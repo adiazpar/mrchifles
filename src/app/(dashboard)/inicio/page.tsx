@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { PageHeader } from '@/components/layout'
 import { Card } from '@/components/ui'
 import {
   Sparkline,
@@ -12,7 +13,7 @@ import {
   IconSales,
   IconProducts,
   IconCashDrawer,
-  IconReports,
+  IconInventory,
   IconArrowUp,
   IconArrowDown,
 } from '@/components/icons'
@@ -95,24 +96,23 @@ export default function InicioPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Header - NO card, just typography */}
-      <div className="home-header">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-sm text-text-secondary">{currentTime}</p>
-            <h1 className="home-greeting">{greeting}</h1>
-          </div>
-          {/* User avatar - visible on mobile */}
+      <PageHeader
+        title="Inicio"
+        subtitle={`${greeting} - ${currentTime}`}
+        actions={
           <div className="lg:hidden w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-semibold text-sm">
             {currentUser.initials}
           </div>
-        </div>
+        }
+      />
 
+      {/* Main content */}
+      <div className="main-content">
         {/* Hero stat - big typography, no card wrapper */}
-        <div className="hero-stat">
-          <div className="hero-stat-label">Ventas de Hoy</div>
-          <div className="hero-stat-value">{formatCurrency(MOCK_STATS.todaySales)}</div>
-          <div className={`hero-stat-change ${isPositiveChange ? 'positive' : 'negative'}`}>
+        <div className="mb-6 text-center">
+          <p className="text-sm text-text-secondary uppercase tracking-wide">Ventas de Hoy</p>
+          <p className="text-4xl font-display font-bold text-text-primary">{formatCurrency(MOCK_STATS.todaySales)}</p>
+          <div className={`flex items-center justify-center gap-1 mt-1 text-sm ${isPositiveChange ? 'text-success' : 'text-error'}`}>
             {isPositiveChange ? (
               <IconArrowUp className="w-4 h-4" />
             ) : (
@@ -123,10 +123,7 @@ export default function InicioPage() {
             </span>
           </div>
         </div>
-      </div>
 
-      {/* Main content */}
-      <div className="main-content">
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <Link href="/ventas" className="quick-action quick-action-primary">
@@ -150,11 +147,11 @@ export default function InicioPage() {
             <span className="quick-action-label">Productos</span>
           </Link>
 
-          <Link href="/reportes" className="quick-action">
+          <Link href="/inventario" className="quick-action">
             <div className="quick-action-icon">
-              <IconReports className="w-5 h-5" />
+              <IconInventory className="w-5 h-5" />
             </div>
-            <span className="quick-action-label">Reportes</span>
+            <span className="quick-action-label">Inventario</span>
           </Link>
         </div>
 

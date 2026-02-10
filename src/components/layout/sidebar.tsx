@@ -7,7 +7,7 @@ import {
   IconSales,
   IconProducts,
   IconCashDrawer,
-  IconReports,
+  IconInventory,
   IconChifle,
 } from '@/components/icons'
 
@@ -16,7 +16,7 @@ const navItems = [
   { href: '/ventas', label: 'Ventas', icon: IconSales },
   { href: '/productos', label: 'Productos', icon: IconProducts },
   { href: '/caja', label: 'Caja', icon: IconCashDrawer },
-  { href: '/reportes', label: 'Reportes', icon: IconReports },
+  { href: '/inventario', label: 'Inventario', icon: IconInventory },
 ]
 
 // Mock user data - will be replaced with auth context
