@@ -23,7 +23,9 @@ pocketbase.exe
 
 # OS
 .DS_Store
+**/.DS_Store
 Thumbs.db
+*.log
 
 # Build
 dist/
