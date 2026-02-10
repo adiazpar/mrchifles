@@ -1,0 +1,35 @@
+{
+  "name": "mrchifles",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:all": "concurrently \"npm run dev\" \"npm run pb:start\"",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "pb:start": "./pocketbase serve --http=127.0.0.1:8090",
+    "pb:download": "node scripts/download-pocketbase.js"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "pocketbase": "^0.21.0",
+    "zod": "^3.23.0",
+    "date-fns": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.0",
+    "concurrently": "^8.2.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
