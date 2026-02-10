@@ -610,6 +610,79 @@ window.addEventListener('online', syncPendingSales);
 
 ---
 
+## Local Development Setup
+
+### Prerequisites
+
+- **Node.js 18+** (recommended: use nvm with `.nvmrc`)
+- **Git**
+
+### Quick Start
+
+```bash
+# Clone the repo
+git clone https://github.com/adiazpar/mrchifles.git
+cd mrchifles
+
+# Install dependencies
+npm install
+
+# Download PocketBase binary (auto-detects your OS)
+npm run pb:download
+
+# Start both Next.js and PocketBase
+npm run dev:all
+```
+
+### Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Next.js development server (port 3000) |
+| `npm run pb:start` | Start PocketBase server (port 8090) |
+| `npm run dev:all` | Start both Next.js and PocketBase concurrently |
+| `npm run pb:download` | Download PocketBase binary for your platform |
+| `npm run build` | Build for production |
+| `npm run lint` | Run ESLint |
+
+### First Time Setup
+
+1. **Start PocketBase**: `npm run pb:start`
+2. **Open Admin UI**: http://127.0.0.1:8090/_/
+3. **Create admin account** (first time only)
+4. **Create collections** (see Data Models section)
+5. **Start Next.js**: `npm run dev`
+6. **Open app**: http://localhost:3000
+
+### Project URLs (Development)
+
+| Service | URL |
+|---------|-----|
+| Next.js App | http://localhost:3000 |
+| PocketBase API | http://127.0.0.1:8090/api/ |
+| PocketBase Admin | http://127.0.0.1:8090/_/ |
+
+### Environment Variables
+
+Copy `.env.example` to `.env.local`:
+
+```bash
+cp .env.example .env.local
+```
+
+Default values work for local development. Update `POCKETBASE_URL` for production.
+
+### No Docker Required
+
+This setup is intentionally lightweight:
+- **PocketBase**: Single binary, no container needed
+- **Next.js**: Runs with Node.js directly
+- **SQLite**: File-based, no database server
+
+For production, see the Deployment Architecture section.
+
+---
+
 ## References & Resources
 
 ### Peruvian Commerce
@@ -642,3 +715,4 @@ window.addEventListener('online', syncPendingSales);
 |---------|------|---------|
 | 0.1.0 | 2026-02-10 | Initial CLAUDE.md created |
 | 0.2.0 | 2026-02-10 | Revised tech stack: Hetzner VPS + PocketBase. Added mobile strategy (PWA first, React Native future). Updated data models for PocketBase collections. Added deployment architecture. |
+| 0.3.0 | 2026-02-10 | Added Local Development Setup section. Project scaffolded with Next.js, PocketBase download script, TypeScript types, and utility functions. |
