@@ -466,11 +466,10 @@ sudo systemctl restart caddy
 
 ```bash
 cd ~/mrchifles
-git pull
-npm install
-npm run build
-pm2 restart nextjs
+npm run deploy
 ```
+
+This single command handles: git pull, npm install, migrations, build, and PM2 restart.
 
 ### Manual Backup
 
@@ -539,8 +538,7 @@ pm2 logs nextjs
 
 | Command | Purpose |
 |---------|---------|
+| `npm run deploy` | Deploy updates (one command) |
 | `pm2 status` | Check app status |
 | `pm2 logs` | View all logs |
-| `pm2 restart all` | Restart apps |
 | `~/backup.sh` | Manual backup |
-| `sudo systemctl restart caddy` | Restart web server |
