@@ -67,14 +67,12 @@ A web-based business management system for a small Chifles (traditional Peruvian
 
 The web app will be built as a PWA from the start:
 
-```
-✓ Same codebase as web
-✓ Installable on home screen
-✓ Works offline (critical for unreliable connectivity)
-✓ No app store approval needed
-✓ Instant updates
-✓ Push notifications
-```
+- Same codebase as web
+- Installable on home screen
+- Works offline (critical for unreliable connectivity)
+- No app store approval needed
+- Instant updates
+- Push notifications
 
 **PWA Implementation:**
 - Service Worker for offline caching
@@ -533,6 +531,7 @@ chifles.example.com {
 3. **Date Format**: DD/MM/YYYY (Peruvian standard)
 4. **Time Zone**: America/Lima (UTC-5)
 5. **Number Format**: Use comma for thousands, period for decimals (1,234.56)
+6. **No Emojis**: Never use emojis in code, documentation, UI text, comments, or commit messages. Keep all output professional and text-only.
 
 ### PocketBase SDK Usage
 

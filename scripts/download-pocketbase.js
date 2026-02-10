@@ -66,7 +66,7 @@ async function main() {
     const archivePath = path.join(PROJECT_ROOT, filename)
     const binaryPath = path.join(PROJECT_ROOT, `pocketbase${ext}`)
 
-    console.log(`\n🍌 Downloading PocketBase ${PB_VERSION} for ${platformInfo}...\n`)
+    console.log(`\nDownloading PocketBase ${PB_VERSION} for ${platformInfo}...\n`)
 
     await downloadFile(downloadUrl, archivePath)
 
@@ -85,7 +85,7 @@ async function main() {
     // Clean up archive
     fs.unlinkSync(archivePath)
 
-    console.log(`\n✅ PocketBase downloaded to: ${binaryPath}`)
+    console.log(`\nPocketBase downloaded to: ${binaryPath}`)
     console.log('\nTo start PocketBase, run: npm run pb:start')
     console.log('Admin UI will be at: http://127.0.0.1:8090/_/')
 

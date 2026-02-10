@@ -1,4 +1,4 @@
-# 🍌 Mr. Chifles
+# Mr. Chifles
 
 Sistema de gestión para negocio de chifles - Business management system for a Chifles snack business.
 
@@ -7,12 +7,12 @@ Sistema de gestión para negocio de chifles - Business management system for a C
 A lightweight, mobile-first POS and business management system for a small Chifles (traditional Peruvian plantain chip snack) business in Lima, Peru.
 
 **Features:**
-- 📱 PWA - Works offline, installable on mobile
-- 💰 Sales tracking with Cash/Yape payment methods
-- 📦 Product catalog management
-- 💵 Cash drawer reconciliation
-- 👥 Multi-user support (Owner, Partner, Employee)
-- 📊 Daily summaries and reports
+- PWA - Works offline, installable on mobile
+- Sales tracking with Cash/Yape payment methods
+- Product catalog management
+- Cash drawer reconciliation
+- Multi-user support (Owner, Partner, Employee)
+- Daily summaries and reports
 
 ## Tech Stack
 
