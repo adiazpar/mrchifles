@@ -757,33 +757,6 @@ Install plugins via the `/plugin` command in Claude Code.
 
 ---
 
-## MCP Servers
-
-For lower-level integrations, MCP servers can be added via `claude mcp add`.
-
-### Recommended MCP Servers
-
-| Server | Purpose | Install Command |
-|--------|---------|-----------------|
-| **Filesystem** | Read/write project files | `claude mcp add filesystem -- npx -y @anthropic-ai/mcp-server-filesystem /path/to/project` |
-| **Git** | Git operations | `claude mcp add git -- npx -y @anthropic-ai/mcp-server-git --repository /path/to/project` |
-| **Fetch** | Fetch web documentation | `claude mcp add fetch -- npx -y @anthropic-ai/mcp-server-fetch` |
-| **Memory** | Persistent memory across sessions | `claude mcp add memory -- npx -y @anthropic-ai/mcp-server-memory` |
-
-### MCP Resources
-- [MCP Specification](https://modelcontextprotocol.io/)
-- [Official MCP Servers (GitHub)](https://github.com/modelcontextprotocol/servers)
-- [MCP Server Registry (PulseMCP)](https://www.pulsemcp.com/servers)
-
-### Project-Specific Notes
-
-No PocketBase MCP server exists yet. Agents should interact with PocketBase via:
-1. The PocketBase Admin UI at `http://127.0.0.1:8090/_/`
-2. Direct API calls using fetch/curl
-3. The PocketBase JS SDK in application code
-
----
-
 ## Version History
 
 | Version | Date | Changes |
