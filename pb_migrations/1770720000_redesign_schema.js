@@ -160,6 +160,22 @@ migrate((db) => {
         presentable: false,
         unique: false,
         options: { min: null, max: null, pattern: "" }
+      },
+      {
+        system: false,
+        id: "saleemployee",
+        name: 'employee',
+        type: 'relation',
+        required: true,
+        presentable: false,
+        unique: false,
+        options: {
+          collectionId: "_pb_users_auth_",
+          cascadeDelete: false,
+          minSelect: null,
+          maxSelect: 1,
+          displayFields: ["name"]
+        }
       }
     ],
     indexes: [],
