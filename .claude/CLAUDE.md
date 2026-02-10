@@ -302,41 +302,25 @@ For processed food products like Chifles:
 
 ## Data Models (PocketBase Collections)
 
-PocketBase uses collections instead of traditional ORM models. Here are the collection schemas:
-
-### users (extends PocketBase auth collection)
-```javascript
-{
-  // Built-in: id, email, password, created, updated
-  name: "text",           // Required
-  pin: "text",            // Hashed PIN for quick auth
-  role: "select",         // Options: owner, partner, employee
-  active: "bool"          // Default: true
-}
-```
+PocketBase uses collections instead of traditional ORM models. The schema is intentionally simple: 5 tables total.
 
 ### products
 ```javascript
 {
-  name: "text",           // Required
-  description: "text",    // Optional
-  flavor: "text",         // e.g., "Salado", "Tocino", "Queso"
-  salePrice: "number",    // Required, min: 0
-  costPrice: "number",    // Optional, min: 0
-  active: "bool",         // Default: true
-  image: "file"           // Optional, single image
+  name: "text",           // Required - e.g., "Chifles Grande Tocino"
+  price: "number",        // Required - selling price per unit
+  costPrice: "number",    // Optional - estimated cost per unit
+  active: "bool"          // Default: true
 }
 ```
 
 ### sales
 ```javascript
 {
-  saleNumber: "number",       // Auto-increment
-  date: "date",               // Default: now
+  date: "date",               // Required
   total: "number",            // Required
-  paymentMethod: "select",    // Options: cash, yape, plin, mixed
-  user: "relation",           // -> users
-  cashDrawer: "relation",     // -> cash_drawers (optional)
+  paymentMethod: "select",    // Options: cash, yape, plin
+  channel: "select",          // Options: feria, whatsapp
   notes: "text"               // Optional
 }
 ```
@@ -347,53 +331,47 @@ PocketBase uses collections instead of traditional ORM models. Here are the coll
   sale: "relation",       // -> sales, required
   product: "relation",    // -> products, required
   quantity: "number",     // Required, min: 1
-  unitPrice: "number",    // Price at time of sale
+  unitPrice: "number",    // Price at time of sale (after promos)
   subtotal: "number"      // quantity * unitPrice
 }
 ```
 
-### cash_drawers
+### orders (purchases from DaSol)
 ```javascript
 {
-  date: "date",               // Required
-  openingBalance: "number",   // Required
-  closingBalance: "number",   // Set on close
-  expectedCash: "number",     // Calculated
-  discrepancy: "number",      // actual - expected
-  notes: "text",
-  status: "select"            // Options: open, closed
+  date: "date",               // Required - when ordered
+  receivedDate: "date",       // Optional - when arrived
+  total: "number",            // Required - what we paid
+  status: "select",           // Options: pending, received
+  notes: "text"               // Optional
 }
 ```
 
-### cash_transactions
+### order_items
 ```javascript
 {
-  cashDrawer: "relation",     // -> cash_drawers, required
-  type: "select",             // Options: cash_in, cash_out
-  amount: "number",           // Required
-  description: "text"         // Required
+  order: "relation",      // -> orders, required
+  product: "relation",    // -> products, required
+  quantity: "number"      // Required - units ordered
 }
 ```
 
-### inventory (Phase 2)
-```javascript
-{
-  product: "relation",    // -> products, unique
-  currentStock: "number", // Default: 0
-  minStock: "number"      // Alert threshold, default: 10
-}
-```
+### How It Works
 
-### expenses (Phase 2)
-```javascript
-{
-  date: "date",               // Default: now
-  amount: "number",           // Required
-  category: "select",         // Options: ingredients, packaging, transport, rent, utilities, salaries, other
-  description: "text",        // Required
-  paymentMethod: "select"     // Options: cash, yape, plin
-}
-```
+**Sales flow:**
+- One `sale` = one customer transaction
+- Multiple `sale_items` = line items on that receipt
+- App calculates promo pricing, stores final price in `unitPrice`
+
+**Orders flow:**
+- One `order` = one purchase from DaSol
+- Multiple `order_items` = products in that shipment
+- Total cost tracked at order level (universal approach)
+
+**Profit calculation:**
+- Revenue = sum of all sales totals
+- Cost = sum of all order totals
+- Profit = Revenue - Cost
 
 ---
 
@@ -624,6 +602,29 @@ window.addEventListener('online', syncPendingSales);
 - PocketBase API: http://127.0.0.1:8090/api/
 - PocketBase Admin: http://127.0.0.1:8090/_/
 
+### Database Migration Workflow
+
+When working on database migrations (files in `pb_migrations/`), agents MUST run `npm run db:reset` after completing the migration work. This command:
+
+1. Deletes the existing database (`pb_data/`)
+2. Runs all migrations to create fresh schema
+3. Creates the admin account using credentials from `.env.local`
+
+**After modifying migrations, always run:**
+```bash
+npm run db:reset
+```
+
+The user will then restart their PocketBase server to pick up the changes.
+
+**Migration files location:** `pb_migrations/`
+**TypeScript types location:** `src/types/index.ts`
+
+When modifying the database schema:
+1. Update the migration file(s) in `pb_migrations/`
+2. Update TypeScript types in `src/types/index.ts` to match
+3. Run `npm run db:reset` to apply changes
+
 ### Quick Start
 
 ```bash
@@ -649,6 +650,8 @@ npm run dev:all
 | `npm run pb:start` | Start PocketBase server (port 8090) |
 | `npm run dev:all` | Start both Next.js and PocketBase concurrently |
 | `npm run pb:download` | Download PocketBase binary for your platform |
+| `npm run pb:migrate` | Run pending database migrations |
+| `npm run db:reset` | Reset database, run migrations, create admin account |
 | `npm run build` | Build for production |
 | `npm run lint` | Run ESLint |
 
@@ -773,3 +776,4 @@ Install plugins via the `/plugin` command in Claude Code.
 | 0.2.0 | 2026-02-10 | Revised tech stack: Hetzner VPS + PocketBase. Added mobile strategy (PWA first, React Native future). Updated data models for PocketBase collections. Added deployment architecture. |
 | 0.3.0 | 2026-02-10 | Added Local Development Setup section. Project scaffolded with Next.js, PocketBase download script, TypeScript types, and utility functions. |
 | 0.4.0 | 2026-02-10 | Fixed cross-platform portability (Windows support). Added comprehensive documentation links. Added MCP servers section. Added no-emoji policy. |
+| 0.5.0 | 2026-02-10 | Simplified database schema to 5 tables (products, sales, sale_items, orders, order_items). Added db:reset script for automated database reset. Added Database Migration Workflow for agents. Environment variables for admin credentials. |
