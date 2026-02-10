@@ -684,27 +684,103 @@ For production, see the Deployment Architecture section.
 
 ## References & Resources
 
+### Core Tech Stack Documentation
+
+| Technology | Documentation | API Reference |
+|------------|---------------|---------------|
+| **Next.js 15** | [nextjs.org/docs](https://nextjs.org/docs) | [App Router](https://nextjs.org/docs/app) |
+| **React 18** | [react.dev](https://react.dev/) | [Reference](https://react.dev/reference/react) |
+| **TypeScript** | [typescriptlang.org/docs](https://www.typescriptlang.org/docs/) | [Handbook](https://www.typescriptlang.org/docs/handbook/) |
+| **Tailwind CSS** | [tailwindcss.com/docs](https://tailwindcss.com/docs) | [Utilities](https://tailwindcss.com/docs/utility-first) |
+| **PocketBase** | [pocketbase.io/docs](https://pocketbase.io/docs/) | [API](https://pocketbase.io/docs/api-records/) |
+| **PocketBase JS SDK** | [github.com/pocketbase/js-sdk](https://github.com/pocketbase/js-sdk) | [README](https://github.com/pocketbase/js-sdk#readme) |
+| **Zod** | [zod.dev](https://zod.dev/) | [API](https://zod.dev/?id=basic-usage) |
+| **date-fns** | [date-fns.org/docs](https://date-fns.org/docs/Getting-Started) | [Functions](https://date-fns.org/docs/Getting-Started) |
+
+### Deployment & Infrastructure
+
+| Service | Documentation |
+|---------|---------------|
+| **Hetzner Cloud** | [docs.hetzner.com/cloud](https://docs.hetzner.com/cloud/) |
+| **Caddy Server** | [caddyserver.com/docs](https://caddyserver.com/docs/) |
+| **Let's Encrypt** (via Caddy) | [letsencrypt.org/docs](https://letsencrypt.org/docs/) |
+
+### PWA Resources
+- [web.dev PWA Guide](https://web.dev/progressive-web-apps/)
+- [Workbox (Service Worker Toolkit)](https://developer.chrome.com/docs/workbox/)
+- [PWA Builder](https://www.pwabuilder.com/)
+
 ### Peruvian Commerce
 - [SUNAT - Tax Authority](https://www.sunat.gob.pe/)
 - [SUNAT Emprender Portal](https://emprender.sunat.gob.pe/)
 - [Yape Business](https://www.yape.com.pe/)
 - [DIGESA - Food Safety](http://www.digesa.minsa.gob.pe/)
 
-### Technical
-- [Next.js Documentation](https://nextjs.org/docs)
-- [PocketBase Documentation](https://pocketbase.io/docs/)
-- [PocketBase JavaScript SDK](https://github.com/pocketbase/js-sdk)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [Hetzner Cloud](https://www.hetzner.com/cloud)
-- [Caddy Server](https://caddyserver.com/docs/)
-
-### PWA Resources
-- [web.dev PWA Guide](https://web.dev/progressive-web-apps/)
-- [Workbox (Service Worker Toolkit)](https://developer.chrome.com/docs/workbox/)
-
 ### Future: React Native
 - [React Native](https://reactnative.dev/)
 - [Expo](https://expo.dev/)
+- [React Native Paper (UI)](https://reactnativepaper.com/)
+
+---
+
+## Claude Code Plugins
+
+Install plugins via the `/plugin` command in Claude Code.
+
+### Recommended Plugins for This Project
+
+| Plugin | Purpose | Install |
+|--------|---------|---------|
+| **typescript-lsp** | Real-time TypeScript type checking and error detection | `/plugin install typescript-lsp` |
+| **frontend-design** | UI/UX specialist for interface development | `/plugin install frontend-design` |
+| **Context7** | Fetches current API docs (Next.js, React, etc.) | `/plugin install context7` |
+| **Playwright** | Browser automation and E2E testing | `/plugin install playwright` |
+| **GitHub** | PR reviews, branch management, code search | `/plugin install github` |
+| **code-review** | Multi-agent code review (security, performance) | `/plugin install code-review` |
+| **pr-review-toolkit** | Specialized PR review agents | `/plugin install pr-review-toolkit` |
+
+### All Available Plugin Categories
+
+**LSP Plugins** (Language Servers):
+- typescript-lsp, pyright-lsp, rust-analyzer-lsp, gopls-lsp, jdtls-lsp, csharp-lsp, swift-lsp, php-lsp, lua-lsp, clangd-lsp
+
+**Workflow Plugins**:
+- security-guidance, code-review, pr-review-toolkit, feature-dev, frontend-design
+
+**External Integrations**:
+- GitHub, Supabase, Context7, Playwright, Firebase, Stripe, Greptile, Linear, Slack, GitLab, Asana, Laravel Boost, Serena
+
+### Plugin Resources
+- [Official Plugin Directory](https://github.com/anthropics/claude-plugins-official)
+- [Plugin Documentation](https://code.claude.com/docs/en/plugins)
+- [Plugin Marketplace Guide](https://code.claude.com/docs/en/discover-plugins)
+
+---
+
+## MCP Servers
+
+For lower-level integrations, MCP servers can be added via `claude mcp add`.
+
+### Recommended MCP Servers
+
+| Server | Purpose | Install Command |
+|--------|---------|-----------------|
+| **Filesystem** | Read/write project files | `claude mcp add filesystem -- npx -y @anthropic-ai/mcp-server-filesystem /path/to/project` |
+| **Git** | Git operations | `claude mcp add git -- npx -y @anthropic-ai/mcp-server-git --repository /path/to/project` |
+| **Fetch** | Fetch web documentation | `claude mcp add fetch -- npx -y @anthropic-ai/mcp-server-fetch` |
+| **Memory** | Persistent memory across sessions | `claude mcp add memory -- npx -y @anthropic-ai/mcp-server-memory` |
+
+### MCP Resources
+- [MCP Specification](https://modelcontextprotocol.io/)
+- [Official MCP Servers (GitHub)](https://github.com/modelcontextprotocol/servers)
+- [MCP Server Registry (PulseMCP)](https://www.pulsemcp.com/servers)
+
+### Project-Specific Notes
+
+No PocketBase MCP server exists yet. Agents should interact with PocketBase via:
+1. The PocketBase Admin UI at `http://127.0.0.1:8090/_/`
+2. Direct API calls using fetch/curl
+3. The PocketBase JS SDK in application code
 
 ---
 
@@ -715,3 +791,4 @@ For production, see the Deployment Architecture section.
 | 0.1.0 | 2026-02-10 | Initial CLAUDE.md created |
 | 0.2.0 | 2026-02-10 | Revised tech stack: Hetzner VPS + PocketBase. Added mobile strategy (PWA first, React Native future). Updated data models for PocketBase collections. Added deployment architecture. |
 | 0.3.0 | 2026-02-10 | Added Local Development Setup section. Project scaffolded with Next.js, PocketBase download script, TypeScript types, and utility functions. |
+| 0.4.0 | 2026-02-10 | Fixed cross-platform portability (Windows support). Added comprehensive documentation links. Added MCP servers section. Added no-emoji policy. |
