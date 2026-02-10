@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "pb:start": "./pocketbase serve --http=127.0.0.1:8090",
+    "pb:start": "node scripts/start-pocketbase.js",
     "pb:download": "node scripts/download-pocketbase.js"
   },
   "dependencies": {

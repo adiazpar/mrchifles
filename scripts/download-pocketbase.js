@@ -3,6 +3,8 @@
 /**
  * Downloads the correct PocketBase binary for the current platform.
  * Run with: npm run pb:download
+ *
+ * Supports: macOS (Intel/ARM), Linux (x64/ARM), Windows (x64/ARM)
  */
 
 const https = require('https')
@@ -53,6 +55,19 @@ async function downloadFile(url, dest) {
   })
 }
 
+function extractZip(archivePath, destDir, binaryName, isWindows) {
+  if (isWindows) {
+    // Use PowerShell on Windows
+    const psCommand = `powershell -Command "Expand-Archive -Path '${archivePath}' -DestinationPath '${destDir}' -Force"`
+    execSync(psCommand, { stdio: 'inherit' })
+  } else {
+    // Use unzip on macOS/Linux
+    execSync(`unzip -o "${archivePath}" ${binaryName} -d "${destDir}"`, {
+      stdio: 'inherit'
+    })
+  }
+}
+
 async function main() {
   try {
     const platformInfo = getPlatformInfo()
@@ -72,10 +87,7 @@ async function main() {
 
     console.log('Extracting...')
 
-    // Extract using unzip command (available on macOS and Linux)
-    execSync(`unzip -o "${archivePath}" pocketbase${ext} -d "${PROJECT_ROOT}"`, {
-      stdio: 'inherit'
-    })
+    extractZip(archivePath, PROJECT_ROOT, `pocketbase${ext}`, isWindows)
 
     // Make executable on Unix
     if (!isWindows) {
