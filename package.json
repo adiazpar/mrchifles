@@ -9,6 +9,7 @@
     "build:prod": "bash scripts/build.sh",
     "start": "next start",
     "start:prod": "bash scripts/start.sh",
+    "deploy": "bash scripts/deploy.sh",
     "lint": "next lint",
     "pb:start": "node scripts/start-pocketbase.js",
     "pb:download": "node scripts/download-pocketbase.js",
