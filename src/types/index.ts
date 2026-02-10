@@ -1,106 +1,99 @@
-// User types
-export type UserRole = 'owner' | 'partner' | 'employee'
+// ============================================
+// PRODUCT TYPES
+// ============================================
 
-export interface User {
-  id: string
-  email: string
-  name: string
-  role: UserRole
-  active: boolean
-  created: string
-  updated: string
-}
-
-// Product types
 export interface Product {
   id: string
   name: string
-  description?: string
-  flavor?: string
-  salePrice: number
-  costPrice?: number
+  price: number // Selling price per unit
+  costPrice?: number // Estimated cost per unit (optional)
   active: boolean
-  image?: string
   created: string
   updated: string
 }
 
-// Sale types
-export type PaymentMethod = 'cash' | 'yape' | 'plin' | 'mixed'
+// ============================================
+// SALE TYPES
+// ============================================
+
+export type PaymentMethod = 'cash' | 'yape' | 'plin'
+export type SalesChannel = 'feria' | 'whatsapp'
 
 export interface Sale {
   id: string
-  saleNumber: number
   date: string
   total: number
   paymentMethod: PaymentMethod
-  user: string
-  cashDrawer?: string
+  channel: SalesChannel
   notes?: string
   created: string
+  // Expanded relations
+  expand?: {
+    'sale_items(sale)'?: SaleItem[]
+  }
 }
 
 export interface SaleItem {
   id: string
-  sale: string
-  product: string
+  sale: string // Relation ID
+  product: string // Relation ID
   quantity: number
-  unitPrice: number
+  unitPrice: number // Price charged (after any promo)
+  subtotal: number
+  created: string
+  // Expanded relations
+  expand?: {
+    sale?: Sale
+    product?: Product
+  }
+}
+
+// ============================================
+// ORDER TYPES (purchases from DaSol)
+// ============================================
+
+export type OrderStatus = 'pending' | 'received'
+
+export interface Order {
+  id: string
+  date: string
+  receivedDate?: string
+  total: number // Total paid to DaSol
+  status: OrderStatus
+  notes?: string
+  created: string
+  updated: string
+  // Expanded relations
+  expand?: {
+    'order_items(order)'?: OrderItem[]
+  }
+}
+
+export interface OrderItem {
+  id: string
+  order: string // Relation ID
+  product: string // Relation ID
+  quantity: number // Units ordered
+  created: string
+  // Expanded relations
+  expand?: {
+    order?: Order
+    product?: Product
+  }
+}
+
+// ============================================
+// CART TYPES (for UI state, not stored in DB)
+// ============================================
+
+export interface CartItem {
+  product: Product
+  quantity: number
+  unitPrice: number // May differ from product.price if promo applied
   subtotal: number
 }
 
-// Cash drawer types
-export type DrawerStatus = 'open' | 'closed'
-
-export interface CashDrawer {
-  id: string
-  date: string
-  openingBalance: number
-  closingBalance?: number
-  expectedCash?: number
-  discrepancy?: number
-  notes?: string
-  status: DrawerStatus
-  created: string
-  updated: string
-}
-
-export type CashTransactionType = 'cash_in' | 'cash_out'
-
-export interface CashTransaction {
-  id: string
-  cashDrawer: string
-  type: CashTransactionType
-  amount: number
-  description: string
-  created: string
-}
-
-// Expense types (Phase 2)
-export type ExpenseCategory =
-  | 'ingredients'
-  | 'packaging'
-  | 'transport'
-  | 'rent'
-  | 'utilities'
-  | 'salaries'
-  | 'other'
-
-export interface Expense {
-  id: string
-  date: string
-  amount: number
-  category: ExpenseCategory
-  description: string
-  paymentMethod: PaymentMethod
-  created: string
-}
-
-// Inventory types (Phase 2)
-export interface Inventory {
-  id: string
-  product: string
-  currentStock: number
-  minStock: number
-  updated: string
+export interface Cart {
+  items: CartItem[]
+  total: number
 }

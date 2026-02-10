@@ -10,7 +10,8 @@
     "lint": "next lint",
     "pb:start": "node scripts/start-pocketbase.js",
     "pb:download": "node scripts/download-pocketbase.js",
-    "pb:migrate": "node scripts/migrate.js"
+    "pb:migrate": "node scripts/migrate.js",
+    "db:reset": "node scripts/reset-db.js"
   },
   "dependencies": {
     "date-fns": "^3.6.0",
