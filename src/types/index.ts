@@ -1,4 +1,16 @@
 // ============================================
+// USER TYPES
+// ============================================
+
+export interface User {
+  id: string
+  email: string
+  name: string
+  created: string
+  updated: string
+}
+
+// ============================================
 // PRODUCT TYPES
 // ============================================
 
@@ -25,11 +37,13 @@ export interface Sale {
   total: number
   paymentMethod: PaymentMethod
   channel: SalesChannel
+  employee: string // Relation ID to users
   notes?: string
   created: string
   // Expanded relations
   expand?: {
     'sale_items(sale)'?: SaleItem[]
+    employee?: User
   }
 }
 
