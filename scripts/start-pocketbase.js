@@ -20,7 +20,7 @@ if (!fs.existsSync(binaryPath)) {
   process.exit(1)
 }
 
-const args = ['serve', '--http=127.0.0.1:8090']
+const args = ['serve', '--http=127.0.0.1:8090', '--automigrate']
 
 console.log(`Starting PocketBase...`)
 console.log(`Binary: ${binaryPath}`)
