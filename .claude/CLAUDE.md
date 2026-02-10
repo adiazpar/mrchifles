@@ -498,6 +498,38 @@ chifles.example.com {
 0 3 * * * cp /path/to/pb_data/data.db /backups/data_$(date +\%Y\%m\%d).db
 ```
 
+### Production Deployment
+
+**Build command** (runs migrations + builds Next.js):
+```bash
+npm run build:prod
+```
+
+**Start command** (with PM2):
+```bash
+pm2 start ecosystem.config.js
+```
+
+**Manual start** (without PM2):
+```bash
+npm run start:prod
+```
+
+**Deployment workflow:**
+1. SSH into server
+2. `git pull` latest changes
+3. `npm run build:prod` (installs deps, runs migrations, builds)
+4. `pm2 restart all` (restarts both PocketBase and Next.js)
+
+**PM2 commands:**
+```bash
+pm2 start ecosystem.config.js  # Start all
+pm2 restart all                # Restart all
+pm2 stop all                   # Stop all
+pm2 logs                       # View logs
+pm2 status                     # Check status
+```
+
 ---
 
 ## Development Guidelines
@@ -652,7 +684,10 @@ npm run dev:all
 | `npm run pb:download` | Download PocketBase binary for your platform |
 | `npm run pb:migrate` | Run pending database migrations |
 | `npm run db:reset` | Reset database, run migrations, create admin account |
-| `npm run build` | Build for production |
+| `npm run build` | Build Next.js for production |
+| `npm run build:prod` | Full production build (deps + migrations + Next.js) |
+| `npm run start` | Start Next.js production server |
+| `npm run start:prod` | Start both PocketBase and Next.js for production |
 | `npm run lint` | Run ESLint |
 
 ### First Time Setup
@@ -777,3 +812,4 @@ Install plugins via the `/plugin` command in Claude Code.
 | 0.3.0 | 2026-02-10 | Added Local Development Setup section. Project scaffolded with Next.js, PocketBase download script, TypeScript types, and utility functions. |
 | 0.4.0 | 2026-02-10 | Fixed cross-platform portability (Windows support). Added comprehensive documentation links. Added MCP servers section. Added no-emoji policy. |
 | 0.5.0 | 2026-02-10 | Simplified database schema to 5 tables (products, sales, sale_items, orders, order_items). Added db:reset script for automated database reset. Added Database Migration Workflow for agents. Environment variables for admin credentials. |
+| 0.6.0 | 2026-02-10 | Added production deployment scripts (build.sh, start.sh, ecosystem.config.js). Added PM2 configuration for process management. |
