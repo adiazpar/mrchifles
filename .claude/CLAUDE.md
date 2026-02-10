@@ -616,6 +616,14 @@ window.addEventListener('online', syncPendingSales);
 - **Node.js 18+** (recommended: use nvm with `.nvmrc`)
 - **Git**
 
+### Important Note for Claude Agents
+
+**The development servers (Next.js and PocketBase) are ALWAYS run by the user in a separate terminal.** Claude agents should NEVER start the dev servers. Assume the servers are already running when working on this project.
+
+- Next.js: http://localhost:3000
+- PocketBase API: http://127.0.0.1:8090/api/
+- PocketBase Admin: http://127.0.0.1:8090/_/
+
 ### Quick Start
 
 ```bash
