@@ -73,10 +73,10 @@ try {
   process.exit(1)
 }
 
-// Step 3: Create superuser
+// Step 3: Create admin account
 console.log('\nCreating admin account...')
 try {
-  execSync(`"${binaryPath}" superuser create "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}"`, {
+  execSync(`"${binaryPath}" admin create "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}"`, {
     cwd: PROJECT_ROOT,
     stdio: 'inherit'
   })
