@@ -539,6 +539,7 @@ pm2 restart all  # Manual restart
 4. **Time Zone**: America/Lima (UTC-5)
 5. **Number Format**: Use comma for thousands, period for decimals (1,234.56)
 6. **No Emojis**: Never use emojis in code, documentation, UI text, comments, or commit messages. Keep all output professional and text-only.
+7. **Plans Directory**: All implementation plans for this project must be written to `.claude/plans/` directory. Use descriptive filenames like `feature-name.md` or `bugfix-description.md`.
 
 ### PocketBase SDK Usage
 
