@@ -16,6 +16,8 @@ import {
   IconInventory,
   IconArrowUp,
   IconArrowDown,
+  IconCircleCheck,
+  IconCircleX,
 } from '@/components/icons'
 import { formatCurrency } from '@/lib/utils'
 
@@ -25,12 +27,11 @@ const currentUser = {
   initials: 'AD',
 }
 
-// Mock data for demo
-const MOCK_STATS = {
+// Mock data for demo - cashDrawerStatus is now stateful
+const INITIAL_STATS = {
   todaySales: 1250.0,
   previousDaySales: 1100.0,
   transactionCount: 45,
-  cashDrawerStatus: 'open' as const,
   cashBalance: 650.0,
 }
 
@@ -65,49 +66,64 @@ const TOP_PRODUCTS = [
 
 function getGreeting(): string {
   const hour = new Date().getHours()
-  if (hour < 12) return 'Buenos dias'
-  if (hour < 18) return 'Buenas tardes'
+  if (hour >= 6 && hour < 12) return 'Buenos dias'
+  if (hour >= 12 && hour < 18) return 'Buenas tardes'
   return 'Buenas noches'
+}
+
+function formatDateShort(date: Date): string {
+  const day = date.getDate().toString().padStart(2, '0')
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
 }
 
 export default function InicioPage() {
   const [greeting, setGreeting] = useState(getGreeting())
+  const [currentDate, setCurrentDate] = useState('')
   const [currentTime, setCurrentTime] = useState('')
+  const [cashDrawerStatus, setCashDrawerStatus] = useState<'open' | 'closed'>('open')
 
   useEffect(() => {
-    const updateTime = () => {
+    const update = () => {
       const now = new Date()
+      setGreeting(getGreeting())
+      setCurrentDate(formatDateShort(now))
       setCurrentTime(
         now.toLocaleTimeString('es-PE', {
           hour: '2-digit',
           minute: '2-digit',
           timeZone: 'America/Lima',
-        })
+        }).replace(/a\.\s*m\./gi, 'a.m.').replace(/p\.\s*m\./gi, 'p.m.')
       )
-      setGreeting(getGreeting())
     }
 
-    updateTime()
-    const interval = setInterval(updateTime, 60000)
+    update()
+    const interval = setInterval(update, 60000)
     return () => clearInterval(interval)
   }, [])
 
+  const handleCashDrawerToggle = () => {
+    // In a real app, this would call an API
+    setCashDrawerStatus(prev => prev === 'open' ? 'closed' : 'open')
+  }
+
   const salesChange =
-    MOCK_STATS.previousDaySales > 0
-      ? ((MOCK_STATS.todaySales - MOCK_STATS.previousDaySales) /
-          MOCK_STATS.previousDaySales) *
+    INITIAL_STATS.previousDaySales > 0
+      ? ((INITIAL_STATS.todaySales - INITIAL_STATS.previousDaySales) /
+          INITIAL_STATS.previousDaySales) *
         100
       : 0
   const isPositiveChange = salesChange >= 0
-  const averageTicket = MOCK_STATS.transactionCount > 0
-    ? MOCK_STATS.todaySales / MOCK_STATS.transactionCount
+  const averageTicket = INITIAL_STATS.transactionCount > 0
+    ? INITIAL_STATS.todaySales / INITIAL_STATS.transactionCount
     : 0
 
   return (
     <div className="min-h-screen">
       <PageHeader
-        title="Inicio"
-        subtitle={`${greeting} - ${currentTime}`}
+        title={`${greeting}, ${currentUser.name.split(' ')[0]}!`}
+        subtitle={`${currentDate} - ${currentTime}`}
         actions={
           <div className="lg:hidden w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-semibold text-sm">
             {currentUser.initials}
@@ -118,9 +134,9 @@ export default function InicioPage() {
       {/* Main content */}
       <div className="main-content">
         {/* Hero stat - big typography, no card wrapper */}
-        <div className="mb-6 text-center">
+        <div className="mb-4 text-center">
           <p className="text-sm text-text-secondary uppercase tracking-wide">Ventas de Hoy</p>
-          <p className="text-4xl font-display font-bold text-text-primary">{formatCurrency(MOCK_STATS.todaySales)}</p>
+          <p className="text-4xl font-display font-bold text-text-primary">{formatCurrency(INITIAL_STATS.todaySales)}</p>
           <div className={`flex items-center justify-center gap-1 mt-1 text-sm ${isPositiveChange ? 'text-success' : 'text-error'}`}>
             {isPositiveChange ? (
               <IconArrowUp className="w-4 h-4" />
@@ -133,15 +149,16 @@ export default function InicioPage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          <Link href="/ventas" className="quick-action">
-            <div className="quick-action-icon">
-              <IconSales className="w-5 h-5" />
-            </div>
-            <span className="quick-action-label">Nueva Venta</span>
+        {/* Prominent Nueva Venta Button */}
+        <div className="mb-6">
+          <Link href="/ventas" className="btn btn-primary btn-lg w-full text-lg gap-3">
+            <IconSales className="w-6 h-6" />
+            Nueva Venta
           </Link>
+        </div>
 
+        {/* Quick Actions - secondary actions grid */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
           <Link href="/caja" className="quick-action">
             <div className="quick-action-icon">
               <IconCashDrawer className="w-5 h-5" />
@@ -164,31 +181,48 @@ export default function InicioPage() {
           </Link>
         </div>
 
-        {/* Cash drawer status */}
-        <div className="flex items-center gap-4 p-4 mb-6 rounded-xl border border-border bg-bg-surface">
+        {/* Cash drawer status with action button */}
+        <div className="flex flex-wrap items-center gap-3 p-4 mb-6 rounded-xl border border-border bg-bg-surface">
           <div
-            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-              MOCK_STATS.cashDrawerStatus === 'open'
+            className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+              cashDrawerStatus === 'open'
                 ? 'bg-success-subtle text-success'
                 : 'bg-error-subtle text-error'
             }`}
           >
             <IconCashDrawer className="w-5 h-5" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-[140px]">
             <p className="font-medium text-text-primary">Estado de Caja</p>
             <p className="text-sm text-text-secondary">
-              {MOCK_STATS.cashDrawerStatus === 'open' ? (
+              {cashDrawerStatus === 'open' ? (
                 <>
                   <span className="text-success font-medium">Abierta</span>
                   {' - '}
-                  {formatCurrency(MOCK_STATS.cashBalance)} en efectivo
+                  {formatCurrency(INITIAL_STATS.cashBalance)} en efectivo
                 </>
               ) : (
                 <span className="text-error font-medium">Cerrada</span>
               )}
             </p>
           </div>
+          <button
+            type="button"
+            className={`btn btn-sm w-full sm:w-auto ${cashDrawerStatus === 'open' ? 'btn-secondary' : 'btn-primary'}`}
+            onClick={handleCashDrawerToggle}
+          >
+            {cashDrawerStatus === 'open' ? (
+              <>
+                <IconCircleX className="w-4 h-4" />
+                Cerrar Caja
+              </>
+            ) : (
+              <>
+                <IconCircleCheck className="w-4 h-4" />
+                Abrir Caja
+              </>
+            )}
+          </button>
         </div>
 
         {/* Two-column stats: Sales & Inventory */}
@@ -199,7 +233,7 @@ export default function InicioPage() {
             <div className="flex items-center justify-between">
               <div className="text-center flex-1">
                 <p className="text-2xl font-display font-bold text-text-primary">
-                  {MOCK_STATS.transactionCount}
+                  {INITIAL_STATS.transactionCount}
                 </p>
                 <p className="text-xs text-text-secondary">Transacciones</p>
               </div>
@@ -270,7 +304,7 @@ export default function InicioPage() {
                   <div className="text-center">
                     <p className="text-[10px] text-text-tertiary">Total</p>
                     <p className="text-xs font-bold text-text-primary">
-                      {formatCurrency(MOCK_STATS.todaySales)}
+                      {formatCurrency(INITIAL_STATS.todaySales)}
                     </p>
                   </div>
                 </DonutChart>

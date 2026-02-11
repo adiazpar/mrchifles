@@ -1,5 +1,4 @@
 import { MobileNav, Sidebar } from '@/components/layout'
-import { ToastProvider } from '@/components/ui'
 
 export default function DashboardLayout({
   children,
@@ -7,19 +6,17 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <ToastProvider>
-      <div className="min-h-screen">
-        {/* Sidebar for desktop */}
-        <Sidebar />
+    <div className="min-h-screen">
+      {/* Sidebar for desktop */}
+      <Sidebar />
 
-        {/* Main content area */}
-        <div className="with-sidebar flex flex-col min-h-screen">
-          {children}
-        </div>
-
-        {/* Mobile navigation */}
-        <MobileNav />
+      {/* Main content area */}
+      <div className="with-sidebar flex flex-col min-h-screen">
+        {children}
       </div>
-    </ToastProvider>
+
+      {/* Mobile navigation */}
+      <MobileNav />
+    </div>
   )
 }

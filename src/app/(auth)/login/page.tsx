@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Input, Card } from '@/components/ui'
+import { Input, Card, Spinner } from '@/components/ui'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -75,14 +75,20 @@ export default function LoginPage() {
               </div>
             )}
 
-            <Button
+            <button
               type="submit"
-              size="lg"
-              className="w-full"
-              loading={isLoading}
+              className="btn btn-primary btn-lg w-full"
+              disabled={isLoading}
             >
-              Iniciar Sesion
-            </Button>
+              {isLoading ? (
+                <>
+                  <Spinner />
+                  <span className="sr-only">Cargando...</span>
+                </>
+              ) : (
+                'Iniciar Sesion'
+              )}
+            </button>
           </form>
         </Card>
 
