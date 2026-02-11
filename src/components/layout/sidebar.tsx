@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   IconHome,
@@ -8,7 +9,6 @@ import {
   IconProducts,
   IconCashDrawer,
   IconInventory,
-  IconChifle,
 } from '@/components/icons'
 
 const navItems = [
@@ -33,12 +33,14 @@ export function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-header">
         <Link href="/inicio" className="sidebar-brand">
-          <div className="sidebar-brand-icon">
-            <IconChifle className="w-6 h-6 text-white" />
-          </div>
-          <div className="sidebar-brand-text">
-            <span>Mr.</span>Chifles
-          </div>
+          <Image
+            src="/logo.png"
+            alt="Mr. Chifles"
+            width={40}
+            height={40}
+            className="rounded-lg"
+          />
+          <span className="sidebar-brand-text">Mr. Chifles</span>
         </Link>
       </div>
 

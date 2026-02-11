@@ -139,7 +139,7 @@ migrate((db) => {
         required: true,
         presentable: false,
         unique: false,
-        options: { maxSelect: 1, values: ['cash', 'yape', 'plin'] }
+        options: { maxSelect: 1, values: ['cash', 'yape', 'pos'] }
       },
       {
         system: false,

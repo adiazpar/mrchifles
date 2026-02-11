@@ -28,7 +28,7 @@ export interface Product {
 // SALE TYPES
 // ============================================
 
-export type PaymentMethod = 'cash' | 'yape' | 'plin'
+export type PaymentMethod = 'cash' | 'yape' | 'pos'
 export type SalesChannel = 'feria' | 'whatsapp'
 
 export interface Sale {
