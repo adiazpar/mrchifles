@@ -568,6 +568,91 @@ pb.collection('sales').subscribe('*', (e) => {
 - Keep components small and focused
 - Use Spanish for variable names in business logic where clarity helps
 
+### UI/CSS Guidelines
+
+**IMPORTANT**: Read this section before creating or modifying any UI components.
+
+#### CSS Variables (MUST USE)
+All styling must use CSS variables from `globals.css`. Never use hardcoded colors, spacing, or font values.
+
+```css
+/* CORRECT */
+color: var(--color-text-primary);
+background: var(--color-brand);
+padding: var(--space-4);
+border-radius: var(--radius-lg);
+
+/* WRONG */
+color: #1E293B;
+background: #0EA5E9;
+padding: 16px;
+border-radius: 10px;
+```
+
+#### Buttons Styled as Links (CRITICAL)
+When using Next.js `<Link>` with button classes, the base anchor styles in `globals.css` will interfere. The `.btn` class has overrides, but be aware:
+
+```tsx
+/* CORRECT - Link with btn classes */
+<Link href="/ventas" className="btn btn-primary btn-lg">
+  Nueva Venta
+</Link>
+
+/* The CSS already handles: */
+/* - text-decoration: none on hover */
+/* - color stays consistent (not brand-hover) */
+```
+
+If adding new button variants, ALWAYS include hover state with:
+- `text-decoration: none;`
+- Explicit `color` value
+- Consistent `background` change (use `var(--color-brand-subtle)` for light buttons)
+
+#### Hover State Consistency
+All interactive elements must have consistent hover behavior:
+
+| Element Type | Hover Effect |
+|--------------|--------------|
+| `.btn-primary` | `filter: brightness(0.92)`, keeps white text |
+| `.btn-secondary` | `border-color: var(--color-brand)`, `background: var(--color-brand-subtle)` |
+| `.quick-action` | `border-color: var(--color-brand)`, `background: var(--color-brand-subtle)` |
+| `.card-interactive` | `border-color: var(--brand-300)` |
+
+**Never** add hover effects that:
+- Add underlines to buttons
+- Change text color unexpectedly
+- Use box-shadow for lift effects (we use border-color changes instead)
+
+#### Time Formatting (es-PE Locale)
+The Spanish Peru locale adds spaces in AM/PM: "1:30 a. m." - this looks wrong. Always clean it:
+
+```typescript
+const time = now.toLocaleTimeString('es-PE', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'America/Lima',
+}).replace(/a\.\s*m\./gi, 'a.m.').replace(/p\.\s*m\./gi, 'p.m.')
+```
+
+#### Time-of-Day Greetings
+Use these hour ranges for Spanish greetings:
+
+```typescript
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour >= 6 && hour < 12) return 'Buenos dias'    // 6am - 11:59am
+  if (hour >= 12 && hour < 18) return 'Buenas tardes' // 12pm - 5:59pm
+  return 'Buenas noches'                               // 6pm - 5:59am
+}
+```
+
+**Note**: 12am-6am is "Buenas noches" (night), NOT "Buenos dias" (morning).
+
+#### Component Patterns
+- Use native `<button>` elements with CSS classes instead of creating Button components that need icon imports
+- Only create component wrappers when they add significant logic (loading states, validation, etc.)
+- For simple styling, CSS classes are preferred over component abstractions
+
 ### Offline-First Patterns
 ```typescript
 // Queue sales when offline

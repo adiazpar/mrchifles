@@ -1,7 +1,8 @@
 # Home Page Improvements Plan
 
 **Created**: 2026-02-11
-**Status**: Pending Approval
+**Updated**: 2026-02-11
+**Status**: In Progress
 **Priority**: High
 
 ## Overview
@@ -14,36 +15,38 @@ Improvements to the Home page (Inicio) based on business owner feedback. The cur
 
 ### Priority 1: Critical for Daily Operations
 
-#### 1.1 Prominent "Nueva Venta" Button
+#### 1.1 Prominent "Nueva Venta" Button [COMPLETED]
 **Why**: This is the most frequent action. Current quick action grid treats it equally with other actions.
 **Implementation**:
-- Add a large, prominent "Nueva Venta" button above the quick actions grid
-- On mobile: Consider a floating action button (FAB) in bottom-right corner
-- Use brand color with high contrast for visibility
+- Added a large, full-width "Nueva Venta" button above the quick actions grid
+- Uses brand primary color with icon
+- Links to /ventas page
 
-**Files to modify**:
+**Files modified**:
 - `src/app/(dashboard)/inicio/page.tsx`
-- Possibly add FAB component to `src/components/ui/`
 
-#### 1.2 Quick Cash Drawer Open/Close Action
+#### 1.2 Quick Cash Drawer Open/Close Action [COMPLETED]
 **Why**: Business owner needs to open cash drawer quickly in morning rush without navigating away.
 **Implementation**:
-- When cash drawer is closed, show "Abrir Caja" button in the status card
-- When open, show "Cerrar Caja" button (with confirmation)
-- Keep it inline with the existing cash drawer status section
+- Added inline toggle button in cash drawer status card
+- Shows "Abrir Caja" with checkmark icon when closed
+- Shows "Cerrar Caja" with X icon when open
+- Mobile responsive: button wraps to full width on small screens
 
-**Files to modify**:
+**Files modified**:
 - `src/app/(dashboard)/inicio/page.tsx`
-- May need to create cash drawer action hooks in `src/hooks/`
+- `src/components/icons/index.tsx` (added IconCircleCheck, IconCircleX)
+- `src/app/globals.css` (mobile layout fixes)
 
-#### 1.3 Today's Date Display
+#### 1.3 Today's Date Display [COMPLETED]
 **Why**: Important for reconciliation, especially with offline mode where data might sync later.
 **Implementation**:
-- Add formatted date (e.g., "Martes, 11 de febrero 2026") in the header area
-- Use `es-PE` locale formatting
+- Date and time displayed in header subtitle (format: "DD/MM/YYYY - HH:MM a.m./p.m.")
+- Greeting includes user's first name: "Buenos dias, Arturo!"
+- Time-of-day greeting logic fixed (6am-12pm morning, 12pm-6pm afternoon, rest is night)
 
-**Files to modify**:
-- `src/app/(dashboard)/inicio/page.tsx` (in PageHeader subtitle or separate element)
+**Files modified**:
+- `src/app/(dashboard)/inicio/page.tsx`
 
 ---
 
@@ -73,11 +76,13 @@ Improvements to the Home page (Inicio) based on business owner feedback. The cur
 - `src/app/(dashboard)/inicio/page.tsx`
 - Create `src/components/inventory/PendingOrderAlert.tsx`
 
-#### 2.3 Logged-in User Display
+#### 2.3 Logged-in User Display [PARTIAL]
 **Why**: Multi-user environment - need to know who is using the system.
 **Implementation**:
 - Show user name/role more prominently on mobile (not just initials)
 - Desktop sidebar likely already shows this, verify and enhance if needed
+
+**Current status**: User's first name is now shown in the greeting ("Buenos dias, Arturo!"). Mobile header shows initials. Full implementation requires auth system integration.
 
 **Files to modify**:
 - `src/app/(dashboard)/inicio/page.tsx`
@@ -126,17 +131,19 @@ Improvements to the Home page (Inicio) based on business owner feedback. The cur
 
 ## Implementation Order
 
-1. **Phase A** (Priority 1 items):
-   - 1.3 Today's Date Display (simplest, immediate value)
-   - 1.1 Prominent "Nueva Venta" Button
-   - 1.2 Quick Cash Drawer Actions
+1. **Phase A** (Priority 1 items): [COMPLETED 2026-02-11]
+   - 1.3 Today's Date Display - DONE
+   - 1.1 Prominent "Nueva Venta" Button - DONE
+   - 1.2 Quick Cash Drawer Actions - DONE
+   - Additional: Mobile layout fixes for quick actions and cash drawer card
+   - Additional: Added IconCircleCheck and IconCircleX icons
 
-2. **Phase B** (Priority 2 items):
+2. **Phase B** (Priority 2 items): [PENDING]
    - 2.3 Logged-in User Display
    - 2.1 Recent Sales List
    - 2.2 Pending Orders Alert
 
-3. **Phase C** (Priority 3 items - future):
+3. **Phase C** (Priority 3 items - future): [PENDING]
    - 3.3 Last Updated Indicator
    - 3.2 Week-over-Week Comparison
    - 3.1 Quick Expense Entry (after Gastos feature)
