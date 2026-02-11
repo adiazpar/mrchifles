@@ -32,7 +32,17 @@ const MOCK_STATS = {
   transactionCount: 45,
   cashDrawerStatus: 'open' as const,
   cashBalance: 650.0,
-  dailyGoal: 1500.0,
+}
+
+// Mock inventory data
+const MOCK_INVENTORY = {
+  totalUnits: 156,
+  lowStockCount: 2,
+  pendingOrder: true,
+  lowStockProducts: [
+    { name: 'Chifles Picante', stock: 5, threshold: 10 },
+    { name: 'Chifles Dulce', stock: 3, threshold: 10 },
+  ],
 }
 
 // Weekly sales trend (last 7 days)
@@ -42,7 +52,7 @@ const WEEKLY_SALES = [820, 950, 1100, 890, 1200, 1100, 1250]
 const PAYMENT_BREAKDOWN = [
   { value: 750, color: 'var(--color-cash)', label: 'Efectivo' },
   { value: 420, color: 'var(--color-yape)', label: 'Yape' },
-  { value: 80, color: 'var(--color-plin)', label: 'Plin' },
+  { value: 80, color: 'var(--color-pos)', label: 'POS' },
 ]
 
 // Top products
@@ -89,7 +99,6 @@ export default function InicioPage() {
         100
       : 0
   const isPositiveChange = salesChange >= 0
-  const goalProgress = (MOCK_STATS.todaySales / MOCK_STATS.dailyGoal) * 100
   const averageTicket = MOCK_STATS.transactionCount > 0
     ? MOCK_STATS.todaySales / MOCK_STATS.transactionCount
     : 0
@@ -125,10 +134,10 @@ export default function InicioPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <Link href="/ventas" className="quick-action quick-action-primary">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <Link href="/ventas" className="quick-action">
             <div className="quick-action-icon">
-              <IconSales className="w-6 h-6" />
+              <IconSales className="w-5 h-5" />
             </div>
             <span className="quick-action-label">Nueva Venta</span>
           </Link>
@@ -155,29 +164,92 @@ export default function InicioPage() {
           </Link>
         </div>
 
-        {/* Inline stats row - NO cards, just numbers with separators */}
-        <div className="flex items-center justify-between py-4 mb-6 border-y border-border">
-          <div className="text-center flex-1">
-            <p className="text-2xl font-display font-bold text-text-primary">
-              {MOCK_STATS.transactionCount}
-            </p>
-            <p className="text-xs text-text-secondary uppercase tracking-wide">Ventas</p>
+        {/* Cash drawer status */}
+        <div className="flex items-center gap-4 p-4 mb-6 rounded-xl border border-border bg-bg-surface">
+          <div
+            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              MOCK_STATS.cashDrawerStatus === 'open'
+                ? 'bg-success-subtle text-success'
+                : 'bg-error-subtle text-error'
+            }`}
+          >
+            <IconCashDrawer className="w-5 h-5" />
           </div>
-          <div className="w-px h-10 bg-border" />
-          <div className="text-center flex-1">
-            <p className="text-2xl font-display font-bold text-text-primary">
-              {formatCurrency(averageTicket)}
+          <div className="flex-1">
+            <p className="font-medium text-text-primary">Estado de Caja</p>
+            <p className="text-sm text-text-secondary">
+              {MOCK_STATS.cashDrawerStatus === 'open' ? (
+                <>
+                  <span className="text-success font-medium">Abierta</span>
+                  {' - '}
+                  {formatCurrency(MOCK_STATS.cashBalance)} en efectivo
+                </>
+              ) : (
+                <span className="text-error font-medium">Cerrada</span>
+              )}
             </p>
-            <p className="text-xs text-text-secondary uppercase tracking-wide">Promedio</p>
-          </div>
-          <div className="w-px h-10 bg-border" />
-          <div className="text-center flex-1">
-            <p className="text-2xl font-display font-bold text-text-primary">
-              {Math.round(goalProgress)}%
-            </p>
-            <p className="text-xs text-text-secondary uppercase tracking-wide">Meta</p>
           </div>
         </div>
+
+        {/* Two-column stats: Sales & Inventory */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Sales stats */}
+          <div className="p-4 rounded-xl border border-border bg-bg-surface">
+            <p className="stats-label mb-3">Ventas de Hoy</p>
+            <div className="flex items-center justify-between">
+              <div className="text-center flex-1">
+                <p className="text-2xl font-display font-bold text-text-primary">
+                  {MOCK_STATS.transactionCount}
+                </p>
+                <p className="text-xs text-text-secondary">Transacciones</p>
+              </div>
+              <div className="w-px h-10 bg-border" />
+              <div className="text-center flex-1">
+                <p className="text-2xl font-display font-bold text-text-primary">
+                  {formatCurrency(averageTicket)}
+                </p>
+                <p className="text-xs text-text-secondary">Ticket Promedio</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Inventory snapshot */}
+          <div className="p-4 rounded-xl border border-border bg-bg-surface">
+            <p className="stats-label mb-3">Inventario</p>
+            <div className="flex items-center justify-between">
+              <div className="text-center flex-1">
+                <p className="text-2xl font-display font-bold text-text-primary">
+                  {MOCK_INVENTORY.totalUnits}
+                </p>
+                <p className="text-xs text-text-secondary">Unidades</p>
+              </div>
+              <div className="w-px h-10 bg-border" />
+              <div className="text-center flex-1">
+                <p className={`text-2xl font-display font-bold ${MOCK_INVENTORY.lowStockCount > 0 ? 'text-error' : 'text-text-primary'}`}>
+                  {MOCK_INVENTORY.lowStockCount}
+                </p>
+                <p className="text-xs text-text-secondary">Stock Bajo</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Low stock alerts (if any) */}
+        {MOCK_INVENTORY.lowStockCount > 0 && (
+          <div className="p-4 mb-6 rounded-xl border border-error bg-error-subtle">
+            <p className="font-medium text-error mb-1">Alerta de Stock Bajo</p>
+            <ul className="text-sm text-text-secondary space-y-1">
+              {MOCK_INVENTORY.lowStockProducts.map((product, index) => (
+                <li key={index}>
+                  {product.name}: {product.stock} unidades (minimo: {product.threshold})
+                </li>
+              ))}
+            </ul>
+            <Link href="/inventario" className="inline-block mt-2 text-sm font-medium text-brand hover:underline">
+              Ver inventario
+            </Link>
+          </div>
+        )}
 
         {/* Summary section */}
         <div className="space-y-4">
@@ -235,33 +307,6 @@ export default function InicioPage() {
               />
             </div>
           </Card>
-
-          {/* Cash drawer status - minimal, no heavy card */}
-          <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-bg-surface">
-            <div
-              className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                MOCK_STATS.cashDrawerStatus === 'open'
-                  ? 'bg-success-subtle text-success'
-                  : 'bg-error-subtle text-error'
-              }`}
-            >
-              <IconCashDrawer className="w-5 h-5" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-text-primary">Estado de Caja</p>
-              <p className="text-sm text-text-secondary">
-                {MOCK_STATS.cashDrawerStatus === 'open' ? (
-                  <>
-                    <span className="text-success font-medium">Abierta</span>
-                    {' - '}
-                    {formatCurrency(MOCK_STATS.cashBalance)} en efectivo
-                  </>
-                ) : (
-                  <span className="text-error font-medium">Cerrada</span>
-                )}
-              </p>
-            </div>
-          </div>
 
           {/* Weekly trend - full width chart with axis labels */}
           <div className="p-4 rounded-xl border border-border bg-bg-surface">
