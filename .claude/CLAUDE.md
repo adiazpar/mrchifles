@@ -877,6 +877,10 @@ Install plugins via the `/plugin` command in Claude Code.
 **External Integrations**:
 - GitHub, Supabase, Context7, Playwright, Firebase, Stripe, Greptile, Linear, Slack, GitLab, Asana, Laravel Boost, Serena
 
+
+## Mobile Screenshots
+When I say "check the screenshot" or "look at the screenshot", check ~/ss/ for the most recent file using: ls -t ~/ss/ | head -1
+
 ### Plugin Resources
 - [Official Plugin Directory](https://github.com/anthropics/claude-plugins-official)
 - [Plugin Documentation](https://code.claude.com/docs/en/plugins)
