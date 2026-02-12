@@ -2,12 +2,46 @@
 // USER TYPES
 // ============================================
 
+export type UserRole = 'owner' | 'partner' | 'employee'
+export type UserStatus = 'active' | 'pending' | 'disabled'
+
 export interface User {
   id: string
   email: string
   name: string
+  role: UserRole
+  status: UserStatus
+  pin?: string // Stored as bcrypt hash, never exposed to client
+  invitedBy?: string // Relation ID to user who invited them
+  avatar?: string // Optional avatar file
   created: string
   updated: string
+  // Expanded relations
+  expand?: {
+    invitedBy?: User
+  }
+}
+
+// ============================================
+// INVITE CODE TYPES
+// ============================================
+
+export type InviteRole = 'partner' | 'employee'
+
+export interface InviteCode {
+  id: string
+  code: string // 6 uppercase alphanumeric chars
+  role: InviteRole
+  createdBy: string // Relation ID to owner
+  usedBy?: string // Relation ID to user who used it
+  expiresAt: string // ISO date string
+  used: boolean
+  created: string
+  // Expanded relations
+  expand?: {
+    createdBy?: User
+    usedBy?: User
+  }
 }
 
 // ============================================

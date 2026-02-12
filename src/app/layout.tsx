@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { DM_Sans, IBM_Plex_Sans } from 'next/font/google'
+import { AuthProvider } from '@/contexts/auth-context'
 import './globals.css'
 
 const dmSans = DM_Sans({
@@ -55,7 +56,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen antialiased bg-bg-base text-text-primary">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   )
