@@ -2,14 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { IconHome, IconSales, IconProducts, IconCashDrawer, IconInventory } from '@/components/icons'
+import { IconHome, IconSales, IconProducts, IconCashDrawer, IconUsers } from '@/components/icons'
 
 const navItems = [
   { href: '/inicio', label: 'Inicio', icon: IconHome },
   { href: '/ventas', label: 'Ventas', icon: IconSales },
   { href: '/productos', label: 'Productos', icon: IconProducts },
   { href: '/caja', label: 'Caja', icon: IconCashDrawer },
-  { href: '/inventario', label: 'Inventario', icon: IconInventory },
+  { href: '/ajustes/equipo', label: 'Equipo', icon: IconUsers },
 ]
 
 export function MobileNav() {

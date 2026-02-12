@@ -2,14 +2,18 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   IconHome,
   IconSales,
   IconProducts,
   IconCashDrawer,
   IconInventory,
+  IconSettings,
+  IconLogout,
 } from '@/components/icons'
+import { useAuth } from '@/contexts/auth-context'
+import { getUserInitials, getRoleLabel } from '@/lib/auth'
 
 const navItems = [
   { href: '/inicio', label: 'Inicio', icon: IconHome },
@@ -17,17 +21,18 @@ const navItems = [
   { href: '/productos', label: 'Productos', icon: IconProducts },
   { href: '/caja', label: 'Caja', icon: IconCashDrawer },
   { href: '/inventario', label: 'Inventario', icon: IconInventory },
+  { href: '/ajustes/equipo', label: 'Equipo', icon: IconSettings },
 ]
-
-// Mock user data - will be replaced with auth context
-const currentUser = {
-  name: 'Arturo Diaz',
-  role: 'Dueno',
-  initials: 'AD',
-}
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { user, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
 
   return (
     <aside className="sidebar">
@@ -63,14 +68,25 @@ export function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        {/* User info only */}
-        <div className="sidebar-user">
-          <div className="sidebar-user-avatar">{currentUser.initials}</div>
-          <div className="sidebar-user-info">
-            <div className="sidebar-user-name">{currentUser.name}</div>
-            <div className="sidebar-user-role">{currentUser.role}</div>
+        {/* User info */}
+        {user && (
+          <div className="sidebar-user">
+            <div className="sidebar-user-avatar">{getUserInitials(user.name)}</div>
+            <div className="sidebar-user-info">
+              <div className="sidebar-user-name">{user.name}</div>
+              <div className="sidebar-user-role">{getRoleLabel(user.role)}</div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Logout button */}
+        <button
+          onClick={handleLogout}
+          className="sidebar-nav-item w-full mt-2 text-error"
+        >
+          <IconLogout className="sidebar-nav-icon" />
+          <span>Cerrar sesion</span>
+        </button>
       </div>
     </aside>
   )
