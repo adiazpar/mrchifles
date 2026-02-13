@@ -11,7 +11,7 @@ export interface User {
   name: string
   role: UserRole
   status: UserStatus
-  pin?: string // Stored as bcrypt hash, never exposed to client
+  pin?: string // Stored as SHA-256 hash for PIN verification
   invitedBy?: string // Relation ID to user who invited them
   avatar?: string // Optional avatar file
   created: string

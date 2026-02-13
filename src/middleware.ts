@@ -8,7 +8,7 @@ import type { NextRequest } from 'next/server'
  * because PocketBase uses localStorage (not cookies) for auth state.
  * Server-side middleware cannot access localStorage.
  */
-export function middleware(request: NextRequest) {
+export function middleware(_request: NextRequest) {
   // No server-side auth checks - handled by client-side AuthGuard
   // This middleware is kept for future non-auth middleware needs
   return NextResponse.next()
