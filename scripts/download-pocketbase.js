@@ -12,7 +12,7 @@ const fs = require('fs')
 const path = require('path')
 const { execSync } = require('child_process')
 
-const PB_VERSION = '0.22.4' // Update as needed
+const PB_VERSION = '0.36.2' // Update as needed
 const PROJECT_ROOT = path.resolve(__dirname, '..')
 
 function getPlatformInfo() {

@@ -1,7 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 /**
- * Migration: Simplified schema for Mr. Chifles business
+ * Migration: Simplified schema for Mr. Chifles business (PocketBase 0.36+)
  *
  * 5 tables:
  * - products: what we sell
@@ -17,9 +17,7 @@ const SALE_ITEMS_ID = "saleitems0001"
 const ORDERS_ID = "orders0000001"
 const ORDER_ITEMS_ID = "orderitems001"
 
-migrate((db) => {
-  const dao = new Dao(db)
-
+migrate((app) => {
   // Delete old collections if they exist
   const collectionsToDelete = [
     'order_items',
@@ -33,9 +31,9 @@ migrate((db) => {
 
   for (const name of collectionsToDelete) {
     try {
-      const collection = dao.findCollectionByNameOrId(name)
+      const collection = app.findCollectionByNameOrId(name)
       if (collection) {
-        dao.deleteCollection(collection)
+        app.delete(collection)
       }
     } catch (e) {
       // Collection doesn't exist, skip
@@ -50,57 +48,43 @@ migrate((db) => {
     name: 'products',
     type: 'base',
     system: false,
-    schema: [
-      {
-        system: false,
-        id: "prodname0001",
-        name: 'name',
-        type: 'text',
-        required: true,
-        presentable: true,
-        unique: false,
-        options: { min: null, max: null, pattern: "" }
-      },
-      {
-        system: false,
-        id: "prodprice001",
-        name: 'price',
-        type: 'number',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: { min: 0, max: null, noDecimal: false }
-      },
-      {
-        system: false,
-        id: "prodcost0001",
-        name: 'costPrice',
-        type: 'number',
-        required: false,
-        presentable: false,
-        unique: false,
-        options: { min: 0, max: null, noDecimal: false }
-      },
-      {
-        system: false,
-        id: "prodactive01",
-        name: 'active',
-        type: 'bool',
-        required: false,
-        presentable: false,
-        unique: false,
-        options: {}
-      }
-    ],
-    indexes: [],
     listRule: "@request.auth.id != ''",
     viewRule: "@request.auth.id != ''",
     createRule: "@request.auth.id != ''",
     updateRule: "@request.auth.id != ''",
     deleteRule: "@request.auth.role = 'owner' || @request.auth.role = 'partner'",
-    options: {}
+    fields: [
+      {
+        id: "prodname0001",
+        name: 'name',
+        type: 'text',
+        required: true,
+        presentable: true,
+      },
+      {
+        id: "prodprice001",
+        name: 'price',
+        type: 'number',
+        required: true,
+        min: 0,
+      },
+      {
+        id: "prodcost0001",
+        name: 'costPrice',
+        type: 'number',
+        required: false,
+        min: 0,
+      },
+      {
+        id: "prodactive01",
+        name: 'active',
+        type: 'bool',
+        required: false,
+      }
+    ],
+    indexes: [],
   })
-  dao.saveCollection(products)
+  app.save(products)
 
   // ============================================
   // SALES
@@ -110,83 +94,61 @@ migrate((db) => {
     name: 'sales',
     type: 'base',
     system: false,
-    schema: [
-      {
-        system: false,
-        id: "saledate0001",
-        name: 'date',
-        type: 'date',
-        required: true,
-        presentable: true,
-        unique: false,
-        options: { min: "", max: "" }
-      },
-      {
-        system: false,
-        id: "saletotal001",
-        name: 'total',
-        type: 'number',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: { min: 0, max: null, noDecimal: false }
-      },
-      {
-        system: false,
-        id: "salepayment1",
-        name: 'paymentMethod',
-        type: 'select',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: { maxSelect: 1, values: ['cash', 'yape', 'pos'] }
-      },
-      {
-        system: false,
-        id: "salechannel1",
-        name: 'channel',
-        type: 'select',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: { maxSelect: 1, values: ['feria', 'whatsapp'] }
-      },
-      {
-        system: false,
-        id: "salenotes001",
-        name: 'notes',
-        type: 'text',
-        required: false,
-        presentable: false,
-        unique: false,
-        options: { min: null, max: null, pattern: "" }
-      },
-      {
-        system: false,
-        id: "saleemployee",
-        name: 'employee',
-        type: 'relation',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: {
-          collectionId: "_pb_users_auth_",
-          cascadeDelete: false,
-          minSelect: null,
-          maxSelect: 1,
-          displayFields: ["name"]
-        }
-      }
-    ],
-    indexes: [],
     listRule: "@request.auth.id != ''",
     viewRule: "@request.auth.id != ''",
     createRule: "@request.auth.id != ''",
     updateRule: "@request.auth.id != ''",
     deleteRule: "@request.auth.role = 'owner' || @request.auth.role = 'partner'",
-    options: {}
+    fields: [
+      {
+        id: "saledate0001",
+        name: 'date',
+        type: 'date',
+        required: true,
+        presentable: true,
+      },
+      {
+        id: "saletotal001",
+        name: 'total',
+        type: 'number',
+        required: true,
+        min: 0,
+      },
+      {
+        id: "salepayment1",
+        name: 'paymentMethod',
+        type: 'select',
+        required: true,
+        values: ['cash', 'yape', 'pos'],
+        maxSelect: 1,
+      },
+      {
+        id: "salechannel1",
+        name: 'channel',
+        type: 'select',
+        required: true,
+        values: ['feria', 'whatsapp'],
+        maxSelect: 1,
+      },
+      {
+        id: "salenotes001",
+        name: 'notes',
+        type: 'text',
+        required: false,
+      },
+      {
+        id: "saleemployee",
+        name: 'employee',
+        type: 'relation',
+        required: true,
+        collectionId: "_pb_users_auth_",
+        cascadeDelete: false,
+        maxSelect: 1,
+      }
+    ],
+    indexes: [],
   })
-  dao.saveCollection(sales)
+  app.save(sales)
 
   // ============================================
   // SALE_ITEMS
@@ -196,79 +158,56 @@ migrate((db) => {
     name: 'sale_items',
     type: 'base',
     system: false,
-    schema: [
-      {
-        system: false,
-        id: "sisale000001",
-        name: 'sale',
-        type: 'relation',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: {
-          collectionId: SALES_ID,
-          cascadeDelete: true,
-          minSelect: null,
-          maxSelect: 1,
-          displayFields: null
-        }
-      },
-      {
-        system: false,
-        id: "siproduct001",
-        name: 'product',
-        type: 'relation',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: {
-          collectionId: PRODUCTS_ID,
-          cascadeDelete: false,
-          minSelect: null,
-          maxSelect: 1,
-          displayFields: null
-        }
-      },
-      {
-        system: false,
-        id: "siquantity01",
-        name: 'quantity',
-        type: 'number',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: { min: 1, max: null, noDecimal: true }
-      },
-      {
-        system: false,
-        id: "siunitprice1",
-        name: 'unitPrice',
-        type: 'number',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: { min: 0, max: null, noDecimal: false }
-      },
-      {
-        system: false,
-        id: "sisubtotal01",
-        name: 'subtotal',
-        type: 'number',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: { min: 0, max: null, noDecimal: false }
-      }
-    ],
-    indexes: [],
     listRule: "@request.auth.id != ''",
     viewRule: "@request.auth.id != ''",
     createRule: "@request.auth.id != ''",
     updateRule: "@request.auth.id != ''",
     deleteRule: "@request.auth.role = 'owner' || @request.auth.role = 'partner'",
-    options: {}
+    fields: [
+      {
+        id: "sisale000001",
+        name: 'sale',
+        type: 'relation',
+        required: true,
+        collectionId: SALES_ID,
+        cascadeDelete: true,
+        maxSelect: 1,
+      },
+      {
+        id: "siproduct001",
+        name: 'product',
+        type: 'relation',
+        required: true,
+        collectionId: PRODUCTS_ID,
+        cascadeDelete: false,
+        maxSelect: 1,
+      },
+      {
+        id: "siquantity01",
+        name: 'quantity',
+        type: 'number',
+        required: true,
+        min: 1,
+        onlyInt: true,
+      },
+      {
+        id: "siunitprice1",
+        name: 'unitPrice',
+        type: 'number',
+        required: true,
+        min: 0,
+      },
+      {
+        id: "sisubtotal01",
+        name: 'subtotal',
+        type: 'number',
+        required: true,
+        min: 0,
+      }
+    ],
+    indexes: [],
   })
-  dao.saveCollection(saleItems)
+  app.save(saleItems)
 
   // ============================================
   // ORDERS (purchases from DaSol)
@@ -278,67 +217,50 @@ migrate((db) => {
     name: 'orders',
     type: 'base',
     system: false,
-    schema: [
-      {
-        system: false,
-        id: "orderdate001",
-        name: 'date',
-        type: 'date',
-        required: true,
-        presentable: true,
-        unique: false,
-        options: { min: "", max: "" }
-      },
-      {
-        system: false,
-        id: "orderrecv001",
-        name: 'receivedDate',
-        type: 'date',
-        required: false,
-        presentable: false,
-        unique: false,
-        options: { min: "", max: "" }
-      },
-      {
-        system: false,
-        id: "ordertotal01",
-        name: 'total',
-        type: 'number',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: { min: 0, max: null, noDecimal: false }
-      },
-      {
-        system: false,
-        id: "orderstatus1",
-        name: 'status',
-        type: 'select',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: { maxSelect: 1, values: ['pending', 'received'] }
-      },
-      {
-        system: false,
-        id: "ordernotes01",
-        name: 'notes',
-        type: 'text',
-        required: false,
-        presentable: false,
-        unique: false,
-        options: { min: null, max: null, pattern: "" }
-      }
-    ],
-    indexes: [],
     listRule: "@request.auth.id != ''",
     viewRule: "@request.auth.id != ''",
     createRule: "@request.auth.id != ''",
     updateRule: "@request.auth.id != ''",
     deleteRule: "@request.auth.role = 'owner' || @request.auth.role = 'partner'",
-    options: {}
+    fields: [
+      {
+        id: "orderdate001",
+        name: 'date',
+        type: 'date',
+        required: true,
+        presentable: true,
+      },
+      {
+        id: "orderrecv001",
+        name: 'receivedDate',
+        type: 'date',
+        required: false,
+      },
+      {
+        id: "ordertotal01",
+        name: 'total',
+        type: 'number',
+        required: true,
+        min: 0,
+      },
+      {
+        id: "orderstatus1",
+        name: 'status',
+        type: 'select',
+        required: true,
+        values: ['pending', 'received'],
+        maxSelect: 1,
+      },
+      {
+        id: "ordernotes01",
+        name: 'notes',
+        type: 'text',
+        required: false,
+      }
+    ],
+    indexes: [],
   })
-  dao.saveCollection(orders)
+  app.save(orders)
 
   // ============================================
   // ORDER_ITEMS
@@ -348,64 +270,45 @@ migrate((db) => {
     name: 'order_items',
     type: 'base',
     system: false,
-    schema: [
-      {
-        system: false,
-        id: "oiorder00001",
-        name: 'order',
-        type: 'relation',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: {
-          collectionId: ORDERS_ID,
-          cascadeDelete: true,
-          minSelect: null,
-          maxSelect: 1,
-          displayFields: null
-        }
-      },
-      {
-        system: false,
-        id: "oiproduct001",
-        name: 'product',
-        type: 'relation',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: {
-          collectionId: PRODUCTS_ID,
-          cascadeDelete: false,
-          minSelect: null,
-          maxSelect: 1,
-          displayFields: null
-        }
-      },
-      {
-        system: false,
-        id: "oiquantity01",
-        name: 'quantity',
-        type: 'number',
-        required: true,
-        presentable: false,
-        unique: false,
-        options: { min: 1, max: null, noDecimal: true }
-      }
-    ],
-    indexes: [],
     listRule: "@request.auth.id != ''",
     viewRule: "@request.auth.id != ''",
     createRule: "@request.auth.id != ''",
     updateRule: "@request.auth.id != ''",
     deleteRule: "@request.auth.role = 'owner' || @request.auth.role = 'partner'",
-    options: {}
+    fields: [
+      {
+        id: "oiorder00001",
+        name: 'order',
+        type: 'relation',
+        required: true,
+        collectionId: ORDERS_ID,
+        cascadeDelete: true,
+        maxSelect: 1,
+      },
+      {
+        id: "oiproduct001",
+        name: 'product',
+        type: 'relation',
+        required: true,
+        collectionId: PRODUCTS_ID,
+        cascadeDelete: false,
+        maxSelect: 1,
+      },
+      {
+        id: "oiquantity01",
+        name: 'quantity',
+        type: 'number',
+        required: true,
+        min: 1,
+        onlyInt: true,
+      }
+    ],
+    indexes: [],
   })
-  dao.saveCollection(orderItems)
+  app.save(orderItems)
 
-}, (db) => {
+}, (app) => {
   // Revert migration
-  const dao = new Dao(db)
-
   const collectionsToDelete = [
     'order_items',
     'orders',
@@ -416,9 +319,9 @@ migrate((db) => {
 
   for (const name of collectionsToDelete) {
     try {
-      const collection = dao.findCollectionByNameOrId(name)
+      const collection = app.findCollectionByNameOrId(name)
       if (collection) {
-        dao.deleteCollection(collection)
+        app.delete(collection)
       }
     } catch (e) {
       // Collection doesn't exist, skip

@@ -45,24 +45,32 @@ export default function InvitePage() {
       setIsLoading(true)
 
       try {
-        // Validate invite code exists and is not expired
-        // Using parameterized query to prevent SQL injection
-        const invites = await pb.collection('invite_codes').getList(1, 1, {
-          filter: pb.filter('code = {:code} && used = false && expiresAt > @now', {
-            code: code,
-          }),
+        // Use server-side validation endpoint (rate-limited, prevents enumeration)
+        const pocketbaseUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
+        const response = await fetch(`${pocketbaseUrl}/api/validate-invite`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
         })
 
-        if (invites.items.length === 0) {
-          setErrors({ code: 'Codigo invalido o expirado' })
+        const result = await response.json()
+
+        if (response.status === 429) {
+          // Rate limited
+          setErrors({ code: result.error || 'Demasiados intentos' })
           setIsLoading(false)
           return
         }
 
-        const invite = invites.items[0]
+        if (!result.valid) {
+          setErrors({ code: result.error || 'Codigo invalido o expirado' })
+          setIsLoading(false)
+          return
+        }
+
         setInviteInfo({
           code,
-          role: invite.role as InviteRole,
+          role: result.role as InviteRole,
         })
         setStep('info')
       } catch (err) {
@@ -72,7 +80,7 @@ export default function InvitePage() {
         setIsLoading(false)
       }
     },
-    [inviteCode, pb]
+    [inviteCode]
   )
 
   const handleInfoSubmit = useCallback(
