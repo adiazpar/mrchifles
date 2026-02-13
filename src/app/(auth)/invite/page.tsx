@@ -46,8 +46,11 @@ export default function InvitePage() {
 
       try {
         // Validate invite code exists and is not expired
+        // Using parameterized query to prevent SQL injection
         const invites = await pb.collection('invite_codes').getList(1, 1, {
-          filter: `code = "${code}" && used = false && expiresAt > @now`,
+          filter: pb.filter('code = {:code} && used = false && expiresAt > @now', {
+            code: code,
+          }),
         })
 
         if (invites.items.length === 0) {
