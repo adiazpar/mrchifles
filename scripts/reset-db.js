@@ -73,15 +73,15 @@ try {
   process.exit(1)
 }
 
-// Step 3: Create admin account
-console.log('\nCreating admin account...')
+// Step 3: Create superuser account (PocketBase 0.36+)
+console.log('\nCreating superuser account...')
 try {
-  execSync(`"${binaryPath}" admin create "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}"`, {
+  execSync(`"${binaryPath}" superuser create "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}"`, {
     cwd: PROJECT_ROOT,
     stdio: 'inherit'
   })
 } catch (error) {
-  console.error('Failed to create admin:', error.message)
+  console.error('Failed to create superuser:', error.message)
   process.exit(1)
 }
 

@@ -359,18 +359,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     pin: string
   }) => {
     try {
-      // Validate invite code using parameterized query to prevent SQL injection
-      const invites = await pb.collection('invite_codes').getList(1, 1, {
-        filter: pb.filter('code = {:code} && used = false && expiresAt > @now', {
-          code: data.inviteCode,
-        }),
+      // Validate invite code using server-side endpoint (rate-limited)
+      const response = await fetch(`${POCKETBASE_URL}/api/validate-invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: data.inviteCode }),
       })
 
-      if (invites.items.length === 0) {
+      const validation = await response.json()
+
+      if (response.status === 429) {
+        throw new Error(validation.error || 'Demasiados intentos')
+      }
+
+      if (!validation.valid) {
         throw new Error('Codigo de invitacion invalido o expirado')
       }
 
-      const invite = invites.items[0]
       const pinHash = await hashPin(data.pin)
 
       // Create user with role from invite using ACTUAL password
@@ -381,19 +386,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         passwordConfirm: data.password, // ACTUAL password
         name: data.name,
         pin: pinHash,                   // PIN hash stored separately
-        role: invite.role,
+        role: validation.role,
         status: 'active',
-        invitedBy: invite.createdBy,
       })
 
       // Log in with ACTUAL password to get auth token
       await pb.collection('users').authWithPassword(data.email, data.password)
 
-      // Mark invite as used (now we're authenticated)
-      await pb.collection('invite_codes').update(invite.id, {
-        used: true,
-        usedBy: newUser.id,
-      })
+      // Mark invite as used via server-side endpoint (now we're authenticated)
+      try {
+        await fetch(`${POCKETBASE_URL}/api/use-invite`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': pb.authStore.token,
+          },
+          body: JSON.stringify({ code: data.inviteCode }),
+        })
+      } catch (updateError) {
+        // Non-critical - invite marking as used can fail without breaking registration
+        console.error('Failed to mark invite as used:', updateError)
+      }
 
       setUser(newUser as unknown as User)
 

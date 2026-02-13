@@ -1,7 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 /**
- * Migration: Authentication system
+ * Migration: Authentication system (PocketBase 0.36+)
  *
  * - Extends users collection with PIN, role, status fields
  * - Creates invite_codes collection for team invitations
@@ -11,69 +11,46 @@
 const INVITE_CODES_ID = "invitecodes01"
 const APP_CONFIG_ID = "appconfig0001"
 
-migrate((db) => {
-  const dao = new Dao(db)
-
+migrate((app) => {
   // ============================================
   // EXTEND USERS COLLECTION
   // ============================================
-  const users = dao.findCollectionByNameOrId("_pb_users_auth_")
-
-  // Clone the existing schema and add new fields
-  const existingSchema = users.schema
+  const users = app.findCollectionByNameOrId("users")
 
   // Add PIN field (stored as hash, ~64 chars for SHA-256)
-  existingSchema.addField(new SchemaField({
-    system: false,
+  users.fields.add(new TextField({
     id: "userpin00001",
     name: 'pin',
-    type: 'text',
     required: false,
     presentable: false,
-    unique: false,
-    options: { min: null, max: null, pattern: "" }
   }))
 
   // Add role field
-  existingSchema.addField(new SchemaField({
-    system: false,
+  users.fields.add(new SelectField({
     id: "userrole0001",
     name: 'role',
-    type: 'select',
     required: true,
-    presentable: false,
-    unique: false,
-    options: { maxSelect: 1, values: ['owner', 'partner', 'employee'] }
+    values: ['owner', 'partner', 'employee'],
+    maxSelect: 1,
   }))
 
   // Add status field
-  existingSchema.addField(new SchemaField({
-    system: false,
+  users.fields.add(new SelectField({
     id: "userstatus01",
     name: 'status',
-    type: 'select',
     required: true,
-    presentable: false,
-    unique: false,
-    options: { maxSelect: 1, values: ['active', 'pending', 'disabled'] }
+    values: ['active', 'pending', 'disabled'],
+    maxSelect: 1,
   }))
 
   // Add invitedBy relation
-  existingSchema.addField(new SchemaField({
-    system: false,
+  users.fields.add(new RelationField({
     id: "userinvited1",
     name: 'invitedBy',
-    type: 'relation',
     required: false,
-    presentable: false,
-    unique: false,
-    options: {
-      collectionId: "_pb_users_auth_",
-      cascadeDelete: false,
-      minSelect: null,
-      maxSelect: 1,
-      displayFields: ["name"]
-    }
+    collectionId: "_pb_users_auth_",
+    cascadeDelete: false,
+    maxSelect: 1,
   }))
 
   // Restrict user access to prevent data exposure
@@ -83,7 +60,15 @@ migrate((db) => {
   users.listRule = "@request.auth.id = id || @request.auth.role = 'owner'"
   users.viewRule = "@request.auth.id = id || @request.auth.role = 'owner'"
 
-  dao.saveCollection(users)
+  // Restrict user updates:
+  // - Users can only update their own record
+  // - Owners can update any user (needed for status changes)
+  // - Server-side hook enforces that only owners can change role/status of others
+  users.updateRule = "@request.auth.id = id || @request.auth.role = 'owner'"
+
+  // User creation is handled by PocketBase auth - server-side hook enforces owner uniqueness
+
+  app.save(users)
 
   // ============================================
   // INVITE_CODES COLLECTION
@@ -93,97 +78,72 @@ migrate((db) => {
     name: 'invite_codes',
     type: 'base',
     system: false,
-    schema: [
+    // Access rules:
+    // - listRule: Only owners can list all invite codes
+    // - viewRule: Only owners can view individual codes (validation done via server-side endpoint)
+    // - create/delete: Only owners can manage invite codes
+    // - update: Authenticated users can mark as used (after registration creates their account)
+    // Note: Invite validation during registration uses server-side /api/validate-invite endpoint
+    listRule: "@request.auth.role = 'owner'",
+    viewRule: "@request.auth.role = 'owner'",
+    createRule: "@request.auth.role = 'owner'",
+    updateRule: "@request.auth.id != ''",  // Allow authenticated users to mark as used
+    deleteRule: "@request.auth.role = 'owner'",
+    fields: [
       {
-        system: false,
         id: "iccode000001",
         name: 'code',
         type: 'text',
         required: true,
         presentable: true,
-        unique: true,
-        options: { min: 6, max: 6, pattern: "^[A-Z0-9]{6}$" }
+        min: 6,
+        max: 6,
+        pattern: "^[A-Z0-9]{6}$",
       },
       {
-        system: false,
         id: "icrole000001",
         name: 'role',
         type: 'select',
         required: true,
-        presentable: false,
-        unique: false,
-        options: { maxSelect: 1, values: ['partner', 'employee'] }
+        values: ['partner', 'employee'],
+        maxSelect: 1,
       },
       {
-        system: false,
         id: "iccreatedby1",
         name: 'createdBy',
         type: 'relation',
         required: true,
-        presentable: false,
-        unique: false,
-        options: {
-          collectionId: "_pb_users_auth_",
-          cascadeDelete: false,
-          minSelect: null,
-          maxSelect: 1,
-          displayFields: ["name"]
-        }
+        collectionId: "_pb_users_auth_",
+        cascadeDelete: false,
+        maxSelect: 1,
       },
       {
-        system: false,
         id: "icusedby0001",
         name: 'usedBy',
         type: 'relation',
         required: false,
-        presentable: false,
-        unique: false,
-        options: {
-          collectionId: "_pb_users_auth_",
-          cascadeDelete: false,
-          minSelect: null,
-          maxSelect: 1,
-          displayFields: ["name"]
-        }
+        collectionId: "_pb_users_auth_",
+        cascadeDelete: false,
+        maxSelect: 1,
       },
       {
-        system: false,
         id: "icexpires001",
         name: 'expiresAt',
         type: 'date',
         required: true,
-        presentable: false,
-        unique: false,
-        options: { min: "", max: "" }
       },
       {
-        system: false,
         id: "icused000001",
         name: 'used',
         type: 'bool',
         required: false,
-        presentable: false,
-        unique: false,
-        options: {}
       }
     ],
     indexes: [
       "CREATE UNIQUE INDEX idx_invite_code ON invite_codes (code)"
     ],
-    // Access rules:
-    // - listRule: Only owners can list all invite codes
-    // - viewRule: Empty string allows unauthenticated validation during registration
-    //   Security note: Invite codes are 6 chars from 32-char alphabet (32^6 = ~1 billion combinations)
-    //   Combined with parameterized queries and rate limiting, enumeration is impractical
-    // - create/update/delete: Only owners can manage invite codes
-    listRule: "@request.auth.role = 'owner'",
-    viewRule: "",
-    createRule: "@request.auth.role = 'owner'",
-    updateRule: "@request.auth.id != ''",  // Allow authenticated users to mark as used
-    deleteRule: "@request.auth.role = 'owner'",
-    options: {}
   })
-  dao.saveCollection(inviteCodes)
+  app.save(inviteCodes)
 
   // ============================================
   // APP_CONFIG COLLECTION
@@ -194,29 +154,6 @@ migrate((db) => {
     name: 'app_config',
     type: 'base',
     system: false,
-    schema: [
-      {
-        system: false,
-        id: "acsetup00001",
-        name: 'setupComplete',
-        type: 'bool',
-        required: false,
-        presentable: false,
-        unique: false,
-        options: {}
-      },
-      {
-        system: false,
-        id: "acowner00001",
-        name: 'ownerEmail',
-        type: 'text',
-        required: false,
-        presentable: false,
-        unique: false,
-        options: { min: null, max: null, pattern: "" }
-      }
-    ],
-    indexes: [],
     // Public read access - anyone can check if setup is complete
     listRule: "",
     viewRule: "",
@@ -224,25 +161,38 @@ migrate((db) => {
     createRule: "@request.auth.role = 'owner'",
     updateRule: "@request.auth.role = 'owner'",
     deleteRule: null, // No one can delete
-    options: {}
+    fields: [
+      {
+        id: "acsetup00001",
+        name: 'setupComplete',
+        type: 'bool',
+        required: false,
+      },
+      {
+        id: "acowner00001",
+        name: 'ownerEmail',
+        type: 'text',
+        required: false,
+      }
+    ],
+    indexes: [],
   })
-  dao.saveCollection(appConfig)
+  app.save(appConfig)
 
   // Create initial config record with setupComplete = false
   const configRecord = new Record(appConfig)
   configRecord.set('setupComplete', false)
   configRecord.set('ownerEmail', '')
-  dao.saveRecord(configRecord)
+  app.save(configRecord)
 
-}, (db) => {
+}, (app) => {
   // Revert migration
-  const dao = new Dao(db)
 
   // Remove app_config collection
   try {
-    const appConfig = dao.findCollectionByNameOrId('app_config')
+    const appConfig = app.findCollectionByNameOrId('app_config')
     if (appConfig) {
-      dao.deleteCollection(appConfig)
+      app.delete(appConfig)
     }
   } catch (e) {
     // Collection doesn't exist, skip
@@ -250,23 +200,24 @@ migrate((db) => {
 
   // Remove invite_codes collection
   try {
-    const inviteCodes = dao.findCollectionByNameOrId('invite_codes')
+    const inviteCodes = app.findCollectionByNameOrId('invite_codes')
     if (inviteCodes) {
-      dao.deleteCollection(inviteCodes)
+      app.delete(inviteCodes)
     }
   } catch (e) {
     // Collection doesn't exist, skip
   }
 
   // Remove added fields from users collection
-  const users = dao.findCollectionByNameOrId("_pb_users_auth_")
-  const fieldsToRemove = ['pin', 'role', 'status', 'invitedBy']
+  try {
+    const users = app.findCollectionByNameOrId("users")
+    const fieldsToRemove = ['pin', 'role', 'status', 'invitedBy']
 
-  for (const fieldName of fieldsToRemove) {
-    const field = users.schema.getFieldByName(fieldName)
-    if (field) {
-      users.schema.removeField(field.id)
+    for (const fieldName of fieldsToRemove) {
+      users.fields.removeByName(fieldName)
     }
+    app.save(users)
+  } catch (e) {
+    // Fields don't exist, skip
   }
-  dao.saveCollection(users)
 })
