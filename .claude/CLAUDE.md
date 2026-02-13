@@ -733,10 +733,6 @@ This project supports two development modes with a **unified configuration**:
 | PocketBase API | http://100.113.9.34:8090/api/ |
 | PocketBase Admin | http://100.113.9.34:8090/_/ (or http://127.0.0.1:8090/_/) |
 
-### Important Note for Claude Agents
-
-**The development servers (Next.js and PocketBase) are ALWAYS run by the user in a separate terminal.** Claude agents should NEVER start the dev servers. Assume the servers are already running when working on this project.
-
 ### Database Migration Workflow
 
 When working on database migrations (files in `pb_migrations/`), agents MUST run `npm run db:reset` after completing the migration work. This command:
@@ -749,8 +745,6 @@ When working on database migrations (files in `pb_migrations/`), agents MUST run
 ```bash
 npm run db:reset
 ```
-
-The user will then restart their PocketBase server to pick up the changes.
 
 **Migration files location:** `pb_migrations/`
 **TypeScript types location:** `src/types/index.ts`
