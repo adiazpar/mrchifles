@@ -64,8 +64,9 @@ function sha256(message: string): string {
   const bitLen = msgLen * 8
 
   // Message needs to be padded to 512-bit (64-byte) blocks
-  // Padding: 1 bit, then zeros, then 64-bit length
-  const padLen = ((msgLen + 8) % 64 === 0) ? 64 : 64 - ((msgLen + 8) % 64)
+  // Padding: 1 bit (0x80 byte), then zeros, then 64-bit length (8 bytes)
+  // Total must be multiple of 64: msgLen + 1 + zeros + 8 ≡ 0 (mod 64)
+  const padLen = (64 - ((msgLen + 9) % 64)) % 64
   const paddedLen = msgLen + 1 + padLen + 8
 
   const padded = new Uint8Array(paddedLen)

@@ -31,12 +31,16 @@ export default function TeamPage() {
 
   // Load team members and invite codes
   useEffect(() => {
+    let cancelled = false
+
     async function loadData() {
       try {
-        // Load all users
+        // Load all users (disable auto-cancellation to avoid StrictMode issues)
         const users = await pb.collection('users').getFullList<User>({
           sort: '-created',
+          requestKey: null,
         })
+        if (cancelled) return
         setTeamMembers(users)
 
         // Load active invite codes (owner only)
@@ -45,18 +49,27 @@ export default function TeamPage() {
             filter: 'used = false && expiresAt > @now',
             sort: '-created',
             expand: 'createdBy',
+            requestKey: null,
           })
+          if (cancelled) return
           setInviteCodes(codes)
         }
       } catch (err) {
+        if (cancelled) return
         console.error('Error loading team data:', err)
         setError('Error al cargar los datos del equipo')
       } finally {
-        setIsLoading(false)
+        if (!cancelled) {
+          setIsLoading(false)
+        }
       }
     }
 
     loadData()
+
+    return () => {
+      cancelled = true
+    }
   }, [pb, canManageTeam])
 
   const handleGenerateCode = useCallback(async () => {
