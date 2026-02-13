@@ -359,9 +359,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     pin: string
   }) => {
     try {
-      // Validate invite code (this endpoint is kept open for validation)
+      // Validate invite code using parameterized query to prevent SQL injection
       const invites = await pb.collection('invite_codes').getList(1, 1, {
-        filter: `code = "${data.inviteCode}" && used = false && expiresAt > @now`,
+        filter: pb.filter('code = {:code} && used = false && expiresAt > @now', {
+          code: data.inviteCode,
+        }),
       })
 
       if (invites.items.length === 0) {

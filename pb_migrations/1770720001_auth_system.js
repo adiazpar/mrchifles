@@ -76,11 +76,12 @@ migrate((db) => {
     }
   }))
 
-  // Restrict user listing/viewing to authenticated users only
-  // Password auth doesn't require querying users - PocketBase handles it
-  // PIN auth uses pb.authStore.model (already authenticated)
-  users.listRule = "@request.auth.id != ''"
-  users.viewRule = "@request.auth.id != ''"
+  // Restrict user access to prevent data exposure
+  // - Users can only view their own record
+  // - Owners can view all users (needed for team management)
+  // - This prevents employees from seeing other users' PIN hashes
+  users.listRule = "@request.auth.id = id || @request.auth.role = 'owner'"
+  users.viewRule = "@request.auth.id = id || @request.auth.role = 'owner'"
 
   dao.saveCollection(users)
 
@@ -169,10 +170,16 @@ migrate((db) => {
     indexes: [
       "CREATE UNIQUE INDEX idx_invite_code ON invite_codes (code)"
     ],
+    // Access rules:
+    // - listRule: Only owners can list all invite codes
+    // - viewRule: Empty string allows unauthenticated validation during registration
+    //   Security note: Invite codes are 6 chars from 32-char alphabet (32^6 = ~1 billion combinations)
+    //   Combined with parameterized queries and rate limiting, enumeration is impractical
+    // - create/update/delete: Only owners can manage invite codes
     listRule: "@request.auth.role = 'owner'",
     viewRule: "",
     createRule: "@request.auth.role = 'owner'",
-    updateRule: "@request.auth.role = 'owner'",
+    updateRule: "@request.auth.id != ''",  // Allow authenticated users to mark as used
     deleteRule: "@request.auth.role = 'owner'",
     options: {}
   })
