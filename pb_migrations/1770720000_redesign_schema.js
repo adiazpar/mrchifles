@@ -93,11 +93,11 @@ migrate((db) => {
       }
     ],
     indexes: [],
-    listRule: "",
-    viewRule: "",
-    createRule: "",
-    updateRule: "",
-    deleteRule: "",
+    listRule: "@request.auth.id != ''",
+    viewRule: "@request.auth.id != ''",
+    createRule: "@request.auth.id != ''",
+    updateRule: "@request.auth.id != ''",
+    deleteRule: "@request.auth.role = 'owner' || @request.auth.role = 'partner'",
     options: {}
   })
   dao.saveCollection(products)
@@ -179,11 +179,11 @@ migrate((db) => {
       }
     ],
     indexes: [],
-    listRule: "",
-    viewRule: "",
-    createRule: "",
-    updateRule: "",
-    deleteRule: "",
+    listRule: "@request.auth.id != ''",
+    viewRule: "@request.auth.id != ''",
+    createRule: "@request.auth.id != ''",
+    updateRule: "@request.auth.id != ''",
+    deleteRule: "@request.auth.role = 'owner' || @request.auth.role = 'partner'",
     options: {}
   })
   dao.saveCollection(sales)
@@ -261,11 +261,11 @@ migrate((db) => {
       }
     ],
     indexes: [],
-    listRule: "",
-    viewRule: "",
-    createRule: "",
-    updateRule: "",
-    deleteRule: "",
+    listRule: "@request.auth.id != ''",
+    viewRule: "@request.auth.id != ''",
+    createRule: "@request.auth.id != ''",
+    updateRule: "@request.auth.id != ''",
+    deleteRule: "@request.auth.role = 'owner' || @request.auth.role = 'partner'",
     options: {}
   })
   dao.saveCollection(saleItems)
@@ -331,11 +331,11 @@ migrate((db) => {
       }
     ],
     indexes: [],
-    listRule: "",
-    viewRule: "",
-    createRule: "",
-    updateRule: "",
-    deleteRule: "",
+    listRule: "@request.auth.id != ''",
+    viewRule: "@request.auth.id != ''",
+    createRule: "@request.auth.id != ''",
+    updateRule: "@request.auth.id != ''",
+    deleteRule: "@request.auth.role = 'owner' || @request.auth.role = 'partner'",
     options: {}
   })
   dao.saveCollection(orders)
@@ -393,11 +393,11 @@ migrate((db) => {
       }
     ],
     indexes: [],
-    listRule: "",
-    viewRule: "",
-    createRule: "",
-    updateRule: "",
-    deleteRule: "",
+    listRule: "@request.auth.id != ''",
+    viewRule: "@request.auth.id != ''",
+    createRule: "@request.auth.id != ''",
+    updateRule: "@request.auth.id != ''",
+    deleteRule: "@request.auth.role = 'owner' || @request.auth.role = 'partner'",
     options: {}
   })
   dao.saveCollection(orderItems)

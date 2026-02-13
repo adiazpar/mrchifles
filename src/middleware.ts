@@ -1,44 +1,16 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Routes that require authentication
-const protectedRoutes = [
-  '/inicio',
-  '/ventas',
-  '/productos',
-  '/caja',
-  '/inventario',
-  '/ajustes',
-]
-
-// Routes only accessible when NOT authenticated
-const authRoutes = ['/login', '/register', '/invite']
-
+/**
+ * Middleware for the Mr. Chifles application
+ *
+ * Note: Auth checks are handled client-side via AuthGuard component
+ * because PocketBase uses localStorage (not cookies) for auth state.
+ * Server-side middleware cannot access localStorage.
+ */
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // Check for PocketBase auth cookie
-  // Note: PocketBase stores auth in localStorage by default, so we also check for a custom cookie
-  const pbAuth = request.cookies.get('pb_auth')
-  const isAuthenticated = !!pbAuth?.value
-
-  // Redirect authenticated users away from auth pages
-  if (authRoutes.some((route) => pathname.startsWith(route))) {
-    if (isAuthenticated) {
-      return NextResponse.redirect(new URL('/inicio', request.url))
-    }
-    return NextResponse.next()
-  }
-
-  // Protect dashboard routes
-  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
-    if (!isAuthenticated) {
-      // Note: Since PocketBase uses localStorage, auth state is checked client-side
-      // The middleware provides a basic check, but the AuthGuard component handles the real protection
-      return NextResponse.next()
-    }
-  }
-
+  // No server-side auth checks - handled by client-side AuthGuard
+  // This middleware is kept for future non-auth middleware needs
   return NextResponse.next()
 }
 

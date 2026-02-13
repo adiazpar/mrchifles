@@ -5,9 +5,11 @@
  *
  * - Extends users collection with PIN, role, status fields
  * - Creates invite_codes collection for team invitations
+ * - Creates app_config collection for app setup state
  */
 
 const INVITE_CODES_ID = "invitecodes01"
+const APP_CONFIG_ID = "appconfig0001"
 
 migrate((db) => {
   const dao = new Dao(db)
@@ -73,6 +75,12 @@ migrate((db) => {
       displayFields: ["name"]
     }
   }))
+
+  // Restrict user listing/viewing to authenticated users only
+  // Password auth doesn't require querying users - PocketBase handles it
+  // PIN auth uses pb.authStore.model (already authenticated)
+  users.listRule = "@request.auth.id != ''"
+  users.viewRule = "@request.auth.id != ''"
 
   dao.saveCollection(users)
 
@@ -170,9 +178,68 @@ migrate((db) => {
   })
   dao.saveCollection(inviteCodes)
 
+  // ============================================
+  // APP_CONFIG COLLECTION
+  // Tracks app setup state (e.g., whether owner exists)
+  // ============================================
+  const appConfig = new Collection({
+    id: APP_CONFIG_ID,
+    name: 'app_config',
+    type: 'base',
+    system: false,
+    schema: [
+      {
+        system: false,
+        id: "acsetup00001",
+        name: 'setupComplete',
+        type: 'bool',
+        required: false,
+        presentable: false,
+        unique: false,
+        options: {}
+      },
+      {
+        system: false,
+        id: "acowner00001",
+        name: 'ownerEmail',
+        type: 'text',
+        required: false,
+        presentable: false,
+        unique: false,
+        options: { min: null, max: null, pattern: "" }
+      }
+    ],
+    indexes: [],
+    // Public read access - anyone can check if setup is complete
+    listRule: "",
+    viewRule: "",
+    // Only authenticated owners can modify
+    createRule: "@request.auth.role = 'owner'",
+    updateRule: "@request.auth.role = 'owner'",
+    deleteRule: null, // No one can delete
+    options: {}
+  })
+  dao.saveCollection(appConfig)
+
+  // Create initial config record with setupComplete = false
+  const configRecord = new Record(appConfig)
+  configRecord.set('setupComplete', false)
+  configRecord.set('ownerEmail', '')
+  dao.saveRecord(configRecord)
+
 }, (db) => {
   // Revert migration
   const dao = new Dao(db)
+
+  // Remove app_config collection
+  try {
+    const appConfig = dao.findCollectionByNameOrId('app_config')
+    if (appConfig) {
+      dao.deleteCollection(appConfig)
+    }
+  } catch (e) {
+    // Collection doesn't exist, skip
+  }
 
   // Remove invite_codes collection
   try {

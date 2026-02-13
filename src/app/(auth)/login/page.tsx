@@ -9,46 +9,65 @@ import { useAuth } from '@/contexts/auth-context'
 import { getUserInitials } from '@/lib/auth'
 import type { User } from '@/types'
 
-type LoginStep = 'email' | 'pin'
+type LoginStep = 'checking' | 'email' | 'password' | 'pin'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { loginWithEmail, verifyUserPin, lockoutRemaining, failedAttempts, getRememberedEmail, clearRememberedEmail } = useAuth()
+  const {
+    loginWithPassword,
+    loginWithPin,
+    lockoutRemaining,
+    failedAttempts,
+    getRememberedEmail,
+    clearRememberedEmail,
+    deviceTrusted,
+    setupComplete,
+    isCheckingSetup,
+    pb,
+  } = useAuth()
 
-  const [step, setStep] = useState<LoginStep>('email')
+  const [step, setStep] = useState<LoginStep>('checking')
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [pendingUser, setPendingUser] = useState<User | null>(null)
-  const [isCheckingRemembered, setIsCheckingRemembered] = useState(true)
+  const [trustedUser, setTrustedUser] = useState<User | null>(null)
 
-  // Check for remembered email on mount and auto-advance to PIN step
+  // Check setup state and trusted device on mount
   useEffect(() => {
-    const checkRememberedEmail = async () => {
+    // Wait for setup check to complete
+    if (isCheckingSetup) return
+
+    // If setup is not complete, redirect to register for first-time setup
+    if (!setupComplete) {
+      router.replace('/register')
+      return
+    }
+
+    // Check for trusted device with valid session
+    const checkTrustedDevice = async () => {
       const rememberedEmail = getRememberedEmail()
 
-      if (rememberedEmail) {
-        try {
-          const result = await loginWithEmail(rememberedEmail)
-
-          if (result.exists && result.user) {
-            setEmail(rememberedEmail)
-            setPendingUser(result.user)
-            setStep('pin')
-          }
-        } catch (err) {
-          console.error('Error checking remembered email:', err)
+      if (rememberedEmail && pb.authStore.isValid) {
+        // Trusted device with valid session - show PIN pad
+        const authUser = pb.authStore.model as User
+        if (authUser && authUser.email === rememberedEmail) {
+          setTrustedUser(authUser)
+          setEmail(rememberedEmail)
+          setStep('pin')
+          return
         }
       }
 
-      setIsCheckingRemembered(false)
+      // Not a trusted device or session expired - show email input
+      setStep('email')
     }
 
-    checkRememberedEmail()
-  }, [getRememberedEmail, loginWithEmail])
+    checkTrustedDevice()
+  }, [getRememberedEmail, pb, deviceTrusted, setupComplete, isCheckingSetup, router])
 
   const handleEmailSubmit = useCallback(
-    async (e: React.FormEvent) => {
+    (e: React.FormEvent) => {
       e.preventDefault()
       setError('')
 
@@ -57,27 +76,45 @@ export default function LoginPage() {
         return
       }
 
+      // Move to password step
+      setStep('password')
+    },
+    [email]
+  )
+
+  const handlePasswordSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+      setError('')
+
+      if (!password) {
+        setError('Por favor ingresa tu contrasena')
+        return
+      }
+
       setIsLoading(true)
 
       try {
-        const result = await loginWithEmail(email.trim())
-
-        if (!result.exists) {
-          setError('No existe una cuenta con este email')
-          setIsLoading(false)
-          return
-        }
-
-        setPendingUser(result.user || null)
-        setStep('pin')
+        await loginWithPassword(email.trim(), password)
+        router.push('/inicio')
       } catch (err) {
         console.error('Login error:', err)
-        setError('Error al verificar el email')
+        // Handle PocketBase error
+        if (err && typeof err === 'object' && 'status' in err) {
+          const pbErr = err as { status: number }
+          if (pbErr.status === 400) {
+            setError('Email o contrasena incorrectos')
+          } else {
+            setError('Error al iniciar sesion')
+          }
+        } else {
+          setError('Error al iniciar sesion')
+        }
       } finally {
         setIsLoading(false)
       }
     },
-    [email, loginWithEmail]
+    [email, password, loginWithPassword, router]
   )
 
   const handlePinComplete = useCallback(
@@ -86,7 +123,7 @@ export default function LoginPage() {
       setIsLoading(true)
 
       try {
-        const isValid = await verifyUserPin(pin)
+        const isValid = await loginWithPin(pin)
 
         if (isValid) {
           router.push('/inicio')
@@ -105,19 +142,26 @@ export default function LoginPage() {
         setIsLoading(false)
       }
     },
-    [verifyUserPin, failedAttempts, router]
+    [loginWithPin, failedAttempts, router]
   )
 
-  const handleBackToEmail = useCallback(() => {
-    setStep('email')
-    setError('')
-    setPendingUser(null)
-    setEmail('')
+  const handleChangeUser = useCallback(() => {
     clearRememberedEmail()
+    setTrustedUser(null)
+    setEmail('')
+    setPassword('')
+    setError('')
+    setStep('email')
   }, [clearRememberedEmail])
 
-  // Loading state while checking remembered email
-  if (isCheckingRemembered) {
+  const handleBackToEmail = useCallback(() => {
+    setPassword('')
+    setError('')
+    setStep('email')
+  }, [])
+
+  // Checking state (also covers setup redirect)
+  if (step === 'checking' || isCheckingSetup) {
     return (
       <Card padding="lg">
         <div className="flex flex-col items-center py-8">
@@ -150,14 +194,7 @@ export default function LoginPage() {
               className="btn btn-primary btn-lg w-full"
               disabled={isLoading}
             >
-              {isLoading ? (
-                <>
-                  <Spinner />
-                  <span className="sr-only">Verificando...</span>
-                </>
-              ) : (
-                'Continuar'
-              )}
+              Continuar
             </button>
           </form>
         </Card>
@@ -166,25 +203,76 @@ export default function LoginPage() {
           <p className="auth-footer-link">
             <Link href="/invite">Tengo un codigo de invitacion</Link>
           </p>
-          <p className="auth-footer-link mt-2">
-            <Link href="/register">Crear cuenta de dueno</Link>
+        </div>
+      </>
+    )
+  }
+
+  // Password step
+  if (step === 'password') {
+    return (
+      <>
+        <Card padding="lg">
+          <div className="mb-4">
+            <p className="text-sm text-text-tertiary">Iniciando sesion como</p>
+            <p className="font-medium text-text-primary">{email}</p>
+          </div>
+
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <Input
+              label="Contrasena"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Tu contrasena"
+              autoComplete="current-password"
+              autoFocus
+              error={error}
+            />
+
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Spinner />
+                  <span className="sr-only">Iniciando sesion...</span>
+                </>
+              ) : (
+                'Iniciar sesion'
+              )}
+            </button>
+          </form>
+        </Card>
+
+        <div className="auth-footer">
+          <p className="auth-footer-link">
+            <button
+              type="button"
+              onClick={handleBackToEmail}
+              className="text-brand hover:underline"
+            >
+              Usar otro email
+            </button>
           </p>
         </div>
       </>
     )
   }
 
-  // PIN step
+  // PIN step (for trusted devices)
   return (
     <>
       {/* User greeting */}
-      {pendingUser && (
+      {trustedUser && (
         <div className="auth-user-greeting">
           <div className="auth-user-avatar">
-            {getUserInitials(pendingUser.name)}
+            {getUserInitials(trustedUser.name)}
           </div>
-          <h2 className="auth-user-name">Hola, {pendingUser.name.split(' ')[0]}</h2>
-          <p className="auth-user-email">{pendingUser.email}</p>
+          <h2 className="auth-user-name">Hola, {trustedUser.name.split(' ')[0]}</h2>
+          <p className="auth-user-email">{trustedUser.email}</p>
         </div>
       )}
 
@@ -212,7 +300,7 @@ export default function LoginPage() {
         <p className="auth-footer-link">
           <button
             type="button"
-            onClick={handleBackToEmail}
+            onClick={handleChangeUser}
             className="text-brand hover:underline"
           >
             Cambiar usuario

@@ -127,7 +127,13 @@ export default function InvitePage() {
       } catch (err) {
         console.error('Registration error:', err)
         const errorMessage = err instanceof Error ? err.message : 'Error al crear la cuenta'
-        setErrors({ general: errorMessage })
+
+        // Check for specific error messages
+        if (errorMessage.includes('email') || errorMessage.includes('already exists')) {
+          setErrors({ email: 'Ya existe una cuenta con este email' })
+        } else {
+          setErrors({ general: errorMessage })
+        }
         setStep('info')
       } finally {
         setIsLoading(false)
@@ -243,15 +249,20 @@ export default function InvitePage() {
               error={errors.email}
             />
 
-            <Input
-              label="Contrasena"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Minimo 8 caracteres"
-              autoComplete="new-password"
-              error={errors.password}
-            />
+            <div>
+              <Input
+                label="Contrasena"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Minimo 8 caracteres"
+                autoComplete="new-password"
+                error={errors.password}
+              />
+              <p className="text-xs text-text-tertiary mt-1">
+                Esta contrasena protege tu cuenta
+              </p>
+            </div>
 
             <Input
               label="Confirmar contrasena"
@@ -295,7 +306,7 @@ export default function InvitePage() {
         <div className="text-center mb-6">
           <h2 className="text-xl font-display font-bold mb-1">Configura tu PIN</h2>
           <p className="text-sm text-text-tertiary">
-            Usaras este PIN de 4 digitos para acceder rapidamente a tu cuenta cada dia
+            Este PIN de 4 digitos te permite acceder rapidamente cada dia sin ingresar tu contrasena
           </p>
         </div>
 

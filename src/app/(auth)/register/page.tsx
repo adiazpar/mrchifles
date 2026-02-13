@@ -1,26 +1,39 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Input, Card, Spinner } from '@/components/ui'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
 import { ownerRegistrationSchema } from '@/lib/auth'
 
-type RegisterStep = 'info' | 'pin'
+type RegisterStep = 'checking' | 'info' | 'pin'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { registerOwner } = useAuth()
+  const { registerOwner, setupComplete, isCheckingSetup } = useAuth()
 
-  const [step, setStep] = useState<RegisterStep>('info')
+  const [step, setStep] = useState<RegisterStep>('checking')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+
+  // Check if setup is already complete (owner exists)
+  useEffect(() => {
+    if (isCheckingSetup) return
+
+    if (setupComplete) {
+      // Owner already exists, redirect to login
+      router.replace('/login')
+      return
+    }
+
+    // Show registration form
+    setStep('info')
+  }, [setupComplete, isCheckingSetup, router])
 
   const handleInfoSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -72,7 +85,16 @@ export default function RegisterPage() {
         router.push('/inicio')
       } catch (err) {
         console.error('Registration error:', err)
-        setErrors({ general: 'Error al crear la cuenta. Intenta de nuevo.' })
+        const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
+
+        // Check for specific error messages
+        if (errorMessage.includes('email') || errorMessage.includes('already exists')) {
+          setErrors({ email: 'Ya existe una cuenta con este email' })
+        } else if (errorMessage.includes('propietario')) {
+          setErrors({ general: errorMessage })
+        } else {
+          setErrors({ general: `Error al crear la cuenta: ${errorMessage}` })
+        }
         setStep('info')
       } finally {
         setIsLoading(false)
@@ -86,44 +108,56 @@ export default function RegisterPage() {
     setErrors({})
   }, [])
 
+  // Checking state
+  if (step === 'checking' || isCheckingSetup) {
+    return (
+      <Card padding="lg">
+        <div className="flex flex-col items-center py-8">
+          <Spinner className="spinner-lg" />
+          <p className="text-text-secondary mt-4">Cargando...</p>
+        </div>
+      </Card>
+    )
+  }
+
   // Info step
   if (step === 'info') {
     return (
-      <>
-        <Card padding="lg">
-          <h2 className="text-xl font-display font-bold mb-1">Crear cuenta de dueno</h2>
-          <p className="text-sm text-text-tertiary mb-6">
-            Configura tu cuenta para gestionar tu negocio
-          </p>
+      <Card padding="lg">
+        <h2 className="text-xl font-display font-bold mb-1">Bienvenido a Mr. Chifles</h2>
+        <p className="text-sm text-text-tertiary mb-6">
+          Configura tu cuenta de propietario para comenzar
+        </p>
 
-          <form onSubmit={handleInfoSubmit} className="space-y-4">
-            {errors.general && (
-              <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-                {errors.general}
-              </div>
-            )}
+        <form onSubmit={handleInfoSubmit} className="space-y-4">
+          {errors.general && (
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+              {errors.general}
+            </div>
+          )}
 
-            <Input
-              label="Nombre completo"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Juan Perez"
-              autoComplete="name"
-              autoFocus
-              error={errors.name}
-            />
+          <Input
+            label="Nombre completo"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Juan Perez"
+            autoComplete="name"
+            autoFocus
+            error={errors.name}
+          />
 
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              autoComplete="email"
-              error={errors.email}
-            />
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            autoComplete="email"
+            error={errors.email}
+          />
 
+          <div>
             <Input
               label="Contrasena"
               type="password"
@@ -133,72 +167,65 @@ export default function RegisterPage() {
               autoComplete="new-password"
               error={errors.password}
             />
+            <p className="text-xs text-text-tertiary mt-1">
+              Esta contrasena protege tu cuenta
+            </p>
+          </div>
 
-            <Input
-              label="Confirmar contrasena"
-              type="password"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              placeholder="Repite tu contrasena"
-              autoComplete="new-password"
-              error={errors.passwordConfirm}
-            />
+          <Input
+            label="Confirmar contrasena"
+            type="password"
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            placeholder="Repite tu contrasena"
+            autoComplete="new-password"
+            error={errors.passwordConfirm}
+          />
 
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg w-full"
-              disabled={isLoading}
-            >
-              Continuar
-            </button>
-          </form>
-        </Card>
-
-        <div className="auth-footer">
-          <p className="auth-footer-link">
-            Ya tienes cuenta? <Link href="/login">Iniciar sesion</Link>
-          </p>
-        </div>
-      </>
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg w-full"
+            disabled={isLoading}
+          >
+            Continuar
+          </button>
+        </form>
+      </Card>
     )
   }
 
   // PIN step
   return (
-    <>
-      <Card padding="lg">
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-display font-bold mb-1">Configura tu PIN</h2>
-          <p className="text-sm text-text-tertiary">
-            Usaras este PIN de 4 digitos para acceder rapidamente a tu cuenta cada dia
-          </p>
-        </div>
-
-        {isLoading ? (
-          <div className="flex flex-col items-center py-8">
-            <Spinner className="spinner-lg" />
-            <p className="text-text-secondary mt-4">Creando tu cuenta...</p>
-          </div>
-        ) : (
-          <PinPad
-            onComplete={handlePinComplete}
-            disabled={isLoading}
-          />
-        )}
-      </Card>
-
-      <div className="auth-footer">
-        <p className="auth-footer-link">
-          <button
-            type="button"
-            onClick={handleBackToInfo}
-            className="text-brand hover:underline"
-            disabled={isLoading}
-          >
-            Volver
-          </button>
+    <Card padding="lg">
+      <div className="text-center mb-6">
+        <h2 className="text-xl font-display font-bold mb-1">Configura tu PIN</h2>
+        <p className="text-sm text-text-tertiary">
+          Este PIN de 4 digitos te permite acceder rapidamente cada dia sin ingresar tu contrasena
         </p>
       </div>
-    </>
+
+      {isLoading ? (
+        <div className="flex flex-col items-center py-8">
+          <Spinner className="spinner-lg" />
+          <p className="text-text-secondary mt-4">Creando tu cuenta...</p>
+        </div>
+      ) : (
+        <PinPad
+          onComplete={handlePinComplete}
+          disabled={isLoading}
+        />
+      )}
+
+      <div className="mt-6 text-center">
+        <button
+          type="button"
+          onClick={handleBackToInfo}
+          className="text-brand hover:underline text-sm"
+          disabled={isLoading}
+        >
+          Volver
+        </button>
+      </div>
+    </Card>
   )
 }
