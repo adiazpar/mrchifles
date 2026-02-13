@@ -1,22 +1,61 @@
 import type { User, UserRole, InviteRole } from '@/types'
 
 // ============================================
-// PIN HASHING (using Web Crypto API)
+// PIN HASHING (pure JS implementation for HTTP compatibility)
 // ============================================
 
 const SALT_PREFIX = 'mrchifles_pin_v1_'
 
 /**
- * Hash a 4-digit PIN using SHA-256
+ * Simple hash function that works in non-secure contexts (HTTP)
  * This is suitable for PINs because security comes from rate limiting,
  * not from the hash strength (4 digits = only 10,000 combinations)
  */
 export async function hashPin(pin: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(SALT_PREFIX + pin)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  const input = SALT_PREFIX + pin
+
+  // Try Web Crypto API first (works in HTTPS/localhost)
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
+    try {
+      const encoder = new TextEncoder()
+      const data = encoder.encode(input)
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+      const hashArray = Array.from(new Uint8Array(hashBuffer))
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    } catch {
+      // Fall through to pure JS implementation
+    }
+  }
+
+  // Pure JS hash fallback (works over HTTP)
+  // Using a simple but effective hash for PIN purposes
+  return simpleHash(input)
+}
+
+/**
+ * Simple string hash function (djb2 variant + additional mixing)
+ * Not cryptographically secure, but sufficient for PIN hashing
+ * where rate limiting provides the actual security
+ */
+function simpleHash(str: string): string {
+  let h1 = 0xdeadbeef
+  let h2 = 0x41c6ce57
+
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i)
+    h1 = Math.imul(h1 ^ ch, 2654435761)
+    h2 = Math.imul(h2 ^ ch, 1597334677)
+  }
+
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507)
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909)
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507)
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909)
+
+  // Return 64-bit hash as hex string
+  const hash = (h2 >>> 0).toString(16).padStart(8, '0') + (h1 >>> 0).toString(16).padStart(8, '0')
+  // Extend to look more like SHA-256 length (repeat pattern)
+  return hash + hash + hash + hash
 }
 
 /**

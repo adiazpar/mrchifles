@@ -20,11 +20,11 @@ if (!fs.existsSync(binaryPath)) {
   process.exit(1)
 }
 
-const args = ['serve', '--http=127.0.0.1:8090', '--automigrate']
+const args = ['serve', '--http=0.0.0.0:8090', '--automigrate']
 
 console.log(`Starting PocketBase...`)
 console.log(`Binary: ${binaryPath}`)
-console.log(`API: http://127.0.0.1:8090/api/`)
+console.log(`API: http://0.0.0.0:8090/api/`)
 console.log(`Admin: http://127.0.0.1:8090/_/\n`)
 
 const child = spawn(binaryPath, args, {

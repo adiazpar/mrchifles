@@ -708,14 +708,34 @@ window.addEventListener('online', syncPendingSales);
 
 - **Node.js 18+** (recommended: use nvm with `.nvmrc`)
 - **Git**
+- **Tailscale** (for unified local + remote development)
+
+### Development Modes
+
+This project supports two development modes with a **unified configuration**:
+
+| Mode | How you access | URL to use |
+|------|----------------|------------|
+| **Local (Mac)** | Browser on your Mac | http://100.113.9.34:3000 |
+| **Remote (Phone/SSH)** | Phone via Tailscale + Terminus | http://100.113.9.34:3000 |
+
+**Key insight:** Using the Tailscale IP (100.113.9.34) works for BOTH modes because:
+- Locally, Tailscale routes the IP to your own machine
+- Remotely, Tailscale makes your machine accessible from anywhere
+
+**Requirement:** Keep Tailscale running on your Mac during development.
+
+### Service URLs
+
+| Service | URL |
+|---------|-----|
+| Next.js App | http://100.113.9.34:3000 |
+| PocketBase API | http://100.113.9.34:8090/api/ |
+| PocketBase Admin | http://100.113.9.34:8090/_/ (or http://127.0.0.1:8090/_/) |
 
 ### Important Note for Claude Agents
 
 **The development servers (Next.js and PocketBase) are ALWAYS run by the user in a separate terminal.** Claude agents should NEVER start the dev servers. Assume the servers are already running when working on this project.
-
-- Next.js: http://localhost:3000
-- PocketBase API: http://127.0.0.1:8090/api/
-- PocketBase Admin: http://127.0.0.1:8090/_/
 
 ### Database Migration Workflow
 
@@ -879,7 +899,7 @@ Install plugins via the `/plugin` command in Claude Code.
 
 
 ## Mobile Screenshots
-When I say "check the screenshot" or "look at the screenshot", check ~/ss/ for the most recent file using: ls -t ~/ss/ | head -1
+When I say "check mobile screenshot" or "check icloud screenshot", check ~/ss/ for the most recent file using: ls -t ~/ss/ | head -1
 
 ### Plugin Resources
 - [Official Plugin Directory](https://github.com/anthropics/claude-plugins-official)

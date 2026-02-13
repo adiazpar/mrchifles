@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { LoadingPage } from '@/components/ui'
 
@@ -17,8 +17,7 @@ export function AuthGuard({
   redirectTo,
 }: AuthGuardProps) {
   const router = useRouter()
-  const pathname = usePathname()
-  const { user, isLoading, isLocked } = useAuth()
+  const { user, isLoading } = useAuth()
 
   useEffect(() => {
     if (isLoading) return
