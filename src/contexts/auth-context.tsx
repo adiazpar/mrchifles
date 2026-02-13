@@ -35,11 +35,16 @@ interface AuthContextType {
   isLocked: boolean
   lockoutRemaining: number
   failedAttempts: number
+  deviceTrusted: boolean
+
+  // Setup state (for first-time setup flow)
+  setupComplete: boolean
+  isCheckingSetup: boolean
 
   // Auth methods
-  loginWithEmail: (email: string) => Promise<{ exists: boolean; user?: User }>
-  verifyUserPin: (pin: string) => Promise<boolean>
-  logout: () => void
+  loginWithPassword: (email: string, password: string) => Promise<void>
+  loginWithPin: (pin: string) => Promise<boolean>
+  logout: (clearDevice?: boolean) => void
 
   // Registration
   registerOwner: (data: {
@@ -61,9 +66,10 @@ interface AuthContextType {
   unlockSession: (pin: string) => Promise<boolean>
   updateActivity: () => void
 
-  // Remembered email (for quick PIN login)
+  // Device trust
   getRememberedEmail: () => string | null
   clearRememberedEmail: () => void
+  trustDevice: (email: string) => void
 
   // PocketBase instance for direct access if needed
   pb: PocketBase
@@ -96,7 +102,7 @@ function setRememberedEmail(email: string): void {
   localStorage.setItem(REMEMBERED_EMAIL_KEY, email)
 }
 
-function clearRememberedEmail(): void {
+function clearRememberedEmailStorage(): void {
   if (typeof window === 'undefined') return
   localStorage.removeItem(REMEMBERED_EMAIL_KEY)
 }
@@ -105,8 +111,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [pb] = useState(() => new PocketBase(POCKETBASE_URL))
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [pendingUser, setPendingUser] = useState<User | null>(null) // User waiting for PIN
   const [sessionState, setSessionState] = useState<SessionState>(createSessionState)
+  const [deviceTrusted, setDeviceTrusted] = useState(false)
+
+  // Setup state - tracks whether owner account has been created
+  const [setupComplete, setSetupComplete] = useState(true) // Default true to avoid flash
+  const [isCheckingSetup, setIsCheckingSetup] = useState(true)
+
+  // Check setup state on mount
+  useEffect(() => {
+    const checkSetup = async () => {
+      try {
+        // app_config has public read access
+        const configs = await pb.collection('app_config').getList(1, 1)
+        if (configs.items.length > 0) {
+          setSetupComplete(configs.items[0].setupComplete === true)
+        } else {
+          // No config record means fresh install
+          setSetupComplete(false)
+        }
+      } catch (error) {
+        console.error('Error checking setup state:', error)
+        // On error, assume setup is complete to avoid blocking existing users
+        setSetupComplete(true)
+      } finally {
+        setIsCheckingSetup(false)
+      }
+    }
+
+    checkSetup()
+  }, [pb])
 
   // Hydrate auth state from PocketBase on mount
   useEffect(() => {
@@ -114,6 +148,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (authData && pb.authStore.isValid) {
       setUser(authData as User)
     }
+
+    // Check if this device is trusted (has remembered email)
+    const rememberedEmail = getRememberedEmail()
+    setDeviceTrusted(!!rememberedEmail && pb.authStore.isValid)
+
     setIsLoading(false)
 
     // Listen for auth changes
@@ -168,29 +207,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // AUTH METHODS
   // ============================================
 
-  const loginWithEmail = useCallback(async (email: string): Promise<{ exists: boolean; user?: User }> => {
+  /**
+   * Login with email and password (for new devices or expired sessions)
+   * This is the primary authentication method
+   */
+  const loginWithPassword = useCallback(async (email: string, password: string): Promise<void> => {
     try {
-      // Check if user exists with this email
-      const records = await pb.collection('users').getList(1, 1, {
-        filter: `email = "${email}"`,
-      })
-
-      if (records.items.length === 0) {
-        return { exists: false }
-      }
-
-      const foundUser = records.items[0] as unknown as User
-      setPendingUser(foundUser)
-      return { exists: true, user: foundUser }
+      const authData = await pb.collection('users').authWithPassword(email, password)
+      setUser(authData.record as unknown as User)
+      setRememberedEmail(email) // Trust this device after successful password login
+      setDeviceTrusted(true)
+      setSessionState(resetPinAttempts(sessionState))
     } catch (error) {
-      console.error('Error checking email:', error)
+      console.error('Login failed:', error)
       throw error
     }
-  }, [pb])
+  }, [pb, sessionState])
 
-  const verifyUserPin = useCallback(async (pin: string): Promise<boolean> => {
-    if (!pendingUser) {
-      throw new Error('No user pending PIN verification')
+  /**
+   * Login with PIN (for trusted devices with valid session)
+   * PIN is just a UI gate to unlock access to existing authenticated session
+   */
+  const loginWithPin = useCallback(async (pin: string): Promise<boolean> => {
+    const rememberedEmail = getRememberedEmail()
+    if (!rememberedEmail) {
+      return false
+    }
+
+    // Check if we have a valid PocketBase session
+    if (!pb.authStore.isValid) {
+      // Session expired - need password login
+      clearRememberedEmailStorage()
+      setDeviceTrusted(false)
+      return false
+    }
+
+    // Verify the session email matches remembered email
+    const authUser = pb.authStore.model as User
+    if (!authUser || authUser.email !== rememberedEmail) {
+      clearRememberedEmailStorage()
+      setDeviceTrusted(false)
+      return false
     }
 
     if (isLockedOut(sessionState)) {
@@ -199,18 +256,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       // Verify PIN against stored hash
-      const isValid = await verifyPin(pin, pendingUser.pin || '')
+      const isValid = await verifyPin(pin, authUser.pin || '')
 
       if (isValid) {
-        // Authenticate with PocketBase using email and a dummy request
-        // Since PocketBase requires password for auth, we'll use authRefresh after setting the token
-        // For now, we'll use a workaround: fetch the full user data and set it
-        await pb.collection('users').authWithPassword(pendingUser.email, pin)
-        setUser(pendingUser)
-        setPendingUser(null)
+        // PIN correct - session is already valid, just update state
+        setUser(authUser)
         setSessionState(resetPinAttempts(sessionState))
-        // Remember email for quick login next time
-        setRememberedEmail(pendingUser.email)
         return true
       } else {
         setSessionState(recordFailedAttempt(sessionState))
@@ -221,15 +272,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSessionState(recordFailedAttempt(sessionState))
       return false
     }
-  }, [pendingUser, sessionState, pb])
+  }, [pb, sessionState])
 
-  const logout = useCallback((clearEmail = true) => {
+  const logout = useCallback((clearDevice = true) => {
     pb.authStore.clear()
     setUser(null)
-    setPendingUser(null)
     setSessionState(createSessionState())
-    if (clearEmail) {
-      clearRememberedEmail()
+    if (clearDevice) {
+      clearRememberedEmailStorage()
+      setDeviceTrusted(false)
     }
   }, [pb])
 
@@ -243,28 +294,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name: string
     pin: string
   }) => {
+    // Check if setup is already complete (owner exists)
+    if (setupComplete) {
+      throw new Error('Ya existe un propietario registrado')
+    }
+
     const pinHash = await hashPin(data.pin)
 
     try {
-      // Create user with owner role
+      // Create user with owner role using ACTUAL password
       const newUser = await pb.collection('users').create({
         email: data.email,
-        password: data.password,
-        passwordConfirm: data.password,
+        emailVisibility: true,
+        password: data.password,        // ACTUAL password
+        passwordConfirm: data.password, // ACTUAL password
         name: data.name,
-        pin: pinHash,
+        pin: pinHash,                   // PIN hash stored separately for quick unlock
         role: 'owner',
         status: 'active',
       })
 
-      // Log in the new user
+      // Log in with ACTUAL password
       await pb.collection('users').authWithPassword(data.email, data.password)
       setUser(newUser as unknown as User)
+
+      // Mark setup as complete
+      try {
+        const configs = await pb.collection('app_config').getList(1, 1)
+        if (configs.items.length > 0) {
+          await pb.collection('app_config').update(configs.items[0].id, {
+            setupComplete: true,
+            ownerEmail: data.email,
+          })
+        }
+        setSetupComplete(true)
+      } catch (configError) {
+        console.error('Failed to update app config:', configError)
+        // Don't fail registration if config update fails
+      }
+
+      // Trust this device
+      setRememberedEmail(data.email)
+      setDeviceTrusted(true)
     } catch (error) {
       console.error('Registration failed:', error)
+      // Extract PocketBase error message if available
+      if (error && typeof error === 'object' && 'response' in error) {
+        const pbError = error as { response?: { data?: Record<string, { message?: string }>, message?: string } }
+        // Check for email already exists error
+        if (pbError.response?.data?.email?.message) {
+          throw new Error(pbError.response.data.email.message)
+        }
+        throw new Error(pbError.response?.message || 'Error de registro')
+      }
       throw error
     }
-  }, [pb])
+  }, [pb, setupComplete])
 
   const registerWithInvite = useCallback(async (data: {
     inviteCode: string
@@ -274,7 +359,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     pin: string
   }) => {
     try {
-      // Validate invite code
+      // Validate invite code (this endpoint is kept open for validation)
       const invites = await pb.collection('invite_codes').getList(1, 1, {
         filter: `code = "${data.inviteCode}" && used = false && expiresAt > @now`,
       })
@@ -286,27 +371,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const invite = invites.items[0]
       const pinHash = await hashPin(data.pin)
 
-      // Create user with role from invite
+      // Create user with role from invite using ACTUAL password
       const newUser = await pb.collection('users').create({
         email: data.email,
-        password: data.password,
-        passwordConfirm: data.password,
+        emailVisibility: true,
+        password: data.password,        // ACTUAL password
+        passwordConfirm: data.password, // ACTUAL password
         name: data.name,
-        pin: pinHash,
+        pin: pinHash,                   // PIN hash stored separately
         role: invite.role,
         status: 'active',
         invitedBy: invite.createdBy,
       })
 
-      // Mark invite as used
+      // Log in with ACTUAL password to get auth token
+      await pb.collection('users').authWithPassword(data.email, data.password)
+
+      // Mark invite as used (now we're authenticated)
       await pb.collection('invite_codes').update(invite.id, {
         used: true,
         usedBy: newUser.id,
       })
 
-      // Log in the new user
-      await pb.collection('users').authWithPassword(data.email, data.password)
       setUser(newUser as unknown as User)
+
+      // Trust this device
+      setRememberedEmail(data.email)
+      setDeviceTrusted(true)
     } catch (error) {
       console.error('Registration failed:', error)
       throw error
@@ -353,6 +444,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // ============================================
+  // DEVICE TRUST
+  // ============================================
+
+  const trustDevice = useCallback((email: string) => {
+    setRememberedEmail(email)
+    setDeviceTrusted(true)
+  }, [])
+
+  const clearRememberedEmail = useCallback(() => {
+    clearRememberedEmailStorage()
+    setDeviceTrusted(false)
+  }, [])
+
+  // ============================================
   // CONTEXT VALUE
   // ============================================
 
@@ -363,9 +468,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLocked: sessionState.isLocked,
     lockoutRemaining,
     failedAttempts: sessionState.failedAttempts,
+    deviceTrusted,
 
-    loginWithEmail,
-    verifyUserPin,
+    // Setup state
+    setupComplete,
+    isCheckingSetup,
+
+    loginWithPassword,
+    loginWithPin,
     logout,
 
     registerOwner,
@@ -377,6 +487,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     getRememberedEmail,
     clearRememberedEmail,
+    trustDevice,
 
     pb,
   }), [
@@ -385,14 +496,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionState.isLocked,
     sessionState.failedAttempts,
     lockoutRemaining,
-    loginWithEmail,
-    verifyUserPin,
+    deviceTrusted,
+    setupComplete,
+    isCheckingSetup,
+    loginWithPassword,
+    loginWithPin,
     logout,
     registerOwner,
     registerWithInvite,
     lockSession,
     unlockSession,
     handleUpdateActivity,
+    clearRememberedEmail,
+    trustDevice,
     pb,
   ])
 
