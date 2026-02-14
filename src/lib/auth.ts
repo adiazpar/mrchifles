@@ -312,6 +312,17 @@ export function resetPinAttempts(state: SessionState): SessionState {
 }
 
 /**
+ * Format PIN error message based on failed attempts
+ */
+export function formatPinErrorMessage(failedAttempts: number): string {
+  const attemptsLeft = MAX_PIN_ATTEMPTS - failedAttempts - 1
+  if (attemptsLeft > 0) {
+    return `PIN incorrecto. ${attemptsLeft} intento${attemptsLeft === 1 ? '' : 's'} restante${attemptsLeft === 1 ? '' : 's'}`
+  }
+  return 'Demasiados intentos fallidos'
+}
+
+/**
  * Update last activity timestamp
  */
 export function updateActivity(state: SessionState): SessionState {

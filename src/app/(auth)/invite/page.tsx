@@ -18,7 +18,7 @@ interface InviteInfo {
 
 export default function InvitePage() {
   const router = useRouter()
-  const { registerWithInvite, pb } = useAuth()
+  const { registerWithInvite } = useAuth()
 
   const [step, setStep] = useState<InviteStep>('code')
   const [inviteCode, setInviteCode] = useState('')

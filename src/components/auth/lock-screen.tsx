@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui'
 import { PinPad } from './pin-pad'
 import { useAuth } from '@/contexts/auth-context'
-import { getUserInitials } from '@/lib/auth'
+import { getUserInitials, formatPinErrorMessage } from '@/lib/auth'
 
 export function LockScreen() {
   const router = useRouter()
@@ -23,12 +23,7 @@ export function LockScreen() {
         const success = await unlockSession(pin)
 
         if (!success) {
-          const attemptsLeft = 3 - failedAttempts - 1
-          if (attemptsLeft > 0) {
-            setError(`PIN incorrecto. ${attemptsLeft} intento${attemptsLeft === 1 ? '' : 's'} restante${attemptsLeft === 1 ? '' : 's'}`)
-          } else {
-            setError('Demasiados intentos fallidos')
-          }
+          setError(formatPinErrorMessage(failedAttempts))
         }
       } catch (err) {
         console.error('Unlock error:', err)

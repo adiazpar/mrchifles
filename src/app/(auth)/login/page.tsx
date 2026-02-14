@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Input, Card, Spinner } from '@/components/ui'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
-import { getUserInitials } from '@/lib/auth'
+import { getUserInitials, formatPinErrorMessage } from '@/lib/auth'
 import type { User } from '@/types'
 
 type LoginStep = 'checking' | 'email' | 'password' | 'pin'
@@ -128,12 +128,7 @@ export default function LoginPage() {
         if (isValid) {
           router.push('/inicio')
         } else {
-          const attemptsLeft = 3 - failedAttempts - 1
-          if (attemptsLeft > 0) {
-            setError(`PIN incorrecto. ${attemptsLeft} intento${attemptsLeft === 1 ? '' : 's'} restante${attemptsLeft === 1 ? '' : 's'}`)
-          } else {
-            setError('Demasiados intentos fallidos')
-          }
+          setError(formatPinErrorMessage(failedAttempts))
         }
       } catch (err) {
         console.error('PIN verification error:', err)

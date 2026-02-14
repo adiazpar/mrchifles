@@ -19,64 +19,15 @@ import {
   IconCircleCheck,
   IconCircleX,
 } from '@/components/icons'
-import { formatCurrency } from '@/lib/utils'
-
-// Mock user data - will be replaced with auth context
-const currentUser = {
-  name: 'Arturo Diaz',
-  initials: 'AD',
-}
-
-// Mock data for demo - cashDrawerStatus is now stateful
-const INITIAL_STATS = {
-  todaySales: 1250.0,
-  previousDaySales: 1100.0,
-  transactionCount: 45,
-  cashBalance: 650.0,
-}
-
-// Mock inventory data
-const MOCK_INVENTORY = {
-  totalUnits: 156,
-  lowStockCount: 2,
-  pendingOrder: true,
-  lowStockProducts: [
-    { name: 'Chifles Picante', stock: 5, threshold: 10 },
-    { name: 'Chifles Dulce', stock: 3, threshold: 10 },
-  ],
-}
-
-// Weekly sales trend (last 7 days)
-const WEEKLY_SALES = [820, 950, 1100, 890, 1200, 1100, 1250]
-
-// Payment method breakdown
-const PAYMENT_BREAKDOWN = [
-  { value: 750, color: 'var(--color-cash)', label: 'Efectivo' },
-  { value: 420, color: 'var(--color-yape)', label: 'Yape' },
-  { value: 80, color: 'var(--color-pos)', label: 'POS' },
-]
-
-// Top products
-const TOP_PRODUCTS = [
-  { label: 'Tocino', value: 28, color: 'var(--color-brand)' },
-  { label: 'Natural', value: 22, color: 'var(--brand-400)' },
-  { label: 'Picante', value: 15, color: 'var(--brand-300)' },
-  { label: 'Dulce', value: 10, color: 'var(--brand-200)' },
-]
-
-function getGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour >= 6 && hour < 12) return 'Buenos dias'
-  if (hour >= 12 && hour < 18) return 'Buenas tardes'
-  return 'Buenas noches'
-}
-
-function formatDateShort(date: Date): string {
-  const day = date.getDate().toString().padStart(2, '0')
-  const month = (date.getMonth() + 1).toString().padStart(2, '0')
-  const year = date.getFullYear()
-  return `${day}/${month}/${year}`
-}
+import { formatCurrency, formatDate, formatTime, getGreeting } from '@/lib/utils'
+import {
+  MOCK_USER,
+  INITIAL_STATS,
+  MOCK_INVENTORY,
+  WEEKLY_SALES,
+  PAYMENT_BREAKDOWN,
+  TOP_PRODUCTS,
+} from '@/lib/mock-data'
 
 export default function InicioPage() {
   const [greeting, setGreeting] = useState(getGreeting())
@@ -88,14 +39,8 @@ export default function InicioPage() {
     const update = () => {
       const now = new Date()
       setGreeting(getGreeting())
-      setCurrentDate(formatDateShort(now))
-      setCurrentTime(
-        now.toLocaleTimeString('es-PE', {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'America/Lima',
-        }).replace(/a\.\s*m\./gi, 'a.m.').replace(/p\.\s*m\./gi, 'p.m.')
-      )
+      setCurrentDate(formatDate(now))
+      setCurrentTime(formatTime(now))
     }
 
     update()
@@ -122,11 +67,11 @@ export default function InicioPage() {
   return (
     <div className="min-h-screen">
       <PageHeader
-        title={`${greeting}, ${currentUser.name.split(' ')[0]}!`}
+        title={`${greeting}, ${MOCK_USER.name.split(' ')[0]}!`}
         subtitle={`${currentDate} - ${currentTime}`}
         actions={
           <div className="lg:hidden w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-semibold text-sm">
-            {currentUser.initials}
+            {MOCK_USER.initials}
           </div>
         }
       />
