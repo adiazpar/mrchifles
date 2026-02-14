@@ -21,15 +21,16 @@ import {
 } from '@/components/icons'
 import { formatCurrency, formatDate, formatTime, getGreeting } from '@/lib/utils'
 import {
-  MOCK_USER,
   INITIAL_STATS,
   MOCK_INVENTORY,
   WEEKLY_SALES,
   PAYMENT_BREAKDOWN,
   TOP_PRODUCTS,
 } from '@/lib/mock-data'
+import { useAuth } from '@/contexts/auth-context'
 
 export default function InicioPage() {
+  const { user } = useAuth()
   const [greeting, setGreeting] = useState(getGreeting())
   const [currentDate, setCurrentDate] = useState('')
   const [currentTime, setCurrentTime] = useState('')
@@ -67,13 +68,8 @@ export default function InicioPage() {
   return (
     <div className="min-h-screen">
       <PageHeader
-        title={`${greeting}, ${MOCK_USER.name.split(' ')[0]}!`}
+        title={`${greeting}, ${user?.name.split(' ')[0] || ''}!`}
         subtitle={`${currentDate} - ${currentTime}`}
-        actions={
-          <div className="lg:hidden w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-semibold text-sm">
-            {MOCK_USER.initials}
-          </div>
-        }
       />
 
       {/* Main content */}
