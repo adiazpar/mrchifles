@@ -118,18 +118,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [setupComplete, setSetupComplete] = useState(true) // Default true to avoid flash
   const [isCheckingSetup, setIsCheckingSetup] = useState(true)
 
-  // Check setup state on mount
+  // Check setup state on mount - verify if owner exists
   useEffect(() => {
     const checkSetup = async () => {
       try {
-        // app_config has public read access
-        const configs = await pb.collection('app_config').getList(1, 1)
-        if (configs.items.length > 0) {
-          setSetupComplete(configs.items[0].setupComplete === true)
-        } else {
-          // No config record means fresh install
-          setSetupComplete(false)
-        }
+        // Use server-side API to check if owner exists
+        // This avoids client-side auth restrictions
+        const response = await fetch('/api/setup-status')
+        const data = await response.json()
+        setSetupComplete(data.ownerExists === true)
       } catch (error) {
         console.error('Error checking setup state:', error)
         // On error, assume setup is complete to avoid blocking existing users
@@ -140,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     checkSetup()
-  }, [pb])
+  }, [])
 
   // Hydrate auth state from PocketBase on mount and validate with server
   useEffect(() => {
