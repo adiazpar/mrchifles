@@ -142,18 +142,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkSetup()
   }, [pb])
 
-  // Hydrate auth state from PocketBase on mount
+  // Hydrate auth state from PocketBase on mount and validate with server
   useEffect(() => {
-    const authData = pb.authStore.model
-    if (authData && pb.authStore.isValid) {
-      setUser(authData as User)
+    const validateAuth = async () => {
+      // Check if we have a stored token
+      if (pb.authStore.model && pb.authStore.isValid) {
+        try {
+          // Validate token with server - this will fail if user was deleted
+          const authData = await pb.collection('users').authRefresh()
+          setUser(authData.record as unknown as User)
+        } catch {
+          // Token is invalid or user was deleted - clear auth state
+          console.warn('Auth token invalid or user deleted, clearing session')
+          pb.authStore.clear()
+          setUser(null)
+          clearRememberedEmailStorage()
+          setDeviceTrusted(false)
+        }
+      }
+
+      // Check if this device is trusted (has remembered email)
+      const rememberedEmail = getRememberedEmail()
+      setDeviceTrusted(!!rememberedEmail && pb.authStore.isValid)
+
+      setIsLoading(false)
     }
 
-    // Check if this device is trusted (has remembered email)
-    const rememberedEmail = getRememberedEmail()
-    setDeviceTrusted(!!rememberedEmail && pb.authStore.isValid)
-
-    setIsLoading(false)
+    validateAuth()
 
     // Listen for auth changes
     const unsubscribe = pb.authStore.onChange((token, model) => {
