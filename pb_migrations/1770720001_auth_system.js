@@ -139,6 +139,20 @@ migrate((app) => {
         name: 'used',
         type: 'bool',
         required: false,
+      },
+      {
+        id: "iccreated001",
+        name: 'created',
+        type: 'autodate',
+        onCreate: true,
+        onUpdate: false,
+      },
+      {
+        id: "icupdated001",
+        name: 'updated',
+        type: 'autodate',
+        onCreate: true,
+        onUpdate: true,
       }
     ],
     indexes: [
