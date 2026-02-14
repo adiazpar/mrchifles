@@ -252,10 +252,10 @@ export default function TeamPage() {
               <button
                 type="button"
                 onClick={handleOpenModal}
-                className="btn btn-secondary btn-sm flex items-center gap-2"
+                className="btn btn-secondary btn-sm p-2"
+                aria-label="Agregar miembro"
               >
                 <AddIcon className="w-5 h-5" />
-                <span>Agregar</span>
               </button>
             )}
           </div>
