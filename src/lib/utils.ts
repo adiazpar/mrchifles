@@ -24,6 +24,7 @@ export function formatDate(date: Date | string): string {
 
 /**
  * Format time in 12-hour format
+ * Fixes es-PE locale quirk: "1:30 a. m." -> "1:30 a.m."
  */
 export function formatTime(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date
@@ -33,6 +34,21 @@ export function formatTime(date: Date | string): string {
     hour12: true,
     timeZone: 'America/Lima',
   }).format(d)
+    .replace(/a\.\s*m\./gi, 'a.m.')
+    .replace(/p\.\s*m\./gi, 'p.m.')
+}
+
+/**
+ * Get time-of-day greeting in Spanish
+ * 6am-12pm: Buenos dias
+ * 12pm-6pm: Buenas tardes
+ * 6pm-6am: Buenas noches
+ */
+export function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour >= 6 && hour < 12) return 'Buenos dias'
+  if (hour >= 12 && hour < 18) return 'Buenas tardes'
+  return 'Buenas noches'
 }
 
 /**

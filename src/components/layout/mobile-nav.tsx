@@ -2,22 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { IconHome, IconSales, IconProducts, IconCashDrawer, IconUsers } from '@/components/icons'
-
-const navItems = [
-  { href: '/inicio', label: 'Inicio', icon: IconHome },
-  { href: '/ventas', label: 'Ventas', icon: IconSales },
-  { href: '/productos', label: 'Productos', icon: IconProducts },
-  { href: '/caja', label: 'Caja', icon: IconCashDrawer },
-  { href: '/ajustes/equipo', label: 'Equipo', icon: IconUsers },
-]
+import { MOBILE_NAV_ITEMS } from '@/lib/navigation'
 
 export function MobileNav() {
   const pathname = usePathname()
 
   return (
     <nav className="mobile-nav">
-      {navItems.map((item) => {
+      {MOBILE_NAV_ITEMS.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
         const Icon = item.icon
 

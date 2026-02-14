@@ -3,26 +3,10 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import {
-  IconHome,
-  IconSales,
-  IconProducts,
-  IconCashDrawer,
-  IconInventory,
-  IconSettings,
-  IconLogout,
-} from '@/components/icons'
+import { IconLogout } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { getUserInitials, getRoleLabel } from '@/lib/auth'
-
-const navItems = [
-  { href: '/inicio', label: 'Inicio', icon: IconHome },
-  { href: '/ventas', label: 'Ventas', icon: IconSales },
-  { href: '/productos', label: 'Productos', icon: IconProducts },
-  { href: '/caja', label: 'Caja', icon: IconCashDrawer },
-  { href: '/inventario', label: 'Inventario', icon: IconInventory },
-  { href: '/ajustes/equipo', label: 'Equipo', icon: IconSettings },
-]
+import { NAV_ITEMS } from '@/lib/navigation'
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -50,7 +34,7 @@ export function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        {navItems.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
           const Icon = item.icon
 

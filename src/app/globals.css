@@ -219,10 +219,12 @@
     transition: color var(--transition-fast);
   }
 
-  a:hover {
-    color: var(--color-brand-hover);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+  @media (hover: hover) {
+    a:hover {
+      color: var(--color-brand-hover);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
   }
 
   button {
@@ -292,10 +294,12 @@
   }
 
   /* Luminance shift hover (NOT translateY) */
-  .btn:hover:not(:disabled) {
-    filter: brightness(0.92);
-    text-decoration: none;
-    color: inherit;
+  @media (hover: hover) {
+    .btn:hover:not(:disabled) {
+      filter: brightness(0.92);
+      text-decoration: none;
+      color: inherit;
+    }
   }
 
   .btn:active:not(:disabled) {
@@ -314,8 +318,10 @@
     color: white;
   }
 
-  .btn-primary:hover:not(:disabled) {
-    color: white;
+  @media (hover: hover) {
+    .btn-primary:hover:not(:disabled) {
+      color: white;
+    }
   }
 
   .btn-secondary {
@@ -324,11 +330,13 @@
     border: 1.5px solid var(--color-border);
   }
 
-  .btn-secondary:hover:not(:disabled) {
-    border-color: var(--color-brand);
-    background: var(--color-brand-subtle);
-    color: var(--color-text-primary);
-    filter: none;
+  @media (hover: hover) {
+    .btn-secondary:hover:not(:disabled) {
+      border-color: var(--color-brand);
+      background: var(--color-brand-subtle);
+      color: var(--color-text-primary);
+      filter: none;
+    }
   }
 
   .btn-ghost {
@@ -336,10 +344,12 @@
     color: var(--color-text-secondary);
   }
 
-  .btn-ghost:hover:not(:disabled) {
-    background: var(--color-bg-muted);
-    color: var(--color-text-primary);
-    filter: none;
+  @media (hover: hover) {
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--color-bg-muted);
+      color: var(--color-text-primary);
+      filter: none;
+    }
   }
 
   .btn-danger {
@@ -399,8 +409,10 @@
     color: var(--color-text-tertiary);
   }
 
-  .input:hover:not(:disabled):not(:focus) {
-    border-color: var(--color-border-hover);
+  @media (hover: hover) {
+    .input:hover:not(:disabled):not(:focus) {
+      border-color: var(--color-border-hover);
+    }
   }
 
   .input:focus {
@@ -497,8 +509,10 @@
   }
 
   /* Border color change on hover (NOT shadow/lift) */
-  .card-interactive:hover {
-    border-color: var(--brand-300);
+  @media (hover: hover) {
+    .card-interactive:hover {
+      border-color: var(--brand-300);
+    }
   }
 
   .card-padding {
@@ -649,10 +663,12 @@
   }
 
   /* Nav item hover: background fill + color change */
-  .sidebar-nav-item:hover {
-    background: var(--color-bg-muted);
-    color: var(--color-text-primary);
-    text-decoration: none;
+  @media (hover: hover) {
+    .sidebar-nav-item:hover {
+      background: var(--color-bg-muted);
+      color: var(--color-text-primary);
+      text-decoration: none;
+    }
   }
 
   .sidebar-nav-item.active {
@@ -681,8 +697,10 @@
     cursor: pointer;
   }
 
-  .sidebar-user:hover {
-    background: var(--color-bg-muted);
+  @media (hover: hover) {
+    .sidebar-user:hover {
+      background: var(--color-bg-muted);
+    }
   }
 
   .sidebar-user-avatar {
@@ -754,9 +772,14 @@
     min-height: var(--touch-target-min);
   }
 
-  .mobile-nav-item:hover,
   .mobile-nav-item.active {
     color: var(--color-brand);
+  }
+
+  @media (hover: hover) {
+    .mobile-nav-item:hover {
+      color: var(--color-brand);
+    }
   }
 
   .mobile-nav-icon {
@@ -848,8 +871,10 @@
   }
 
   /* Border color change on hover (NOT lift/shadow) */
-  .product-card:hover {
-    border-color: var(--brand-300);
+  @media (hover: hover) {
+    .product-card:hover {
+      border-color: var(--brand-300);
+    }
   }
 
   .product-card:active {
@@ -914,8 +939,10 @@
     margin-bottom: var(--space-2);
   }
 
-  .cart-item:hover {
-    background: var(--color-bg-muted);
+  @media (hover: hover) {
+    .cart-item:hover {
+      background: var(--color-bg-muted);
+    }
   }
 
   .cart-item-info {
@@ -955,9 +982,11 @@
     transition: background var(--transition-fast), color var(--transition-fast);
   }
 
-  .cart-item-qty-btn:hover {
-    background: var(--color-brand-subtle);
-    color: var(--color-brand);
+  @media (hover: hover) {
+    .cart-item-qty-btn:hover {
+      background: var(--color-brand-subtle);
+      color: var(--color-brand);
+    }
   }
 
   .cart-item-qty-value {
@@ -1022,8 +1051,10 @@
     color: white;
   }
 
-  .payment-btn:hover {
-    filter: brightness(0.92);
+  @media (hover: hover) {
+    .payment-btn:hover {
+      filter: brightness(0.92);
+    }
   }
 
   .payment-btn:active {
@@ -1226,8 +1257,10 @@
     transition: background var(--transition-fast);
   }
 
-  .table tbody tr:hover {
-    background: var(--color-bg-muted);
+  @media (hover: hover) {
+    .table tbody tr:hover {
+      background: var(--color-bg-muted);
+    }
   }
 
   /* ===== Spinner ===== */
@@ -1283,10 +1316,12 @@
     min-height: 80px;
   }
 
-  .quick-action:hover {
-    border-color: var(--color-brand);
-    background: var(--color-brand-subtle);
-    text-decoration: none;
+  @media (hover: hover) {
+    .quick-action:hover {
+      border-color: var(--color-brand);
+      background: var(--color-brand-subtle);
+      text-decoration: none;
+    }
   }
 
   .quick-action-icon {
@@ -1302,9 +1337,11 @@
     transition: background var(--transition-fast), color var(--transition-fast);
   }
 
-  .quick-action:hover .quick-action-icon {
-    background: var(--color-brand);
-    color: white;
+  @media (hover: hover) {
+    .quick-action:hover .quick-action-icon {
+      background: var(--color-brand);
+      color: white;
+    }
   }
 
   .quick-action-label {
@@ -1453,9 +1490,11 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .pin-key:hover:not(:disabled) {
-    background: var(--color-bg-muted);
-    border-color: var(--color-border-hover);
+  @media (hover: hover) {
+    .pin-key:hover:not(:disabled) {
+      background: var(--color-bg-muted);
+      border-color: var(--color-border-hover);
+    }
   }
 
   .pin-key:active:not(:disabled) {
