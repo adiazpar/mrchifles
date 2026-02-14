@@ -735,6 +735,27 @@
     color: var(--color-text-tertiary);
   }
 
+  /* Interactive user profile (button reset) */
+  .sidebar-user-interactive {
+    border: none;
+    background: transparent;
+    font-family: inherit;
+  }
+
+  /* ===== Mobile User Menu ===== */
+  .mobile-user-menu {
+    position: fixed;
+    top: var(--space-4);
+    right: var(--space-4);
+    z-index: var(--z-sticky);
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-user-menu {
+      display: none;
+    }
+  }
+
   /* ===== Mobile Bottom Navigation ===== */
   .mobile-nav {
     position: fixed;

@@ -2,21 +2,12 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
-import { IconLogout } from '@/components/icons'
-import { useAuth } from '@/contexts/auth-context'
-import { getUserInitials, getRoleLabel } from '@/lib/auth'
+import { usePathname } from 'next/navigation'
 import { NAV_ITEMS } from '@/lib/navigation'
+import { UserMenu } from './user-menu'
 
 export function Sidebar() {
   const pathname = usePathname()
-  const router = useRouter()
-  const { user, logout } = useAuth()
-
-  const handleLogout = () => {
-    logout()
-    router.push('/login')
-  }
 
   return (
     <aside className="sidebar">
@@ -52,25 +43,7 @@ export function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        {/* User info */}
-        {user && (
-          <div className="sidebar-user">
-            <div className="sidebar-user-avatar">{getUserInitials(user.name)}</div>
-            <div className="sidebar-user-info">
-              <div className="sidebar-user-name">{user.name}</div>
-              <div className="sidebar-user-role">{getRoleLabel(user.role)}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Logout button */}
-        <button
-          onClick={handleLogout}
-          className="sidebar-nav-item w-full mt-2 text-error"
-        >
-          <IconLogout className="sidebar-nav-icon" />
-          <span>Cerrar sesion</span>
-        </button>
+        <UserMenu variant="sidebar" />
       </div>
     </aside>
   )

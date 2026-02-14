@@ -3,12 +3,6 @@
  * This will be replaced with real data from PocketBase
  */
 
-// Mock user data - will be replaced with auth context
-export const MOCK_USER = {
-  name: 'Arturo Diaz',
-  initials: 'AD',
-}
-
 // Initial stats for dashboard
 export const INITIAL_STATS = {
   todaySales: 1250.0,
