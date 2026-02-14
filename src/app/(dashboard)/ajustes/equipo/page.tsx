@@ -40,31 +40,27 @@ function AddIcon({ className = '' }: { className?: string }) {
   )
 }
 
-// Modal component
+// Modal component using global CSS styles
 function Modal({
   isOpen,
   onClose,
   title,
-  children
+  children,
+  footer
 }: {
   isOpen: boolean
   onClose: () => void
   title: string
   children: React.ReactNode
+  footer?: React.ReactNode
 }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-      />
-      {/* Modal content */}
-      <div className="relative bg-bg-primary rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display font-bold text-xl">{title}</h2>
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">{title}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -75,7 +71,14 @@ function Modal({
             </svg>
           </button>
         </div>
-        {children}
+        <div className="modal-body">
+          {children}
+        </div>
+        {footer && (
+          <div className="modal-footer">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -249,7 +252,7 @@ export default function TeamPage() {
               <button
                 type="button"
                 onClick={handleOpenModal}
-                className="btn btn-primary btn-sm flex items-center gap-2"
+                className="btn btn-secondary btn-sm flex items-center gap-2"
               >
                 <AddIcon className="w-5 h-5" />
                 <span>Agregar</span>
@@ -346,6 +349,26 @@ export default function TeamPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title="Agregar miembro"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="btn btn-secondary flex-1"
+            >
+              Cerrar
+            </button>
+            {newCode && (
+              <button
+                type="button"
+                onClick={() => setNewCode(null)}
+                className="btn btn-primary flex-1"
+              >
+                Generar otro
+              </button>
+            )}
+          </>
+        }
       >
         <div className="space-y-4">
           <div>
@@ -406,25 +429,6 @@ export default function TeamPage() {
               </p>
             </div>
           )}
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              className="btn btn-secondary flex-1"
-            >
-              Cerrar
-            </button>
-            {newCode && (
-              <button
-                type="button"
-                onClick={() => setNewCode(null)}
-                className="btn btn-primary flex-1"
-              >
-                Generar otro
-              </button>
-            )}
-          </div>
         </div>
       </Modal>
     </>
