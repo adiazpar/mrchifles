@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { PageHeader } from '@/components/layout'
+import { PageHeader, UserMenu } from '@/components/layout'
 import { Card } from '@/components/ui'
 import {
   Sparkline,
@@ -70,6 +70,7 @@ export default function InicioPage() {
       <PageHeader
         title={`${greeting}, ${user?.name.split(' ')[0] || ''}!`}
         subtitle={`${currentDate} - ${currentTime}`}
+        actions={<UserMenu variant="mobile" />}
       />
 
       {/* Main content */}
