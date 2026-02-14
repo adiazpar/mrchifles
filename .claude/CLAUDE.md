@@ -733,6 +733,36 @@ This project supports two development modes with a **unified configuration**:
 | PocketBase API | http://100.113.9.34:8090/api/ |
 | PocketBase Admin | http://100.113.9.34:8090/_/ (or http://127.0.0.1:8090/_/) |
 
+### Development Server Management (Claude Agents)
+
+**CRITICAL:** Only use `npm run dev:all` to run development servers. This command uses `concurrently` to manage both Next.js and PocketBase in a single process tree.
+
+**Starting Development:**
+```bash
+npm run dev:all
+```
+Run this as a single background task. Do NOT start Next.js and PocketBase separately.
+
+**Stopping Development:**
+Kill the single `dev:all` background task. Do NOT use `pkill` to kill individual processes - this corrupts the `.next` cache.
+
+**Resetting Database (when migrations change):**
+```bash
+# 1. Stop the dev:all background task first
+# 2. Reset database and restart:
+npm run db:reset && npm run dev:all
+```
+
+**If `.next` cache becomes corrupted (404 errors, MIME type errors):**
+```bash
+rm -rf .next && npm run dev:all
+```
+
+**Why this matters:**
+- Using `pkill` to kill Next.js abruptly corrupts `.next` cache
+- Running multiple background tasks creates orphan processes
+- `concurrently` properly manages child process cleanup
+
 ### Database Migration Workflow
 
 When working on database migrations (files in `pb_migrations/`), agents MUST run `npm run db:reset` after completing the migration work. This command:
@@ -752,7 +782,7 @@ npm run db:reset
 When modifying the database schema:
 1. Update the migration file(s) in `pb_migrations/`
 2. Update TypeScript types in `src/types/index.ts` to match
-3. Run `npm run db:reset` to apply changes
+3. Stop `dev:all`, run `npm run db:reset`, then restart `dev:all`
 
 ### Quick Start
 
