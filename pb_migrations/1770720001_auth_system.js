@@ -57,14 +57,15 @@ migrate((app) => {
   // - Users can only view their own record
   // - Owners can view all users (needed for team management)
   // - This prevents employees from seeing other users' PIN hashes
-  users.listRule = "@request.auth.id = id || @request.auth.role = 'owner'"
-  users.viewRule = "@request.auth.id = id || @request.auth.role = 'owner'"
+  // Note: Use ?= for safe comparison that returns false instead of error when field is null
+  users.listRule = '@request.auth.id = id || @request.auth.role ?= "owner"'
+  users.viewRule = '@request.auth.id = id || @request.auth.role ?= "owner"'
 
   // Restrict user updates:
   // - Users can only update their own record
   // - Owners can update any user (needed for status changes)
   // - Server-side hook enforces that only owners can change role/status of others
-  users.updateRule = "@request.auth.id = id || @request.auth.role = 'owner'"
+  users.updateRule = '@request.auth.id = id || @request.auth.role ?= "owner"'
 
   // User creation is handled by PocketBase auth - server-side hook enforces owner uniqueness
 
@@ -84,11 +85,12 @@ migrate((app) => {
     // - create/delete: Only owners can manage invite codes
     // - update: Authenticated users can mark as used (after registration creates their account)
     // Note: Invite validation during registration uses server-side /api/validate-invite endpoint
-    listRule: "@request.auth.role = 'owner'",
-    viewRule: "@request.auth.role = 'owner'",
-    createRule: "@request.auth.role = 'owner'",
-    updateRule: "@request.auth.id != ''",  // Allow authenticated users to mark as used
-    deleteRule: "@request.auth.role = 'owner'",
+    // Note: Rules must check auth.id first to ensure user is authenticated before checking custom fields
+    listRule: '@request.auth.role ?= "owner"',
+    viewRule: '@request.auth.role ?= "owner"',
+    createRule: '@request.auth.role ?= "owner"',
+    updateRule: '@request.auth.id != ""',  // Allow authenticated users to mark as used
+    deleteRule: '@request.auth.role ?= "owner"',
     fields: [
       {
         id: "iccode000001",
@@ -158,8 +160,8 @@ migrate((app) => {
     listRule: "",
     viewRule: "",
     // Only authenticated owners can modify
-    createRule: "@request.auth.role = 'owner'",
-    updateRule: "@request.auth.role = 'owner'",
+    createRule: '@request.auth.role ?= "owner"',
+    updateRule: '@request.auth.role ?= "owner"',
     deleteRule: null, // No one can delete
     fields: [
       {
