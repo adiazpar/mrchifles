@@ -198,12 +198,20 @@ onRecordUpdate((e) => {
 }, "users")
 
 // ============================================
-// LOGGING (Optional - for monitoring)
+// BLOCK DISABLED USERS FROM LOGGING IN
 // ============================================
 
-// Log successful password auth (useful for security monitoring)
+// Check user status before allowing password auth
 onRecordAuthWithPasswordRequest((e) => {
-  console.log(`[SECURITY] Password auth: ${e.record.email}`)
+  const status = e.record.get("status")
+
+  // Block disabled users from logging in
+  if (status === "disabled") {
+    console.log(`[SECURITY] Blocked login attempt for disabled user: ${e.record.get("email")}`)
+    throw new BadRequestError("Tu cuenta ha sido deshabilitada. Contacta al propietario.")
+  }
+
+  console.log(`[SECURITY] Password auth: ${e.record.get("email")}`)
   e.next()
 }, "users")
 

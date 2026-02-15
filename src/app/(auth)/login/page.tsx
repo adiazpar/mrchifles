@@ -99,10 +99,13 @@ export default function LoginPage() {
         router.push('/inicio')
       } catch (err) {
         console.error('Login error:', err)
-        // Handle PocketBase error
+        // Handle PocketBase error - check for custom message from server
         if (err && typeof err === 'object' && 'status' in err) {
-          const pbErr = err as { status: number }
-          if (pbErr.status === 400) {
+          const pbErr = err as { status: number; message?: string }
+          // Check if server sent a custom error message (e.g., "disabled account")
+          if (pbErr.message && pbErr.message.includes('deshabilitada')) {
+            setError(pbErr.message)
+          } else if (pbErr.status === 400) {
             setError('Email o contrasena incorrectos')
           } else {
             setError('Error al iniciar sesion')
