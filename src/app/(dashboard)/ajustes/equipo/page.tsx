@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Card, Badge, Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
 import { useAuth } from '@/contexts/auth-context'
@@ -143,6 +143,20 @@ export default function TeamPage() {
     }
   }, [pb, canManageTeam])
 
+  // Sort team members: owner first, then partners, then employees
+  const sortedTeamMembers = useMemo(() => {
+    const roleOrder: Record<string, number> = {
+      owner: 0,
+      partner: 1,
+      employee: 2,
+    }
+    return [...teamMembers].sort((a, b) => {
+      const orderA = roleOrder[a.role] ?? 99
+      const orderB = roleOrder[b.role] ?? 99
+      return orderA - orderB
+    })
+  }, [teamMembers])
+
   const handleGenerateCode = useCallback(async () => {
     if (!user) return
 
@@ -280,7 +294,7 @@ export default function TeamPage() {
           </div>
 
           <div className="space-y-3">
-            {teamMembers.map(member => (
+            {sortedTeamMembers.map(member => (
               <div
                 key={member.id}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-muted transition-colors"
