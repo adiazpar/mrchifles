@@ -98,7 +98,6 @@ export default function LoginPage() {
         await loginWithPassword(email.trim(), password)
         router.push('/inicio')
       } catch (err) {
-        console.error('Login error:', err)
         // Handle PocketBase error - check for custom message from server
         if (err && typeof err === 'object' && 'status' in err) {
           const pbErr = err as { status: number; message?: string }

@@ -268,7 +268,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setDeviceTrusted(true)
       setSessionState(prev => resetPinAttempts(prev))
     } catch (error) {
-      console.error('Login failed:', error)
+      // Don't log expected errors (disabled account, wrong password) as errors
+      const pbError = error as { status?: number; message?: string }
+      if (pbError.message?.includes('deshabilitada')) {
+        console.warn('Login blocked: account disabled')
+      } else {
+        console.warn('Login failed:', pbError.status || 'unknown')
+      }
       throw error
     }
   }, [pb])
