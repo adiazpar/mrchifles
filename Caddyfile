@@ -1,0 +1,47 @@
+# Caddyfile for Mr. Chifles Production Server
+# Copy this to /etc/caddy/Caddyfile and replace "yourdomain.com" with your actual domain
+#
+# Caddy automatically:
+# - Obtains and renews SSL certificates via Let's Encrypt
+# - Redirects HTTP to HTTPS
+# - Handles certificate renewals
+
+yourdomain.com {
+    # PocketBase API endpoints
+    handle /api/* {
+        reverse_proxy localhost:8090
+    }
+
+    # PocketBase Admin UI
+    handle /_/* {
+        reverse_proxy localhost:8090
+    }
+
+    # Next.js app (everything else)
+    handle {
+        reverse_proxy localhost:3000
+    }
+
+    # Security headers
+    header {
+        # Prevent clickjacking
+        X-Frame-Options "SAMEORIGIN"
+        # Prevent MIME type sniffing
+        X-Content-Type-Options "nosniff"
+        # Enable XSS filter
+        X-XSS-Protection "1; mode=block"
+        # Referrer policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Logging (optional - comment out if not needed)
+    log {
+        output file /var/log/caddy/mrchifles.log
+        format json
+    }
+}
+
+# Optional: www redirect to non-www
+www.yourdomain.com {
+    redir https://yourdomain.com{uri} permanent
+}

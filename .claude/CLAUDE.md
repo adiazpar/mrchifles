@@ -16,24 +16,59 @@ A web-based business management system for a small Chifles (traditional Peruvian
 
 ## Tech Stack
 
-| Layer | Technology | Justification |
-|-------|------------|---------------|
-| **Server** | Hetzner VPS (CX22) | €3.49/mo, 2GB RAM, always on, no cold starts |
-| **Backend** | PocketBase | SQLite + Auth + Files + Realtime in single binary |
-| **Frontend** | Next.js 14+ (App Router) | React, SSR, great mobile support |
-| **Language** | TypeScript | Type safety for financial data |
-| **Styling** | Tailwind CSS | Rapid UI development, responsive design |
-| **Database** | SQLite (via PocketBase) | Simple, fast, reliable for this scale |
-| **Reverse Proxy** | Caddy | Automatic HTTPS, simple config |
+| Layer | Technology | Status | Notes |
+|-------|------------|--------|-------|
+| **Frontend Hosting** | Vercel (Free) | USING | Hosts Next.js app, global CDN, auto HTTPS |
+| **Backend Hosting** | PocketHost ($5/mo) | USING | Managed PocketBase hosting |
+| **Frontend** | Next.js 15+ (App Router) | USING | React, SSR, great mobile support |
+| **Backend** | PocketBase | USING | SQLite + Auth + Files + Realtime |
+| **Language** | TypeScript | USING | Type safety for financial data |
+| **Styling** | Tailwind CSS | USING | Rapid UI development, responsive design |
+| **Database** | SQLite (via PocketBase) | USING | Simple, fast, reliable for this scale |
+| **Domain** | Namecheap | USING | ~$10-13/year for .com domain |
+
+### What We're NOT Using
+
+| Technology | Why Not |
+|------------|---------|
+| ~~Vultr VPS~~ | Free tier is sufficient for 3 users |
+| ~~Caddy~~ | Vercel/PocketHost handle HTTPS automatically |
+| ~~Cloudflare~~ | Vercel has built-in CDN |
+| ~~PM2~~ | No server to manage |
+| ~~setup-server.sh~~ | No server to set up |
 
 ### Why This Stack?
 
-1. **Always On**: No cold starts, no pausing, no free tier limits
-2. **Simple**: One server, one database file, one deployment
-3. **Cheap**: ~€3.49/month total for everything
-4. **Reliable**: SQLite handles thousands of writes/second
-5. **Backups**: Just copy the SQLite file
-6. **Full Control**: No vendor lock-in
+1. **Low Cost**: ~$5/month for hosting + domain
+2. **Zero Server Management**: No VPS to maintain, update, or secure
+3. **Simple Deployment**: `git push` deploys automatically
+4. **Good Enough Latency**: ~66ms from Lima to Vercel (Washington DC)
+5. **Reliable**: Managed services handle uptime
+6. **Easy Migration**: Can upgrade to self-hosted later if needed
+
+### Latency Reality Check
+
+Based on [Zenlayer's measured data](https://www.zenlayer.com/public-latency-table-dmd/):
+
+| Route | Latency | Stack |
+|-------|---------|-------|
+| Lima → Santiago | 30ms | Self-hosted (Vultr) |
+| Lima → Washington DC | 66ms | **Free tier (Vercel)** |
+| Lima → São Paulo | 71ms | Vercel (if configured) |
+
+The 36ms difference is minimal for a POS app. Free tier is fine for 3 users.
+
+### Trade-offs: Managed vs Self-Hosted
+
+| Aspect | Managed (Current) | Self-Hosted |
+|--------|-------------------|-------------|
+| **Cost** | ~$6/month | ~$7/month |
+| **Latency** | ~66ms | ~30ms |
+| **Cold starts** | Possible after inactivity | None |
+| **Control** | Limited | Full |
+| **Maintenance** | Zero | Some |
+
+**Upgrade path:** If latency or cold starts become annoying, migrate to Vultr Santiago for ~$1/month more.
 
 ### Key Dependencies
 
@@ -442,8 +477,7 @@ PocketBase uses collections instead of traditional ORM models. The schema is int
 ├── public/
 │   ├── icons/                # PWA icons
 │   └── ...
-├── Caddyfile                  # Caddy reverse proxy config
-├── docker-compose.yml         # Optional: containerized deployment
+├── Caddyfile                  # (Optional) For self-hosted deployment
 ├── package.json
 ├── tailwind.config.js
 └── tsconfig.json
@@ -454,78 +488,132 @@ PocketBase uses collections instead of traditional ORM models. The schema is int
 ## Deployment Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                 Hetzner VPS (CX22)                  │
-│                 €3.49/month                         │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│   ┌─────────────┐     ┌─────────────────────────┐  │
-│   │   Caddy     │────▶│      Next.js App        │  │
-│   │  (HTTPS)    │     │     (Port 3000)         │  │
-│   │  Port 443   │     └─────────────────────────┘  │
-│   │             │                                   │
-│   │             │     ┌─────────────────────────┐  │
-│   │             │────▶│     PocketBase          │  │
-│   │             │     │     (Port 8090)         │  │
-│   └─────────────┘     │                         │  │
-│                       │  ┌───────────────────┐  │  │
-│                       │  │   SQLite DB       │  │  │
-│                       │  │   (pb_data/)      │  │  │
-│                       │  └───────────────────┘  │  │
-│                       └─────────────────────────┘  │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                           YOUR BROWSER                              │
+│                     (Phone/Desktop in Lima)                         │
+└─────────────────────────────────────────────────────────────────────┘
+                          │                    │
+                          │ ~66ms              │ ~66ms
+                          ▼                    ▼
+┌─────────────────────────────────┐  ┌─────────────────────────────────┐
+│         VERCEL (Free)           │  │      POCKETHOST ($5/mo)         │
+│      mrchifles.vercel.app       │  │    mrchifles.pockethost.io      │
+│                                 │  │                                 │
+│  ┌───────────────────────────┐  │  │  ┌───────────────────────────┐  │
+│  │      Next.js App          │  │  │  │      PocketBase           │  │
+│  │   (React, TypeScript)     │  │  │  │   (Auth, API, Realtime)   │  │
+│  └───────────────────────────┘  │  │  └───────────────────────────┘  │
+│                                 │  │                                 │
+│  - Global CDN                   │  │  ┌───────────────────────────┐  │
+│  - Auto HTTPS                   │  │  │      SQLite Database      │  │
+│  - Auto deployments from Git    │  │  │      (managed backups)    │  │
+│                                 │  │  └───────────────────────────┘  │
+└─────────────────────────────────┘  └─────────────────────────────────┘
 ```
 
-### Caddyfile Example
+### How It Works
+
+1. **Frontend (Vercel)**: Hosts your Next.js app. Auto-deploys when you push to GitHub.
+2. **Backend (PocketHost)**: Hosts PocketBase with your database. Accessed directly from browser.
+3. **No server to manage**: Both services handle scaling, HTTPS, and uptime.
+
+### Deployment Workflow
+
 ```
-chifles.example.com {
-    handle /api/* {
-        reverse_proxy localhost:8090
-    }
-    handle /_/* {
-        reverse_proxy localhost:8090
-    }
-    handle {
-        reverse_proxy localhost:3000
-    }
-}
+┌──────────────┐     git push     ┌──────────────┐     auto-deploy    ┌──────────────┐
+│  Your Mac    │ ───────────────► │    GitHub    │ ─────────────────► │    Vercel    │
+│ (write code) │                  │ (repository) │                    │  (live app)  │
+└──────────────┘                  └──────────────┘                    └──────────────┘
 ```
+
+**To deploy changes:**
+```bash
+git add .
+git commit -m "Your changes"
+git push
+```
+
+That's it. Vercel auto-deploys in ~30 seconds.
+
+### Environment Variables
+
+**In Vercel Dashboard** (Settings → Environment Variables):
+```
+NEXT_PUBLIC_POCKETBASE_URL=https://mrchifles.pockethost.io
+```
+
+**In PocketHost Dashboard**:
+- Create your instance at pockethost.io
+- Note your instance URL (e.g., `mrchifles.pockethost.io`)
+
+### Custom Domain Setup (Optional)
+
+To use `mrchifles.com` instead of `mrchifles.vercel.app`:
+
+1. **In Vercel**: Settings → Domains → Add `mrchifles.com`
+2. **In Namecheap**: Add DNS records Vercel provides
+3. Vercel handles HTTPS automatically
 
 ### Backup Strategy
-```bash
-# Daily backup cron job
-0 3 * * * cp /path/to/pb_data/data.db /backups/data_$(date +\%Y\%m\%d).db
+
+PocketHost includes automatic backups. You can also:
+1. Export data from PocketHost dashboard
+2. Download your SQLite database periodically
+
+### Cost Summary
+
+| Item | Cost | Frequency |
+|------|------|-----------|
+| Vercel Hosting | Free | - |
+| PocketHost Hosting | $5.00 | Monthly |
+| Domain (.com via Namecheap) | ~$10-13 | Yearly |
+| SSL Certificates | Free | Automatic |
+| **Total Year 1** | **~$70-73** | (~$6/month) |
+| **Total Year 2+** | **~$75-78** | (~$6.50/month, higher renewal) |
+
+### Upgrade Path (If Needed Later)
+
+If free tier limitations become a problem:
+
+| Issue | Solution | Cost |
+|-------|----------|------|
+| Cold starts annoying | Upgrade to Vercel Pro | $20/mo |
+| Need more PocketHost resources | Upgrade PocketHost plan | $5/mo |
+| Want full control | Self-host on Vultr Santiago | $7/mo |
+
+---
+
+## Self-Hosted Alternative (Optional)
+
+<details>
+<summary>Click to expand self-hosted setup (Vultr + Caddy)</summary>
+
+If you later decide to self-host for lower latency (~30ms vs ~66ms):
+
+### Architecture
+```
+Vultr VPS (Santiago, Chile) - $6/mo
+├── Caddy (reverse proxy, auto HTTPS)
+├── Next.js (port 3000)
+└── PocketBase (port 8090)
 ```
 
-### Production Deployment
-
-**One command to deploy:**
+### Setup
 ```bash
+ssh root@<vultr-ip>
+curl -fsSL https://raw.githubusercontent.com/adiazpar/mrchifles/main/scripts/setup-server.sh | bash
+```
+
+### Deploy
+```bash
+ssh root@<vultr-ip>
+cd /var/www/mrchifles
 npm run deploy
 ```
 
-This single command:
-1. Pulls latest code from git
-2. Installs dependencies
-3. Runs database migrations (preserves data)
-4. Builds Next.js
-5. Restarts servers with PM2
+See `scripts/setup-server.sh` and `Caddyfile` in this repo.
 
-**First-time server setup:**
-```bash
-# SSH into your new Hetzner VPS, then:
-bash scripts/setup-server.sh
-```
-
-This installs Node.js, PM2, Caddy, clones the repo, and downloads PocketBase.
-
-**PM2 commands (if needed):**
-```bash
-pm2 status     # Check status
-pm2 logs       # View logs
-pm2 restart all  # Manual restart
-```
+</details>
 
 ---
 
@@ -868,13 +956,20 @@ For production, see the Deployment Architecture section.
 | **Zod** | [zod.dev](https://zod.dev/) | [API](https://zod.dev/?id=basic-usage) |
 | **date-fns** | [date-fns.org/docs](https://date-fns.org/docs/Getting-Started) | [Functions](https://date-fns.org/docs/Getting-Started) |
 
-### Deployment & Infrastructure
+### Deployment & Infrastructure (Free Tier)
 
 | Service | Documentation |
 |---------|---------------|
-| **Hetzner Cloud** | [docs.hetzner.com/cloud](https://docs.hetzner.com/cloud/) |
+| **Vercel** | [vercel.com/docs](https://vercel.com/docs) |
+| **PocketHost** | [pockethost.io/docs](https://pockethost.io/docs) |
+| **Namecheap (Domains)** | [namecheap.com](https://www.namecheap.com/) |
+
+### Self-Hosted Alternative (Optional)
+
+| Service | Documentation |
+|---------|---------------|
+| **Vultr** | [vultr.com/docs](https://docs.vultr.com/) |
 | **Caddy Server** | [caddyserver.com/docs](https://caddyserver.com/docs/) |
-| **Let's Encrypt** (via Caddy) | [letsencrypt.org/docs](https://letsencrypt.org/docs/) |
 
 ### PWA Resources
 - [web.dev PWA Guide](https://web.dev/progressive-web-apps/)
@@ -942,3 +1037,5 @@ When I say "check mobile screenshot" or "check icloud screenshot", check ~/ss/ f
 | 0.4.0 | 2026-02-10 | Fixed cross-platform portability (Windows support). Added comprehensive documentation links. Added MCP servers section. Added no-emoji policy. |
 | 0.5.0 | 2026-02-10 | Simplified database schema to 5 tables (products, sales, sale_items, orders, order_items). Added db:reset script for automated database reset. Added Database Migration Workflow for agents. Environment variables for admin credentials. |
 | 0.6.0 | 2026-02-10 | Added one-command deployment (npm run deploy). Added server setup script. Simplified production workflow. |
+| 0.7.0 | 2026-02-15 | Changed hosting from Hetzner (Germany) to Vultr (Santiago, Chile) for lower latency to Peru (~30-50ms vs ~250ms). Added Cloudflare for DNS/CDN. Updated deployment guide with Vultr-specific instructions. Added Caddyfile template. Domain registrar: Namecheap. Added Vultr auto-backups to cost summary. |
+| 0.8.0 | 2026-02-15 | Switched to managed deployment: Vercel (frontend, free) + PocketHost (backend, $5/mo). Removed Vultr, Caddy, Cloudflare, PM2 from active stack. Measured actual latency: Lima→Washington DC is 66ms (vs 30ms to Santiago), acceptable for 3-user POS app. Total cost ~$6/mo. Self-hosted remains as optional upgrade path for lower latency. |
