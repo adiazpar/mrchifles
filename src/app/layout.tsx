@@ -54,6 +54,7 @@ export default function RootLayout({
       lang="es"
       className={`${dmSans.variable} ${ibmPlexSans.variable}`}
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
     >
       <body className="min-h-screen antialiased bg-bg-base text-text-primary">
         <AuthProvider>
