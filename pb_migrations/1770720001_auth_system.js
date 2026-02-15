@@ -53,13 +53,12 @@ migrate((app) => {
     maxSelect: 1,
   }))
 
-  // Restrict user access to prevent data exposure
-  // - Users can only view their own record
-  // - Owners can view all users (needed for team management)
-  // - This prevents employees from seeing other users' PIN hashes
-  // Note: Use ?= for safe comparison that returns false instead of error when field is null
-  users.listRule = '@request.auth.id = id || @request.auth.role ?= "owner"'
-  users.viewRule = '@request.auth.id = id || @request.auth.role ?= "owner"'
+  // User access rules:
+  // - All authenticated users can list/view team members (for team page)
+  // - PIN field is hidden from other users by security hook (onRecordEnrich)
+  // Note: Use @request.auth.id != "" to check if user is authenticated
+  users.listRule = '@request.auth.id != ""'
+  users.viewRule = '@request.auth.id != ""'
 
   // Restrict user updates:
   // - Users can only update their own record

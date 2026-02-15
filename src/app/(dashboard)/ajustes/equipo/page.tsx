@@ -95,6 +95,7 @@ export default function TeamPage() {
   const [newCode, setNewCode] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
 
   // Check if current user is owner
   const canManageTeam = isOwner(user)
@@ -179,10 +180,28 @@ export default function TeamPage() {
 
   const handleCopyCode = useCallback(async (code: string) => {
     try {
-      await navigator.clipboard.writeText(code)
-      // Could show a toast here
+      // Check if clipboard API is available (requires secure context - HTTPS)
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(code)
+      } else {
+        // Fallback for non-secure contexts (HTTP on mobile)
+        const textArea = document.createElement('textarea')
+        textArea.value = code
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-9999px'
+        textArea.style.top = '-9999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      setCopyFeedback(code)
+      setTimeout(() => setCopyFeedback(null), 2000)
     } catch (err) {
       console.error('Failed to copy:', err)
+      // Show the code in an alert as last resort
+      alert(`Codigo: ${code}`)
     }
   }, [])
 
@@ -419,9 +438,9 @@ export default function TeamPage() {
                 <button
                   type="button"
                   onClick={() => handleCopyCode(newCode)}
-                  className="btn btn-sm btn-secondary"
+                  className={`btn btn-sm ${copyFeedback === newCode ? 'btn-success' : 'btn-secondary'}`}
                 >
-                  Copiar
+                  {copyFeedback === newCode ? 'Copiado!' : 'Copiar'}
                 </button>
               </div>
               <p className="text-xs text-text-tertiary mt-2">
