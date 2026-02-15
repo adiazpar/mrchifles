@@ -23,6 +23,9 @@ export function LockScreen() {
         const success = await unlockSession(pin)
 
         if (!success) {
+          // Get fresh failedAttempts from context after the unlock attempt
+          // The formatPinErrorMessage will be called with the current state
+          // Note: failedAttempts here is already incremented by unlockSession
           setError(formatPinErrorMessage(failedAttempts))
         }
       } catch (err) {

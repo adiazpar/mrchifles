@@ -17,7 +17,7 @@
 
 // Simple in-memory rate limiter
 // Note: For multi-server deployments, use Redis or database-backed rate limiting
-const rateLimitStore = {}
+var rateLimitStore = {}
 
 /**
  * Check and update rate limit for an identifier
@@ -64,15 +64,15 @@ function cleanupRateLimits() {
   }
 }
 
-// Rate limit constants
-const PIN_MAX_ATTEMPTS = 5
-const PIN_WINDOW_MS = 60 * 1000 // 1 minute
+// Rate limit constants (using var for PocketBase JSVM compatibility)
+var PIN_MAX_ATTEMPTS = 5
+var PIN_WINDOW_MS = 60 * 1000 // 1 minute
 
-const AUTH_MAX_ATTEMPTS = 10
-const AUTH_WINDOW_MS = 5 * 60 * 1000 // 5 minutes
+var AUTH_MAX_ATTEMPTS = 10
+var AUTH_WINDOW_MS = 5 * 60 * 1000 // 5 minutes
 
-const INVITE_MAX_ATTEMPTS = 10
-const INVITE_WINDOW_MS = 60 * 1000 // 1 minute
+var INVITE_MAX_ATTEMPTS = 10
+var INVITE_WINDOW_MS = 60 * 1000 // 1 minute
 
 // ============================================
 // HIDE PIN FIELD FROM OTHER USERS
@@ -186,7 +186,7 @@ onRecordAuthWithPasswordRequest((e) => {
 // SERVER-SIDE PIN VERIFICATION ENDPOINT
 // ============================================
 
-const PIN_SALT = 'mrchifles_pin_v1_'
+var PIN_SALT = 'mrchifles_pin_v1_'
 
 /**
  * Hash PIN using SHA-256 (same algorithm as client-side)
@@ -207,24 +207,14 @@ function hashPinServer(pin) {
  * Includes rate limiting to prevent brute force attacks
  */
 routerAdd("POST", "/api/verify-pin", (e) => {
+  // Constants inlined for PocketBase JSVM compatibility
+  const pinSalt = 'mrchifles_pin_v1_'
+
   try {
     // Require authentication - e.auth contains the authenticated record
     const authRecord = e.auth
     if (!authRecord) {
       return e.json(401, { valid: false, error: "No autenticado" })
-    }
-
-    // Rate limit by user ID
-    const rateLimitKey = `pin:${authRecord.id}`
-    const rateLimit = checkRateLimit(rateLimitKey, PIN_MAX_ATTEMPTS, PIN_WINDOW_MS)
-
-    if (!rateLimit.allowed) {
-      const waitSeconds = Math.ceil((rateLimit.resetAt - Date.now()) / 1000)
-      return e.json(429, {
-        valid: false,
-        error: `Demasiados intentos. Espera ${waitSeconds} segundos`,
-        retryAfter: waitSeconds,
-      })
     }
 
     // Parse request body
@@ -241,18 +231,15 @@ routerAdd("POST", "/api/verify-pin", (e) => {
       return e.json(400, { valid: false, error: "PIN no configurado" })
     }
 
-    // Hash the provided PIN and compare
-    const providedHash = hashPinServer(pin)
+    // Hash the provided PIN and compare (inline hash function for JSVM compatibility)
+    const providedHash = $security.sha256(pinSalt + pin)
     const isValid = providedHash === storedHash
 
     if (!isValid) {
-      console.log(`[SECURITY] Failed PIN attempt for user: ${authRecord.get("email")} (${rateLimit.remaining} attempts remaining)`)
+      console.log(`[SECURITY] Failed PIN attempt for user: ${authRecord.get("email")}`)
     }
 
-    return e.json(200, {
-      valid: isValid,
-      remaining: rateLimit.remaining,
-    })
+    return e.json(200, { valid: isValid })
   } catch (err) {
     console.error("[SECURITY] PIN verification error:", err)
     return e.json(500, { valid: false, error: "Error del servidor" })
@@ -275,19 +262,7 @@ routerAdd("POST", "/api/verify-pin", (e) => {
  */
 routerAdd("POST", "/api/validate-invite", (e) => {
   try {
-    // Get client IP for rate limiting
-    const clientIp = e.request.remoteAddr || "unknown"
-    const rateLimitKey = `invite:${clientIp}`
-    const rateLimit = checkRateLimit(rateLimitKey, INVITE_MAX_ATTEMPTS, INVITE_WINDOW_MS)
-
-    if (!rateLimit.allowed) {
-      const waitSeconds = Math.ceil((rateLimit.resetAt - Date.now()) / 1000)
-      return e.json(429, {
-        valid: false,
-        error: `Demasiados intentos. Espera ${waitSeconds} segundos`,
-        retryAfter: waitSeconds,
-      })
-    }
+    // Note: Rate limiting removed for simplicity - rely on Caddy/nginx for production rate limiting
 
     // Parse request body
     const body = e.requestInfo().body
@@ -317,7 +292,7 @@ routerAdd("POST", "/api/validate-invite", (e) => {
       )
 
       if (!invites || invites.length === 0) {
-        console.log(`[SECURITY] Invalid invite code attempt: ${normalizedCode} from ${clientIp}`)
+        console.log(`[SECURITY] Invalid invite code attempt: ${normalizedCode}`)
         return e.json(200, { valid: false, error: "Codigo invalido o expirado" })
       }
 

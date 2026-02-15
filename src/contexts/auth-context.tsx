@@ -229,12 +229,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(authData.record as unknown as User)
       setRememberedEmail(email) // Trust this device after successful password login
       setDeviceTrusted(true)
-      setSessionState(resetPinAttempts(sessionState))
+      setSessionState(prev => resetPinAttempts(prev))
     } catch (error) {
       console.error('Login failed:', error)
       throw error
     }
-  }, [pb, sessionState])
+  }, [pb])
 
   /**
    * Login with PIN (for trusted devices with valid session)
@@ -266,22 +266,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false
     }
 
+    // Check if PIN hash exists - defensive check
+    if (!authUser.pin) {
+      console.error('Login with PIN failed: authUser.pin is empty or undefined')
+      return false
+    }
+
     try {
       // Verify PIN against stored hash
-      const isValid = await verifyPin(pin, authUser.pin || '')
+      const isValid = await verifyPin(pin, authUser.pin)
 
       if (isValid) {
         // PIN correct - session is already valid, just update state
         setUser(authUser)
-        setSessionState(resetPinAttempts(sessionState))
+        setSessionState(prev => resetPinAttempts(prev))
         return true
       } else {
-        setSessionState(recordFailedAttempt(sessionState))
+        setSessionState(prev => recordFailedAttempt(prev))
         return false
       }
     } catch (error) {
       console.error('PIN verification failed:', error)
-      setSessionState(recordFailedAttempt(sessionState))
+      setSessionState(prev => recordFailedAttempt(prev))
       return false
     }
   }, [pb, sessionState])
@@ -442,12 +448,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const unlockSession = useCallback(async (pin: string): Promise<boolean> => {
     if (!user) return false
 
+    // Note: We check lockout using sessionState from closure, but this is okay
+    // because isLockedOut compares against Date.now(), so even with stale lockoutUntil
+    // timestamp, if time has passed, it will correctly return false
     if (isLockedOut(sessionState)) {
       return false
     }
 
+    // Check if PIN hash exists - defensive check
+    if (!user.pin) {
+      console.error('Unlock failed: user.pin is empty or undefined')
+      return false
+    }
+
     try {
-      const isValid = await verifyPin(pin, user.pin || '')
+      const isValid = await verifyPin(pin, user.pin)
 
       if (isValid) {
         setSessionState(prev => ({
@@ -456,12 +471,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }))
         return true
       } else {
-        setSessionState(recordFailedAttempt(sessionState))
+        // Use functional update to avoid stale closure issues
+        setSessionState(prev => recordFailedAttempt(prev))
         return false
       }
     } catch (error) {
       console.error('Unlock failed:', error)
-      setSessionState(recordFailedAttempt(sessionState))
+      setSessionState(prev => recordFailedAttempt(prev))
       return false
     }
   }, [user, sessionState])
