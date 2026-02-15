@@ -387,6 +387,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setupComplete: true,
             ownerEmail: data.email,
           })
+        } else {
+          // Create config record if none exists (e.g., fresh PocketHost import)
+          await pb.collection('app_config').create({
+            setupComplete: true,
+            ownerEmail: data.email,
+          })
         }
         setSetupComplete(true)
       } catch (configError) {
