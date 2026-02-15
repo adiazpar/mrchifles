@@ -147,7 +147,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           // Validate token with server - this will fail if user was deleted
           const authData = await pb.collection('users').authRefresh()
-          setUser(authData.record as unknown as User)
+          const refreshedUser = authData.record as unknown as User
+
+          // Check if user has been disabled - log them out
+          if (refreshedUser.status === 'disabled') {
+            console.warn('User account has been disabled, logging out')
+            pb.authStore.clear()
+            setUser(null)
+            clearRememberedEmailStorage()
+            setDeviceTrusted(false)
+            return
+          }
+
+          setUser(refreshedUser)
         } catch {
           // Token is invalid or user was deleted - clear auth state
           console.warn('Auth token invalid or user deleted, clearing session')
@@ -176,6 +188,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       unsubscribe()
     }
   }, [pb])
+
+  // Periodically check if user has been disabled (every 30 seconds)
+  useEffect(() => {
+    if (!user) return
+
+    const checkUserStatus = async () => {
+      try {
+        // Refresh user data to check current status
+        const freshUser = await pb.collection('users').getOne<User>(user.id)
+        if (freshUser.status === 'disabled') {
+          console.warn('User account has been disabled, logging out')
+          pb.authStore.clear()
+          setUser(null)
+          clearRememberedEmailStorage()
+          setDeviceTrusted(false)
+        }
+      } catch {
+        // Ignore errors - user might have been deleted
+      }
+    }
+
+    const interval = setInterval(checkUserStatus, 30000) // Check every 30 seconds
+
+    return () => clearInterval(interval)
+  }, [pb, user])
 
   // Check for inactivity and lock session
   useEffect(() => {
