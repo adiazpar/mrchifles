@@ -216,6 +216,16 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            {/* Hidden username field for accessibility and password managers */}
+            <input
+              type="email"
+              value={email}
+              autoComplete="username"
+              readOnly
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
+            />
             <Input
               label="Contrasena"
               type="password"
