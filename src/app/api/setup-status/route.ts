@@ -2,35 +2,35 @@ import { NextResponse } from 'next/server'
 import PocketBase from 'pocketbase'
 
 const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
-const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL
-const PB_ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD
 
 /**
  * GET /api/setup-status
  *
  * Checks if initial setup (owner registration) is needed.
- * This is a server-side route that authenticates as admin to query
- * PocketBase without client-side restrictions.
+ * Uses the app_config collection which has public read access.
  */
 export async function GET() {
   try {
     const pb = new PocketBase(POCKETBASE_URL)
 
-    // Authenticate as admin to bypass collection rules
-    if (PB_ADMIN_EMAIL && PB_ADMIN_PASSWORD) {
-      await pb.collection('_superusers').authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD)
+    // app_config has public read access (listRule: "", viewRule: "")
+    // The migration creates one record with setupComplete = false initially
+    const configs = await pb.collection('app_config').getList(1, 1)
+
+    if (configs.totalItems === 0) {
+      // No config record = fresh install, needs setup
+      return NextResponse.json({
+        setupComplete: false,
+        ownerExists: false,
+      })
     }
 
-    // Check if any user with role='owner' exists
-    const owners = await pb.collection('users').getList(1, 1, {
-      filter: 'role = "owner"',
-    })
-
-    const ownerExists = owners.totalItems > 0
+    const config = configs.items[0]
+    const setupComplete = config.setupComplete === true
 
     return NextResponse.json({
-      setupComplete: ownerExists,
-      ownerExists,
+      setupComplete,
+      ownerExists: setupComplete,
     })
   } catch (error) {
     console.error('Error checking setup status:', error)

@@ -1,13 +1,15 @@
 #!/bin/bash
 
-# One-time server setup script for Hetzner VPS
+# One-time server setup script for Vultr VPS (Ubuntu 22.04)
+# Optimized for Santiago, Chile datacenter (low latency to Peru)
 # Run this once when setting up a new server
-# Usage: curl -fsSL <raw-github-url> | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/adiazpar/mrchifles/main/scripts/setup-server.sh | bash
 
 set -e  # Exit on any error
 
 echo "========================================"
 echo "Setting up server for Mr. Chifles..."
+echo "Vultr VPS - Santiago, Chile"
 echo "========================================"
 
 # Update system
@@ -58,7 +60,22 @@ echo "Server setup complete!"
 echo "========================================"
 echo ""
 echo "Next steps:"
-echo "1. Create .env.local with your production settings"
-echo "2. Configure Caddy: sudo nano /etc/caddy/Caddyfile"
-echo "3. Run: ./scripts/deploy.sh"
+echo "1. Create .env.local with your production settings:"
+echo "   nano .env.local"
+echo ""
+echo "2. Configure Caddy with your domain:"
+echo "   sudo nano /etc/caddy/Caddyfile"
+echo "   (Copy the template from Caddyfile in this repo)"
+echo ""
+echo "3. Restart Caddy:"
+echo "   sudo systemctl restart caddy"
+echo ""
+echo "4. Initialize the database and deploy:"
+echo "   npm run db:reset"
+echo "   npm run build"
+echo "   pm2 start ecosystem.config.js"
+echo "   pm2 save"
+echo "   pm2 startup  # Follow instructions to enable auto-start"
+echo ""
+echo "For future deployments, just run: npm run deploy"
 echo ""
