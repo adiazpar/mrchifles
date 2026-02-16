@@ -16,10 +16,7 @@ import {
   verifyPin,
   createSessionState,
   shouldLockSession,
-  isLockedOut,
-  getLockoutRemainingSeconds,
-  recordFailedAttempt,
-  resetPinAttempts,
+  resetSession,
   updateActivity,
   type SessionState,
 } from '@/lib/auth'
@@ -33,8 +30,6 @@ interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   isLocked: boolean
-  lockoutRemaining: number
-  failedAttempts: number
   deviceTrusted: boolean
 
   // Setup state (for first-time setup flow)
@@ -229,29 +224,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval)
   }, [user, sessionState])
 
-  // Update lockout countdown
-  const [lockoutRemaining, setLockoutRemaining] = useState(0)
-  useEffect(() => {
-    if (isLockedOut(sessionState)) {
-      const updateCountdown = () => {
-        const remaining = getLockoutRemainingSeconds(sessionState)
-        setLockoutRemaining(remaining)
-        if (remaining <= 0) {
-          setSessionState(prev => ({
-            ...prev,
-            failedAttempts: 0,
-            lockoutUntil: null,
-          }))
-        }
-      }
-      updateCountdown()
-      const interval = setInterval(updateCountdown, 1000)
-      return () => clearInterval(interval)
-    } else {
-      setLockoutRemaining(0)
-    }
-  }, [sessionState])
-
   // ============================================
   // AUTH METHODS
   // ============================================
@@ -266,7 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(authData.record as unknown as User)
       setRememberedEmail(email) // Trust this device after successful password login
       setDeviceTrusted(true)
-      setSessionState(prev => resetPinAttempts(prev))
+      setSessionState(prev => resetSession(prev))
     } catch (error) {
       // Don't log expected errors (disabled account, wrong password) as errors
       const pbError = error as { status?: number; message?: string }
@@ -305,10 +277,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false
     }
 
-    if (isLockedOut(sessionState)) {
-      return false
-    }
-
     // Check if PIN hash exists - defensive check
     if (!authUser.pin) {
       console.error('Login with PIN failed: authUser.pin is empty or undefined')
@@ -322,18 +290,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isValid) {
         // PIN correct - session is already valid, just update state
         setUser(authUser)
-        setSessionState(prev => resetPinAttempts(prev))
+        setSessionState(prev => resetSession(prev))
         return true
       } else {
-        setSessionState(prev => recordFailedAttempt(prev))
         return false
       }
     } catch (error) {
       console.error('PIN verification failed:', error)
-      setSessionState(prev => recordFailedAttempt(prev))
       return false
     }
-  }, [pb, sessionState])
+  }, [pb])
 
   const logout = useCallback((clearDevice = true) => {
     pb.authStore.clear()
@@ -497,13 +463,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const unlockSession = useCallback(async (pin: string): Promise<boolean> => {
     if (!user) return false
 
-    // Note: We check lockout using sessionState from closure, but this is okay
-    // because isLockedOut compares against Date.now(), so even with stale lockoutUntil
-    // timestamp, if time has passed, it will correctly return false
-    if (isLockedOut(sessionState)) {
-      return false
-    }
-
     // Check if PIN hash exists - defensive check
     if (!user.pin) {
       console.error('Unlock failed: user.pin is empty or undefined')
@@ -515,21 +474,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (isValid) {
         setSessionState(prev => ({
-          ...resetPinAttempts(prev),
+          ...resetSession(prev),
           isLocked: false,
         }))
         return true
       } else {
-        // Use functional update to avoid stale closure issues
-        setSessionState(prev => recordFailedAttempt(prev))
         return false
       }
     } catch (error) {
       console.error('Unlock failed:', error)
-      setSessionState(prev => recordFailedAttempt(prev))
       return false
     }
-  }, [user, sessionState])
+  }, [user])
 
   const handleUpdateActivity = useCallback(() => {
     setSessionState(updateActivity)
@@ -558,8 +514,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user && !sessionState.isLocked,
     isLoading,
     isLocked: sessionState.isLocked,
-    lockoutRemaining,
-    failedAttempts: sessionState.failedAttempts,
     deviceTrusted,
 
     // Setup state
@@ -586,8 +540,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isLoading,
     sessionState.isLocked,
-    sessionState.failedAttempts,
-    lockoutRemaining,
     deviceTrusted,
     setupComplete,
     isCheckingSetup,

@@ -13,10 +13,7 @@ import {
   isPartnerOrOwner,
   createSessionState,
   shouldLockSession,
-  isLockedOut,
-  getLockoutRemainingSeconds,
-  recordFailedAttempt,
-  resetPinAttempts,
+  resetSession,
   updateActivity,
   pinSchema,
   emailSchema,
@@ -249,8 +246,6 @@ describe('createSessionState', () => {
   it('should create initial state with correct defaults', () => {
     const state = createSessionState()
     expect(state.isLocked).toBe(false)
-    expect(state.failedAttempts).toBe(0)
-    expect(state.lockoutUntil).toBeNull()
     expect(state.lastActivity).toBeCloseTo(Date.now(), -2) // within 100ms
   })
 })
@@ -282,119 +277,14 @@ describe('shouldLockSession', () => {
   })
 })
 
-describe('isLockedOut', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('should return false when lockoutUntil is null', () => {
-    const state = createSessionState()
-    expect(isLockedOut(state)).toBe(false)
-  })
-
-  it('should return true when lockout is active', () => {
-    const state = {
-      ...createSessionState(),
-      lockoutUntil: Date.now() + 10000, // 10 seconds in future
-    }
-    expect(isLockedOut(state)).toBe(true)
-  })
-
-  it('should return false when lockout has expired', () => {
-    const state = {
-      ...createSessionState(),
-      lockoutUntil: Date.now() - 1000, // 1 second in past
-    }
-    expect(isLockedOut(state)).toBe(false)
-  })
-})
-
-describe('getLockoutRemainingSeconds', () => {
-  it('should return 0 when no lockout', () => {
-    const state = createSessionState()
-    expect(getLockoutRemainingSeconds(state)).toBe(0)
-  })
-
-  it('should return remaining seconds', () => {
-    const state = {
-      ...createSessionState(),
-      lockoutUntil: Date.now() + 15000, // 15 seconds
-    }
-    const remaining = getLockoutRemainingSeconds(state)
-    expect(remaining).toBeGreaterThanOrEqual(14)
-    expect(remaining).toBeLessThanOrEqual(15)
-  })
-
-  it('should return 0 for expired lockout', () => {
-    const state = {
-      ...createSessionState(),
-      lockoutUntil: Date.now() - 1000,
-    }
-    expect(getLockoutRemainingSeconds(state)).toBe(0)
-  })
-})
-
-describe('recordFailedAttempt', () => {
-  it('should increment failed attempts', () => {
-    let state = createSessionState()
-    state = recordFailedAttempt(state)
-    expect(state.failedAttempts).toBe(1)
-    state = recordFailedAttempt(state)
-    expect(state.failedAttempts).toBe(2)
-  })
-
-  it('should set lockout after 3 failed attempts', () => {
-    let state = createSessionState()
-    state = recordFailedAttempt(state) // 1
-    expect(state.lockoutUntil).toBeNull()
-    state = recordFailedAttempt(state) // 2
-    expect(state.lockoutUntil).toBeNull()
-    state = recordFailedAttempt(state) // 3
-    expect(state.lockoutUntil).not.toBeNull()
-    expect(state.lockoutUntil).toBeGreaterThan(Date.now())
-  })
-
-  it('should set 30 second lockout', () => {
-    let state = createSessionState()
-    state = recordFailedAttempt(state)
-    state = recordFailedAttempt(state)
-    state = recordFailedAttempt(state)
-    const lockoutDuration = state.lockoutUntil! - Date.now()
-    expect(lockoutDuration).toBeGreaterThanOrEqual(29000)
-    expect(lockoutDuration).toBeLessThanOrEqual(30000)
-  })
-})
-
-describe('resetPinAttempts', () => {
-  it('should reset failed attempts to 0', () => {
-    let state = createSessionState()
-    state = recordFailedAttempt(state)
-    state = recordFailedAttempt(state)
-    state = resetPinAttempts(state)
-    expect(state.failedAttempts).toBe(0)
-  })
-
-  it('should clear lockout', () => {
-    let state = createSessionState()
-    state = recordFailedAttempt(state)
-    state = recordFailedAttempt(state)
-    state = recordFailedAttempt(state)
-    expect(state.lockoutUntil).not.toBeNull()
-    state = resetPinAttempts(state)
-    expect(state.lockoutUntil).toBeNull()
-  })
-
+describe('resetSession', () => {
   it('should update lastActivity', () => {
     const oldTime = Date.now() - 10000
     const state = {
       ...createSessionState(),
       lastActivity: oldTime,
     }
-    const newState = resetPinAttempts(state)
+    const newState = resetSession(state)
     expect(newState.lastActivity).toBeGreaterThan(oldTime)
   })
 })
@@ -414,11 +304,9 @@ describe('updateActivity', () => {
   it('should preserve other state', () => {
     const state = {
       ...createSessionState(),
-      failedAttempts: 2,
       isLocked: true,
     }
     const newState = updateActivity(state)
-    expect(newState.failedAttempts).toBe(2)
     expect(newState.isLocked).toBe(true)
   })
 })
