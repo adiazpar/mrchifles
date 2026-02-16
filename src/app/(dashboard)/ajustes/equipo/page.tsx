@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Card, Badge, Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
+import { IconEmployee, IconPartner, IconCheck } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import {
   generateInviteCode,
@@ -81,6 +82,32 @@ function Modal({
         )}
       </div>
     </div>
+  )
+}
+
+// Role selection card component
+interface RoleCardProps {
+  icon: React.ReactNode
+  title: string
+  description: string
+  selected: boolean
+  onClick: () => void
+}
+
+function RoleCard({ icon, title, description, selected, onClick }: RoleCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`role-card ${selected ? 'role-card-selected' : ''}`}
+    >
+      <div className="role-card-icon">{icon}</div>
+      <div className="role-card-content">
+        <span className="role-card-title">{title}</span>
+        <span className="role-card-description">{description}</span>
+      </div>
+      <IconCheck className={`role-card-check ${selected ? '' : 'invisible'}`} />
+    </button>
   )
 }
 
@@ -389,9 +416,25 @@ export default function TeamPage() {
               onClick={handleCloseModal}
               className="btn btn-secondary flex-1"
             >
-              Cerrar
+              Cancelar
             </button>
-            {newCode && (
+            {!newCode ? (
+              <button
+                type="button"
+                onClick={handleGenerateCode}
+                disabled={isGenerating}
+                className="btn btn-primary flex-1"
+              >
+                {isGenerating ? (
+                  <>
+                    <Spinner />
+                    <span>Generando...</span>
+                  </>
+                ) : (
+                  'Generar codigo'
+                )}
+              </button>
+            ) : (
               <button
                 type="button"
                 onClick={() => setNewCode(null)}
@@ -406,41 +449,25 @@ export default function TeamPage() {
         <div className="space-y-4">
           <div>
             <label className="label">Rol del nuevo miembro</label>
-            <div className="flex gap-3">
-              <button
-                type="button"
+            <div className="space-y-3">
+              <RoleCard
+                icon={<IconEmployee className="w-5 h-5" />}
+                title="Empleado"
+                description="Puede registrar ventas y ver el resumen del dia"
+                selected={selectedRole === 'employee'}
                 onClick={() => setSelectedRole('employee')}
-                className={`btn flex-1 ${selectedRole === 'employee' ? 'btn-primary' : 'btn-secondary'}`}
-              >
-                Empleado
-              </button>
-              <button
-                type="button"
+              />
+              <RoleCard
+                icon={<IconPartner className="w-5 h-5" />}
+                title="Socio"
+                description="Acceso completo a reportes, inventario y configuracion"
+                selected={selectedRole === 'partner'}
                 onClick={() => setSelectedRole('partner')}
-                className={`btn flex-1 ${selectedRole === 'partner' ? 'btn-primary' : 'btn-secondary'}`}
-              >
-                Socio
-              </button>
+              />
             </div>
           </div>
 
-          {!newCode ? (
-            <button
-              type="button"
-              onClick={handleGenerateCode}
-              disabled={isGenerating}
-              className="btn btn-primary w-full"
-            >
-              {isGenerating ? (
-                <>
-                  <Spinner />
-                  <span>Generando...</span>
-                </>
-              ) : (
-                'Generar codigo de invitacion'
-              )}
-            </button>
-          ) : (
+          {newCode && (
             <div className="p-4 bg-success-subtle rounded-lg">
               <p className="text-sm text-text-secondary mb-2">
                 Comparte este codigo con tu nuevo {getInviteRoleLabel(selectedRole).toLowerCase()}:
