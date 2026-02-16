@@ -5,6 +5,7 @@ import { IconClose, IconBackspace } from '@/components/icons'
 
 interface PinPadProps {
   onComplete: (pin: string) => void
+  onInput?: () => void
   disabled?: boolean
   error?: string
   maxLength?: number
@@ -12,6 +13,7 @@ interface PinPadProps {
 
 export function PinPad({
   onComplete,
+  onInput,
   disabled = false,
   error,
   maxLength = 4,
@@ -29,13 +31,14 @@ export function PinPad({
     if (disabled) return
     if (pin.length >= maxLength) return
 
+    onInput?.()
     const newPin = pin + digit
     setPin(newPin)
 
     if (newPin.length === maxLength) {
       onComplete(newPin)
     }
-  }, [pin, maxLength, disabled, onComplete])
+  }, [pin, maxLength, disabled, onComplete, onInput])
 
   const handleBackspace = useCallback(() => {
     if (disabled) return

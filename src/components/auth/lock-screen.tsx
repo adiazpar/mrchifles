@@ -34,6 +34,10 @@ export function LockScreen() {
     [unlockSession]
   )
 
+  const handleInput = useCallback(() => {
+    setError('')
+  }, [])
+
   const handleSwitchUser = useCallback(() => {
     logout()
     router.push('/login')
@@ -64,6 +68,7 @@ export function LockScreen() {
 
           <PinPad
             onComplete={handlePinComplete}
+            onInput={handleInput}
             disabled={isLoading}
             error={error}
           />
