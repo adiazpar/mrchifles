@@ -1291,6 +1291,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    align-self: center;
     background: white;
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border);
@@ -1313,11 +1314,31 @@
   .invite-code-box {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: var(--space-3) var(--space-4);
+    justify-content: center;
+    align-self: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
     background: var(--color-bg-muted);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+  }
+
+  @media (hover: hover) {
+    .invite-code-box:hover {
+      border-color: var(--color-brand);
+      background: var(--color-brand-subtle);
+    }
+  }
+
+  .invite-code-box:active {
+    transform: scale(0.98);
+  }
+
+  .invite-code-box svg {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
   }
 
   .invite-code-text {
@@ -1326,30 +1347,6 @@
     font-weight: 700;
     letter-spacing: 0.2em;
     color: var(--color-text-primary);
-  }
-
-  .invite-code-copy {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-lg);
-    color: var(--color-text-secondary);
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-border);
-    transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
-  }
-
-  @media (hover: hover) {
-    .invite-code-copy:hover {
-      border-color: var(--color-brand);
-      color: var(--color-brand);
-    }
-  }
-
-  .invite-code-copy:active {
-    transform: scale(0.95);
   }
 
   .invite-regenerate {
