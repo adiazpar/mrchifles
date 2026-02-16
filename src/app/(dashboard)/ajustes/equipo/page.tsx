@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import QRCode from 'qrcode'
 import { Card, Badge, Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
-import { IconEmployee, IconPartner, IconCheck, IconRefresh } from '@/components/icons'
+import { IconEmployee, IconPartner, IconCheck, IconRefresh, IconCopy, IconTrash, IconClose, IconAdd } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import {
   generateInviteCode,
@@ -16,31 +16,6 @@ import {
 } from '@/lib/auth'
 import { formatDate } from '@/lib/utils'
 import type { User, InviteCode, InviteRole } from '@/types'
-
-// Add icon component
-function AddIcon({ className = '' }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M11 8C11 7.44772 11.4477 7 12 7C12.5523 7 13 7.44772 13 8V11H16C16.5523 11 17 11.4477 17 12C17 12.5523 16.5523 13 16 13H13V16C13 16.5523 12.5523 17 12 17C11.4477 17 11 16.5523 11 16V13H8C7.44771 13 7 12.5523 7 12C7 11.4477 7.44772 11 8 11H11V8Z"
-        fill="currentColor"
-      />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12ZM3.00683 12C3.00683 16.9668 7.03321 20.9932 12 20.9932C16.9668 20.9932 20.9932 16.9668 20.9932 12C20.9932 7.03321 16.9668 3.00683 12 3.00683C7.03321 3.00683 3.00683 7.03321 3.00683 12Z"
-        fill="currentColor"
-      />
-    </svg>
-  )
-}
 
 // Modal component using global CSS styles
 function Modal({
@@ -68,9 +43,7 @@ function Modal({
             onClick={onClose}
             className="p-2 hover:bg-bg-muted rounded-lg transition-colors"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <IconClose className="w-5 h-5" />
           </button>
         </div>
         <div className="modal-body">
@@ -341,6 +314,27 @@ export default function TeamPage() {
     setIsModalOpen(true)
   }, [])
 
+  const handleOpenExistingCode = useCallback(async (code: InviteCode) => {
+    setSelectedRole(code.role)
+    setGeneratedCodeId(code.id)
+    setNewCode(code.code)
+    setError('')
+    setIsModalOpen(true)
+
+    // Generate QR code for existing invite
+    try {
+      const registrationUrl = `${window.location.origin}/invite?code=${code.code}`
+      const qr = await QRCode.toDataURL(registrationUrl, {
+        width: 200,
+        margin: 2,
+        color: { dark: '#0F172A', light: '#FFFFFF' }
+      })
+      setQrDataUrl(qr)
+    } catch (err) {
+      console.error('Failed to generate QR code:', err)
+    }
+  }, [])
+
   const handleCloseModal = useCallback(() => {
     setIsModalOpen(false)
     setNewCode(null)
@@ -392,7 +386,7 @@ export default function TeamPage() {
                 className="btn btn-secondary btn-sm p-2"
                 aria-label="Agregar miembro"
               >
-                <AddIcon className="w-5 h-5" />
+                <IconAdd className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -451,9 +445,11 @@ export default function TeamPage() {
               </h3>
               <div className="space-y-3">
                 {inviteCodes.map(code => (
-                  <div
+                  <button
                     key={code.id}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-muted transition-colors"
+                    type="button"
+                    onClick={() => handleOpenExistingCode(code)}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-muted transition-colors w-full text-left"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -465,14 +461,49 @@ export default function TeamPage() {
                         {getInviteRoleLabel(code.role)} <span className="mx-1">·</span> Expira {formatDate(code.expiresAt)}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCode(code.id)}
-                      className="btn btn-sm btn-ghost text-error"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
+                    <div className="flex items-center gap-1">
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleCopyCode(code.code)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation()
+                            handleCopyCode(code.code)
+                          }
+                        }}
+                        className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-brand-subtle transition-colors"
+                        title="Copiar codigo"
+                      >
+                        {copyFeedback === code.code ? (
+                          <IconCheck className="w-4 h-4 text-success" />
+                        ) : (
+                          <IconCopy className="w-4 h-4" />
+                        )}
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteCode(code.id)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation()
+                            handleDeleteCode(code.id)
+                          }
+                        }}
+                        className="p-2 rounded-lg text-text-secondary hover:text-error hover:bg-error-subtle transition-colors"
+                        title="Eliminar codigo"
+                      >
+                        <IconTrash className="w-4 h-4" />
+                      </span>
+                    </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -571,10 +602,7 @@ export default function TeamPage() {
               {copyFeedback === newCode ? (
                 <IconCheck className="w-5 h-5 text-success" />
               ) : (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" />
-                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                </svg>
+                <IconCopy className="w-5 h-5" />
               )}
             </button>
 
