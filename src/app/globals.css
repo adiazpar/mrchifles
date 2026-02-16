@@ -1608,40 +1608,6 @@
     font-weight: 500;
   }
 
-  .auth-lockout {
-    text-align: center;
-    padding: var(--space-4);
-    background: var(--color-error-subtle);
-    border-radius: var(--radius-lg);
-    margin-bottom: var(--space-4);
-  }
-
-  .auth-lockout-text {
-    color: var(--color-error);
-    font-size: var(--text-sm);
-    margin: 0;
-  }
-
-  .auth-lockout-timer {
-    font-family: var(--font-display);
-    font-size: var(--text-2xl);
-    font-weight: 700;
-    color: var(--color-error);
-    margin-top: var(--space-2);
-  }
-
-  /* ===== Lock Screen Overlay ===== */
-  .lock-screen-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-modal);
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-6);
-  }
 }
 
 /* ==========================================================================

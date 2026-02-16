@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Input, Card, Spinner } from '@/components/ui'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
-import { getUserInitials, formatPinErrorMessage } from '@/lib/auth'
+import { getUserInitials } from '@/lib/auth'
 import type { User } from '@/types'
 
 type LoginStep = 'checking' | 'email' | 'password' | 'pin'
@@ -16,8 +16,6 @@ export default function LoginPage() {
   const {
     loginWithPassword,
     loginWithPin,
-    lockoutRemaining,
-    failedAttempts,
     getRememberedEmail,
     clearRememberedEmail,
     deviceTrusted,
@@ -130,7 +128,7 @@ export default function LoginPage() {
         if (isValid) {
           router.push('/inicio')
         } else {
-          setError(formatPinErrorMessage(failedAttempts))
+          setError('PIN incorrecto')
         }
       } catch (err) {
         console.error('PIN verification error:', err)
@@ -139,7 +137,7 @@ export default function LoginPage() {
         setIsLoading(false)
       }
     },
-    [loginWithPin, failedAttempts, router]
+    [loginWithPin, router]
   )
 
   const handleChangeUser = useCallback(() => {
@@ -288,17 +286,9 @@ export default function LoginPage() {
           <p className="text-text-secondary">Ingresa tu PIN de 4 digitos</p>
         </div>
 
-        {/* Lockout message */}
-        {lockoutRemaining > 0 && (
-          <div className="auth-lockout">
-            <p className="auth-lockout-text">Demasiados intentos fallidos</p>
-            <p className="auth-lockout-timer">{lockoutRemaining}s</p>
-          </div>
-        )}
-
         <PinPad
           onComplete={handlePinComplete}
-          disabled={isLoading || lockoutRemaining > 0}
+          disabled={isLoading}
           error={error}
         />
       </Card>

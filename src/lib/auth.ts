@@ -239,14 +239,10 @@ export function isPartnerOrOwner(user: User | null): boolean {
 // ============================================
 
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
-const LOCKOUT_DURATION_MS = 30 * 1000 // 30 seconds
-const MAX_PIN_ATTEMPTS = 3
 
 export interface SessionState {
   isLocked: boolean
   lastActivity: number
-  failedAttempts: number
-  lockoutUntil: number | null
 }
 
 /**
@@ -256,8 +252,6 @@ export function createSessionState(): SessionState {
   return {
     isLocked: false,
     lastActivity: Date.now(),
-    failedAttempts: 0,
-    lockoutUntil: null,
   }
 }
 
@@ -269,57 +263,13 @@ export function shouldLockSession(state: SessionState): boolean {
 }
 
 /**
- * Check if user is currently locked out due to failed attempts
+ * Reset session after successful unlock
  */
-export function isLockedOut(state: SessionState): boolean {
-  if (!state.lockoutUntil) return false
-  return Date.now() < state.lockoutUntil
-}
-
-/**
- * Get remaining lockout time in seconds
- */
-export function getLockoutRemainingSeconds(state: SessionState): number {
-  if (!state.lockoutUntil) return 0
-  const remaining = Math.max(0, state.lockoutUntil - Date.now())
-  return Math.ceil(remaining / 1000)
-}
-
-/**
- * Record a failed PIN attempt
- */
-export function recordFailedAttempt(state: SessionState): SessionState {
-  const newAttempts = state.failedAttempts + 1
+export function resetSession(state: SessionState): SessionState {
   return {
     ...state,
-    failedAttempts: newAttempts,
-    lockoutUntil: newAttempts >= MAX_PIN_ATTEMPTS
-      ? Date.now() + LOCKOUT_DURATION_MS
-      : null,
-  }
-}
-
-/**
- * Reset PIN attempts after successful login
- */
-export function resetPinAttempts(state: SessionState): SessionState {
-  return {
-    ...state,
-    failedAttempts: 0,
-    lockoutUntil: null,
     lastActivity: Date.now(),
   }
-}
-
-/**
- * Format PIN error message based on failed attempts
- */
-export function formatPinErrorMessage(failedAttempts: number): string {
-  const attemptsLeft = MAX_PIN_ATTEMPTS - failedAttempts - 1
-  if (attemptsLeft > 0) {
-    return `PIN incorrecto. ${attemptsLeft} intento${attemptsLeft === 1 ? '' : 's'} restante${attemptsLeft === 1 ? '' : 's'}`
-  }
-  return 'Demasiados intentos fallidos'
 }
 
 /**

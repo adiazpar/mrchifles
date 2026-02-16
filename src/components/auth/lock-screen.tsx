@@ -2,14 +2,13 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card } from '@/components/ui'
 import { PinPad } from './pin-pad'
 import { useAuth } from '@/contexts/auth-context'
-import { getUserInitials, formatPinErrorMessage } from '@/lib/auth'
+import { getUserInitials } from '@/lib/auth'
 
 export function LockScreen() {
   const router = useRouter()
-  const { user, unlockSession, logout, lockoutRemaining, failedAttempts } = useAuth()
+  const { user, unlockSession, logout } = useAuth()
 
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -23,10 +22,7 @@ export function LockScreen() {
         const success = await unlockSession(pin)
 
         if (!success) {
-          // Get fresh failedAttempts from context after the unlock attempt
-          // The formatPinErrorMessage will be called with the current state
-          // Note: failedAttempts here is already incremented by unlockSession
-          setError(formatPinErrorMessage(failedAttempts))
+          setError('PIN incorrecto')
         }
       } catch (err) {
         console.error('Unlock error:', err)
@@ -35,7 +31,7 @@ export function LockScreen() {
         setIsLoading(false)
       }
     },
-    [unlockSession, failedAttempts]
+    [unlockSession]
   )
 
   const handleSwitchUser = useCallback(() => {
@@ -46,47 +42,42 @@ export function LockScreen() {
   if (!user) return null
 
   return (
-    <div className="lock-screen-overlay">
-      <div className="auth-card animate-scaleIn">
-        {/* User greeting */}
-        <div className="auth-user-greeting">
-          <div className="auth-user-avatar">
-            {getUserInitials(user.name)}
-          </div>
-          <h2 className="auth-user-name">{user.name}</h2>
-          <p className="auth-user-email">Sesion bloqueada</p>
-        </div>
-
-        <Card padding="lg">
+    <div className="modal-backdrop">
+      <div className="modal animate-scaleIn" style={{ maxWidth: '360px' }}>
+        <div className="modal-body">
+          {/* User greeting */}
           <div className="text-center mb-4">
-            <p className="text-text-secondary">Ingresa tu PIN para desbloquear</p>
+            <div
+              className="mx-auto mb-3 rounded-full bg-brand text-white flex items-center justify-center font-display font-semibold"
+              style={{ width: '48px', height: '48px', fontSize: '16px' }}
+            >
+              {getUserInitials(user.name)}
+            </div>
+            <h2 className="font-display font-semibold text-lg text-text-primary">
+              {user.name}
+            </h2>
           </div>
 
-          {/* Lockout message */}
-          {lockoutRemaining > 0 && (
-            <div className="auth-lockout">
-              <p className="auth-lockout-text">Demasiados intentos fallidos</p>
-              <p className="auth-lockout-timer">{lockoutRemaining}s</p>
-            </div>
-          )}
+          <div className="border-t border-border pt-4 mb-4">
+            <p className="text-text-secondary text-center">Ingresa tu PIN para desbloquear</p>
+          </div>
 
           <PinPad
             onComplete={handlePinComplete}
-            disabled={isLoading || lockoutRemaining > 0}
+            disabled={isLoading}
             error={error}
           />
-        </Card>
 
-        <div className="auth-footer">
-          <p className="auth-footer-link">
+          {/* Switch user link */}
+          <div className="text-center mt-6 pt-4 border-t border-border">
             <button
               type="button"
               onClick={handleSwitchUser}
-              className="text-brand hover:underline"
+              className="text-sm text-brand hover:underline"
             >
               Cambiar usuario
             </button>
-          </p>
+          </div>
         </div>
       </div>
     </div>
