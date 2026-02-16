@@ -65,6 +65,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if phone number is already registered
+    try {
+      const existingUsers = await pb.collection('users').getList(1, 1, {
+        filter: `phoneNumber = "${phoneNumber}"`,
+      })
+      if (existingUsers.totalItems > 0) {
+        return NextResponse.json(
+          { error: 'Este numero ya esta registrado en la app' },
+          { status: 400 }
+        )
+      }
+    } catch {
+      // If check fails, continue anyway - registration will catch duplicates
+      console.warn('Could not check for existing phone number')
+    }
+
     // Validate invite code format
     if (!inviteCode || !/^[A-Z0-9]{6}$/.test(inviteCode)) {
       return NextResponse.json(

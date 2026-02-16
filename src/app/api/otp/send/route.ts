@@ -77,6 +77,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // For registration, check if phone is already registered (saves WhatsApp API cost)
+    if (purpose === 'registration') {
+      try {
+        const existingUsers = await pb.collection('users').getList(1, 1, {
+          filter: `phoneNumber = "${phoneNumber}"`,
+        })
+        if (existingUsers.totalItems > 0) {
+          return NextResponse.json(
+            { error: 'Este numero ya esta registrado' },
+            { status: 400 }
+          )
+        }
+      } catch {
+        // If check fails, continue - registration will catch duplicates later
+        console.warn('Could not check for existing phone number')
+      }
+    }
+
     // Delete any existing unused OTPs for this phone
     try {
       const existingOtps = await pb.collection('otp_codes').getList(1, 100, {
