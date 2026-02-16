@@ -1638,8 +1638,7 @@
   }
 
   .pin-dot.error {
-    background: var(--color-error);
-    animation: pinShake 0.3s ease-in-out;
+    animation: pinShakeError 0.5s ease-in-out forwards;
   }
 
   .pin-error {
@@ -1859,6 +1858,24 @@
   25% { transform: translateX(-8px); }
   50% { transform: translateX(8px); }
   75% { transform: translateX(-8px); }
+}
+
+@keyframes pinShakeError {
+  0% {
+    transform: translateX(0);
+    background: var(--color-error);
+  }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% {
+    transform: translateX(-8px);
+    background: var(--color-error);
+  }
+  80% { transform: translateX(0); }
+  100% {
+    transform: translateX(0);
+    background: var(--color-border);
+  }
 }
 
 .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
