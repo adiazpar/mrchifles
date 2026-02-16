@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import QRCode from 'qrcode'
 import { Card, Badge, Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
@@ -126,6 +126,7 @@ export default function TeamPage() {
   const [error, setError] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
+  const copyFeedbackTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Check if current user is owner
   const canManageTeam = isOwner(user)
@@ -210,7 +211,7 @@ export default function TeamPage() {
       setNewCode(code)
 
       // Generate QR code
-      const registrationUrl = `${window.location.origin}/registro?code=${code}`
+      const registrationUrl = `${window.location.origin}/invite?code=${code}`
       const qr = await QRCode.toDataURL(registrationUrl, {
         width: 200,
         margin: 2,
@@ -250,8 +251,12 @@ export default function TeamPage() {
         document.execCommand('copy')
         document.body.removeChild(textArea)
       }
+      // Clear any existing timer before setting a new one
+      if (copyFeedbackTimerRef.current) {
+        clearTimeout(copyFeedbackTimerRef.current)
+      }
       setCopyFeedback(code)
-      setTimeout(() => setCopyFeedback(null), 2000)
+      copyFeedbackTimerRef.current = setTimeout(() => setCopyFeedback(null), 2000)
     } catch (err) {
       console.error('Failed to copy:', err)
       // Show the code in an alert as last resort
@@ -293,7 +298,7 @@ export default function TeamPage() {
       setNewCode(code)
 
       // Generate new QR
-      const registrationUrl = `${window.location.origin}/registro?code=${code}`
+      const registrationUrl = `${window.location.origin}/invite?code=${code}`
       const qr = await QRCode.toDataURL(registrationUrl, {
         width: 200,
         margin: 2,
@@ -342,6 +347,12 @@ export default function TeamPage() {
     setGeneratedCodeId(null)
     setQrDataUrl(null)
     setError('')
+    // Clear copy feedback timer and state
+    if (copyFeedbackTimerRef.current) {
+      clearTimeout(copyFeedbackTimerRef.current)
+      copyFeedbackTimerRef.current = null
+    }
+    setCopyFeedback(null)
   }, [])
 
   if (isLoading) {
@@ -435,24 +446,23 @@ export default function TeamPage() {
           {/* Active Invite Codes Section (within the card) */}
           {canManageTeam && inviteCodes.length > 0 && (
             <div className="mt-6 pt-6 border-t border-border">
-              <h4 className="font-display font-semibold text-base mb-3">
-                Codigos de invitacion activos
-              </h4>
-              <div className="space-y-2">
+              <h3 className="font-display font-bold text-lg mb-4">
+                Codigos de invitacion activos ({inviteCodes.length})
+              </h3>
+              <div className="space-y-3">
                 {inviteCodes.map(code => (
                   <div
                     key={code.id}
-                    className="flex items-center justify-between p-3 bg-bg-muted rounded-lg"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-muted transition-colors"
                   >
-                    <div>
-                      <code className="font-display font-bold tracking-widest">
-                        {code.code}
-                      </code>
-                      <div className="flex gap-2 mt-1">
-                        <Badge variant="brand">{getInviteRoleLabel(code.role)}</Badge>
-                        <span className="text-xs text-text-tertiary">
-                          Expira {formatDate(code.expiresAt)}
-                        </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <code className="font-display font-bold tracking-widest">
+                          {code.code}
+                        </code>
+                      </div>
+                      <div className="text-xs text-text-tertiary mt-1">
+                        {getInviteRoleLabel(code.role)} <span className="mx-1">·</span> Expira {formatDate(code.expiresAt)}
                       </div>
                     </div>
                     <button
@@ -551,24 +561,22 @@ export default function TeamPage() {
               Escanea el codigo QR o ingresa el codigo manualmente para registrarse como {getInviteRoleLabel(selectedRole).toLowerCase()}
             </p>
 
-            <div className="invite-code-box">
+            <button
+              type="button"
+              onClick={() => handleCopyCode(newCode)}
+              className="invite-code-box"
+              title="Copiar codigo"
+            >
               <code className="invite-code-text">{newCode}</code>
-              <button
-                type="button"
-                onClick={() => handleCopyCode(newCode)}
-                className="invite-code-copy"
-                title="Copiar codigo"
-              >
-                {copyFeedback === newCode ? (
-                  <IconCheck className="w-5 h-5" />
-                ) : (
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" />
-                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                  </svg>
-                )}
-              </button>
-            </div>
+              {copyFeedback === newCode ? (
+                <IconCheck className="w-5 h-5 text-success" />
+              ) : (
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                </svg>
+              )}
+            </button>
 
             <button
               type="button"

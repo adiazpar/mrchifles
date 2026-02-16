@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Input, Card, Spinner } from '@/components/ui'
 import { PinPad } from '@/components/auth/pin-pad'
@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { employeeRegistrationSchema, getInviteRoleLabel } from '@/lib/auth'
 import type { InviteRole } from '@/types'
 
-type InviteStep = 'code' | 'info' | 'pin'
+type InviteStep = 'loading' | 'code' | 'info' | 'pin'
 
 interface InviteInfo {
   code: string
@@ -18,10 +18,15 @@ interface InviteInfo {
 
 export default function InvitePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { registerWithInvite } = useAuth()
+  const hasAutoValidated = useRef(false)
 
-  const [step, setStep] = useState<InviteStep>('code')
-  const [inviteCode, setInviteCode] = useState('')
+  // Check for code in URL query parameter
+  const codeFromUrl = searchParams.get('code')
+
+  const [step, setStep] = useState<InviteStep>(codeFromUrl ? 'loading' : 'code')
+  const [inviteCode, setInviteCode] = useState(codeFromUrl?.toUpperCase() || '')
   const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -29,6 +34,51 @@ export default function InvitePage() {
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+
+  // Auto-validate code from URL parameter
+  useEffect(() => {
+    if (!codeFromUrl || hasAutoValidated.current) return
+    hasAutoValidated.current = true
+
+    const validateCodeFromUrl = async () => {
+      const code = codeFromUrl.trim().toUpperCase()
+
+      if (!code || code.length !== 6) {
+        setErrors({ code: 'Codigo invalido' })
+        setStep('code')
+        return
+      }
+
+      try {
+        const pocketbaseUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
+        const response = await fetch(`${pocketbaseUrl}/api/validate-invite`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        })
+
+        const result = await response.json()
+
+        if (!result.valid) {
+          setErrors({ code: result.error || 'Codigo invalido o expirado' })
+          setStep('code')
+          return
+        }
+
+        setInviteInfo({
+          code,
+          role: result.role as InviteRole,
+        })
+        setStep('info')
+      } catch (err) {
+        console.error('Code validation error:', err)
+        setErrors({ code: 'Error al verificar el codigo' })
+        setStep('code')
+      }
+    }
+
+    validateCodeFromUrl()
+  }, [codeFromUrl])
 
   const handleCodeSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -162,6 +212,18 @@ export default function InvitePage() {
     setStep('info')
     setErrors({})
   }, [])
+
+  // Loading state (auto-validating code from URL)
+  if (step === 'loading') {
+    return (
+      <Card padding="lg">
+        <div className="flex flex-col items-center py-8">
+          <Spinner className="spinner-lg" />
+          <p className="text-text-secondary mt-4">Verificando codigo...</p>
+        </div>
+      </Card>
+    )
+  }
 
   // Code step
   if (step === 'code') {
