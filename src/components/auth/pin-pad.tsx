@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { IconClose, IconBackspace } from '@/components/icons'
 
 interface PinPadProps {
   onComplete: (pin: string) => void
@@ -105,9 +106,7 @@ export function PinPad({
           disabled={disabled}
           aria-label="Borrar todo"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
+          <IconClose className="w-6 h-6" />
         </button>
         <button
           type="button"
@@ -125,11 +124,7 @@ export function PinPad({
           disabled={disabled}
           aria-label="Borrar"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z" />
-            <line x1="18" y1="9" x2="12" y2="15" />
-            <line x1="12" y1="9" x2="18" y2="15" />
-          </svg>
+          <IconBackspace className="w-8 h-8" />
         </button>
       </div>
     </div>
