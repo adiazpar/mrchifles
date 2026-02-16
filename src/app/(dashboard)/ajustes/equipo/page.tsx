@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import QRCode from 'qrcode'
 import { Card, Badge, Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
-import { IconEmployee, IconPartner, IconCheck } from '@/components/icons'
+import { IconEmployee, IconPartner, IconCheck, IconRefresh } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import {
   generateInviteCode,
@@ -120,6 +121,8 @@ export default function TeamPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedRole, setSelectedRole] = useState<InviteRole>('employee')
   const [newCode, setNewCode] = useState<string | null>(null)
+  const [generatedCodeId, setGeneratedCodeId] = useState<string | null>(null)
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
@@ -195,7 +198,7 @@ export default function TeamPage() {
       const code = generateInviteCode()
       const expiresAt = getInviteCodeExpiration()
 
-      await pb.collection('invite_codes').create({
+      const record = await pb.collection('invite_codes').create({
         code,
         role: selectedRole,
         createdBy: user.id,
@@ -203,7 +206,17 @@ export default function TeamPage() {
         used: false,
       })
 
+      setGeneratedCodeId(record.id)
       setNewCode(code)
+
+      // Generate QR code
+      const registrationUrl = `${window.location.origin}/registro?code=${code}`
+      const qr = await QRCode.toDataURL(registrationUrl, {
+        width: 200,
+        margin: 2,
+        color: { dark: '#0F172A', light: '#FFFFFF' }
+      })
+      setQrDataUrl(qr)
 
       // Refresh invite codes list
       const codes = await pb.collection('invite_codes').getFullList<InviteCode>({
@@ -255,6 +268,53 @@ export default function TeamPage() {
     }
   }, [pb])
 
+  const handleRegenerateCode = useCallback(async () => {
+    if (!user || !generatedCodeId) return
+
+    setIsGenerating(true)
+
+    try {
+      // Delete old code
+      await pb.collection('invite_codes').delete(generatedCodeId)
+
+      // Generate new code with SAME role (selectedRole is locked)
+      const code = generateInviteCode()
+      const expiresAt = getInviteCodeExpiration()
+
+      const record = await pb.collection('invite_codes').create({
+        code,
+        role: selectedRole,
+        createdBy: user.id,
+        expiresAt: expiresAt.toISOString(),
+        used: false,
+      })
+
+      setGeneratedCodeId(record.id)
+      setNewCode(code)
+
+      // Generate new QR
+      const registrationUrl = `${window.location.origin}/registro?code=${code}`
+      const qr = await QRCode.toDataURL(registrationUrl, {
+        width: 200,
+        margin: 2,
+        color: { dark: '#0F172A', light: '#FFFFFF' }
+      })
+      setQrDataUrl(qr)
+
+      // Refresh list
+      const codes = await pb.collection('invite_codes').getFullList<InviteCode>({
+        filter: 'used = false && expiresAt > @now',
+        sort: '-created',
+      })
+      setInviteCodes(codes)
+    } catch (err) {
+      console.error('Error regenerating code:', err)
+      setError('Error al regenerar el codigo')
+    } finally {
+      setIsGenerating(false)
+    }
+  }, [user, generatedCodeId, selectedRole, pb])
+
   const handleToggleUserStatus = useCallback(async (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'disabled' : 'active'
     try {
@@ -269,13 +329,19 @@ export default function TeamPage() {
 
   const handleOpenModal = useCallback(() => {
     setNewCode(null)
+    setGeneratedCodeId(null)
+    setQrDataUrl(null)
     setSelectedRole('employee')
+    setError('')
     setIsModalOpen(true)
   }, [])
 
   const handleCloseModal = useCallback(() => {
     setIsModalOpen(false)
     setNewCode(null)
+    setGeneratedCodeId(null)
+    setQrDataUrl(null)
+    setError('')
   }, [])
 
   if (isLoading) {
@@ -410,15 +476,15 @@ export default function TeamPage() {
         onClose={handleCloseModal}
         title="Agregar miembro"
         footer={
-          <>
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              className="btn btn-secondary flex-1"
-            >
-              Cancelar
-            </button>
-            {!newCode ? (
+          !newCode ? (
+            <>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="btn btn-secondary flex-1"
+              >
+                Cancelar
+              </button>
               <button
                 type="button"
                 onClick={handleGenerateCode}
@@ -434,19 +500,20 @@ export default function TeamPage() {
                   'Generar codigo'
                 )}
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setNewCode(null)}
-                className="btn btn-primary flex-1"
-              >
-                Generar otro
-              </button>
-            )}
-          </>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="btn btn-primary w-full"
+            >
+              Listo
+            </button>
+          )
         }
       >
-        <div className="space-y-4">
+        {!newCode ? (
+          /* Step 1: Role Selection */
           <div>
             <label className="label">Rol del nuevo miembro</label>
             <div className="space-y-3">
@@ -466,30 +533,63 @@ export default function TeamPage() {
               />
             </div>
           </div>
-
-          {newCode && (
-            <div className="p-4 bg-success-subtle rounded-lg">
-              <p className="text-sm text-text-secondary mb-2">
-                Comparte este codigo con tu nuevo {getInviteRoleLabel(selectedRole).toLowerCase()}:
-              </p>
-              <div className="flex items-center gap-3">
-                <code className="text-2xl font-display font-bold tracking-widest text-success">
-                  {newCode}
-                </code>
-                <button
-                  type="button"
-                  onClick={() => handleCopyCode(newCode)}
-                  className={`btn btn-sm ${copyFeedback === newCode ? 'btn-success' : 'btn-secondary'}`}
-                >
-                  {copyFeedback === newCode ? 'Copiado!' : 'Copiar'}
-                </button>
-              </div>
-              <p className="text-xs text-text-tertiary mt-2">
-                Valido por 7 dias
-              </p>
+        ) : (
+          /* Step 2: Success State - Compact Layout */
+          <div className="invite-success-compact">
+            <div className="invite-meta-row">
+              <Badge variant="brand">{getInviteRoleLabel(selectedRole)}</Badge>
+              <span className="invite-expiry-inline">Valido por 7 dias</span>
             </div>
-          )}
-        </div>
+
+            {qrDataUrl && (
+              <div className="invite-qr-box">
+                <img src={qrDataUrl} alt="Codigo QR para registro" />
+              </div>
+            )}
+
+            <p className="invite-hint">
+              Escanea el codigo QR o ingresa el codigo manualmente para registrarse como {getInviteRoleLabel(selectedRole).toLowerCase()}
+            </p>
+
+            <div className="invite-code-box">
+              <code className="invite-code-text">{newCode}</code>
+              <button
+                type="button"
+                onClick={() => handleCopyCode(newCode)}
+                className="invite-code-copy"
+                title="Copiar codigo"
+              >
+                {copyFeedback === newCode ? (
+                  <IconCheck className="w-5 h-5" />
+                ) : (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" />
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRegenerateCode}
+              disabled={isGenerating}
+              className="invite-regenerate"
+            >
+              {isGenerating ? (
+                <>
+                  <Spinner />
+                  <span>Regenerando...</span>
+                </>
+              ) : (
+                <>
+                  <IconRefresh className="w-3.5 h-3.5" />
+                  <span>Regenerar codigo</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </Modal>
     </>
   )

@@ -1267,6 +1267,114 @@
     flex-shrink: 0;
   }
 
+  /* ===== Invite Success State ===== */
+  .invite-success-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-4);
+  }
+
+  .invite-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+  }
+
+  .invite-expiry-inline {
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+  }
+
+  .invite-qr-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+    padding: var(--space-4);
+  }
+
+  .invite-qr-box img {
+    width: 180px;
+    height: 180px;
+  }
+
+  .invite-hint {
+    font-size: var(--text-sm);
+    color: var(--color-text-tertiary);
+    text-align: center;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .invite-code-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-bg-muted);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+  }
+
+  .invite-code-text {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--color-text-primary);
+  }
+
+  .invite-code-copy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  }
+
+  @media (hover: hover) {
+    .invite-code-copy:hover {
+      border-color: var(--color-brand);
+      color: var(--color-brand);
+    }
+  }
+
+  .invite-code-copy:active {
+    transform: scale(0.95);
+  }
+
+  .invite-regenerate {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    color: var(--color-text-tertiary);
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    transition: color var(--transition-fast);
+  }
+
+  @media (hover: hover) {
+    .invite-regenerate:hover:not(:disabled) {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  .invite-regenerate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   /* ===== Toast ===== */
   .toast-container {
     position: fixed;
