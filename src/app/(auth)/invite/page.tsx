@@ -4,12 +4,15 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Input, Card, Spinner } from '@/components/ui'
+import { PhoneInput } from '@/components/auth/phone-input'
+import { OTPInput } from '@/components/auth/otp-input'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
 import { employeeRegistrationSchema, getInviteRoleLabel } from '@/lib/auth'
+import { isValidE164, formatPhoneForDisplay } from '@/lib/countries'
 import type { InviteRole } from '@/types'
 
-type InviteStep = 'loading' | 'code' | 'info' | 'pin'
+type InviteStep = 'loading' | 'code' | 'phone' | 'otp' | 'info' | 'pin'
 
 interface InviteInfo {
   code: string
@@ -19,7 +22,7 @@ interface InviteInfo {
 export default function InvitePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { registerWithInvite } = useAuth()
+  const { registerWithInvite, sendOTP, verifyOTP } = useAuth()
   const hasAutoValidated = useRef(false)
 
   // Check for code in URL query parameter
@@ -28,12 +31,14 @@ export default function InvitePage() {
   const [step, setStep] = useState<InviteStep>(codeFromUrl ? 'loading' : 'code')
   const [inviteCode, setInviteCode] = useState(codeFromUrl?.toUpperCase() || '')
   const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null)
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [devCode, setDevCode] = useState<string | null>(null)
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [otpSending, setOtpSending] = useState(false)
 
   // Auto-validate code from URL parameter
   useEffect(() => {
@@ -69,7 +74,7 @@ export default function InvitePage() {
           code,
           role: result.role as InviteRole,
         })
-        setStep('info')
+        setStep('phone')
       } catch (err) {
         console.error('Code validation error:', err)
         setErrors({ code: 'Error al verificar el codigo' })
@@ -122,7 +127,7 @@ export default function InvitePage() {
           code,
           role: result.role as InviteRole,
         })
-        setStep('info')
+        setStep('phone')
       } catch (err) {
         console.error('Code validation error:', err)
         setErrors({ code: 'Error al verificar el codigo' })
@@ -132,6 +137,72 @@ export default function InvitePage() {
     },
     [inviteCode]
   )
+
+  const handlePhoneSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+      setErrors({})
+
+      if (!phoneNumber || !isValidE164(phoneNumber)) {
+        setErrors({ phone: 'Ingresa un numero de telefono valido' })
+        return
+      }
+
+      setOtpSending(true)
+
+      // Send OTP
+      const result = await sendOTP(phoneNumber, 'registration')
+
+      if (!result.success) {
+        setErrors({ phone: result.error || 'Error al enviar el codigo' })
+        setOtpSending(false)
+        return
+      }
+
+      // In dev mode, show the code
+      if (result.devCode) {
+        setDevCode(result.devCode)
+      }
+
+      setOtpSending(false)
+      setStep('otp')
+    },
+    [phoneNumber, sendOTP]
+  )
+
+  const handleOtpComplete = useCallback(
+    async (code: string) => {
+      setIsLoading(true)
+      setErrors({})
+
+      const result = await verifyOTP(phoneNumber, code)
+
+      if (!result.valid) {
+        setErrors({ otp: result.error || 'Codigo incorrecto' })
+        setIsLoading(false)
+        return
+      }
+
+      setIsLoading(false)
+      setStep('info')
+    },
+    [phoneNumber, verifyOTP]
+  )
+
+  const handleResendOtp = useCallback(async () => {
+    setOtpSending(true)
+    setErrors({})
+
+    const result = await sendOTP(phoneNumber, 'registration')
+
+    if (!result.success) {
+      setErrors({ otp: result.error || 'Error al reenviar el codigo' })
+    } else if (result.devCode) {
+      setDevCode(result.devCode)
+    }
+
+    setOtpSending(false)
+  }, [phoneNumber, sendOTP])
 
   const handleInfoSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -147,7 +218,7 @@ export default function InvitePage() {
       // Validate with Zod (except PIN which comes next)
       const validation = employeeRegistrationSchema.safeParse({
         inviteCode: inviteInfo?.code || '',
-        email,
+        phoneNumber,
         password,
         name,
         pin: '0000', // Placeholder, will be set in next step
@@ -166,7 +237,7 @@ export default function InvitePage() {
 
       setStep('pin')
     },
-    [email, password, passwordConfirm, name, inviteInfo]
+    [phoneNumber, password, passwordConfirm, name, inviteInfo]
   )
 
   const handlePinComplete = useCallback(
@@ -178,7 +249,7 @@ export default function InvitePage() {
       try {
         await registerWithInvite({
           inviteCode: inviteInfo.code,
-          email,
+          phoneNumber,
           password,
           name,
           pin,
@@ -190,22 +261,30 @@ export default function InvitePage() {
         const errorMessage = err instanceof Error ? err.message : 'Error al crear la cuenta'
 
         // Check for specific error messages
-        if (errorMessage.includes('email') || errorMessage.includes('already exists')) {
-          setErrors({ email: 'Ya existe una cuenta con este email' })
+        if (errorMessage.includes('numero') || errorMessage.includes('phone')) {
+          setErrors({ phone: errorMessage })
+          setStep('phone')
         } else {
           setErrors({ general: errorMessage })
+          setStep('info')
         }
-        setStep('info')
       } finally {
         setIsLoading(false)
       }
     },
-    [inviteInfo, email, password, name, registerWithInvite, router]
+    [inviteInfo, phoneNumber, password, name, registerWithInvite, router]
   )
 
   const handleBackToCode = useCallback(() => {
     setStep('code')
     setErrors({})
+    setInviteInfo(null)
+  }, [])
+
+  const handleBackToPhone = useCallback(() => {
+    setStep('phone')
+    setErrors({})
+    setDevCode(null)
   }, [])
 
   const handleBackToInfo = useCallback(() => {
@@ -275,8 +354,8 @@ export default function InvitePage() {
     )
   }
 
-  // Info step
-  if (step === 'info') {
+  // Phone step
+  if (step === 'phone') {
     return (
       <>
         <Card padding="lg">
@@ -289,10 +368,108 @@ export default function InvitePage() {
             </div>
           )}
 
-          <h2 className="text-xl font-display font-bold mb-1">Crear tu cuenta</h2>
+          <h2 className="text-xl font-display font-bold mb-1">Tu numero de telefono</h2>
           <p className="text-sm text-text-tertiary mb-6">
-            Completa tus datos para unirte al equipo
+            Te enviaremos un codigo de verificacion por WhatsApp
           </p>
+
+          <form onSubmit={handlePhoneSubmit} className="space-y-4">
+            <PhoneInput
+              label="Numero de telefono"
+              value={phoneNumber}
+              onChange={setPhoneNumber}
+              error={errors.phone}
+              autoFocus
+            />
+
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg w-full"
+              disabled={otpSending}
+            >
+              {otpSending ? (
+                <>
+                  <Spinner />
+                  <span>Enviando codigo...</span>
+                </>
+              ) : (
+                'Continuar'
+              )}
+            </button>
+          </form>
+        </Card>
+
+        <div className="auth-footer">
+          <p className="auth-footer-link">
+            <button
+              type="button"
+              onClick={handleBackToCode}
+              className="text-brand hover:underline"
+            >
+              Usar otro codigo
+            </button>
+          </p>
+        </div>
+      </>
+    )
+  }
+
+  // OTP step
+  if (step === 'otp') {
+    return (
+      <Card padding="lg">
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-display font-bold mb-1">Verifica tu numero</h2>
+          <p className="text-sm text-text-tertiary">
+            Ingresa el codigo enviado a {formatPhoneForDisplay(phoneNumber)}
+          </p>
+        </div>
+
+        {devCode && (
+          <div className="mb-4 p-3 bg-warning-subtle text-warning text-sm rounded-lg text-center">
+            Codigo de desarrollo: <strong>{devCode}</strong>
+          </div>
+        )}
+
+        <OTPInput
+          onComplete={handleOtpComplete}
+          error={errors.otp}
+          disabled={isLoading}
+        />
+
+        <div className="mt-6 text-center space-y-2">
+          <button
+            type="button"
+            onClick={handleResendOtp}
+            disabled={otpSending}
+            className="text-brand hover:underline text-sm"
+          >
+            {otpSending ? 'Reenviando...' : 'Reenviar codigo'}
+          </button>
+          <br />
+          <button
+            type="button"
+            onClick={handleBackToPhone}
+            className="text-text-tertiary hover:underline text-sm"
+          >
+            Cambiar numero
+          </button>
+        </div>
+      </Card>
+    )
+  }
+
+  // Info step
+  if (step === 'info') {
+    return (
+      <>
+        <Card padding="lg">
+          <div className="mb-4">
+            <p className="text-sm text-text-tertiary">Registrando</p>
+            <p className="font-medium text-text-primary">
+              {formatPhoneForDisplay(phoneNumber)}
+            </p>
+          </div>
 
           <form onSubmit={handleInfoSubmit} className="space-y-4">
             {errors.general && (
@@ -310,16 +487,6 @@ export default function InvitePage() {
               autoComplete="name"
               autoFocus
               error={errors.name}
-            />
-
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              autoComplete="email"
-              error={errors.email}
             />
 
             <div>
@@ -361,10 +528,10 @@ export default function InvitePage() {
           <p className="auth-footer-link">
             <button
               type="button"
-              onClick={handleBackToCode}
+              onClick={handleBackToPhone}
               className="text-brand hover:underline"
             >
-              Usar otro codigo
+              Usar otro numero
             </button>
           </p>
         </div>

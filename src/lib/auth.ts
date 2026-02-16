@@ -290,7 +290,12 @@ import { z } from 'zod'
 
 export const pinSchema = z.string().regex(/^\d{4}$/, 'El PIN debe ser de 4 digitos')
 
-export const emailSchema = z.string().email('Email invalido')
+export const phoneSchema = z.string()
+  .regex(/^\+[1-9]\d{6,14}$/, 'Numero de telefono invalido')
+
+export const otpSchema = z.string()
+  .length(6, 'El codigo debe tener 6 digitos')
+  .regex(/^\d+$/, 'Solo numeros')
 
 export const nameSchema = z.string()
   .min(2, 'El nombre debe tener al menos 2 caracteres')
@@ -303,7 +308,7 @@ export const inviteCodeSchema = z.string()
   .regex(/^[A-Z0-9]{6}$/, 'Codigo invalido')
 
 export const ownerRegistrationSchema = z.object({
-  email: emailSchema,
+  phoneNumber: phoneSchema,
   password: passwordSchema,
   name: nameSchema,
   pin: pinSchema,
@@ -311,14 +316,14 @@ export const ownerRegistrationSchema = z.object({
 
 export const employeeRegistrationSchema = z.object({
   inviteCode: inviteCodeSchema,
-  email: emailSchema,
+  phoneNumber: phoneSchema,
   password: passwordSchema,
   name: nameSchema,
   pin: pinSchema,
 })
 
 export const loginSchema = z.object({
-  email: emailSchema,
+  phoneNumber: phoneSchema,
 })
 
 export type OwnerRegistrationData = z.infer<typeof ownerRegistrationSchema>

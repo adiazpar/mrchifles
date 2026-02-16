@@ -7,7 +7,9 @@ export type UserStatus = 'active' | 'pending' | 'disabled'
 
 export interface User {
   id: string
-  email: string
+  email: string // Formatted phone as email (51987654321@phone.local) for PocketBase auth
+  phoneNumber: string // E.164 format (+51987654321) for WhatsApp/display
+  phoneVerified: boolean // Whether phone was verified via OTP
   name: string
   role: UserRole
   status: UserStatus
@@ -20,6 +22,22 @@ export interface User {
   expand?: {
     invitedBy?: User
   }
+}
+
+// ============================================
+// OTP TYPES
+// ============================================
+
+export type OTPPurpose = 'registration' | 'login' | 'reset'
+
+export interface OTPCode {
+  id: string
+  phoneNumber: string // E.164 format
+  code: string // 6-digit code
+  expiresAt: string // ISO date string
+  used: boolean
+  purpose: OTPPurpose
+  created: string
 }
 
 // ============================================
