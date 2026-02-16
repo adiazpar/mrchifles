@@ -5,6 +5,7 @@ import QRCode from 'qrcode'
 import { Card, Badge, Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
 import { IconEmployee, IconPartner, IconCheck, IconRefresh, IconCopy, IconTrash, IconClose, IconAdd } from '@/components/icons'
+import { DirectInviteForm } from '@/components/invite'
 import { useAuth } from '@/contexts/auth-context'
 import {
   generateInviteCode,
@@ -99,6 +100,7 @@ export default function TeamPage() {
   const [error, setError] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
+  const [shareMethod, setShareMethod] = useState<'qr' | 'code' | 'whatsapp'>('qr')
   const copyFeedbackTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Check if current user is owner
@@ -311,6 +313,7 @@ export default function TeamPage() {
     setQrDataUrl(null)
     setSelectedRole('employee')
     setError('')
+    setShareMethod('qr')
     setIsModalOpen(true)
   }, [])
 
@@ -319,6 +322,7 @@ export default function TeamPage() {
     setGeneratedCodeId(code.id)
     setNewCode(code.code)
     setError('')
+    setShareMethod('qr')
     setIsModalOpen(true)
 
     // Generate QR code for existing invite
@@ -575,37 +579,82 @@ export default function TeamPage() {
             </div>
           </div>
         ) : (
-          /* Step 2: Success State - Compact Layout */
+          /* Step 2: Success State - Segmented Control Layout */
           <div className="invite-success-compact">
+            {/* Header with role and expiry */}
             <div className="invite-meta-row">
               <Badge variant="brand">{getInviteRoleLabel(selectedRole)}</Badge>
               <span className="invite-expiry-inline">Valido por 7 dias</span>
             </div>
 
-            {qrDataUrl && (
-              <div className="invite-qr-box">
-                <img src={qrDataUrl} alt="Codigo QR para registro" />
-              </div>
-            )}
+            {/* Segmented Control */}
+            <div className="invite-segment-control">
+              <button
+                type="button"
+                className={`invite-segment ${shareMethod === 'qr' ? 'invite-segment-active' : ''}`}
+                onClick={() => setShareMethod('qr')}
+              >
+                Escanear QR
+              </button>
+              <button
+                type="button"
+                className={`invite-segment ${shareMethod === 'code' ? 'invite-segment-active' : ''}`}
+                onClick={() => setShareMethod('code')}
+              >
+                Copiar codigo
+              </button>
+              <button
+                type="button"
+                className={`invite-segment ${shareMethod === 'whatsapp' ? 'invite-segment-active' : ''}`}
+                onClick={() => setShareMethod('whatsapp')}
+              >
+                WhatsApp
+              </button>
+            </div>
 
-            <p className="invite-hint">
-              Escanea el codigo QR o ingresa el codigo manualmente para registrarse como {getInviteRoleLabel(selectedRole).toLowerCase()}
-            </p>
-
-            <button
-              type="button"
-              onClick={() => handleCopyCode(newCode)}
-              className="invite-code-box"
-              title="Copiar codigo"
-            >
-              <code className="invite-code-text">{newCode}</code>
-              {copyFeedback === newCode ? (
-                <IconCheck className="w-5 h-5 text-success" />
-              ) : (
-                <IconCopy className="w-5 h-5" />
+            {/* Dynamic Content Area */}
+            <div className="invite-content-area">
+              {shareMethod === 'qr' && qrDataUrl && (
+                <div className="invite-qr-view">
+                  <div className="invite-qr-box">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- Data URL for QR code, no optimization benefit */}
+                    <img src={qrDataUrl} alt="Codigo QR para registro" />
+                  </div>
+                  <p className="invite-hint">
+                    El empleado escanea este codigo con su camara
+                  </p>
+                </div>
               )}
-            </button>
 
+              {shareMethod === 'code' && (
+                <div className="invite-code-view">
+                  <button
+                    type="button"
+                    onClick={() => handleCopyCode(newCode)}
+                    className="invite-code-box-large"
+                    title="Copiar codigo"
+                  >
+                    <code className="invite-code-text-large">{newCode}</code>
+                    {copyFeedback === newCode ? (
+                      <IconCheck className="w-6 h-6 text-success" />
+                    ) : (
+                      <IconCopy className="w-6 h-6" />
+                    )}
+                  </button>
+                  <p className="invite-hint">
+                    Toca para copiar y compartir el codigo
+                  </p>
+                </div>
+              )}
+
+              {shareMethod === 'whatsapp' && (
+                <div className="invite-whatsapp-view">
+                  <DirectInviteForm code={newCode} role={selectedRole} />
+                </div>
+              )}
+            </div>
+
+            {/* Regenerate button */}
             <button
               type="button"
               onClick={handleRegenerateCode}

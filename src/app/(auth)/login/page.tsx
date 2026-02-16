@@ -4,20 +4,22 @@ import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Input, Card, Spinner } from '@/components/ui'
+import { PhoneInput } from '@/components/auth/phone-input'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
 import { getUserInitials } from '@/lib/auth'
+import { isValidE164, formatPhoneForDisplay } from '@/lib/countries'
 import type { User } from '@/types'
 
-type LoginStep = 'checking' | 'email' | 'password' | 'pin'
+type LoginStep = 'checking' | 'phone' | 'password' | 'pin'
 
 export default function LoginPage() {
   const router = useRouter()
   const {
     loginWithPassword,
     loginWithPin,
-    getRememberedEmail,
-    clearRememberedEmail,
+    getRememberedPhone,
+    clearRememberedPhone,
     deviceTrusted,
     setupComplete,
     isCheckingSetup,
@@ -25,7 +27,7 @@ export default function LoginPage() {
   } = useAuth()
 
   const [step, setStep] = useState<LoginStep>('checking')
-  const [email, setEmail] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -44,40 +46,40 @@ export default function LoginPage() {
 
     // Check for trusted device with valid session
     const checkTrustedDevice = async () => {
-      const rememberedEmail = getRememberedEmail()
+      const rememberedPhone = getRememberedPhone()
 
-      if (rememberedEmail && pb.authStore.isValid) {
+      if (rememberedPhone && pb.authStore.isValid) {
         // Trusted device with valid session - show PIN pad
         const authUser = pb.authStore.model as User
-        if (authUser && authUser.email === rememberedEmail) {
+        if (authUser && authUser.phoneNumber === rememberedPhone) {
           setTrustedUser(authUser)
-          setEmail(rememberedEmail)
+          setPhoneNumber(rememberedPhone)
           setStep('pin')
           return
         }
       }
 
-      // Not a trusted device or session expired - show email input
-      setStep('email')
+      // Not a trusted device or session expired - show phone input
+      setStep('phone')
     }
 
     checkTrustedDevice()
-  }, [getRememberedEmail, pb, deviceTrusted, setupComplete, isCheckingSetup, router])
+  }, [getRememberedPhone, pb, deviceTrusted, setupComplete, isCheckingSetup, router])
 
-  const handleEmailSubmit = useCallback(
+  const handlePhoneSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault()
       setError('')
 
-      if (!email.trim()) {
-        setError('Por favor ingresa tu email')
+      if (!phoneNumber || !isValidE164(phoneNumber)) {
+        setError('Ingresa un numero de telefono valido')
         return
       }
 
       // Move to password step
       setStep('password')
     },
-    [email]
+    [phoneNumber]
   )
 
   const handlePasswordSubmit = useCallback(
@@ -93,7 +95,7 @@ export default function LoginPage() {
       setIsLoading(true)
 
       try {
-        await loginWithPassword(email.trim(), password)
+        await loginWithPassword(phoneNumber, password)
         router.push('/inicio')
       } catch (err) {
         // Handle PocketBase error - check for custom message from server
@@ -103,7 +105,7 @@ export default function LoginPage() {
           if (pbErr.message && pbErr.message.includes('deshabilitada')) {
             setError(pbErr.message)
           } else if (pbErr.status === 400) {
-            setError('Email o contrasena incorrectos')
+            setError('Numero o contrasena incorrectos')
           } else {
             setError('Error al iniciar sesion')
           }
@@ -114,7 +116,7 @@ export default function LoginPage() {
         setIsLoading(false)
       }
     },
-    [email, password, loginWithPassword, router]
+    [phoneNumber, password, loginWithPassword, router]
   )
 
   const handlePinComplete = useCallback(
@@ -141,18 +143,18 @@ export default function LoginPage() {
   )
 
   const handleChangeUser = useCallback(() => {
-    clearRememberedEmail()
+    clearRememberedPhone()
     setTrustedUser(null)
-    setEmail('')
+    setPhoneNumber('')
     setPassword('')
     setError('')
-    setStep('email')
-  }, [clearRememberedEmail])
+    setStep('phone')
+  }, [clearRememberedPhone])
 
-  const handleBackToEmail = useCallback(() => {
+  const handleBackToPhone = useCallback(() => {
     setPassword('')
     setError('')
-    setStep('email')
+    setStep('phone')
   }, [])
 
   // Checking state (also covers setup redirect)
@@ -167,21 +169,18 @@ export default function LoginPage() {
     )
   }
 
-  // Email step
-  if (step === 'email') {
+  // Phone step
+  if (step === 'phone') {
     return (
       <>
         <Card padding="lg">
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              autoComplete="email"
-              autoFocus
+          <form onSubmit={handlePhoneSubmit} className="space-y-4">
+            <PhoneInput
+              label="Numero de telefono"
+              value={phoneNumber}
+              onChange={setPhoneNumber}
               error={error}
+              autoFocus
             />
 
             <button
@@ -210,14 +209,16 @@ export default function LoginPage() {
         <Card padding="lg">
           <div className="mb-4">
             <p className="text-sm text-text-tertiary">Iniciando sesion como</p>
-            <p className="font-medium text-text-primary">{email}</p>
+            <p className="font-medium text-text-primary">
+              {formatPhoneForDisplay(phoneNumber)}
+            </p>
           </div>
 
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            {/* Hidden username field for accessibility and password managers */}
+            {/* Hidden phone field for accessibility and password managers */}
             <input
-              type="email"
-              value={email}
+              type="tel"
+              value={phoneNumber}
               autoComplete="username"
               readOnly
               className="sr-only"
@@ -256,10 +257,10 @@ export default function LoginPage() {
           <p className="auth-footer-link">
             <button
               type="button"
-              onClick={handleBackToEmail}
+              onClick={handleBackToPhone}
               className="text-brand hover:underline"
             >
-              Usar otro email
+              Usar otro numero
             </button>
           </p>
         </div>
@@ -277,7 +278,7 @@ export default function LoginPage() {
             {getUserInitials(trustedUser.name)}
           </div>
           <h2 className="auth-user-name">Hola, {trustedUser.name.split(' ')[0]}</h2>
-          <p className="auth-user-email">{trustedUser.email}</p>
+          <p className="auth-user-email">{formatPhoneForDisplay(trustedUser.phoneNumber)}</p>
         </div>
       )}
 

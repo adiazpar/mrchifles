@@ -36,21 +36,25 @@ interface AuthContextType {
   setupComplete: boolean
   isCheckingSetup: boolean
 
-  // Auth methods
-  loginWithPassword: (email: string, password: string) => Promise<void>
+  // Auth methods (now phone-based)
+  loginWithPassword: (phoneNumber: string, password: string) => Promise<void>
   loginWithPin: (pin: string) => Promise<boolean>
   logout: (clearDevice?: boolean) => void
 
-  // Registration
+  // OTP methods
+  sendOTP: (phoneNumber: string, purpose: 'registration' | 'login' | 'reset') => Promise<{ success: boolean; devCode?: string; error?: string }>
+  verifyOTP: (phoneNumber: string, code: string) => Promise<{ valid: boolean; error?: string }>
+
+  // Registration (phone-based)
   registerOwner: (data: {
-    email: string
+    phoneNumber: string
     password: string
     name: string
     pin: string
   }) => Promise<void>
   registerWithInvite: (data: {
     inviteCode: string
-    email: string
+    phoneNumber: string
     password: string
     name: string
     pin: string
@@ -61,10 +65,10 @@ interface AuthContextType {
   unlockSession: (pin: string) => Promise<boolean>
   updateActivity: () => void
 
-  // Device trust
-  getRememberedEmail: () => string | null
-  clearRememberedEmail: () => void
-  trustDevice: (email: string) => void
+  // Device trust (now phone-based)
+  getRememberedPhone: () => string | null
+  clearRememberedPhone: () => void
+  trustDevice: (phoneNumber: string) => void
 
   // PocketBase instance for direct access if needed
   pb: PocketBase
@@ -81,25 +85,34 @@ const AuthContext = createContext<AuthContextType | null>(null)
 // ============================================
 
 const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
-const REMEMBERED_EMAIL_KEY = 'chifles_remembered_email'
+const REMEMBERED_PHONE_KEY = 'chifles_remembered_phone'
 
 // ============================================
-// REMEMBERED EMAIL HELPERS
+// REMEMBERED PHONE HELPERS
 // ============================================
 
-function getRememberedEmail(): string | null {
+function getRememberedPhone(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem(REMEMBERED_EMAIL_KEY)
+  return localStorage.getItem(REMEMBERED_PHONE_KEY)
 }
 
-function setRememberedEmail(email: string): void {
+function setRememberedPhone(phoneNumber: string): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(REMEMBERED_EMAIL_KEY, email)
+  localStorage.setItem(REMEMBERED_PHONE_KEY, phoneNumber)
 }
 
-function clearRememberedEmailStorage(): void {
+function clearRememberedPhoneStorage(): void {
   if (typeof window === 'undefined') return
-  localStorage.removeItem(REMEMBERED_EMAIL_KEY)
+  localStorage.removeItem(REMEMBERED_PHONE_KEY)
+}
+
+/**
+ * Convert phone number to auth email format for PocketBase
+ * +51987654321 -> 51987654321@phone.local
+ */
+function phoneToAuthEmail(phoneNumber: string): string {
+  const digits = phoneNumber.replace('+', '')
+  return `${digits}@phone.local`
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -149,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.warn('User account has been disabled, logging out')
             pb.authStore.clear()
             setUser(null)
-            clearRememberedEmailStorage()
+            clearRememberedPhoneStorage()
             setDeviceTrusted(false)
             return
           }
@@ -160,14 +173,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('Auth token invalid or user deleted, clearing session')
           pb.authStore.clear()
           setUser(null)
-          clearRememberedEmailStorage()
+          clearRememberedPhoneStorage()
           setDeviceTrusted(false)
         }
       }
 
-      // Check if this device is trusted (has remembered email)
-      const rememberedEmail = getRememberedEmail()
-      setDeviceTrusted(!!rememberedEmail && pb.authStore.isValid)
+      // Check if this device is trusted (has remembered phone)
+      const rememberedPhone = getRememberedPhone()
+      setDeviceTrusted(!!rememberedPhone && pb.authStore.isValid)
 
       setIsLoading(false)
     }
@@ -196,7 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('User account has been disabled, logging out')
           pb.authStore.clear()
           setUser(null)
-          clearRememberedEmailStorage()
+          clearRememberedPhoneStorage()
           setDeviceTrusted(false)
         }
       } catch {
@@ -229,14 +242,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
 
   /**
-   * Login with email and password (for new devices or expired sessions)
+   * Login with phone number and password (for new devices or expired sessions)
    * This is the primary authentication method
    */
-  const loginWithPassword = useCallback(async (email: string, password: string): Promise<void> => {
+  const loginWithPassword = useCallback(async (phoneNumber: string, password: string): Promise<void> => {
     try {
-      const authData = await pb.collection('users').authWithPassword(email, password)
+      // Convert phone to auth email format for PocketBase
+      const authEmail = phoneToAuthEmail(phoneNumber)
+      const authData = await pb.collection('users').authWithPassword(authEmail, password)
       setUser(authData.record as unknown as User)
-      setRememberedEmail(email) // Trust this device after successful password login
+      setRememberedPhone(phoneNumber) // Trust this device after successful password login
       setDeviceTrusted(true)
       setSessionState(prev => resetSession(prev))
     } catch (error) {
@@ -256,23 +271,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * PIN is just a UI gate to unlock access to existing authenticated session
    */
   const loginWithPin = useCallback(async (pin: string): Promise<boolean> => {
-    const rememberedEmail = getRememberedEmail()
-    if (!rememberedEmail) {
+    const rememberedPhone = getRememberedPhone()
+    if (!rememberedPhone) {
       return false
     }
 
     // Check if we have a valid PocketBase session
     if (!pb.authStore.isValid) {
       // Session expired - need password login
-      clearRememberedEmailStorage()
+      clearRememberedPhoneStorage()
       setDeviceTrusted(false)
       return false
     }
 
-    // Verify the session email matches remembered email
+    // Verify the session phone matches remembered phone
     const authUser = pb.authStore.model as User
-    if (!authUser || authUser.email !== rememberedEmail) {
-      clearRememberedEmailStorage()
+    if (!authUser || authUser.phoneNumber !== rememberedPhone) {
+      clearRememberedPhoneStorage()
       setDeviceTrusted(false)
       return false
     }
@@ -306,17 +321,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     setSessionState(createSessionState())
     if (clearDevice) {
-      clearRememberedEmailStorage()
+      clearRememberedPhoneStorage()
       setDeviceTrusted(false)
     }
   }, [pb])
+
+  // ============================================
+  // OTP METHODS
+  // ============================================
+
+  /**
+   * Send OTP code to phone number via WhatsApp
+   */
+  const sendOTP = useCallback(async (
+    phoneNumber: string,
+    purpose: 'registration' | 'login' | 'reset'
+  ): Promise<{ success: boolean; devCode?: string; error?: string }> => {
+    try {
+      const response = await fetch('/api/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, purpose }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Error al enviar el codigo' }
+      }
+
+      return { success: true, devCode: data.devCode }
+    } catch {
+      return { success: false, error: 'Error de conexion' }
+    }
+  }, [])
+
+  /**
+   * Verify OTP code
+   */
+  const verifyOTP = useCallback(async (
+    phoneNumber: string,
+    code: string
+  ): Promise<{ valid: boolean; error?: string }> => {
+    try {
+      const response = await fetch('/api/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, code }),
+      })
+
+      const data = await response.json()
+      return { valid: data.valid, error: data.error }
+    } catch {
+      return { valid: false, error: 'Error de conexion' }
+    }
+  }, [])
 
   // ============================================
   // REGISTRATION METHODS
   // ============================================
 
   const registerOwner = useCallback(async (data: {
-    email: string
+    phoneNumber: string
     password: string
     name: string
     pin: string
@@ -327,22 +393,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const pinHash = await hashPin(data.pin)
+    const authEmail = phoneToAuthEmail(data.phoneNumber)
 
     try {
-      // Create user with owner role using ACTUAL password
+      // Create user with owner role using phone as auth email
       const newUser = await pb.collection('users').create({
-        email: data.email,
-        emailVisibility: true,
-        password: data.password,        // ACTUAL password
-        passwordConfirm: data.password, // ACTUAL password
+        email: authEmail,               // Phone formatted as email for PocketBase auth
+        emailVisibility: false,
+        password: data.password,
+        passwordConfirm: data.password,
         name: data.name,
-        pin: pinHash,                   // PIN hash stored separately for quick unlock
+        phoneNumber: data.phoneNumber,  // Actual phone number for display/WhatsApp
+        phoneVerified: true,            // Verified via OTP before registration
+        pin: pinHash,
         role: 'owner',
         status: 'active',
       })
 
-      // Log in with ACTUAL password
-      await pb.collection('users').authWithPassword(data.email, data.password)
+      // Log in with auth email
+      await pb.collection('users').authWithPassword(authEmail, data.password)
       setUser(newUser as unknown as User)
 
       // Mark setup as complete
@@ -351,13 +420,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (configs.items.length > 0) {
           await pb.collection('app_config').update(configs.items[0].id, {
             setupComplete: true,
-            ownerEmail: data.email,
+            ownerPhone: data.phoneNumber,
           })
         } else {
-          // Create config record if none exists (e.g., fresh PocketHost import)
+          // Create config record if none exists
           await pb.collection('app_config').create({
             setupComplete: true,
-            ownerEmail: data.email,
+            ownerPhone: data.phoneNumber,
           })
         }
         setSetupComplete(true)
@@ -367,16 +436,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Trust this device
-      setRememberedEmail(data.email)
+      setRememberedPhone(data.phoneNumber)
       setDeviceTrusted(true)
     } catch (error) {
       console.error('Registration failed:', error)
       // Extract PocketBase error message if available
       if (error && typeof error === 'object' && 'response' in error) {
         const pbError = error as { response?: { data?: Record<string, { message?: string }>, message?: string } }
-        // Check for email already exists error
+        // Check for phone already exists error (email field in PocketBase)
         if (pbError.response?.data?.email?.message) {
-          throw new Error(pbError.response.data.email.message)
+          throw new Error('Ya existe una cuenta con este numero')
+        }
+        if (pbError.response?.data?.phoneNumber?.message) {
+          throw new Error(pbError.response.data.phoneNumber.message)
         }
         throw new Error(pbError.response?.message || 'Error de registro')
       }
@@ -386,7 +458,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerWithInvite = useCallback(async (data: {
     inviteCode: string
-    email: string
+    phoneNumber: string
     password: string
     name: string
     pin: string
@@ -410,21 +482,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const pinHash = await hashPin(data.pin)
+      const authEmail = phoneToAuthEmail(data.phoneNumber)
 
-      // Create user with role from invite using ACTUAL password
+      // Create user with role from invite using phone as auth email
       const newUser = await pb.collection('users').create({
-        email: data.email,
-        emailVisibility: true,
-        password: data.password,        // ACTUAL password
-        passwordConfirm: data.password, // ACTUAL password
+        email: authEmail,               // Phone formatted as email for PocketBase auth
+        emailVisibility: false,
+        password: data.password,
+        passwordConfirm: data.password,
         name: data.name,
-        pin: pinHash,                   // PIN hash stored separately
+        phoneNumber: data.phoneNumber,  // Actual phone number for display/WhatsApp
+        phoneVerified: true,            // Verified via OTP before registration
+        pin: pinHash,
         role: validation.role,
         status: 'active',
       })
 
-      // Log in with ACTUAL password to get auth token
-      await pb.collection('users').authWithPassword(data.email, data.password)
+      // Log in with auth email
+      await pb.collection('users').authWithPassword(authEmail, data.password)
 
       // Mark invite as used via server-side endpoint (now we're authenticated)
       try {
@@ -444,7 +519,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(newUser as unknown as User)
 
       // Trust this device
-      setRememberedEmail(data.email)
+      setRememberedPhone(data.phoneNumber)
       setDeviceTrusted(true)
     } catch (error) {
       console.error('Registration failed:', error)
@@ -495,13 +570,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // DEVICE TRUST
   // ============================================
 
-  const trustDevice = useCallback((email: string) => {
-    setRememberedEmail(email)
+  const trustDevice = useCallback((phoneNumber: string) => {
+    setRememberedPhone(phoneNumber)
     setDeviceTrusted(true)
   }, [])
 
-  const clearRememberedEmail = useCallback(() => {
-    clearRememberedEmailStorage()
+  const clearRememberedPhone = useCallback(() => {
+    clearRememberedPhoneStorage()
     setDeviceTrusted(false)
   }, [])
 
@@ -524,6 +599,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loginWithPin,
     logout,
 
+    sendOTP,
+    verifyOTP,
+
     registerOwner,
     registerWithInvite,
 
@@ -531,8 +609,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     unlockSession,
     updateActivity: handleUpdateActivity,
 
-    getRememberedEmail,
-    clearRememberedEmail,
+    getRememberedPhone,
+    clearRememberedPhone,
     trustDevice,
 
     pb,
@@ -546,12 +624,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loginWithPassword,
     loginWithPin,
     logout,
+    sendOTP,
+    verifyOTP,
     registerOwner,
     registerWithInvite,
     lockSession,
     unlockSession,
     handleUpdateActivity,
-    clearRememberedEmail,
+    clearRememberedPhone,
     trustDevice,
     pb,
   ])

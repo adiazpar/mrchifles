@@ -3,23 +3,28 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input, Card, Spinner } from '@/components/ui'
+import { PhoneInput } from '@/components/auth/phone-input'
+import { OTPInput } from '@/components/auth/otp-input'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
 import { ownerRegistrationSchema } from '@/lib/auth'
+import { isValidE164, formatPhoneForDisplay } from '@/lib/countries'
 
-type RegisterStep = 'checking' | 'info' | 'pin'
+type RegisterStep = 'checking' | 'phone' | 'otp' | 'info' | 'pin'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { registerOwner, setupComplete, isCheckingSetup } = useAuth()
+  const { registerOwner, sendOTP, verifyOTP, setupComplete, isCheckingSetup } = useAuth()
 
   const [step, setStep] = useState<RegisterStep>('checking')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [devCode, setDevCode] = useState<string | null>(null)
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [otpSending, setOtpSending] = useState(false)
 
   // Check if setup is already complete (owner exists)
   useEffect(() => {
@@ -31,9 +36,75 @@ export default function RegisterPage() {
       return
     }
 
-    // Show registration form
-    setStep('info')
+    // Show phone input
+    setStep('phone')
   }, [setupComplete, isCheckingSetup, router])
+
+  const handlePhoneSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+      setErrors({})
+
+      if (!phoneNumber || !isValidE164(phoneNumber)) {
+        setErrors({ phone: 'Ingresa un numero de telefono valido' })
+        return
+      }
+
+      setOtpSending(true)
+
+      // Send OTP
+      const result = await sendOTP(phoneNumber, 'registration')
+
+      if (!result.success) {
+        setErrors({ phone: result.error || 'Error al enviar el codigo' })
+        setOtpSending(false)
+        return
+      }
+
+      // In dev mode, show the code
+      if (result.devCode) {
+        setDevCode(result.devCode)
+      }
+
+      setOtpSending(false)
+      setStep('otp')
+    },
+    [phoneNumber, sendOTP]
+  )
+
+  const handleOtpComplete = useCallback(
+    async (code: string) => {
+      setIsLoading(true)
+      setErrors({})
+
+      const result = await verifyOTP(phoneNumber, code)
+
+      if (!result.valid) {
+        setErrors({ otp: result.error || 'Codigo incorrecto' })
+        setIsLoading(false)
+        return
+      }
+
+      setIsLoading(false)
+      setStep('info')
+    },
+    [phoneNumber, verifyOTP]
+  )
+
+  const handleResendOtp = useCallback(async () => {
+    setOtpSending(true)
+    setErrors({})
+
+    const result = await sendOTP(phoneNumber, 'registration')
+
+    if (!result.success) {
+      setErrors({ otp: result.error || 'Error al reenviar el codigo' })
+    } else if (result.devCode) {
+      setDevCode(result.devCode)
+    }
+
+    setOtpSending(false)
+  }, [phoneNumber, sendOTP])
 
   const handleInfoSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -48,7 +119,7 @@ export default function RegisterPage() {
 
       // Validate with Zod (except PIN which comes next)
       const validation = ownerRegistrationSchema.safeParse({
-        email,
+        phoneNumber,
         password,
         name,
         pin: '0000', // Placeholder, will be set in next step
@@ -67,7 +138,7 @@ export default function RegisterPage() {
 
       setStep('pin')
     },
-    [email, password, passwordConfirm, name]
+    [phoneNumber, password, passwordConfirm, name]
   )
 
   const handlePinComplete = useCallback(
@@ -76,7 +147,7 @@ export default function RegisterPage() {
 
       try {
         await registerOwner({
-          email,
+          phoneNumber,
           password,
           name,
           pin,
@@ -88,20 +159,28 @@ export default function RegisterPage() {
         const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
 
         // Check for specific error messages
-        if (errorMessage.includes('email') || errorMessage.includes('already exists')) {
-          setErrors({ email: 'Ya existe una cuenta con este email' })
+        if (errorMessage.includes('numero') || errorMessage.includes('phone')) {
+          setErrors({ phone: errorMessage })
+          setStep('phone')
         } else if (errorMessage.includes('propietario')) {
           setErrors({ general: errorMessage })
+          setStep('phone')
         } else {
           setErrors({ general: `Error al crear la cuenta: ${errorMessage}` })
+          setStep('info')
         }
-        setStep('info')
       } finally {
         setIsLoading(false)
       }
     },
-    [email, password, name, registerOwner, router]
+    [phoneNumber, password, name, registerOwner, router]
   )
+
+  const handleBackToPhone = useCallback(() => {
+    setStep('phone')
+    setErrors({})
+    setDevCode(null)
+  }, [])
 
   const handleBackToInfo = useCallback(() => {
     setStep('info')
@@ -120,14 +199,106 @@ export default function RegisterPage() {
     )
   }
 
-  // Info step
-  if (step === 'info') {
+  // Phone step
+  if (step === 'phone') {
     return (
       <Card padding="lg">
         <h2 className="text-xl font-display font-bold mb-1">Bienvenido a Mr. Chifles</h2>
         <p className="text-sm text-text-tertiary mb-6">
           Configura tu cuenta de propietario para comenzar
         </p>
+
+        <form onSubmit={handlePhoneSubmit} className="space-y-4">
+          {errors.general && (
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+              {errors.general}
+            </div>
+          )}
+
+          <PhoneInput
+            label="Numero de telefono"
+            value={phoneNumber}
+            onChange={setPhoneNumber}
+            error={errors.phone}
+            autoFocus
+          />
+
+          <p className="text-xs text-text-tertiary">
+            Te enviaremos un codigo de verificacion por WhatsApp
+          </p>
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg w-full"
+            disabled={otpSending}
+          >
+            {otpSending ? (
+              <>
+                <Spinner />
+                <span>Enviando codigo...</span>
+              </>
+            ) : (
+              'Continuar'
+            )}
+          </button>
+        </form>
+      </Card>
+    )
+  }
+
+  // OTP step
+  if (step === 'otp') {
+    return (
+      <Card padding="lg">
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-display font-bold mb-1">Verifica tu numero</h2>
+          <p className="text-sm text-text-tertiary">
+            Ingresa el codigo enviado a {formatPhoneForDisplay(phoneNumber)}
+          </p>
+        </div>
+
+        {devCode && (
+          <div className="mb-4 p-3 bg-warning-subtle text-warning text-sm rounded-lg text-center">
+            Codigo de desarrollo: <strong>{devCode}</strong>
+          </div>
+        )}
+
+        <OTPInput
+          onComplete={handleOtpComplete}
+          error={errors.otp}
+          disabled={isLoading}
+        />
+
+        <div className="mt-6 text-center space-y-2">
+          <button
+            type="button"
+            onClick={handleResendOtp}
+            disabled={otpSending}
+            className="text-brand hover:underline text-sm"
+          >
+            {otpSending ? 'Reenviando...' : 'Reenviar codigo'}
+          </button>
+          <br />
+          <button
+            type="button"
+            onClick={handleBackToPhone}
+            className="text-text-tertiary hover:underline text-sm"
+          >
+            Cambiar numero
+          </button>
+        </div>
+      </Card>
+    )
+  }
+
+  // Info step
+  if (step === 'info') {
+    return (
+      <Card padding="lg">
+        <div className="mb-4">
+          <p className="text-sm text-text-tertiary">Registrando</p>
+          <p className="font-medium text-text-primary">{formatPhoneForDisplay(phoneNumber)}</p>
+        </div>
 
         <form onSubmit={handleInfoSubmit} className="space-y-4">
           {errors.general && (
@@ -145,16 +316,6 @@ export default function RegisterPage() {
             autoComplete="name"
             autoFocus
             error={errors.name}
-          />
-
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="tu@email.com"
-            autoComplete="email"
-            error={errors.email}
           />
 
           <div>
@@ -190,6 +351,16 @@ export default function RegisterPage() {
             Continuar
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={handleBackToPhone}
+            className="text-brand hover:underline text-sm"
+          >
+            Usar otro numero
+          </button>
+        </div>
       </Card>
     )
   }
