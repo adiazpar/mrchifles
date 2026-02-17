@@ -116,7 +116,7 @@ export default function ChangePinPage() {
 
   return (
     <>
-      <PageHeader title="Cambiar PIN" />
+      <PageHeader title="Cambiar PIN" subtitle="Actualiza tu codigo de acceso" />
 
       <main className="change-pin-container">
         <div className="change-pin-content">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { PageHeader } from '@/components/layout'
 import { IconPalette, IconInfo, IconSun, IconMoon, IconMonitor } from '@/components/icons'
 
@@ -27,19 +27,24 @@ const THEME_CONFIG = {
   },
 }
 
+function getInitialTheme(): Theme {
+  if (typeof window === 'undefined') return 'system'
+  const saved = localStorage.getItem('theme') as Theme | null
+  return saved || 'system'
+}
+
 export default function SettingsPage() {
-  const [theme, setTheme] = useState<Theme>('system')
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+  const isInitialMount = useRef(true)
 
-  // Load theme preference on mount
+  // Apply theme changes only when user changes theme (not on mount)
   useEffect(() => {
-    const saved = localStorage.getItem('theme') as Theme | null
-    if (saved) {
-      setTheme(saved)
+    // Skip the initial mount - the inline script already applied the theme
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
     }
-  }, [])
 
-  // Apply theme changes
-  useEffect(() => {
     const root = document.documentElement
 
     if (theme === 'system') {
@@ -69,7 +74,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Configuracion" />
+      <PageHeader title="Configuracion" subtitle="Personaliza tu experiencia" />
 
       <main className="settings-container">
         {/* Appearance Section */}
