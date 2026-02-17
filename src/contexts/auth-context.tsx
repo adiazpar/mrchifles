@@ -183,6 +183,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           setUser(refreshedUser)
+
+          // Update remembered user info to keep in sync with server
+          const rememberedPhone = getRememberedPhone()
+          if (rememberedPhone) {
+            setRememberedUser(rememberedPhone, refreshedUser.name)
+          }
         } catch {
           // Token is invalid or user was deleted - clear auth state
           console.warn('Auth token invalid or user deleted, clearing session')

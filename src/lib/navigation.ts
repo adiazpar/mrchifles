@@ -19,8 +19,8 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: '/inicio', label: 'Inicio', icon: IconHome },
   { href: '/ventas', label: 'Ventas', icon: IconSales },
-  { href: '/productos', label: 'Productos', icon: IconProducts },
   { href: '/caja', label: 'Caja', icon: IconCashDrawer },
+  { href: '/productos', label: 'Productos', icon: IconProducts },
   { href: '/inventario', label: 'Inventario', icon: IconInventory },
 ]
 
@@ -30,7 +30,7 @@ export const NAV_ITEMS: NavItem[] = [
 export const MOBILE_NAV_ITEMS: NavItem[] = [
   { href: '/inicio', label: 'Inicio', icon: IconHome },
   { href: '/ventas', label: 'Ventas', icon: IconSales },
-  { href: '/productos', label: 'Productos', icon: IconProducts },
   { href: '/caja', label: 'Caja', icon: IconCashDrawer },
+  { href: '/productos', label: 'Productos', icon: IconProducts },
   { href: '/inventario', label: 'Inventario', icon: IconInventory },
 ]

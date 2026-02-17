@@ -18,7 +18,7 @@ export function AuthGuard({
   redirectTo,
 }: AuthGuardProps) {
   const router = useRouter()
-  const { user, isLoading, requiresPinVerification, verifyPinForSession, logout, getRememberedName } = useAuth()
+  const { user, isLoading, requiresPinVerification, verifyPinForSession, logout } = useAuth()
   const [pinError, setPinError] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
 
@@ -75,14 +75,25 @@ export function AuthGuard({
 
   // Show PIN verification overlay if needed
   if (requireAuth && requiresPinVerification) {
-    const rememberedName = getRememberedName()
+    const firstName = user?.name?.split(' ')[0]
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-        <div className="w-full max-w-sm">
+      <div className="auth-container">
+        <div className="auth-card">
+          {/* Logo */}
+          <div className="auth-logo">
+            <h1 className="auth-logo-title">
+              <span className="text-brand">Mr.</span>
+              <span>Chifles</span>
+            </h1>
+            <p className="auth-logo-subtitle">
+              Sistema de Gestion de Ventas
+            </p>
+          </div>
+
           <Card padding="lg">
             <div className="text-center mb-4">
               <h2 className="font-display font-semibold text-lg text-text-primary mb-1">
-                {rememberedName ? `Hola, ${rememberedName.split(' ')[0]}` : 'Bienvenido'}
+                {firstName ? `Hola, ${firstName}` : 'Bienvenido'}
               </h2>
               <p className="text-text-secondary">Ingresa tu PIN de 4 digitos</p>
             </div>
@@ -95,14 +106,16 @@ export function AuthGuard({
             />
           </Card>
 
-          <div className="text-center mt-4">
-            <button
-              type="button"
-              onClick={handleChangeUser}
-              className="text-sm text-brand hover:underline"
-            >
-              Cambiar usuario
-            </button>
+          <div className="auth-footer">
+            <p className="auth-footer-link">
+              <button
+                type="button"
+                onClick={handleChangeUser}
+                className="text-brand hover:underline"
+              >
+                Cambiar usuario
+              </button>
+            </p>
           </div>
         </div>
       </div>
