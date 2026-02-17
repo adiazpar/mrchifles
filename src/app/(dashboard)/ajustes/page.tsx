@@ -2,9 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { PageHeader } from '@/components/layout'
-import { Card } from '@/components/ui'
+import { IconPalette, IconInfo, IconSun, IconMoon, IconMonitor } from '@/components/icons'
 
 type Theme = 'light' | 'dark' | 'system'
+
+const THEME_CONFIG = {
+  light: {
+    label: 'Claro',
+    icon: IconSun,
+    preview: 'theme-option-preview-light',
+    description: 'Modo claro activado',
+  },
+  dark: {
+    label: 'Oscuro',
+    icon: IconMoon,
+    preview: 'theme-option-preview-dark',
+    description: 'Modo oscuro activado',
+  },
+  system: {
+    label: 'Sistema',
+    icon: IconMonitor,
+    preview: 'theme-option-preview-system',
+    description: 'Se ajusta automaticamente segun tu dispositivo',
+  },
+}
 
 export default function SettingsPage() {
   const [theme, setTheme] = useState<Theme>('system')
@@ -44,85 +65,77 @@ export default function SettingsPage() {
     return () => mediaQuery.removeEventListener('change', handler)
   }, [theme])
 
+  const currentConfig = THEME_CONFIG[theme]
+
   return (
     <>
-      <PageHeader title="Configuracion" subtitle="Personaliza tu experiencia" />
+      <PageHeader title="Configuracion" />
 
-      <main className="main-content space-y-6">
-        {/* Appearance */}
-        <Card padding="lg">
-          <h3 className="font-display font-bold text-lg mb-4">Apariencia</h3>
+      <main className="settings-container">
+        {/* Appearance Section */}
+        <section className="settings-section">
+          <div className="settings-section-header">
+            <div className="settings-section-icon">
+              <IconPalette width={20} height={20} />
+            </div>
+            <h2 className="settings-section-title">Apariencia</h2>
+          </div>
+          <div className="settings-section-body">
+            <span className="settings-label">Tema</span>
+            <div className="theme-options">
+              {(Object.keys(THEME_CONFIG) as Theme[]).map((key) => {
+                const config = THEME_CONFIG[key]
+                const Icon = config.icon
+                const isActive = theme === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setTheme(key)}
+                    className={`theme-option ${isActive ? 'theme-option-active' : ''}`}
+                    aria-pressed={isActive}
+                  >
+                    <div className={`theme-option-preview ${config.preview}`}>
+                      <Icon
+                        width={20}
+                        height={20}
+                        style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          color: key === 'dark' ? '#F8FAFC' : key === 'system' ? '#64748B' : '#334155',
+                        }}
+                      />
+                    </div>
+                    <span className="theme-option-label">{config.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <p className="settings-hint">{currentConfig.description}</p>
+          </div>
+        </section>
 
-          <div className="space-y-4">
-            <div>
-              <label className="label">Tema</label>
-              <div className="flex gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setTheme('light')}
-                  className={`flex-1 p-3 rounded-lg border-2 transition-colors ${
-                    theme === 'light'
-                      ? 'border-brand bg-brand-subtle'
-                      : 'border-border hover:border-border-hover'
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-white border border-border" />
-                    <span className="text-sm font-medium">Claro</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTheme('dark')}
-                  className={`flex-1 p-3 rounded-lg border-2 transition-colors ${
-                    theme === 'dark'
-                      ? 'border-brand bg-brand-subtle'
-                      : 'border-border hover:border-border-hover'
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-neutral-800 border border-neutral-700" />
-                    <span className="text-sm font-medium">Oscuro</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTheme('system')}
-                  className={`flex-1 p-3 rounded-lg border-2 transition-colors ${
-                    theme === 'system'
-                      ? 'border-brand bg-brand-subtle'
-                      : 'border-border hover:border-border-hover'
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-gradient-to-r from-white to-neutral-800 border border-border" />
-                    <span className="text-sm font-medium">Sistema</span>
-                  </div>
-                </button>
-              </div>
-              <p className="helper-text mt-2">
-                {theme === 'system'
-                  ? 'Se ajusta automaticamente segun la configuracion de tu dispositivo'
-                  : theme === 'dark'
-                  ? 'Modo oscuro activado'
-                  : 'Modo claro activado'}
-              </p>
+        {/* About Section */}
+        <section className="settings-section">
+          <div className="settings-section-header">
+            <div className="settings-section-icon">
+              <IconInfo width={20} height={20} />
+            </div>
+            <h2 className="settings-section-title">Acerca de</h2>
+          </div>
+          <div className="settings-section-body">
+            <div className="settings-info-row">
+              <span className="settings-info-label">Version</span>
+              <span className="settings-info-value">0.1.0</span>
+            </div>
+            <div className="settings-info-row">
+              <span className="settings-info-label">Desarrollado por</span>
+              <span className="settings-info-value">Mr. Chifles</span>
             </div>
           </div>
-        </Card>
-
-        {/* About */}
-        <Card padding="lg">
-          <h3 className="font-display font-bold text-lg mb-4">Acerca de</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Version</span>
-              <span className="font-medium">0.1.0</span>
-            </div>
-          </div>
-        </Card>
+        </section>
       </main>
     </>
   )
