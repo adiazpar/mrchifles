@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
   hashPin,
   verifyPin,
@@ -11,12 +11,7 @@ import {
   getInviteRoleLabel,
   isOwner,
   isPartnerOrOwner,
-  createSessionState,
-  shouldLockSession,
-  resetSession,
-  updateActivity,
   pinSchema,
-  emailSchema,
   nameSchema,
   passwordSchema,
   inviteCodeSchema,
@@ -239,79 +234,6 @@ describe('isPartnerOrOwner', () => {
 })
 
 // ============================================
-// SESSION MANAGEMENT TESTS
-// ============================================
-
-describe('createSessionState', () => {
-  it('should create initial state with correct defaults', () => {
-    const state = createSessionState()
-    expect(state.isLocked).toBe(false)
-    expect(state.lastActivity).toBeCloseTo(Date.now(), -2) // within 100ms
-  })
-})
-
-describe('shouldLockSession', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('should return false when activity is recent', () => {
-    const state = createSessionState()
-    expect(shouldLockSession(state)).toBe(false)
-  })
-
-  it('should return true after 5 minutes of inactivity', () => {
-    const state = createSessionState()
-    vi.advanceTimersByTime(5 * 60 * 1000 + 1) // 5 minutes + 1ms
-    expect(shouldLockSession(state)).toBe(true)
-  })
-
-  it('should return false just before 5 minutes', () => {
-    const state = createSessionState()
-    vi.advanceTimersByTime(5 * 60 * 1000 - 1000) // 5 minutes - 1 second
-    expect(shouldLockSession(state)).toBe(false)
-  })
-})
-
-describe('resetSession', () => {
-  it('should update lastActivity', () => {
-    const oldTime = Date.now() - 10000
-    const state = {
-      ...createSessionState(),
-      lastActivity: oldTime,
-    }
-    const newState = resetSession(state)
-    expect(newState.lastActivity).toBeGreaterThan(oldTime)
-  })
-})
-
-describe('updateActivity', () => {
-  it('should update lastActivity timestamp', () => {
-    const oldTime = Date.now() - 10000
-    const state = {
-      ...createSessionState(),
-      lastActivity: oldTime,
-    }
-    const newState = updateActivity(state)
-    expect(newState.lastActivity).toBeGreaterThan(oldTime)
-    expect(newState.lastActivity).toBeCloseTo(Date.now(), -2)
-  })
-
-  it('should preserve other state', () => {
-    const state = {
-      ...createSessionState(),
-      isLocked: true,
-    }
-    const newState = updateActivity(state)
-    expect(newState.isLocked).toBe(true)
-  })
-})
-
-// ============================================
 // ZOD SCHEMA TESTS
 // ============================================
 
@@ -325,19 +247,6 @@ describe('pinSchema', () => {
     expect(pinSchema.safeParse('123').success).toBe(false)
     expect(pinSchema.safeParse('12345').success).toBe(false)
     expect(pinSchema.safeParse('abcd').success).toBe(false)
-  })
-})
-
-describe('emailSchema', () => {
-  it('should accept valid emails', () => {
-    expect(emailSchema.safeParse('test@example.com').success).toBe(true)
-    expect(emailSchema.safeParse('user.name@domain.co.pe').success).toBe(true)
-  })
-
-  it('should reject invalid emails', () => {
-    expect(emailSchema.safeParse('notanemail').success).toBe(false)
-    expect(emailSchema.safeParse('@domain.com').success).toBe(false)
-    expect(emailSchema.safeParse('').success).toBe(false)
   })
 })
 

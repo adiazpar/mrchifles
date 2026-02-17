@@ -14,11 +14,6 @@ import type { User } from '@/types'
 import {
   hashPin,
   verifyPin,
-  createSessionState,
-  shouldLockSession,
-  resetSession,
-  updateActivity,
-  type SessionState,
 } from '@/lib/auth'
 
 // ============================================
@@ -29,8 +24,8 @@ interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  isLocked: boolean
   deviceTrusted: boolean
+  requiresPinVerification: boolean // true if logged in but hasn't entered PIN this session
 
   // Setup state (for first-time setup flow)
   setupComplete: boolean
@@ -38,7 +33,7 @@ interface AuthContextType {
 
   // Auth methods (now phone-based)
   loginWithPassword: (phoneNumber: string, password: string) => Promise<void>
-  loginWithPin: (pin: string) => Promise<boolean>
+  verifyPinForSession: (pin: string) => Promise<boolean>
   logout: (clearDevice?: boolean) => void
 
   // OTP methods
@@ -60,15 +55,11 @@ interface AuthContextType {
     pin: string
   }) => Promise<void>
 
-  // Session management
-  lockSession: () => void
-  unlockSession: (pin: string) => Promise<boolean>
-  updateActivity: () => void
-
   // Device trust (now phone-based)
   getRememberedPhone: () => string | null
   clearRememberedPhone: () => void
-  trustDevice: (phoneNumber: string) => void
+  trustDevice: (phoneNumber: string, name: string) => void
+  getRememberedName: () => string | null
 
   // PocketBase instance for direct access if needed
   pb: PocketBase
@@ -86,9 +77,11 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
 const REMEMBERED_PHONE_KEY = 'chifles_remembered_phone'
+const REMEMBERED_NAME_KEY = 'chifles_remembered_name'
+const PIN_VERIFIED_KEY = 'chifles_pin_verified' // sessionStorage - clears on tab close
 
 // ============================================
-// REMEMBERED PHONE HELPERS
+// REMEMBERED USER HELPERS
 // ============================================
 
 function getRememberedPhone(): string | null {
@@ -96,14 +89,36 @@ function getRememberedPhone(): string | null {
   return localStorage.getItem(REMEMBERED_PHONE_KEY)
 }
 
-function setRememberedPhone(phoneNumber: string): void {
-  if (typeof window === 'undefined') return
-  localStorage.setItem(REMEMBERED_PHONE_KEY, phoneNumber)
+function getRememberedName(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(REMEMBERED_NAME_KEY)
 }
 
-function clearRememberedPhoneStorage(): void {
+function setRememberedUser(phoneNumber: string, name: string): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(REMEMBERED_PHONE_KEY, phoneNumber)
+  localStorage.setItem(REMEMBERED_NAME_KEY, name)
+}
+
+function clearRememberedUserStorage(): void {
   if (typeof window === 'undefined') return
   localStorage.removeItem(REMEMBERED_PHONE_KEY)
+  localStorage.removeItem(REMEMBERED_NAME_KEY)
+}
+
+function isPinVerifiedThisSession(): boolean {
+  if (typeof window === 'undefined') return false
+  return sessionStorage.getItem(PIN_VERIFIED_KEY) === 'true'
+}
+
+function setPinVerifiedThisSession(): void {
+  if (typeof window === 'undefined') return
+  sessionStorage.setItem(PIN_VERIFIED_KEY, 'true')
+}
+
+function clearPinVerifiedThisSession(): void {
+  if (typeof window === 'undefined') return
+  sessionStorage.removeItem(PIN_VERIFIED_KEY)
 }
 
 /**
@@ -119,8 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [pb] = useState(() => new PocketBase(POCKETBASE_URL))
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [sessionState, setSessionState] = useState<SessionState>(createSessionState)
   const [deviceTrusted, setDeviceTrusted] = useState(false)
+  const [pinVerified, setPinVerified] = useState(() => isPinVerifiedThisSession())
 
   // Setup state - tracks whether owner account has been created
   const [setupComplete, setSetupComplete] = useState(true) // Default true to avoid flash
@@ -162,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.warn('User account has been disabled, logging out')
             pb.authStore.clear()
             setUser(null)
-            clearRememberedPhoneStorage()
+            clearRememberedUserStorage()
             setDeviceTrusted(false)
             return
           }
@@ -173,7 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('Auth token invalid or user deleted, clearing session')
           pb.authStore.clear()
           setUser(null)
-          clearRememberedPhoneStorage()
+          clearRememberedUserStorage()
           setDeviceTrusted(false)
         }
       }
@@ -209,7 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn('User account has been disabled, logging out')
           pb.authStore.clear()
           setUser(null)
-          clearRememberedPhoneStorage()
+          clearRememberedUserStorage()
           setDeviceTrusted(false)
         }
       } catch {
@@ -221,21 +236,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => clearInterval(interval)
   }, [pb, user])
-
-  // Check for inactivity and lock session
-  useEffect(() => {
-    if (!user) return
-
-    const checkInactivity = () => {
-      if (shouldLockSession(sessionState) && !sessionState.isLocked) {
-        setSessionState(prev => ({ ...prev, isLocked: true }))
-      }
-    }
-
-    const interval = setInterval(checkInactivity, 10000) // Check every 10 seconds
-
-    return () => clearInterval(interval)
-  }, [user, sessionState])
 
   // ============================================
   // AUTH METHODS
@@ -250,10 +250,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Convert phone to auth email format for PocketBase
       const authEmail = phoneToAuthEmail(phoneNumber)
       const authData = await pb.collection('users').authWithPassword(authEmail, password)
-      setUser(authData.record as unknown as User)
-      setRememberedPhone(phoneNumber) // Trust this device after successful password login
+      const authUser = authData.record as unknown as User
+      setUser(authUser)
+      setRememberedUser(phoneNumber, authUser.name) // Trust this device after successful password login
       setDeviceTrusted(true)
-      setSessionState(prev => resetSession(prev))
+      setPinVerified(true)
+      setPinVerifiedThisSession()
     } catch (error) {
       // Don't log expected errors (disabled account, wrong password) as errors
       const pbError = error as { status?: number; message?: string }
@@ -267,61 +269,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [pb])
 
   /**
-   * Login with PIN (for trusted devices with valid session)
-   * PIN is just a UI gate to unlock access to existing authenticated session
+   * Verify PIN for this browser session
+   * Used when user is already authenticated but needs to confirm identity
    */
-  const loginWithPin = useCallback(async (pin: string): Promise<boolean> => {
-    const rememberedPhone = getRememberedPhone()
-    if (!rememberedPhone) {
-      return false
-    }
-
-    // Check if we have a valid PocketBase session
-    if (!pb.authStore.isValid) {
-      // Session expired - need password login
-      clearRememberedPhoneStorage()
-      setDeviceTrusted(false)
-      return false
-    }
-
-    // Verify the session phone matches remembered phone
-    const authUser = pb.authStore.model as User
-    if (!authUser || authUser.phoneNumber !== rememberedPhone) {
-      clearRememberedPhoneStorage()
-      setDeviceTrusted(false)
-      return false
-    }
-
-    // Check if PIN hash exists - defensive check
-    if (!authUser.pin) {
-      console.error('Login with PIN failed: authUser.pin is empty or undefined')
-      return false
-    }
+  const verifyPinForSession = useCallback(async (pin: string): Promise<boolean> => {
+    if (!user?.pin) return false
 
     try {
-      // Verify PIN against stored hash
-      const isValid = await verifyPin(pin, authUser.pin)
-
+      const isValid = await verifyPin(pin, user.pin)
       if (isValid) {
-        // PIN correct - session is already valid, just update state
-        setUser(authUser)
-        setSessionState(prev => resetSession(prev))
+        setPinVerified(true)
+        setPinVerifiedThisSession()
         return true
-      } else {
-        return false
       }
-    } catch (error) {
-      console.error('PIN verification failed:', error)
+      return false
+    } catch {
       return false
     }
-  }, [pb])
+  }, [user])
 
   const logout = useCallback((clearDevice = true) => {
     pb.authStore.clear()
     setUser(null)
-    setSessionState(createSessionState())
+    setPinVerified(false)
+    clearPinVerifiedThisSession()
     if (clearDevice) {
-      clearRememberedPhoneStorage()
+      clearRememberedUserStorage()
       setDeviceTrusted(false)
     }
   }, [pb])
@@ -436,7 +409,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Trust this device
-      setRememberedPhone(data.phoneNumber)
+      setRememberedUser(data.phoneNumber, data.name)
       setDeviceTrusted(true)
     } catch (error) {
       console.error('Registration failed:', error)
@@ -519,7 +492,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(newUser as unknown as User)
 
       // Trust this device
-      setRememberedPhone(data.phoneNumber)
+      setRememberedUser(data.phoneNumber, data.name)
       setDeviceTrusted(true)
     } catch (error) {
       console.error('Registration failed:', error)
@@ -528,55 +501,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [pb])
 
   // ============================================
-  // SESSION MANAGEMENT
-  // ============================================
-
-  const lockSession = useCallback(() => {
-    setSessionState(prev => ({ ...prev, isLocked: true }))
-  }, [])
-
-  const unlockSession = useCallback(async (pin: string): Promise<boolean> => {
-    if (!user) return false
-
-    // Check if PIN hash exists - defensive check
-    if (!user.pin) {
-      console.error('Unlock failed: user.pin is empty or undefined')
-      return false
-    }
-
-    try {
-      const isValid = await verifyPin(pin, user.pin)
-
-      if (isValid) {
-        setSessionState(prev => ({
-          ...resetSession(prev),
-          isLocked: false,
-        }))
-        return true
-      } else {
-        return false
-      }
-    } catch (error) {
-      console.error('Unlock failed:', error)
-      return false
-    }
-  }, [user])
-
-  const handleUpdateActivity = useCallback(() => {
-    setSessionState(updateActivity)
-  }, [])
-
-  // ============================================
   // DEVICE TRUST
   // ============================================
 
-  const trustDevice = useCallback((phoneNumber: string) => {
-    setRememberedPhone(phoneNumber)
+  const trustDevice = useCallback((phoneNumber: string, name: string) => {
+    setRememberedUser(phoneNumber, name)
     setDeviceTrusted(true)
   }, [])
 
   const clearRememberedPhone = useCallback(() => {
-    clearRememberedPhoneStorage()
+    clearRememberedUserStorage()
     setDeviceTrusted(false)
   }, [])
 
@@ -586,17 +520,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthContextType>(() => ({
     user,
-    isAuthenticated: !!user && !sessionState.isLocked,
+    isAuthenticated: !!user,
     isLoading,
-    isLocked: sessionState.isLocked,
     deviceTrusted,
+    requiresPinVerification: !!user && !pinVerified,
 
     // Setup state
     setupComplete,
     isCheckingSetup,
 
     loginWithPassword,
-    loginWithPin,
+    verifyPinForSession,
     logout,
 
     sendOTP,
@@ -605,11 +539,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     registerOwner,
     registerWithInvite,
 
-    lockSession,
-    unlockSession,
-    updateActivity: handleUpdateActivity,
-
     getRememberedPhone,
+    getRememberedName,
     clearRememberedPhone,
     trustDevice,
 
@@ -617,20 +548,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }), [
     user,
     isLoading,
-    sessionState.isLocked,
     deviceTrusted,
+    pinVerified,
     setupComplete,
     isCheckingSetup,
     loginWithPassword,
-    loginWithPin,
+    verifyPinForSession,
     logout,
     sendOTP,
     verifyOTP,
     registerOwner,
     registerWithInvite,
-    lockSession,
-    unlockSession,
-    handleUpdateActivity,
     clearRememberedPhone,
     trustDevice,
     pb,

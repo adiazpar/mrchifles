@@ -235,54 +235,6 @@ export function isPartnerOrOwner(user: User | null): boolean {
 }
 
 // ============================================
-// SESSION MANAGEMENT
-// ============================================
-
-const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
-
-export interface SessionState {
-  isLocked: boolean
-  lastActivity: number
-}
-
-/**
- * Create initial session state
- */
-export function createSessionState(): SessionState {
-  return {
-    isLocked: false,
-    lastActivity: Date.now(),
-  }
-}
-
-/**
- * Check if session should be locked due to inactivity
- */
-export function shouldLockSession(state: SessionState): boolean {
-  return Date.now() - state.lastActivity > INACTIVITY_TIMEOUT_MS
-}
-
-/**
- * Reset session after successful unlock
- */
-export function resetSession(state: SessionState): SessionState {
-  return {
-    ...state,
-    lastActivity: Date.now(),
-  }
-}
-
-/**
- * Update last activity timestamp
- */
-export function updateActivity(state: SessionState): SessionState {
-  return {
-    ...state,
-    lastActivity: Date.now(),
-  }
-}
-
-// ============================================
 // VALIDATION SCHEMAS (using Zod)
 // ============================================
 
