@@ -10,6 +10,29 @@ import { IconCheck } from '@/components/icons'
 
 type Step = 'verify' | 'new' | 'confirm' | 'success'
 
+const STEP_CONFIG = {
+  verify: {
+    title: 'Ingresa tu PIN actual',
+    subtitle: 'Verifica tu identidad',
+    indicator: 1,
+  },
+  new: {
+    title: 'Crea tu nuevo PIN',
+    subtitle: '4 digitos',
+    indicator: 2,
+  },
+  confirm: {
+    title: 'Confirma tu nuevo PIN',
+    subtitle: 'Ingresa el mismo PIN',
+    indicator: 3,
+  },
+  success: {
+    title: 'PIN actualizado',
+    subtitle: 'Tu PIN ha sido cambiado exitosamente',
+    indicator: 4,
+  },
+}
+
 export default function ChangePinPage() {
   const router = useRouter()
   const { user, pb } = useAuth()
@@ -70,7 +93,6 @@ export default function ChangePinPage() {
   }, [user, newPin, pb])
 
   const handleInputClear = useCallback(() => {
-    // Clear error when user starts typing new PIN
     if (error) {
       setError('')
     }
@@ -80,50 +102,32 @@ export default function ChangePinPage() {
     router.back()
   }, [router])
 
-  const getStepTitle = () => {
-    switch (step) {
-      case 'verify':
-        return 'Ingresa tu PIN actual'
-      case 'new':
-        return 'Ingresa tu nuevo PIN'
-      case 'confirm':
-        return 'Confirma tu nuevo PIN'
-      case 'success':
-        return 'PIN actualizado'
+  const handlePreviousStep = useCallback(() => {
+    if (step === 'confirm') {
+      setNewPin('')
+      setStep('new')
+    } else {
+      setStep('verify')
     }
-  }
+    setError('')
+  }, [step])
 
-  const getStepSubtitle = () => {
-    switch (step) {
-      case 'verify':
-        return 'Verifica tu identidad'
-      case 'new':
-        return '4 digitos'
-      case 'confirm':
-        return 'Ingresa el mismo PIN'
-      case 'success':
-        return 'Tu PIN ha sido cambiado exitosamente'
-    }
-  }
+  const config = STEP_CONFIG[step]
 
   return (
     <>
       <PageHeader title="Cambiar PIN" />
 
-      <main className="main-content">
-        <div className="flex flex-col items-center justify-center min-h-[60vh] py-8">
+      <main className="change-pin-container">
+        <div className="change-pin-content">
           {step === 'success' ? (
-            <div className="text-center space-y-6">
-              <div className="w-20 h-20 rounded-full bg-success-subtle flex items-center justify-center mx-auto"
-                style={{ backgroundColor: 'var(--color-success-subtle)' }}>
-                <IconCheck
-                  className="w-10 h-10"
-                  style={{ color: 'var(--color-success)' }}
-                />
+            <div className="change-pin-success">
+              <div className="change-pin-success-icon">
+                <IconCheck className="w-10 h-10" />
               </div>
-              <div>
-                <h2 className="text-2xl font-display font-bold mb-2">{getStepTitle()}</h2>
-                <p className="text-text-secondary">{getStepSubtitle()}</p>
+              <div className="change-pin-header">
+                <h2 className="change-pin-title">{config.title}</h2>
+                <p className="change-pin-subtitle">{config.subtitle}</p>
               </div>
               <button
                 type="button"
@@ -134,13 +138,16 @@ export default function ChangePinPage() {
               </button>
             </div>
           ) : (
-            <div className="text-center space-y-8">
-              <div>
-                <h2 className="text-2xl font-display font-bold mb-2">{getStepTitle()}</h2>
-                <p className="text-text-secondary">{getStepSubtitle()}</p>
+            <>
+              {/* Header */}
+              <div className="change-pin-header">
+                <h2 className="change-pin-title">{config.title}</h2>
+                <p className="change-pin-subtitle">{config.subtitle}</p>
               </div>
 
+              {/* PinPad */}
               <PinPad
+                key={step}
                 onComplete={
                   step === 'verify'
                     ? handleVerifyCurrentPin
@@ -153,25 +160,35 @@ export default function ChangePinPage() {
                 error={error}
               />
 
-              {step !== 'verify' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (step === 'confirm') {
-                      setNewPin('')
-                      setStep('new')
-                    } else {
-                      setStep('verify')
-                    }
-                    setError('')
-                  }}
-                  className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                  disabled={isSubmitting}
-                >
-                  Volver al paso anterior
-                </button>
-              )}
-            </div>
+              {/* Footer: Step dots + Back link */}
+              <div className="change-pin-footer">
+                <div className="change-pin-dots">
+                  {[1, 2, 3].map((num) => (
+                    <div
+                      key={num}
+                      className={`change-pin-dot ${
+                        num < config.indicator
+                          ? 'completed'
+                          : num === config.indicator
+                          ? 'active'
+                          : ''
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {step !== 'verify' && (
+                  <button
+                    type="button"
+                    onClick={handlePreviousStep}
+                    className="change-pin-back"
+                    disabled={isSubmitting}
+                  >
+                    Paso anterior
+                  </button>
+                )}
+              </div>
+            </>
           )}
         </div>
       </main>

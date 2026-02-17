@@ -15,7 +15,7 @@ export default function DashboardLayout({
         <Sidebar />
 
         {/* Main content area */}
-        <div className="with-sidebar flex flex-col min-h-screen">
+        <div className="with-sidebar flex flex-col h-screen overflow-y-auto">
           {children}
         </div>
 
