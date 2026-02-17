@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/layout'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
 import { hashPin, verifyPin } from '@/lib/auth'
-import { IconCheck } from '@/components/icons'
+import { IconCircleCheck } from '@/components/icons'
 
 type Step = 'verify' | 'new' | 'confirm' | 'success'
 
@@ -123,7 +123,7 @@ export default function ChangePinPage() {
           {step === 'success' ? (
             <div className="change-pin-success">
               <div className="change-pin-success-icon">
-                <IconCheck className="w-10 h-10" />
+                <IconCircleCheck className="w-10 h-10" />
               </div>
               <div className="change-pin-header">
                 <h2 className="change-pin-title">{config.title}</h2>
