@@ -1895,7 +1895,8 @@
   .dropdown-content {
     position: absolute;
     z-index: var(--z-dropdown);
-    min-width: 220px;
+    width: 100%;
+    min-width: 200px;
     background: var(--color-bg-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
