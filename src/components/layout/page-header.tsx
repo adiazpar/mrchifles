@@ -1,4 +1,7 @@
+'use client'
+
 import { ReactNode } from 'react'
+import { UserMenu } from './user-menu'
 
 interface PageHeaderProps {
   title: string
@@ -13,7 +16,12 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
         <h1 className="page-title">{title}</h1>
         {subtitle && <p className="page-subtitle">{subtitle}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      <div className="flex items-center gap-2">
+        {actions}
+        <div className="md:hidden">
+          <UserMenu variant="mobile" />
+        </div>
+      </div>
     </header>
   )
 }
