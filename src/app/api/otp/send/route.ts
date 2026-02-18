@@ -38,12 +38,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate purpose
-    const validPurposes: OTPPurpose[] = ['registration', 'login', 'reset']
+    const validPurposes: OTPPurpose[] = ['registration', 'login', 'reset', 'phone-change']
     if (!purpose || !validPurposes.includes(purpose)) {
       return NextResponse.json(
         { error: 'Proposito invalido' },
         { status: 400 }
       )
+    }
+
+    // For phone-change, require authentication via Authorization header
+    if (purpose === 'phone-change') {
+      const authHeader = request.headers.get('Authorization')
+      if (!authHeader) {
+        return NextResponse.json(
+          { error: 'No autorizado' },
+          { status: 401 }
+        )
+      }
     }
 
     // Check rate limit (max 3 OTPs per phone per hour)
@@ -77,8 +88,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // For registration, check if phone is already registered (saves WhatsApp API cost)
-    if (purpose === 'registration') {
+    // For registration and phone-change, check if phone is already registered (saves WhatsApp API cost)
+    if (purpose === 'registration' || purpose === 'phone-change') {
       try {
         const existingUsers = await pb.collection('users').getList(1, 1, {
           filter: `phoneNumber = "${phoneNumber}"`,

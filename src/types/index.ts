@@ -28,7 +28,7 @@ export interface User {
 // OTP TYPES
 // ============================================
 
-export type OTPPurpose = 'registration' | 'login' | 'reset'
+export type OTPPurpose = 'registration' | 'login' | 'reset' | 'phone-change'
 
 export interface OTPCode {
   id: string
