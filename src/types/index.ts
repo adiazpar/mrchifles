@@ -14,6 +14,7 @@ export interface User {
   role: UserRole
   status: UserStatus
   pin?: string // Stored as SHA-256 hash for PIN verification
+  pinResetRequired?: boolean // If true, user must reset PIN on next login
   invitedBy?: string // Relation ID to user who invited them
   avatar?: string // Optional avatar file
   created: string

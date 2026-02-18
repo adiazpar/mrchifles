@@ -53,6 +53,13 @@ migrate((app) => {
     maxSelect: 1,
   }))
 
+  // Add pinResetRequired field (for forcing PIN reset on next login)
+  users.fields.add(new BoolField({
+    id: "userpinrst01",
+    name: 'pinResetRequired',
+    required: false,
+  }))
+
   // User access rules:
   // - All authenticated users can list/view team members (for team page)
   // - PIN field is hidden from other users by security hook (onRecordEnrich)
@@ -226,7 +233,7 @@ migrate((app) => {
   // Remove added fields from users collection
   try {
     const users = app.findCollectionByNameOrId("users")
-    const fieldsToRemove = ['pin', 'role', 'status', 'invitedBy']
+    const fieldsToRemove = ['pin', 'role', 'status', 'invitedBy', 'pinResetRequired']
 
     for (const fieldName of fieldsToRemove) {
       users.fields.removeByName(fieldName)
