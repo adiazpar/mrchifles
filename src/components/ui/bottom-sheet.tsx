@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { IconClose } from '@/components/icons'
 
 interface BottomSheetProps {
@@ -10,14 +10,34 @@ interface BottomSheetProps {
   children: ReactNode
 }
 
+const ANIMATION_DURATION = 200 // matches --transition-normal
+
 export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null)
   const startY = useRef<number>(0)
   const currentY = useRef<number>(0)
+  const [isVisible, setIsVisible] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
+
+  // Handle open/close state
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true)
+      setIsClosing(false)
+    } else if (isVisible) {
+      // Start closing animation
+      setIsClosing(true)
+      const timer = setTimeout(() => {
+        setIsVisible(false)
+        setIsClosing(false)
+      }, ANIMATION_DURATION)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, isVisible])
 
   // Handle escape key
   useEffect(() => {
-    if (!isOpen) return
+    if (!isVisible) return
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -30,7 +50,7 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
     return () => {
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [isOpen, onClose])
+  }, [isVisible, onClose])
 
   // Handle touch events for swipe-to-dismiss
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -62,13 +82,13 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
     currentY.current = 0
   }
 
-  if (!isOpen) return null
+  if (!isVisible) return null
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="bottom-sheet-backdrop"
+        className={`bottom-sheet-backdrop${isClosing ? ' bottom-sheet-backdrop-closing' : ''}`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -76,7 +96,7 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className="bottom-sheet"
+        className={`bottom-sheet${isClosing ? ' bottom-sheet-closing' : ''}`}
         role="dialog"
         aria-modal="true"
         onTouchStart={handleTouchStart}
