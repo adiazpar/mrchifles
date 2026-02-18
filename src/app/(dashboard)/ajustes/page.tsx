@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/layout'
 import { Spinner } from '@/components/ui'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { PinPad } from '@/components/auth/pin-pad'
-import { IconPalette, IconInfo, IconSun, IconMoon, IconMonitor, IconTransfer, IconClock, IconClose } from '@/components/icons'
+import { IconPalette, IconInfo, IconSun, IconMoon, IconMonitor, IconTransfer, IconClock, IconClose, IconPhone } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { formatPhoneForDisplay, isValidE164 } from '@/lib/countries'
 
@@ -52,7 +52,7 @@ function getInitialTheme(): Theme {
 }
 
 export default function SettingsPage() {
-  const { user, pb } = useAuth()
+  const { user, pb, sendOTP, changePhoneNumber } = useAuth()
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const isInitialMount = useRef(true)
 
@@ -64,6 +64,16 @@ export default function SettingsPage() {
   const [transferPhone, setTransferPhone] = useState('')
   const [transferError, setTransferError] = useState('')
   const [transferLoading, setTransferLoading] = useState(false)
+
+  // Phone change state
+  const [showPhoneChangeModal, setShowPhoneChangeModal] = useState(false)
+  const [phoneChangeStep, setPhoneChangeStep] = useState<'phone' | 'otp'>('phone')
+  const [newPhone, setNewPhone] = useState('')
+  const [otpCode, setOtpCode] = useState('')
+  const [phoneChangeError, setPhoneChangeError] = useState('')
+  const [phoneChangeLoading, setPhoneChangeLoading] = useState(false)
+  const [devOtpCode, setDevOtpCode] = useState<string | null>(null)
+  const [resendCountdown, setResendCountdown] = useState(0)
 
   const isOwner = user?.role === 'owner'
 
@@ -265,6 +275,121 @@ export default function SettingsPage() {
     return `${minutes}m restantes`
   }
 
+  // Resend countdown timer
+  useEffect(() => {
+    if (resendCountdown <= 0) return
+
+    const timer = setInterval(() => {
+      setResendCountdown((prev) => prev - 1)
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [resendCountdown])
+
+  const handleClosePhoneChangeModal = useCallback(() => {
+    setShowPhoneChangeModal(false)
+    setPhoneChangeStep('phone')
+    setNewPhone('')
+    setOtpCode('')
+    setPhoneChangeError('')
+    setDevOtpCode(null)
+    setResendCountdown(0)
+  }, [])
+
+  const handleSendPhoneChangeOTP = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPhoneChangeError('')
+
+    if (!newPhone || !isValidE164(newPhone)) {
+      setPhoneChangeError('Ingresa un numero de telefono valido')
+      return
+    }
+
+    // Check if new phone is same as current
+    if (user?.phoneNumber === newPhone) {
+      setPhoneChangeError('El nuevo numero debe ser diferente al actual')
+      return
+    }
+
+    setPhoneChangeLoading(true)
+
+    try {
+      const result = await sendOTP(newPhone, 'phone-change')
+
+      if (!result.success) {
+        setPhoneChangeError(result.error || 'Error al enviar el codigo')
+        setPhoneChangeLoading(false)
+        return
+      }
+
+      // Store dev code if present (for testing)
+      if (result.devCode) {
+        setDevOtpCode(result.devCode)
+      }
+
+      // Move to OTP step
+      setPhoneChangeStep('otp')
+      setResendCountdown(60)
+    } catch {
+      setPhoneChangeError('Error de conexion')
+    } finally {
+      setPhoneChangeLoading(false)
+    }
+  }, [newPhone, user?.phoneNumber, sendOTP])
+
+  const handleVerifyPhoneChangeOTP = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPhoneChangeError('')
+
+    if (!otpCode || !/^\d{6}$/.test(otpCode)) {
+      setPhoneChangeError('Ingresa un codigo de 6 digitos')
+      return
+    }
+
+    setPhoneChangeLoading(true)
+
+    try {
+      const result = await changePhoneNumber(newPhone, otpCode)
+
+      if (!result.success) {
+        setPhoneChangeError(result.error || 'Error al verificar el codigo')
+        setPhoneChangeLoading(false)
+        return
+      }
+
+      // Success - close modal
+      handleClosePhoneChangeModal()
+    } catch {
+      setPhoneChangeError('Error de conexion')
+    } finally {
+      setPhoneChangeLoading(false)
+    }
+  }, [otpCode, newPhone, changePhoneNumber, handleClosePhoneChangeModal])
+
+  const handleResendOTP = useCallback(async () => {
+    if (resendCountdown > 0) return
+
+    setPhoneChangeError('')
+    setPhoneChangeLoading(true)
+
+    try {
+      const result = await sendOTP(newPhone, 'phone-change')
+
+      if (!result.success) {
+        setPhoneChangeError(result.error || 'Error al reenviar el codigo')
+      } else {
+        if (result.devCode) {
+          setDevOtpCode(result.devCode)
+        }
+        setResendCountdown(60)
+      }
+    } catch {
+      setPhoneChangeError('Error de conexion')
+    } finally {
+      setPhoneChangeLoading(false)
+    }
+  }, [resendCountdown, newPhone, sendOTP])
+
   const currentConfig = THEME_CONFIG[theme]
 
   return (
@@ -356,6 +481,31 @@ export default function SettingsPage() {
             </div>
           </section>
         )}
+
+        {/* Account Section */}
+        <section className="settings-section">
+          <div className="settings-section-header">
+            <div className="settings-section-icon">
+              <IconPhone width={20} height={20} />
+            </div>
+            <h2 className="settings-section-title">Cuenta</h2>
+          </div>
+          <div className="settings-section-body">
+            <div className="flex justify-between items-center">
+              <span className="settings-info-label">Telefono</span>
+              <span className="settings-info-value">
+                {user?.phoneNumber ? formatPhoneForDisplay(user.phoneNumber) : '-'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPhoneChangeModal(true)}
+              className="btn btn-secondary mt-3"
+            >
+              Cambiar numero
+            </button>
+          </div>
+        </section>
 
         {/* Appearance Section */}
         <section className="settings-section">
@@ -531,6 +681,141 @@ export default function SettingsPage() {
                 />
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Phone Change Modal */}
+      {showPhoneChangeModal && (
+        <div className="modal-backdrop" onClick={handleClosePhoneChangeModal}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                {phoneChangeStep === 'phone' ? 'Cambiar numero' : 'Verificar codigo'}
+              </h3>
+              <button
+                type="button"
+                onClick={handleClosePhoneChangeModal}
+                className="modal-close"
+              >
+                <IconClose width={20} height={20} />
+              </button>
+            </div>
+
+            {phoneChangeStep === 'phone' ? (
+              <form onSubmit={handleSendPhoneChangeOTP} className="modal-body">
+                <div className="mb-4 p-3 bg-warning-subtle rounded-lg">
+                  <p className="text-sm text-warning font-medium mb-1">Atencion</p>
+                  <p className="text-xs text-text-secondary">
+                    Se enviara un codigo de verificacion via WhatsApp al nuevo numero.
+                    Asegurate de tener acceso a ese telefono.
+                  </p>
+                </div>
+
+                {phoneChangeError && (
+                  <div className="mb-4 p-3 bg-error-subtle text-error text-sm rounded-lg">
+                    {phoneChangeError}
+                  </div>
+                )}
+
+                <PhoneInput
+                  label="Nuevo numero de telefono"
+                  value={newPhone}
+                  onChange={setNewPhone}
+                  autoFocus
+                />
+
+                <div className="flex gap-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={handleClosePhoneChangeModal}
+                    className="btn btn-secondary flex-1"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary flex-1"
+                    disabled={phoneChangeLoading}
+                  >
+                    {phoneChangeLoading ? <Spinner /> : 'Enviar codigo'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyPhoneChangeOTP} className="modal-body">
+                <p className="text-sm text-text-secondary mb-4 text-center">
+                  Ingresa el codigo enviado a<br />
+                  <span className="font-medium text-text-primary">
+                    {formatPhoneForDisplay(newPhone)}
+                  </span>
+                </p>
+
+                {phoneChangeError && (
+                  <div className="mb-4 p-3 bg-error-subtle text-error text-sm rounded-lg">
+                    {phoneChangeError}
+                  </div>
+                )}
+
+                {devOtpCode && (
+                  <div className="mb-4 p-3 bg-brand-subtle rounded-lg">
+                    <p className="text-xs text-text-tertiary">Codigo de prueba (dev):</p>
+                    <p className="font-mono text-lg text-brand font-medium">{devOtpCode}</p>
+                  </div>
+                )}
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-text-secondary mb-2">
+                    Codigo de verificacion
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="000000"
+                    className="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="text-center mb-4">
+                  {resendCountdown > 0 ? (
+                    <p className="text-sm text-text-tertiary">
+                      Reenviar codigo en {resendCountdown}s
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendOTP}
+                      className="text-sm text-brand hover:underline"
+                      disabled={phoneChangeLoading}
+                    >
+                      Reenviar codigo
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleClosePhoneChangeModal}
+                    className="btn btn-secondary flex-1"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary flex-1"
+                    disabled={phoneChangeLoading || otpCode.length !== 6}
+                  >
+                    {phoneChangeLoading ? <Spinner /> : 'Verificar'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

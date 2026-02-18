@@ -37,8 +37,11 @@ interface AuthContextType {
   logout: (clearDevice?: boolean) => void
 
   // OTP methods
-  sendOTP: (phoneNumber: string, purpose: 'registration' | 'login' | 'reset') => Promise<{ success: boolean; devCode?: string; error?: string }>
+  sendOTP: (phoneNumber: string, purpose: 'registration' | 'login' | 'reset' | 'phone-change') => Promise<{ success: boolean; devCode?: string; error?: string }>
   verifyOTP: (phoneNumber: string, code: string) => Promise<{ valid: boolean; error?: string }>
+
+  // Phone change
+  changePhoneNumber: (newPhone: string, otpCode: string) => Promise<{ success: boolean; error?: string }>
 
   // Registration (phone-based)
   registerOwner: (data: {
@@ -314,12 +317,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const sendOTP = useCallback(async (
     phoneNumber: string,
-    purpose: 'registration' | 'login' | 'reset'
+    purpose: 'registration' | 'login' | 'reset' | 'phone-change'
   ): Promise<{ success: boolean; devCode?: string; error?: string }> => {
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+
+      // For phone-change, include auth token
+      if (purpose === 'phone-change' && pb.authStore.token) {
+        headers['Authorization'] = pb.authStore.token
+      }
+
       const response = await fetch('/api/otp/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ phoneNumber, purpose }),
       })
 
@@ -333,7 +343,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       return { success: false, error: 'Error de conexion' }
     }
-  }, [])
+  }, [pb.authStore.token])
 
   /**
    * Verify OTP code
@@ -355,6 +365,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { valid: false, error: 'Error de conexion' }
     }
   }, [])
+
+  /**
+   * Change phone number after OTP verification
+   */
+  const changePhoneNumber = useCallback(async (
+    newPhone: string,
+    otpCode: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await fetch('/api/phone/change', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': pb.authStore.token,
+        },
+        body: JSON.stringify({ newPhoneNumber: newPhone, otpCode }),
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.user) {
+        // Update local user state with new data
+        setUser(data.user)
+
+        // Update remembered phone if device is trusted
+        const rememberedPhone = getRememberedPhone()
+        if (rememberedPhone) {
+          setRememberedUser(newPhone, data.user.name)
+        }
+      }
+
+      return { success: data.success, error: data.error }
+    } catch {
+      return { success: false, error: 'Error de conexion' }
+    }
+  }, [pb])
 
   // ============================================
   // REGISTRATION METHODS
@@ -541,6 +587,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     sendOTP,
     verifyOTP,
+    changePhoneNumber,
 
     registerOwner,
     registerWithInvite,
@@ -563,6 +610,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     sendOTP,
     verifyOTP,
+    changePhoneNumber,
     registerOwner,
     registerWithInvite,
     clearRememberedPhone,
