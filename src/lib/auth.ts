@@ -173,6 +173,30 @@ export function isValidInviteCode(code: string): boolean {
   return /^[A-Z0-9]{6}$/.test(code)
 }
 
+// ============================================
+// TRANSFER CODE GENERATION
+// ============================================
+
+const TRANSFER_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Excludes confusing chars: 0, O, I, 1
+
+/**
+ * Generate a random 8-character transfer code using cryptographically secure random numbers
+ */
+export function generateTransferCode(): string {
+  const array = new Uint8Array(8)
+  crypto.getRandomValues(array)
+  return Array.from(array)
+    .map(byte => TRANSFER_CODE_CHARS[byte % TRANSFER_CODE_CHARS.length])
+    .join('')
+}
+
+/**
+ * Validate transfer code format (8 uppercase alphanumeric)
+ */
+export function isValidTransferCode(code: string): boolean {
+  return /^[A-Z0-9]{8}$/.test(code)
+}
+
 /**
  * Calculate invite code expiration (7 days from now)
  */

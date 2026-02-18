@@ -115,6 +115,74 @@ export async function sendInviteViaWhatsApp(
   }
 }
 
+/**
+ * Send ownership transfer request via WhatsApp
+ * @param phoneNumber E.164 format (recipient)
+ * @param ownerName Name of the current owner
+ * @param transferCode 8-character transfer code
+ */
+export async function sendTransferRequestViaWhatsApp(
+  phoneNumber: string,
+  ownerName: string,
+  transferCode: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!client) {
+    console.error('Twilio not configured')
+    return { success: false, error: 'Servicio de mensajeria no configurado' }
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mrchifles.vercel.app'
+
+  try {
+    await client.messages.create({
+      from: whatsappNumber,
+      to: `whatsapp:${phoneNumber}`,
+      body: `${ownerName} te quiere transferir la propiedad de Mr. Chifles.\n\nTu codigo de transferencia: ${transferCode}\n\nAbre este enlace para aceptar:\n${appUrl}/transfer?code=${transferCode}\n\nEste codigo expira en 24 horas.`,
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to send WhatsApp transfer request:', error)
+    return {
+      success: false,
+      error: 'Error al enviar la solicitud. Intenta de nuevo.',
+    }
+  }
+}
+
+/**
+ * Send notification that transfer was accepted via WhatsApp
+ * @param phoneNumber E.164 format (owner)
+ * @param recipientName Name of the person who accepted
+ */
+export async function sendTransferAcceptedViaWhatsApp(
+  phoneNumber: string,
+  recipientName: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!client) {
+    console.error('Twilio not configured')
+    return { success: false, error: 'Servicio de mensajeria no configurado' }
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mrchifles.vercel.app'
+
+  try {
+    await client.messages.create({
+      from: whatsappNumber,
+      to: `whatsapp:${phoneNumber}`,
+      body: `${recipientName} acepto la transferencia de propiedad de Mr. Chifles.\n\nAbre la app para confirmar y completar la transferencia:\n${appUrl}/ajustes\n\nRecuerda: una vez confirmada, la transferencia es inmediata y final.`,
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to send WhatsApp transfer accepted:', error)
+    return {
+      success: false,
+      error: 'Error al enviar la notificacion.',
+    }
+  }
+}
+
 // ============================================
 // RATE LIMITING (Simple in-memory for demo)
 // In production, use Redis or database

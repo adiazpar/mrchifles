@@ -149,6 +149,31 @@ export interface OrderItem {
 }
 
 // ============================================
+// OWNERSHIP TRANSFER TYPES
+// ============================================
+
+export type TransferStatus = 'pending' | 'accepted' | 'completed' | 'expired' | 'cancelled'
+
+export interface OwnershipTransfer {
+  id: string
+  code: string // 8-char uppercase code
+  fromUser: string // Relation ID to current owner
+  toPhone: string // E.164 format
+  toUser?: string // Relation ID to recipient (set when accepted)
+  status: TransferStatus
+  expiresAt: string // ISO date string
+  acceptedAt?: string // ISO date string
+  completedAt?: string // ISO date string
+  created: string
+  updated: string
+  // Expanded relations
+  expand?: {
+    fromUser?: User
+    toUser?: User
+  }
+}
+
+// ============================================
 // CART TYPES (for UI state, not stored in DB)
 // ============================================
 
