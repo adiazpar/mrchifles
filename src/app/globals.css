@@ -1156,7 +1156,6 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
     z-index: var(--z-modal-backdrop);
     display: flex;
     align-items: center;
@@ -1937,7 +1936,6 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
     z-index: var(--z-modal-backdrop);
     animation: fadeIn var(--transition-fast);
   }
@@ -1959,6 +1957,24 @@
   @keyframes slideUp {
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
+  }
+
+  @keyframes slideDown {
+    from { transform: translateY(0); }
+    to { transform: translateY(100%); }
+  }
+
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  .bottom-sheet-closing {
+    animation: slideDown var(--transition-normal) forwards;
+  }
+
+  .bottom-sheet-backdrop-closing {
+    animation: fadeOut var(--transition-normal) forwards;
   }
 
   .bottom-sheet-handle {
