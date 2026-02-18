@@ -568,11 +568,10 @@ export default function TeamPage() {
           <div className="space-y-3">
             {sortedTeamMembers.map(member => {
               const isSelf = member.id === user?.id
-              const isManageable = canManageTeam && !isSelf && member.role !== 'owner'
               return (
                 <div
                   key={member.id}
-                  className="flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer hover:bg-bg-muted"
+                  className="list-item-clickable"
                   onClick={() => handleOpenUserModal(member)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -603,7 +602,7 @@ export default function TeamPage() {
                   </div>
 
                   {/* Chevron indicator */}
-                  <div className={`${isManageable ? 'text-text-tertiary' : 'text-text-quaternary'}`}>
+                  <div className="text-text-secondary">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
@@ -625,7 +624,7 @@ export default function TeamPage() {
                     key={code.id}
                     type="button"
                     onClick={() => handleOpenExistingCode(code)}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-bg-muted transition-colors w-full text-left"
+                    className="list-item-clickable w-full text-left"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
