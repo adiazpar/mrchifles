@@ -418,3 +418,512 @@ routerAdd("POST", "/api/use-invite", (e) => {
 // Note: PocketBase doesn't expose pre-auth hooks that can block requests,
 // but we can log and track failed attempts via the existing onRecordAuthWithPasswordRequest
 // For production, consider implementing rate limiting at the reverse proxy level (Caddy)
+
+// ============================================
+// OWNERSHIP TRANSFER ENDPOINTS
+// ============================================
+
+var TRANSFER_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Excludes confusing chars: 0, O, I, 1
+
+/**
+ * Generate an 8-character transfer code
+ */
+function generateTransferCode() {
+  var code = ''
+  for (var i = 0; i < 8; i++) {
+    code += TRANSFER_CODE_CHARS.charAt(Math.floor(Math.random() * TRANSFER_CODE_CHARS.length))
+  }
+  return code
+}
+
+/**
+ * Get transfer expiration (24 hours from now)
+ */
+function getTransferExpiration() {
+  var date = new Date()
+  date.setHours(date.getHours() + 24)
+  return date.toISOString()
+}
+
+/**
+ * POST /api/transfer/initiate
+ * Owner initiates a transfer to a phone number
+ * Body: { toPhone: "+51987654321" }
+ * Returns: { success: true, code: "ABC12345", existingUser?: { name, role } }
+ */
+routerAdd("POST", "/api/transfer/initiate", (e) => {
+  try {
+    const authRecord = e.auth
+    if (!authRecord) {
+      return e.json(401, { success: false, error: "No autenticado" })
+    }
+
+    // Verify user is owner
+    if (authRecord.get("role") !== "owner") {
+      return e.json(403, { success: false, error: "Solo el propietario puede transferir" })
+    }
+
+    const body = e.requestInfo().body
+    const toPhone = body?.toPhone
+
+    if (!toPhone || typeof toPhone !== 'string') {
+      return e.json(400, { success: false, error: "Numero de telefono requerido" })
+    }
+
+    // Validate phone format (E.164)
+    if (!/^\+[1-9]\d{6,14}$/.test(toPhone)) {
+      return e.json(400, { success: false, error: "Formato de telefono invalido" })
+    }
+
+    // Cannot transfer to yourself
+    if (authRecord.get("phoneNumber") === toPhone) {
+      return e.json(400, { success: false, error: "No puedes transferirte a ti mismo" })
+    }
+
+    // Check for existing pending transfer
+    try {
+      const pendingTransfers = $app.findRecordsByFilter(
+        "ownership_transfers",
+        "fromUser = {:userId} && status = 'pending'",
+        "",
+        1,
+        0,
+        { userId: authRecord.id }
+      )
+
+      if (pendingTransfers && pendingTransfers.length > 0) {
+        return e.json(400, { success: false, error: "Ya tienes una transferencia pendiente" })
+      }
+    } catch (err) {
+      // Collection may not exist yet, continue
+    }
+
+    // Check if recipient already exists in system
+    var existingUser = null
+    try {
+      const users = $app.findRecordsByFilter(
+        "users",
+        "phoneNumber = {:phone}",
+        "",
+        1,
+        0,
+        { phone: toPhone }
+      )
+
+      if (users && users.length > 0) {
+        existingUser = {
+          id: users[0].id,
+          name: users[0].get("name"),
+          role: users[0].get("role"),
+        }
+      }
+    } catch (err) {
+      // User not found, that's ok
+    }
+
+    // Generate unique code
+    var code = generateTransferCode()
+    var attempts = 0
+    while (attempts < 10) {
+      try {
+        const existing = $app.findRecordsByFilter(
+          "ownership_transfers",
+          "code = {:code}",
+          "",
+          1,
+          0,
+          { code: code }
+        )
+        if (!existing || existing.length === 0) break
+        code = generateTransferCode()
+        attempts++
+      } catch (err) {
+        break
+      }
+    }
+
+    // Create transfer record
+    const collection = $app.findCollectionByNameOrId("ownership_transfers")
+    const transfer = new Record(collection)
+    transfer.set("code", code)
+    transfer.set("fromUser", authRecord.id)
+    transfer.set("toPhone", toPhone)
+    transfer.set("status", "pending")
+    transfer.set("expiresAt", getTransferExpiration())
+
+    $app.save(transfer)
+
+    console.log(`[TRANSFER] Owner ${authRecord.get("email")} initiated transfer to ${toPhone}`)
+
+    return e.json(200, {
+      success: true,
+      code: code,
+      existingUser: existingUser,
+    })
+  } catch (err) {
+    console.error("[TRANSFER] Initiate error:", err)
+    return e.json(500, { success: false, error: "Error del servidor" })
+  }
+}, $apis.requireAuth())
+
+/**
+ * POST /api/transfer/validate
+ * Validate a transfer code (public endpoint for registration flow)
+ * Body: { code: "ABC12345" }
+ * Returns: { valid: true/false, ownerName?: string, error?: string }
+ */
+routerAdd("POST", "/api/transfer/validate", (e) => {
+  try {
+    const body = e.requestInfo().body
+    const code = body?.code
+
+    if (!code || typeof code !== 'string') {
+      return e.json(400, { valid: false, error: "Codigo requerido" })
+    }
+
+    const normalizedCode = code.trim().toUpperCase()
+
+    if (!/^[A-Z0-9]{8}$/.test(normalizedCode)) {
+      return e.json(400, { valid: false, error: "Formato de codigo invalido" })
+    }
+
+    try {
+      const transfers = $app.findRecordsByFilter(
+        "ownership_transfers",
+        "code = {:code} && status = 'pending' && expiresAt > @now",
+        "",
+        1,
+        0,
+        { code: normalizedCode }
+      )
+
+      if (!transfers || transfers.length === 0) {
+        return e.json(200, { valid: false, error: "Codigo invalido o expirado" })
+      }
+
+      const transfer = transfers[0]
+
+      // Get owner name
+      var ownerName = "El propietario"
+      try {
+        const owner = $app.findRecordById("users", transfer.get("fromUser"))
+        ownerName = owner.get("name")
+      } catch (err) {
+        // Owner not found, use default
+      }
+
+      return e.json(200, {
+        valid: true,
+        ownerName: ownerName,
+        toPhone: transfer.get("toPhone"),
+      })
+    } catch (err) {
+      console.log(`[TRANSFER] Validate error:`, err.message)
+      return e.json(200, { valid: false, error: "Codigo invalido o expirado" })
+    }
+  } catch (err) {
+    console.error("[TRANSFER] Validate error:", err)
+    return e.json(500, { valid: false, error: "Error del servidor" })
+  }
+})
+
+/**
+ * POST /api/transfer/accept
+ * Recipient accepts the transfer
+ * Body: { code: "ABC12345" }
+ * Returns: { success: true/false, error?: string }
+ */
+routerAdd("POST", "/api/transfer/accept", (e) => {
+  try {
+    const authRecord = e.auth
+    if (!authRecord) {
+      return e.json(401, { success: false, error: "No autenticado" })
+    }
+
+    const body = e.requestInfo().body
+    const code = body?.code
+
+    if (!code || typeof code !== 'string') {
+      return e.json(400, { success: false, error: "Codigo requerido" })
+    }
+
+    const normalizedCode = code.trim().toUpperCase()
+
+    try {
+      const transfers = $app.findRecordsByFilter(
+        "ownership_transfers",
+        "code = {:code} && status = 'pending' && expiresAt > @now",
+        "",
+        1,
+        0,
+        { code: normalizedCode }
+      )
+
+      if (!transfers || transfers.length === 0) {
+        return e.json(200, { success: false, error: "Codigo invalido o expirado" })
+      }
+
+      const transfer = transfers[0]
+
+      // Verify recipient phone matches
+      const recipientPhone = authRecord.get("phoneNumber")
+      if (recipientPhone !== transfer.get("toPhone")) {
+        console.log(`[TRANSFER] Phone mismatch: ${recipientPhone} vs ${transfer.get("toPhone")}`)
+        return e.json(200, { success: false, error: "Este codigo no es para ti" })
+      }
+
+      // Get owner's phone for notification
+      var ownerPhone = null
+      try {
+        const owner = $app.findRecordById("users", transfer.get("fromUser"))
+        ownerPhone = owner.get("phoneNumber")
+      } catch (err) {
+        // Owner not found
+      }
+
+      // Update transfer status
+      transfer.set("status", "accepted")
+      transfer.set("toUser", authRecord.id)
+      transfer.set("acceptedAt", new Date().toISOString())
+      $app.save(transfer)
+
+      console.log(`[TRANSFER] Transfer ${normalizedCode} accepted by ${recipientPhone}`)
+
+      return e.json(200, { success: true, ownerPhone: ownerPhone })
+    } catch (err) {
+      console.error(`[TRANSFER] Accept error:`, err.message)
+      return e.json(200, { success: false, error: "Codigo invalido o expirado" })
+    }
+  } catch (err) {
+    console.error("[TRANSFER] Accept error:", err)
+    return e.json(500, { success: false, error: "Error del servidor" })
+  }
+}, $apis.requireAuth())
+
+/**
+ * POST /api/transfer/confirm
+ * Owner confirms the transfer with PIN (executes role swap)
+ * Body: { code: "ABC12345", pin: "1234" }
+ * Returns: { success: true/false, error?: string }
+ */
+routerAdd("POST", "/api/transfer/confirm", (e) => {
+  try {
+    const authRecord = e.auth
+    if (!authRecord) {
+      return e.json(401, { success: false, error: "No autenticado" })
+    }
+
+    if (authRecord.get("role") !== "owner") {
+      return e.json(403, { success: false, error: "Solo el propietario puede confirmar" })
+    }
+
+    const body = e.requestInfo().body
+    const code = body?.code
+    const pin = body?.pin
+
+    if (!code || typeof code !== 'string') {
+      return e.json(400, { success: false, error: "Codigo requerido" })
+    }
+
+    if (!pin || typeof pin !== 'string' || pin.length !== 4) {
+      return e.json(400, { success: false, error: "PIN invalido" })
+    }
+
+    // Verify PIN
+    const storedHash = authRecord.get("pin")
+    if (!storedHash) {
+      return e.json(400, { success: false, error: "PIN no configurado" })
+    }
+
+    const pinSalt = 'mrchifles_pin_v1_'
+    const providedHash = $security.sha256(pinSalt + pin)
+    if (providedHash !== storedHash) {
+      console.log(`[TRANSFER] PIN verification failed for ${authRecord.get("email")}`)
+      return e.json(200, { success: false, error: "PIN incorrecto" })
+    }
+
+    const normalizedCode = code.trim().toUpperCase()
+
+    try {
+      const transfers = $app.findRecordsByFilter(
+        "ownership_transfers",
+        "code = {:code} && fromUser = {:userId} && status = 'accepted'",
+        "",
+        1,
+        0,
+        { code: normalizedCode, userId: authRecord.id }
+      )
+
+      if (!transfers || transfers.length === 0) {
+        return e.json(200, { success: false, error: "Transferencia no encontrada o no aceptada" })
+      }
+
+      const transfer = transfers[0]
+      const newOwnerId = transfer.get("toUser")
+
+      if (!newOwnerId) {
+        return e.json(200, { success: false, error: "El destinatario no ha aceptado" })
+      }
+
+      // Execute role swap in transaction
+      $app.runInTransaction((txApp) => {
+        // Get new owner record
+        const newOwner = txApp.findRecordById("users", newOwnerId)
+
+        // Swap roles: old owner -> partner, new user -> owner
+        authRecord.set("role", "partner")
+        txApp.save(authRecord)
+
+        newOwner.set("role", "owner")
+        txApp.save(newOwner)
+
+        // Mark transfer as completed
+        transfer.set("status", "completed")
+        transfer.set("completedAt", new Date().toISOString())
+        txApp.save(transfer)
+
+        console.log(`[TRANSFER] Ownership transferred from ${authRecord.get("email")} to ${newOwner.get("email")}`)
+      })
+
+      return e.json(200, { success: true })
+    } catch (err) {
+      console.error(`[TRANSFER] Confirm error:`, err.message)
+      return e.json(500, { success: false, error: "Error al ejecutar transferencia" })
+    }
+  } catch (err) {
+    console.error("[TRANSFER] Confirm error:", err)
+    return e.json(500, { success: false, error: "Error del servidor" })
+  }
+}, $apis.requireAuth())
+
+/**
+ * POST /api/transfer/cancel
+ * Owner cancels a pending transfer
+ * Body: { code: "ABC12345" }
+ * Returns: { success: true/false, error?: string }
+ */
+routerAdd("POST", "/api/transfer/cancel", (e) => {
+  try {
+    const authRecord = e.auth
+    if (!authRecord) {
+      return e.json(401, { success: false, error: "No autenticado" })
+    }
+
+    if (authRecord.get("role") !== "owner") {
+      return e.json(403, { success: false, error: "Solo el propietario puede cancelar" })
+    }
+
+    const body = e.requestInfo().body
+    const code = body?.code
+
+    if (!code || typeof code !== 'string') {
+      return e.json(400, { success: false, error: "Codigo requerido" })
+    }
+
+    const normalizedCode = code.trim().toUpperCase()
+
+    try {
+      const transfers = $app.findRecordsByFilter(
+        "ownership_transfers",
+        "code = {:code} && fromUser = {:userId} && (status = 'pending' || status = 'accepted')",
+        "",
+        1,
+        0,
+        { code: normalizedCode, userId: authRecord.id }
+      )
+
+      if (!transfers || transfers.length === 0) {
+        return e.json(200, { success: false, error: "Transferencia no encontrada" })
+      }
+
+      const transfer = transfers[0]
+      transfer.set("status", "cancelled")
+      $app.save(transfer)
+
+      console.log(`[TRANSFER] Transfer ${normalizedCode} cancelled by owner`)
+
+      return e.json(200, { success: true })
+    } catch (err) {
+      console.error(`[TRANSFER] Cancel error:`, err.message)
+      return e.json(200, { success: false, error: "Transferencia no encontrada" })
+    }
+  } catch (err) {
+    console.error("[TRANSFER] Cancel error:", err)
+    return e.json(500, { success: false, error: "Error del servidor" })
+  }
+}, $apis.requireAuth())
+
+/**
+ * GET /api/transfer/pending
+ * Get pending transfer for current owner
+ * Returns: { transfer?: { code, toPhone, status, expiresAt, toUser? } }
+ */
+routerAdd("GET", "/api/transfer/pending", (e) => {
+  try {
+    const authRecord = e.auth
+    if (!authRecord) {
+      return e.json(401, { error: "No autenticado" })
+    }
+
+    if (authRecord.get("role") !== "owner") {
+      return e.json(200, { transfer: null })
+    }
+
+    try {
+      const transfers = $app.findRecordsByFilter(
+        "ownership_transfers",
+        "fromUser = {:userId} && (status = 'pending' || status = 'accepted')",
+        "-created",
+        1,
+        0,
+        { userId: authRecord.id }
+      )
+
+      if (!transfers || transfers.length === 0) {
+        return e.json(200, { transfer: null })
+      }
+
+      const transfer = transfers[0]
+
+      // Check if expired
+      const expiresAt = new Date(transfer.get("expiresAt"))
+      if (expiresAt < new Date()) {
+        // Mark as expired
+        transfer.set("status", "expired")
+        $app.save(transfer)
+        return e.json(200, { transfer: null })
+      }
+
+      // Get recipient info if accepted
+      var toUserInfo = null
+      const toUserId = transfer.get("toUser")
+      if (toUserId) {
+        try {
+          const toUser = $app.findRecordById("users", toUserId)
+          toUserInfo = {
+            id: toUser.id,
+            name: toUser.get("name"),
+          }
+        } catch (err) {
+          // User not found
+        }
+      }
+
+      return e.json(200, {
+        transfer: {
+          code: transfer.get("code"),
+          toPhone: transfer.get("toPhone"),
+          status: transfer.get("status"),
+          expiresAt: transfer.get("expiresAt"),
+          toUser: toUserInfo,
+        }
+      })
+    } catch (err) {
+      console.error(`[TRANSFER] Pending error:`, err.message)
+      return e.json(200, { transfer: null })
+    }
+  } catch (err) {
+    console.error("[TRANSFER] Pending error:", err)
+    return e.json(500, { error: "Error del servidor" })
+  }
+}, $apis.requireAuth())
