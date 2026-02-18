@@ -26,6 +26,7 @@ interface AuthContextType {
   isLoading: boolean
   deviceTrusted: boolean
   requiresPinVerification: boolean // true if logged in but hasn't entered PIN this session
+  requiresPinReset: boolean // true if user must reset PIN before continuing
 
   // Setup state (for first-time setup flow)
   setupComplete: boolean
@@ -34,6 +35,7 @@ interface AuthContextType {
   // Auth methods (now phone-based)
   loginWithPassword: (phoneNumber: string, password: string) => Promise<void>
   verifyPinForSession: (pin: string) => Promise<boolean>
+  resetPin: (newPin: string) => Promise<{ success: boolean; error?: string }> // Reset PIN and clear pinResetRequired
   logout: (clearDevice?: boolean) => void
 
   // OTP methods
@@ -296,6 +298,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false
     }
   }, [user])
+
+  /**
+   * Reset PIN for current user
+   * Used when pinResetRequired is true
+   */
+  const resetPin = useCallback(async (newPin: string): Promise<{ success: boolean; error?: string }> => {
+    if (!user) return { success: false, error: 'No autorizado' }
+
+    try {
+      const pinHash = await hashPin(newPin)
+
+      // Update user's PIN and clear the reset flag
+      await pb.collection('users').update(user.id, {
+        pin: pinHash,
+        pinResetRequired: false,
+      })
+
+      // Update local user state
+      setUser(prev => prev ? { ...prev, pin: pinHash, pinResetRequired: false } : null)
+
+      // Mark PIN as verified for this session
+      setPinVerified(true)
+      setPinVerifiedThisSession()
+
+      return { success: true }
+    } catch (err) {
+      console.error('Error resetting PIN:', err)
+      return { success: false, error: 'Error al cambiar el PIN' }
+    }
+  }, [user, pb])
 
   const logout = useCallback((clearDevice = true) => {
     pb.authStore.clear()
@@ -576,6 +608,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     deviceTrusted,
     requiresPinVerification: !!user && !pinVerified,
+    requiresPinReset: !!user?.pinResetRequired,
 
     // Setup state
     setupComplete,
@@ -583,6 +616,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     loginWithPassword,
     verifyPinForSession,
+    resetPin,
     logout,
 
     sendOTP,
@@ -607,6 +641,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isCheckingSetup,
     loginWithPassword,
     verifyPinForSession,
+    resetPin,
     logout,
     sendOTP,
     verifyOTP,
