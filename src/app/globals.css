@@ -147,10 +147,10 @@
 
 /* ===== Dark Mode ===== */
 .dark {
-  --color-bg-base: #0F172A;
-  --color-bg-surface: #1E293B;
-  --color-bg-elevated: #334155;
-  --color-bg-muted: #334155;
+  --color-bg-base: #131B2E;
+  --color-bg-surface: #182032;
+  --color-bg-elevated: #1E2840;
+  --color-bg-muted: #1E2840;
 
   --color-brand: #38BDF8;
   --color-brand-hover: #7DD3FC;
@@ -160,8 +160,8 @@
   --color-text-secondary: #CBD5E1;
   --color-text-tertiary: #94A3B8;
 
-  --color-border: #334155;
-  --color-border-hover: #475569;
+  --color-border: #243044;
+  --color-border-hover: #344156;
 
   /* Semantic colors - lighter/brighter for dark backgrounds */
   --color-success: #4ADE80;
