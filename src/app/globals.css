@@ -2535,6 +2535,28 @@
   100% { background-position: -200% 0; }
 }
 
+/* Clickable list item (mobile-friendly hover) */
+.list-item-clickable {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .list-item-clickable:hover {
+    background: var(--color-bg-muted);
+  }
+}
+
+.list-item-clickable:active {
+  background: var(--color-bg-muted);
+}
+
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *,
