@@ -492,9 +492,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Don't fail registration if config update fails
       }
 
-      // Trust this device
+      // Trust this device and mark PIN as verified (they just set it)
       setRememberedUser(data.phoneNumber, data.name)
       setDeviceTrusted(true)
+      setPinVerified(true)
+      setPinVerifiedThisSession()
     } catch (error) {
       console.error('Registration failed:', error)
       // Extract PocketBase error message if available
@@ -575,9 +577,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(newUser as unknown as User)
 
-      // Trust this device
+      // Trust this device and mark PIN as verified (they just set it)
       setRememberedUser(data.phoneNumber, data.name)
       setDeviceTrusted(true)
+      setPinVerified(true)
+      setPinVerifiedThisSession()
     } catch (error) {
       console.error('Registration failed:', error)
       throw error
