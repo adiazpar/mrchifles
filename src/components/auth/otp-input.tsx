@@ -116,7 +116,7 @@ export function OTPInput({
   )
 
   return (
-    <div className="w-full">
+    <div className="w-full px-2">
       <div className="flex justify-center gap-2">
         {Array.from({ length }).map((_, index) => (
           <input
@@ -134,13 +134,14 @@ export function OTPInput({
             onPaste={handlePaste}
             disabled={disabled}
             className={`
-              w-12 h-14 text-center text-2xl font-bold
+              w-11 h-14 text-center text-2xl font-bold
               border-2 rounded-lg
               focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand
+              bg-[var(--color-bg-muted)] text-text-primary
               ${
                 hasError
-                  ? 'border-error bg-error-subtle'
-                  : 'border-border bg-white'
+                  ? 'border-error'
+                  : 'border-border'
               }
               ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             `}

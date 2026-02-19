@@ -371,7 +371,7 @@ export default function RegisterPage() {
       <div className="text-center mb-6">
         <h2 className="text-xl font-display font-bold mb-1">Configura tu PIN</h2>
         <p className="text-sm text-text-tertiary">
-          Este PIN de 4 digitos te permite acceder rapidamente cada dia sin ingresar tu contrasena
+          Usaras este PIN para acceder rapidamente cada dia
         </p>
       </div>
 
