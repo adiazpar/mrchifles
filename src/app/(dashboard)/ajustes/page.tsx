@@ -491,7 +491,7 @@ export default function SettingsPage() {
             <h2 className="settings-section-title">Cuenta</h2>
           </div>
           <div className="settings-section-body">
-            <div className="flex justify-between items-center">
+            <div className="settings-info-row">
               <span className="settings-info-label">Telefono</span>
               <span className="settings-info-value">
                 {user?.phoneNumber ? formatPhoneForDisplay(user.phoneNumber) : '-'}
@@ -776,7 +776,7 @@ export default function SettingsPage() {
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="000000"
-                    className="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+                    className="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 border border-border rounded-lg bg-[var(--color-bg-muted)] text-text-primary focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
                     autoFocus
                   />
                 </div>
