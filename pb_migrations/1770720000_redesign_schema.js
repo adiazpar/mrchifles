@@ -90,6 +90,14 @@ migrate((app) => {
         maxSize: 5242880, // 5MB
         mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'],
         thumbs: ['100x100', '200x200'],
+      },
+      {
+        id: "prodcateg001",
+        name: 'category',
+        type: 'select',
+        required: false,
+        values: ['chifles', 'miel', 'algarrobina', 'postres'],
+        maxSelect: 1,
       }
     ],
     indexes: [],
