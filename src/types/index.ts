@@ -67,6 +67,8 @@ export interface InviteCode {
 // PRODUCT TYPES
 // ============================================
 
+export type ProductCategory = 'chifles' | 'miel' | 'algarrobina' | 'postres'
+
 export interface Product {
   id: string
   collectionId: string // Needed for image URL
@@ -75,6 +77,7 @@ export interface Product {
   price: number // Selling price per unit
   costPrice?: number // Estimated cost per unit (optional)
   active: boolean
+  category?: ProductCategory // Product category for grouping
   image?: string // Filename from PocketBase
   created: string
   updated: string

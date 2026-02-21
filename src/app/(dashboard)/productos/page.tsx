@@ -6,8 +6,41 @@ import { Card, Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
 import { IconAdd, IconClose, IconTrash, IconImage, IconProducts } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
-import { getProductImageUrl, formatPrice } from '@/lib/products'
-import type { Product } from '@/types'
+import { getProductImageUrl } from '@/lib/products'
+import type { Product, ProductCategory } from '@/types'
+
+// Category display names and order
+const CATEGORY_CONFIG: Record<ProductCategory, { label: string; order: number }> = {
+  chifles: { label: 'Chifles', order: 1 },
+  miel: { label: 'Miel de Abeja', order: 2 },
+  algarrobina: { label: 'Algarrobina', order: 3 },
+  postres: { label: 'Postres', order: 4 },
+}
+
+// Group products by category
+function groupByCategory(products: Product[]): Map<ProductCategory | 'sin_categoria', Product[]> {
+  const groups = new Map<ProductCategory | 'sin_categoria', Product[]>()
+
+  for (const product of products) {
+    const category = product.category || 'sin_categoria'
+    if (!groups.has(category)) {
+      groups.set(category, [])
+    }
+    groups.get(category)!.push(product)
+  }
+
+  return groups
+}
+
+// Get sorted category keys
+function getSortedCategories(groups: Map<ProductCategory | 'sin_categoria', Product[]>): (ProductCategory | 'sin_categoria')[] {
+  const keys = Array.from(groups.keys())
+  return keys.sort((a, b) => {
+    const orderA = a === 'sin_categoria' ? 999 : CATEGORY_CONFIG[a]?.order ?? 999
+    const orderB = b === 'sin_categoria' ? 999 : CATEGORY_CONFIG[b]?.order ?? 999
+    return orderA - orderB
+  })
+}
 
 // Modal component
 function Modal({
@@ -33,7 +66,8 @@ function Modal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 hover:bg-bg-muted rounded-lg transition-colors"
+            className="modal-close"
+            aria-label="Cerrar"
           >
             <IconClose className="w-5 h-5" />
           </button>
@@ -75,13 +109,14 @@ function DeleteConfirmModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 hover:bg-bg-muted rounded-lg transition-colors"
+            className="modal-close"
+            aria-label="Cerrar"
           >
             <IconClose className="w-5 h-5" />
           </button>
         </div>
         <div className="modal-body">
-          <p className="text-text-secondary">
+          <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
             Estas seguro que deseas eliminar <strong>{productName}</strong>? Esta accion no se puede deshacer.
           </p>
         </div>
@@ -89,7 +124,8 @@ function DeleteConfirmModal({
           <button
             type="button"
             onClick={onClose}
-            className="btn btn-secondary flex-1"
+            className="btn btn-secondary"
+            style={{ flex: 1 }}
             disabled={isDeleting}
           >
             Cancelar
@@ -97,7 +133,8 @@ function DeleteConfirmModal({
           <button
             type="button"
             onClick={onConfirm}
-            className="btn btn-danger flex-1"
+            className="btn btn-danger"
+            style={{ flex: 1 }}
             disabled={isDeleting}
           >
             {isDeleting ? <Spinner /> : 'Eliminar'}
@@ -337,16 +374,6 @@ export default function ProductosPage() {
       <PageHeader
         title="Productos"
         subtitle="Catalogo de productos"
-        actions={
-          <button
-            type="button"
-            onClick={handleOpenAdd}
-            className="btn btn-secondary btn-sm p-2"
-            aria-label="Agregar producto"
-          >
-            <IconAdd className="w-5 h-5" />
-          </button>
-        }
       />
 
       <main className="main-content">
@@ -374,50 +401,83 @@ export default function ProductosPage() {
             </div>
           </Card>
         ) : (
-          <div className="product-grid">
-            {products.map(product => {
-              const imageUrl = getProductImageUrl(product, '100x100')
-              return (
-                <button
-                  key={product.id}
-                  type="button"
-                  onClick={() => handleOpenEdit(product)}
-                  className={`product-card ${!product.active ? 'opacity-50' : ''}`}
-                >
-                  {/* Product image */}
-                  <div className="product-image">
-                    {imageUrl ? (
-                      <Image
-                        src={imageUrl}
-                        alt={product.name}
-                        width={64}
-                        height={64}
-                        className="product-image-img"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="product-image-placeholder">
-                        <IconImage className="w-6 h-6" />
-                      </div>
-                    )}
-                  </div>
+          <div className="product-categories">
+            {(() => {
+              const groups = groupByCategory(products)
+              const sortedCategories = getSortedCategories(groups)
 
-                  {/* Product info */}
-                  <span className="product-card-name line-clamp-2">
-                    {product.name}
-                  </span>
-                  <span className="product-card-price">
-                    {formatPrice(product.price)}
-                  </span>
+              return sortedCategories.map(category => {
+                const categoryProducts = groups.get(category) || []
+                const categoryLabel = category === 'sin_categoria'
+                  ? 'Sin Categoria'
+                  : CATEGORY_CONFIG[category]?.label || category
 
-                  {!product.active && (
-                    <span className="text-xs text-text-tertiary">Inactivo</span>
-                  )}
-                </button>
-              )
-            })}
+                return (
+                  <section key={category} className="product-category-section">
+                    <h2 className="product-category-title">{categoryLabel}</h2>
+                    <div className="product-grid">
+                      {categoryProducts.map(product => {
+                        const imageUrl = getProductImageUrl(product, '200x200')
+                        const isInactive = !product.active
+                        return (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onClick={() => handleOpenEdit(product)}
+                            className={`product-card ${isInactive ? 'product-card--inactive' : ''}`}
+                          >
+                            {/* Product image */}
+                            <div className="product-card-image">
+                              {imageUrl ? (
+                                <Image
+                                  src={imageUrl}
+                                  alt={product.name}
+                                  width={200}
+                                  height={200}
+                                  unoptimized
+                                />
+                              ) : (
+                                <div className="product-card-image-placeholder">
+                                  <IconImage className="w-10 h-10" />
+                                </div>
+                              )}
+                              {isInactive && (
+                                <span className="product-card-badge product-card-badge--inactive">
+                                  Inactivo
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Product info */}
+                            <div className="product-card-info">
+                              <span className="product-card-name">
+                                {product.name}
+                              </span>
+                              <span className="product-card-price">
+                                <span className="product-card-price-currency">S/ </span>
+                                {product.price.toFixed(2)}
+                              </span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )
+              })
+            })()}
           </div>
         )}
+
+        {/* Floating Action Button */}
+        <button
+          type="button"
+          onClick={handleOpenAdd}
+          className="fab"
+          aria-label="Agregar producto"
+        >
+          <IconAdd className="w-6 h-6" />
+        </button>
       </main>
 
       {/* Add/Edit Modal */}
@@ -426,20 +486,20 @@ export default function ProductosPage() {
         onClose={handleCloseModal}
         title={editingProduct ? 'Editar producto' : 'Agregar producto'}
         footer={
-          <div className="flex gap-3 w-full">
+          <>
             {editingProduct && canDelete && (
               <button
                 type="button"
                 onClick={() => {
                   setDeleteProduct(editingProduct)
                 }}
-                className="btn btn-ghost text-error p-2"
+                className="modal-action-delete"
                 title="Eliminar producto"
               >
                 <IconTrash className="w-5 h-5" />
               </button>
             )}
-            <div className="flex gap-3 flex-1 justify-end">
+            <div className="modal-actions">
               <button
                 type="button"
                 onClick={handleCloseModal}
@@ -457,7 +517,7 @@ export default function ProductosPage() {
                 {isSaving ? <Spinner /> : 'Guardar'}
               </button>
             </div>
-          </div>
+          </>
         }
       >
         <form id="product-form" onSubmit={handleSubmit} className="space-y-4">
