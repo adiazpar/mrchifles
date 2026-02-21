@@ -69,10 +69,13 @@ export interface InviteCode {
 
 export interface Product {
   id: string
+  collectionId: string // Needed for image URL
+  collectionName: string // Needed for image URL
   name: string
   price: number // Selling price per unit
   costPrice?: number // Estimated cost per unit (optional)
   active: boolean
+  image?: string // Filename from PocketBase
   created: string
   updated: string
 }

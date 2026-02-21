@@ -80,6 +80,16 @@ migrate((app) => {
         name: 'active',
         type: 'bool',
         required: false,
+      },
+      {
+        id: "prodimage001",
+        name: 'image',
+        type: 'file',
+        required: false,
+        maxSelect: 1,
+        maxSize: 5242880, // 5MB
+        mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'],
+        thumbs: ['100x100', '200x200'],
       }
     ],
     indexes: [],
