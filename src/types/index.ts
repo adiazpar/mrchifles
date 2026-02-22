@@ -67,7 +67,7 @@ export interface InviteCode {
 // PRODUCT TYPES
 // ============================================
 
-export type ProductCategory = 'chifles' | 'miel' | 'algarrobina' | 'postres'
+export type ProductCategory = 'chifles_grande' | 'chifles_chico' | 'miel' | 'algarrobina' | 'postres'
 
 export interface Product {
   id: string
