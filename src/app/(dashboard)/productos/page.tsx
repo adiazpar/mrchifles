@@ -18,14 +18,14 @@ const CATEGORY_CONFIG: Record<ProductCategory, { label: string; size?: string; o
   postres: { label: 'Postres', order: 5 },
 }
 
-// Get short label for filter tabs
-function getCategoryShortLabel(category: ProductCategory): string {
-  const config = CATEGORY_CONFIG[category]
-  if (config.size) {
-    // For chifles, show "Grande" or "Chico"
-    return category === 'chifles_grande' ? 'Grande' : 'Chico'
-  }
-  return config.label
+// Filter tab configuration (combines chifles into one)
+type FilterCategory = 'all' | 'chifles' | 'miel' | 'algarrobina' | 'postres'
+
+const FILTER_CONFIG: Record<Exclude<FilterCategory, 'all'>, { label: string; categories: ProductCategory[] }> = {
+  chifles: { label: 'Chifles', categories: ['chifles_grande', 'chifles_chico'] },
+  miel: { label: 'Miel', categories: ['miel'] },
+  algarrobina: { label: 'Algarrobina', categories: ['algarrobina'] },
+  postres: { label: 'Postres', categories: ['postres'] },
 }
 
 // Modal component
@@ -140,7 +140,7 @@ export default function ProductosPage() {
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'all'>('all')
+  const [selectedFilter, setSelectedFilter] = useState<FilterCategory>('all')
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -199,8 +199,9 @@ export default function ProductosPage() {
     let result = products
 
     // Filter by category
-    if (selectedCategory !== 'all') {
-      result = result.filter(p => p.category === selectedCategory)
+    if (selectedFilter !== 'all') {
+      const allowedCategories = FILTER_CONFIG[selectedFilter].categories
+      result = result.filter(p => p.category && allowedCategories.includes(p.category))
     }
 
     // Filter by search query
@@ -216,17 +217,23 @@ export default function ProductosPage() {
       if (a.active !== b.active) return a.active ? -1 : 1
       return a.name.localeCompare(b.name)
     })
-  }, [products, selectedCategory, searchQuery])
+  }, [products, selectedFilter, searchQuery])
 
-  // Get unique categories from products for filter tabs
-  const availableCategories = useMemo(() => {
-    const categories = new Set<ProductCategory>()
+  // Get available filters based on products
+  const availableFilters = useMemo(() => {
+    const productCategories = new Set<ProductCategory>()
     products.forEach(p => {
-      if (p.category) categories.add(p.category)
+      if (p.category) productCategories.add(p.category)
     })
-    return Array.from(categories).sort((a, b) =>
-      (CATEGORY_CONFIG[a]?.order ?? 999) - (CATEGORY_CONFIG[b]?.order ?? 999)
-    )
+
+    // Check which filters have at least one product
+    const filters: Exclude<FilterCategory, 'all'>[] = []
+    for (const [filter, config] of Object.entries(FILTER_CONFIG) as [Exclude<FilterCategory, 'all'>, typeof FILTER_CONFIG[keyof typeof FILTER_CONFIG]][]) {
+      if (config.categories.some(cat => productCategories.has(cat))) {
+        filters.push(filter)
+      }
+    }
+    return filters
   }, [products])
 
   const resetForm = useCallback(() => {
@@ -423,23 +430,23 @@ export default function ProductosPage() {
         </div>
 
         {/* Category Filter Tabs */}
-        {availableCategories.length > 0 && (
+        {availableFilters.length > 0 && (
           <div className="filter-tabs">
             <button
               type="button"
-              onClick={() => setSelectedCategory('all')}
-              className={`filter-tab ${selectedCategory === 'all' ? 'filter-tab-active' : ''}`}
+              onClick={() => setSelectedFilter('all')}
+              className={`filter-tab ${selectedFilter === 'all' ? 'filter-tab-active' : ''}`}
             >
               Todos
             </button>
-            {availableCategories.map(cat => (
+            {availableFilters.map(filter => (
               <button
-                key={cat}
+                key={filter}
                 type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`filter-tab ${selectedCategory === cat ? 'filter-tab-active' : ''}`}
+                onClick={() => setSelectedFilter(filter)}
+                className={`filter-tab ${selectedFilter === filter ? 'filter-tab-active' : ''}`}
               >
-                {getCategoryShortLabel(cat)}
+                {FILTER_CONFIG[filter].label}
               </button>
             ))}
           </div>
