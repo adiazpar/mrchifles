@@ -527,10 +527,8 @@ export default function TeamPage() {
     return (
       <>
         <PageHeader title="Equipo" />
-        <main className="main-content">
-          <div className="flex justify-center py-12">
-            <Spinner className="spinner-lg" />
-          </div>
+        <main className="page-loading">
+          <Spinner className="spinner-lg" />
         </main>
       </>
     )

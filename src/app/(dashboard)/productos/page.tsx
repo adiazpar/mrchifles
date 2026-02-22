@@ -384,10 +384,8 @@ export default function ProductosPage() {
     return (
       <>
         <PageHeader title="Productos" subtitle="Gestiona tu catalogo" />
-        <main className="main-content">
-          <div className="flex justify-center py-12">
-            <Spinner className="spinner-lg" />
-          </div>
+        <main className="page-loading">
+          <Spinner className="spinner-lg" />
         </main>
       </>
     )
