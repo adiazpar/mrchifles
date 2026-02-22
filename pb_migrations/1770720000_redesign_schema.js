@@ -96,7 +96,7 @@ migrate((app) => {
         name: 'category',
         type: 'select',
         required: false,
-        values: ['chifles', 'miel', 'algarrobina', 'postres'],
+        values: ['chifles_grande', 'chifles_chico', 'miel', 'algarrobina', 'postres'],
         maxSelect: 1,
       }
     ],
