@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import QRCode from 'qrcode'
-import { Card, Badge, Spinner } from '@/components/ui'
+import { Badge, Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
 import { IconEmployee, IconPartner, IconCheck, IconRefresh, IconCopy, IconTrash, IconClose, IconAdd, IconPhone } from '@/components/icons'
 import { DirectInviteForm } from '@/components/invite'
@@ -547,143 +547,143 @@ export default function TeamPage() {
           </div>
         )}
 
-        {/* Team Members Card */}
-        <Card padding="lg">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-bold text-lg">
-              Miembros del equipo ({teamMembers.length})
-            </h3>
-            {canManageTeam && (
-              <button
-                type="button"
-                onClick={handleOpenModal}
-                className="btn btn-secondary btn-sm p-2"
-                aria-label="Agregar miembro"
+        {/* Team Members */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-text-secondary">
+            {teamMembers.length} {teamMembers.length === 1 ? 'miembro' : 'miembros'}
+          </span>
+          {canManageTeam && (
+            <button
+              type="button"
+              onClick={handleOpenModal}
+              className="btn btn-primary btn-sm"
+            >
+              <IconAdd className="w-4 h-4" />
+              Agregar
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          {sortedTeamMembers.map(member => {
+            const isSelf = member.id === user?.id
+            return (
+              <div
+                key={member.id}
+                className="list-item-clickable"
+                onClick={() => handleOpenUserModal(member)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleOpenUserModal(member)
+                  }
+                }}
+                tabIndex={0}
+                role="button"
               >
-                <IconAdd className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            {sortedTeamMembers.map(member => {
-              const isSelf = member.id === user?.id
-              return (
-                <div
-                  key={member.id}
-                  className="list-item-clickable"
-                  onClick={() => handleOpenUserModal(member)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      handleOpenUserModal(member)
-                    }
-                  }}
-                  tabIndex={0}
-                  role="button"
-                >
-                  <div className="sidebar-user-avatar">
-                    {getUserInitials(member.name)}
+                <div className="sidebar-user-avatar">
+                  {getUserInitials(member.name)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium truncate">{member.name}</span>
+                    {isSelf && (
+                      <span className="text-xs text-text-tertiary">(Tu)</span>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{member.name}</span>
-                      {isSelf && (
-                        <span className="text-xs text-text-tertiary">(Tu)</span>
-                      )}
-                    </div>
-                    <div className="text-xs text-text-tertiary mt-0.5">
-                      {getRoleLabel(member.role)}
-                      <span className="mx-1.5">·</span>
-                      <span className={member.status === 'active' ? 'text-success' : 'text-error'}>
-                        {member.status === 'active' ? 'Activo' : 'Deshabilitado'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Chevron indicator */}
-                  <div className="text-text-secondary">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                  <div className="text-xs text-text-tertiary mt-0.5">
+                    {getRoleLabel(member.role)}
+                    <span className="mx-1.5">·</span>
+                    <span className={member.status === 'active' ? 'text-success' : 'text-error'}>
+                      {member.status === 'active' ? 'Activo' : 'Deshabilitado'}
+                    </span>
                   </div>
                 </div>
-              )
-            })}
-          </div>
 
-          {/* Active Invite Codes Section (within the card) */}
-          {canManageTeam && inviteCodes.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-border">
-              <h3 className="font-display font-bold text-lg mb-4">
-                Codigos de invitacion activos ({inviteCodes.length})
-              </h3>
-              <div className="space-y-3">
-                {inviteCodes.map(code => (
-                  <button
-                    key={code.id}
-                    type="button"
-                    onClick={() => handleOpenExistingCode(code)}
-                    className="list-item-clickable w-full text-left"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <code className="font-display font-bold tracking-widest">
-                          {code.code}
-                        </code>
-                      </div>
-                      <div className="text-xs text-text-tertiary mt-1">
-                        {getInviteRoleLabel(code.role)} <span className="mx-1">·</span> Expira {formatDate(code.expiresAt)}
-                      </div>
+                {/* Chevron indicator */}
+                <div className="text-text-secondary">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Active Invite Codes Section */}
+        {canManageTeam && inviteCodes.length > 0 && (
+          <>
+            <div className="flex items-center justify-between mt-6">
+              <span className="text-sm text-text-secondary">
+                {inviteCodes.length} {inviteCodes.length === 1 ? 'codigo activo' : 'codigos activos'}
+              </span>
+            </div>
+            <div className="space-y-1">
+              {inviteCodes.map(code => (
+                <button
+                  key={code.id}
+                  type="button"
+                  onClick={() => handleOpenExistingCode(code)}
+                  className="list-item-clickable w-full text-left"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <code className="font-display font-bold tracking-widest">
+                        {code.code}
+                      </code>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
+                    <div className="text-xs text-text-tertiary mt-1">
+                      {getInviteRoleLabel(code.role)} <span className="mx-1">·</span> Expira {formatDate(code.expiresAt)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCopyCode(code.code)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
                           e.stopPropagation()
                           handleCopyCode(code.code)
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.stopPropagation()
-                            handleCopyCode(code.code)
-                          }
-                        }}
-                        className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-brand-subtle transition-colors"
-                        title="Copiar codigo"
-                      >
-                        {copyFeedback === code.code ? (
-                          <IconCheck className="w-4 h-4 text-success" />
-                        ) : (
-                          <IconCopy className="w-4 h-4" />
-                        )}
-                      </span>
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
+                        }
+                      }}
+                      className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-brand-subtle transition-colors"
+                      title="Copiar codigo"
+                    >
+                      {copyFeedback === code.code ? (
+                        <IconCheck className="w-4 h-4 text-success" />
+                      ) : (
+                        <IconCopy className="w-4 h-4" />
+                      )}
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteCode(code.id)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
                           e.stopPropagation()
                           handleDeleteCode(code.id)
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.stopPropagation()
-                            handleDeleteCode(code.id)
-                          }
-                        }}
-                        className="p-2 rounded-lg text-text-secondary hover:text-error hover:bg-error-subtle transition-colors"
-                        title="Eliminar codigo"
-                      >
-                        <IconTrash className="w-4 h-4" />
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                        }
+                      }}
+                      className="p-2 rounded-lg text-text-secondary hover:text-error hover:bg-error-subtle transition-colors"
+                      title="Eliminar codigo"
+                    >
+                      <IconTrash className="w-4 h-4" />
+                    </span>
+                  </div>
+                </button>
+              ))}
             </div>
-          )}
-        </Card>
+          </>
+        )}
       </main>
 
       {/* Add Member Modal */}
