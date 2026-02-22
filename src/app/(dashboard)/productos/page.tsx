@@ -1,45 +1,31 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
-import { Card, Spinner } from '@/components/ui'
+import { Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
-import { IconAdd, IconClose, IconTrash, IconImage, IconProducts } from '@/components/icons'
+import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { getProductImageUrl } from '@/lib/products'
 import type { Product, ProductCategory } from '@/types'
 
-// Category display names and order
-const CATEGORY_CONFIG: Record<ProductCategory, { label: string; order: number }> = {
-  chifles: { label: 'Chifles', order: 1 },
-  miel: { label: 'Miel de Abeja', order: 2 },
-  algarrobina: { label: 'Algarrobina', order: 3 },
-  postres: { label: 'Postres', order: 4 },
+// Category configuration
+const CATEGORY_CONFIG: Record<ProductCategory, { label: string; size?: string; order: number }> = {
+  chifles_grande: { label: 'Chifles Grande', size: '250g', order: 1 },
+  chifles_chico: { label: 'Chifles Chico', size: '160g', order: 2 },
+  miel: { label: 'Miel de Abeja', order: 3 },
+  algarrobina: { label: 'Algarrobina', order: 4 },
+  postres: { label: 'Postres', order: 5 },
 }
 
-// Group products by category
-function groupByCategory(products: Product[]): Map<ProductCategory | 'sin_categoria', Product[]> {
-  const groups = new Map<ProductCategory | 'sin_categoria', Product[]>()
-
-  for (const product of products) {
-    const category = product.category || 'sin_categoria'
-    if (!groups.has(category)) {
-      groups.set(category, [])
-    }
-    groups.get(category)!.push(product)
+// Get short label for filter tabs
+function getCategoryShortLabel(category: ProductCategory): string {
+  const config = CATEGORY_CONFIG[category]
+  if (config.size) {
+    // For chifles, show "Grande" or "Chico"
+    return category === 'chifles_grande' ? 'Grande' : 'Chico'
   }
-
-  return groups
-}
-
-// Get sorted category keys
-function getSortedCategories(groups: Map<ProductCategory | 'sin_categoria', Product[]>): (ProductCategory | 'sin_categoria')[] {
-  const keys = Array.from(groups.keys())
-  return keys.sort((a, b) => {
-    const orderA = a === 'sin_categoria' ? 999 : CATEGORY_CONFIG[a]?.order ?? 999
-    const orderB = b === 'sin_categoria' ? 999 : CATEGORY_CONFIG[b]?.order ?? 999
-    return orderA - orderB
-  })
+  return config.label
 }
 
 // Modal component
@@ -152,6 +138,10 @@ export default function ProductosPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'all'>('all')
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -164,7 +154,7 @@ export default function ProductosPage() {
   // Form state
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
-  const [costPrice, setCostPrice] = useState('')
+  const [category, setCategory] = useState<ProductCategory | ''>('')
   const [active, setActive] = useState(true)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -204,10 +194,45 @@ export default function ProductosPage() {
     }
   }, [pb])
 
+  // Filter and search products
+  const filteredProducts = useMemo(() => {
+    let result = products
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      result = result.filter(p => p.category === selectedCategory)
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(query)
+      )
+    }
+
+    // Sort: active first, then by name
+    return result.sort((a, b) => {
+      if (a.active !== b.active) return a.active ? -1 : 1
+      return a.name.localeCompare(b.name)
+    })
+  }, [products, selectedCategory, searchQuery])
+
+  // Get unique categories from products for filter tabs
+  const availableCategories = useMemo(() => {
+    const categories = new Set<ProductCategory>()
+    products.forEach(p => {
+      if (p.category) categories.add(p.category)
+    })
+    return Array.from(categories).sort((a, b) =>
+      (CATEGORY_CONFIG[a]?.order ?? 999) - (CATEGORY_CONFIG[b]?.order ?? 999)
+    )
+  }, [products])
+
   const resetForm = useCallback(() => {
     setName('')
     setPrice('')
-    setCostPrice('')
+    setCategory('')
     setActive(true)
     setImageFile(null)
     setImagePreview(null)
@@ -225,7 +250,7 @@ export default function ProductosPage() {
     setEditingProduct(product)
     setName(product.name)
     setPrice(product.price.toString())
-    setCostPrice(product.costPrice?.toString() || '')
+    setCategory(product.category || '')
     setActive(product.active)
     setImageFile(null)
     setRemoveImage(false)
@@ -252,7 +277,6 @@ export default function ProductosPage() {
     }
 
     // Validate file type
-    // Note: HEIC may show as empty string or application/octet-stream on some browsers
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
     const isHeicFile = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
     if (!validTypes.includes(file.type) && !isHeicFile) {
@@ -296,12 +320,6 @@ export default function ProductosPage() {
       return
     }
 
-    const costPriceNum = costPrice ? parseFloat(costPrice) : undefined
-    if (costPrice && (isNaN(costPriceNum!) || costPriceNum! < 0)) {
-      setError('Ingresa un costo valido')
-      return
-    }
-
     setIsSaving(true)
     setError('')
 
@@ -309,15 +327,14 @@ export default function ProductosPage() {
       const formData = new FormData()
       formData.append('name', name.trim())
       formData.append('price', priceNum.toString())
-      if (costPriceNum !== undefined) {
-        formData.append('costPrice', costPriceNum.toString())
+      if (category) {
+        formData.append('category', category)
       }
       formData.append('active', active.toString())
 
       if (imageFile) {
         formData.append('image', imageFile)
       } else if (removeImage && editingProduct?.image) {
-        // To remove an image in PocketBase, pass an empty string
         formData.append('image', '')
       }
 
@@ -337,7 +354,7 @@ export default function ProductosPage() {
     } finally {
       setIsSaving(false)
     }
-  }, [name, price, costPrice, active, imageFile, removeImage, editingProduct, pb, handleCloseModal])
+  }, [name, price, category, active, imageFile, removeImage, editingProduct, pb, handleCloseModal])
 
   const handleDelete = useCallback(async () => {
     if (!deleteProduct) return
@@ -359,7 +376,7 @@ export default function ProductosPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Productos" subtitle="Catalogo de productos" />
+        <PageHeader title="Productos" subtitle="Gestiona tu catalogo" />
         <main className="main-content">
           <div className="flex justify-center py-12">
             <Spinner className="spinner-lg" />
@@ -373,18 +390,78 @@ export default function ProductosPage() {
     <>
       <PageHeader
         title="Productos"
-        subtitle="Catalogo de productos"
+        subtitle="Gestiona tu catalogo"
       />
 
-      <main className="main-content">
+      <main className="main-content space-y-4">
         {error && !isModalOpen && (
-          <div className="p-4 mb-4 bg-error-subtle text-error rounded-lg">
+          <div className="p-4 bg-error-subtle text-error rounded-lg">
             {error}
           </div>
         )}
 
+        {/* Search Bar */}
+        <div className="search-bar">
+          <IconSearch className="search-bar-icon" />
+          <input
+            type="text"
+            placeholder="Buscar productos..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="search-bar-input"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="search-bar-clear"
+              aria-label="Limpiar busqueda"
+            >
+              <IconClose className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Category Filter Tabs */}
+        {availableCategories.length > 0 && (
+          <div className="filter-tabs">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('all')}
+              className={`filter-tab ${selectedCategory === 'all' ? 'filter-tab-active' : ''}`}
+            >
+              Todos
+            </button>
+            {availableCategories.map(cat => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`filter-tab ${selectedCategory === cat ? 'filter-tab-active' : ''}`}
+              >
+                {getCategoryShortLabel(cat)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Product List Header */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-text-secondary">
+            {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
+          </span>
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="btn btn-primary btn-sm"
+          >
+            <IconAdd className="w-4 h-4" />
+            Agregar
+          </button>
+        </div>
+
+        {/* Product List */}
         {products.length === 0 ? (
-          <Card padding="lg">
             <div className="empty-state">
               <IconProducts className="empty-state-icon" />
               <h3 className="empty-state-title">No hay productos</h3>
@@ -399,85 +476,91 @@ export default function ProductosPage() {
                 Agregar producto
               </button>
             </div>
-          </Card>
-        ) : (
-          <div className="product-categories">
-            {(() => {
-              const groups = groupByCategory(products)
-              const sortedCategories = getSortedCategories(groups)
-
-              return sortedCategories.map(category => {
-                const categoryProducts = groups.get(category) || []
-                const categoryLabel = category === 'sin_categoria'
-                  ? 'Sin Categoria'
-                  : CATEGORY_CONFIG[category]?.label || category
+          ) : filteredProducts.length === 0 ? (
+            <div className="empty-state">
+              <IconSearch className="empty-state-icon" />
+              <h3 className="empty-state-title">Sin resultados</h3>
+              <p className="empty-state-description">
+                No se encontraron productos con ese criterio
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredProducts.map(product => {
+                const imageUrl = getProductImageUrl(product, '100x100')
+                const categoryConfig = product.category ? CATEGORY_CONFIG[product.category] : null
 
                 return (
-                  <section key={category} className="product-category-section">
-                    <h2 className="product-category-title">{categoryLabel}</h2>
-                    <div className="product-grid">
-                      {categoryProducts.map(product => {
-                        const imageUrl = getProductImageUrl(product, '200x200')
-                        const isInactive = !product.active
-                        return (
-                          <button
-                            key={product.id}
-                            type="button"
-                            onClick={() => handleOpenEdit(product)}
-                            className={`product-card ${isInactive ? 'product-card--inactive' : ''}`}
-                          >
-                            {/* Product image */}
-                            <div className="product-card-image">
-                              {imageUrl ? (
-                                <Image
-                                  src={imageUrl}
-                                  alt={product.name}
-                                  width={200}
-                                  height={200}
-                                  unoptimized
-                                />
-                              ) : (
-                                <div className="product-card-image-placeholder">
-                                  <IconImage className="w-10 h-10" />
-                                </div>
-                              )}
-                              {isInactive && (
-                                <span className="product-card-badge product-card-badge--inactive">
-                                  Inactivo
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Product info */}
-                            <div className="product-card-info">
-                              <span className="product-card-name">
-                                {product.name}
-                              </span>
-                              <span className="product-card-price">
-                                <span className="product-card-price-currency">S/ </span>
-                                {product.price.toFixed(2)}
-                              </span>
-                            </div>
-                          </button>
-                        )
-                      })}
+                  <div
+                    key={product.id}
+                    className="list-item-clickable"
+                    onClick={() => handleOpenEdit(product)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleOpenEdit(product)
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                  >
+                    {/* Product Image/Icon */}
+                    <div className="product-list-image">
+                      {imageUrl ? (
+                        <Image
+                          src={imageUrl}
+                          alt={product.name}
+                          width={40}
+                          height={40}
+                          className="product-list-image-img"
+                          unoptimized
+                        />
+                      ) : (
+                        <IconImage className="w-5 h-5 text-text-tertiary" />
+                      )}
                     </div>
-                  </section>
-                )
-              })
-            })()}
-          </div>
-        )}
 
-        {/* Floating Action Button */}
-        <button
-          type="button"
-          onClick={handleOpenAdd}
-          className="fab"
-          aria-label="Agregar producto"
-        >
-          <IconAdd className="w-6 h-6" />
-        </button>
+                    {/* Product Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-medium truncate ${!product.active ? 'text-text-tertiary' : ''}`}>
+                          {product.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {categoryConfig && (
+                          <>
+                            <span className="text-xs text-text-tertiary">
+                              {categoryConfig.label}
+                              {categoryConfig.size && ` (${categoryConfig.size})`}
+                            </span>
+                            <span className="text-text-muted">·</span>
+                          </>
+                        )}
+                        <span className={`text-xs ${product.active ? 'text-success' : 'text-text-tertiary'}`}>
+                          {product.active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className="text-right">
+                      <span className={`font-display font-bold ${!product.active ? 'text-text-tertiary' : 'text-text-primary'}`}>
+                        S/ {product.price.toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Chevron */}
+                    <div className="text-text-tertiary ml-2">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
       </main>
 
       {/* Add/Edit Modal */}
@@ -583,7 +666,7 @@ export default function ProductosPage() {
               value={name}
               onChange={e => setName(e.target.value)}
               className="input"
-              placeholder="Ej: Chifles Grande"
+              placeholder="Ej: Tocino"
               autoComplete="off"
             />
           </div>
@@ -604,21 +687,24 @@ export default function ProductosPage() {
             />
           </div>
 
-          {/* Cost price */}
+          {/* Category */}
           <div>
-            <label htmlFor="costPrice" className="label">Costo (S/) <span className="text-text-tertiary font-normal">(opcional)</span></label>
-            <input
-              id="costPrice"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              value={costPrice}
-              onChange={e => setCostPrice(e.target.value)}
+            <label htmlFor="category" className="label">Categoria</label>
+            <select
+              id="category"
+              value={category}
+              onChange={e => setCategory(e.target.value as ProductCategory | '')}
               className="input"
-              placeholder="0.00"
-            />
-            <p className="helper-text">Para calcular la ganancia</p>
+            >
+              <option value="">Seleccionar categoria</option>
+              {Object.entries(CATEGORY_CONFIG)
+                .sort(([, a], [, b]) => a.order - b.order)
+                .map(([key, config]) => (
+                  <option key={key} value={key}>
+                    {config.label}{config.size ? ` (${config.size})` : ''}
+                  </option>
+                ))}
+            </select>
           </div>
 
           {/* Active toggle */}
