@@ -23,7 +23,7 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
 
 export function LoadingPage() {
   return (
-    <div className="flex items-center justify-center min-h-[400px]">
+    <div className="flex items-center justify-center min-h-screen">
       <Spinner size="lg" />
     </div>
   )
