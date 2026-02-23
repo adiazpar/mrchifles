@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import { Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
-import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch } from '@/components/icons'
+import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconFilter, IconCheck } from '@/components/icons'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAuth } from '@/contexts/auth-context'
 import { getProductImageUrl } from '@/lib/products'
 import type { Product, ProductCategory } from '@/types'
@@ -131,8 +132,25 @@ function DeleteConfirmModal({
   )
 }
 
+// Tab types
+type PageTab = 'productos' | 'inventario'
+
+// Sort options
+type SortOption = 'name_asc' | 'name_desc' | 'price_asc' | 'price_desc' | 'category'
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'name_asc', label: 'Nombre (A-Z)' },
+  { value: 'name_desc', label: 'Nombre (Z-A)' },
+  { value: 'price_asc', label: 'Precio (menor a mayor)' },
+  { value: 'price_desc', label: 'Precio (mayor a menor)' },
+  { value: 'category', label: 'Categoria' },
+]
+
 export default function ProductosPage() {
   const { user, pb } = useAuth()
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<PageTab>('productos')
 
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -141,6 +159,8 @@ export default function ProductosPage() {
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFilter, setSelectedFilter] = useState<FilterCategory>('all')
+  const [sortBy, setSortBy] = useState<SortOption>('name_asc')
+  const [isSortSheetOpen, setIsSortSheetOpen] = useState(false)
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -212,12 +232,32 @@ export default function ProductosPage() {
       )
     }
 
-    // Sort: active first, then by name
+    // Sort: always active first, then by selected sort option
     return result.sort((a, b) => {
+      // Active products always come first
       if (a.active !== b.active) return a.active ? -1 : 1
-      return a.name.localeCompare(b.name)
+
+      // Then apply selected sort
+      switch (sortBy) {
+        case 'name_asc':
+          return a.name.localeCompare(b.name)
+        case 'name_desc':
+          return b.name.localeCompare(a.name)
+        case 'price_asc':
+          return a.price - b.price
+        case 'price_desc':
+          return b.price - a.price
+        case 'category': {
+          const catA = a.category ? CATEGORY_CONFIG[a.category]?.order ?? 99 : 99
+          const catB = b.category ? CATEGORY_CONFIG[b.category]?.order ?? 99 : 99
+          if (catA !== catB) return catA - catB
+          return a.name.localeCompare(b.name)
+        }
+        default:
+          return a.name.localeCompare(b.name)
+      }
     })
-  }, [products, selectedFilter, searchQuery])
+  }, [products, selectedFilter, searchQuery, sortBy])
 
   // Get available filters based on products
   const availableFilters = useMemo(() => {
@@ -380,10 +420,24 @@ export default function ProductosPage() {
     }
   }, [deleteProduct, pb])
 
+  const scrollToTop = useCallback(() => {
+    // The scrolling container is the .with-sidebar div, not window
+    const scrollContainer = document.querySelector('.with-sidebar')
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [])
+
+  // Tab subtitle config
+  const tabSubtitles: Record<PageTab, string> = {
+    productos: 'Gestiona tu catalogo',
+    inventario: 'Control de stock',
+  }
+
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Productos" subtitle="Gestiona tu catalogo" />
+        <PageHeader title="Productos" subtitle={tabSubtitles[activeTab]} />
         <main className="page-loading">
           <Spinner className="spinner-lg" />
         </main>
@@ -395,37 +449,67 @@ export default function ProductosPage() {
     <>
       <PageHeader
         title="Productos"
-        subtitle="Gestiona tu catalogo"
+        subtitle={tabSubtitles[activeTab]}
       />
 
       <main className="main-content space-y-4">
-        {error && !isModalOpen && (
-          <div className="p-4 bg-error-subtle text-error rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {/* Search Bar */}
-        <div className="search-bar">
-          <IconSearch className="search-bar-icon" />
-          <input
-            type="text"
-            placeholder="Buscar productos..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="search-bar-input"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="search-bar-clear"
-              aria-label="Limpiar busqueda"
-            >
-              <IconClose className="w-4 h-4" />
-            </button>
-          )}
+        {/* Section Tabs */}
+        <div className="section-tabs">
+          <button
+            type="button"
+            onClick={() => setActiveTab('productos')}
+            className={`section-tab ${activeTab === 'productos' ? 'section-tab-active' : ''}`}
+          >
+            Productos
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('inventario')}
+            className={`section-tab ${activeTab === 'inventario' ? 'section-tab-active' : ''}`}
+          >
+            Inventario
+          </button>
         </div>
+
+        {activeTab === 'productos' ? (
+          <>
+            {error && !isModalOpen && (
+              <div className="p-4 bg-error-subtle text-error rounded-lg">
+                {error}
+              </div>
+            )}
+
+            {/* Search Bar with Sort Button */}
+            <div className="flex gap-2">
+              <div className="search-bar flex-1">
+                <IconSearch className="search-bar-icon" />
+                <input
+                  type="text"
+                  placeholder="Buscar productos..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="search-bar-input"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="search-bar-clear"
+                    aria-label="Limpiar busqueda"
+                  >
+                    <IconClose className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSortSheetOpen(true)}
+                className="btn btn-secondary btn-icon flex-shrink-0"
+                aria-label="Ordenar productos"
+              >
+                <IconFilter className="w-5 h-5" />
+              </button>
+            </div>
 
         {/* Category Filter Tabs */}
         {availableFilters.length > 0 && (
@@ -566,6 +650,25 @@ export default function ProductosPage() {
               })}
             </div>
           )}
+
+            {/* Back to top button */}
+            {filteredProducts.length > 5 && (
+              <button
+                type="button"
+                onClick={scrollToTop}
+                className="w-full py-3 mt-4 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+              >
+                <IconArrowUp className="w-4 h-4" />
+                Volver arriba
+              </button>
+            )}
+          </>
+        ) : (
+          /* Inventory placeholder */
+          <div className="flex flex-col items-center justify-center h-64 border border-dashed border-border rounded-xl">
+            <p className="text-text-secondary">Proximamente</p>
+          </div>
+        )}
       </main>
 
       {/* Add/Edit Modal */}
@@ -738,6 +841,34 @@ export default function ProductosPage() {
         productName={deleteProduct?.name || ''}
         isDeleting={isDeleting}
       />
+
+      {/* Sort bottom sheet */}
+      <BottomSheet
+        isOpen={isSortSheetOpen}
+        onClose={() => setIsSortSheetOpen(false)}
+        title="Ordenar por"
+      >
+        <div className="space-y-1">
+          {SORT_OPTIONS.map(option => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                setSortBy(option.value)
+                setIsSortSheetOpen(false)
+              }}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-left hover:bg-bg-muted transition-colors"
+            >
+              <span className={sortBy === option.value ? 'font-medium text-brand' : 'text-text-primary'}>
+                {option.label}
+              </span>
+              {sortBy === option.value && (
+                <IconCheck className="w-5 h-5 text-brand" />
+              )}
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
     </>
   )
 }

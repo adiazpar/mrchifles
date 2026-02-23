@@ -2890,6 +2890,39 @@
     color: white;
   }
 
+  /* ===== Section Tabs (Page-level navigation) ===== */
+  .section-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--space-4);
+  }
+
+  .section-tab {
+    flex: 1;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: center;
+  }
+
+  @media (hover: hover) {
+    .section-tab:hover:not(.section-tab-active) {
+      color: var(--color-text-primary);
+      background: var(--color-bg-muted);
+    }
+  }
+
+  .section-tab-active {
+    color: var(--color-brand);
+    border-bottom-color: var(--color-brand);
+  }
+
   /* ===== Product List Image ===== */
   .product-list-image {
     width: 48px;

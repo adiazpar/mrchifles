@@ -114,7 +114,7 @@ export default function InicioPage() {
             <span className="quick-action-label">Productos</span>
           </Link>
 
-          <Link href="/inventario" className="quick-action">
+          <Link href="/productos" className="quick-action">
             <div className="quick-action-icon">
               <IconInventory className="w-5 h-5" />
             </div>
@@ -220,7 +220,7 @@ export default function InicioPage() {
                 </li>
               ))}
             </ul>
-            <Link href="/inventario" className="inline-block mt-2 text-sm font-medium text-brand hover:underline">
+            <Link href="/productos" className="inline-block mt-2 text-sm font-medium text-brand hover:underline">
               Ver inventario
             </Link>
           </div>

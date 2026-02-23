@@ -3,7 +3,7 @@ import {
   IconSales,
   IconProducts,
   IconCashDrawer,
-  IconInventory,
+  IconReports,
 } from '@/components/icons'
 import type { ComponentType } from 'react'
 
@@ -21,7 +21,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/ventas', label: 'Ventas', icon: IconSales },
   { href: '/caja', label: 'Caja', icon: IconCashDrawer },
   { href: '/productos', label: 'Productos', icon: IconProducts },
-  { href: '/inventario', label: 'Inventario', icon: IconInventory },
+  { href: '/reportes', label: 'Reportes', icon: IconReports },
 ]
 
 /**
@@ -32,5 +32,5 @@ export const MOBILE_NAV_ITEMS: NavItem[] = [
   { href: '/ventas', label: 'Ventas', icon: IconSales },
   { href: '/caja', label: 'Caja', icon: IconCashDrawer },
   { href: '/productos', label: 'Productos', icon: IconProducts },
-  { href: '/inventario', label: 'Inventario', icon: IconInventory },
+  { href: '/reportes', label: 'Reportes', icon: IconReports },
 ]
