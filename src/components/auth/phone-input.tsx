@@ -98,19 +98,31 @@ export function PhoneInput({
       )}
 
       <div className="flex gap-2">
-        {/* Country selector - native select for iOS/Android picker */}
-        <select
-          value={selectedCountry.code}
-          onChange={handleCountryChange}
-          disabled={disabled}
-          className={`input w-20 flex-shrink-0 ${error ? 'input-error' : ''}`}
-        >
-          {COUNTRIES.map((country) => (
-            <option key={country.code} value={country.code}>
-              {country.dialCode}
-            </option>
-          ))}
-        </select>
+        {/* Country selector - custom display with native picker */}
+        <div className="relative flex-shrink-0">
+          {/* Visible display showing just dial code */}
+          <div
+            className={`input flex items-center justify-between gap-1 w-20 pointer-events-none ${error ? 'input-error' : ''} ${disabled ? 'opacity-50' : ''}`}
+          >
+            <span className="text-sm">{selectedCountry.dialCode}</span>
+            <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          {/* Transparent native select on top for picker */}
+          <select
+            value={selectedCountry.code}
+            onChange={handleCountryChange}
+            disabled={disabled}
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+          >
+            {COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.dialCode} {country.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Phone number input */}
         <input
