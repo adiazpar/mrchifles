@@ -151,7 +151,7 @@ export function PhoneInput({
           {/* Dropdown */}
           {isDropdownOpen && (
             <ul
-              className="absolute z-50 mt-1 w-56 bg-white border border-border rounded-lg shadow-lg max-h-60 overflow-auto"
+              className="absolute z-50 mt-1 w-56 bg-bg-surface border border-border rounded-lg shadow-lg max-h-60 overflow-auto"
               role="listbox"
             >
               {COUNTRIES.map((country) => (
