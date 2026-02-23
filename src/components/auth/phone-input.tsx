@@ -103,7 +103,7 @@ export function PhoneInput({
           value={selectedCountry.code}
           onChange={handleCountryChange}
           disabled={disabled}
-          className={`input min-w-[100px] ${error ? 'input-error' : ''}`}
+          className={`input w-24 flex-shrink-0 ${error ? 'input-error' : ''}`}
         >
           {COUNTRIES.map((country) => (
             <option key={country.code} value={country.code}>
