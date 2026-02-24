@@ -109,7 +109,8 @@ export interface Sale {
 export interface SaleItem {
   id: string
   sale: string // Relation ID
-  product: string // Relation ID
+  product?: string // Relation ID (optional - can be null if product was deleted)
+  productName: string // Snapshot of product name at time of sale
   quantity: number
   unitPrice: number // Price charged (after any promo)
   subtotal: number
