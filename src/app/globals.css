@@ -1461,6 +1461,27 @@
     max-width: 280px;
   }
 
+  /* Centered empty state - fills available space between header/tabs and navbar */
+  .empty-state-centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-6);
+    /* Fill remaining viewport: 100vh - header - tabs - padding - navbar */
+    min-height: calc(100vh - var(--header-height) - 60px - var(--page-padding) * 2 - var(--mobile-nav-height) - env(safe-area-inset-bottom, 0px));
+    min-height: calc(100dvh - var(--header-height) - 60px - var(--page-padding) * 2 - var(--mobile-nav-height) - env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 1024px) {
+    .empty-state-centered {
+      /* Desktop: no mobile navbar */
+      min-height: calc(100vh - var(--header-height) - 60px - var(--space-6) * 2);
+      min-height: calc(100dvh - var(--header-height) - 60px - var(--space-6) * 2);
+    }
+  }
+
   /* ===== Modal ===== */
   .modal-backdrop {
     position: fixed;
