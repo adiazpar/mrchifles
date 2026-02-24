@@ -84,6 +84,7 @@ const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0
 const REMEMBERED_PHONE_KEY = 'chifles_remembered_phone'
 const REMEMBERED_NAME_KEY = 'chifles_remembered_name'
 const PIN_VERIFIED_KEY = 'chifles_pin_verified' // sessionStorage - clears on tab close
+const PRODUCT_FILTERS_KEY = 'chifles_product_filters' // Product page filter preferences
 
 // ============================================
 // REMEMBERED USER HELPERS
@@ -334,6 +335,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     setPinVerified(false)
     clearPinVerifiedThisSession()
+    // Clear user preferences stored in localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(PRODUCT_FILTERS_KEY)
+    }
     if (clearDevice) {
       clearRememberedUserStorage()
       setDeviceTrusted(false)

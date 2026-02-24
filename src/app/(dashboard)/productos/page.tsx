@@ -146,6 +146,33 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'category', label: 'Categoria' },
 ]
 
+// LocalStorage key for product filters
+const PRODUCT_FILTERS_KEY = 'chifles_product_filters'
+
+interface ProductFilters {
+  selectedFilter: FilterCategory
+  sortBy: SortOption
+}
+
+function loadProductFilters(): ProductFilters | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const stored = localStorage.getItem(PRODUCT_FILTERS_KEY)
+    if (stored) {
+      return JSON.parse(stored)
+    }
+  } catch {
+    // Invalid JSON, ignore
+  }
+  return null
+}
+
+function saveProductFilters(filters: ProductFilters): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(PRODUCT_FILTERS_KEY, JSON.stringify(filters))
+}
+
+
 export default function ProductosPage() {
   const { user, pb } = useAuth()
 
@@ -158,8 +185,14 @@ export default function ProductosPage() {
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedFilter, setSelectedFilter] = useState<FilterCategory>('all')
-  const [sortBy, setSortBy] = useState<SortOption>('name_asc')
+  const [selectedFilter, setSelectedFilter] = useState<FilterCategory>(() => {
+    const saved = loadProductFilters()
+    return saved?.selectedFilter ?? 'all'
+  })
+  const [sortBy, setSortBy] = useState<SortOption>(() => {
+    const saved = loadProductFilters()
+    return saved?.sortBy ?? 'name_asc'
+  })
   const [isSortSheetOpen, setIsSortSheetOpen] = useState(false)
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
   const [isSelectionMode, setIsSelectionMode] = useState(false)
@@ -216,6 +249,11 @@ export default function ProductosPage() {
       cancelled = true
     }
   }, [pb])
+
+  // Save filters to localStorage when they change
+  useEffect(() => {
+    saveProductFilters({ selectedFilter, sortBy })
+  }, [selectedFilter, sortBy])
 
   // Filter and search products
   const filteredProducts = useMemo(() => {
