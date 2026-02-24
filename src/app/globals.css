@@ -1642,20 +1642,8 @@
   .invite-success-compact {
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-4);
-  }
-
-  .invite-meta-row {
-    display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--space-3);
-  }
-
-  .invite-expiry-inline {
-    font-size: var(--text-xs);
-    color: var(--color-text-tertiary);
+    text-align: center;
   }
 
   .invite-qr-box {
@@ -1664,60 +1652,14 @@
     justify-content: center;
     align-self: center;
     background: white;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
-    padding: var(--space-4);
+    padding: var(--space-3);
   }
 
   .invite-qr-box img {
-    width: 180px;
-    height: 180px;
-  }
-
-  .invite-hint {
-    font-size: var(--text-sm);
-    color: var(--color-text-tertiary);
-    text-align: center;
-    margin: 0;
-    line-height: 1.5;
-  }
-
-  .invite-code-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    align-self: center;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-5);
-    background: var(--color-bg-muted);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--color-border);
-    cursor: pointer;
-    transition: border-color var(--transition-fast), background var(--transition-fast);
-  }
-
-  @media (hover: hover) {
-    .invite-code-box:hover {
-      border-color: var(--color-brand);
-      background: var(--color-brand-subtle);
-    }
-  }
-
-  .invite-code-box:active {
-    transform: scale(0.98);
-  }
-
-  .invite-code-box svg {
-    color: var(--color-text-secondary);
-    flex-shrink: 0;
-  }
-
-  .invite-code-text {
-    font-family: var(--font-display);
-    font-size: var(--text-2xl);
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    color: var(--color-text-primary);
+    width: 140px;
+    height: 140px;
   }
 
   .invite-regenerate {
@@ -1741,105 +1683,6 @@
   .invite-regenerate:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-  }
-
-  /* ===== Invite Segmented Control ===== */
-  .invite-segment-control {
-    display: flex;
-    background: var(--color-bg-muted);
-    border-radius: var(--radius-lg);
-    padding: 3px;
-    gap: 2px;
-  }
-
-  .invite-segment {
-    flex: 1;
-    padding: var(--space-2) var(--space-3);
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    background: transparent;
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
-    white-space: nowrap;
-  }
-
-  .invite-segment-active {
-    background: var(--color-bg-surface);
-    color: var(--color-text-primary);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  }
-
-  @media (hover: hover) {
-    .invite-segment:not(.invite-segment-active):hover {
-      color: var(--color-text-primary);
-    }
-  }
-
-  /* Content area - fixed height for consistent modal size */
-  .invite-content-area {
-    height: 260px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .invite-qr-view,
-  .invite-code-view,
-  .invite-whatsapp-view {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-3);
-    flex: 1;
-  }
-
-  /* Large code box for code view - inline layout */
-  .invite-code-box-large {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-4);
-    padding: var(--space-4) var(--space-6);
-    background: var(--color-bg-muted);
-    border-radius: var(--radius-xl);
-    border: 2px dashed var(--color-border);
-    cursor: pointer;
-    transition: border-color var(--transition-fast), background var(--transition-fast);
-  }
-
-  @media (hover: hover) {
-    .invite-code-box-large:hover {
-      border-color: var(--color-brand);
-      background: var(--color-brand-subtle);
-    }
-  }
-
-  .invite-code-box-large:active {
-    transform: scale(0.98);
-  }
-
-  .invite-code-box-large svg {
-    color: var(--color-text-secondary);
-    flex-shrink: 0;
-  }
-
-  .invite-code-text-large {
-    font-family: var(--font-display);
-    font-size: var(--text-3xl);
-    font-weight: 700;
-    letter-spacing: 0.25em;
-    color: var(--color-text-primary);
-  }
-
-  /* WhatsApp view adjustments */
-  .invite-whatsapp-view {
-    justify-content: center;
-  }
-
-  .invite-whatsapp-view form {
-    width: 100%;
   }
 
   /* ===== Toast ===== */

@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { PageHeader } from '@/components/layout'
 import { Spinner } from '@/components/ui'
 import { PhoneInput } from '@/components/auth/phone-input'
+import { FirebasePhoneVerify } from '@/components/auth/firebase-phone-verify'
 import { PinPad } from '@/components/auth/pin-pad'
-import { IconPalette, IconInfo, IconSun, IconMoon, IconMonitor, IconTransfer, IconClock, IconClose, IconPhone } from '@/components/icons'
+import { IconPalette, IconInfo, IconSun, IconMoon, IconMonitor, IconTransfer, IconClock, IconClose, IconPhone, IconCopy, IconCheck } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { formatPhoneForDisplay, isValidE164 } from '@/lib/countries'
 
@@ -52,7 +53,7 @@ function getInitialTheme(): Theme {
 }
 
 export default function SettingsPage() {
-  const { user, pb, sendOTP, changePhoneNumber } = useAuth()
+  const { user, pb, changePhoneNumber } = useAuth()
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const isInitialMount = useRef(true)
 
@@ -60,20 +61,20 @@ export default function SettingsPage() {
   const [pendingTransfer, setPendingTransfer] = useState<PendingTransfer | null>(null)
   const [isLoadingTransfer, setIsLoadingTransfer] = useState(false)
   const [showTransferModal, setShowTransferModal] = useState(false)
+  const [showTransferLinkModal, setShowTransferLinkModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [transferPhone, setTransferPhone] = useState('')
   const [transferError, setTransferError] = useState('')
   const [transferLoading, setTransferLoading] = useState(false)
+  const [transferLink, setTransferLink] = useState('')
+  const [linkCopied, setLinkCopied] = useState(false)
 
   // Phone change state
   const [showPhoneChangeModal, setShowPhoneChangeModal] = useState(false)
-  const [phoneChangeStep, setPhoneChangeStep] = useState<'phone' | 'otp'>('phone')
+  const [phoneChangeStep, setPhoneChangeStep] = useState<'phone' | 'verify'>('phone')
   const [newPhone, setNewPhone] = useState('')
-  const [otpCode, setOtpCode] = useState('')
   const [phoneChangeError, setPhoneChangeError] = useState('')
   const [phoneChangeLoading, setPhoneChangeLoading] = useState(false)
-  const [devOtpCode, setDevOtpCode] = useState<string | null>(null)
-  const [resendCountdown, setResendCountdown] = useState(0)
 
   const isOwner = user?.role === 'owner'
 
@@ -163,23 +164,9 @@ export default function SettingsPage() {
         return
       }
 
-      // Send WhatsApp notification
-      try {
-        await fetch('/api/transfer/send-request', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${pb.authStore.token}`,
-          },
-          body: JSON.stringify({
-            phoneNumber: transferPhone,
-            transferCode: data.code,
-          }),
-        })
-      } catch (whatsappErr) {
-        console.warn('WhatsApp notification failed:', whatsappErr)
-        // Don't fail the transfer if WhatsApp fails
-      }
+      // Generate transfer link for manual sharing
+      const link = `${window.location.origin}/transfer?code=${data.code}`
+      setTransferLink(link)
 
       // Update pending transfer
       setPendingTransfer({
@@ -190,6 +177,7 @@ export default function SettingsPage() {
       })
 
       setShowTransferModal(false)
+      setShowTransferLinkModal(true)
       setTransferPhone('')
     } catch (err) {
       console.error('Transfer initiate error:', err)
@@ -198,6 +186,28 @@ export default function SettingsPage() {
       setTransferLoading(false)
     }
   }, [transferPhone, pb])
+
+  const handleCopyTransferLink = useCallback(async () => {
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(transferLink)
+      } else {
+        const textArea = document.createElement('textarea')
+        textArea.value = transferLink
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-9999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }, [transferLink])
 
   const handleCancelTransfer = useCallback(async () => {
     if (!pendingTransfer) return
@@ -275,28 +285,14 @@ export default function SettingsPage() {
     return `${minutes}m restantes`
   }
 
-  // Resend countdown timer
-  useEffect(() => {
-    if (resendCountdown <= 0) return
-
-    const timer = setInterval(() => {
-      setResendCountdown((prev) => prev - 1)
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [resendCountdown])
-
   const handleClosePhoneChangeModal = useCallback(() => {
     setShowPhoneChangeModal(false)
     setPhoneChangeStep('phone')
     setNewPhone('')
-    setOtpCode('')
     setPhoneChangeError('')
-    setDevOtpCode(null)
-    setResendCountdown(0)
   }, [])
 
-  const handleSendPhoneChangeOTP = useCallback(async (e: React.FormEvent) => {
+  const handlePhoneSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault()
     setPhoneChangeError('')
 
@@ -311,48 +307,19 @@ export default function SettingsPage() {
       return
     }
 
+    // Move to verification step
+    setPhoneChangeStep('verify')
+  }, [newPhone, user?.phoneNumber])
+
+  const handlePhoneVerified = useCallback(async (idToken: string) => {
     setPhoneChangeLoading(true)
-
-    try {
-      const result = await sendOTP(newPhone, 'phone-change')
-
-      if (!result.success) {
-        setPhoneChangeError(result.error || 'Error al enviar el codigo')
-        setPhoneChangeLoading(false)
-        return
-      }
-
-      // Store dev code if present (for testing)
-      if (result.devCode) {
-        setDevOtpCode(result.devCode)
-      }
-
-      // Move to OTP step
-      setPhoneChangeStep('otp')
-      setResendCountdown(60)
-    } catch {
-      setPhoneChangeError('Error de conexion')
-    } finally {
-      setPhoneChangeLoading(false)
-    }
-  }, [newPhone, user?.phoneNumber, sendOTP])
-
-  const handleVerifyPhoneChangeOTP = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
     setPhoneChangeError('')
 
-    if (!otpCode || !/^\d{6}$/.test(otpCode)) {
-      setPhoneChangeError('Ingresa un codigo de 6 digitos')
-      return
-    }
-
-    setPhoneChangeLoading(true)
-
     try {
-      const result = await changePhoneNumber(newPhone, otpCode)
+      const result = await changePhoneNumber(newPhone, idToken)
 
       if (!result.success) {
-        setPhoneChangeError(result.error || 'Error al verificar el codigo')
+        setPhoneChangeError(result.error || 'Error al cambiar el numero')
         setPhoneChangeLoading(false)
         return
       }
@@ -364,31 +331,7 @@ export default function SettingsPage() {
     } finally {
       setPhoneChangeLoading(false)
     }
-  }, [otpCode, newPhone, changePhoneNumber, handleClosePhoneChangeModal])
-
-  const handleResendOTP = useCallback(async () => {
-    if (resendCountdown > 0) return
-
-    setPhoneChangeError('')
-    setPhoneChangeLoading(true)
-
-    try {
-      const result = await sendOTP(newPhone, 'phone-change')
-
-      if (!result.success) {
-        setPhoneChangeError(result.error || 'Error al reenviar el codigo')
-      } else {
-        if (result.devCode) {
-          setDevOtpCode(result.devCode)
-        }
-        setResendCountdown(60)
-      }
-    } catch {
-      setPhoneChangeError('Error de conexion')
-    } finally {
-      setPhoneChangeLoading(false)
-    }
-  }, [resendCountdown, newPhone, sendOTP])
+  }, [newPhone, changePhoneNumber, handleClosePhoneChangeModal])
 
   const currentConfig = THEME_CONFIG[theme]
 
@@ -450,7 +393,7 @@ export default function SettingsPage() {
                       </button>
                     ) : (
                       <p className="text-sm text-text-tertiary">
-                        Esperando que el destinatario acepte la transferencia via WhatsApp.
+                        Comparte el enlace con el destinatario para que acepte la transferencia.
                       </p>
                     )}
                   </div>
@@ -611,7 +554,7 @@ export default function SettingsPage() {
               />
 
               <p className="text-xs text-text-tertiary mt-2 mb-4">
-                Se enviara una invitacion por WhatsApp a este numero.
+                Se generara un enlace que debes compartir con esta persona.
               </p>
 
               <div className="flex gap-3">
@@ -627,10 +570,59 @@ export default function SettingsPage() {
                   className="btn btn-primary flex-1"
                   disabled={transferLoading}
                 >
-                  {transferLoading ? <Spinner /> : 'Enviar invitacion'}
+                  {transferLoading ? <Spinner /> : 'Generar enlace'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Link Modal */}
+      {showTransferLinkModal && (
+        <div className="modal-backdrop" onClick={() => setShowTransferLinkModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Enlace de transferencia</h3>
+              <button
+                type="button"
+                onClick={() => setShowTransferLinkModal(false)}
+                className="modal-close"
+              >
+                <IconClose width={20} height={20} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <p className="text-sm text-text-secondary mb-4">
+                Comparte este enlace con el nuevo propietario para que acepte la transferencia.
+              </p>
+
+              <button
+                type="button"
+                onClick={handleCopyTransferLink}
+                className="w-full p-4 bg-bg-muted rounded-lg border border-border flex items-center justify-between hover:border-brand transition-colors"
+              >
+                <span className="text-sm font-mono truncate pr-2">{transferLink}</span>
+                {linkCopied ? (
+                  <IconCheck className="w-5 h-5 text-success flex-shrink-0" />
+                ) : (
+                  <IconCopy className="w-5 h-5 text-text-secondary flex-shrink-0" />
+                )}
+              </button>
+
+              <p className="text-xs text-text-tertiary mt-3">
+                El enlace es valido por 24 horas.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setShowTransferLinkModal(false)}
+                className="btn btn-primary w-full mt-4"
+              >
+                Listo
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -691,7 +683,7 @@ export default function SettingsPage() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">
-                {phoneChangeStep === 'phone' ? 'Cambiar numero' : 'Verificar codigo'}
+                {phoneChangeStep === 'phone' ? 'Cambiar numero' : 'Verificar numero'}
               </h3>
               <button
                 type="button"
@@ -703,11 +695,11 @@ export default function SettingsPage() {
             </div>
 
             {phoneChangeStep === 'phone' ? (
-              <form onSubmit={handleSendPhoneChangeOTP} className="modal-body">
+              <form onSubmit={handlePhoneSubmit} className="modal-body">
                 <div className="mb-4 p-3 bg-warning-subtle rounded-lg">
                   <p className="text-sm text-warning font-medium mb-1">Atencion</p>
                   <p className="text-xs text-text-secondary">
-                    Se enviara un codigo de verificacion via WhatsApp al nuevo numero.
+                    Se enviara un codigo de verificacion via SMS al nuevo numero.
                     Asegurate de tener acceso a ese telefono.
                   </p>
                 </div>
@@ -738,83 +730,24 @@ export default function SettingsPage() {
                     className="btn btn-primary flex-1"
                     disabled={phoneChangeLoading}
                   >
-                    {phoneChangeLoading ? <Spinner /> : 'Enviar codigo'}
+                    Continuar
                   </button>
                 </div>
               </form>
             ) : (
-              <form onSubmit={handleVerifyPhoneChangeOTP} className="modal-body">
-                <p className="text-sm text-text-secondary mb-4 text-center">
-                  Ingresa el codigo enviado a<br />
-                  <span className="font-medium text-text-primary">
-                    {formatPhoneForDisplay(newPhone)}
-                  </span>
-                </p>
-
+              <div className="modal-body">
                 {phoneChangeError && (
                   <div className="mb-4 p-3 bg-error-subtle text-error text-sm rounded-lg">
                     {phoneChangeError}
                   </div>
                 )}
 
-                {devOtpCode && (
-                  <div className="mb-4 p-3 bg-brand-subtle rounded-lg">
-                    <p className="text-xs text-text-tertiary">Codigo de prueba (dev):</p>
-                    <p className="font-mono text-lg text-brand font-medium">{devOtpCode}</p>
-                  </div>
-                )}
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-text-secondary mb-2">
-                    Codigo de verificacion
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="000000"
-                    className="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 border border-border rounded-lg bg-[var(--color-bg-muted)] text-text-primary focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
-                    autoFocus
-                  />
-                </div>
-
-                <div className="text-center mb-4">
-                  {resendCountdown > 0 ? (
-                    <p className="text-sm text-text-tertiary">
-                      Reenviar codigo en {resendCountdown}s
-                    </p>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResendOTP}
-                      className="text-sm text-brand hover:underline"
-                      disabled={phoneChangeLoading}
-                    >
-                      Reenviar codigo
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={handleClosePhoneChangeModal}
-                    className="btn btn-secondary flex-1"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary flex-1"
-                    disabled={phoneChangeLoading || otpCode.length !== 6}
-                  >
-                    {phoneChangeLoading ? <Spinner /> : 'Verificar'}
-                  </button>
-                </div>
-              </form>
+                <FirebasePhoneVerify
+                  phoneNumber={newPhone}
+                  onVerified={handlePhoneVerified}
+                  onBack={() => setPhoneChangeStep('phone')}
+                />
+              </div>
             )}
           </div>
         </div>

@@ -4,6 +4,9 @@ import { isValidE164 } from '@/lib/countries'
 
 const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
 
+// Firebase project ID from environment
+const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+
 /**
  * Convert phone number to auth email format for PocketBase
  * +51987654321 -> 51987654321@phone.local
@@ -14,12 +17,72 @@ function phoneToAuthEmail(phoneNumber: string): string {
 }
 
 /**
+ * Verify a Firebase ID token
+ * This is a lightweight verification that checks the token structure and claims.
+ */
+async function verifyFirebaseToken(idToken: string): Promise<{
+  valid: boolean
+  phoneNumber?: string
+  error?: string
+}> {
+  try {
+    // Decode the JWT (base64) to get the payload
+    const parts = idToken.split('.')
+    if (parts.length !== 3) {
+      return { valid: false, error: 'Token invalido' }
+    }
+
+    // Decode payload (middle part)
+    const payload = JSON.parse(
+      Buffer.from(parts[1], 'base64').toString('utf-8')
+    )
+
+    // Basic validation
+    const now = Math.floor(Date.now() / 1000)
+
+    // Check expiration
+    if (payload.exp && payload.exp < now) {
+      return { valid: false, error: 'Token expirado' }
+    }
+
+    // Check issued at (not in the future)
+    if (payload.iat && payload.iat > now + 60) {
+      return { valid: false, error: 'Token invalido' }
+    }
+
+    // Check issuer matches our Firebase project
+    const expectedIssuer = `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`
+    if (payload.iss !== expectedIssuer) {
+      return { valid: false, error: 'Token invalido' }
+    }
+
+    // Check audience matches our Firebase project
+    if (payload.aud !== FIREBASE_PROJECT_ID) {
+      return { valid: false, error: 'Token invalido' }
+    }
+
+    // Check phone number is present
+    if (!payload.phone_number) {
+      return { valid: false, error: 'Token no contiene numero de telefono' }
+    }
+
+    return {
+      valid: true,
+      phoneNumber: payload.phone_number,
+    }
+  } catch (error) {
+    console.error('Error verifying Firebase token:', error)
+    return { valid: false, error: 'Error al verificar token' }
+  }
+}
+
+/**
  * POST /api/phone/change
  *
- * Update user's phone number after OTP verification.
+ * Update user's phone number after Firebase verification.
  * Requires authentication via Authorization header.
  *
- * Body: { newPhoneNumber: "+51987654321", otpCode: "123456" }
+ * Body: { newPhoneNumber: "+51987654321", firebaseToken: "firebase_id_token" }
  * Response: { success: true, user: User } or { success: false, error: "..." }
  */
 export async function POST(request: NextRequest) {
@@ -39,9 +102,9 @@ export async function POST(request: NextRequest) {
       : authHeader
 
     const body = await request.json()
-    const { newPhoneNumber, otpCode } = body as {
+    const { newPhoneNumber, firebaseToken } = body as {
       newPhoneNumber: string
-      otpCode: string
+      firebaseToken: string
     }
 
     // Validate new phone number format
@@ -52,15 +115,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate OTP code format (6 digits)
-    if (!otpCode || !/^\d{6}$/.test(otpCode)) {
+    // Validate Firebase token is provided
+    if (!firebaseToken) {
       return NextResponse.json(
-        { success: false, error: 'Codigo debe tener 6 digitos' },
+        { success: false, error: 'Token de verificacion requerido' },
         { status: 400 }
       )
     }
 
-    // Connect to PocketBase as admin to verify OTP and update user
+    // Check if Firebase is configured
+    if (!FIREBASE_PROJECT_ID) {
+      console.error('Firebase project ID not configured')
+      return NextResponse.json(
+        { success: false, error: 'Error de configuracion del servidor' },
+        { status: 500 }
+      )
+    }
+
+    // Connect to PocketBase as admin
     const pb = new PocketBase(POCKETBASE_URL)
 
     const adminEmail = process.env.PB_ADMIN_EMAIL
@@ -84,7 +156,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user token is valid by checking user exists
-    // Create a separate PocketBase instance to validate the user token
     const userPb = new PocketBase(POCKETBASE_URL)
     userPb.authStore.save(token, null)
 
@@ -97,6 +168,24 @@ export async function POST(request: NextRequest) {
         { success: false, error: 'Sesion invalida' },
         { status: 401 }
       )
+    }
+
+    // Verify the Firebase ID token
+    const verification = await verifyFirebaseToken(firebaseToken)
+
+    if (!verification.valid) {
+      return NextResponse.json({
+        success: false,
+        error: verification.error || 'Token invalido',
+      })
+    }
+
+    // Check that the phone number in the token matches the new phone number
+    if (verification.phoneNumber !== newPhoneNumber) {
+      return NextResponse.json({
+        success: false,
+        error: 'El numero verificado no coincide',
+      })
     }
 
     // Check if new phone is already registered by another user
@@ -113,42 +202,6 @@ export async function POST(request: NextRequest) {
     } catch {
       console.warn('Could not check for existing phone number')
     }
-
-    // Verify OTP for the new phone number
-    const otps = await pb.collection('otp_codes').getList(1, 1, {
-      filter: `phoneNumber = "${newPhoneNumber}" && used = false && purpose = "phone-change"`,
-      sort: '-created',
-    })
-
-    if (otps.totalItems === 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'No hay codigo pendiente. Solicita uno nuevo.',
-      })
-    }
-
-    const otpRecord = otps.items[0]
-
-    // Check if expired
-    const expiresAt = new Date(otpRecord.expiresAt)
-    if (expiresAt < new Date()) {
-      await pb.collection('otp_codes').update(otpRecord.id, { used: true })
-      return NextResponse.json({
-        success: false,
-        error: 'Codigo expirado. Solicita uno nuevo.',
-      })
-    }
-
-    // Check if code matches
-    if (otpRecord.code !== otpCode) {
-      return NextResponse.json({
-        success: false,
-        error: 'Codigo incorrecto',
-      })
-    }
-
-    // Mark OTP as used
-    await pb.collection('otp_codes').update(otpRecord.id, { used: true })
 
     // Update user's phone number and email (auth email)
     const newAuthEmail = phoneToAuthEmail(newPhoneNumber)

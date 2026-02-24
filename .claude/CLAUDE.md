@@ -79,6 +79,7 @@ The 36ms difference is minimal for a POS app. Free tier is fine for 3 users.
   "typescript": "^5.0.0",
   "tailwindcss": "^3.4.0",
   "pocketbase": "^0.21.0",
+  "firebase": "^10.14.0",
   "date-fns": "^3.0.0",
   "zod": "^3.22.0"
 }
@@ -93,6 +94,77 @@ The 36ms difference is minimal for a POS app. Free tier is fine for 3 users.
 - **File Storage**: Upload handling included
 - **REST API**: Auto-generated for all collections
 - **SDK**: Official JavaScript SDK for Next.js
+
+### Firebase Phone Auth
+
+Firebase is used ONLY for phone number verification via SMS OTP. PocketBase remains the primary auth system.
+
+**Firebase Console:** https://console.firebase.google.com
+**Project:** mrchifles-135b2
+
+#### Authorized Domains (IMPORTANT)
+
+When changing the app's domain, you MUST update Firebase authorized domains:
+
+1. Go to Firebase Console > Authentication > Settings > Authorized domains
+2. Add/update domains as needed
+
+**Current authorized domains:**
+
+| Domain | Purpose |
+|--------|---------|
+| `localhost` | Default (keep it) |
+| `100.113.9.34` | Local dev via Tailscale |
+| `mrchifles.vercel.app` | Production |
+
+**If migrating to `mrchifles.com`:**
+1. Add `mrchifles.com` to Firebase authorized domains
+2. Update `NEXT_PUBLIC_APP_URL` in `.env.local` and Vercel env vars
+3. Update Vercel custom domain settings
+
+#### Environment Variables
+
+```bash
+NEXT_PUBLIC_FIREBASE_API_KEY=<FIREBASE_API_KEY_REMOVED>
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=mrchifles-135b2.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=mrchifles-135b2
+```
+
+#### SMS Region Policy (Optional)
+
+To prevent SMS abuse, limit to Peru only:
+1. Firebase Console > Authentication > Settings > SMS Region Policy
+2. Set to "Allow" and select Peru (+51)
+
+#### Test Phone Numbers (Development)
+
+To avoid SMS costs during development:
+1. Firebase Console > Authentication > Sign-in method > Phone numbers for testing
+2. Add fake numbers like `+51999888777` with code `123456`
+3. Up to 10 test numbers allowed
+
+#### How It Works
+
+```
+User enters phone → Firebase sends SMS (client-side via reCAPTCHA)
+→ User enters code → Firebase verifies (client-side)
+→ App gets Firebase ID token → Server validates token
+→ PocketBase creates/updates user account
+```
+
+#### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/lib/firebase.ts` | Firebase init, reCAPTCHA, OTP send/verify |
+| `src/components/auth/firebase-phone-verify.tsx` | OTP verification UI component |
+| `src/app/api/otp/verify/route.ts` | Server-side Firebase token validation |
+
+#### Pricing
+
+- **Free tier:** 10 test SMS/day, 50k MAU for basic auth
+- **Real SMS:** ~$0.05-0.10 per SMS to Peru
+- **For 3 users:** Essentially free
 
 ---
 

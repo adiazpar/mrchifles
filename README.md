@@ -14,7 +14,7 @@ A lightweight, mobile-first POS and business management system for a small Chifl
 - **Inventory** - Track stock levels and orders from supplier
 - **Dashboard** - Daily summaries and business insights
 - **Team Management** - Invite partners/employees with role-based access
-- **Phone Auth** - WhatsApp OTP verification via Twilio
+- **Phone Auth** - SMS OTP verification via Firebase
 - **PIN Login** - Fast 4-digit PIN authentication after phone verification
 - **Ownership Transfer** - Secure business ownership transfer between users
 - **PWA** - Works offline, installable on mobile devices
@@ -26,7 +26,7 @@ A lightweight, mobile-first POS and business management system for a small Chifl
 | **Frontend** | Next.js 15, React 18, TypeScript |
 | **Styling** | Tailwind CSS |
 | **Backend** | PocketBase (SQLite + Auth + Realtime) |
-| **Auth** | Phone/WhatsApp OTP (Twilio) + PIN |
+| **Auth** | Phone SMS OTP (Firebase) + PIN |
 | **Testing** | Vitest, React Testing Library |
 | **Frontend Hosting** | Vercel (Free) |
 | **Backend Hosting** | PocketHost ($5/mo) |
@@ -83,9 +83,9 @@ cp .env.example .env.local
 | `POCKETBASE_URL` | PocketBase server URL |
 | `PB_ADMIN_EMAIL` | Admin email for db:reset script |
 | `PB_ADMIN_PASSWORD` | Admin password for db:reset script |
-| `TWILIO_ACCOUNT_SID` | Twilio account SID for WhatsApp OTP |
-| `TWILIO_AUTH_TOKEN` | Twilio auth token |
-| `TWILIO_WHATSAPP_NUMBER` | Twilio WhatsApp sender number |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase Web API Key |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase Project ID |
 | `NEXT_PUBLIC_APP_URL` | Public app URL for invite links |
 
 ## Project Structure
@@ -109,7 +109,7 @@ cp .env.example .env.local
 │   │   ├── layout/             # Layout components (sidebar, nav)
 │   │   └── invite/             # Invite flow components
 │   ├── contexts/               # React contexts (auth)
-│   ├── lib/                    # Utilities (PocketBase, auth, Twilio)
+│   ├── lib/                    # Utilities (PocketBase, auth, Firebase)
 │   └── types/                  # TypeScript definitions
 ├── pb_migrations/              # PocketBase schema migrations
 ├── scripts/                    # Build and deployment scripts
