@@ -927,3 +927,47 @@ routerAdd("GET", "/api/transfer/pending", (e) => {
     return e.json(500, { error: "Error del servidor" })
   }
 }, $apis.requireAuth())
+
+// ============================================
+// RESET APP_CONFIG WHEN OWNER IS DELETED
+// ============================================
+
+/**
+ * When an owner account is deleted, reset app_config to allow new owner registration
+ * This ensures the app returns to the initial setup state
+ */
+onRecordDelete((e) => {
+  const deletedUser = e.record
+  const role = deletedUser.get("role")
+
+  // Only reset if the deleted user was the owner
+  if (role !== "owner") {
+    return
+  }
+
+  console.log(`[SECURITY] Owner account deleted: ${deletedUser.get("email")}`)
+
+  try {
+    // Find the app_config record
+    const configs = $app.findRecordsByFilter(
+      "app_config",
+      "1=1", // Get all records (should only be one)
+      "",
+      1,
+      0
+    )
+
+    if (configs && configs.length > 0) {
+      const config = configs[0]
+      config.set("setupComplete", false)
+      config.set("ownerEmail", "")
+      config.set("ownerPhone", "")
+      $app.save(config)
+      console.log("[SECURITY] app_config reset - ready for new owner registration")
+    }
+  } catch (err) {
+    console.error("[SECURITY] Error resetting app_config:", err.message)
+  }
+
+  e.next()
+}, "users")

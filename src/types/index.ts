@@ -26,22 +26,6 @@ export interface User {
 }
 
 // ============================================
-// OTP TYPES
-// ============================================
-
-export type OTPPurpose = 'registration' | 'login' | 'reset' | 'phone-change'
-
-export interface OTPCode {
-  id: string
-  phoneNumber: string // E.164 format
-  code: string // 6-digit code
-  expiresAt: string // ISO date string
-  used: boolean
-  purpose: OTPPurpose
-  created: string
-}
-
-// ============================================
 // INVITE CODE TYPES
 // ============================================
 

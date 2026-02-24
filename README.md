@@ -119,12 +119,11 @@ cp .env.example .env.local
 
 ## Database Schema
 
-The app uses 8 PocketBase collections:
+The app uses 7 PocketBase collections:
 
 | Collection | Purpose |
 |------------|---------|
 | `users` | Team members with phone auth and PIN |
-| `otp_codes` | One-time passwords for phone verification |
 | `invite_codes` | Invite codes for team member onboarding |
 | `products` | Product catalog with prices |
 | `sales` | Sales transactions |

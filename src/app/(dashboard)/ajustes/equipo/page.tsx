@@ -786,7 +786,7 @@ export default function TeamPage() {
 
             {/* Large readable code */}
             <div className="text-center mb-1">
-              <code className="text-3xl font-display font-bold tracking-[0.3em] text-text-primary">
+              <code className="text-3xl font-display font-bold tracking-[0.3em] -mr-[0.3em] text-text-primary">
                 {newCode}
               </code>
             </div>
