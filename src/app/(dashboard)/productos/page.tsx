@@ -534,13 +534,13 @@ export default function ProductosPage() {
   }
 
   return (
-    <>
+    <div className="min-h-screen">
       <PageHeader
         title="Productos"
         subtitle={tabSubtitles[activeTab]}
       />
 
-      <main className="main-content space-y-4">
+      <div className="main-content space-y-4">
         {/* Section Tabs */}
         <div className="section-tabs">
           <button
@@ -567,110 +567,116 @@ export default function ProductosPage() {
               </div>
             )}
 
-            {/* Search Bar with Sort Button */}
-            <div className="flex gap-2">
-              <div className="search-bar flex-1">
-                <IconSearch className="search-bar-icon" />
-                <input
-                  type="text"
-                  placeholder="Buscar productos..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="search-bar-input"
-                />
-                {searchQuery && (
+            {/* Search, Filter, and List Header - only show when products exist */}
+            {products.length > 0 && (
+              <>
+                {/* Search Bar with Sort Button */}
+                <div className="flex gap-2">
+                  <div className="search-bar flex-1">
+                    <IconSearch className="search-bar-icon" />
+                    <input
+                      type="text"
+                      placeholder="Buscar productos..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="search-bar-input"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        className="search-bar-clear"
+                        aria-label="Limpiar busqueda"
+                      >
+                        <IconClose className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="search-bar-clear"
-                    aria-label="Limpiar busqueda"
+                    onClick={() => setIsSortSheetOpen(true)}
+                    className="btn btn-secondary btn-icon flex-shrink-0"
+                    aria-label="Ordenar productos"
                   >
-                    <IconClose className="w-4 h-4" />
+                    <IconFilter className="w-5 h-5" />
                   </button>
+                </div>
+
+                {/* Category Filter Tabs */}
+                {availableFilters.length > 0 && (
+                  <div className="filter-tabs">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFilter('all')}
+                      className={`filter-tab ${selectedFilter === 'all' ? 'filter-tab-active' : ''}`}
+                    >
+                      Todos
+                    </button>
+                    {availableFilters.map(filter => (
+                      <button
+                        key={filter}
+                        type="button"
+                        onClick={() => setSelectedFilter(filter)}
+                        className={`filter-tab ${selectedFilter === filter ? 'filter-tab-active' : ''}`}
+                      >
+                        {FILTER_CONFIG[filter].label}
+                      </button>
+                    ))}
+                  </div>
                 )}
+
+                {/* Product List Header */}
+                <div className="flex items-center justify-between">
+                  {isSelectionMode ? (
+                    <>
+                      <span className="text-sm text-text-secondary">
+                        {selectedProducts.size} {selectedProducts.size === 1 ? 'seleccionado' : 'seleccionados'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleExitSelectionMode}
+                        className="btn btn-secondary btn-sm"
+                      >
+                        <IconClose className="w-4 h-4" />
+                        Cancelar
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm text-text-secondary">
+                        {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditSheetOpen(true)}
+                        className="btn btn-primary btn-sm"
+                      >
+                        <IconEdit className="w-4 h-4" />
+                        Editar
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Product List */}
+            {products.length === 0 ? (
+              <div className="empty-state-centered">
+                <IconProducts className="empty-state-icon" />
+                <h3 className="empty-state-title">No hay productos</h3>
+                <p className="empty-state-description">
+                  Agrega tu primer producto para comenzar
+                </p>
+                <button
+                  type="button"
+                  onClick={handleOpenAdd}
+                  className="btn btn-primary mt-4"
+                >
+                  Agregar producto
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsSortSheetOpen(true)}
-                className="btn btn-secondary btn-icon flex-shrink-0"
-                aria-label="Ordenar productos"
-              >
-                <IconFilter className="w-5 h-5" />
-              </button>
-            </div>
-
-        {/* Category Filter Tabs */}
-        {availableFilters.length > 0 && (
-          <div className="filter-tabs">
-            <button
-              type="button"
-              onClick={() => setSelectedFilter('all')}
-              className={`filter-tab ${selectedFilter === 'all' ? 'filter-tab-active' : ''}`}
-            >
-              Todos
-            </button>
-            {availableFilters.map(filter => (
-              <button
-                key={filter}
-                type="button"
-                onClick={() => setSelectedFilter(filter)}
-                className={`filter-tab ${selectedFilter === filter ? 'filter-tab-active' : ''}`}
-              >
-                {FILTER_CONFIG[filter].label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Product List Header */}
-        <div className="flex items-center justify-between">
-          {isSelectionMode ? (
-            <>
-              <span className="text-sm text-text-secondary">
-                {selectedProducts.size} {selectedProducts.size === 1 ? 'seleccionado' : 'seleccionados'}
-              </span>
-              <button
-                type="button"
-                onClick={handleExitSelectionMode}
-                className="btn btn-secondary btn-sm"
-              >
-                Cancelar
-              </button>
-            </>
-          ) : (
-            <>
-              <span className="text-sm text-text-secondary">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsEditSheetOpen(true)}
-                className="btn btn-primary btn-icon"
-                aria-label="Editar productos"
-              >
-                <IconEdit className="w-5 h-5" />
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Product List */}
-        {products.length === 0 ? (
-            <div className="empty-state">
-              <IconProducts className="empty-state-icon" />
-              <h3 className="empty-state-title">No hay productos</h3>
-              <p className="empty-state-description">
-                Agrega tu primer producto para comenzar
-              </p>
-              <button
-                type="button"
-                onClick={handleOpenAdd}
-                className="btn btn-primary mt-4"
-              >
-                Agregar producto
-              </button>
-            </div>
-          ) : filteredProducts.length === 0 ? (
+            ) : filteredProducts.length === 0 ? (
             <div className="empty-state">
               <IconSearch className="empty-state-icon" />
               <h3 className="empty-state-title">Sin resultados</h3>
@@ -793,7 +799,7 @@ export default function ProductosPage() {
             <p className="text-text-secondary">Proximamente</p>
           </div>
         )}
-      </main>
+      </div>
 
       {/* Add/Edit Modal */}
       <Modal
@@ -1049,6 +1055,6 @@ export default function ProductosPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
