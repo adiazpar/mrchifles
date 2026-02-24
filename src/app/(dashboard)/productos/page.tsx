@@ -411,13 +411,14 @@ export default function ProductosPage() {
       await pb.collection('products').delete(deleteProduct.id)
       setProducts(prev => prev.filter(p => p.id !== deleteProduct.id))
       setDeleteProduct(null)
+      handleCloseModal()
     } catch (err) {
       console.error('Error deleting product:', err)
       setError('Error al eliminar el producto')
     } finally {
       setIsDeleting(false)
     }
-  }, [deleteProduct, pb])
+  }, [deleteProduct, pb, handleCloseModal])
 
   // Selection mode handlers
   const handleEnterSelectionMode = useCallback(() => {
@@ -606,10 +607,10 @@ export default function ProductosPage() {
               <button
                 type="button"
                 onClick={() => setIsEditSheetOpen(true)}
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-icon"
+                aria-label="Editar productos"
               >
-                <IconEdit className="w-4 h-4" />
-                Editar
+                <IconEdit className="w-5 h-5" />
               </button>
             </>
           )}
