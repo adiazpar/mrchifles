@@ -125,9 +125,10 @@ When changing the app's domain, you MUST update Firebase authorized domains:
 #### Environment Variables
 
 ```bash
-NEXT_PUBLIC_FIREBASE_API_KEY=<FIREBASE_API_KEY_REMOVED>
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=mrchifles-135b2.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=mrchifles-135b2
+# Get these from Firebase Console > Project Settings > Your apps > Web app
+NEXT_PUBLIC_FIREBASE_API_KEY=<your-firebase-api-key>
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<your-project-id>.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=<your-project-id>
 ```
 
 #### SMS Region Policy (Optional)
