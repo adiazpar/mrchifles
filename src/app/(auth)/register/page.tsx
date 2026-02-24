@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input, Card, Spinner } from '@/components/ui'
 import { PhoneInput } from '@/components/auth/phone-input'
-import { OTPInput } from '@/components/auth/otp-input'
+import { FirebasePhoneVerify } from '@/components/auth/firebase-phone-verify'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
 import { ownerRegistrationSchema } from '@/lib/auth'
@@ -14,17 +14,16 @@ type RegisterStep = 'checking' | 'phone' | 'otp' | 'info' | 'pin'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { registerOwner, sendOTP, verifyOTP, setupComplete, isCheckingSetup } = useAuth()
+  const { registerOwner, verifyFirebaseToken, setupComplete, isCheckingSetup } = useAuth()
 
   const [step, setStep] = useState<RegisterStep>('checking')
   const [phoneNumber, setPhoneNumber] = useState('')
-  const [devCode, setDevCode] = useState<string | null>(null)
+  const [_firebaseToken, setFirebaseToken] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
-  const [otpSending, setOtpSending] = useState(false)
 
   // Check if setup is already complete (owner exists)
   useEffect(() => {
@@ -50,61 +49,38 @@ export default function RegisterPage() {
         return
       }
 
-      setOtpSending(true)
-
-      // Send OTP
-      const result = await sendOTP(phoneNumber, 'registration')
-
-      if (!result.success) {
-        setErrors({ phone: result.error || 'Error al enviar el codigo' })
-        setOtpSending(false)
-        return
-      }
-
-      // In dev mode, show the code
-      if (result.devCode) {
-        setDevCode(result.devCode)
-      }
-
-      setOtpSending(false)
       setStep('otp')
     },
-    [phoneNumber, sendOTP]
+    [phoneNumber]
   )
 
-  const handleOtpComplete = useCallback(
-    async (code: string) => {
+  const handleOtpVerified = useCallback(
+    async (idToken: string) => {
       setIsLoading(true)
       setErrors({})
 
-      const result = await verifyOTP(phoneNumber, code)
+      // Verify the token with our server
+      const result = await verifyFirebaseToken(phoneNumber, idToken, 'registration')
 
       if (!result.valid) {
-        setErrors({ otp: result.error || 'Codigo incorrecto' })
+        setErrors({ otp: result.error || 'Error al verificar' })
         setIsLoading(false)
         return
       }
 
+      // Store token for later use during registration
+      setFirebaseToken(idToken)
       setIsLoading(false)
       setStep('info')
     },
-    [phoneNumber, verifyOTP]
+    [phoneNumber, verifyFirebaseToken]
   )
 
-  const handleResendOtp = useCallback(async () => {
-    setOtpSending(true)
+  const handleBackToPhone = useCallback(() => {
+    setStep('phone')
     setErrors({})
-
-    const result = await sendOTP(phoneNumber, 'registration')
-
-    if (!result.success) {
-      setErrors({ otp: result.error || 'Error al reenviar el codigo' })
-    } else if (result.devCode) {
-      setDevCode(result.devCode)
-    }
-
-    setOtpSending(false)
-  }, [phoneNumber, sendOTP])
+    setFirebaseToken(null)
+  }, [])
 
   const handleInfoSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -176,12 +152,6 @@ export default function RegisterPage() {
     [phoneNumber, password, name, registerOwner, router]
   )
 
-  const handleBackToPhone = useCallback(() => {
-    setStep('phone')
-    setErrors({})
-    setDevCode(null)
-  }, [])
-
   const handleBackToInfo = useCallback(() => {
     setStep('info')
     setErrors({})
@@ -224,69 +194,29 @@ export default function RegisterPage() {
           />
 
           <p className="text-xs text-text-tertiary">
-            Te enviaremos un codigo de verificacion por WhatsApp
+            Te enviaremos un codigo de verificacion por SMS
           </p>
 
           <button
             type="submit"
             className="btn btn-primary btn-lg w-full"
-            disabled={otpSending}
           >
-            {otpSending ? (
-              <>
-                <Spinner />
-                <span>Enviando codigo...</span>
-              </>
-            ) : (
-              'Continuar'
-            )}
+            Continuar
           </button>
         </form>
       </Card>
     )
   }
 
-  // OTP step
+  // OTP step - use Firebase component
   if (step === 'otp') {
     return (
       <Card padding="lg">
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-display font-bold mb-1">Verifica tu numero</h2>
-          <p className="text-sm text-text-tertiary">
-            Ingresa el codigo enviado a {formatPhoneForDisplay(phoneNumber)}
-          </p>
-        </div>
-
-        {devCode && (
-          <div className="mb-4 p-3 bg-warning-subtle text-warning text-sm rounded-lg text-center">
-            Codigo de desarrollo: <strong>{devCode}</strong>
-          </div>
-        )}
-
-        <OTPInput
-          onComplete={handleOtpComplete}
-          error={errors.otp}
-          disabled={isLoading}
+        <FirebasePhoneVerify
+          phoneNumber={phoneNumber}
+          onVerified={handleOtpVerified}
+          onBack={handleBackToPhone}
         />
-
-        <div className="mt-6 text-center space-y-2">
-          <button
-            type="button"
-            onClick={handleResendOtp}
-            disabled={otpSending}
-            className="text-brand hover:underline text-sm"
-          >
-            {otpSending ? 'Reenviando...' : 'Reenviar codigo'}
-          </button>
-          <br />
-          <button
-            type="button"
-            onClick={handleBackToPhone}
-            className="text-text-tertiary hover:underline text-sm"
-          >
-            Cambiar numero
-          </button>
-        </div>
       </Card>
     )
   }

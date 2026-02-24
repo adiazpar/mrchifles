@@ -38,12 +38,11 @@ interface AuthContextType {
   resetPin: (newPin: string) => Promise<{ success: boolean; error?: string }> // Reset PIN and clear pinResetRequired
   logout: (clearDevice?: boolean) => void
 
-  // OTP methods
-  sendOTP: (phoneNumber: string, purpose: 'registration' | 'login' | 'reset' | 'phone-change') => Promise<{ success: boolean; devCode?: string; error?: string }>
-  verifyOTP: (phoneNumber: string, code: string) => Promise<{ valid: boolean; error?: string }>
+  // Firebase phone verification
+  verifyFirebaseToken: (phoneNumber: string, idToken: string, purpose?: 'registration' | 'phone-change') => Promise<{ valid: boolean; error?: string }>
 
   // Phone change
-  changePhoneNumber: (newPhone: string, otpCode: string) => Promise<{ success: boolean; error?: string }>
+  changePhoneNumber: (newPhone: string, firebaseToken: string) => Promise<{ success: boolean; error?: string }>
 
   // Registration (phone-based)
   registerOwner: (data: {
@@ -346,54 +345,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [pb])
 
   // ============================================
-  // OTP METHODS
+  // FIREBASE VERIFICATION
   // ============================================
 
   /**
-   * Send OTP code to phone number via WhatsApp
+   * Verify a Firebase ID token with our server
+   * This confirms the phone was verified by Firebase
    */
-  const sendOTP = useCallback(async (
+  const verifyFirebaseToken = useCallback(async (
     phoneNumber: string,
-    purpose: 'registration' | 'login' | 'reset' | 'phone-change'
-  ): Promise<{ success: boolean; devCode?: string; error?: string }> => {
-    try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-
-      // For phone-change, include auth token
-      if (purpose === 'phone-change' && pb.authStore.token) {
-        headers['Authorization'] = pb.authStore.token
-      }
-
-      const response = await fetch('/api/otp/send', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ phoneNumber, purpose }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        return { success: false, error: data.error || 'Error al enviar el codigo' }
-      }
-
-      return { success: true, devCode: data.devCode }
-    } catch {
-      return { success: false, error: 'Error de conexion' }
-    }
-  }, [pb.authStore.token])
-
-  /**
-   * Verify OTP code
-   */
-  const verifyOTP = useCallback(async (
-    phoneNumber: string,
-    code: string
+    idToken: string,
+    purpose?: 'registration' | 'phone-change'
   ): Promise<{ valid: boolean; error?: string }> => {
     try {
       const response = await fetch('/api/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber, code }),
+        body: JSON.stringify({ phoneNumber, idToken, purpose }),
       })
 
       const data = await response.json()
@@ -404,11 +372,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   /**
-   * Change phone number after OTP verification
+   * Change phone number after Firebase verification
    */
   const changePhoneNumber = useCallback(async (
     newPhone: string,
-    otpCode: string
+    firebaseToken: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const response = await fetch('/api/phone/change', {
@@ -417,7 +385,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           'Content-Type': 'application/json',
           'Authorization': pb.authStore.token,
         },
-        body: JSON.stringify({ newPhoneNumber: newPhone, otpCode }),
+        body: JSON.stringify({ newPhoneNumber: newPhone, firebaseToken }),
       })
 
       const data = await response.json()
@@ -628,8 +596,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resetPin,
     logout,
 
-    sendOTP,
-    verifyOTP,
+    verifyFirebaseToken,
     changePhoneNumber,
 
     registerOwner,
@@ -652,8 +619,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     verifyPinForSession,
     resetPin,
     logout,
-    sendOTP,
-    verifyOTP,
+    verifyFirebaseToken,
     changePhoneNumber,
     registerOwner,
     registerWithInvite,
