@@ -10,13 +10,16 @@
 migrate((app) => {
   const collection = app.findCollectionByNameOrId('sale_items')
 
-  // Add productName field to store name at time of sale
-  collection.fields.push({
-    id: "siproductname",
-    name: 'productName',
-    type: 'text',
-    required: true,
-  })
+  // Add productName field to store name at time of sale (after product field)
+  collection.fields.addAt(2, new Field({
+    "id": "siproductname",
+    "name": "productName",
+    "type": "text",
+    "required": false,
+    "system": false,
+    "hidden": false,
+    "presentable": false
+  }))
 
   // Make product relation optional (can be null if product was deleted)
   const productField = collection.fields.find(f => f.name === 'product')
@@ -24,13 +27,13 @@ migrate((app) => {
     productField.required = false
   }
 
-  app.save(collection)
+  return app.save(collection)
 
 }, (app) => {
   const collection = app.findCollectionByNameOrId('sale_items')
 
   // Remove productName field
-  collection.fields = collection.fields.filter(f => f.name !== 'productName')
+  collection.fields.removeById("siproductname")
 
   // Make product relation required again
   const productField = collection.fields.find(f => f.name === 'product')
@@ -38,5 +41,5 @@ migrate((app) => {
     productField.required = true
   }
 
-  app.save(collection)
+  return app.save(collection)
 })
