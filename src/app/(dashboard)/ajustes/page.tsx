@@ -530,7 +530,7 @@ export default function SettingsPage() {
                       </p>
 
                       <p className="text-sm text-text-secondary">
-                        Ya aceptaste la transferencia. Esperando a que <strong>{incomingTransfer.fromUser?.name || 'el propietario'}</strong> confirme con su PIN para completar el proceso.
+                        Ya aceptaste la transferencia. Esperando a que <strong>{incomingTransfer.fromUser?.name || 'el propietario'}</strong> confirme para completar el proceso.
                       </p>
                     </div>
                   ) : (
