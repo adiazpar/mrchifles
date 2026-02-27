@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
-import { IconTransfer, IconClose, IconClock } from '@/components/icons'
+import { IconTransfer, IconClose } from '@/components/icons'
 import { Spinner } from '@/components/ui'
 
 const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
@@ -83,22 +83,6 @@ export function TransferBanner() {
     }
   }, [transfer, pb, router])
 
-  const formatTimeRemaining = (expiresAt: string): string => {
-    const now = new Date()
-    const expiry = new Date(expiresAt)
-    const diff = expiry.getTime() - now.getTime()
-
-    if (diff <= 0) return 'Expirado'
-
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`
-    }
-    return `${minutes}m`
-  }
-
   // Don't show if loading, dismissed, no transfer, or user is owner
   if (isLoading || isDismissed || !transfer || user?.role === 'owner') {
     return null
@@ -118,11 +102,6 @@ export function TransferBanner() {
           <p className="transfer-banner-subtitle">
             <strong>{transfer.fromUser?.name || 'El propietario'}</strong> quiere transferirte la propiedad del negocio
           </p>
-        </div>
-
-        <div className="transfer-banner-time">
-          <IconClock width={14} height={14} />
-          <span>{formatTimeRemaining(transfer.expiresAt)}</span>
         </div>
 
         <div className="transfer-banner-actions">
