@@ -2733,9 +2733,10 @@
 
   /* ===== Settings Page ===== */
   .settings-container {
+    width: 100%;
     padding: var(--space-4);
     padding-bottom: calc(var(--mobile-nav-height) + var(--space-6) + env(safe-area-inset-bottom, 0));
-    max-width: 560px;
+    max-width: 640px;
     margin: 0 auto;
   }
 
