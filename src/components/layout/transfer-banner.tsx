@@ -126,8 +126,10 @@ export function TransferBanner() {
     )
   }
 
-  // Recipient banner: show when there's a pending incoming transfer
+  // Recipient banner: show when there's a pending or accepted incoming transfer
   if (!isOwner && incomingTransfer) {
+    const isAccepted = incomingTransfer.status === 'accepted'
+
     return (
       <div className="transfer-banner">
         <div className="transfer-banner-content">
@@ -137,10 +139,14 @@ export function TransferBanner() {
 
           <div className="transfer-banner-text">
             <p className="transfer-banner-title">
-              Transferencia de propiedad
+              {isAccepted ? 'Esperando confirmacion' : 'Transferencia de propiedad'}
             </p>
             <p className="transfer-banner-subtitle">
-              <strong>{incomingTransfer.fromUser?.name || 'El propietario'}</strong> quiere transferirte la propiedad del negocio
+              {isAccepted ? (
+                <>Esperando a que <strong>{incomingTransfer.fromUser?.name || 'el propietario'}</strong> confirme la transferencia</>
+              ) : (
+                <><strong>{incomingTransfer.fromUser?.name || 'El propietario'}</strong> quiere transferirte la propiedad del negocio</>
+              )}
             </p>
           </div>
 
@@ -150,7 +156,7 @@ export function TransferBanner() {
               onClick={handleGoToSettings}
               className="btn btn-primary btn-sm"
             >
-              Aceptar
+              {isAccepted ? 'Ver estado' : 'Aceptar'}
             </button>
           </div>
 

@@ -965,7 +965,7 @@ routerAdd("GET", "/api/transfer/pending", (e) => {
 
 /**
  * GET /api/transfer/incoming
- * Get pending transfer for the current user (as recipient)
+ * Get pending or accepted transfer for the current user (as recipient)
  * Returns: { transfer?: { code, fromUser: { name }, status, expiresAt } }
  */
 routerAdd("GET", "/api/transfer/incoming", (e) => {
@@ -983,7 +983,7 @@ routerAdd("GET", "/api/transfer/incoming", (e) => {
     try {
       const transfers = $app.findRecordsByFilter(
         "ownership_transfers",
-        "toPhone = {:phone} && status = 'pending' && expiresAt > @now",
+        "toPhone = {:phone} && (status = 'pending' || status = 'accepted') && expiresAt > @now",
         "-created",
         1,
         0,
