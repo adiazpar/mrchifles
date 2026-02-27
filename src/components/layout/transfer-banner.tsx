@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { IconTransfer, IconClose } from '@/components/icons'
-import { Spinner } from '@/components/ui'
 
 const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
 
@@ -36,7 +35,6 @@ export function TransferBanner() {
   const [pendingTransfer, setPendingTransfer] = useState<PendingTransfer | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDismissed, setIsDismissed] = useState(false)
-  const [isAccepting, setIsAccepting] = useState(false)
 
   const isOwner = user?.role === 'owner'
 
@@ -77,36 +75,6 @@ export function TransferBanner() {
 
     fetchTransferData()
   }, [user, pb, isOwner])
-
-  const handleAccept = useCallback(async () => {
-    if (!incomingTransfer) return
-
-    setIsAccepting(true)
-
-    try {
-      const response = await fetch(`${POCKETBASE_URL}/api/transfer/accept`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': pb.authStore.token,
-        },
-        body: JSON.stringify({ code: incomingTransfer.code }),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        // Redirect to settings to show the accepted state
-        router.push('/ajustes')
-        // Refresh the page to update the user's role display
-        window.location.reload()
-      }
-    } catch (err) {
-      console.error('Accept transfer error:', err)
-    } finally {
-      setIsAccepting(false)
-    }
-  }, [incomingTransfer, pb, router])
 
   const handleGoToSettings = useCallback(() => {
     router.push('/ajustes')
@@ -179,11 +147,10 @@ export function TransferBanner() {
           <div className="transfer-banner-actions">
             <button
               type="button"
-              onClick={handleAccept}
+              onClick={handleGoToSettings}
               className="btn btn-primary btn-sm"
-              disabled={isAccepting}
             >
-              {isAccepting ? <Spinner /> : 'Aceptar'}
+              Aceptar
             </button>
           </div>
 
