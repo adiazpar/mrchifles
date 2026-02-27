@@ -115,11 +115,9 @@ When changing the app's domain, you MUST update Firebase authorized domains:
 |--------|---------|
 | `localhost` | Default (keep it) |
 | `100.113.9.34` | Local dev via Tailscale |
-| `mrchifles.vercel.app` | Production |
+| `mrchifles.com` | Production |
 
-**If migrating to `mrchifles.com`:**
-1. Add `mrchifles.com` to Firebase authorized domains
-2. Update Vercel custom domain settings
+**Note:** If you change the production domain, update Firebase authorized domains accordingly.
 
 #### Environment Variables
 
@@ -569,7 +567,7 @@ PocketBase uses collections instead of traditional ORM models. The schema is int
                           ▼                    ▼
 ┌─────────────────────────────────┐  ┌─────────────────────────────────┐
 │         VERCEL (Free)           │  │      POCKETHOST ($5/mo)         │
-│      mrchifles.vercel.app       │  │    mrchifles.pockethost.io      │
+│        mrchifles.com            │  │    mrchifles.pockethost.io      │
 │                                 │  │                                 │
 │  ┌───────────────────────────┐  │  │  ┌───────────────────────────┐  │
 │  │      Next.js App          │  │  │  │      PocketBase           │  │
@@ -618,13 +616,17 @@ NEXT_PUBLIC_POCKETBASE_URL=https://mrchifles.pockethost.io
 - Create your instance at pockethost.io
 - Note your instance URL (e.g., `mrchifles.pockethost.io`)
 
-### Custom Domain Setup (Optional)
+### Custom Domain
 
-To use `mrchifles.com` instead of `mrchifles.vercel.app`:
+The app uses `mrchifles.com` (registered via Namecheap, pointed to Vercel).
 
-1. **In Vercel**: Settings → Domains → Add `mrchifles.com`
-2. **In Namecheap**: Add DNS records Vercel provides
-3. Vercel handles HTTPS automatically
+**DNS Configuration (in Namecheap):**
+| Type | Host | Value |
+|------|------|-------|
+| A | @ | 76.76.21.21 |
+| CNAME | www | cname.vercel-dns.com |
+
+Vercel handles HTTPS automatically.
 
 ### Backup Strategy
 

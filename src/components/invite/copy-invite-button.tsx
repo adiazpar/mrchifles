@@ -35,7 +35,7 @@ export function CopyInviteButton({
 
   const handleCopy = useCallback(async () => {
     const roleLabel = role === 'partner' ? 'Socio' : 'Empleado'
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+    const appUrl = window.location.origin
 
     const textToCopy =
       variant === 'code'
