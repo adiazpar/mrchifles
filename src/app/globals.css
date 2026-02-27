@@ -1640,18 +1640,6 @@
     font-weight: 600;
   }
 
-  .transfer-banner-time {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    font-size: var(--text-xs);
-    color: rgba(255, 255, 255, 0.8);
-    background: rgba(255, 255, 255, 0.15);
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-md);
-  }
-
   .transfer-banner-actions {
     flex-shrink: 0;
   }
@@ -1663,8 +1651,16 @@
     font-weight: 600;
   }
 
-  .transfer-banner-actions .btn:hover {
-    background: rgba(255, 255, 255, 0.9);
+  @media (hover: hover) {
+    .transfer-banner-actions .btn:hover:not(:disabled) {
+      background: var(--neutral-100);
+      color: var(--brand-700);
+      filter: none;
+    }
+  }
+
+  .transfer-banner-actions .btn:active:not(:disabled) {
+    transform: scale(0.98);
   }
 
   .transfer-banner-dismiss {
@@ -1680,9 +1676,15 @@
     transition: background-color var(--transition-fast), color var(--transition-fast);
   }
 
-  .transfer-banner-dismiss:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
+  @media (hover: hover) {
+    .transfer-banner-dismiss:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+    }
+  }
+
+  .transfer-banner-dismiss:active {
+    transform: scale(0.95);
   }
 
   /* Mobile adjustments */
@@ -1703,10 +1705,6 @@
 
     .transfer-banner-text {
       flex: 1 1 calc(100% - 80px);
-    }
-
-    .transfer-banner-time {
-      display: none;
     }
 
     .transfer-banner-actions {
