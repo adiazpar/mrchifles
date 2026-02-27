@@ -624,10 +624,33 @@ routerAdd("POST", "/api/transfer/validate", (e) => {
         // Owner not found, use default
       }
 
+      // Check if recipient already has an account
+      var existingUser = false
+      var existingUserName = null
+      try {
+        const toPhone = transfer.get("toPhone")
+        const users = $app.findRecordsByFilter(
+          "users",
+          "phoneNumber = {:phone}",
+          "",
+          1,
+          0,
+          { phone: toPhone }
+        )
+        if (users && users.length > 0) {
+          existingUser = true
+          existingUserName = users[0].get("name")
+        }
+      } catch (err) {
+        // User not found, that's ok
+      }
+
       return e.json(200, {
         valid: true,
         ownerName: ownerName,
         toPhone: transfer.get("toPhone"),
+        existingUser: existingUser,
+        existingUserName: existingUserName,
       })
     } catch (err) {
       console.log(`[TRANSFER] Validate error:`, err.message)
