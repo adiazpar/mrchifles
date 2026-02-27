@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import { Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
-import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconFilter, IconCheck, IconEdit, IconChevronRight, IconSelect } from '@/components/icons'
+import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconSelect } from '@/components/icons'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAuth } from '@/contexts/auth-context'
 import { getProductImageUrl } from '@/lib/products'
@@ -904,7 +904,7 @@ export default function ProductosPage() {
               value={name}
               onChange={e => setName(e.target.value)}
               className="input"
-              placeholder="Ej: Tocino"
+              placeholder="Ej: Chifle Grande"
               autoComplete="off"
             />
           </div>
@@ -913,17 +913,45 @@ export default function ProductosPage() {
           <div className="flex gap-3">
             <div className="flex-1">
               <label htmlFor="price" className="label">Precio (S/)</label>
-              <input
-                id="price"
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0"
-                value={price}
-                onChange={e => setPrice(e.target.value)}
-                className="input"
-                placeholder="0.00"
-              />
+              <div className="input-number-wrapper">
+                <input
+                  id="price"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  value={price}
+                  onChange={e => setPrice(e.target.value)}
+                  className="input"
+                  placeholder="0.00"
+                />
+                <div className="input-number-spinners">
+                  <button
+                    type="button"
+                    className="input-number-spinner"
+                    onClick={() => {
+                      const current = parseFloat(price) || 0
+                      setPrice((current + 1).toFixed(2))
+                    }}
+                    tabIndex={-1}
+                    aria-label="Incrementar precio"
+                  >
+                    <IconArrowUp />
+                  </button>
+                  <button
+                    type="button"
+                    className="input-number-spinner"
+                    onClick={() => {
+                      const current = parseFloat(price) || 0
+                      setPrice(Math.max(0, current - 1).toFixed(2))
+                    }}
+                    tabIndex={-1}
+                    aria-label="Decrementar precio"
+                  >
+                    <IconArrowDown />
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="flex-1">
               <label htmlFor="category" className="label">Categoria</label>
@@ -931,7 +959,7 @@ export default function ProductosPage() {
                 id="category"
                 value={category}
                 onChange={e => setCategory(e.target.value as ProductCategory | '')}
-                className="input"
+                className={`input ${category === '' ? 'select-placeholder' : ''}`}
               >
                 <option value="">Seleccionar</option>
                 {Object.entries(CATEGORY_CONFIG)
