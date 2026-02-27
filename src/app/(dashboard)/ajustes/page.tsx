@@ -512,34 +512,60 @@ export default function SettingsPage() {
                 </div>
               ) : incomingTransfer ? (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-lg border border-brand bg-brand-subtle">
-                    <div className="flex items-start justify-between mb-3">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-brand text-white">
-                        Nueva
-                      </span>
-                      <div className="flex items-center text-xs text-text-tertiary">
-                        <IconClock width={14} height={14} className="mr-1" />
-                        {formatTimeRemaining(incomingTransfer.expiresAt)}
+                  {incomingTransfer.status === 'accepted' ? (
+                    /* Already accepted - waiting for owner to confirm */
+                    <div className="p-4 rounded-lg border border-warning bg-warning-subtle">
+                      <div className="flex items-start justify-between mb-3">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-warning text-white">
+                          Esperando confirmacion
+                        </span>
+                        <div className="flex items-center text-xs text-text-tertiary">
+                          <IconClock width={14} height={14} className="mr-1" />
+                          {formatTimeRemaining(incomingTransfer.expiresAt)}
+                        </div>
                       </div>
+
+                      <p className="text-sm text-text-secondary mb-3">
+                        De: <span className="font-medium text-text-primary">{incomingTransfer.fromUser?.name || 'Propietario'}</span>
+                      </p>
+
+                      <p className="text-sm text-text-secondary">
+                        Ya aceptaste la transferencia. Esperando a que <strong>{incomingTransfer.fromUser?.name || 'el propietario'}</strong> confirme con su PIN para completar el proceso.
+                      </p>
                     </div>
+                  ) : (
+                    /* Pending - needs to accept */
+                    <>
+                      <div className="p-4 rounded-lg border border-brand bg-brand-subtle">
+                        <div className="flex items-start justify-between mb-3">
+                          <span className="text-xs font-medium px-2 py-0.5 rounded bg-brand text-white">
+                            Nueva
+                          </span>
+                          <div className="flex items-center text-xs text-text-tertiary">
+                            <IconClock width={14} height={14} className="mr-1" />
+                            {formatTimeRemaining(incomingTransfer.expiresAt)}
+                          </div>
+                        </div>
 
-                    <p className="text-sm text-text-secondary mb-3">
-                      De: <span className="font-medium text-text-primary">{incomingTransfer.fromUser?.name || 'Propietario'}</span>
-                    </p>
+                        <p className="text-sm text-text-secondary mb-3">
+                          De: <span className="font-medium text-text-primary">{incomingTransfer.fromUser?.name || 'Propietario'}</span>
+                        </p>
 
-                    <p className="text-sm text-text-secondary">
-                      El propietario quiere transferirte la propiedad del negocio. Al aceptar, te convertiras en el nuevo propietario cuando el actual confirme la transferencia.
-                    </p>
-                  </div>
+                        <p className="text-sm text-text-secondary">
+                          El propietario quiere transferirte la propiedad del negocio. Al aceptar, te convertiras en el nuevo propietario cuando el actual confirme la transferencia.
+                        </p>
+                      </div>
 
-                  <button
-                    type="button"
-                    onClick={handleAcceptIncomingTransfer}
-                    className="btn btn-primary w-full"
-                    disabled={acceptingTransfer}
-                  >
-                    {acceptingTransfer ? <Spinner /> : 'Aceptar transferencia'}
-                  </button>
+                      <button
+                        type="button"
+                        onClick={handleAcceptIncomingTransfer}
+                        className="btn btn-primary w-full"
+                        disabled={acceptingTransfer}
+                      >
+                        {acceptingTransfer ? <Spinner /> : 'Aceptar transferencia'}
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : null}
             </div>
