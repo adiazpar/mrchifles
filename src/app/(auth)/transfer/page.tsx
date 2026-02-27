@@ -9,6 +9,7 @@ import { FirebasePhoneVerify } from '@/components/auth/firebase-phone-verify'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
 import { formatPhoneForDisplay } from '@/lib/countries'
+import { hashPin } from '@/lib/auth'
 
 type TransferStep = 'loading' | 'code' | 'details' | 'phone' | 'otp' | 'info' | 'pin' | 'success'
 
@@ -23,7 +24,7 @@ const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0
 export default function TransferPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, isAuthenticated, verifyFirebaseToken, pb } = useAuth()
+  const { user, isAuthenticated, verifyFirebaseToken, verifyPinForSession, pb } = useAuth()
   const hasAutoValidated = useRef(false)
 
   // Check for code in URL query parameter
@@ -274,13 +275,16 @@ export default function TransferPage() {
           name: name,
           phoneNumber: phoneNumber,
           phoneVerified: true,
-          pin: await hashPinForTransfer(pin),
-          role: 'employee', // Temporary, will become owner after confirm
+          pin: await hashPin(pin),
+          role: 'partner', // Partner until owner confirms transfer
           status: 'active',
         })
 
         // Log in
         await pb.collection('users').authWithPassword(authEmail, password)
+
+        // Mark PIN as verified for this session (user just created it)
+        await verifyPinForSession(pin)
 
         // Accept the transfer
         const response = await fetch(`${POCKETBASE_URL}/api/transfer/accept`, {
@@ -318,22 +322,8 @@ export default function TransferPage() {
         setIsLoading(false)
       }
     },
-    [transferInfo, phoneNumber, password, name, pb]
+    [transferInfo, phoneNumber, password, name, pb, verifyPinForSession]
   )
-
-  // Helper function to hash PIN (matches the server-side algorithm)
-  async function hashPinForTransfer(pin: string): Promise<string> {
-    const input = 'mrchifles_pin_v1_' + pin
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
-      const encoder = new TextEncoder()
-      const data = encoder.encode(input)
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-      const hashArray = Array.from(new Uint8Array(hashBuffer))
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-    }
-    // Fallback - should not reach here in modern browsers
-    throw new Error('Crypto not available')
-  }
 
   const handleBackToCode = useCallback(() => {
     setStep('code')
@@ -436,8 +426,7 @@ export default function TransferPage() {
               Importante
             </p>
             <p className="text-xs text-text-secondary">
-              Al aceptar, te convertiras en el nuevo propietario del negocio.
-              El propietario actual se convertira en socio.
+              Iniciaras como Socio hasta que el propietario confirme la transferencia.
             </p>
           </div>
 
@@ -504,7 +493,8 @@ export default function TransferPage() {
             Debe coincidir con el numero al que se envio la invitacion
           </p>
           <p className="text-xs text-brand mb-6">
-            {formatPhoneForDisplay(transferInfo?.toPhone || '')}
+            {/* Show only last 4 digits for privacy */}
+            {transferInfo?.toPhone ? `****${transferInfo.toPhone.slice(-4)}` : ''}
           </p>
 
           <form onSubmit={handlePhoneSubmit} className="space-y-4">
@@ -514,6 +504,7 @@ export default function TransferPage() {
               onChange={setPhoneNumber}
               error={errors.phone}
               autoFocus
+              autoComplete="off"
             />
 
             <button
@@ -641,7 +632,7 @@ export default function TransferPage() {
           <div className="text-center mb-6">
             <h2 className="text-xl font-display font-bold mb-1">Configura tu PIN</h2>
             <p className="text-sm text-text-tertiary">
-              Este PIN de 4 digitos te permite acceder rapidamente cada dia sin ingresar tu contrasena
+              4 digitos para acceso rapido diario
             </p>
           </div>
 
@@ -684,11 +675,11 @@ export default function TransferPage() {
           </svg>
         </div>
         <h2 className="text-xl font-display font-bold mb-2">Transferencia aceptada</h2>
-        <p className="text-sm text-text-tertiary mb-6">
-          Has aceptado la transferencia de propiedad. El propietario actual debe confirmar para completar el proceso.
+        <p className="text-sm text-text-tertiary mb-4">
+          Tu cuenta ha sido creada como Socio. Cuando el propietario confirme la transferencia, te convertiras en el nuevo propietario.
         </p>
         <p className="text-xs text-text-quaternary mb-6">
-          Te notificaremos cuando se complete la transferencia.
+          Mientras tanto, puedes usar la aplicacion con acceso de socio.
         </p>
         <button
           type="button"

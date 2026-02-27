@@ -18,7 +18,7 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
       </div>
       <div className="flex items-center gap-2">
         {actions}
-        <div className="md:hidden">
+        <div className="lg:hidden">
           <UserMenu variant="mobile" />
         </div>
       </div>
