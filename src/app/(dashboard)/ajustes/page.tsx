@@ -57,9 +57,20 @@ export default function SettingsPage() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const isInitialMount = useRef(true)
 
-  // Transfer state
+  // Transfer state (for owner)
   const [pendingTransfer, setPendingTransfer] = useState<PendingTransfer | null>(null)
   const [isLoadingTransfer, setIsLoadingTransfer] = useState(false)
+
+  // Incoming transfer state (for non-owner recipients)
+  interface IncomingTransfer {
+    code: string
+    fromUser: { id: string; name: string } | null
+    status: 'pending' | 'accepted'
+    expiresAt: string
+  }
+  const [incomingTransfer, setIncomingTransfer] = useState<IncomingTransfer | null>(null)
+  const [isLoadingIncoming, setIsLoadingIncoming] = useState(false)
+  const [acceptingTransfer, setAcceptingTransfer] = useState(false)
   const [showTransferModal, setShowTransferModal] = useState(false)
   const [showTransferLinkModal, setShowTransferLinkModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -100,6 +111,30 @@ export default function SettingsPage() {
     }
 
     fetchPendingTransfer()
+  }, [isOwner, pb])
+
+  // Fetch incoming transfer for non-owners
+  useEffect(() => {
+    if (isOwner) return
+
+    const fetchIncomingTransfer = async () => {
+      setIsLoadingIncoming(true)
+      try {
+        const response = await fetch(`${POCKETBASE_URL}/api/transfer/incoming`, {
+          headers: {
+            'Authorization': pb.authStore.token,
+          },
+        })
+        const data = await response.json()
+        setIncomingTransfer(data.transfer || null)
+      } catch (err) {
+        console.error('Error fetching incoming transfer:', err)
+      } finally {
+        setIsLoadingIncoming(false)
+      }
+    }
+
+    fetchIncomingTransfer()
   }, [isOwner, pb])
 
   // Apply theme changes only when user changes theme (not on mount)
@@ -285,6 +320,34 @@ export default function SettingsPage() {
     return `${minutes}m restantes`
   }
 
+  const handleAcceptIncomingTransfer = useCallback(async () => {
+    if (!incomingTransfer) return
+
+    setAcceptingTransfer(true)
+
+    try {
+      const response = await fetch(`${POCKETBASE_URL}/api/transfer/accept`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': pb.authStore.token,
+        },
+        body: JSON.stringify({ code: incomingTransfer.code }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Reload to show updated state
+        window.location.reload()
+      }
+    } catch (err) {
+      console.error('Accept incoming transfer error:', err)
+    } finally {
+      setAcceptingTransfer(false)
+    }
+  }, [incomingTransfer, pb])
+
   const handleClosePhoneChangeModal = useCallback(() => {
     setShowPhoneChangeModal(false)
     setPhoneChangeStep('phone')
@@ -392,9 +455,17 @@ export default function SettingsPage() {
                         {transferLoading ? <Spinner /> : 'Confirmar transferencia'}
                       </button>
                     ) : (
-                      <p className="text-sm text-text-tertiary">
-                        Comparte el enlace con el destinatario para que acepte la transferencia.
-                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTransferLink(`${window.location.origin}/transfer?code=${pendingTransfer.code}`)
+                          setShowTransferLinkModal(true)
+                        }}
+                        className="btn btn-secondary flex-1"
+                      >
+                        <IconCopy width={16} height={16} />
+                        <span>Copiar enlace</span>
+                      </button>
                     )}
                   </div>
 
@@ -421,6 +492,59 @@ export default function SettingsPage() {
                   </button>
                 </div>
               )}
+            </div>
+          </section>
+        )}
+
+        {/* Incoming Transfer Section - Non-owners with pending transfer */}
+        {!isOwner && (isLoadingIncoming || incomingTransfer) && (
+          <section className="settings-section">
+            <div className="settings-section-header">
+              <div className="settings-section-icon">
+                <IconTransfer width={20} height={20} />
+              </div>
+              <h2 className="settings-section-title">Transferencia pendiente</h2>
+            </div>
+            <div className="settings-section-body">
+              {isLoadingIncoming ? (
+                <div className="flex items-center justify-center py-4">
+                  <Spinner />
+                </div>
+              ) : incomingTransfer ? (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-lg border border-brand bg-brand-subtle">
+                    <div className="flex items-start justify-between mb-3">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-brand text-white">
+                        Nueva
+                      </span>
+                      <div className="flex items-center text-xs text-text-tertiary">
+                        <IconClock width={14} height={14} className="mr-1" />
+                        {formatTimeRemaining(incomingTransfer.expiresAt)}
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-text-secondary mb-1">
+                      De:
+                    </p>
+                    <p className="font-medium text-text-primary mb-3">
+                      {incomingTransfer.fromUser?.name || 'Propietario'}
+                    </p>
+
+                    <p className="text-sm text-text-secondary">
+                      El propietario quiere transferirte la propiedad del negocio. Al aceptar, te convertiras en el nuevo propietario cuando el actual confirme la transferencia.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAcceptIncomingTransfer}
+                    className="btn btn-primary w-full"
+                    disabled={acceptingTransfer}
+                  >
+                    {acceptingTransfer ? <Spinner /> : 'Aceptar transferencia'}
+                  </button>
+                </div>
+              ) : null}
             </div>
           </section>
         )}

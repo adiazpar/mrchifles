@@ -853,7 +853,9 @@ export default function TeamPage() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-text-secondary">Telefono</span>
                 <span className="text-sm font-medium">
-                  {formatPhoneForDisplay(selectedMember.phoneNumber)}
+                  {selectedMember.id === user?.id
+                    ? formatPhoneForDisplay(selectedMember.phoneNumber)
+                    : `****${selectedMember.phoneNumber.slice(-4)}`}
                 </span>
               </div>
               <div className="flex justify-between items-center">

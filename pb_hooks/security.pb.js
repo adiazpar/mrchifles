@@ -963,6 +963,69 @@ routerAdd("GET", "/api/transfer/pending", (e) => {
   }
 }, $apis.requireAuth())
 
+/**
+ * GET /api/transfer/incoming
+ * Get pending transfer for the current user (as recipient)
+ * Returns: { transfer?: { code, fromUser: { name }, status, expiresAt } }
+ */
+routerAdd("GET", "/api/transfer/incoming", (e) => {
+  try {
+    const authRecord = e.auth
+    if (!authRecord) {
+      return e.json(401, { error: "No autenticado" })
+    }
+
+    const userPhone = authRecord.get("phoneNumber")
+    if (!userPhone) {
+      return e.json(200, { transfer: null })
+    }
+
+    try {
+      const transfers = $app.findRecordsByFilter(
+        "ownership_transfers",
+        "toPhone = {:phone} && status = 'pending' && expiresAt > @now",
+        "-created",
+        1,
+        0,
+        { phone: userPhone }
+      )
+
+      if (!transfers || transfers.length === 0) {
+        return e.json(200, { transfer: null })
+      }
+
+      const transfer = transfers[0]
+
+      // Get owner info
+      var fromUserInfo = null
+      try {
+        const fromUser = $app.findRecordById("users", transfer.get("fromUser"))
+        fromUserInfo = {
+          id: fromUser.id,
+          name: fromUser.get("name"),
+        }
+      } catch (err) {
+        // Owner not found
+      }
+
+      return e.json(200, {
+        transfer: {
+          code: transfer.get("code"),
+          fromUser: fromUserInfo,
+          status: transfer.get("status"),
+          expiresAt: transfer.get("expiresAt"),
+        }
+      })
+    } catch (err) {
+      console.error(`[TRANSFER] Incoming error:`, err.message)
+      return e.json(200, { transfer: null })
+    }
+  } catch (err) {
+    console.error("[TRANSFER] Incoming error:", err)
+    return e.json(500, { error: "Error del servidor" })
+  }
+}, $apis.requireAuth())
+
 // ============================================
 // RESET APP_CONFIG WHEN OWNER IS DELETED
 // ============================================
