@@ -438,6 +438,109 @@
     border-color: var(--color-error);
   }
 
+  /* Number input spinner styling */
+  input[type="number"].input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  input[type="number"].input::-webkit-inner-spin-button,
+  input[type="number"].input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+
+  /* Custom number input with styled spinners */
+  .input-number-wrapper {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+  }
+
+  .input-number-wrapper .input {
+    padding-right: 40px;
+  }
+
+  .input-number-spinners {
+    position: absolute;
+    right: 1px;
+    top: 1px;
+    bottom: 1px;
+    width: 36px;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--color-border);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    overflow: hidden;
+  }
+
+  .input-number-spinner {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-muted);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .input-number-spinner:first-child {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  @media (hover: hover) {
+    .input-number-spinner:hover {
+      background: var(--color-brand-subtle);
+      color: var(--color-brand);
+    }
+  }
+
+  .input-number-spinner:active {
+    background: var(--color-brand);
+    color: white;
+  }
+
+  .input-number-spinner svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Select with placeholder styling */
+  select.input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%2394A3B8'%3E%3Cpath d='M5.70711 9.71069C5.31658 10.1012 5.31658 10.7344 5.70711 11.1249L10.5993 16.0123C11.3805 16.7927 12.6463 16.7924 13.4271 16.0117L18.3174 11.1213C18.708 10.7308 18.708 10.0976 18.3174 9.70708C17.9269 9.31655 17.2937 9.31655 16.9032 9.70708L12.7176 13.8927C12.3271 14.2833 11.6939 14.2832 11.3034 13.8927L7.12132 9.71069C6.7308 9.32016 6.09763 9.32016 5.70711 9.71069Z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--space-3) center;
+    background-size: 20px 20px;
+    padding-right: var(--space-10);
+  }
+
+  .dark select.input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%2394A3B8'%3E%3Cpath d='M5.70711 9.71069C5.31658 10.1012 5.31658 10.7344 5.70711 11.1249L10.5993 16.0123C11.3805 16.7927 12.6463 16.7924 13.4271 16.0117L18.3174 11.1213C18.708 10.7308 18.708 10.0976 18.3174 9.70708C17.9269 9.31655 17.2937 9.31655 16.9032 9.70708L12.7176 13.8927C12.3271 14.2833 11.6939 14.2832 11.3034 13.8927L7.12132 9.71069C6.7308 9.32016 6.09763 9.32016 5.70711 9.71069Z'/%3E%3C/svg%3E");
+  }
+
+  /* Style for when select has placeholder (empty value) */
+  select.input:has(option[value=""]:checked),
+  select.input.select-placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  select.input option {
+    color: var(--color-text-primary);
+    background: var(--color-bg-surface);
+  }
+
+  select.input option[value=""] {
+    color: var(--color-text-tertiary);
+  }
+
   .label {
     display: block;
     font-size: var(--text-sm);
