@@ -119,8 +119,7 @@ When changing the app's domain, you MUST update Firebase authorized domains:
 
 **If migrating to `mrchifles.com`:**
 1. Add `mrchifles.com` to Firebase authorized domains
-2. Update `NEXT_PUBLIC_APP_URL` in `.env.local` and Vercel env vars
-3. Update Vercel custom domain settings
+2. Update Vercel custom domain settings
 
 #### Environment Variables
 
@@ -437,7 +436,8 @@ PocketBase uses collections instead of traditional ORM models. The schema is int
 ```javascript
 {
   sale: "relation",       // -> sales, required
-  product: "relation",    // -> products, required
+  product: "relation",    // -> products, optional (can be null if product deleted)
+  productName: "text",    // Snapshot of product name at time of sale
   quantity: "number",     // Required, min: 1
   unitPrice: "number",    // Price at time of sale (after promos)
   subtotal: "number"      // quantity * unitPrice
@@ -550,7 +550,6 @@ PocketBase uses collections instead of traditional ORM models. The schema is int
 ├── public/
 │   ├── icons/                # PWA icons
 │   └── ...
-├── Caddyfile                  # (Optional) For self-hosted deployment
 ├── package.json
 ├── tailwind.config.js
 └── tsconfig.json
@@ -656,35 +655,32 @@ If free tier limitations become a problem:
 
 ---
 
-## Self-Hosted Alternative (Optional)
+## Self-Hosted Alternative (Future Option)
 
 <details>
-<summary>Click to expand self-hosted setup (Vultr + Caddy)</summary>
+<summary>Click to expand self-hosted setup info</summary>
 
-If you later decide to self-host for lower latency (~30ms vs ~66ms):
+If you later decide to self-host for lower latency (~30ms vs ~66ms) or to combine frontend + backend hosting:
 
 ### Architecture
 ```
-Vultr VPS (Santiago, Chile) - $6/mo
+VPS (Santiago, Chile) - ~$6/mo
 ├── Caddy (reverse proxy, auto HTTPS)
 ├── Next.js (port 3000)
 └── PocketBase (port 8090)
 ```
 
-### Setup
-```bash
-ssh root@<vultr-ip>
-curl -fsSL https://raw.githubusercontent.com/adiazpar/mrchifles/main/scripts/setup-server.sh | bash
-```
+### Why Consider Self-Hosting?
+- Lower latency (~30ms from Lima to Santiago vs ~66ms to Washington DC)
+- Combined hosting could be cheaper than Vercel + PocketHost separately
+- Full control over the server
 
-### Deploy
-```bash
-ssh root@<vultr-ip>
-cd /var/www/mrchifles
-npm run deploy
-```
-
-See `scripts/setup-server.sh` and `Caddyfile` in this repo.
+### Getting Started
+The self-hosted deployment files (Caddyfile, setup scripts) were removed to keep the repo clean. If you decide to self-host, you would need to:
+1. Set up a VPS (Vultr Santiago recommended)
+2. Create a Caddyfile for reverse proxy
+3. Set up PM2 or systemd for process management
+4. Configure auto-deployment
 
 </details>
 
@@ -973,7 +969,6 @@ npm run dev:all
 | `npm run pb:migrate` | Run pending database migrations |
 | `npm run db:reset` | Reset database, run migrations, create admin account |
 | `npm run build` | Build Next.js for production |
-| `npm run deploy` | One-command production deployment (pull, build, restart) |
 | `npm run lint` | Run ESLint |
 
 ### First Time Setup
