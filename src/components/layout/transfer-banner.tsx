@@ -18,43 +18,68 @@ interface IncomingTransfer {
   expiresAt: string
 }
 
+interface PendingTransfer {
+  code: string
+  toPhone: string
+  status: 'pending' | 'accepted'
+  expiresAt: string
+  toUser?: {
+    id: string
+    name: string
+  }
+}
+
 export function TransferBanner() {
   const router = useRouter()
   const { user, pb } = useAuth()
-  const [transfer, setTransfer] = useState<IncomingTransfer | null>(null)
+  const [incomingTransfer, setIncomingTransfer] = useState<IncomingTransfer | null>(null)
+  const [pendingTransfer, setPendingTransfer] = useState<PendingTransfer | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDismissed, setIsDismissed] = useState(false)
   const [isAccepting, setIsAccepting] = useState(false)
 
-  // Fetch incoming transfer on mount
+  const isOwner = user?.role === 'owner'
+
+  // Fetch transfer data on mount
   useEffect(() => {
-    // Don't check for owners (they initiate transfers, not receive them)
-    if (!user || user.role === 'owner') {
+    if (!user) {
       setIsLoading(false)
       return
     }
 
-    const fetchIncomingTransfer = async () => {
+    const fetchTransferData = async () => {
       try {
-        const response = await fetch(`${POCKETBASE_URL}/api/transfer/incoming`, {
-          headers: {
-            'Authorization': pb.authStore.token,
-          },
-        })
-        const data = await response.json()
-        setTransfer(data.transfer || null)
+        if (isOwner) {
+          // Owner: check for pending transfers that are accepted
+          const response = await fetch(`${POCKETBASE_URL}/api/transfer/pending`, {
+            headers: {
+              'Authorization': pb.authStore.token,
+            },
+          })
+          const data = await response.json()
+          setPendingTransfer(data.transfer || null)
+        } else {
+          // Non-owner: check for incoming transfers
+          const response = await fetch(`${POCKETBASE_URL}/api/transfer/incoming`, {
+            headers: {
+              'Authorization': pb.authStore.token,
+            },
+          })
+          const data = await response.json()
+          setIncomingTransfer(data.transfer || null)
+        }
       } catch (err) {
-        console.error('Error fetching incoming transfer:', err)
+        console.error('Error fetching transfer:', err)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchIncomingTransfer()
-  }, [user, pb])
+    fetchTransferData()
+  }, [user, pb, isOwner])
 
   const handleAccept = useCallback(async () => {
-    if (!transfer) return
+    if (!incomingTransfer) return
 
     setIsAccepting(true)
 
@@ -65,7 +90,7 @@ export function TransferBanner() {
           'Content-Type': 'application/json',
           'Authorization': pb.authStore.token,
         },
-        body: JSON.stringify({ code: transfer.code }),
+        body: JSON.stringify({ code: incomingTransfer.code }),
       })
 
       const result = await response.json()
@@ -81,49 +106,99 @@ export function TransferBanner() {
     } finally {
       setIsAccepting(false)
     }
-  }, [transfer, pb, router])
+  }, [incomingTransfer, pb, router])
 
-  // Don't show if loading, dismissed, no transfer, or user is owner
-  if (isLoading || isDismissed || !transfer || user?.role === 'owner') {
+  const handleGoToSettings = useCallback(() => {
+    router.push('/ajustes')
+  }, [router])
+
+  // Don't show if loading or dismissed
+  if (isLoading || isDismissed) {
     return null
   }
 
-  return (
-    <div className="transfer-banner">
-      <div className="transfer-banner-content">
-        <div className="transfer-banner-icon">
-          <IconTransfer width={24} height={24} />
-        </div>
+  // Owner banner: show when there's an accepted transfer waiting for confirmation
+  if (isOwner && pendingTransfer?.status === 'accepted') {
+    return (
+      <div className="transfer-banner">
+        <div className="transfer-banner-content">
+          <div className="transfer-banner-icon">
+            <IconTransfer width={24} height={24} />
+          </div>
 
-        <div className="transfer-banner-text">
-          <p className="transfer-banner-title">
-            Transferencia de propiedad
-          </p>
-          <p className="transfer-banner-subtitle">
-            <strong>{transfer.fromUser?.name || 'El propietario'}</strong> quiere transferirte la propiedad del negocio
-          </p>
-        </div>
+          <div className="transfer-banner-text">
+            <p className="transfer-banner-title">
+              Transferencia lista para confirmar
+            </p>
+            <p className="transfer-banner-subtitle">
+              <strong>{pendingTransfer.toUser?.name || 'El destinatario'}</strong> ha aceptado la transferencia. Confirma con tu PIN para completar.
+            </p>
+          </div>
 
-        <div className="transfer-banner-actions">
+          <div className="transfer-banner-actions">
+            <button
+              type="button"
+              onClick={handleGoToSettings}
+              className="btn btn-primary btn-sm"
+            >
+              Confirmar
+            </button>
+          </div>
+
           <button
             type="button"
-            onClick={handleAccept}
-            className="btn btn-primary btn-sm"
-            disabled={isAccepting}
+            onClick={() => setIsDismissed(true)}
+            className="transfer-banner-dismiss"
+            aria-label="Cerrar"
           >
-            {isAccepting ? <Spinner /> : 'Aceptar'}
+            <IconClose width={18} height={18} />
           </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setIsDismissed(true)}
-          className="transfer-banner-dismiss"
-          aria-label="Cerrar"
-        >
-          <IconClose width={18} height={18} />
-        </button>
       </div>
-    </div>
-  )
+    )
+  }
+
+  // Recipient banner: show when there's a pending incoming transfer
+  if (!isOwner && incomingTransfer) {
+    return (
+      <div className="transfer-banner">
+        <div className="transfer-banner-content">
+          <div className="transfer-banner-icon">
+            <IconTransfer width={24} height={24} />
+          </div>
+
+          <div className="transfer-banner-text">
+            <p className="transfer-banner-title">
+              Transferencia de propiedad
+            </p>
+            <p className="transfer-banner-subtitle">
+              <strong>{incomingTransfer.fromUser?.name || 'El propietario'}</strong> quiere transferirte la propiedad del negocio
+            </p>
+          </div>
+
+          <div className="transfer-banner-actions">
+            <button
+              type="button"
+              onClick={handleAccept}
+              className="btn btn-primary btn-sm"
+              disabled={isAccepting}
+            >
+              {isAccepting ? <Spinner /> : 'Aceptar'}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsDismissed(true)}
+            className="transfer-banner-dismiss"
+            aria-label="Cerrar"
+          >
+            <IconClose width={18} height={18} />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return null
 }

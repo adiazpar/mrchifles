@@ -523,11 +523,8 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    <p className="text-sm text-text-secondary mb-1">
-                      De:
-                    </p>
-                    <p className="font-medium text-text-primary mb-3">
-                      {incomingTransfer.fromUser?.name || 'Propietario'}
+                    <p className="text-sm text-text-secondary mb-3">
+                      De: <span className="font-medium text-text-primary">{incomingTransfer.fromUser?.name || 'Propietario'}</span>
                     </p>
 
                     <p className="text-sm text-text-secondary">
