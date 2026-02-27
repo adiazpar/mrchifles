@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Input, Card, Spinner } from '@/components/ui'
@@ -24,6 +24,21 @@ interface TransferInfo {
 const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
 
 export default function TransferPage() {
+  return (
+    <Suspense fallback={
+      <Card padding="lg">
+        <div className="flex flex-col items-center py-8">
+          <Spinner className="spinner-lg" />
+          <p className="text-text-secondary mt-4">Cargando...</p>
+        </div>
+      </Card>
+    }>
+      <TransferPageContent />
+    </Suspense>
+  )
+}
+
+function TransferPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, isAuthenticated, verifyFirebaseToken, verifyPinForSession, pb } = useAuth()
