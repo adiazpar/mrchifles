@@ -11,12 +11,14 @@ import { useAuth } from '@/contexts/auth-context'
 import { formatPhoneForDisplay } from '@/lib/countries'
 import { hashPin } from '@/lib/auth'
 
-type TransferStep = 'loading' | 'code' | 'details' | 'phone' | 'otp' | 'info' | 'pin' | 'success'
+type TransferStep = 'loading' | 'code' | 'details' | 'login' | 'phone' | 'otp' | 'info' | 'pin' | 'success'
 
 interface TransferInfo {
   code: string
   ownerName: string
   toPhone: string
+  existingUser?: boolean // true if recipient already has an account
+  existingUserName?: string // name of existing user
 }
 
 const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
@@ -38,6 +40,7 @@ export default function TransferPage() {
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
 
@@ -74,6 +77,8 @@ export default function TransferPage() {
           code,
           ownerName: result.ownerName,
           toPhone: result.toPhone,
+          existingUser: result.existingUser,
+          existingUserName: result.existingUserName,
         })
 
         // If user is logged in and phone matches, go directly to details
@@ -131,6 +136,8 @@ export default function TransferPage() {
           code,
           ownerName: result.ownerName,
           toPhone: result.toPhone,
+          existingUser: result.existingUser,
+          existingUserName: result.existingUserName,
         })
 
         // If user is logged in and phone matches, go directly to details
@@ -187,7 +194,13 @@ export default function TransferPage() {
       }
     } else {
       // Not authenticated, need to register/login first
-      setStep('phone')
+      if (transferInfo.existingUser) {
+        // Existing user - go to login step
+        setStep('login')
+      } else {
+        // New user - go through phone verification and registration
+        setStep('phone')
+      }
     }
   }, [isAuthenticated, transferInfo, pb])
 
@@ -325,6 +338,55 @@ export default function TransferPage() {
     [transferInfo, phoneNumber, password, name, pb, verifyPinForSession]
   )
 
+  const handleLoginSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+      if (!transferInfo) return
+
+      setErrors({})
+      setIsLoading(true)
+
+      try {
+        // Build email from phone number
+        const authEmail = transferInfo.toPhone.replace('+', '') + '@phone.local'
+
+        // Authenticate with PocketBase
+        await pb.collection('users').authWithPassword(authEmail, loginPassword)
+
+        // Accept the transfer
+        const response = await fetch(`${POCKETBASE_URL}/api/transfer/accept`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': pb.authStore.token,
+          },
+          body: JSON.stringify({ code: transferInfo.code }),
+        })
+
+        const result = await response.json()
+
+        if (!result.success) {
+          setErrors({ general: result.error || 'Error al aceptar la transferencia' })
+          setIsLoading(false)
+          return
+        }
+
+        setStep('success')
+      } catch (err) {
+        console.error('Login error:', err)
+        const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesion'
+        if (errorMessage.includes('password') || errorMessage.includes('credentials')) {
+          setErrors({ loginPassword: 'Contrasena incorrecta' })
+        } else {
+          setErrors({ general: errorMessage })
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [transferInfo, loginPassword, pb]
+  )
+
   const handleBackToCode = useCallback(() => {
     setStep('code')
     setErrors({})
@@ -456,7 +518,9 @@ export default function TransferPage() {
 
           {!isAuthenticated && (
             <p className="text-xs text-text-tertiary mt-4 text-center">
-              Necesitas crear una cuenta para aceptar
+              {transferInfo?.existingUser
+                ? 'Necesitas iniciar sesion para aceptar'
+                : 'Necesitas crear una cuenta para aceptar'}
             </p>
           )}
         </Card>
@@ -469,6 +533,77 @@ export default function TransferPage() {
               className="text-brand hover:underline"
             >
               Usar otro codigo
+            </button>
+          </p>
+        </div>
+      </>
+    )
+  }
+
+  // Login step (for existing users)
+  if (step === 'login') {
+    return (
+      <>
+        <Card padding="lg">
+          <div className="mb-6 p-3 bg-brand-subtle rounded-lg text-center">
+            <p className="text-sm text-text-secondary">Transferencia de</p>
+            <p className="font-display font-bold text-brand">
+              {transferInfo?.ownerName}
+            </p>
+          </div>
+
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-display font-bold mb-1">
+              Hola, {transferInfo?.existingUserName}
+            </h2>
+            <p className="text-sm text-text-tertiary">
+              Ingresa tu contrasena para aceptar la transferencia
+            </p>
+          </div>
+
+          {errors.general && (
+            <div className="mb-4 p-3 bg-error-subtle text-error text-sm rounded-lg">
+              {errors.general}
+            </div>
+          )}
+
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <Input
+              label="Contrasena"
+              type="password"
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
+              placeholder="Tu contrasena"
+              autoComplete="current-password"
+              autoFocus
+              error={errors.loginPassword}
+            />
+
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg w-full"
+              disabled={isLoading || !loginPassword}
+            >
+              {isLoading ? (
+                <>
+                  <Spinner />
+                  <span>Iniciando sesion...</span>
+                </>
+              ) : (
+                'Aceptar transferencia'
+              )}
+            </button>
+          </form>
+        </Card>
+
+        <div className="auth-footer">
+          <p className="auth-footer-link">
+            <button
+              type="button"
+              onClick={handleBackToDetails}
+              className="text-brand hover:underline"
+            >
+              Volver
             </button>
           </p>
         </div>
@@ -676,10 +811,12 @@ export default function TransferPage() {
         </div>
         <h2 className="text-xl font-display font-bold mb-2">Transferencia aceptada</h2>
         <p className="text-sm text-text-tertiary mb-4">
-          Tu cuenta ha sido creada como Socio. Cuando el propietario confirme la transferencia, te convertiras en el nuevo propietario.
+          {transferInfo?.existingUser
+            ? 'Cuando el propietario confirme la transferencia, te convertiras en el nuevo propietario.'
+            : 'Tu cuenta ha sido creada como Socio. Cuando el propietario confirme la transferencia, te convertiras en el nuevo propietario.'}
         </p>
         <p className="text-xs text-text-quaternary mb-6">
-          Mientras tanto, puedes usar la aplicacion con acceso de socio.
+          Mientras tanto, puedes usar la aplicacion normalmente.
         </p>
         <button
           type="button"
