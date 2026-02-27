@@ -521,8 +521,17 @@ routerAdd("POST", "/api/transfer/initiate", (e) => {
       // User not found, that's ok
     }
 
-    // Generate unique code
-    var code = generateTransferCode()
+    // Generate unique code (inline for JSVM compatibility)
+    var codeChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    function genCode() {
+      var c = ''
+      for (var i = 0; i < 8; i++) {
+        c += codeChars.charAt(Math.floor(Math.random() * codeChars.length))
+      }
+      return c
+    }
+
+    var code = genCode()
     var attempts = 0
     while (attempts < 10) {
       try {
@@ -535,7 +544,7 @@ routerAdd("POST", "/api/transfer/initiate", (e) => {
           { code: code }
         )
         if (!existing || existing.length === 0) break
-        code = generateTransferCode()
+        code = genCode()
         attempts++
       } catch (err) {
         break
@@ -549,7 +558,10 @@ routerAdd("POST", "/api/transfer/initiate", (e) => {
     transfer.set("fromUser", authRecord.id)
     transfer.set("toPhone", toPhone)
     transfer.set("status", "pending")
-    transfer.set("expiresAt", getTransferExpiration())
+    // Calculate expiration (24 hours from now)
+    var expDate = new Date()
+    expDate.setHours(expDate.getHours() + 24)
+    transfer.set("expiresAt", expDate.toISOString())
 
     $app.save(transfer)
 

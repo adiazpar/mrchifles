@@ -11,6 +11,7 @@ export interface PhoneInputProps {
   helper?: string
   disabled?: boolean
   autoFocus?: boolean
+  autoComplete?: string
 }
 
 export function PhoneInput({
@@ -21,6 +22,7 @@ export function PhoneInput({
   helper,
   disabled = false,
   autoFocus = false,
+  autoComplete = 'tel-national',
 }: PhoneInputProps) {
   const inputId = useRef(`phone-${Math.random().toString(36).substr(2, 9)}`).current
   const inputRef = useRef<HTMLInputElement>(null)
@@ -134,7 +136,7 @@ export function PhoneInput({
           onChange={handleLocalNumberChange}
           disabled={disabled}
           placeholder="987654321"
-          autoComplete="tel-national"
+          autoComplete={autoComplete}
           className={`input flex-1 ${error ? 'input-error' : ''}`}
         />
       </div>

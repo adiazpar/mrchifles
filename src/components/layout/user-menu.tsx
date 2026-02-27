@@ -18,7 +18,7 @@ export function UserMenu({ variant }: UserMenuProps) {
 
   // Detect screen size changes - close menu when crossing breakpoint
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(min-width: 768px)')
+    const mediaQuery = window.matchMedia('(min-width: 1024px)')
 
     setIsDesktop(mediaQuery.matches)
 
