@@ -534,7 +534,7 @@ export default function ProductosPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <>
       <PageHeader
         title="Productos"
         subtitle={tabSubtitles[activeTab]}
@@ -1083,6 +1083,6 @@ export default function ProductosPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
