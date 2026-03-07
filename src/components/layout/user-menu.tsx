@@ -79,7 +79,7 @@ export function UserMenu({ variant }: UserMenuProps) {
         <BottomSheet
           isOpen={menuOpen}
           onClose={handleClose}
-          title="Mi Cuenta"
+          title="Cuenta y Ajustes"
         >
           <UserMenuContent onAction={handleClose} />
         </BottomSheet>

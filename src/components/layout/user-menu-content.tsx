@@ -5,7 +5,7 @@ import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { getUserInitials, getRoleLabel, isPartnerOrOwner } from '@/lib/auth'
-import { IconLock, IconUsers, IconLogout, IconChevronRight, IconSettings } from '@/components/icons'
+import { IconUsers, IconLogout, IconChevronRight, IconSettings } from '@/components/icons'
 
 interface UserMenuContentProps {
   onAction?: () => void
@@ -48,17 +48,6 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
 
       {/* Menu Items */}
       <div className="user-menu-items">
-        {/* Change PIN */}
-        <button
-          type="button"
-          className="user-menu-item"
-          onClick={() => handleNavigation('/cambiar-pin')}
-        >
-          <IconLock width={20} height={20} />
-          <span>Cambiar PIN</span>
-          <IconChevronRight width={16} height={16} className="user-menu-item-arrow" />
-        </button>
-
         {/* Team Management (owner/partner only) */}
         {canManageTeam && (
           <Link
