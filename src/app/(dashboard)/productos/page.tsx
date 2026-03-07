@@ -236,6 +236,8 @@ export default function ProductosPage() {
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false)
   const [receivingOrder, setReceivingOrder] = useState<ExpandedOrder | null>(null)
   const [isReceiving, setIsReceiving] = useState(false)
+  const [isOrderDetailModalOpen, setIsOrderDetailModalOpen] = useState(false)
+  const [viewingOrder, setViewingOrder] = useState<ExpandedOrder | null>(null)
   const [orderProductSearchQuery, setOrderProductSearchQuery] = useState('')
 
   // Form state
@@ -693,6 +695,18 @@ export default function ProductosPage() {
     setIsReceiveModalOpen(true)
   }, [])
 
+  const handleOpenOrderDetail = useCallback((order: ExpandedOrder) => {
+    setViewingOrder(order)
+    setIsOrderDetailModalOpen(true)
+  }, [])
+
+  // Get receipt URL from order
+  const getOrderReceiptUrl = useCallback((order: ExpandedOrder): string | null => {
+    if (!order.receipt) return null
+    const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
+    return `${pbUrl}/api/files/${order.collectionId}/${order.id}/${order.receipt}`
+  }, [])
+
   const handleReceiveOrder = useCallback(async () => {
     if (!receivingOrder || !user) return
 
@@ -1089,9 +1103,9 @@ export default function ProductosPage() {
                     <div
                       key={order.id}
                       className="list-item-clickable"
-                      onClick={() => isPending ? handleOpenReceiveOrder(order) : undefined}
-                      role={isPending ? 'button' : undefined}
-                      tabIndex={isPending ? 0 : undefined}
+                      onClick={() => handleOpenOrderDetail(order)}
+                      role="button"
+                      tabIndex={0}
                     >
                       {/* Status indicator */}
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -1133,11 +1147,9 @@ export default function ProductosPage() {
                       </div>
 
                       {/* Action indicator */}
-                      {isPending && (
-                        <div className="text-text-tertiary ml-2">
-                          <IconChevronRight className="w-5 h-5" />
-                        </div>
-                      )}
+                      <div className="text-text-tertiary ml-2">
+                        <IconChevronRight className="w-5 h-5" />
+                      </div>
                     </div>
                   )
                 })}
@@ -1649,6 +1661,129 @@ export default function ProductosPage() {
               <IconWarning className="w-4 h-4 inline mr-2" />
               Al confirmar, el stock de estos productos aumentara automaticamente.
             </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Order Detail Modal */}
+      <Modal
+        isOpen={isOrderDetailModalOpen}
+        onClose={() => {
+          setIsOrderDetailModalOpen(false)
+          setViewingOrder(null)
+        }}
+        title="Detalle del Pedido"
+        size="large"
+        footer={
+          viewingOrder?.status === 'pending' ? (
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOrderDetailModalOpen(false)
+                  setViewingOrder(null)
+                }}
+                className="btn btn-secondary"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOrderDetailModalOpen(false)
+                  if (viewingOrder) {
+                    handleOpenReceiveOrder(viewingOrder)
+                  }
+                }}
+                className="btn btn-primary"
+              >
+                Recibir Pedido
+              </button>
+            </div>
+          ) : undefined
+        }
+      >
+        {viewingOrder && (
+          <div className="space-y-4">
+            {/* Order info */}
+            <div className="p-4 rounded-lg bg-bg-muted">
+              <div className="flex justify-between mb-2">
+                <span className="text-text-secondary">Fecha:</span>
+                <span className="font-medium">{formatDate(new Date(viewingOrder.date))}</span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-text-secondary">Estado:</span>
+                <span className={`font-medium ${viewingOrder.status === 'pending' ? 'text-warning' : 'text-success'}`}>
+                  {viewingOrder.status === 'pending' ? 'Pendiente' : 'Recibido'}
+                </span>
+              </div>
+              {viewingOrder.receivedDate && (
+                <div className="flex justify-between mb-2">
+                  <span className="text-text-secondary">Fecha recibido:</span>
+                  <span className="font-medium">{formatDate(new Date(viewingOrder.receivedDate))}</span>
+                </div>
+              )}
+              {viewingOrder.estimatedArrival && viewingOrder.status === 'pending' && (
+                <div className="flex justify-between mb-2">
+                  <span className="text-text-secondary">Llegada estimada:</span>
+                  <span className="font-medium">{formatDate(new Date(viewingOrder.estimatedArrival))}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Total pagado:</span>
+                <span className="font-bold text-error">-{formatCurrency(viewingOrder.total)}</span>
+              </div>
+            </div>
+
+            {/* Products */}
+            <div>
+              <p className="label">Productos:</p>
+              <div className="space-y-2">
+                {viewingOrder.expand?.['order_items(order)']?.map(item => (
+                  <div key={item.id} className="flex items-center justify-between p-2 rounded-lg border border-border">
+                    <span>{item.expand?.product?.name || 'Producto'}</span>
+                    <span className="font-medium">{item.quantity} uds</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Notes */}
+            {viewingOrder.notes && (
+              <div>
+                <p className="label">Notas:</p>
+                <p className="text-sm text-text-secondary">{viewingOrder.notes}</p>
+              </div>
+            )}
+
+            {/* Receipt/Comprobante */}
+            {viewingOrder.receipt && (
+              <div>
+                <p className="label">Comprobante:</p>
+                {viewingOrder.receipt.toLowerCase().endsWith('.pdf') ? (
+                  <a
+                    href={getOrderReceiptUrl(viewingOrder) || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary w-full"
+                  >
+                    Ver PDF
+                  </a>
+                ) : (
+                  <a
+                    href={getOrderReceiptUrl(viewingOrder) || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={getOrderReceiptUrl(viewingOrder) || ''}
+                      alt="Comprobante"
+                      className="w-full rounded-lg border border-border"
+                    />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         )}
       </Modal>
