@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { PageHeader } from '@/components/layout'
 import { Spinner } from '@/components/ui'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { FirebasePhoneVerify } from '@/components/auth/firebase-phone-verify'
 import { PinPad } from '@/components/auth/pin-pad'
-import { IconPalette, IconInfo, IconSun, IconMoon, IconMonitor, IconTransfer, IconClock, IconClose, IconPhone, IconCopy, IconCheck } from '@/components/icons'
+import { IconPalette, IconInfo, IconSun, IconMoon, IconMonitor, IconTransfer, IconClock, IconClose, IconPhone, IconCopy, IconCheck, IconLock } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { formatPhoneForDisplay, isValidE164 } from '@/lib/countries'
 
@@ -594,6 +595,24 @@ export default function SettingsPage() {
             >
               Cambiar numero
             </button>
+          </div>
+        </section>
+
+        {/* Security Section */}
+        <section className="settings-section">
+          <div className="settings-section-header">
+            <div className="settings-section-icon">
+              <IconLock width={20} height={20} />
+            </div>
+            <h2 className="settings-section-title">Seguridad</h2>
+          </div>
+          <div className="settings-section-body">
+            <p className="text-sm text-text-tertiary mb-3">
+              Tu PIN se usa para confirmar acciones importantes y cerrar sesion.
+            </p>
+            <Link href="/cambiar-pin" className="btn btn-secondary">
+              Cambiar PIN
+            </Link>
           </div>
         </section>
 
