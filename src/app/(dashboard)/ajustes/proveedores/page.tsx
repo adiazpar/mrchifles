@@ -195,26 +195,6 @@ export default function ProveedoresPage() {
     }
   }, [name, phone, email, notes, active, editingProvider, pb, handleCloseModal])
 
-  const handleToggleActive = useCallback(async () => {
-    if (!editingProvider) return
-
-    const newActive = !editingProvider.active
-
-    try {
-      await pb.collection('providers').update(editingProvider.id, { active: newActive })
-
-      // Update local state
-      const updatedProvider = { ...editingProvider, active: newActive }
-      setEditingProvider(updatedProvider)
-      setActive(newActive)
-      setProviders(prev =>
-        prev.map(p => p.id === editingProvider.id ? updatedProvider : p)
-      )
-    } catch (err) {
-      console.error('Error updating provider status:', err)
-    }
-  }, [editingProvider, pb])
-
   if (isLoading) {
     return (
       <>
@@ -344,7 +324,6 @@ export default function ProveedoresPage() {
               onChange={e => setName(e.target.value)}
               className="input"
               placeholder="Nombre del proveedor"
-              autoFocus
               required
             />
           </div>
@@ -382,36 +361,21 @@ export default function ProveedoresPage() {
             />
           </div>
 
-          {/* Active toggle - only show when editing */}
-          {editingProvider && canManage && (
-            <div className="pt-2 border-t border-border">
-              <button
-                type="button"
-                onClick={handleToggleActive}
-                className={`btn w-full justify-start gap-3 ${
-                  active
-                    ? 'btn-ghost text-error hover:bg-error-subtle'
-                    : 'btn-secondary'
-                }`}
-              >
-                {active ? (
-                  <>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
-                    <span>Marcar como inactivo</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Marcar como activo</span>
-                  </>
-                )}
-              </button>
+          {/* Active toggle */}
+          <div className="flex items-center justify-between py-2">
+            <div>
+              <span className="label mb-0">Activo</span>
+              <p className="text-xs text-text-tertiary mt-0.5">
+                Mostrar en la lista de proveedores
+              </p>
             </div>
-          )}
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={e => setActive(e.target.checked)}
+              className="toggle"
+            />
+          </div>
         </form>
       </Modal>
     </>
