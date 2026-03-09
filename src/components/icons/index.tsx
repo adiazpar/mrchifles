@@ -665,3 +665,46 @@ export function IconHistory(props: IconProps) {
     </svg>
   )
 }
+
+export function IconTruck(props: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
+      <path fillRule="evenodd" clipRule="evenodd" d="M1 4C1 3.44772 1.44772 3 2 3H14C14.5523 3 15 3.44772 15 4V6H18.382C19.0704 6 19.696 6.38314 20.0056 6.98541L21.882 10.6382C21.9596 10.7897 22 10.9565 22 11.1255V17C22 17.5523 21.5523 18 21 18H19.9495C19.7178 19.6961 18.2535 21 16.5 21C14.7465 21 13.2822 19.6961 13.0505 18H8.94949C8.71785 19.6961 7.25349 21 5.5 21C3.74651 21 2.28215 19.6961 2.05051 18H2C1.44772 18 1 17.5523 1 17V4ZM2.05051 16C2.28215 14.3039 3.74651 13 5.5 13C7.25349 13 8.71785 14.3039 8.94949 16H13V5H3V16H2.05051ZM15 16V8H18.382L20 11.236V16H19.9495C19.7178 14.3039 18.2535 13 16.5 13C15.9404 13 15.4139 13.1344 14.9466 13.3724L15 16ZM16.5 15C15.6716 15 15 15.6716 15 16.5C15 17.3284 15.6716 18 16.5 18C17.3284 18 18 17.3284 18 16.5C18 15.6716 17.3284 15 16.5 15ZM5.5 15C4.67157 15 4 15.6716 4 16.5C4 17.3284 4.67157 18 5.5 18C6.32843 18 7 17.3284 7 16.5C7 15.6716 6.32843 15 5.5 15Z" />
+    </svg>
+  )
+}
+
+export function IconAdjust(props: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      {/* Plus/minus adjustment icon - sliders concept */}
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
+    </svg>
+  )
+}

@@ -109,6 +109,21 @@ export interface SaleItem {
 }
 
 // ============================================
+// PROVIDER TYPES
+// ============================================
+
+export interface Provider {
+  id: string
+  name: string
+  phone?: string
+  email?: string
+  notes?: string
+  active: boolean
+  created: string
+  updated: string
+}
+
+// ============================================
 // ORDER TYPES (purchases from suppliers)
 // ============================================
 
@@ -125,11 +140,13 @@ export interface Order {
   estimatedArrival?: string // Estimated delivery date
   receipt?: string // Proof of purchase file (receipt, Yape screenshot)
   notes?: string
+  provider?: string // Relation ID to provider
   created: string
   updated: string
   // Expanded relations
   expand?: {
     'order_items(order)'?: OrderItem[]
+    provider?: Provider
   }
 }
 
