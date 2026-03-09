@@ -5,7 +5,7 @@ import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { getUserInitials, getRoleLabel, isPartnerOrOwner } from '@/lib/auth'
-import { IconUsers, IconLogout, IconChevronRight, IconSettings } from '@/components/icons'
+import { IconUsers, IconLogout, IconChevronRight, IconSettings, IconTruck } from '@/components/icons'
 
 interface UserMenuContentProps {
   onAction?: () => void
@@ -57,6 +57,19 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           >
             <IconUsers width={20} height={20} />
             <span>Gestionar Equipo</span>
+            <IconChevronRight width={16} height={16} className="user-menu-item-arrow" />
+          </Link>
+        )}
+
+        {/* Providers (owner/partner only) */}
+        {canManageTeam && (
+          <Link
+            href="/ajustes/proveedores"
+            className="user-menu-item"
+            onClick={onAction}
+          >
+            <IconTruck width={20} height={20} />
+            <span>Proveedores</span>
             <IconChevronRight width={16} height={16} className="user-menu-item-arrow" />
           </Link>
         )}

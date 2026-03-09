@@ -4,12 +4,12 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import { Spinner } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
-import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconSelect, IconWarning, IconInventory } from '@/components/icons'
+import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconSelect, IconWarning, IconInventory, IconAdjust } from '@/components/icons'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAuth } from '@/contexts/auth-context'
 import { getProductImageUrl } from '@/lib/products'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { Product, ProductCategory, Order, OrderItem } from '@/types'
+import type { Product, ProductCategory, Order, OrderItem, Provider } from '@/types'
 
 // Category configuration
 const CATEGORY_CONFIG: Record<ProductCategory, { label: string; size?: string; order: number }> = {
@@ -38,6 +38,7 @@ interface ExpandedOrder extends Order {
         product?: Product
       }
     })[]
+    provider?: Provider
   }
 }
 
@@ -223,8 +224,17 @@ export default function ProductosPage() {
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // Stock adjustment modal state
+  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null)
+  const [adjustmentMode, setAdjustmentMode] = useState<'add' | 'remove'>('remove')
+  const [adjustmentQuantity, setAdjustmentQuantity] = useState('')
+  const [adjustmentReason, setAdjustmentReason] = useState('')
+  const [adjustmentNotes, setAdjustmentNotes] = useState('')
+  const [isAdjusting, setIsAdjusting] = useState(false)
+
   // Orders state (for Pedidos tab)
   const [orders, setOrders] = useState<ExpandedOrder[]>([])
+  const [providers, setProviders] = useState<Provider[]>([])
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
   const [orderItems, setOrderItems] = useState<{ product: Product; quantity: number }[]>([])
   const [orderTotal, setOrderTotal] = useState('')
@@ -232,13 +242,20 @@ export default function ProductosPage() {
   const [orderEstimatedArrival, setOrderEstimatedArrival] = useState('')
   const [orderReceiptFile, setOrderReceiptFile] = useState<File | null>(null)
   const [orderReceiptPreview, setOrderReceiptPreview] = useState<string | null>(null)
+  const [orderProvider, setOrderProvider] = useState('')
   const [isSavingOrder, setIsSavingOrder] = useState(false)
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false)
   const [receivingOrder, setReceivingOrder] = useState<ExpandedOrder | null>(null)
+  const [receivedQuantities, setReceivedQuantities] = useState<Record<string, number>>({})
   const [isReceiving, setIsReceiving] = useState(false)
   const [isOrderDetailModalOpen, setIsOrderDetailModalOpen] = useState(false)
   const [viewingOrder, setViewingOrder] = useState<ExpandedOrder | null>(null)
   const [orderProductSearchQuery, setOrderProductSearchQuery] = useState('')
+  const [deleteOrder, setDeleteOrder] = useState<ExpandedOrder | null>(null)
+  const [isDeletingOrder, setIsDeletingOrder] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<ExpandedOrder | null>(null)
+  const [orderSearchQuery, setOrderSearchQuery] = useState('')
+  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'pending' | 'received'>('all')
 
   // Form state
   const [name, setName] = useState('')
@@ -260,20 +277,26 @@ export default function ProductosPage() {
 
     async function loadData() {
       try {
-        const [productsRes, ordersRes] = await Promise.all([
+        const [productsRes, ordersRes, providersRes] = await Promise.all([
           pb.collection('products').getFullList<Product>({
             sort: 'name',
             requestKey: null,
           }),
           pb.collection('orders').getFullList<ExpandedOrder>({
             sort: '-date',
-            expand: 'order_items(order).product',
+            expand: 'order_items(order).product,provider',
+            requestKey: null,
+          }),
+          pb.collection('providers').getFullList<Provider>({
+            sort: 'name',
+            filter: 'active = true',
             requestKey: null,
           }),
         ])
         if (cancelled) return
         setProducts(productsRes)
         setOrders(ordersRes)
+        setProviders(providersRes)
       } catch (err) {
         if (cancelled) return
         console.error('Error loading data:', err)
@@ -383,6 +406,28 @@ export default function ProductosPage() {
     const query = orderProductSearchQuery.toLowerCase()
     return products.filter(p => p.active && p.name.toLowerCase().includes(query))
   }, [products, orderProductSearchQuery])
+
+  // Filtered orders for Pedidos tab
+  const filteredOrders = useMemo(() => {
+    let result = orders
+
+    // Filter by status
+    if (orderStatusFilter !== 'all') {
+      result = result.filter(o => o.status === orderStatusFilter)
+    }
+
+    // Filter by search query (provider name or date)
+    if (orderSearchQuery.trim()) {
+      const query = orderSearchQuery.toLowerCase()
+      result = result.filter(o => {
+        const providerName = o.expand?.provider?.name?.toLowerCase() || ''
+        const dateStr = formatDate(new Date(o.date)).toLowerCase()
+        return providerName.includes(query) || dateStr.includes(query)
+      })
+    }
+
+    return result
+  }, [orders, orderStatusFilter, orderSearchQuery])
 
   const resetForm = useCallback(() => {
     setName('')
@@ -529,6 +574,82 @@ export default function ProductosPage() {
     }
   }, [deleteProduct, pb, handleCloseModal])
 
+  // Stock adjustment handlers
+  const handleOpenAdjustment = useCallback((product: Product) => {
+    setAdjustingProduct(product)
+    setAdjustmentMode('remove')
+    setAdjustmentQuantity('')
+    setAdjustmentReason('')
+    setAdjustmentNotes('')
+  }, [])
+
+  const handleCloseAdjustment = useCallback(() => {
+    setAdjustingProduct(null)
+    setAdjustmentQuantity('')
+    setAdjustmentReason('')
+    setAdjustmentNotes('')
+  }, [])
+
+  const handleSaveAdjustment = useCallback(async () => {
+    if (!adjustingProduct) return
+
+    const qty = parseInt(adjustmentQuantity, 10)
+    if (isNaN(qty) || qty <= 0) {
+      setError('Ingresa una cantidad valida')
+      return
+    }
+
+    // Check if removing more than available
+    const currentStock = adjustingProduct.stock ?? 0
+    if (adjustmentMode === 'remove' && qty > currentStock) {
+      setError(`No puedes remover mas de ${currentStock} unidades`)
+      return
+    }
+
+    if (!adjustmentReason) {
+      setError('Selecciona un motivo')
+      return
+    }
+
+    setIsAdjusting(true)
+    setError('')
+
+    try {
+      const adjustmentQty = adjustmentMode === 'add' ? qty : -qty
+      const newStock = currentStock + adjustmentQty
+
+      // Update product stock
+      await pb.collection('products').update(adjustingProduct.id, {
+        stock: newStock
+      })
+
+      // Create inventory transaction for tracking
+      await pb.collection('inventory_transactions').create({
+        date: new Date().toISOString(),
+        product: adjustingProduct.id,
+        type: 'adjustment',
+        quantity: adjustmentQty,
+        notes: `${adjustmentReason}${adjustmentNotes ? ': ' + adjustmentNotes : ''}`,
+        createdBy: user?.id,
+      })
+
+      // Update local state
+      setProducts(prev =>
+        prev.map(p =>
+          p.id === adjustingProduct.id ? { ...p, stock: newStock } : p
+        )
+      )
+
+      handleCloseAdjustment()
+      handleCloseModal()
+    } catch (err) {
+      console.error('Error adjusting stock:', err)
+      setError('Error al ajustar el inventario')
+    } finally {
+      setIsAdjusting(false)
+    }
+  }, [adjustingProduct, adjustmentQuantity, adjustmentMode, adjustmentReason, adjustmentNotes, pb, handleCloseAdjustment, handleCloseModal])
+
   // Selection mode handlers
   const handleEnterSelectionMode = useCallback(() => {
     setIsEditSheetOpen(false)
@@ -595,7 +716,9 @@ export default function ProductosPage() {
     setOrderEstimatedArrival('')
     setOrderReceiptFile(null)
     setOrderReceiptPreview(null)
+    setOrderProvider('')
     setOrderProductSearchQuery('')
+    setEditingOrder(null)
     setError('')
   }, [])
 
@@ -603,6 +726,34 @@ export default function ProductosPage() {
     resetOrderForm()
     setIsOrderModalOpen(true)
   }, [resetOrderForm])
+
+  const handleOpenEditOrder = useCallback((order: ExpandedOrder) => {
+    // Pre-fill form with order data
+    setEditingOrder(order)
+
+    // Convert order items to the format expected by the form
+    const items = order.expand?.['order_items(order)'] || []
+    const formItems = items.map(item => ({
+      product: item.expand?.product as Product,
+      quantity: item.quantity,
+      orderItemId: item.id, // Track the original order_item ID for updates
+    })).filter(item => item.product) // Filter out items with deleted products
+
+    setOrderItems(formItems as { product: Product; quantity: number }[])
+    setOrderTotal(order.total.toString())
+    setOrderNotes(order.notes || '')
+    setOrderEstimatedArrival(order.estimatedArrival ? new Date(order.estimatedArrival).toISOString().split('T')[0] : '')
+    setOrderProvider(order.provider || '')
+    setOrderReceiptFile(null)
+    setOrderReceiptPreview(null)
+    setOrderProductSearchQuery('')
+    setError('')
+
+    // Close detail modal and open edit modal
+    setIsOrderDetailModalOpen(false)
+    setViewingOrder(null)
+    setIsOrderModalOpen(true)
+  }, [])
 
   const handleAddProductToOrder = useCallback((product: Product) => {
     setOrderItems(prev => {
@@ -646,36 +797,73 @@ export default function ProductosPage() {
     setError('')
 
     try {
-      // Create the order using FormData for file upload
-      const formData = new FormData()
-      formData.append('date', new Date().toISOString())
-      formData.append('total', totalNum.toString())
-      formData.append('status', 'pending')
-      if (orderNotes.trim()) {
-        formData.append('notes', orderNotes.trim())
-      }
-      if (orderEstimatedArrival) {
-        formData.append('estimatedArrival', new Date(orderEstimatedArrival).toISOString())
-      }
-      if (orderReceiptFile) {
-        formData.append('receipt', orderReceiptFile)
-      }
+      if (editingOrder) {
+        // UPDATE existing order
+        const formData = new FormData()
+        formData.append('total', totalNum.toString())
+        formData.append('notes', orderNotes.trim() || '')
+        if (orderEstimatedArrival) {
+          formData.append('estimatedArrival', new Date(orderEstimatedArrival).toISOString())
+        } else {
+          formData.append('estimatedArrival', '')
+        }
+        if (orderReceiptFile) {
+          formData.append('receipt', orderReceiptFile)
+        }
+        formData.append('provider', orderProvider || '')
 
-      const order = await pb.collection('orders').create<Order>(formData)
+        await pb.collection('orders').update(editingOrder.id, formData)
 
-      // Create order items
-      for (const item of orderItems) {
-        await pb.collection('order_items').create({
-          order: order.id,
-          product: item.product.id,
-          quantity: item.quantity,
-        })
+        // Handle order items: delete old ones and create new ones
+        // This is simpler than trying to diff and update individual items
+        const existingItems = editingOrder.expand?.['order_items(order)'] || []
+        for (const item of existingItems) {
+          await pb.collection('order_items').delete(item.id)
+        }
+
+        // Create new order items
+        for (const item of orderItems) {
+          await pb.collection('order_items').create({
+            order: editingOrder.id,
+            product: item.product.id,
+            quantity: item.quantity,
+          })
+        }
+      } else {
+        // CREATE new order
+        const formData = new FormData()
+        formData.append('date', new Date().toISOString())
+        formData.append('total', totalNum.toString())
+        formData.append('status', 'pending')
+        if (orderNotes.trim()) {
+          formData.append('notes', orderNotes.trim())
+        }
+        if (orderEstimatedArrival) {
+          formData.append('estimatedArrival', new Date(orderEstimatedArrival).toISOString())
+        }
+        if (orderReceiptFile) {
+          formData.append('receipt', orderReceiptFile)
+        }
+        if (orderProvider) {
+          formData.append('provider', orderProvider)
+        }
+
+        const order = await pb.collection('orders').create<Order>(formData)
+
+        // Create order items
+        for (const item of orderItems) {
+          await pb.collection('order_items').create({
+            order: order.id,
+            product: item.product.id,
+            quantity: item.quantity,
+          })
+        }
       }
 
       // Reload orders with expanded data
       const updatedOrders = await pb.collection('orders').getFullList<ExpandedOrder>({
         sort: '-date',
-        expand: 'order_items(order).product',
+        expand: 'order_items(order).product,provider',
         requestKey: null,
       })
       setOrders(updatedOrders)
@@ -688,10 +876,17 @@ export default function ProductosPage() {
     } finally {
       setIsSavingOrder(false)
     }
-  }, [orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, pb, resetOrderForm])
+  }, [orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, editingOrder, pb, resetOrderForm])
 
   const handleOpenReceiveOrder = useCallback((order: ExpandedOrder) => {
     setReceivingOrder(order)
+    // Initialize received quantities with ordered quantities
+    const items = order.expand?.['order_items(order)'] || []
+    const initialQuantities: Record<string, number> = {}
+    for (const item of items) {
+      initialQuantities[item.id] = item.quantity
+    }
+    setReceivedQuantities(initialQuantities)
     setIsReceiveModalOpen(true)
   }, [])
 
@@ -722,21 +917,31 @@ export default function ProductosPage() {
         const product = item.expand?.product
         if (!product) continue
 
+        // Get the received quantity (may be different from ordered)
+        const receivedQty = receivedQuantities[item.id] ?? item.quantity
+        if (receivedQty <= 0) continue // Skip items not received
+
+        // Build notes based on whether quantity differs
+        const orderedQty = item.quantity
+        const notes = receivedQty !== orderedQty
+          ? `Pedido recibido (${receivedQty} de ${orderedQty} ordenados)`
+          : `Pedido recibido`
+
         // Create inventory transaction
         await pb.collection('inventory_transactions').create({
           date: now,
           product: product.id,
-          quantity: item.quantity,
+          quantity: receivedQty,
           type: 'purchase',
           order: receivingOrder.id,
           createdBy: user.id,
-          notes: `Pedido recibido`,
+          notes,
         })
 
         // Update product stock
         const currentStock = product.stock || 0
         await pb.collection('products').update(product.id, {
-          stock: currentStock + item.quantity,
+          stock: currentStock + receivedQty,
         })
       }
 
@@ -754,7 +959,7 @@ export default function ProductosPage() {
         }),
         pb.collection('orders').getFullList<ExpandedOrder>({
           sort: '-date',
-          expand: 'order_items(order).product',
+          expand: 'order_items(order).product,provider',
           requestKey: null,
         }),
       ])
@@ -769,7 +974,36 @@ export default function ProductosPage() {
     } finally {
       setIsReceiving(false)
     }
-  }, [receivingOrder, user, pb])
+  }, [receivingOrder, receivedQuantities, user, pb])
+
+  const handleDeleteOrder = useCallback(async () => {
+    if (!deleteOrder) return
+
+    setIsDeletingOrder(true)
+    setError('')
+
+    try {
+      // First delete all order items
+      const orderItemsList = deleteOrder.expand?.['order_items(order)'] || []
+      for (const item of orderItemsList) {
+        await pb.collection('order_items').delete(item.id)
+      }
+
+      // Then delete the order
+      await pb.collection('orders').delete(deleteOrder.id)
+
+      // Update local state
+      setOrders(prev => prev.filter(o => o.id !== deleteOrder.id))
+      setDeleteOrder(null)
+      setIsOrderDetailModalOpen(false)
+      setViewingOrder(null)
+    } catch (err) {
+      console.error('Error deleting order:', err)
+      setError('Error al eliminar el pedido')
+    } finally {
+      setIsDeletingOrder(false)
+    }
+  }, [deleteOrder, pb])
 
   // Tab subtitle config
   const tabSubtitles: Record<PageTab, string> = {
@@ -1076,25 +1310,73 @@ export default function ProductosPage() {
                 </button>
               </div>
             ) : (
-              /* Orders exist - show header and list */
+              /* Orders exist - show search, filter, and list */
               <>
-                {/* Header with add button */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-text-secondary">
-                    {orders.length} {orders.length === 1 ? 'pedido' : 'pedidos'}
-                  </span>
+                {/* Search Bar */}
+                <div className="flex gap-2">
+                  <div className="search-bar flex-1">
+                    <IconSearch className="search-bar-icon" />
+                    <input
+                      type="text"
+                      placeholder="Buscar por proveedor o fecha..."
+                      value={orderSearchQuery}
+                      onChange={e => setOrderSearchQuery(e.target.value)}
+                      className="search-bar-input"
+                    />
+                    {orderSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setOrderSearchQuery('')}
+                        className="search-bar-clear"
+                        aria-label="Limpiar busqueda"
+                      >
+                        <IconClose className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={handleOpenNewOrder}
-                    className="btn btn-primary btn-sm"
+                    className="btn btn-primary btn-icon flex-shrink-0"
+                    aria-label="Nuevo pedido"
                   >
                     <IconAdd className="w-4 h-4" />
-                    Nuevo Pedido
                   </button>
                 </div>
 
-              <div className="space-y-2">
-                {orders.map(order => {
+                {/* Status Filter Tabs */}
+                <div className="filter-tabs">
+                  <button
+                    type="button"
+                    onClick={() => setOrderStatusFilter('all')}
+                    className={`filter-tab ${orderStatusFilter === 'all' ? 'filter-tab-active' : ''}`}
+                  >
+                    Todos ({orders.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrderStatusFilter('pending')}
+                    className={`filter-tab ${orderStatusFilter === 'pending' ? 'filter-tab-active' : ''}`}
+                  >
+                    Pendientes ({orders.filter(o => o.status === 'pending').length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrderStatusFilter('received')}
+                    className={`filter-tab ${orderStatusFilter === 'received' ? 'filter-tab-active' : ''}`}
+                  >
+                    Recibidos ({orders.filter(o => o.status === 'received').length})
+                  </button>
+                </div>
+
+                {/* Orders List */}
+                {filteredOrders.length === 0 ? (
+                  <div className="text-center py-8 text-text-secondary">
+                    No se encontraron pedidos
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                {filteredOrders.map(order => {
                   const items = order.expand?.['order_items(order)'] || []
                   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
                   const isPending = order.status === 'pending'
@@ -1125,11 +1407,11 @@ export default function ProductosPage() {
                           <span className="text-xs text-text-tertiary">
                             {itemCount} {itemCount === 1 ? 'unidad' : 'unidades'}
                           </span>
-                          {order.notes && (
+                          {order.expand?.provider && (
                             <>
                               <span className="text-text-muted">·</span>
                               <span className="text-xs text-text-tertiary truncate">
-                                {order.notes}
+                                {order.expand.provider.name}
                               </span>
                             </>
                           )}
@@ -1153,7 +1435,8 @@ export default function ProductosPage() {
                     </div>
                   )
                 })}
-                </div>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -1167,17 +1450,29 @@ export default function ProductosPage() {
         title={editingProduct ? 'Editar producto' : 'Agregar producto'}
         footer={
           <>
-            {editingProduct && canDelete && (
-              <button
-                type="button"
-                onClick={() => {
-                  setDeleteProduct(editingProduct)
-                }}
-                className="modal-action-delete"
-                title="Eliminar producto"
-              >
-                <IconTrash className="w-5 h-5" />
-              </button>
+            {editingProduct && (
+              <>
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteProduct(editingProduct)
+                    }}
+                    className="modal-action-delete"
+                    title="Eliminar producto"
+                  >
+                    <IconTrash className="w-5 h-5" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleOpenAdjustment(editingProduct)}
+                  className="modal-action-adjust"
+                  title="Ajustar inventario"
+                >
+                  <IconAdjust className="w-5 h-5" />
+                </button>
+              </>
             )}
             <div className="modal-actions">
               <button
@@ -1359,6 +1654,177 @@ export default function ProductosPage() {
         isDeleting={isDeleting}
       />
 
+      {/* Stock adjustment modal */}
+      <Modal
+        isOpen={adjustingProduct !== null}
+        onClose={handleCloseAdjustment}
+        title="Ajustar inventario"
+        footer={
+          <div className="modal-actions">
+            <button
+              type="button"
+              onClick={handleCloseAdjustment}
+              className="btn btn-secondary"
+              disabled={isAdjusting}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveAdjustment}
+              className="btn btn-primary"
+              disabled={isAdjusting || !adjustmentQuantity || !adjustmentReason}
+            >
+              {isAdjusting ? <Spinner /> : 'Guardar'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          {error && (
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+              {error}
+            </div>
+          )}
+
+          {/* Product info */}
+          {adjustingProduct && (
+            <div className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
+              <div className="w-12 h-12 bg-bg-elevated rounded-lg flex items-center justify-center overflow-hidden">
+                {adjustingProduct.image ? (
+                  <Image
+                    src={getProductImageUrl(adjustingProduct, pb.baseURL)}
+                    alt={adjustingProduct.name}
+                    width={48}
+                    height={48}
+                    className="object-cover w-full h-full"
+                    unoptimized
+                  />
+                ) : (
+                  <IconProducts className="w-6 h-6 text-text-tertiary" />
+                )}
+              </div>
+              <div>
+                <div className="font-medium">{adjustingProduct.name}</div>
+                <div className="text-sm text-text-secondary">
+                  Stock actual: <span className="font-medium">{adjustingProduct.stock ?? 0}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Add/Remove toggle */}
+          <div>
+            <label className="label">Tipo de ajuste</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAdjustmentMode('remove')
+                  setAdjustmentReason('')
+                }}
+                className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
+                  adjustmentMode === 'remove'
+                    ? 'border-error bg-error-subtle text-error'
+                    : 'border-border bg-bg-elevated text-text-secondary'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <IconArrowDown className="w-5 h-5" />
+                  <span className="font-medium">Remover</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAdjustmentMode('add')
+                  setAdjustmentReason('')
+                }}
+                className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
+                  adjustmentMode === 'add'
+                    ? 'border-success bg-success-subtle text-success'
+                    : 'border-border bg-bg-elevated text-text-secondary'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <IconArrowUp className="w-5 h-5" />
+                  <span className="font-medium">Agregar</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Quantity */}
+          <div>
+            <label className="label">Cantidad</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={adjustmentQuantity}
+              onChange={e => setAdjustmentQuantity(e.target.value)}
+              className="input"
+              placeholder="0"
+              min="1"
+              max={adjustmentMode === 'remove' ? (adjustingProduct?.stock ?? 0) : undefined}
+            />
+          </div>
+
+          {/* Reason dropdown */}
+          <div>
+            <label className="label">Motivo</label>
+            <select
+              value={adjustmentReason}
+              onChange={e => setAdjustmentReason(e.target.value)}
+              className="input"
+            >
+              <option value="">Seleccionar motivo...</option>
+              {adjustmentMode === 'remove' ? (
+                <>
+                  <option value="Producto danado">Producto danado</option>
+                  <option value="Producto vencido">Producto vencido</option>
+                  <option value="Perdida">Perdida</option>
+                  <option value="Conteo incorrecto">Conteo incorrecto</option>
+                  <option value="Uso interno">Uso interno</option>
+                  <option value="Otro">Otro</option>
+                </>
+              ) : (
+                <>
+                  <option value="Conteo incorrecto">Conteo incorrecto</option>
+                  <option value="Envio extra">Envio extra</option>
+                  <option value="Devolucion">Devolucion</option>
+                  <option value="Otro">Otro</option>
+                </>
+              )}
+            </select>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="label">Notas (opcional)</label>
+            <textarea
+              value={adjustmentNotes}
+              onChange={e => setAdjustmentNotes(e.target.value)}
+              className="input"
+              rows={2}
+              placeholder="Detalles adicionales..."
+            />
+          </div>
+
+          {/* Preview */}
+          {adjustingProduct && adjustmentQuantity && (
+            <div className="p-3 bg-bg-muted rounded-lg text-sm">
+              <span className="text-text-secondary">Nuevo stock: </span>
+              <span className="font-medium">
+                {adjustmentMode === 'add'
+                  ? (adjustingProduct.stock ?? 0) + parseInt(adjustmentQuantity || '0', 10)
+                  : Math.max(0, (adjustingProduct.stock ?? 0) - parseInt(adjustmentQuantity || '0', 10))
+                }
+              </span>
+            </div>
+          )}
+        </div>
+      </Modal>
+
       {/* New Order Modal */}
       <Modal
         isOpen={isOrderModalOpen}
@@ -1366,7 +1832,7 @@ export default function ProductosPage() {
           setIsOrderModalOpen(false)
           resetOrderForm()
         }}
-        title="Nuevo Pedido"
+        title={editingOrder ? "Editar Pedido" : "Nuevo Pedido"}
         size="large"
         footer={
           <div className="modal-actions">
@@ -1503,6 +1969,22 @@ export default function ProductosPage() {
               className="input"
               placeholder="0.00"
             />
+          </div>
+
+          {/* Provider */}
+          <div>
+            <label htmlFor="orderProvider" className="label">Proveedor (opcional)</label>
+            <select
+              id="orderProvider"
+              value={orderProvider}
+              onChange={e => setOrderProvider(e.target.value)}
+              className="input"
+            >
+              <option value="">Sin proveedor</option>
+              {providers.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
           </div>
 
           {/* Estimated Arrival */}
@@ -1647,19 +2129,56 @@ export default function ProductosPage() {
 
             <div>
               <p className="label">Productos a recibir:</p>
+              <p className="text-xs text-text-tertiary mb-2">Ajusta las cantidades si recibiste menos de lo ordenado</p>
               <div className="space-y-2">
-                {receivingOrder.expand?.['order_items(order)']?.map(item => (
-                  <div key={item.id} className="flex items-center justify-between p-2 rounded-lg border border-border">
-                    <span>{item.expand?.product?.name || 'Producto'}</span>
-                    <span className="font-medium text-success">+{item.quantity} unidades</span>
-                  </div>
-                ))}
+                {receivingOrder.expand?.['order_items(order)']?.map(item => {
+                  const orderedQty = item.quantity
+                  const receivedQty = receivedQuantities[item.id] ?? orderedQty
+                  const isDifferent = receivedQty !== orderedQty
+
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg border border-border">
+                      <div className="flex-1 min-w-0">
+                        <span className="block truncate">{item.expand?.product?.name || 'Producto'}</span>
+                        <span className="text-xs text-text-tertiary">Ordenado: {orderedQty}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setReceivedQuantities(prev => ({
+                            ...prev,
+                            [item.id]: Math.max(0, (prev[item.id] ?? orderedQty) - 1)
+                          }))}
+                          className="btn btn-secondary btn-icon btn-sm"
+                          disabled={receivedQty <= 0}
+                        >
+                          <IconArrowDown className="w-4 h-4" />
+                        </button>
+                        <span className={`font-medium min-w-[3rem] text-center ${
+                          receivedQty === 0 ? 'text-error' : isDifferent ? 'text-warning' : 'text-success'
+                        }`}>
+                          +{receivedQty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setReceivedQuantities(prev => ({
+                            ...prev,
+                            [item.id]: (prev[item.id] ?? orderedQty) + 1
+                          }))}
+                          className="btn btn-secondary btn-icon btn-sm"
+                        >
+                          <IconArrowUp className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
             <div className="p-3 rounded-lg bg-warning-subtle text-warning text-sm">
               <IconWarning className="w-4 h-4 inline mr-2" />
-              Al confirmar, el stock de estos productos aumentara automaticamente.
+              Al confirmar, el stock aumentara segun las cantidades indicadas.
             </div>
           </div>
         )}
@@ -1676,30 +2195,58 @@ export default function ProductosPage() {
         size="large"
         footer={
           viewingOrder?.status === 'pending' ? (
-            <div className="modal-actions">
+            <>
+              {canDelete && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (viewingOrder) {
+                      setDeleteOrder(viewingOrder)
+                    }
+                  }}
+                  className="modal-action-delete"
+                  title="Eliminar pedido"
+                >
+                  <IconTrash className="w-5 h-5" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
-                  setIsOrderDetailModalOpen(false)
-                  setViewingOrder(null)
-                }}
-                className="btn btn-secondary"
-              >
-                Cerrar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOrderDetailModalOpen(false)
                   if (viewingOrder) {
-                    handleOpenReceiveOrder(viewingOrder)
+                    handleOpenEditOrder(viewingOrder)
                   }
                 }}
-                className="btn btn-primary"
+                className="modal-action-edit"
+                title="Editar pedido"
               >
-                Recibir Pedido
+                <IconEdit className="w-5 h-5" />
               </button>
-            </div>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOrderDetailModalOpen(false)
+                    setViewingOrder(null)
+                  }}
+                  className="btn btn-secondary"
+                >
+                  Cerrar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOrderDetailModalOpen(false)
+                    if (viewingOrder) {
+                      handleOpenReceiveOrder(viewingOrder)
+                    }
+                  }}
+                  className="btn btn-primary"
+                >
+                  Recibir Pedido
+                </button>
+              </div>
+            </>
           ) : undefined
         }
       >
@@ -1733,6 +2280,12 @@ export default function ProductosPage() {
                 <span className="text-text-secondary">Total pagado:</span>
                 <span className="font-bold text-error">-{formatCurrency(viewingOrder.total)}</span>
               </div>
+              {viewingOrder.expand?.provider && (
+                <div className="flex justify-between mt-2">
+                  <span className="text-text-secondary">Proveedor:</span>
+                  <span className="font-medium">{viewingOrder.expand.provider.name}</span>
+                </div>
+              )}
             </div>
 
             {/* Products */}
@@ -1846,6 +2399,50 @@ export default function ProductosPage() {
           </button>
         </div>
       </BottomSheet>
+
+      {/* Order delete confirmation modal */}
+      {deleteOrder !== null && (
+        <div className="modal-backdrop" onClick={() => setDeleteOrder(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Eliminar pedido</h2>
+              <button
+                type="button"
+                onClick={() => setDeleteOrder(null)}
+                className="modal-close"
+                aria-label="Cerrar"
+              >
+                <IconClose className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
+                Estas seguro que deseas eliminar el pedido del <strong>{formatDate(new Date(deleteOrder.date))}</strong>? Esta accion no se puede deshacer.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                onClick={() => setDeleteOrder(null)}
+                className="btn btn-secondary"
+                style={{ flex: 1 }}
+                disabled={isDeletingOrder}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteOrder}
+                className="btn btn-danger"
+                style={{ flex: 1 }}
+                disabled={isDeletingOrder}
+              >
+                {isDeletingOrder ? <Spinner /> : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bulk action bar (fixed above mobile nav when in selection mode) */}
       {isSelectionMode && selectedProducts.size > 0 && (
