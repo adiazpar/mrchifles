@@ -1313,35 +1313,25 @@ export default function ProductosPage() {
               /* Orders exist - show search, filter, and list */
               <>
                 {/* Search Bar */}
-                <div className="flex gap-2">
-                  <div className="search-bar flex-1">
-                    <IconSearch className="search-bar-icon" />
-                    <input
-                      type="text"
-                      placeholder="Buscar por proveedor o fecha..."
-                      value={orderSearchQuery}
-                      onChange={e => setOrderSearchQuery(e.target.value)}
-                      className="search-bar-input"
-                    />
-                    {orderSearchQuery && (
-                      <button
-                        type="button"
-                        onClick={() => setOrderSearchQuery('')}
-                        className="search-bar-clear"
-                        aria-label="Limpiar busqueda"
-                      >
-                        <IconClose className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleOpenNewOrder}
-                    className="btn btn-primary btn-icon flex-shrink-0"
-                    aria-label="Nuevo pedido"
-                  >
-                    <IconAdd className="w-4 h-4" />
-                  </button>
+                <div className="search-bar">
+                  <IconSearch className="search-bar-icon" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por proveedor o fecha..."
+                    value={orderSearchQuery}
+                    onChange={e => setOrderSearchQuery(e.target.value)}
+                    className="search-bar-input"
+                  />
+                  {orderSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setOrderSearchQuery('')}
+                      className="search-bar-clear"
+                      aria-label="Limpiar busqueda"
+                    >
+                      <IconClose className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Status Filter Tabs */}
@@ -1351,7 +1341,7 @@ export default function ProductosPage() {
                     onClick={() => setOrderStatusFilter('all')}
                     className={`filter-tab ${orderStatusFilter === 'all' ? 'filter-tab-active' : ''}`}
                   >
-                    Todos ({orders.length})
+                    Todos
                   </button>
                   <button
                     type="button"
@@ -1366,6 +1356,21 @@ export default function ProductosPage() {
                     className={`filter-tab ${orderStatusFilter === 'received' ? 'filter-tab-active' : ''}`}
                   >
                     Recibidos ({orders.filter(o => o.status === 'received').length})
+                  </button>
+                </div>
+
+                {/* Count and New Order button */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-text-secondary">
+                    {orders.length} {orders.length === 1 ? 'pedido' : 'pedidos'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleOpenNewOrder}
+                    className="btn btn-primary btn-sm"
+                  >
+                    <IconAdd className="w-4 h-4" />
+                    Nuevo Pedido
                   </button>
                 </div>
 
