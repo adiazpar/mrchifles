@@ -3321,6 +3321,22 @@
   background: var(--color-bg-muted);
 }
 
+/* Non-clickable list item (has hover effects but no cursor change) */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-fast);
+}
+
+@media (hover: hover) {
+  .list-item:hover {
+    background: var(--color-bg-muted);
+  }
+}
+
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *,

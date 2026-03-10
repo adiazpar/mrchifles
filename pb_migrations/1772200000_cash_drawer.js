@@ -129,7 +129,6 @@ migrate((app) => {
         type: 'select',
         required: true,
         values: [
-          'apertura',
           'venta',
           'prestamo_empleado',
           'retiro_banco',
