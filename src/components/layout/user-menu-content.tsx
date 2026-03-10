@@ -22,11 +22,6 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
     router.push('/login')
   }, [logout, router, onAction])
 
-  const handleNavigation = useCallback((path: string) => {
-    onAction?.()
-    router.push(path)
-  }, [router, onAction])
-
   if (!user) return null
 
   const canManageTeam = isPartnerOrOwner(user)

@@ -645,7 +645,7 @@ export default function ProductosPage() {
     } finally {
       setIsAdjusting(false)
     }
-  }, [adjustingProduct, adjustmentQuantity, adjustmentMode, adjustmentReason, adjustmentNotes, pb, handleCloseAdjustment, handleCloseModal])
+  }, [adjustingProduct, adjustmentQuantity, adjustmentMode, adjustmentReason, adjustmentNotes, pb, user?.id, handleCloseAdjustment, handleCloseModal])
 
   // Selection mode handlers
   const handleEnterSelectionMode = useCallback(() => {
@@ -2025,6 +2025,7 @@ export default function ProductosPage() {
             />
             {orderReceiptPreview ? (
               <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={orderReceiptPreview}
                   alt="Comprobante"
@@ -2330,6 +2331,7 @@ export default function ProductosPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={getOrderReceiptUrl(viewingOrder) || ''}
                       alt="Comprobante"
