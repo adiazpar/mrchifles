@@ -5,23 +5,22 @@ export interface Country {
   code: string // ISO 3166-1 alpha-2
   name: string // Spanish name
   dialCode: string // E.g., "+51"
-  flag: string // Emoji flag
 }
 
 export const COUNTRIES: Country[] = [
-  { code: 'PE', name: 'Peru', dialCode: '+51', flag: '' },
-  { code: 'US', name: 'Estados Unidos', dialCode: '+1', flag: '' },
-  { code: 'MX', name: 'Mexico', dialCode: '+52', flag: '' },
-  { code: 'CO', name: 'Colombia', dialCode: '+57', flag: '' },
-  { code: 'AR', name: 'Argentina', dialCode: '+54', flag: '' },
-  { code: 'CL', name: 'Chile', dialCode: '+56', flag: '' },
-  { code: 'ES', name: 'Espana', dialCode: '+34', flag: '' },
-  { code: 'EC', name: 'Ecuador', dialCode: '+593', flag: '' },
-  { code: 'BO', name: 'Bolivia', dialCode: '+591', flag: '' },
-  { code: 'VE', name: 'Venezuela', dialCode: '+58', flag: '' },
-  { code: 'BR', name: 'Brasil', dialCode: '+55', flag: '' },
-  { code: 'PY', name: 'Paraguay', dialCode: '+595', flag: '' },
-  { code: 'UY', name: 'Uruguay', dialCode: '+598', flag: '' },
+  { code: 'PE', name: 'Peru', dialCode: '+51' },
+  { code: 'US', name: 'Estados Unidos', dialCode: '+1' },
+  { code: 'MX', name: 'Mexico', dialCode: '+52' },
+  { code: 'CO', name: 'Colombia', dialCode: '+57' },
+  { code: 'AR', name: 'Argentina', dialCode: '+54' },
+  { code: 'CL', name: 'Chile', dialCode: '+56' },
+  { code: 'ES', name: 'Espana', dialCode: '+34' },
+  { code: 'EC', name: 'Ecuador', dialCode: '+593' },
+  { code: 'BO', name: 'Bolivia', dialCode: '+591' },
+  { code: 'VE', name: 'Venezuela', dialCode: '+58' },
+  { code: 'BR', name: 'Brasil', dialCode: '+55' },
+  { code: 'PY', name: 'Paraguay', dialCode: '+595' },
+  { code: 'UY', name: 'Uruguay', dialCode: '+598' },
 ]
 
 // Default country (Peru)
