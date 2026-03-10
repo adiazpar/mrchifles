@@ -179,6 +179,11 @@ export default function CajaPage() {
     return actualBalance - expectedBalance
   }, [closingBalance, expectedBalance])
 
+  // Get the most recent closed session (for reference when opening new drawer)
+  const lastClosedSession = useMemo(() => {
+    return sessions.find(s => s.closedAt != null) || null
+  }, [sessions])
+
   // ============================================
   // DATA LOADING
   // ============================================
@@ -708,7 +713,7 @@ export default function CajaPage() {
               type="button"
               onClick={handleOpenDrawer}
               className="btn btn-primary flex-1"
-              disabled={isOpening || !openingBalance || parseFloat(openingBalance) < 0}
+              disabled={isOpening || openingBalance === '' || parseFloat(openingBalance) < 0}
             >
               {isOpening ? <Spinner /> : 'Abrir'}
             </button>
@@ -716,6 +721,19 @@ export default function CajaPage() {
         }
       >
         <div className="space-y-4">
+          {lastClosedSession && lastClosedSession.closedAt && lastClosedSession.closingBalance !== undefined && (
+            <div className="p-3 rounded-lg bg-bg-muted">
+              <div className="text-sm text-text-secondary">
+                La sesion anterior cerro con
+              </div>
+              <div className="text-lg font-display font-bold text-text-primary mt-0.5">
+                {formatCurrency(lastClosedSession.closingBalance)}
+              </div>
+              <div className="text-xs text-text-tertiary mt-1">
+                {formatDate(lastClosedSession.closedAt)}
+              </div>
+            </div>
+          )}
           <div>
             <label htmlFor="opening-balance" className="label">Saldo inicial (S/)</label>
             <input

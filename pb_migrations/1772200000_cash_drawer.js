@@ -60,7 +60,7 @@ migrate((app) => {
         id: "csopenbal01",
         name: 'openingBalance',
         type: 'number',
-        required: true,
+        required: false,  // false to allow 0 (PocketBase treats 0 as "empty" for required fields)
         min: 0,
       },
       {
