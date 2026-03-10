@@ -234,3 +234,61 @@ export interface InventoryTransaction {
     createdBy?: User
   }
 }
+
+// ============================================
+// CASH DRAWER TYPES
+// ============================================
+
+export type CashMovementType = 'ingreso' | 'egreso'
+
+export type CashMovementCategory =
+  | 'apertura'           // Opening balance (ingreso)
+  | 'venta'              // Cash sale (ingreso) - auto from ventas
+  | 'prestamo_empleado'  // Employee loan to drawer (ingreso)
+  | 'retiro_banco'       // Bank withdrawal (ingreso)
+  | 'cambio'             // Getting change (ingreso)
+  | 'devolucion_prestamo' // Repaying employee loan (egreso)
+  | 'deposito_banco'     // Bank deposit (egreso)
+  | 'gastos'             // Operating expenses (egreso)
+  | 'devolucion_cliente' // Customer refund (egreso)
+  | 'cambio_billetes'    // Breaking bills (egreso)
+  | 'otro'               // Other
+
+export interface CashSession {
+  id: string
+  openedAt: string
+  closedAt?: string
+  openedBy: string
+  closedBy?: string
+  openingBalance: number
+  closingBalance?: number
+  expectedBalance?: number
+  discrepancy?: number
+  discrepancyNote?: string
+  created: string
+  updated: string
+  expand?: {
+    openedBy?: User
+    closedBy?: User
+    'cash_movements(session)'?: CashMovement[]
+  }
+}
+
+export interface CashMovement {
+  id: string
+  session: string
+  type: CashMovementType
+  category: CashMovementCategory
+  amount: number
+  note?: string
+  sale?: string
+  employee?: string
+  createdBy: string
+  created: string
+  expand?: {
+    session?: CashSession
+    sale?: Sale
+    employee?: User
+    createdBy?: User
+  }
+}
