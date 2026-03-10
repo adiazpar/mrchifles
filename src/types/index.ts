@@ -242,7 +242,6 @@ export interface InventoryTransaction {
 export type CashMovementType = 'ingreso' | 'egreso'
 
 export type CashMovementCategory =
-  | 'apertura'           // Opening balance (ingreso)
   | 'venta'              // Cash sale (ingreso) - auto from ventas
   | 'prestamo_empleado'  // Employee loan to drawer (ingreso)
   | 'retiro_banco'       // Bank withdrawal (ingreso)

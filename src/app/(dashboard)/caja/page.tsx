@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { PageHeader } from '@/components/layout'
 import { Spinner } from '@/components/ui'
-import { IconClose, IconAdd, IconTime, IconCashDrawer, IconArrowUp, IconArrowDown, IconCheck, IconClock } from '@/components/icons'
+import { IconClose, IconAdd, IconTime, IconCashDrawer, IconIngreso, IconEgreso, IconCheck, IconClock, IconChevronRight } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { CashSession, CashMovement, CashMovementType, CashMovementCategory, User } from '@/types'
+import type { CashSession, CashMovement, CashMovementType, CashMovementCategory } from '@/types'
 
 // ============================================
 // CONSTANTS
@@ -15,7 +15,6 @@ import type { CashSession, CashMovement, CashMovementType, CashMovementCategory,
 type PageTab = 'caja' | 'historial'
 
 const CATEGORY_LABELS: Record<CashMovementCategory, string> = {
-  apertura: 'Apertura',
   venta: 'Venta',
   prestamo_empleado: 'Prestamo empleado',
   retiro_banco: 'Retiro de banco',
@@ -209,18 +208,12 @@ export default function CajaPage() {
 
   const loadMovements = useCallback(async (sessionId: string) => {
     try {
-      console.log('loadMovements called with sessionId:', sessionId)
-
-      // Try the simplest possible query - just getList with no options
-      const result = await pb.collection('cash_movements').getList(1, 50)
-      console.log('Got result:', result)
-
-      const movs = result.items.filter(m => m.session === sessionId) as CashMovement[]
+      // Use simple getList with client-side filtering (workaround for SDK issue)
+      const result = await pb.collection('cash_movements').getList<CashMovement>(1, 50)
+      const movs = result.items.filter(m => m.session === sessionId)
       setMovements(movs)
     } catch (err: unknown) {
       console.error('Error loading movements:', err)
-      // Log the full error object
-      console.error('Full error:', JSON.stringify(err, null, 2))
     }
   }, [pb])
 
@@ -286,25 +279,16 @@ export default function CajaPage() {
     try {
       const now = new Date().toISOString()
 
-      // Create session
+      // Create session (opening balance is stored in the session, not as a movement)
       const session = await pb.collection('cash_sessions').create<CashSession>({
         openedAt: now,
         openedBy: user.id,
         openingBalance: balance,
       })
 
-      // Create apertura movement
-      await pb.collection('cash_movements').create({
-        session: session.id,
-        type: 'ingreso',
-        category: 'apertura',
-        amount: balance,
-        createdBy: user.id,
-      })
-
       // Refresh data
       setCurrentSession(session)
-      await loadMovements(session.id)
+      setMovements([]) // New session starts with no movements
       await loadSessions()
 
       // Close modal and reset form
@@ -367,19 +351,18 @@ export default function CajaPage() {
 
     setIsSavingMovement(true)
     try {
-      await pb.collection('cash_movements').create({
+      const newMovement = await pb.collection('cash_movements').create<CashMovement>({
         session: currentSession.id,
         type: movementType,
         category: movementCategory,
         amount: amount,
         note: movementNote.trim() || null,
         createdBy: user.id,
-        // For employee loans, use current user as employee (can be enhanced later)
         employee: (movementCategory === 'prestamo_empleado' || movementCategory === 'devolucion_prestamo') ? user.id : null,
       })
 
-      // Refresh movements
-      await loadMovements(currentSession.id)
+      // Add new movement to state directly (PocketBase returns the created record with timestamp)
+      setMovements(prev => [...prev, newMovement])
 
       // Close modal and reset form
       setIsMovementModalOpen(false)
@@ -402,8 +385,8 @@ export default function CajaPage() {
 
     try {
       // Use simple getList with client-side filtering (same fix as loadMovements)
-      const result = await pb.collection('cash_movements').getList(1, 50)
-      const movs = result.items.filter(m => m.session === session.id) as CashMovement[]
+      const result = await pb.collection('cash_movements').getList<CashMovement>(1, 50)
+      const movs = result.items.filter(m => m.session === session.id)
       // Sort by created descending (newest first)
       movs.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
       setViewingSessionMovements(movs)
@@ -430,8 +413,10 @@ export default function CajaPage() {
     }).replace(/a\.\s*m\./gi, 'a.m.').replace(/p\.\s*m\./gi, 'p.m.')
   }
 
-  const formatTime = (dateStr: string) => {
+  const formatTime = (dateStr: string | undefined) => {
+    if (!dateStr) return ''
     const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return ''
     return date.toLocaleTimeString('es-PE', {
       hour: '2-digit',
       minute: '2-digit',
@@ -445,23 +430,26 @@ export default function CajaPage() {
 
   if (isLoading) {
     return (
-      <div className="page-wrapper">
-        <PageHeader title="Caja" subtitle="Control de caja" />
-        <main className="page-content">
-          <div className="page-body">
-            <div className="flex items-center justify-center h-64">
-              <Spinner />
-            </div>
-          </div>
+      <>
+        <PageHeader title="Caja" />
+        <main className="page-loading">
+          <Spinner className="spinner-lg" />
         </main>
-      </div>
+      </>
     )
   }
 
   return (
-    <div className="page-wrapper">
-      <PageHeader title="Caja" subtitle="Control de caja" />
-      <main className="page-content space-y-4">
+    <>
+      <PageHeader title="Caja" subtitle="Control de efectivo" />
+
+      <main className="page-content space-y-6">
+        {error && (
+          <div className="p-4 bg-error-subtle text-error rounded-lg">
+            {error}
+          </div>
+        )}
+
         {/* Section Tabs */}
         <div className="section-tabs">
           <button
@@ -481,45 +469,38 @@ export default function CajaPage() {
         </div>
 
         {activeTab === 'caja' ? (
-          <div className="page-body space-y-4">
-            {error && (
-              <div className="p-4 bg-error-subtle text-error rounded-lg">
-                {error}
-              </div>
-            )}
-
-            {currentSession ? (
-              // Open drawer view
-              <div className="space-y-4">
-                {/* Balance Card */}
-                <div className="card p-4" style={{ background: 'var(--color-success-light)' }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium" style={{ color: 'var(--color-success)' }}>
-                      Caja abierta
+          currentSession ? (
+            // Open drawer view
+            <div className="space-y-6 pb-20">
+                {/* Balance Summary */}
+                <div className="p-4 rounded-lg border border-success bg-success-subtle">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-success text-white">
+                      Abierta
                     </span>
-                    <span className="text-xs text-text-secondary">
+                    <span className="text-xs text-text-tertiary">
                       {formatDateTime(currentSession.openedAt)}
                     </span>
                   </div>
-                  <div className="text-3xl font-bold text-text-primary mb-1">
+                  <div className="text-3xl font-display font-bold text-text-primary">
                     {formatCurrency(expectedBalance)}
                   </div>
-                  <div className="text-sm text-text-secondary">
+                  <div className="text-sm text-text-secondary mt-1">
                     Saldo esperado
                   </div>
                 </div>
 
                 {/* Outstanding Loans */}
                 {outstandingLoans.size > 0 && (
-                  <div className="card p-4">
-                    <h3 className="text-sm font-medium text-text-secondary mb-3">
+                  <div className="p-4 rounded-lg border border-warning bg-warning-subtle">
+                    <h3 className="text-sm font-medium text-text-primary mb-3">
                       Prestamos pendientes
                     </h3>
                     <div className="space-y-2">
                       {Array.from(outstandingLoans.entries()).map(([id, loan]) => (
                         <div key={id} className="flex items-center justify-between">
-                          <span className="text-text-primary">{loan.name}</span>
-                          <span className="font-medium" style={{ color: 'var(--color-warning)' }}>
+                          <span className="text-sm text-text-secondary">{loan.name}</span>
+                          <span className="text-sm font-medium text-warning">
                             {formatCurrency(loan.amount)}
                           </span>
                         </div>
@@ -528,181 +509,197 @@ export default function CajaPage() {
                   </div>
                 )}
 
-                {/* Actions */}
-                <div className="flex gap-3">
+                {/* Movements Header */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-text-secondary">
+                    {movements.length} {movements.length === 1 ? 'movimiento' : 'movimientos'}
+                  </span>
                   <button
+                    type="button"
                     onClick={() => setIsMovementModalOpen(true)}
-                    className="btn btn-primary flex-1"
+                    className="btn btn-primary btn-sm"
                   >
-                    <IconAdd className="w-5 h-5" />
-                    Registrar movimiento
-                  </button>
-                  <button
-                    onClick={() => setIsCloseDrawerModalOpen(true)}
-                    className="btn btn-secondary"
-                  >
-                    Cerrar caja
+                    <IconAdd className="w-4 h-4" />
+                    Registrar
                   </button>
                 </div>
 
                 {/* Movements List */}
-                <div>
-                  <h3 className="text-sm font-medium text-text-secondary mb-3">
-                    Movimientos de hoy
-                  </h3>
-                  {movements.length === 0 ? (
-                    <div className="text-center py-8 text-text-secondary">
-                      No hay movimientos registrados
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {movements.map((mov) => (
+                {movements.length === 0 ? (
+                  <div className="text-center py-8 text-text-tertiary">
+                    No hay movimientos registrados
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {movements.map((mov) => (
+                      <div
+                        key={mov.id}
+                        className="list-item"
+                      >
                         <div
-                          key={mov.id}
-                          className="card p-3 flex items-center gap-3"
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            mov.type === 'ingreso'
+                              ? 'bg-success-subtle text-success'
+                              : 'bg-error-subtle text-error'
+                          }`}
                         >
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center"
-                            style={{
-                              background: mov.type === 'ingreso'
-                                ? 'var(--color-success-light)'
-                                : 'var(--color-error-light)',
-                            }}
-                          >
-                            {mov.type === 'ingreso' ? (
-                              <IconArrowDown className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
-                            ) : (
-                              <IconArrowUp className="w-4 h-4" style={{ color: 'var(--color-error)' }} />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-text-primary">
-                              {CATEGORY_LABELS[mov.category]}
-                            </div>
-                            {mov.note && (
-                              <div className="text-xs text-text-secondary truncate">
-                                {mov.note}
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <div
-                              className="font-medium"
-                              style={{
-                                color: mov.type === 'ingreso'
-                                  ? 'var(--color-success)'
-                                  : 'var(--color-error)',
-                              }}
-                            >
-                              {mov.type === 'ingreso' ? '+' : '-'}{formatCurrency(mov.amount)}
-                            </div>
-                            <div className="text-xs text-text-secondary">
-                              {formatTime(mov.created)}
-                            </div>
-                          </div>
+                          {mov.type === 'ingreso' ? (
+                            <IconIngreso className="w-5 h-5" />
+                          ) : (
+                            <IconEgreso className="w-5 h-5" />
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              // Closed drawer view
-              <div className="empty-state-fill">
-                <IconCashDrawer className="empty-state-icon" />
-                <h3 className="empty-state-title">Caja cerrada</h3>
-                <p className="empty-state-description">
-                  Abre la caja para comenzar a registrar movimientos
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIsOpenDrawerModalOpen(true)}
-                  className="btn btn-primary mt-4"
-                >
-                  Abrir Caja
-                </button>
-              </div>
-            )}
-          </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium block">
+                            {CATEGORY_LABELS[mov.category]}
+                          </span>
+                          {mov.note && (
+                            <span className="text-xs text-text-tertiary truncate block mt-0.5">
+                              {mov.note}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span
+                            className={`font-medium block ${
+                              mov.type === 'ingreso' ? 'text-success' : 'text-error'
+                            }`}
+                          >
+                            {mov.type === 'ingreso' ? '+' : '-'}{formatCurrency(mov.amount)}
+                          </span>
+                          <span className="text-xs text-text-tertiary block mt-0.5">
+                            {formatTime(mov.created)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </div>
+          ) : (
+            // Closed drawer view
+            <div className="empty-state-fill">
+              <IconCashDrawer className="empty-state-icon" />
+              <h3 className="empty-state-title">Caja cerrada</h3>
+              <p className="empty-state-description">
+                Abre la caja para comenzar a registrar movimientos
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsOpenDrawerModalOpen(true)}
+                className="btn btn-primary mt-4"
+              >
+                Abrir caja
+              </button>
+            </div>
+          )
         ) : (
           // Historial tab
-          <div className="page-body space-y-4">
-            {sessions.length === 0 ? (
-              <div className="empty-state-fill">
-                <IconTime className="empty-state-icon" />
-                <h3 className="empty-state-title">No hay sesiones</h3>
-                <p className="empty-state-description">
-                  Las sesiones de caja apareceran aqui
-                </p>
+          sessions.length === 0 ? (
+            <div className="empty-state-fill">
+              <IconTime className="empty-state-icon" />
+              <h3 className="empty-state-title">No hay sesiones</h3>
+              <p className="empty-state-description">
+                Las sesiones de caja apareceran aqui
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Sessions count */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-text-secondary">
+                  {sessions.length} {sessions.length === 1 ? 'sesion' : 'sesiones'}
+                </span>
               </div>
-            ) : (
-              <div className="space-y-2">
+
+              {/* Sessions List */}
+              <div className="space-y-1">
                 {sessions.map((session) => (
-                  <button
+                  <div
                     key={session.id}
+                    className="list-item-clickable"
                     onClick={() => handleViewSessionDetail(session)}
-                    className="card p-4 w-full text-left hover:border-brand transition-colors"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleViewSessionDetail(session)
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {session.closedAt ? (
-                          <IconCheck className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
-                        ) : (
-                          <IconClock className="w-4 h-4" style={{ color: 'var(--color-warning)' }} />
-                        )}
-                        <span className="font-medium text-text-primary">
-                          {formatDate(session.openedAt)}
-                        </span>
-                      </div>
-                      <span className="text-sm text-text-secondary">
-                        {session.closedAt ? 'Cerrada' : 'Abierta'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="text-text-secondary">
-                        Apertura: {formatCurrency(session.openingBalance)}
-                      </div>
-                      {session.closedAt && session.closingBalance !== undefined && (
-                        <div className="text-text-secondary">
-                          Cierre: {formatCurrency(session.closingBalance)}
-                        </div>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      session.closedAt
+                        ? 'bg-success-subtle text-success'
+                        : 'bg-warning-subtle text-warning'
+                    }`}>
+                      {session.closedAt ? (
+                        <IconCheck className="w-5 h-5" />
+                      ) : (
+                        <IconClock className="w-5 h-5" />
                       )}
                     </div>
-                    {session.discrepancy !== undefined && session.discrepancy !== 0 && (
-                      <div className="mt-2 text-sm">
-                        <span className="text-text-secondary">Diferencia: </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium block">
+                        {formatDate(session.openedAt)}
+                      </span>
+                      <div className="text-xs text-text-tertiary mt-0.5">
+                        Apertura: {formatCurrency(session.openingBalance)}
+                        {session.closedAt && session.closingBalance !== undefined && (
+                          <>
+                            <span className="mx-1.5">·</span>
+                            Cierre: {formatCurrency(session.closingBalance)}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {session.discrepancy !== undefined && session.discrepancy !== 0 && (
                         <span
-                          className="font-medium"
-                          style={{
-                            color: session.discrepancy > 0
-                              ? 'var(--color-success)'
-                              : 'var(--color-error)',
-                          }}
+                          className={`text-sm font-medium ${
+                            session.discrepancy > 0 ? 'text-success' : 'text-error'
+                          }`}
                         >
                           {session.discrepancy > 0 ? '+' : ''}{formatCurrency(session.discrepancy)}
                         </span>
-                      </div>
-                    )}
-                  </button>
+                      )}
+                      <IconChevronRight className="w-5 h-5 text-text-tertiary" />
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )
         )}
       </main>
+
+      {/* Close Drawer Button - Fixed above mobile nav */}
+      {currentSession && activeTab === 'caja' && (
+        <div
+          className="fixed left-0 right-0 p-4 bg-bg-surface border-t border-border z-40 lg:ml-64 lg:bottom-0"
+          style={{ bottom: 'calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px))' }}
+        >
+          <button
+            type="button"
+            onClick={() => setIsCloseDrawerModalOpen(true)}
+            className="btn btn-secondary w-full max-w-lg mx-auto block"
+          >
+            Cerrar caja
+          </button>
+        </div>
+      )}
 
       {/* Open Drawer Modal */}
       <Modal
         isOpen={isOpenDrawerModalOpen}
         onClose={() => !isOpening && setIsOpenDrawerModalOpen(false)}
-        title="Abrir Caja"
+        title="Abrir caja"
         footer={
-          <>
+          <div className="flex gap-3 w-full">
             <button
               type="button"
               onClick={() => setIsOpenDrawerModalOpen(false)}
-              className="btn btn-secondary"
-              style={{ flex: 1 }}
+              className="btn btn-secondary flex-1"
               disabled={isOpening}
             >
               Cancelar
@@ -710,33 +707,31 @@ export default function CajaPage() {
             <button
               type="button"
               onClick={handleOpenDrawer}
-              className="btn btn-primary"
-              style={{ flex: 1 }}
+              className="btn btn-primary flex-1"
               disabled={isOpening || !openingBalance || parseFloat(openingBalance) < 0}
             >
               {isOpening ? <Spinner /> : 'Abrir'}
             </button>
-          </>
+          </div>
         }
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
-              Saldo inicial (S/)
-            </label>
+            <label htmlFor="opening-balance" className="label">Saldo inicial (S/)</label>
             <input
+              id="opening-balance"
               type="number"
               inputMode="decimal"
               value={openingBalance}
               onChange={(e) => setOpeningBalance(e.target.value)}
-              className="input w-full text-lg"
+              className="input"
               placeholder="0.00"
               min="0"
               step="0.01"
               autoFocus
             />
           </div>
-          <p className="text-sm text-text-secondary">
+          <p className="text-sm text-text-tertiary">
             Ingresa la cantidad de efectivo con la que inicias la caja
           </p>
         </div>
@@ -746,14 +741,13 @@ export default function CajaPage() {
       <Modal
         isOpen={isCloseDrawerModalOpen}
         onClose={() => !isClosing && setIsCloseDrawerModalOpen(false)}
-        title="Cerrar Caja"
+        title="Cerrar caja"
         footer={
-          <>
+          <div className="flex gap-3 w-full">
             <button
               type="button"
               onClick={() => setIsCloseDrawerModalOpen(false)}
-              className="btn btn-secondary"
-              style={{ flex: 1 }}
+              className="btn btn-secondary flex-1"
               disabled={isClosing}
             >
               Cancelar
@@ -761,33 +755,31 @@ export default function CajaPage() {
             <button
               type="button"
               onClick={handleCloseDrawer}
-              className="btn btn-primary"
-              style={{ flex: 1 }}
+              className="btn btn-primary flex-1"
               disabled={isClosing || !closingBalance || parseFloat(closingBalance) < 0}
             >
-              {isClosing ? <Spinner /> : 'Cerrar caja'}
+              {isClosing ? <Spinner /> : 'Cerrar'}
             </button>
-          </>
+          </div>
         }
       >
         <div className="space-y-4">
-          <div className="p-3 rounded-lg" style={{ background: 'var(--color-surface-raised)' }}>
-            <div className="text-sm text-text-secondary mb-1">Saldo esperado</div>
-            <div className="text-xl font-bold text-text-primary">
+          <div className="p-3 rounded-lg bg-bg-muted">
+            <div className="text-sm text-text-secondary">Saldo esperado</div>
+            <div className="text-xl font-display font-bold text-text-primary mt-1">
               {formatCurrency(expectedBalance)}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
-              Saldo real (S/)
-            </label>
+            <label htmlFor="closing-balance" className="label">Saldo real (S/)</label>
             <input
+              id="closing-balance"
               type="number"
               inputMode="decimal"
               value={closingBalance}
               onChange={(e) => setClosingBalance(e.target.value)}
-              className="input w-full text-lg"
+              className="input"
               placeholder="0.00"
               min="0"
               step="0.01"
@@ -797,25 +789,23 @@ export default function CajaPage() {
 
           {closingBalance && (
             <div
-              className="p-3 rounded-lg"
-              style={{
-                background: closingDiscrepancy === 0
-                  ? 'var(--color-success-light)'
+              className={`p-3 rounded-lg ${
+                closingDiscrepancy === 0
+                  ? 'bg-success-subtle'
                   : closingDiscrepancy > 0
-                    ? 'var(--color-warning-light, var(--color-surface-raised))'
-                    : 'var(--color-error-light)',
-              }}
+                    ? 'bg-warning-subtle'
+                    : 'bg-error-subtle'
+              }`}
             >
-              <div className="text-sm text-text-secondary mb-1">Diferencia</div>
+              <div className="text-sm text-text-secondary">Diferencia</div>
               <div
-                className="text-xl font-bold"
-                style={{
-                  color: closingDiscrepancy === 0
-                    ? 'var(--color-success)'
+                className={`text-xl font-display font-bold mt-1 ${
+                  closingDiscrepancy === 0
+                    ? 'text-success'
                     : closingDiscrepancy > 0
-                      ? 'var(--color-warning, var(--color-text-primary))'
-                      : 'var(--color-error)',
-                }}
+                      ? 'text-warning'
+                      : 'text-error'
+                }`}
               >
                 {closingDiscrepancy > 0 ? '+' : ''}{formatCurrency(closingDiscrepancy)}
               </div>
@@ -824,13 +814,12 @@ export default function CajaPage() {
 
           {closingBalance && closingDiscrepancy !== 0 && (
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Nota (opcional)
-              </label>
+              <label htmlFor="discrepancy-note" className="label">Nota (opcional)</label>
               <textarea
+                id="discrepancy-note"
                 value={discrepancyNote}
                 onChange={(e) => setDiscrepancyNote(e.target.value)}
-                className="input w-full"
+                className="input"
                 placeholder="Explica la diferencia..."
                 rows={2}
               />
@@ -845,12 +834,11 @@ export default function CajaPage() {
         onClose={() => !isSavingMovement && setIsMovementModalOpen(false)}
         title="Registrar movimiento"
         footer={
-          <>
+          <div className="flex gap-3 w-full">
             <button
               type="button"
               onClick={() => setIsMovementModalOpen(false)}
-              className="btn btn-secondary"
-              style={{ flex: 1 }}
+              className="btn btn-secondary flex-1"
               disabled={isSavingMovement}
             >
               Cancelar
@@ -858,13 +846,12 @@ export default function CajaPage() {
             <button
               type="button"
               onClick={handleRecordMovement}
-              className="btn btn-primary"
-              style={{ flex: 1 }}
+              className="btn btn-primary flex-1"
               disabled={isSavingMovement || !movementCategory || !movementAmount || parseFloat(movementAmount) <= 0}
             >
               {isSavingMovement ? <Spinner /> : 'Registrar'}
             </button>
-          </>
+          </div>
         }
       >
         <div className="space-y-4">
@@ -876,14 +863,13 @@ export default function CajaPage() {
                 setMovementType('ingreso')
                 setMovementCategory('')
               }}
-              className={`flex-1 py-3 rounded-lg font-medium transition-colors ${
+              className={`flex-1 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
                 movementType === 'ingreso'
-                  ? 'text-white'
-                  : 'bg-surface-raised text-text-secondary hover:text-text-primary'
+                  ? 'bg-success text-white'
+                  : 'bg-bg-muted text-text-secondary hover:text-text-primary'
               }`}
-              style={movementType === 'ingreso' ? { background: 'var(--color-success)' } : undefined}
             >
-              <IconArrowDown className="w-5 h-5 inline-block mr-2" />
+              <IconIngreso className="w-5 h-5" />
               Ingreso
             </button>
             <button
@@ -892,27 +878,25 @@ export default function CajaPage() {
                 setMovementType('egreso')
                 setMovementCategory('')
               }}
-              className={`flex-1 py-3 rounded-lg font-medium transition-colors ${
+              className={`flex-1 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
                 movementType === 'egreso'
-                  ? 'text-white'
-                  : 'bg-surface-raised text-text-secondary hover:text-text-primary'
+                  ? 'bg-error text-white'
+                  : 'bg-bg-muted text-text-secondary hover:text-text-primary'
               }`}
-              style={movementType === 'egreso' ? { background: 'var(--color-error)' } : undefined}
             >
-              <IconArrowUp className="w-5 h-5 inline-block mr-2" />
+              <IconEgreso className="w-5 h-5" />
               Egreso
             </button>
           </div>
 
           {/* Category Select */}
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
-              Categoria
-            </label>
+            <label htmlFor="movement-category" className="label">Categoria</label>
             <select
+              id="movement-category"
               value={movementCategory}
               onChange={(e) => setMovementCategory(e.target.value as CashMovementCategory)}
-              className="input w-full"
+              className="input"
             >
               <option value="">Seleccionar...</option>
               {(movementType === 'ingreso' ? INGRESO_CATEGORIES : EGRESO_CATEGORIES).map((cat) => (
@@ -925,15 +909,14 @@ export default function CajaPage() {
 
           {/* Amount */}
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
-              Monto (S/)
-            </label>
+            <label htmlFor="movement-amount" className="label">Monto (S/)</label>
             <input
+              id="movement-amount"
               type="number"
               inputMode="decimal"
               value={movementAmount}
               onChange={(e) => setMovementAmount(e.target.value)}
-              className="input w-full text-lg"
+              className="input"
               placeholder="0.00"
               min="0"
               step="0.01"
@@ -942,13 +925,12 @@ export default function CajaPage() {
 
           {/* Note */}
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
-              Nota (opcional)
-            </label>
+            <label htmlFor="movement-note" className="label">Nota (opcional)</label>
             <textarea
+              id="movement-note"
               value={movementNote}
               onChange={(e) => setMovementNote(e.target.value)}
-              className="input w-full"
+              className="input"
               placeholder="Descripcion del movimiento..."
               rows={2}
             />
@@ -969,103 +951,96 @@ export default function CajaPage() {
         ) : viewingSession ? (
           <div className="space-y-4">
             {/* Session Info */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Apertura</span>
-                <span className="text-text-primary">
+            <div className="space-y-3 p-4 bg-bg-muted rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-secondary">Apertura</span>
+                <span className="text-sm font-medium">
                   {formatTime(viewingSession.openedAt)} - {formatCurrency(viewingSession.openingBalance)}
                 </span>
               </div>
               {viewingSession.closedAt && (
                 <>
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-secondary">Cierre</span>
-                    <span className="text-text-primary">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-text-secondary">Cierre</span>
+                    <span className="text-sm font-medium">
                       {formatTime(viewingSession.closedAt)} - {formatCurrency(viewingSession.closingBalance || 0)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-secondary">Esperado</span>
-                    <span className="text-text-primary">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-text-secondary">Esperado</span>
+                    <span className="text-sm font-medium">
                       {formatCurrency(viewingSession.expectedBalance || 0)}
                     </span>
                   </div>
                   {viewingSession.discrepancy !== undefined && viewingSession.discrepancy !== 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-text-secondary">Diferencia</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-text-secondary">Diferencia</span>
                       <span
-                        className="font-medium"
-                        style={{
-                          color: viewingSession.discrepancy > 0
-                            ? 'var(--color-success)'
-                            : 'var(--color-error)',
-                        }}
+                        className={`text-sm font-medium ${
+                          viewingSession.discrepancy > 0 ? 'text-success' : 'text-error'
+                        }`}
                       >
                         {viewingSession.discrepancy > 0 ? '+' : ''}{formatCurrency(viewingSession.discrepancy)}
                       </span>
-                    </div>
-                  )}
-                  {viewingSession.discrepancyNote && (
-                    <div className="p-3 rounded-lg" style={{ background: 'var(--color-surface-raised)' }}>
-                      <div className="text-sm text-text-secondary mb-1">Nota</div>
-                      <div className="text-text-primary">{viewingSession.discrepancyNote}</div>
                     </div>
                   )}
                 </>
               )}
             </div>
 
+            {viewingSession.discrepancyNote && (
+              <div className="p-3 rounded-lg bg-warning-subtle">
+                <div className="text-xs text-text-secondary mb-1">Nota</div>
+                <div className="text-sm text-text-primary">{viewingSession.discrepancyNote}</div>
+              </div>
+            )}
+
             {/* Movements */}
             <div>
               <h4 className="text-sm font-medium text-text-secondary mb-3">
-                Movimientos
+                Movimientos ({viewingSessionMovements.length})
               </h4>
               {viewingSessionMovements.length === 0 ? (
-                <div className="text-center py-4 text-text-secondary">
+                <div className="text-center py-4 text-text-tertiary">
                   Sin movimientos
                 </div>
               ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
+                <div className="space-y-1 max-h-64 overflow-y-auto">
                   {viewingSessionMovements.map((mov) => (
                     <div
                       key={mov.id}
-                      className="flex items-center gap-3 p-2 rounded-lg"
-                      style={{ background: 'var(--color-surface-raised)' }}
+                      className="list-item"
                     >
                       <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{
-                          background: mov.type === 'ingreso'
-                            ? 'var(--color-success-light)'
-                            : 'var(--color-error-light)',
-                        }}
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          mov.type === 'ingreso'
+                            ? 'bg-success-subtle text-success'
+                            : 'bg-error-subtle text-error'
+                        }`}
                       >
                         {mov.type === 'ingreso' ? (
-                          <IconArrowDown className="w-3 h-3" style={{ color: 'var(--color-success)' }} />
+                          <IconIngreso className="w-4 h-4" />
                         ) : (
-                          <IconArrowUp className="w-3 h-3" style={{ color: 'var(--color-error)' }} />
+                          <IconEgreso className="w-4 h-4" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-text-primary">
+                        <span className="text-sm font-medium block">
                           {CATEGORY_LABELS[mov.category]}
-                        </div>
+                        </span>
                         {mov.note && (
-                          <div className="text-xs text-text-secondary truncate">
+                          <span className="text-xs text-text-tertiary truncate block">
                             {mov.note}
-                          </div>
+                          </span>
                         )}
                       </div>
-                      <div
-                        className="text-sm font-medium flex-shrink-0"
-                        style={{
-                          color: mov.type === 'ingreso'
-                            ? 'var(--color-success)'
-                            : 'var(--color-error)',
-                        }}
+                      <span
+                        className={`text-sm font-medium flex-shrink-0 ${
+                          mov.type === 'ingreso' ? 'text-success' : 'text-error'
+                        }`}
                       >
                         {mov.type === 'ingreso' ? '+' : '-'}{formatCurrency(mov.amount)}
-                      </div>
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -1074,6 +1049,6 @@ export default function CajaPage() {
           </div>
         ) : null}
       </Modal>
-    </div>
+    </>
   )
 }
