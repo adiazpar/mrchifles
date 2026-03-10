@@ -376,8 +376,8 @@
     color: white;
   }
 
-  .btn-plin {
-    background: var(--color-plin);
+  .btn-pos {
+    background: var(--color-pos);
     color: white;
   }
 
@@ -706,9 +706,9 @@
     color: var(--color-yape);
   }
 
-  .badge-plin {
-    background: var(--color-plin-subtle);
-    color: var(--color-plin);
+  .badge-pos {
+    background: var(--color-pos-subtle);
+    color: var(--color-pos);
   }
 
   /* ===== Desktop Sidebar ===== */
@@ -3199,7 +3199,7 @@
   .bg-brand-subtle { background-color: var(--color-brand-subtle); }
   .bg-cash { background-color: var(--color-cash); }
   .bg-yape { background-color: var(--color-yape); }
-  .bg-plin { background-color: var(--color-plin); }
+  .bg-pos { background-color: var(--color-pos); }
 
   .font-display { font-family: var(--font-display); }
   .font-body { font-family: var(--font-body); }

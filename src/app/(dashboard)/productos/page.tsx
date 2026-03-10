@@ -7,8 +7,8 @@ import { PageHeader } from '@/components/layout'
 import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconSelect, IconWarning, IconInventory, IconAdjust } from '@/components/icons'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAuth } from '@/contexts/auth-context'
-import { getProductImageUrl } from '@/lib/products'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, getProductImageUrl } from '@/lib/utils'
+import { PRODUCT_FILTERS_KEY } from '@/lib/constants'
 import type { Product, ProductCategory, Order, OrderItem, Provider } from '@/types'
 
 // Category configuration
@@ -162,9 +162,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'stock_desc', label: 'Stock (mayor a menor)' },
   { value: 'category', label: 'Categoria' },
 ]
-
-// LocalStorage key for product filters
-const PRODUCT_FILTERS_KEY = 'chifles_product_filters'
 
 interface ProductFilters {
   selectedFilter: FilterCategory
@@ -1698,7 +1695,7 @@ export default function ProductosPage() {
               <div className="w-12 h-12 bg-bg-elevated rounded-lg flex items-center justify-center overflow-hidden">
                 {adjustingProduct.image ? (
                   <Image
-                    src={getProductImageUrl(adjustingProduct, pb.baseURL)}
+                    src={getProductImageUrl(adjustingProduct)!}
                     alt={adjustingProduct.name}
                     width={48}
                     height={48}

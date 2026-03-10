@@ -15,6 +15,13 @@ import {
   hashPin,
   verifyPin,
 } from '@/lib/auth'
+import { POCKETBASE_URL } from '@/lib/pocketbase'
+import {
+  REMEMBERED_PHONE_KEY,
+  REMEMBERED_NAME_KEY,
+  PIN_VERIFIED_KEY,
+  PRODUCT_FILTERS_KEY,
+} from '@/lib/constants'
 
 // ============================================
 // TYPES
@@ -79,11 +86,6 @@ const AuthContext = createContext<AuthContextType | null>(null)
 // PROVIDER
 // ============================================
 
-const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
-const REMEMBERED_PHONE_KEY = 'chifles_remembered_phone'
-const REMEMBERED_NAME_KEY = 'chifles_remembered_name'
-const PIN_VERIFIED_KEY = 'chifles_pin_verified' // sessionStorage - clears on tab close
-const PRODUCT_FILTERS_KEY = 'chifles_product_filters' // Product page filter preferences
 
 // ============================================
 // REMEMBERED USER HELPERS

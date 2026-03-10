@@ -149,21 +149,35 @@ export function isValidPin(pin: string): boolean {
 }
 
 // ============================================
-// INVITE CODE GENERATION
+// SECURE CODE GENERATION
 // ============================================
 
-const INVITE_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Excludes confusing chars: 0, O, I, 1
+// Excludes confusing chars: 0, O, I, 1
+const SECURE_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
 /**
- * Generate a random 6-character invite code using cryptographically secure random numbers
- * Uses crypto.getRandomValues() instead of Math.random() to prevent prediction attacks
+ * Generate a cryptographically secure random code of specified length
  */
-export function generateInviteCode(): string {
-  const array = new Uint8Array(6)
+function generateSecureCode(length: number): string {
+  const array = new Uint8Array(length)
   crypto.getRandomValues(array)
   return Array.from(array)
-    .map(byte => INVITE_CODE_CHARS[byte % INVITE_CODE_CHARS.length])
+    .map(byte => SECURE_CODE_CHARS[byte % SECURE_CODE_CHARS.length])
     .join('')
+}
+
+/**
+ * Generate a random 6-character invite code
+ */
+export function generateInviteCode(): string {
+  return generateSecureCode(6)
+}
+
+/**
+ * Generate a random 8-character transfer code
+ */
+export function generateTransferCode(): string {
+  return generateSecureCode(8)
 }
 
 /**
@@ -171,23 +185,6 @@ export function generateInviteCode(): string {
  */
 export function isValidInviteCode(code: string): boolean {
   return /^[A-Z0-9]{6}$/.test(code)
-}
-
-// ============================================
-// TRANSFER CODE GENERATION
-// ============================================
-
-const TRANSFER_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Excludes confusing chars: 0, O, I, 1
-
-/**
- * Generate a random 8-character transfer code using cryptographically secure random numbers
- */
-export function generateTransferCode(): string {
-  const array = new Uint8Array(8)
-  crypto.getRandomValues(array)
-  return Array.from(array)
-    .map(byte => TRANSFER_CODE_CHARS[byte % TRANSFER_CODE_CHARS.length])
-    .join('')
 }
 
 /**

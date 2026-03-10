@@ -14,20 +14,9 @@ export interface NavItem {
 }
 
 /**
- * All navigation items for the sidebar (desktop)
+ * Navigation items for sidebar (desktop) and mobile bottom nav
  */
 export const NAV_ITEMS: NavItem[] = [
-  { href: '/inicio', label: 'Inicio', icon: IconHome },
-  { href: '/ventas', label: 'Ventas', icon: IconSales },
-  { href: '/caja', label: 'Caja', icon: IconCashDrawer },
-  { href: '/productos', label: 'Productos', icon: IconProducts },
-  { href: '/reportes', label: 'Reportes', icon: IconReports },
-]
-
-/**
- * Navigation items for mobile bottom nav
- */
-export const MOBILE_NAV_ITEMS: NavItem[] = [
   { href: '/inicio', label: 'Inicio', icon: IconHome },
   { href: '/ventas', label: 'Ventas', icon: IconSales },
   { href: '/caja', label: 'Caja', icon: IconCashDrawer },

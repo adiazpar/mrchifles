@@ -237,17 +237,3 @@ export function AuthGuard({
 
   return <>{children}</>
 }
-
-// Higher-order component version
-export function withAuthGuard<P extends object>(
-  Component: React.ComponentType<P>,
-  options?: Omit<AuthGuardProps, 'children'>
-) {
-  return function AuthGuardedComponent(props: P) {
-    return (
-      <AuthGuard {...options}>
-        <Component {...props} />
-      </AuthGuard>
-    )
-  }
-}
