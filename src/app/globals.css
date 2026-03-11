@@ -3660,6 +3660,26 @@
 }
 
 /* ===== Modal Content Morph ===== */
+
+/* Panel height animation using CSS Grid */
+.morph-panel {
+  display: grid;
+  transition: grid-template-rows var(--duration-normal) ease-out;
+}
+
+.morph-panel-visible {
+  grid-template-rows: 1fr;
+}
+
+.morph-panel-hidden {
+  grid-template-rows: 0fr;
+}
+
+.morph-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
 .morph-content {
   display: flex;
   flex-direction: column;

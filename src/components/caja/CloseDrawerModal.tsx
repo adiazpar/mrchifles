@@ -201,116 +201,120 @@ export function CloseDrawerModal({
 
         {/* Body */}
         <div className="modal-body">
-          {/* Form Content */}
-          {isFormPhase && (
-            <div className={`morph-content ${phase === 'exiting' ? 'morph-content-exit' : ''}`}>
-              <div className="morph-item p-3 rounded-lg bg-bg-muted">
-                <div className="text-sm text-text-secondary">Saldo esperado</div>
-                <div className="text-xl font-display font-bold text-text-primary mt-1">
-                  {formatCurrency(expectedBalance)}
-                </div>
-              </div>
-
-              <div className="morph-item">
-                <label htmlFor="closing-balance" className="label">Saldo real (S/)</label>
-                <input
-                  id="closing-balance"
-                  type="number"
-                  inputMode="decimal"
-                  value={closingBalance}
-                  onChange={(e) => setClosingBalance(e.target.value)}
-                  className="input"
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  autoFocus
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              {closingBalance && (
-                <div
-                  className={`morph-item p-3 rounded-lg ${
-                    closingDiscrepancy === 0
-                      ? 'bg-success-subtle'
-                      : closingDiscrepancy > 0
-                        ? 'bg-warning-subtle'
-                        : 'bg-error-subtle'
-                  }`}
-                >
-                  <div className="text-sm text-text-secondary">Diferencia</div>
-                  <div
-                    className={`text-xl font-display font-bold mt-1 ${
-                      closingDiscrepancy === 0
-                        ? 'text-success'
-                        : closingDiscrepancy > 0
-                          ? 'text-warning'
-                          : 'text-error'
-                    }`}
-                  >
-                    {closingDiscrepancy > 0 ? '+' : ''}{formatCurrency(closingDiscrepancy)}
+          {/* Form Panel - collapses when not active */}
+          <div className={`morph-panel ${isFormPhase ? 'morph-panel-visible' : 'morph-panel-hidden'}`}>
+            <div className="morph-panel-inner">
+              <div className={`morph-content ${phase === 'exiting' ? 'morph-content-exit' : ''}`}>
+                <div className="morph-item p-3 rounded-lg bg-bg-muted">
+                  <div className="text-sm text-text-secondary">Saldo esperado</div>
+                  <div className="text-xl font-display font-bold text-text-primary mt-1">
+                    {formatCurrency(expectedBalance)}
                   </div>
                 </div>
-              )}
 
-              {closingBalance && closingDiscrepancy !== 0 && (
                 <div className="morph-item">
-                  <label htmlFor="discrepancy-note" className="label">Nota (opcional)</label>
-                  <textarea
-                    id="discrepancy-note"
-                    value={discrepancyNote}
-                    onChange={(e) => setDiscrepancyNote(e.target.value)}
+                  <label htmlFor="closing-balance" className="label">Saldo real (S/)</label>
+                  <input
+                    id="closing-balance"
+                    type="number"
+                    inputMode="decimal"
+                    value={closingBalance}
+                    onChange={(e) => setClosingBalance(e.target.value)}
                     className="input"
-                    placeholder="Explica la diferencia..."
-                    rows={2}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    autoFocus
                     disabled={isSubmitting}
                   />
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* Celebration Content */}
-          {isCelebrationPhase && (
-            <div className={`morph-content ${phase === 'entering' ? 'morph-content-enter' : ''}`}>
-              <div className="morph-item flex flex-col items-center text-center">
-                {/* Lottie container - always present for layout, animation conditional */}
-                <div className="mb-6" style={{ width: 200, height: 200 }}>
-                  {showLottie && (
-                    <LottiePlayer
-                      src="/animations/trophy.lottie"
-                      loop={false}
-                      autoplay={true}
-                      style={{ width: 200, height: 200 }}
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="morph-item w-full p-4 bg-bg-muted rounded-lg">
-                <p className="text-text-secondary text-center mb-4">
-                  Buen trabajo hoy!
-                </p>
-                {celebrationStats.length > 0 && (
+                {closingBalance && (
                   <div
-                    className="grid gap-4"
-                    style={{ gridTemplateColumns: `repeat(${Math.min(celebrationStats.length, 3)}, 1fr)` }}
+                    className={`morph-item p-3 rounded-lg ${
+                      closingDiscrepancy === 0
+                        ? 'bg-success-subtle'
+                        : closingDiscrepancy > 0
+                          ? 'bg-warning-subtle'
+                          : 'bg-error-subtle'
+                    }`}
                   >
-                    {celebrationStats.map((stat, idx) => (
-                      <div key={idx} className="text-center">
-                        <div className="text-xl font-bold font-display text-text-primary">
-                          {stat.value}
-                        </div>
-                        <div className="text-sm text-text-secondary mt-1">
-                          {stat.label}
-                        </div>
-                      </div>
-                    ))}
+                    <div className="text-sm text-text-secondary">Diferencia</div>
+                    <div
+                      className={`text-xl font-display font-bold mt-1 ${
+                        closingDiscrepancy === 0
+                          ? 'text-success'
+                          : closingDiscrepancy > 0
+                            ? 'text-warning'
+                            : 'text-error'
+                      }`}
+                    >
+                      {closingDiscrepancy > 0 ? '+' : ''}{formatCurrency(closingDiscrepancy)}
+                    </div>
+                  </div>
+                )}
+
+                {closingBalance && closingDiscrepancy !== 0 && (
+                  <div className="morph-item">
+                    <label htmlFor="discrepancy-note" className="label">Nota (opcional)</label>
+                    <textarea
+                      id="discrepancy-note"
+                      value={discrepancyNote}
+                      onChange={(e) => setDiscrepancyNote(e.target.value)}
+                      className="input"
+                      placeholder="Explica la diferencia..."
+                      rows={2}
+                      disabled={isSubmitting}
+                    />
                   </div>
                 )}
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Celebration Panel - collapses when not active */}
+          <div className={`morph-panel ${isCelebrationPhase ? 'morph-panel-visible' : 'morph-panel-hidden'}`}>
+            <div className="morph-panel-inner">
+              <div className={`morph-content ${phase === 'entering' ? 'morph-content-enter' : ''}`}>
+                <div className="morph-item flex flex-col items-center text-center">
+                  {/* Lottie container */}
+                  <div className="mb-6" style={{ width: 200, height: 200 }}>
+                    {showLottie && (
+                      <LottiePlayer
+                        src="/animations/trophy.lottie"
+                        loop={false}
+                        autoplay={true}
+                        style={{ width: 200, height: 200 }}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="morph-item w-full p-4 bg-bg-muted rounded-lg">
+                  <p className="text-text-secondary text-center mb-4">
+                    Buen trabajo hoy!
+                  </p>
+                  {celebrationStats.length > 0 && (
+                    <div
+                      className="grid gap-4"
+                      style={{ gridTemplateColumns: `repeat(${Math.min(celebrationStats.length, 3)}, 1fr)` }}
+                    >
+                      {celebrationStats.map((stat, idx) => (
+                        <div key={idx} className="text-center">
+                          <div className="text-xl font-bold font-display text-text-primary">
+                            {stat.value}
+                          </div>
+                          <div className="text-sm text-text-secondary mt-1">
+                            {stat.label}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
