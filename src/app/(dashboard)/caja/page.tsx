@@ -549,8 +549,10 @@ export default function CajaPage() {
 
               {/* Movements List */}
               {movements.length === 0 ? (
-                <div className="text-center py-8 text-text-tertiary">
-                  Aun no hay movimientos registrados
+                <div className="empty-state-fill">
+                  <p className="empty-state-description">
+                    Aun no hay movimientos registrados
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2">
