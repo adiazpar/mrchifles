@@ -16,12 +16,13 @@ interface CloseDrawerModalProps {
   movements: CashMovement[]
 }
 
-type Phase = 'form' | 'exiting' | 'entering' | 'celebration'
+type Phase = 'form' | 'exiting' | 'height-transition' | 'entering' | 'celebration'
 
 // Timing constants
 const STAGGER_DELAY = 40 // ms between each item
 const EXIT_BASE_DURATION = 120
 const ENTER_BASE_DURATION = 120
+const HEIGHT_TRANSITION_DURATION = 300 // matches --duration-normal
 const FORM_ITEM_COUNT = 4 // Expected balance, input, discrepancy, note
 const CELEBRATION_ITEM_COUNT = 2 // Lottie container, stats box
 
@@ -89,8 +90,9 @@ export function CloseDrawerModal({
   // Escape key handler
   useEffect(() => {
     if (!render) return
+    const isTransitioning = phase === 'exiting' || phase === 'height-transition' || phase === 'entering'
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isSubmitting && phase !== 'exiting' && phase !== 'entering') {
+      if (e.key === 'Escape' && !isSubmitting && !isTransitioning) {
         handleClose()
       }
     }
@@ -99,7 +101,8 @@ export function CloseDrawerModal({
   }, [render, isSubmitting, phase])
 
   const handleClose = () => {
-    if (phase === 'exiting' || phase === 'entering') return // Don't allow close during transition
+    const isTransitioning = phase === 'exiting' || phase === 'height-transition' || phase === 'entering'
+    if (isTransitioning) return // Don't allow close during transition
 
     if (phase === 'celebration') {
       onSuccess()
@@ -139,23 +142,29 @@ export function CloseDrawerModal({
         { label: 'Retiros', value: formatCurrency(totalRetiros) },
       ])
 
-      // Start phase transitions
+      // Start phase transitions: exiting -> height-transition -> entering -> celebration
       setPhase('exiting')
 
       // Calculate exit duration: base + (items - 1) * stagger
       const exitDuration = EXIT_BASE_DURATION + (FORM_ITEM_COUNT - 1) * STAGGER_DELAY
 
       setTimeout(() => {
-        setPhase('entering')
-
-        // Calculate enter duration for Lottie timing
-        const enterDuration = ENTER_BASE_DURATION + (CELEBRATION_ITEM_COUNT - 1) * STAGGER_DELAY
+        // After fade out completes, start height transition
+        setPhase('height-transition')
 
         setTimeout(() => {
-          setPhase('celebration')
-          // Show Lottie immediately after enter completes
+          // After height transition completes, start fade in
+          setPhase('entering')
+          // Start loading Lottie immediately so it's ready when fade-in completes
           setShowLottie(true)
-        }, enterDuration)
+
+          // Calculate enter duration for phase transition
+          const enterDuration = ENTER_BASE_DURATION + (CELEBRATION_ITEM_COUNT - 1) * STAGGER_DELAY
+
+          setTimeout(() => {
+            setPhase('celebration')
+          }, enterDuration)
+        }, HEIGHT_TRANSITION_DURATION)
       }, exitDuration)
 
     } catch (err) {
@@ -168,9 +177,15 @@ export function CloseDrawerModal({
 
   if (!render) return null
 
-  const isFormPhase = phase === 'form' || phase === 'exiting'
-  const isCelebrationPhase = phase === 'entering' || phase === 'celebration'
-  const title = isFormPhase ? 'Cerrar caja' : 'Caja cerrada'
+  // Height animation: form panel visible until height-transition starts
+  const formPanelExpanded = phase === 'form' || phase === 'exiting'
+  const celebrationPanelExpanded = phase === 'height-transition' || phase === 'entering' || phase === 'celebration'
+
+  // Content visibility: form content visible during form/exiting, celebration during entering/celebration
+  const showFormContent = phase === 'form' || phase === 'exiting'
+  const showCelebrationContent = phase === 'entering' || phase === 'celebration'
+
+  const title = showFormContent ? 'Cerrar caja' : 'Caja cerrada'
 
   return (
     <div
@@ -186,14 +201,14 @@ export function CloseDrawerModal({
         {/* Header */}
         <div className="modal-header">
           <h2 className="modal-title">
-            {isCelebrationPhase ? 'Caja cerrada' : 'Cerrar caja'}
+            {title}
           </h2>
           <button
             type="button"
             onClick={handleClose}
             className="modal-close"
             aria-label="Cerrar"
-            disabled={phase === 'exiting' || phase === 'entering'}
+            disabled={phase === 'exiting' || phase === 'height-transition' || phase === 'entering'}
           >
             <IconClose className="w-5 h-5" />
           </button>
@@ -202,9 +217,9 @@ export function CloseDrawerModal({
         {/* Body */}
         <div className="modal-body">
           {/* Form Panel - collapses when not active */}
-          <div className={`morph-panel ${isFormPhase ? 'morph-panel-visible' : 'morph-panel-hidden'}`}>
+          <div className={`morph-panel ${formPanelExpanded ? 'morph-panel-visible' : 'morph-panel-hidden'}`}>
             <div className="morph-panel-inner">
-              <div className={`morph-content ${phase === 'exiting' ? 'morph-content-exit' : ''}`}>
+              <div className={`morph-content ${phase === 'exiting' ? 'morph-content-exit' : ''} ${phase === 'height-transition' ? 'opacity-0' : ''}`}>
                 <div className="morph-item p-3 rounded-lg bg-bg-muted">
                   <div className="text-sm text-text-secondary">Saldo esperado</div>
                   <div className="text-xl font-display font-bold text-text-primary mt-1">
@@ -273,7 +288,7 @@ export function CloseDrawerModal({
           </div>
 
           {/* Celebration Panel - collapses when not active */}
-          <div className={`morph-panel ${isCelebrationPhase ? 'morph-panel-visible' : 'morph-panel-hidden'}`}>
+          <div className={`morph-panel ${celebrationPanelExpanded ? 'morph-panel-visible' : 'morph-panel-hidden'}`}>
             <div className="morph-panel-inner">
               <div className={`morph-content ${phase === 'entering' ? 'morph-content-enter' : ''}`}>
                 <div className="morph-item flex flex-col items-center text-center">
@@ -320,8 +335,8 @@ export function CloseDrawerModal({
         {/* Footer */}
         <div className="modal-footer">
           {/* Form Buttons */}
-          {isFormPhase && (
-            <div className={`morph-footer ${phase === 'exiting' ? 'morph-content-exit' : ''}`}>
+          {(showFormContent || phase === 'height-transition') && (
+            <div className={`morph-footer ${phase === 'exiting' ? 'morph-content-exit' : ''} ${phase === 'height-transition' ? 'opacity-0' : ''}`}>
               <button
                 type="button"
                 onClick={handleClose}
@@ -342,7 +357,7 @@ export function CloseDrawerModal({
           )}
 
           {/* Celebration Button */}
-          {isCelebrationPhase && (
+          {showCelebrationContent && (
             <div className={`morph-footer ${phase === 'entering' ? 'morph-content-enter' : ''}`}>
               <button
                 className="morph-item btn btn-primary flex-1"

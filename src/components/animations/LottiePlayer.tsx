@@ -1,7 +1,7 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
-import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { useRef } from 'react'
+import Lottie, { LottieRefCurrentProps } from 'lottie-react'
 
 interface LottiePlayerProps {
   src: string
@@ -22,30 +22,30 @@ export function LottiePlayer({
   style,
   onComplete
 }: LottiePlayerProps) {
+  const lottieRef = useRef<LottieRefCurrentProps>(null)
   const hasCalledComplete = useRef(false)
-  const onCompleteRef = useRef(onComplete)
-  onCompleteRef.current = onComplete
 
-  const handleDotLottieRef = useCallback((dotLottie: any) => {
-    if (!dotLottie) return
+  // Convert .lottie paths to .json paths
+  const jsonPath = src.replace(/\.lottie$/, '.json')
 
-    dotLottie.addEventListener('complete', () => {
-      // Prevent double-firing
-      if (hasCalledComplete.current) return
-      hasCalledComplete.current = true
-      onCompleteRef.current?.()
-    })
-  }, [])
+  const handleComplete = () => {
+    if (hasCalledComplete.current) return
+    hasCalledComplete.current = true
+    onComplete?.()
+  }
 
   return (
-    <DotLottieReact
-      src={src}
+    <Lottie
+      lottieRef={lottieRef}
+      path={jsonPath}
       loop={loop}
       autoplay={autoplay}
-      speed={speed}
       className={className}
       style={style}
-      dotLottieRefCallback={handleDotLottieRef}
+      onComplete={handleComplete}
+      rendererSettings={{
+        preserveAspectRatio: 'xMidYMid slice'
+      }}
     />
   )
 }
