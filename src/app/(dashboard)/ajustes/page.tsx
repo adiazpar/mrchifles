@@ -10,6 +10,7 @@ import { PinPad } from '@/components/auth/pin-pad'
 import { IconPalette, IconInfo, IconSun, IconMoon, IconMonitor, IconTransfer, IconClock, IconClose, IconPhone, IconCopy, IconCheck, IconLock } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { formatPhoneForDisplay, isValidE164 } from '@/lib/countries'
+import { transitionModals } from '@/lib/modal-utils'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -212,9 +213,11 @@ export default function SettingsPage() {
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       })
 
-      setShowTransferModal(false)
-      setShowTransferLinkModal(true)
       setTransferPhone('')
+      transitionModals(
+        () => setShowTransferModal(false),
+        () => setShowTransferLinkModal(true)
+      )
     } catch (err) {
       console.error('Transfer initiate error:', err)
       setTransferError('Error de conexion')
