@@ -18,28 +18,20 @@ const CATEGORY_LABELS: Record<CashMovementCategory, string> = {
   venta: 'Venta',
   prestamo_empleado: 'Prestamo empleado',
   retiro_banco: 'Retiro de banco',
-  cambio: 'Sencillo/Cambio',
   devolucion_prestamo: 'Devolucion prestamo',
   deposito_banco: 'Deposito a banco',
-  gastos: 'Gastos operativos',
-  devolucion_cliente: 'Devolucion cliente',
-  cambio_billetes: 'Cambio de billetes',
   otro: 'Otro',
 }
 
 const INGRESO_CATEGORIES: CashMovementCategory[] = [
   'prestamo_empleado',
   'retiro_banco',
-  'cambio',
   'otro'
 ]
 
 const EGRESO_CATEGORIES: CashMovementCategory[] = [
   'devolucion_prestamo',
   'deposito_banco',
-  'gastos',
-  'devolucion_cliente',
-  'cambio_billetes',
   'otro'
 ]
 

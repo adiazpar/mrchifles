@@ -146,12 +146,8 @@ migrate((app) => {
           'venta',
           'prestamo_empleado',
           'retiro_banco',
-          'cambio',
           'devolucion_prestamo',
           'deposito_banco',
-          'gastos',
-          'devolucion_cliente',
-          'cambio_billetes',
           'otro'
         ],
       },
