@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { PageHeader } from '@/components/layout'
 import { Spinner } from '@/components/ui'
-import { IconClose, IconAdd, IconTime, IconCashDrawer, IconIngreso, IconEgreso, IconCheck, IconClock, IconChevronRight } from '@/components/icons'
+import { IconClose, IconAdd, IconIngreso, IconEgreso, IconCheck, IconClock, IconChevronRight } from '@/components/icons'
+import { BalanceHero } from '@/components/caja/BalanceHero'
+import { EmptyStateAnimation, CelebrationOverlay, SuccessOverlay } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { CashSession, CashMovement, CashMovementType, CashMovementCategory } from '@/types'
@@ -63,8 +65,8 @@ function Modal({
   if (!isOpen) return null
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+    <div className="modal-backdrop modal-backdrop-animated" onClick={onClose}>
+      <div className="modal modal-animated" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
           <button
@@ -129,6 +131,16 @@ export default function CajaPage() {
   const [isSavingMovement, setIsSavingMovement] = useState(false)
   const [isLoadingSessionDetail, setIsLoadingSessionDetail] = useState(false)
 
+  // Animation states
+  const [lastMovementType, setLastMovementType] = useState<'ingreso' | 'egreso' | null>(null)
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [celebrationStats, setCelebrationStats] = useState<{ label: string; value: string }[]>([])
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false)
+  const [successOverlayData, setSuccessOverlayData] = useState<{
+    type: 'ingreso' | 'egreso'
+    amount: number
+  } | null>(null)
+
   // ============================================
   // CALCULATED VALUES
   // ============================================
@@ -154,11 +166,21 @@ export default function CajaPage() {
 
     for (const mov of movements) {
       if (mov.category === 'prestamo_empleado' && mov.employee) {
-        const current = loans.get(mov.employee) || { name: mov.expand?.employee?.name || 'Empleado', amount: 0 }
+        const employeeName = mov.expand?.employee?.name || 'Empleado'
+        const current = loans.get(mov.employee) || { name: employeeName, amount: 0 }
+        // Update name if we have expanded data (in case earlier entries didn't)
+        if (mov.expand?.employee?.name) {
+          current.name = mov.expand.employee.name
+        }
         current.amount += mov.amount
         loans.set(mov.employee, current)
       } else if (mov.category === 'devolucion_prestamo' && mov.employee) {
-        const current = loans.get(mov.employee) || { name: mov.expand?.employee?.name || 'Empleado', amount: 0 }
+        const employeeName = mov.expand?.employee?.name || 'Empleado'
+        const current = loans.get(mov.employee) || { name: employeeName, amount: 0 }
+        // Update name if we have expanded data
+        if (mov.expand?.employee?.name) {
+          current.name = mov.expand.employee.name
+        }
         current.amount -= mov.amount
         loans.set(mov.employee, current)
       }
@@ -214,7 +236,9 @@ export default function CajaPage() {
   const loadMovements = useCallback(async (sessionId: string) => {
     try {
       // Use simple getList with client-side filtering (workaround for SDK issue)
-      const result = await pb.collection('cash_movements').getList<CashMovement>(1, 50)
+      const result = await pb.collection('cash_movements').getList<CashMovement>(1, 50, {
+        expand: 'employee',
+      })
       const movs = result.items.filter(m => m.session === sessionId)
       setMovements(movs)
     } catch (err: unknown) {
@@ -319,6 +343,10 @@ export default function CajaPage() {
     try {
       const now = new Date().toISOString()
 
+      // Calculate stats for celebration
+      const totalIngresos = movements.filter(m => m.type === 'ingreso').reduce((sum, m) => sum + m.amount, 0)
+      const totalEgresos = movements.filter(m => m.type === 'egreso').reduce((sum, m) => sum + m.amount, 0)
+
       // Update session with closing info
       await pb.collection('cash_sessions').update(currentSession.id, {
         closedAt: now,
@@ -329,18 +357,30 @@ export default function CajaPage() {
         discrepancyNote: discrepancyNote.trim() || null,
       })
 
+      // Close modal first
+      setIsCloseDrawerModalOpen(false)
+
+      // Set up celebration stats
+      setCelebrationStats([
+        { label: 'Movimientos', value: String(movements.length) },
+        { label: 'Ingresos', value: formatCurrency(totalIngresos) },
+        { label: 'Egresos', value: formatCurrency(totalEgresos) },
+      ])
+
+      // Show celebration overlay
+      setShowCelebration(true)
+
       // Refresh data
       setCurrentSession(null)
       setMovements([])
       await loadSessions()
 
-      // Close modal and reset form
-      setIsCloseDrawerModalOpen(false)
+      // Reset form
       setClosingBalance('')
       setDiscrepancyNote('')
     } catch (err) {
       console.error('Error closing drawer:', err)
-      setError('Error al cerrar la caja')
+      alert('Error al cerrar la caja')
     } finally {
       setIsClosing(false)
     }
@@ -366,8 +406,20 @@ export default function CajaPage() {
         employee: (movementCategory === 'prestamo_empleado' || movementCategory === 'devolucion_prestamo') ? user.id : null,
       })
 
+      // Add expanded employee data for immediate display
+      const movementWithExpand: CashMovement = {
+        ...newMovement,
+        expand: (movementCategory === 'prestamo_empleado' || movementCategory === 'devolucion_prestamo')
+          ? { employee: user }
+          : undefined
+      }
+
       // Add new movement to state directly (PocketBase returns the created record with timestamp)
-      setMovements(prev => [...prev, newMovement])
+      setMovements(prev => [...prev, movementWithExpand])
+
+      // Trigger balance animation
+      setLastMovementType(movementType)
+      setTimeout(() => setLastMovementType(null), 500)
 
       // Close modal and reset form
       setIsMovementModalOpen(false)
@@ -375,9 +427,13 @@ export default function CajaPage() {
       setMovementCategory('')
       setMovementAmount('')
       setMovementNote('')
+
+      // Show friendly success overlay with animation
+      setSuccessOverlayData({ type: movementType, amount })
+      setShowSuccessOverlay(true)
     } catch (err) {
       console.error('Error recording movement:', err)
-      setError('Error al registrar el movimiento')
+      alert('Error al registrar el movimiento')
     } finally {
       setIsSavingMovement(false)
     }
@@ -390,7 +446,9 @@ export default function CajaPage() {
 
     try {
       // Use simple getList with client-side filtering (same fix as loadMovements)
-      const result = await pb.collection('cash_movements').getList<CashMovement>(1, 50)
+      const result = await pb.collection('cash_movements').getList<CashMovement>(1, 50, {
+        expand: 'employee',
+      })
       const movs = result.items.filter(m => m.session === session.id)
       // Sort by created descending (newest first)
       movs.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
@@ -419,9 +477,10 @@ export default function CajaPage() {
   }
 
   const formatTime = (dateStr: string | undefined) => {
-    if (!dateStr) return ''
+    if (!dateStr) return 'Ahora'
+    // PocketBase returns dates like "2024-01-15 10:30:00.000Z"
     const date = new Date(dateStr)
-    if (isNaN(date.getTime())) return ''
+    if (isNaN(date.getTime())) return 'Ahora'
     return date.toLocaleTimeString('es-PE', {
       hour: '2-digit',
       minute: '2-digit',
@@ -436,7 +495,7 @@ export default function CajaPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Caja" />
+        <PageHeader title="Caja" subtitle="Control de efectivo" />
         <main className="page-loading">
           <Spinner className="spinner-lg" />
         </main>
@@ -476,9 +535,9 @@ export default function CajaPage() {
         {activeTab === 'caja' ? (
           currentSession ? (
             // Open drawer view
-            <div className="space-y-6 pb-20">
-                {/* Balance Summary */}
-                <div className="p-4 rounded-lg border border-success bg-success-subtle">
+            <div className="space-y-6 pb-20 page-stagger">
+                {/* Balance Hero */}
+                <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-medium px-2 py-0.5 rounded bg-success text-white">
                       Abierta
@@ -487,12 +546,15 @@ export default function CajaPage() {
                       {formatDateTime(currentSession.openedAt)}
                     </span>
                   </div>
-                  <div className="text-3xl font-display font-bold text-text-primary">
-                    {formatCurrency(expectedBalance)}
-                  </div>
-                  <div className="text-sm text-text-secondary mt-1">
-                    Saldo esperado
-                  </div>
+                  <BalanceHero
+                    balance={expectedBalance}
+                    label="Saldo esperado"
+                    lastMovementType={lastMovementType}
+                    trend={movements.length > 0 ? {
+                      direction: expectedBalance >= currentSession.openingBalance ? 'up' : 'down',
+                      amount: Math.abs(expectedBalance - currentSession.openingBalance)
+                    } : undefined}
+                  />
                 </div>
 
                 {/* Outstanding Loans */}
@@ -535,11 +597,26 @@ export default function CajaPage() {
                     No hay movimientos registrados
                   </div>
                 ) : (
-                  <div className="space-y-1">
-                    {movements.map((mov) => (
+                  <div className="space-y-2">
+                    {[...movements].sort((a, b) => {
+                      // Sort by created time descending (newest first)
+                      // Fallback to ID comparison since PocketBase IDs are time-sortable
+                      if (a.created && b.created) {
+                        const timeA = new Date(a.created).getTime()
+                        const timeB = new Date(b.created).getTime()
+                        if (!isNaN(timeA) && !isNaN(timeB)) {
+                          return timeB - timeA
+                        }
+                      }
+                      // Fallback: compare IDs (PocketBase IDs are lexicographically sortable)
+                      return b.id.localeCompare(a.id)
+                    }).map((mov, index) => (
                       <div
                         key={mov.id}
-                        className="list-item"
+                        className={`movement-item ${
+                          mov.type === 'ingreso' ? 'movement-item--ingreso' : 'movement-item--egreso'
+                        } entering`}
+                        style={{ animationDelay: `${Math.min(index * 30, 150)}ms` }}
                       >
                         <div
                           className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -558,6 +635,11 @@ export default function CajaPage() {
                           <span className="font-medium block">
                             {CATEGORY_LABELS[mov.category]}
                           </span>
+                          {(mov.category === 'prestamo_empleado' || mov.category === 'devolucion_prestamo') && mov.expand?.employee && (
+                            <span className="text-xs text-text-secondary truncate block mt-0.5">
+                              {mov.expand.employee.name}
+                            </span>
+                          )}
                           {mov.note && (
                             <span className="text-xs text-text-tertiary truncate block mt-0.5">
                               {mov.note}
@@ -582,47 +664,59 @@ export default function CajaPage() {
                 )}
             </div>
           ) : (
-            // Closed drawer view
-            <div className="empty-state-fill">
-              <IconCashDrawer className="empty-state-icon" />
-              <h3 className="empty-state-title">Caja cerrada</h3>
-              <p className="empty-state-description">
-                Abre la caja para comenzar a registrar movimientos
-              </p>
-              <button
-                type="button"
-                onClick={() => setIsOpenDrawerModalOpen(true)}
-                className="btn btn-primary mt-4"
-              >
-                Abrir caja
-              </button>
-            </div>
+            // Closed drawer view with animated empty state
+            <EmptyStateAnimation
+              title="Caja cerrada"
+              description="Abre la caja para comenzar a registrar movimientos"
+              action={
+                <button
+                  type="button"
+                  onClick={() => setIsOpenDrawerModalOpen(true)}
+                  className="btn btn-primary btn-lg"
+                >
+                  Abrir caja
+                </button>
+              }
+            />
           )
         ) : (
           // Historial tab
           sessions.length === 0 ? (
-            <div className="empty-state-fill">
-              <IconTime className="empty-state-icon" />
-              <h3 className="empty-state-title">No hay sesiones</h3>
-              <p className="empty-state-description">
-                Las sesiones de caja apareceran aqui
-              </p>
-            </div>
+            <EmptyStateAnimation
+              title="No hay sesiones"
+              description="Las sesiones de caja apareceran aqui"
+              className="empty-state-fill"
+            />
           ) : (
-            <div className="space-y-6">
-              {/* Sessions count */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-text-secondary">
-                  {sessions.length} {sessions.length === 1 ? 'sesion' : 'sesiones'}
-                </span>
+            <div className="space-y-4">
+              {/* Summary Stats */}
+              <div className="session-stats" role="region" aria-label="Resumen de sesiones">
+                <div className="session-stat">
+                  <div className="session-stat__value">{sessions.length}</div>
+                  <div className="session-stat__label">{sessions.length === 1 ? 'Sesion' : 'Sesiones'}</div>
+                </div>
+                <div className="session-stat">
+                  <div className="session-stat__value">
+                    {sessions.filter(s => s.closedAt).length}
+                  </div>
+                  <div className="session-stat__label">Cerradas</div>
+                </div>
+                <div className="session-stat">
+                  <div className="session-stat__value">
+                    {sessions.filter(s => !s.closedAt).length}
+                  </div>
+                  <div className="session-stat__label">Abiertas</div>
+                </div>
               </div>
 
               {/* Sessions List */}
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {sessions.map((session) => (
                   <div
                     key={session.id}
-                    className="list-item-clickable"
+                    className={`session-item entering ${
+                      session.closedAt ? 'session-item--closed' : 'session-item--open'
+                    }`}
                     onClick={() => handleViewSessionDetail(session)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
@@ -632,6 +726,7 @@ export default function CajaPage() {
                     }}
                     tabIndex={0}
                     role="button"
+                    aria-label={`Sesion del ${formatDate(session.openedAt)}, ${session.closedAt ? 'cerrada' : 'abierta'}`}
                   >
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                       session.closedAt
@@ -1067,6 +1162,28 @@ export default function CajaPage() {
           </div>
         ) : null}
       </Modal>
+
+      {/* Success overlay for movement recording */}
+      {successOverlayData && (
+        <SuccessOverlay
+          isVisible={showSuccessOverlay}
+          onClose={() => {
+            setShowSuccessOverlay(false)
+            setSuccessOverlayData(null)
+          }}
+          type={successOverlayData.type}
+          amount={successOverlayData.amount}
+        />
+      )}
+
+      {/* Celebration overlay for drawer close */}
+      <CelebrationOverlay
+        isVisible={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        title="Caja cerrada"
+        subtitle="Buen trabajo hoy"
+        stats={celebrationStats}
+      />
     </>
   )
 }

@@ -17,10 +17,11 @@
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@lottiefiles/dotlottie-react": "^0.18.4",
     "date-fns": "^3.6.0",
+    "firebase": "^10.14.0",
     "next": "^15.5.12",
     "pocketbase": "^0.21.0",
-    "firebase": "^10.14.0",
     "qrcode": "^1.5.4",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",

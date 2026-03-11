@@ -88,6 +88,20 @@ migrate((app) => {
         type: 'text',
         required: false,
       },
+      // System autodate fields (required in PocketBase v0.23+)
+      {
+        id: "cscreated01",
+        name: 'created',
+        type: 'autodate',
+        onCreate: true,
+      },
+      {
+        id: "csupdated01",
+        name: 'updated',
+        type: 'autodate',
+        onCreate: true,
+        onUpdate: true,
+      },
     ],
     indexes: [],
   })
@@ -180,6 +194,20 @@ migrate((app) => {
         collectionId: "_pb_users_auth_",
         cascadeDelete: false,
         maxSelect: 1,
+      },
+      // System autodate fields (required in PocketBase v0.23+)
+      {
+        id: "cmcreated01",
+        name: 'created',
+        type: 'autodate',
+        onCreate: true,
+      },
+      {
+        id: "cmupdated01",
+        name: 'updated',
+        type: 'autodate',
+        onCreate: true,
+        onUpdate: true,
       },
     ],
     indexes: [],
