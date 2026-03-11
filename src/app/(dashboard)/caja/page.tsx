@@ -8,6 +8,7 @@ import { BalanceHero } from '@/components/caja/BalanceHero'
 import { CelebrationOverlay, LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { transitionModals } from '@/lib/modal-utils'
 import type { CashSession, CashMovement, CashMovementType, CashMovementCategory } from '@/types'
 
 // ============================================
@@ -257,17 +258,20 @@ export default function CajaPage() {
         openingBalance: balance,
       })
 
-      // Refresh data
-      setCurrentSession(session)
-      setMovements([]) // New session starts with no movements
-      await loadSessions()
-
-      // Close modal and reset form
-      setIsOpenDrawerModalOpen(false)
+      // Reset form
       setOpeningBalance('')
 
-      // Show opening animation after modal closes
-      setTimeout(() => setShowOpenAnimation(true), 200)
+      // Transition from open drawer modal to opening animation
+      // Update session state AFTER modal closes to prevent content flash
+      transitionModals(
+        () => setIsOpenDrawerModalOpen(false),
+        () => {
+          setCurrentSession(session)
+          setMovements([]) // New session starts with no movements
+          setShowOpenAnimation(true)
+          loadSessions()
+        }
+      )
     } catch (err) {
       console.error('Error opening drawer:', err)
       setError('Error al abrir la caja')
@@ -302,9 +306,6 @@ export default function CajaPage() {
         discrepancyNote: discrepancyNote.trim() || null,
       })
 
-      // Close modal first
-      setIsCloseDrawerModalOpen(false)
-
       // Set up celebration stats
       setCelebrationStats([
         { label: 'Movimientos', value: String(movements.length) },
@@ -312,8 +313,11 @@ export default function CajaPage() {
         { label: 'Retiros', value: formatCurrency(totalRetiros) },
       ])
 
-      // Show celebration overlay
-      setShowCelebration(true)
+      // Transition from close drawer modal to celebration overlay
+      transitionModals(
+        () => setIsCloseDrawerModalOpen(false),
+        () => setShowCelebration(true)
+      )
 
       // Refresh data
       setCurrentSession(null)
@@ -1094,15 +1098,18 @@ export default function CajaPage() {
                     session.closedAt ? 'session-item--closed' : 'session-item--open'
                   }`}
                   onClick={() => {
-                    setIsHistorialModalOpen(false)
-                    // Wait for modal close animation before opening detail
-                    setTimeout(() => handleViewSessionDetail(session), 180)
+                    transitionModals(
+                      () => setIsHistorialModalOpen(false),
+                      () => handleViewSessionDetail(session)
+                    )
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
-                      setIsHistorialModalOpen(false)
-                      setTimeout(() => handleViewSessionDetail(session), 180)
+                      transitionModals(
+                        () => setIsHistorialModalOpen(false),
+                        () => handleViewSessionDetail(session)
+                      )
                     }
                   }}
                   tabIndex={0}

@@ -8,6 +8,7 @@ import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, Ico
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAuth } from '@/contexts/auth-context'
 import { formatCurrency, formatDate, getProductImageUrl } from '@/lib/utils'
+import { transitionModals } from '@/lib/modal-utils'
 import { PRODUCT_FILTERS_KEY } from '@/lib/constants'
 import type { Product, ProductCategory, Order, OrderItem, Provider } from '@/types'
 
@@ -701,10 +702,14 @@ export default function ProductosPage() {
     setOrderProductSearchQuery('')
     setError('')
 
-    // Close detail modal and open edit modal
-    setIsOrderDetailModalOpen(false)
-    setViewingOrder(null)
-    setIsOrderModalOpen(true)
+    // Transition from detail modal to edit modal
+    transitionModals(
+      () => {
+        setIsOrderDetailModalOpen(false)
+        setViewingOrder(null)
+      },
+      () => setIsOrderModalOpen(true)
+    )
   }, [])
 
   const handleAddProductToOrder = useCallback((product: Product) => {
