@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
-import { Spinner } from '@/components/ui'
+import { Spinner, Modal } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
 import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconSelect, IconWarning, IconInventory, IconAdjust } from '@/components/icons'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
@@ -40,51 +40,6 @@ interface ExpandedOrder extends Order {
     })[]
     provider?: Provider
   }
-}
-
-// Modal component
-function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  footer,
-  size = 'default',
-}: {
-  isOpen: boolean
-  onClose: () => void
-  title: string
-  children: React.ReactNode
-  footer?: React.ReactNode
-  size?: 'default' | 'large'
-}) {
-  if (!isOpen) return null
-
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className={`modal ${size === 'large' ? 'modal-lg' : ''}`} onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="modal-close"
-            aria-label="Cerrar"
-          >
-            <IconClose className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="modal-body">
-          {children}
-        </div>
-        {footer && (
-          <div className="modal-footer">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
-  )
 }
 
 // Delete confirmation modal

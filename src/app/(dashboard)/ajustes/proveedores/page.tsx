@@ -1,56 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Spinner } from '@/components/ui'
+import { Spinner, Modal } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
-import { IconAdd, IconClose, IconChevronRight } from '@/components/icons'
+import { IconAdd, IconChevronRight } from '@/components/icons'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { useAuth } from '@/contexts/auth-context'
 import { isPartnerOrOwner } from '@/lib/auth'
 import { formatPhoneForDisplay } from '@/lib/countries'
 import type { Provider } from '@/types'
-
-// Modal component using global CSS styles
-function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  footer
-}: {
-  isOpen: boolean
-  onClose: () => void
-  title: string
-  children: React.ReactNode
-  footer?: React.ReactNode
-}) {
-  if (!isOpen) return null
-
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 hover:bg-bg-muted rounded-lg transition-colors"
-          >
-            <IconClose className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="modal-body">
-          {children}
-        </div>
-        {footer && (
-          <div className="modal-footer">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
 
 function getProviderInitials(name: string): string {
   const parts = name.trim().split(/\s+/)

@@ -11,13 +11,17 @@ interface BalanceHeroProps {
     amount: number
   }
   lastMovementType?: 'ingreso' | 'retiro' | null
+  status?: string
+  timestamp?: string
 }
 
 export function BalanceHero({
   balance,
   label = 'Saldo actual',
   trend,
-  lastMovementType
+  lastMovementType,
+  status,
+  timestamp
 }: BalanceHeroProps) {
   // Start from 0 for initial count-up animation
   const [displayBalance, setDisplayBalance] = useState(0)
@@ -76,6 +80,14 @@ export function BalanceHero({
 
   return (
     <div className="balance-hero-container">
+      {/* Status row - subtle text in corners */}
+      {(status || timestamp) && (
+        <div className="balance-hero__status-row">
+          {status && <span className="balance-hero__status">{status}</span>}
+          {timestamp && <span className="balance-hero__timestamp">{timestamp}</span>}
+        </div>
+      )}
+
       {/* Animated background glow */}
       <div className="balance-glow" />
 

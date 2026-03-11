@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import QRCode from 'qrcode'
-import { Badge, Spinner } from '@/components/ui'
+import { Badge, Spinner, Modal } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
-import { IconEmployee, IconPartner, IconCheck, IconRefresh, IconCopy, IconTrash, IconClose, IconAdd, IconPhone } from '@/components/icons'
+import { IconEmployee, IconPartner, IconCheck, IconRefresh, IconCopy, IconTrash, IconAdd, IconPhone } from '@/components/icons'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { useAuth } from '@/contexts/auth-context'
 import {
@@ -21,48 +21,6 @@ import { formatPhoneForDisplay, isValidE164 } from '@/lib/countries'
 import type { User, InviteCode, InviteRole } from '@/types'
 
 const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
-
-// Modal component using global CSS styles
-function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  footer
-}: {
-  isOpen: boolean
-  onClose: () => void
-  title: string
-  children: React.ReactNode
-  footer?: React.ReactNode
-}) {
-  if (!isOpen) return null
-
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 hover:bg-bg-muted rounded-lg transition-colors"
-          >
-            <IconClose className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="modal-body">
-          {children}
-        </div>
-        {footer && (
-          <div className="modal-footer">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
 
 // Role selection card component
 interface RoleCardProps {
