@@ -469,7 +469,7 @@ export default function CajaPage() {
           </div>
         )}
 
-        <div className="space-y-6 page-stagger">
+        <div className="flex flex-col flex-1 gap-6 page-stagger">
           {/* Balance Hero with status */}
           <BalanceHero
             balance={expectedBalance}
@@ -493,7 +493,7 @@ export default function CajaPage() {
                 onClick={() => setIsCloseDrawerModalOpen(true)}
                 className="caja-action-btn"
               >
-                <IconCloseDrawer className="caja-action-btn__icon" />
+                <IconCloseDrawer className="caja-action-btn__icon text-error" />
                 Cerrar
               </button>
             ) : (
@@ -502,7 +502,7 @@ export default function CajaPage() {
                 onClick={() => setIsOpenDrawerModalOpen(true)}
                 className="caja-action-btn"
               >
-                <IconAdd className="caja-action-btn__icon" />
+                <IconAdd className="caja-action-btn__icon text-success" />
                 Abrir
               </button>
             )}
@@ -521,7 +521,7 @@ export default function CajaPage() {
               className="caja-action-btn"
               disabled={!currentSession}
             >
-              <IconMovement className="caja-action-btn__icon" />
+              <IconMovement className="caja-action-btn__icon text-brand" />
               Movimientos ({movements.length})
             </button>
             <button
@@ -530,7 +530,7 @@ export default function CajaPage() {
               className="caja-action-btn"
               disabled={!currentSession}
             >
-              <IconCoins className="caja-action-btn__icon" />
+              <IconCoins className="caja-action-btn__icon text-warning" />
               Prestamos ({outstandingLoans.size})
             </button>
           </div>

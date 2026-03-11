@@ -1072,8 +1072,7 @@
     align-items: center;
     justify-content: center;
     flex: 1;
-    min-height: 200px;
-    padding: var(--space-6);
+    min-height: 0;
     text-align: center;
   }
 
@@ -1679,6 +1678,7 @@
     font-size: var(--text-base);
     color: var(--color-text-tertiary);
     max-width: 280px;
+    opacity: 0.5;
   }
 
   /* DEPRECATED: Use .empty-state-fill instead - this uses fragile calc() */
@@ -3780,21 +3780,6 @@
   margin-bottom: var(--space-4);
 }
 
-.empty-state-title {
-  font-size: var(--text-xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-2);
-  animation: fadeInUp var(--duration-slow) var(--ease-out-expo) 0.1s backwards;
-}
-
-.empty-state-description {
-  font-size: var(--text-base);
-  color: var(--color-text-secondary);
-  max-width: 280px;
-  margin-bottom: var(--space-6);
-  animation: fadeInUp var(--duration-slow) var(--ease-out-expo) 0.2s backwards;
-}
 
 /* ===== Glass Effect ===== */
 .glass {
