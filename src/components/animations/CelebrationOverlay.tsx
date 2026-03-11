@@ -28,7 +28,7 @@ export function CelebrationOverlay({
       setRender(true)
       setClosing(false)
       // Delay animation to let modal fully render first
-      const animTimer = setTimeout(() => setShowAnimation(true), 100)
+      const animTimer = setTimeout(() => setShowAnimation(true), 300)
       return () => clearTimeout(animTimer)
     } else if (render) {
       setShowAnimation(false)
