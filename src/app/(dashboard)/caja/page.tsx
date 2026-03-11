@@ -560,18 +560,16 @@ export default function CajaPage() {
                   }).map((mov, index) => (
                     <div
                       key={mov.id}
-                      className={`movement-item ${
-                        mov.type === 'ingreso' ? 'movement-item--ingreso' : 'movement-item--retiro'
-                      } entering`}
+                      className="movement-item entering"
                       style={{ animationDelay: `${Math.min(index * 30, 150)}ms` }}
                     >
                       {mov.id === newMovementId ? (
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
                           <LottiePlayer
                             src="/animations/success.lottie"
                             loop={false}
                             autoplay={true}
-                            style={{ width: 40, height: 40 }}
+                            style={{ width: 56, height: 56 }}
                             onComplete={() => setNewMovementId(null)}
                           />
                         </div>

@@ -3460,15 +3460,6 @@
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-lg);
   transition: all var(--duration-fast) var(--ease-out-expo);
-  border-left: 3px solid transparent;
-}
-
-.movement-item--ingreso {
-  border-left-color: var(--color-success);
-}
-
-.movement-item--retiro {
-  border-left-color: var(--color-error);
 }
 
 /* Staggered entrance for list items */

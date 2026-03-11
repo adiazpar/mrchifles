@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useRef, useCallback } from 'react'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 
 interface LottiePlayerProps {
@@ -22,25 +22,19 @@ export function LottiePlayer({
   style,
   onComplete
 }: LottiePlayerProps) {
-  const dotLottieRef = useRef<any>(null)
+  const hasCalledComplete = useRef(false)
   const onCompleteRef = useRef(onComplete)
-
-  // Keep onComplete ref updated
-  useEffect(() => {
-    onCompleteRef.current = onComplete
-  }, [onComplete])
+  onCompleteRef.current = onComplete
 
   const handleDotLottieRef = useCallback((dotLottie: any) => {
-    if (dotLottie) {
-      dotLottieRef.current = dotLottie
+    if (!dotLottie) return
 
-      // Add complete event listener if callback provided
-      if (onCompleteRef.current) {
-        dotLottie.addEventListener('complete', () => {
-          onCompleteRef.current?.()
-        })
-      }
-    }
+    dotLottie.addEventListener('complete', () => {
+      // Prevent double-firing
+      if (hasCalledComplete.current) return
+      hasCalledComplete.current = true
+      onCompleteRef.current?.()
+    })
   }, [])
 
   return (
