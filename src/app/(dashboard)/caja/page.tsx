@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { PageHeader } from '@/components/layout'
-import { Spinner } from '@/components/ui'
-import { IconClose, IconAdd, IconIngreso, IconRetiro, IconCheck, IconClock, IconChevronRight } from '@/components/icons'
+import { Spinner, Modal } from '@/components/ui'
+import { IconClose, IconAdd, IconIngreso, IconRetiro, IconCheck, IconClock, IconChevronRight, IconCloseDrawer, IconMovement, IconTransfer } from '@/components/icons'
 import { BalanceHero } from '@/components/caja/BalanceHero'
 import { EmptyStateAnimation, CelebrationOverlay, SuccessOverlay } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
@@ -44,52 +44,6 @@ const EGRESO_CATEGORIES: CashMovementCategory[] = [
   'cambio_billetes',
   'otro'
 ]
-
-// ============================================
-// MODAL COMPONENT
-// ============================================
-
-function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  footer,
-}: {
-  isOpen: boolean
-  onClose: () => void
-  title: string
-  children: React.ReactNode
-  footer?: React.ReactNode
-}) {
-  if (!isOpen) return null
-
-  return (
-    <div className="modal-backdrop modal-backdrop-animated" onClick={onClose}>
-      <div className="modal modal-animated" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="modal-close"
-            aria-label="Cerrar"
-          >
-            <IconClose className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="modal-body">
-          {children}
-        </div>
-        {footer && (
-          <div className="modal-footer">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
 
 // ============================================
 // MAIN COMPONENT
@@ -140,6 +94,9 @@ export default function CajaPage() {
     type: 'ingreso' | 'retiro'
     amount: number
   } | null>(null)
+
+  // Modal states (continued)
+  const [isLoansModalOpen, setIsLoansModalOpen] = useState(false)
 
   // ============================================
   // CALCULATED VALUES
@@ -507,7 +464,7 @@ export default function CajaPage() {
     <>
       <PageHeader title="Caja" subtitle="Control de efectivo" />
 
-      <main className="page-content space-y-6">
+      <main className="page-content space-y-4">
         {error && (
           <div className="p-4 bg-error-subtle text-error rounded-lg">
             {error}
@@ -535,60 +492,53 @@ export default function CajaPage() {
         {activeTab === 'caja' ? (
           currentSession ? (
             // Open drawer view
-            <div className="space-y-6 pb-20 page-stagger">
-                {/* Balance Hero */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-success text-white">
-                      Abierta
-                    </span>
-                    <span className="text-xs text-text-tertiary">
-                      {formatDateTime(currentSession.openedAt)}
-                    </span>
-                  </div>
-                  <BalanceHero
-                    balance={expectedBalance}
-                    label="Saldo esperado"
-                    lastMovementType={lastMovementType}
-                    trend={movements.length > 0 ? {
-                      direction: expectedBalance >= currentSession.openingBalance ? 'up' : 'down',
-                      amount: Math.abs(expectedBalance - currentSession.openingBalance)
-                    } : undefined}
-                  />
-                </div>
+            <div className="space-y-6 page-stagger">
+                {/* Balance Hero with status */}
+                <BalanceHero
+                  balance={expectedBalance}
+                  label="Saldo esperado"
+                  lastMovementType={lastMovementType}
+                  status="Abierta"
+                  timestamp={formatDateTime(currentSession.openedAt)}
+                  trend={movements.length > 0 ? {
+                    direction: expectedBalance >= currentSession.openingBalance ? 'up' : 'down',
+                    amount: Math.abs(expectedBalance - currentSession.openingBalance)
+                  } : undefined}
+                />
 
-                {/* Outstanding Loans */}
-                {outstandingLoans.size > 0 && (
-                  <div className="p-4 rounded-lg border border-warning bg-warning-subtle">
-                    <h3 className="text-sm font-medium text-text-primary mb-3">
-                      Prestamos pendientes
-                    </h3>
-                    <div className="space-y-2">
-                      {Array.from(outstandingLoans.entries()).map(([id, loan]) => (
-                        <div key={id} className="flex items-center justify-between">
-                          <span className="text-sm text-text-secondary">{loan.name}</span>
-                          <span className="text-sm font-medium text-warning">
-                            {formatCurrency(loan.amount)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Movements Header */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-text-secondary">
-                    {movements.length} {movements.length === 1 ? 'movimiento' : 'movimientos'}
-                  </span>
+                {/* Action Buttons */}
+                <div className="caja-actions">
                   <button
                     type="button"
                     onClick={() => setIsMovementModalOpen(true)}
-                    className="btn btn-primary btn-sm"
+                    className="caja-action-btn caja-action-btn--primary"
                   >
-                    <IconAdd className="w-4 h-4" />
-                    Registrar
+                    <IconMovement className="caja-action-btn__icon" />
+                    Movimientos ({movements.length})
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsCloseDrawerModalOpen(true)}
+                    className="caja-action-btn caja-action-btn--danger"
+                  >
+                    <IconCloseDrawer className="caja-action-btn__icon" />
+                    Cerrar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsLoansModalOpen(true)}
+                    className="caja-action-btn caja-action-btn--warning"
+                  >
+                    <IconTransfer className="caja-action-btn__icon" />
+                    Prestamos ({outstandingLoans.size})
+                  </button>
+                </div>
+
+                {/* Movements Header */}
+                <div className="flex items-center">
+                  <span className="text-sm text-text-secondary">
+                    {movements.length} {movements.length === 1 ? 'movimiento' : 'movimientos'}
+                  </span>
                 </div>
 
                 {/* Movements List */}
@@ -773,21 +723,6 @@ export default function CajaPage() {
         )}
       </main>
 
-      {/* Close Drawer Button - Fixed above mobile nav */}
-      {currentSession && activeTab === 'caja' && (
-        <div
-          className="fixed left-0 right-0 p-4 bg-bg-surface border-t border-border z-40 lg:ml-64 lg:bottom-0"
-          style={{ bottom: 'calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px))' }}
-        >
-          <button
-            type="button"
-            onClick={() => setIsCloseDrawerModalOpen(true)}
-            className="btn btn-secondary w-full max-w-lg mx-auto block"
-          >
-            Cerrar caja
-          </button>
-        </div>
-      )}
 
       {/* Open Drawer Modal */}
       <Modal
@@ -1161,6 +1096,30 @@ export default function CajaPage() {
             </div>
           </div>
         ) : null}
+      </Modal>
+
+      {/* Loans Modal */}
+      <Modal
+        isOpen={isLoansModalOpen}
+        onClose={() => setIsLoansModalOpen(false)}
+        title="Prestamos pendientes"
+      >
+        {outstandingLoans.size > 0 ? (
+          <div className="space-y-2">
+            {Array.from(outstandingLoans.entries()).map(([id, loan]) => (
+              <div key={id} className="flex items-center justify-between p-3 bg-bg-muted rounded-lg">
+                <span className="text-sm text-text-primary">{loan.name}</span>
+                <span className="text-sm font-medium text-warning">
+                  {formatCurrency(loan.amount)}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-text-tertiary">
+            No hay prestamos pendientes
+          </div>
+        )}
       </Modal>
 
       {/* Success overlay for movement recording */}
