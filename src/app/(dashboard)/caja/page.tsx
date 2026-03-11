@@ -538,17 +538,19 @@ export default function CajaPage() {
           {/* Movements Section (only when session is open) */}
           {currentSession && (
             <>
-              {/* Movements Header */}
-              <div className="flex items-center">
-                <span className="text-sm text-text-secondary">
-                  {movements.length} {movements.length === 1 ? 'movimiento' : 'movimientos'}
-                </span>
-              </div>
+              {/* Movements Header - only show when there are movements */}
+              {movements.length > 0 && (
+                <div className="flex items-center">
+                  <span className="text-sm text-text-secondary">
+                    {movements.length} {movements.length === 1 ? 'movimiento' : 'movimientos'}
+                  </span>
+                </div>
+              )}
 
               {/* Movements List */}
               {movements.length === 0 ? (
                 <div className="text-center py-8 text-text-tertiary">
-                  No hay movimientos registrados
+                  Aun no hay movimientos registrados
                 </div>
               ) : (
                 <div className="space-y-2">
