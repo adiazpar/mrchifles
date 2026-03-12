@@ -50,6 +50,30 @@ export function ModalNextButton({ children, className = '', disabled, onClick }:
   )
 }
 
+interface GoToStepButtonProps extends ModalButtonProps {
+  step: number
+}
+
+export function ModalGoToStepButton({ children, className = '', disabled, step, onClick }: GoToStepButtonProps) {
+  const { goToStep, isLocked, isTransitioning } = useMorphingModal()
+
+  const handleClick = () => {
+    onClick?.()
+    goToStep(step)
+  }
+
+  return (
+    <button
+      type="button"
+      className={className}
+      onClick={handleClick}
+      disabled={disabled || isLocked || isTransitioning}
+    >
+      {children}
+    </button>
+  )
+}
+
 interface CancelBackButtonProps extends ModalButtonProps {
   onCancel?: () => void
 }

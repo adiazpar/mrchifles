@@ -15,9 +15,9 @@ export function useModalContext(): ModalContextValue {
   return context
 }
 
-export function useMorphingModal(): Omit<ModalContextValue, '_registerStep' | '_unregisterStep' | '_onClose' | '_currentStepHideBackButton' | '_setCurrentStepHideBackButton'> {
+export function useMorphingModal(): Omit<ModalContextValue, '_registerStep' | '_unregisterStep' | '_onClose' | '_currentStepHideBackButton' | '_setCurrentStepHideBackButton' | '_currentStepBackStep' | '_setCurrentStepBackStep'> {
   const ctx = useModalContext()
-  const { _registerStep, _unregisterStep, _onClose, _currentStepHideBackButton, _setCurrentStepHideBackButton, ...publicApi } = ctx
+  const { _registerStep, _unregisterStep, _onClose, _currentStepHideBackButton, _setCurrentStepHideBackButton, _currentStepBackStep, _setCurrentStepBackStep, ...publicApi } = ctx
   return publicApi
 }
 
@@ -40,6 +40,7 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
   const [direction, setDirection] = useState<Direction>('forward')
   const [isLocked, setIsLocked] = useState(false)
   const [currentStepHideBackButton, setCurrentStepHideBackButton] = useState(false)
+  const [currentStepBackStep, setCurrentStepBackStep] = useState<number | undefined>(undefined)
 
   // Track timeout IDs for cleanup
   const timeoutIdsRef = useRef<NodeJS.Timeout[]>([])
@@ -55,6 +56,7 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
       setDirection('forward')
       setIsLocked(false)
       setCurrentStepHideBackButton(false)
+      setCurrentStepBackStep(undefined)
     }
     prevIsOpen.current = isOpen
   }, [isOpen, initialStep])
@@ -156,6 +158,8 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
     _onClose,
     _currentStepHideBackButton: currentStepHideBackButton,
     _setCurrentStepHideBackButton: setCurrentStepHideBackButton,
+    _currentStepBackStep: currentStepBackStep,
+    _setCurrentStepBackStep: setCurrentStepBackStep,
   }
 
   return (

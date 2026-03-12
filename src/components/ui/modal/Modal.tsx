@@ -7,13 +7,13 @@ import { ModalProvider, useModalContext } from './ModalContext'
 import { ModalStep } from './ModalStep'
 import { ModalItem } from './ModalItem'
 import { ModalFooter } from './ModalFooter'
-import { ModalBackButton, ModalNextButton, ModalCancelBackButton } from './ModalButtons'
+import { ModalBackButton, ModalNextButton, ModalCancelBackButton, ModalGoToStepButton } from './ModalButtons'
 import type { ModalProps, ModalStepProps } from './types'
 
 // Internal header component (needs context)
 function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTitle?: string }) {
   const ctx = useModalContext()
-  const { isFirstStep, isLocked, isTransitioning, goBack, _onClose, _currentStepHideBackButton } = ctx
+  const { isFirstStep, isLocked, isTransitioning, goBack, goToStep, _onClose, _currentStepHideBackButton, _currentStepBackStep } = ctx
 
   // For single-step modals, use the prop title
   // For multi-step, find the current step's title from DOM (set via data attribute)
@@ -22,12 +22,21 @@ function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTit
   // Show back button if: multi-step modal, not first step, and step doesn't hide it
   const showBackIcon = !singleStepTitle && !isFirstStep && !_currentStepHideBackButton
 
+  // Handle back navigation - use custom backStep if defined, otherwise default goBack
+  const handleBack = () => {
+    if (_currentStepBackStep !== undefined) {
+      goToStep(_currentStepBackStep)
+    } else {
+      goBack()
+    }
+  }
+
   return (
     <div className="modal-header">
       <div className={`modal-back-container ${showBackIcon ? 'modal-back-visible' : 'modal-back-hidden'}`}>
         <button
           type="button"
-          onClick={goBack}
+          onClick={handleBack}
           className="modal-back"
           aria-label="Volver"
           disabled={isLocked || isTransitioning || !showBackIcon}
@@ -267,4 +276,5 @@ export const Modal = Object.assign(ModalRoot, {
   BackButton: ModalBackButton,
   NextButton: ModalNextButton,
   CancelBackButton: ModalCancelBackButton,
+  GoToStepButton: ModalGoToStepButton,
 })

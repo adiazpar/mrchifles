@@ -191,6 +191,15 @@ migrate((app) => {
         cascadeDelete: false,
         maxSelect: 1,
       },
+      {
+        id: "cmeditedby1",
+        name: 'editedBy',
+        type: 'relation',
+        required: false,
+        collectionId: "_pb_users_auth_",
+        cascadeDelete: false,
+        maxSelect: 1,
+      },
       // System autodate fields (required in PocketBase v0.23+)
       {
         id: "cmcreated01",
