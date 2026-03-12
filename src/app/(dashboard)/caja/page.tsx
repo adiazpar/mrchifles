@@ -1011,8 +1011,7 @@ export default function CajaPage() {
         onClose={() => !isSavingEdit && !isDeleting && setIsEditMovementModalOpen(false)}
       >
         <Modal.Step title="Editar movimiento">
-          <div className="space-y-4">
-            {/* Type Toggle */}
+          <Modal.Item>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -1045,56 +1044,54 @@ export default function CajaPage() {
                 Retiro
               </button>
             </div>
+          </Modal.Item>
 
-            {/* Category Select */}
-            <div>
-              <label htmlFor="edit-category" className="label">Categoria</label>
-              <select
-                id="edit-category"
-                value={editCategory}
-                onChange={(e) => setEditCategory(e.target.value as CashMovementCategory)}
-                className="input"
-              >
-                <option value="">Seleccionar...</option>
-                {(editType === 'ingreso' ? INGRESO_CATEGORIES : EGRESO_CATEGORIES).map((cat) => (
-                  <option key={cat} value={cat}>
-                    {CATEGORY_LABELS[cat]}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <Modal.Item>
+            <label htmlFor="edit-category" className="label">Categoria</label>
+            <select
+              id="edit-category"
+              value={editCategory}
+              onChange={(e) => setEditCategory(e.target.value as CashMovementCategory)}
+              className="input"
+            >
+              <option value="">Seleccionar...</option>
+              {(editType === 'ingreso' ? INGRESO_CATEGORIES : EGRESO_CATEGORIES).map((cat) => (
+                <option key={cat} value={cat}>
+                  {CATEGORY_LABELS[cat]}
+                </option>
+              ))}
+            </select>
+          </Modal.Item>
 
-            {/* Amount */}
-            <div>
-              <label htmlFor="edit-amount" className="label">Monto (S/)</label>
-              <input
-                id="edit-amount"
-                type="number"
-                inputMode="decimal"
-                value={editAmount}
-                onChange={(e) => setEditAmount(e.target.value)}
-                className="input"
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-              />
-            </div>
+          <Modal.Item>
+            <label htmlFor="edit-amount" className="label">Monto (S/)</label>
+            <input
+              id="edit-amount"
+              type="number"
+              inputMode="decimal"
+              value={editAmount}
+              onChange={(e) => setEditAmount(e.target.value)}
+              className="input"
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+            />
+          </Modal.Item>
 
-            {/* Note */}
-            <div>
-              <label htmlFor="edit-note" className="label">Nota (opcional)</label>
-              <textarea
-                id="edit-note"
-                value={editNote}
-                onChange={(e) => setEditNote(e.target.value)}
-                className="input"
-                placeholder="Descripcion del movimiento..."
-                rows={2}
-              />
-            </div>
-          </div>
+          <Modal.Item>
+            <label htmlFor="edit-note" className="label">Nota (opcional)</label>
+            <textarea
+              id="edit-note"
+              value={editNote}
+              onChange={(e) => setEditNote(e.target.value)}
+              className="input"
+              placeholder="Descripcion del movimiento..."
+              rows={2}
+            />
+          </Modal.Item>
+
           <Modal.Footer>
-            <Modal.NextButton className="!flex-none !p-2 !bg-transparent text-error hover:!bg-error-subtle">
+            <Modal.NextButton className="btn-icon !bg-transparent text-error hover:!bg-error-subtle rounded-lg">
               <IconTrash className="w-5 h-5" />
             </Modal.NextButton>
             <div className="flex-1" />
@@ -1118,11 +1115,14 @@ export default function CajaPage() {
         </Modal.Step>
 
         <Modal.Step title="Eliminar movimiento">
-          <div className="space-y-4">
+          <Modal.Item>
             <p className="text-text-secondary">
               Estas seguro de que deseas eliminar este movimiento?
             </p>
-            {editingMovement && (
+          </Modal.Item>
+
+          {editingMovement && (
+            <Modal.Item>
               <div className="p-4 bg-bg-muted rounded-lg space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-text-secondary">Tipo</span>
@@ -1143,11 +1143,15 @@ export default function CajaPage() {
                   </span>
                 </div>
               </div>
-            )}
+            </Modal.Item>
+          )}
+
+          <Modal.Item>
             <p className="text-sm text-error">
               Esta accion no se puede deshacer.
             </p>
-          </div>
+          </Modal.Item>
+
           <Modal.Footer>
             <Modal.BackButton className="btn btn-secondary flex-1">
               Volver
