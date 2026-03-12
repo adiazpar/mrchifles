@@ -13,13 +13,14 @@ import type { ModalProps, ModalStepProps } from './types'
 // Internal header component (needs context)
 function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTitle?: string }) {
   const ctx = useModalContext()
-  const { isFirstStep, isLocked, isTransitioning, goBack, _onClose } = ctx
+  const { isFirstStep, isLocked, isTransitioning, goBack, _onClose, _currentStepHideBackButton } = ctx
 
   // For single-step modals, use the prop title
   // For multi-step, find the current step's title from DOM (set via data attribute)
   const displayTitle = singleStepTitle || title || ''
 
-  const showBackIcon = !singleStepTitle && !isFirstStep
+  // Show back button if: multi-step modal, not first step, and step doesn't hide it
+  const showBackIcon = !singleStepTitle && !isFirstStep && !_currentStepHideBackButton
 
   return (
     <div className="modal-header">

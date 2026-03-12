@@ -1410,52 +1410,6 @@ export default function ProductosPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title={editingProduct ? 'Editar producto' : 'Agregar producto'}
-        footer={
-          <>
-            {editingProduct && (
-              <>
-                {canDelete && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeleteProduct(editingProduct)
-                    }}
-                    className="modal-action-delete"
-                    title="Eliminar producto"
-                  >
-                    <IconTrash className="w-5 h-5" />
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => handleOpenAdjustment(editingProduct)}
-                  className="modal-action-adjust"
-                  title="Ajustar inventario"
-                >
-                  <IconAdjust className="w-5 h-5" />
-                </button>
-              </>
-            )}
-            <div className="modal-actions">
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                className="btn btn-secondary"
-                disabled={isSaving}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                form="product-form"
-                className="btn btn-primary"
-                disabled={isSaving}
-              >
-                {isSaving ? <Spinner /> : 'Guardar'}
-              </button>
-            </div>
-          </>
-        }
       >
         <form id="product-form" onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -1605,6 +1559,50 @@ export default function ProductosPage() {
             />
           </div>
         </form>
+        <Modal.Footer>
+          {editingProduct && (
+            <>
+              {canDelete && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteProduct(editingProduct)
+                  }}
+                  className="modal-action-delete"
+                  title="Eliminar producto"
+                >
+                  <IconTrash className="w-5 h-5" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleOpenAdjustment(editingProduct)}
+                className="modal-action-adjust"
+                title="Ajustar inventario"
+              >
+                <IconAdjust className="w-5 h-5" />
+              </button>
+            </>
+          )}
+          <div className="modal-actions">
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="btn btn-secondary"
+              disabled={isSaving}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="product-form"
+              className="btn btn-primary"
+              disabled={isSaving}
+            >
+              {isSaving ? <Spinner /> : 'Guardar'}
+            </button>
+          </div>
+        </Modal.Footer>
       </Modal>
 
       {/* Delete confirmation modal */}
@@ -1621,26 +1619,6 @@ export default function ProductosPage() {
         isOpen={adjustingProduct !== null}
         onClose={handleCloseAdjustment}
         title="Ajustar inventario"
-        footer={
-          <div className="modal-actions">
-            <button
-              type="button"
-              onClick={handleCloseAdjustment}
-              className="btn btn-secondary"
-              disabled={isAdjusting}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleSaveAdjustment}
-              className="btn btn-primary"
-              disabled={isAdjusting || !adjustmentQuantity || !adjustmentReason}
-            >
-              {isAdjusting ? <Spinner /> : 'Guardar'}
-            </button>
-          </div>
-        }
       >
         <div className="space-y-4">
           {error && (
@@ -1785,6 +1763,24 @@ export default function ProductosPage() {
             </div>
           )}
         </div>
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={handleCloseAdjustment}
+            className="btn btn-secondary flex-1"
+            disabled={isAdjusting}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveAdjustment}
+            className="btn btn-primary flex-1"
+            disabled={isAdjusting || !adjustmentQuantity || !adjustmentReason}
+          >
+            {isAdjusting ? <Spinner /> : 'Guardar'}
+          </button>
+        </Modal.Footer>
       </Modal>
 
       {/* New Order Modal */}
@@ -1796,29 +1792,6 @@ export default function ProductosPage() {
         }}
         title={editingOrder ? "Editar Pedido" : "Nuevo Pedido"}
         size="large"
-        footer={
-          <div className="modal-actions">
-            <button
-              type="button"
-              onClick={() => {
-                setIsOrderModalOpen(false)
-                resetOrderForm()
-              }}
-              className="btn btn-secondary"
-              disabled={isSavingOrder}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleSaveOrder}
-              className="btn btn-primary"
-              disabled={isSavingOrder || orderItems.length === 0}
-            >
-              {isSavingOrder ? <Spinner /> : 'Guardar'}
-            </button>
-          </div>
-        }
       >
         <div className="space-y-4">
           {error && (
@@ -2043,6 +2016,27 @@ export default function ProductosPage() {
             />
           </div>
         </div>
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={() => {
+              setIsOrderModalOpen(false)
+              resetOrderForm()
+            }}
+            className="btn btn-secondary flex-1"
+            disabled={isSavingOrder}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveOrder}
+            className="btn btn-primary flex-1"
+            disabled={isSavingOrder || orderItems.length === 0}
+          >
+            {isSavingOrder ? <Spinner /> : 'Guardar'}
+          </button>
+        </Modal.Footer>
       </Modal>
 
       {/* Receive Order Modal */}
@@ -2053,29 +2047,6 @@ export default function ProductosPage() {
           setReceivingOrder(null)
         }}
         title="Recibir Pedido"
-        footer={
-          <div className="modal-actions">
-            <button
-              type="button"
-              onClick={() => {
-                setIsReceiveModalOpen(false)
-                setReceivingOrder(null)
-              }}
-              className="btn btn-secondary"
-              disabled={isReceiving}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleReceiveOrder}
-              className="btn btn-primary"
-              disabled={isReceiving}
-            >
-              {isReceiving ? <Spinner /> : 'Confirmar Recepcion'}
-            </button>
-          </div>
-        }
       >
         {receivingOrder && (
           <div className="space-y-4">
@@ -2145,6 +2116,27 @@ export default function ProductosPage() {
             </div>
           </div>
         )}
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={() => {
+              setIsReceiveModalOpen(false)
+              setReceivingOrder(null)
+            }}
+            className="btn btn-secondary flex-1"
+            disabled={isReceiving}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleReceiveOrder}
+            className="btn btn-primary flex-1"
+            disabled={isReceiving}
+          >
+            {isReceiving ? <Spinner /> : 'Confirmar Recepcion'}
+          </button>
+        </Modal.Footer>
       </Modal>
 
       {/* Order Detail Modal */}
@@ -2156,62 +2148,6 @@ export default function ProductosPage() {
         }}
         title="Detalle del Pedido"
         size="large"
-        footer={
-          viewingOrder?.status === 'pending' ? (
-            <>
-              {canDelete && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (viewingOrder) {
-                      setDeleteOrder(viewingOrder)
-                    }
-                  }}
-                  className="modal-action-delete"
-                  title="Eliminar pedido"
-                >
-                  <IconTrash className="w-5 h-5" />
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  if (viewingOrder) {
-                    handleOpenEditOrder(viewingOrder)
-                  }
-                }}
-                className="modal-action-edit"
-                title="Editar pedido"
-              >
-                <IconEdit className="w-5 h-5" />
-              </button>
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOrderDetailModalOpen(false)
-                    setViewingOrder(null)
-                  }}
-                  className="btn btn-secondary"
-                >
-                  Cerrar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOrderDetailModalOpen(false)
-                    if (viewingOrder) {
-                      handleOpenReceiveOrder(viewingOrder)
-                    }
-                  }}
-                  className="btn btn-primary"
-                >
-                  Recibir Pedido
-                </button>
-              </div>
-            </>
-          ) : undefined
-        }
       >
         {viewingOrder && (
           <div className="space-y-4">
@@ -2302,6 +2238,60 @@ export default function ProductosPage() {
               </div>
             )}
           </div>
+        )}
+        {viewingOrder?.status === 'pending' && (
+          <Modal.Footer>
+            {canDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (viewingOrder) {
+                    setDeleteOrder(viewingOrder)
+                  }
+                }}
+                className="modal-action-delete"
+                title="Eliminar pedido"
+              >
+                <IconTrash className="w-5 h-5" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                if (viewingOrder) {
+                  handleOpenEditOrder(viewingOrder)
+                }
+              }}
+              className="modal-action-edit"
+              title="Editar pedido"
+            >
+              <IconEdit className="w-5 h-5" />
+            </button>
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOrderDetailModalOpen(false)
+                  setViewingOrder(null)
+                }}
+                className="btn btn-secondary"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOrderDetailModalOpen(false)
+                  if (viewingOrder) {
+                    handleOpenReceiveOrder(viewingOrder)
+                  }
+                }}
+                className="btn btn-primary"
+              >
+                Recibir Pedido
+              </button>
+            </div>
+          </Modal.Footer>
         )}
       </Modal>
 

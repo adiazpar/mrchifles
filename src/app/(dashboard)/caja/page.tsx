@@ -606,26 +606,6 @@ export default function CajaPage() {
         isOpen={isOpenDrawerModalOpen}
         onClose={() => !isOpening && setIsOpenDrawerModalOpen(false)}
         title="Abrir caja"
-        footer={
-          <div className="flex gap-3 w-full">
-            <button
-              type="button"
-              onClick={() => setIsOpenDrawerModalOpen(false)}
-              className="btn btn-secondary flex-1"
-              disabled={isOpening}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleOpenDrawer}
-              className="btn btn-primary flex-1"
-              disabled={isOpening || openingBalance === '' || parseFloat(openingBalance) < 0}
-            >
-              {isOpening ? <Spinner /> : 'Abrir'}
-            </button>
-          </div>
-        }
       >
         <div className="space-y-4">
           {lastClosedSession && lastClosedSession.closedAt && lastClosedSession.closingBalance !== undefined && (
@@ -660,6 +640,24 @@ export default function CajaPage() {
             Ingresa la cantidad de efectivo con la que inicias la caja
           </p>
         </div>
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={() => setIsOpenDrawerModalOpen(false)}
+            className="btn btn-secondary flex-1"
+            disabled={isOpening}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleOpenDrawer}
+            className="btn btn-primary flex-1"
+            disabled={isOpening || openingBalance === '' || parseFloat(openingBalance) < 0}
+          >
+            {isOpening ? <Spinner /> : 'Abrir'}
+          </button>
+        </Modal.Footer>
       </Modal>
 
       {/* Close Drawer Modal */}
@@ -676,26 +674,6 @@ export default function CajaPage() {
         isOpen={isMovementModalOpen}
         onClose={() => !isSavingMovement && setIsMovementModalOpen(false)}
         title="Registrar movimiento"
-        footer={
-          <div className="flex gap-3 w-full">
-            <button
-              type="button"
-              onClick={() => setIsMovementModalOpen(false)}
-              className="btn btn-secondary flex-1"
-              disabled={isSavingMovement}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleRecordMovement}
-              className="btn btn-primary flex-1"
-              disabled={isSavingMovement || !movementCategory || !movementAmount || parseFloat(movementAmount) <= 0}
-            >
-              {isSavingMovement ? <Spinner /> : 'Registrar'}
-            </button>
-          </div>
-        }
       >
         <div className="space-y-4">
           {/* Type Toggle */}
@@ -779,6 +757,24 @@ export default function CajaPage() {
             />
           </div>
         </div>
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={() => setIsMovementModalOpen(false)}
+            className="btn btn-secondary flex-1"
+            disabled={isSavingMovement}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleRecordMovement}
+            className="btn btn-primary flex-1"
+            disabled={isSavingMovement || !movementCategory || !movementAmount || parseFloat(movementAmount) <= 0}
+          >
+            {isSavingMovement ? <Spinner /> : 'Registrar'}
+          </button>
+        </Modal.Footer>
       </Modal>
 
       {/* Session Detail Modal */}
