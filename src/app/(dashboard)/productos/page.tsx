@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import { Spinner, Modal } from '@/components/ui'
 import { PageHeader } from '@/components/layout'
-import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconSelect, IconWarning, IconInventory, IconAdjust } from '@/components/icons'
+import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconSelect, IconWarning, IconInventory, IconAdjust, IconCirclePlus, IconCircleMinus } from '@/components/icons'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAuth } from '@/contexts/auth-context'
 import { formatCurrency, formatDate, getProductImageUrl } from '@/lib/utils'
@@ -41,66 +41,6 @@ interface ExpandedOrder extends Order {
     })[]
     provider?: Provider
   }
-}
-
-// Delete confirmation modal
-function DeleteConfirmModal({
-  isOpen,
-  onClose,
-  onConfirm,
-  productName,
-  isDeleting
-}: {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => void
-  productName: string
-  isDeleting: boolean
-}) {
-  if (!isOpen) return null
-
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">Eliminar producto</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="modal-close"
-            aria-label="Cerrar"
-          >
-            <IconClose className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="modal-body">
-          <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
-            Estas seguro que deseas eliminar <strong>{productName}</strong>? Esta accion no se puede deshacer.
-          </p>
-        </div>
-        <div className="modal-footer">
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn btn-secondary"
-            style={{ flex: 1 }}
-            disabled={isDeleting}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="btn btn-danger"
-            style={{ flex: 1 }}
-            disabled={isDeleting}
-          >
-            {isDeleting ? <Spinner /> : 'Eliminar'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 // Tab types
@@ -173,12 +113,10 @@ export default function ProductosPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Delete modal state
-  const [deleteProduct, setDeleteProduct] = useState<Product | null>(null)
+  // Delete state
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Stock adjustment modal state
-  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null)
+  // Stock adjustment form state (used in modal step 1)
   const [adjustmentMode, setAdjustmentMode] = useState<'add' | 'remove'>('remove')
   const [adjustmentQuantity, setAdjustmentQuantity] = useState('')
   const [adjustmentReason, setAdjustmentReason] = useState('')
@@ -410,6 +348,11 @@ export default function ProductosPage() {
     // Set existing image preview
     const existingImageUrl = getProductImageUrl(product, '200x200')
     setImagePreview(existingImageUrl)
+    // Reset adjustment form state for step 1
+    setAdjustmentMode('remove')
+    setAdjustmentQuantity('')
+    setAdjustmentReason('')
+    setAdjustmentNotes('')
     setError('')
     setIsModalOpen(true)
   }, [])
@@ -458,8 +401,8 @@ export default function ProductosPage() {
     }
   }, [])
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault()
 
     // Validate
     if (!name.trim()) {
@@ -510,14 +453,13 @@ export default function ProductosPage() {
   }, [name, price, category, active, imageFile, removeImage, editingProduct, pb, handleCloseModal])
 
   const handleDelete = useCallback(async () => {
-    if (!deleteProduct) return
+    if (!editingProduct) return
 
     setIsDeleting(true)
 
     try {
-      await pb.collection('products').delete(deleteProduct.id)
-      setProducts(prev => prev.filter(p => p.id !== deleteProduct.id))
-      setDeleteProduct(null)
+      await pb.collection('products').delete(editingProduct.id)
+      setProducts(prev => prev.filter(p => p.id !== editingProduct.id))
       handleCloseModal()
     } catch (err) {
       console.error('Error deleting product:', err)
@@ -525,26 +467,11 @@ export default function ProductosPage() {
     } finally {
       setIsDeleting(false)
     }
-  }, [deleteProduct, pb, handleCloseModal])
+  }, [editingProduct, pb, handleCloseModal])
 
-  // Stock adjustment handlers
-  const handleOpenAdjustment = useCallback((product: Product) => {
-    setAdjustingProduct(product)
-    setAdjustmentMode('remove')
-    setAdjustmentQuantity('')
-    setAdjustmentReason('')
-    setAdjustmentNotes('')
-  }, [])
-
-  const handleCloseAdjustment = useCallback(() => {
-    setAdjustingProduct(null)
-    setAdjustmentQuantity('')
-    setAdjustmentReason('')
-    setAdjustmentNotes('')
-  }, [])
-
+  // Stock adjustment handler
   const handleSaveAdjustment = useCallback(async () => {
-    if (!adjustingProduct) return
+    if (!editingProduct) return
 
     const qty = parseInt(adjustmentQuantity, 10)
     if (isNaN(qty) || qty <= 0) {
@@ -553,7 +480,7 @@ export default function ProductosPage() {
     }
 
     // Check if removing more than available
-    const currentStock = adjustingProduct.stock ?? 0
+    const currentStock = editingProduct.stock ?? 0
     if (adjustmentMode === 'remove' && qty > currentStock) {
       setError(`No puedes remover mas de ${currentStock} unidades`)
       return
@@ -572,14 +499,14 @@ export default function ProductosPage() {
       const newStock = currentStock + adjustmentQty
 
       // Update product stock
-      await pb.collection('products').update(adjustingProduct.id, {
+      await pb.collection('products').update(editingProduct.id, {
         stock: newStock
       })
 
       // Create inventory transaction for tracking
       await pb.collection('inventory_transactions').create({
         date: new Date().toISOString(),
-        product: adjustingProduct.id,
+        product: editingProduct.id,
         type: 'adjustment',
         quantity: adjustmentQty,
         notes: `${adjustmentReason}${adjustmentNotes ? ': ' + adjustmentNotes : ''}`,
@@ -589,11 +516,14 @@ export default function ProductosPage() {
       // Update local state
       setProducts(prev =>
         prev.map(p =>
-          p.id === adjustingProduct.id ? { ...p, stock: newStock } : p
+          p.id === editingProduct.id ? { ...p, stock: newStock } : p
         )
       )
 
-      handleCloseAdjustment()
+      // Reset adjustment form state
+      setAdjustmentQuantity('')
+      setAdjustmentReason('')
+      setAdjustmentNotes('')
       handleCloseModal()
     } catch (err) {
       console.error('Error adjusting stock:', err)
@@ -601,7 +531,7 @@ export default function ProductosPage() {
     } finally {
       setIsAdjusting(false)
     }
-  }, [adjustingProduct, adjustmentQuantity, adjustmentMode, adjustmentReason, adjustmentNotes, pb, user?.id, handleCloseAdjustment, handleCloseModal])
+  }, [editingProduct, adjustmentQuantity, adjustmentMode, adjustmentReason, adjustmentNotes, pb, user?.id, handleCloseModal])
 
   // Selection mode handlers
   const handleEnterSelectionMode = useCallback(() => {
@@ -1006,7 +936,7 @@ export default function ProductosPage() {
         </div>
 
         {activeTab === 'productos' ? (
-          <div className="page-body space-y-4">
+          <div className="page-body space-y-4 page-stagger">
             {error && !isModalOpen && (
               <div className="p-4 bg-error-subtle text-error rounded-lg">
                 {error}
@@ -1132,7 +1062,7 @@ export default function ProductosPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {filteredProducts.map(product => {
+              {filteredProducts.map((product, index) => {
                 const imageUrl = getProductImageUrl(product, '100x100')
                 const categoryConfig = product.category ? CATEGORY_CONFIG[product.category] : null
                 const isSelected = selectedProducts.has(product.id)
@@ -1143,7 +1073,8 @@ export default function ProductosPage() {
                 return (
                   <div
                     key={product.id}
-                    className="list-item-clickable"
+                    className="list-item-clickable entering"
+                    style={{ animationDelay: `${Math.min(index * 30, 240)}ms` }}
                     onClick={() => {
                       if (isSelectionMode) {
                         handleToggleProductSelection(product.id)
@@ -1234,7 +1165,7 @@ export default function ProductosPage() {
           </div>
         ) : (
           /* Pedidos tab */
-          <div className="page-body space-y-4">
+          <div className="page-body space-y-4 page-stagger">
             {error && !isOrderModalOpen && (
               <div className="p-4 bg-error-subtle text-error rounded-lg">
                 {error}
@@ -1338,7 +1269,7 @@ export default function ProductosPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                {filteredOrders.map(order => {
+                {filteredOrders.map((order, index) => {
                   const items = order.expand?.['order_items(order)'] || []
                   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
                   const isPending = order.status === 'pending'
@@ -1346,7 +1277,8 @@ export default function ProductosPage() {
                   return (
                     <div
                       key={order.id}
-                      className="list-item-clickable"
+                      className="list-item-clickable entering"
+                      style={{ animationDelay: `${Math.min(index * 30, 240)}ms` }}
                       onClick={() => handleOpenOrderDetail(order)}
                       role="button"
                       tabIndex={0}
@@ -1411,15 +1343,17 @@ export default function ProductosPage() {
         onClose={handleCloseModal}
         title={editingProduct ? 'Editar producto' : 'Agregar producto'}
       >
-        <form id="product-form" onSubmit={handleSubmit} className="space-y-4">
+        <Modal.Step title={editingProduct ? 'Editar producto' : 'Agregar producto'}>
           {error && (
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
+            <Modal.Item>
+              <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+                {error}
+              </div>
+            </Modal.Item>
           )}
 
           {/* Image upload */}
-          <div>
+          <Modal.Item>
             <label className="label">Imagen</label>
             <input
               ref={fileInputRef}
@@ -1463,10 +1397,10 @@ export default function ProductosPage() {
                 </span>
               </button>
             )}
-          </div>
+          </Modal.Item>
 
           {/* Name */}
-          <div>
+          <Modal.Item>
             <label htmlFor="name" className="label">Nombre</label>
             <input
               id="name"
@@ -1477,240 +1411,232 @@ export default function ProductosPage() {
               placeholder="Ej: Chifle Grande"
               autoComplete="off"
             />
-          </div>
+          </Modal.Item>
 
           {/* Price and Category inline */}
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label htmlFor="price" className="label">Precio (S/)</label>
-              <div className="input-number-wrapper">
-                <input
-                  id="price"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={price}
-                  onChange={e => setPrice(e.target.value)}
-                  className="input"
-                  placeholder="0.00"
-                />
-                <div className="input-number-spinners">
-                  <button
-                    type="button"
-                    className="input-number-spinner"
-                    onClick={() => {
-                      const current = parseFloat(price) || 0
-                      setPrice((current + 1).toFixed(2))
-                    }}
-                    tabIndex={-1}
-                    aria-label="Incrementar precio"
-                  >
-                    <IconArrowUp />
-                  </button>
-                  <button
-                    type="button"
-                    className="input-number-spinner"
-                    onClick={() => {
-                      const current = parseFloat(price) || 0
-                      setPrice(Math.max(0, current - 1).toFixed(2))
-                    }}
-                    tabIndex={-1}
-                    aria-label="Decrementar precio"
-                  >
-                    <IconArrowDown />
-                  </button>
+          <Modal.Item>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label htmlFor="price" className="label">Precio (S/)</label>
+                <div className="input-number-wrapper">
+                  <input
+                    id="price"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    value={price}
+                    onChange={e => setPrice(e.target.value)}
+                    className="input"
+                    placeholder="0.00"
+                  />
+                  <div className="input-number-spinners">
+                    <button
+                      type="button"
+                      className="input-number-spinner"
+                      onClick={() => {
+                        const current = parseFloat(price) || 0
+                        setPrice((current + 1).toFixed(2))
+                      }}
+                      tabIndex={-1}
+                      aria-label="Incrementar precio"
+                    >
+                      <IconArrowUp />
+                    </button>
+                    <button
+                      type="button"
+                      className="input-number-spinner"
+                      onClick={() => {
+                        const current = parseFloat(price) || 0
+                        setPrice(Math.max(0, current - 1).toFixed(2))
+                      }}
+                      tabIndex={-1}
+                      aria-label="Decrementar precio"
+                    >
+                      <IconArrowDown />
+                    </button>
+                  </div>
                 </div>
               </div>
+              <div className="flex-1">
+                <label htmlFor="category" className="label">Categoria</label>
+                <select
+                  id="category"
+                  value={category}
+                  onChange={e => setCategory(e.target.value as ProductCategory | '')}
+                  className={`input ${category === '' ? 'select-placeholder' : ''}`}
+                >
+                  <option value="">Seleccionar</option>
+                  {Object.entries(CATEGORY_CONFIG)
+                    .sort(([, a], [, b]) => a.order - b.order)
+                    .map(([key, config]) => (
+                      <option key={key} value={key}>
+                        {config.label}{config.size ? ` (${config.size})` : ''}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
-            <div className="flex-1">
-              <label htmlFor="category" className="label">Categoria</label>
-              <select
-                id="category"
-                value={category}
-                onChange={e => setCategory(e.target.value as ProductCategory | '')}
-                className={`input ${category === '' ? 'select-placeholder' : ''}`}
-              >
-                <option value="">Seleccionar</option>
-                {Object.entries(CATEGORY_CONFIG)
-                  .sort(([, a], [, b]) => a.order - b.order)
-                  .map(([key, config]) => (
-                    <option key={key} value={key}>
-                      {config.label}{config.size ? ` (${config.size})` : ''}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          </div>
+          </Modal.Item>
 
           {/* Active toggle */}
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <span className="label mb-0">Activo</span>
-              <p className="text-xs text-text-tertiary mt-0.5">
-                Mostrar en la lista de ventas
-              </p>
+          <Modal.Item>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <span className="label mb-0">Activo</span>
+                <p className="text-xs text-text-tertiary mt-0.5">
+                  Mostrar en la lista de ventas
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={active}
+                onChange={e => setActive(e.target.checked)}
+                className="toggle"
+              />
             </div>
-            <input
-              type="checkbox"
-              checked={active}
-              onChange={e => setActive(e.target.checked)}
-              className="toggle"
-            />
-          </div>
-        </form>
-        <Modal.Footer>
-          {editingProduct && (
-            <>
-              {canDelete && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDeleteProduct(editingProduct)
-                  }}
-                  className="modal-action-delete"
-                  title="Eliminar producto"
-                >
-                  <IconTrash className="w-5 h-5" />
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => handleOpenAdjustment(editingProduct)}
-                className="modal-action-adjust"
-                title="Ajustar inventario"
-              >
-                <IconAdjust className="w-5 h-5" />
-              </button>
-            </>
-          )}
-          <div className="modal-actions">
+          </Modal.Item>
+
+          <Modal.Footer>
+            {editingProduct && (
+              <>
+                {canDelete && (
+                  <Modal.GoToStepButton step={3} className="btn-icon !bg-transparent text-error hover:!bg-error-subtle rounded-lg">
+                    <IconTrash className="w-5 h-5" />
+                  </Modal.GoToStepButton>
+                )}
+                <Modal.GoToStepButton step={1} className="modal-action-adjust">
+                  <IconAdjust className="w-5 h-5" />
+                </Modal.GoToStepButton>
+              </>
+            )}
             <button
               type="button"
               onClick={handleCloseModal}
-              className="btn btn-secondary"
+              className="btn btn-secondary flex-1"
               disabled={isSaving}
             >
               Cancelar
             </button>
             <button
-              type="submit"
-              form="product-form"
-              className="btn btn-primary"
+              type="button"
+              onClick={handleSubmit}
+              className="btn btn-primary flex-1"
               disabled={isSaving}
             >
               {isSaving ? <Spinner /> : 'Guardar'}
             </button>
-          </div>
-        </Modal.Footer>
-      </Modal>
+          </Modal.Footer>
+        </Modal.Step>
 
-      {/* Delete confirmation modal */}
-      <DeleteConfirmModal
-        isOpen={deleteProduct !== null}
-        onClose={() => setDeleteProduct(null)}
-        onConfirm={handleDelete}
-        productName={deleteProduct?.name || ''}
-        isDeleting={isDeleting}
-      />
+        {/* Adjust inventory - mode selection step */}
+        <Modal.Step title="Ajustar inventario">
+          {/* Product info - flush layout */}
+          {editingProduct && (
+            <Modal.Item>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg overflow-hidden flex items-center justify-center bg-bg-muted">
+                  {editingProduct.image ? (
+                    <Image
+                      src={getProductImageUrl(editingProduct)!}
+                      alt={editingProduct.name}
+                      width={48}
+                      height={48}
+                      className="object-cover w-full h-full"
+                      unoptimized
+                    />
+                  ) : (
+                    <IconImage className="w-5 h-5 text-text-tertiary" />
+                  )}
+                </div>
+                <div>
+                  <div className="font-medium">{editingProduct.name}</div>
+                  <div className="text-sm text-text-secondary">
+                    Stock actual: <span className="font-medium">{editingProduct.stock ?? 0}</span>
+                  </div>
+                </div>
+              </div>
+            </Modal.Item>
+          )}
 
-      {/* Stock adjustment modal */}
-      <Modal
-        isOpen={adjustingProduct !== null}
-        onClose={handleCloseAdjustment}
-        title="Ajustar inventario"
-      >
-        <div className="space-y-4">
+          {/* Mode selection buttons - stacked vertically */}
+          <Modal.Item>
+            <Modal.GoToStepButton
+              step={2}
+              className="w-full py-4 px-5 rounded-xl border-2 border-error bg-error-subtle text-error hover:bg-error/10 transition-colors text-left"
+              onClick={() => {
+                setAdjustmentMode('remove')
+                setAdjustmentReason('')
+              }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-error/20 flex items-center justify-center">
+                  <IconCircleMinus className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="font-semibold text-base">Remover stock</div>
+                  <div className="text-sm opacity-80">Registrar perdidas, danos o uso interno</div>
+                </div>
+              </div>
+            </Modal.GoToStepButton>
+          </Modal.Item>
+
+          <Modal.Item>
+            <Modal.GoToStepButton
+              step={2}
+              className="w-full py-4 px-5 rounded-xl border-2 border-success bg-success-subtle text-success hover:bg-success/10 transition-colors text-left"
+              onClick={() => {
+                setAdjustmentMode('add')
+                setAdjustmentReason('')
+              }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center">
+                  <IconCirclePlus className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="font-semibold text-base">Agregar stock</div>
+                  <div className="text-sm opacity-80">Registrar correcciones o devoluciones</div>
+                </div>
+              </div>
+            </Modal.GoToStepButton>
+          </Modal.Item>
+
+          <Modal.Footer>
+            <Modal.CancelBackButton className="btn btn-secondary flex-1">
+              Cancelar
+            </Modal.CancelBackButton>
+          </Modal.Footer>
+        </Modal.Step>
+
+        {/* Adjust inventory - form step */}
+        <Modal.Step title={adjustmentMode === 'remove' ? 'Remover stock' : 'Agregar stock'}>
           {error && (
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
-          )}
-
-          {/* Product info */}
-          {adjustingProduct && (
-            <div className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
-              <div className="w-12 h-12 bg-bg-elevated rounded-lg flex items-center justify-center overflow-hidden">
-                {adjustingProduct.image ? (
-                  <Image
-                    src={getProductImageUrl(adjustingProduct)!}
-                    alt={adjustingProduct.name}
-                    width={48}
-                    height={48}
-                    className="object-cover w-full h-full"
-                    unoptimized
-                  />
-                ) : (
-                  <IconProducts className="w-6 h-6 text-text-tertiary" />
-                )}
+            <Modal.Item>
+              <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+                {error}
               </div>
-              <div>
-                <div className="font-medium">{adjustingProduct.name}</div>
-                <div className="text-sm text-text-secondary">
-                  Stock actual: <span className="font-medium">{adjustingProduct.stock ?? 0}</span>
-                </div>
-              </div>
-            </div>
+            </Modal.Item>
           )}
-
-          {/* Add/Remove toggle */}
-          <div>
-            <label className="label">Tipo de ajuste</label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setAdjustmentMode('remove')
-                  setAdjustmentReason('')
-                }}
-                className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
-                  adjustmentMode === 'remove'
-                    ? 'border-error bg-error-subtle text-error'
-                    : 'border-border bg-bg-elevated text-text-secondary'
-                }`}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <IconArrowDown className="w-5 h-5" />
-                  <span className="font-medium">Remover</span>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAdjustmentMode('add')
-                  setAdjustmentReason('')
-                }}
-                className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
-                  adjustmentMode === 'add'
-                    ? 'border-success bg-success-subtle text-success'
-                    : 'border-border bg-bg-elevated text-text-secondary'
-                }`}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <IconArrowUp className="w-5 h-5" />
-                  <span className="font-medium">Agregar</span>
-                </div>
-              </button>
-            </div>
-          </div>
 
           {/* Quantity */}
-          <div>
+          <Modal.Item>
             <label className="label">Cantidad</label>
             <input
               type="number"
               inputMode="numeric"
               value={adjustmentQuantity}
               onChange={e => setAdjustmentQuantity(e.target.value)}
-              className="input"
+              className="input text-lg"
               placeholder="0"
               min="1"
-              max={adjustmentMode === 'remove' ? (adjustingProduct?.stock ?? 0) : undefined}
+              max={adjustmentMode === 'remove' ? (editingProduct?.stock ?? 0) : undefined}
+              autoFocus
             />
-          </div>
+          </Modal.Item>
 
           {/* Reason dropdown */}
-          <div>
+          <Modal.Item>
             <label className="label">Motivo</label>
             <select
               value={adjustmentReason}
@@ -1736,10 +1662,10 @@ export default function ProductosPage() {
                 </>
               )}
             </select>
-          </div>
+          </Modal.Item>
 
           {/* Notes */}
-          <div>
+          <Modal.Item>
             <label className="label">Notas (opcional)</label>
             <textarea
               value={adjustmentNotes}
@@ -1748,39 +1674,63 @@ export default function ProductosPage() {
               rows={2}
               placeholder="Detalles adicionales..."
             />
-          </div>
+          </Modal.Item>
 
           {/* Preview */}
-          {adjustingProduct && adjustmentQuantity && (
-            <div className="p-3 bg-bg-muted rounded-lg text-sm">
-              <span className="text-text-secondary">Nuevo stock: </span>
-              <span className="font-medium">
-                {adjustmentMode === 'add'
-                  ? (adjustingProduct.stock ?? 0) + parseInt(adjustmentQuantity || '0', 10)
-                  : Math.max(0, (adjustingProduct.stock ?? 0) - parseInt(adjustmentQuantity || '0', 10))
-                }
-              </span>
-            </div>
+          {editingProduct && adjustmentQuantity && (
+            <Modal.Item>
+              <div className={`p-3 rounded-lg text-sm ${adjustmentMode === 'remove' ? 'bg-error-subtle' : 'bg-success-subtle'}`}>
+                <span className="text-text-secondary">Nuevo stock: </span>
+                <span className="font-semibold">
+                  {adjustmentMode === 'add'
+                    ? (editingProduct.stock ?? 0) + parseInt(adjustmentQuantity || '0', 10)
+                    : Math.max(0, (editingProduct.stock ?? 0) - parseInt(adjustmentQuantity || '0', 10))
+                  }
+                </span>
+                <span className="text-text-tertiary ml-2">
+                  (actual: {editingProduct.stock ?? 0})
+                </span>
+              </div>
+            </Modal.Item>
           )}
-        </div>
-        <Modal.Footer>
-          <button
-            type="button"
-            onClick={handleCloseAdjustment}
-            className="btn btn-secondary flex-1"
-            disabled={isAdjusting}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={handleSaveAdjustment}
-            className="btn btn-primary flex-1"
-            disabled={isAdjusting || !adjustmentQuantity || !adjustmentReason}
-          >
-            {isAdjusting ? <Spinner /> : 'Guardar'}
-          </button>
-        </Modal.Footer>
+
+          <Modal.Footer>
+            <Modal.CancelBackButton className="btn btn-secondary flex-1" disabled={isAdjusting}>
+              Atras
+            </Modal.CancelBackButton>
+            <button
+              type="button"
+              onClick={handleSaveAdjustment}
+              className={`btn flex-1 ${adjustmentMode === 'remove' ? 'btn-danger' : 'btn-primary'}`}
+              disabled={isAdjusting || !adjustmentQuantity || !adjustmentReason}
+            >
+              {isAdjusting ? <Spinner /> : (adjustmentMode === 'remove' ? 'Remover' : 'Agregar')}
+            </button>
+          </Modal.Footer>
+        </Modal.Step>
+
+        {/* Delete confirmation step */}
+        <Modal.Step title="Eliminar producto" backStep={0}>
+          <Modal.Item>
+            <p className="text-text-secondary">
+              Estas seguro que deseas eliminar <strong>{editingProduct?.name}</strong>? Esta accion no se puede deshacer.
+            </p>
+          </Modal.Item>
+
+          <Modal.Footer>
+            <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
+              Cancelar
+            </Modal.GoToStepButton>
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="btn btn-danger flex-1"
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Spinner /> : 'Eliminar'}
+            </button>
+          </Modal.Footer>
+        </Modal.Step>
       </Modal>
 
       {/* New Order Modal */}

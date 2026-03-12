@@ -3271,8 +3271,12 @@
     border: 1.5px solid var(--color-border);
     border-radius: var(--radius-full);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all var(--transition-fast), transform 100ms ease-out;
     white-space: nowrap;
+  }
+
+  .filter-tab:active {
+    transform: scale(0.97);
   }
 
   @media (hover: hover) {
@@ -3323,8 +3327,12 @@
     border: none;
     border-bottom: 2px solid transparent;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all var(--transition-fast), transform 100ms ease-out;
     text-align: center;
+  }
+
+  .section-tab:active {
+    transform: scale(0.98);
   }
 
   @media (hover: hover) {
@@ -3496,6 +3504,21 @@
 .list-item-clickable:active {
   background: var(--color-bg-muted);
 }
+
+/* Staggered entrance for clickable list items */
+.list-item-clickable.entering {
+  animation: list-item-enter var(--duration-normal) var(--ease-out-expo) backwards;
+}
+
+.list-item-clickable:nth-child(1).entering { animation-delay: 0ms; }
+.list-item-clickable:nth-child(2).entering { animation-delay: 30ms; }
+.list-item-clickable:nth-child(3).entering { animation-delay: 60ms; }
+.list-item-clickable:nth-child(4).entering { animation-delay: 90ms; }
+.list-item-clickable:nth-child(5).entering { animation-delay: 120ms; }
+.list-item-clickable:nth-child(6).entering { animation-delay: 150ms; }
+.list-item-clickable:nth-child(7).entering { animation-delay: 180ms; }
+.list-item-clickable:nth-child(8).entering { animation-delay: 210ms; }
+.list-item-clickable:nth-child(n+9).entering { animation-delay: 240ms; }
 
 /* Non-clickable list item (has hover effects but no cursor change) */
 .list-item {

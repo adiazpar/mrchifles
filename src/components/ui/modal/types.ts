@@ -51,6 +51,8 @@ export interface ModalContextValue {
   _onClose: () => void
   _currentStepHideBackButton: boolean
   _setCurrentStepHideBackButton: (hide: boolean) => void
+  _currentStepBackStep: number | undefined
+  _setCurrentStepBackStep: (step: number | undefined) => void
 }
 
 // Component props
@@ -69,6 +71,8 @@ export interface ModalStepProps {
   children: ReactNode
   /** Hide the back button for this step (useful for terminal/completion steps) */
   hideBackButton?: boolean
+  /** Override which step the back button navigates to (default: previous step) */
+  backStep?: number
 }
 
 export interface ModalItemProps {
