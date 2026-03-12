@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { PageHeader } from '@/components/layout'
 import { Spinner, Modal } from '@/components/ui'
 import { IconAdd, IconIngreso, IconRetiro, IconCheck, IconClock, IconChevronRight, IconCloseDrawer, IconMovement, IconCoins, IconHistory, IconArrowUp } from '@/components/icons'
@@ -8,6 +9,7 @@ import { BalanceHero } from '@/components/caja/BalanceHero'
 import { CloseDrawerModal } from '@/components/caja/CloseDrawerModal'
 import { LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
+import { useNavbar } from '@/contexts/navbar-context'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { transitionModals } from '@/lib/modal-utils'
 import type { CashSession, CashMovement, CashMovementType, CashMovementCategory } from '@/types'
@@ -42,7 +44,9 @@ const EGRESO_CATEGORIES: CashMovementCategory[] = [
 // ============================================
 
 export default function CajaPage() {
+  const router = useRouter()
   const { user, pb } = useAuth()
+  const { isReturning, setReturning } = useNavbar()
 
   // Session state
   const [currentSession, setCurrentSession] = useState<CashSession | null>(null)
@@ -78,7 +82,6 @@ export default function CajaPage() {
 
   // Modal states (continued)
   const [isLoansModalOpen, setIsLoansModalOpen] = useState(false)
-  const [isHistorialModalOpen, setIsHistorialModalOpen] = useState(false)
 
   // ============================================
   // CALCULATED VALUES
@@ -192,6 +195,14 @@ export default function CajaPage() {
       console.error('Error loading sessions:', err)
     }
   }, [pb])
+
+  // Clear returning state after animation
+  useEffect(() => {
+    if (isReturning) {
+      const timer = setTimeout(() => setReturning(false), 300)
+      return () => clearTimeout(timer)
+    }
+  }, [isReturning, setReturning])
 
   // Initial load
   useEffect(() => {
@@ -393,7 +404,7 @@ export default function CajaPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Caja" subtitle="Control de efectivo" />
+        <PageHeader title="Caja" subtitle="Control de efectivo" isReturning={isReturning} />
         <main className="page-loading">
           <Spinner className="spinner-lg" />
         </main>
@@ -403,7 +414,7 @@ export default function CajaPage() {
 
   return (
     <>
-      <PageHeader title="Caja" subtitle="Control de efectivo" />
+      <PageHeader title="Caja" subtitle="Control de efectivo" isReturning={isReturning} />
 
       <main className="page-content space-y-4">
         {error && (
@@ -451,7 +462,7 @@ export default function CajaPage() {
             )}
             <button
               type="button"
-              onClick={() => setIsHistorialModalOpen(true)}
+              onClick={() => router.push('/caja/historial')}
               className="caja-action-btn"
             >
               <IconHistory className="caja-action-btn__icon" />
@@ -909,110 +920,6 @@ export default function CajaPage() {
         ) : (
           <div className="text-center py-8 text-text-tertiary">
             No hay prestamos pendientes
-          </div>
-        )}
-      </Modal>
-
-      {/* Historial Modal */}
-      <Modal
-        isOpen={isHistorialModalOpen}
-        onClose={() => setIsHistorialModalOpen(false)}
-        title="Historial de sesiones"
-        size="large"
-      >
-        {sessions.length === 0 ? (
-          <div className="text-center py-8 text-text-tertiary">
-            No hay sesiones registradas
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Summary Stats */}
-            <div className="session-stats" role="region" aria-label="Resumen de sesiones">
-              <div className="session-stat">
-                <div className="session-stat__value">{sessions.length}</div>
-                <div className="session-stat__label">{sessions.length === 1 ? 'Sesion' : 'Sesiones'}</div>
-              </div>
-              <div className="session-stat">
-                <div className="session-stat__value">
-                  {sessions.filter(s => s.closedAt).length}
-                </div>
-                <div className="session-stat__label">Cerradas</div>
-              </div>
-              <div className="session-stat">
-                <div className="session-stat__value">
-                  {sessions.filter(s => !s.closedAt).length}
-                </div>
-                <div className="session-stat__label">Abiertas</div>
-              </div>
-            </div>
-
-            {/* Sessions List */}
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {sessions.map((session) => (
-                <div
-                  key={session.id}
-                  className={`session-item ${
-                    session.closedAt ? 'session-item--closed' : 'session-item--open'
-                  }`}
-                  onClick={() => {
-                    transitionModals(
-                      () => setIsHistorialModalOpen(false),
-                      () => handleViewSessionDetail(session)
-                    )
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      transitionModals(
-                        () => setIsHistorialModalOpen(false),
-                        () => handleViewSessionDetail(session)
-                      )
-                    }
-                  }}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`Sesion del ${formatDate(session.openedAt)}, ${session.closedAt ? 'cerrada' : 'abierta'}`}
-                >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    session.closedAt
-                      ? 'bg-success-subtle text-success'
-                      : 'bg-warning-subtle text-warning'
-                  }`}>
-                    {session.closedAt ? (
-                      <IconCheck className="w-5 h-5" />
-                    ) : (
-                      <IconClock className="w-5 h-5" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="font-medium block">
-                      {formatDate(session.openedAt)}
-                    </span>
-                    <div className="text-xs text-text-tertiary mt-0.5">
-                      Apertura: {formatCurrency(session.openingBalance)}
-                      {session.closedAt && session.closingBalance !== undefined && (
-                        <>
-                          <span className="mx-1.5">·</span>
-                          Cierre: {formatCurrency(session.closingBalance)}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {session.discrepancy !== undefined && session.discrepancy !== 0 && (
-                      <span
-                        className={`text-sm font-medium ${
-                          session.discrepancy > 0 ? 'text-success' : 'text-error'
-                        }`}
-                      >
-                        {session.discrepancy > 0 ? '+' : ''}{formatCurrency(session.discrepancy)}
-                      </span>
-                    )}
-                    <IconChevronRight className="w-5 h-5 text-text-tertiary" />
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </Modal>
