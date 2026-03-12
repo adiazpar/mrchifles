@@ -643,64 +643,6 @@ export default function TeamPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title="Agregar miembro"
-        footer={
-          !newCode ? (
-            <>
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                className="btn btn-secondary flex-1"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleGenerateCode}
-                disabled={isGenerating}
-                className="btn btn-primary flex-1"
-              >
-                {isGenerating ? (
-                  <>
-                    <Spinner />
-                    <span>Generando...</span>
-                  </>
-                ) : (
-                  'Generar codigo'
-                )}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  const inviteUrl = `${window.location.origin}/invite?code=${newCode}`
-                  handleCopyCode(inviteUrl)
-                }}
-                className="btn btn-secondary flex-1"
-              >
-                {copyFeedback === `${window.location.origin}/invite?code=${newCode}` ? (
-                  <>
-                    <IconCheck className="w-5 h-5 text-success" />
-                    <span>Copiado</span>
-                  </>
-                ) : (
-                  <>
-                    <IconCopy className="w-5 h-5" />
-                    <span>Copiar enlace</span>
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                className="btn btn-primary flex-1"
-              >
-                Listo
-              </button>
-            </>
-          )
-        }
       >
         {!newCode ? (
           /* Step 1: Role Selection */
@@ -770,6 +712,45 @@ export default function TeamPage() {
             </button>
           </div>
         )}
+        <Modal.Footer>
+          {!newCode ? (
+            <>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="btn btn-secondary flex-1"
+                disabled={isGenerating}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleGenerateCode}
+                className="btn btn-primary flex-1"
+                disabled={isGenerating}
+              >
+                {isGenerating ? <Spinner /> : 'Generar codigo'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => handleCopyCode(newCode)}
+                className="btn btn-secondary flex-1"
+              >
+                {copyFeedback === newCode ? 'Copiado!' : 'Copiar codigo'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="btn btn-primary flex-1"
+              >
+                Listo
+              </button>
+            </>
+          )}
+        </Modal.Footer>
       </Modal>
 
       {/* User Management Modal */}

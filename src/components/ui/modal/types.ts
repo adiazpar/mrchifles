@@ -27,6 +27,7 @@ export interface ModalState {
 export interface ModalContextValue {
   // State
   currentStep: number
+  targetStep: number
   stepCount: number
   isFirstStep: boolean
   isLastStep: boolean
@@ -48,6 +49,8 @@ export interface ModalContextValue {
   _registerStep: (index: number) => void
   _unregisterStep: (index: number) => void
   _onClose: () => void
+  _currentStepHideBackButton: boolean
+  _setCurrentStepHideBackButton: (hide: boolean) => void
 }
 
 // Component props
@@ -64,6 +67,8 @@ export interface ModalProps {
 export interface ModalStepProps {
   title: string
   children: ReactNode
+  /** Hide the back button for this step (useful for terminal/completion steps) */
+  hideBackButton?: boolean
 }
 
 export interface ModalItemProps {

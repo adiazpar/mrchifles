@@ -15,9 +15,9 @@ export function useModalContext(): ModalContextValue {
   return context
 }
 
-export function useMorphingModal(): Omit<ModalContextValue, '_registerStep' | '_unregisterStep' | '_onClose'> {
+export function useMorphingModal(): Omit<ModalContextValue, '_registerStep' | '_unregisterStep' | '_onClose' | '_currentStepHideBackButton' | '_setCurrentStepHideBackButton'> {
   const ctx = useModalContext()
-  const { _registerStep, _unregisterStep, _onClose, ...publicApi } = ctx
+  const { _registerStep, _unregisterStep, _onClose, _currentStepHideBackButton, _setCurrentStepHideBackButton, ...publicApi } = ctx
   return publicApi
 }
 
@@ -35,10 +35,11 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
 
   // Core state
   const [currentStep, setCurrentStep] = useState(initialStep)
-  const [_targetStep, setTargetStep] = useState(initialStep)
+  const [targetStep, setTargetStep] = useState(initialStep)
   const [phase, setPhase] = useState<Phase>('idle')
   const [direction, setDirection] = useState<Direction>('forward')
   const [isLocked, setIsLocked] = useState(false)
+  const [currentStepHideBackButton, setCurrentStepHideBackButton] = useState(false)
 
   // Track timeout IDs for cleanup
   const timeoutIdsRef = useRef<NodeJS.Timeout[]>([])
@@ -53,6 +54,7 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
       setPhase('idle')
       setDirection('forward')
       setIsLocked(false)
+      setCurrentStepHideBackButton(false)
     }
     prevIsOpen.current = isOpen
   }, [isOpen, initialStep])
@@ -136,6 +138,7 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
 
   const value: ModalContextValue = {
     currentStep,
+    targetStep,
     stepCount,
     isFirstStep: currentStep === 0,
     isLastStep: currentStep === stepCount - 1,
@@ -151,6 +154,8 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
     _registerStep,
     _unregisterStep,
     _onClose,
+    _currentStepHideBackButton: currentStepHideBackButton,
+    _setCurrentStepHideBackButton: setCurrentStepHideBackButton,
   }
 
   return (

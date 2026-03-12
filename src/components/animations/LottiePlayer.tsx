@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Lottie, { LottieRefCurrentProps } from 'lottie-react'
 
 interface LottiePlayerProps {
@@ -24,9 +24,35 @@ export function LottiePlayer({
 }: LottiePlayerProps) {
   const lottieRef = useRef<LottieRefCurrentProps>(null)
   const hasCalledComplete = useRef(false)
+  const [animationData, setAnimationData] = useState<object | null>(null)
 
-  // Convert .lottie paths to .json paths
+  // Convert .lottie paths to .json paths and fetch the data
   const jsonPath = src.replace(/\.lottie$/, '.json')
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetch(jsonPath)
+      .then(res => res.json())
+      .then(data => {
+        if (!cancelled) {
+          setAnimationData(data)
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load Lottie animation:', err)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [jsonPath])
+
+  useEffect(() => {
+    if (lottieRef.current && speed !== 1) {
+      lottieRef.current.setSpeed(speed)
+    }
+  }, [speed, animationData])
 
   const handleComplete = () => {
     if (hasCalledComplete.current) return
@@ -34,10 +60,14 @@ export function LottiePlayer({
     onComplete?.()
   }
 
+  if (!animationData) {
+    return null
+  }
+
   return (
     <Lottie
       lottieRef={lottieRef}
-      path={jsonPath}
+      animationData={animationData}
       loop={loop}
       autoplay={autoplay}
       className={className}

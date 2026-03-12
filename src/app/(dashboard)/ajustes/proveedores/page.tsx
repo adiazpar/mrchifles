@@ -244,26 +244,6 @@ export default function ProveedoresPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title={editingProvider ? 'Editar proveedor' : 'Agregar proveedor'}
-        footer={
-          <div className="flex gap-3 w-full">
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              className="btn btn-secondary flex-1"
-              disabled={isSaving}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              form="provider-form"
-              className="btn btn-primary flex-1"
-              disabled={isSaving}
-            >
-              {isSaving ? <Spinner /> : 'Guardar'}
-            </button>
-          </div>
-        }
       >
         <form id="provider-form" onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -335,6 +315,24 @@ export default function ProveedoresPage() {
             />
           </div>
         </form>
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={handleCloseModal}
+            className="btn btn-secondary flex-1"
+            disabled={isSaving}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            form="provider-form"
+            className="btn btn-primary flex-1"
+            disabled={isSaving}
+          >
+            {isSaving ? <Spinner /> : 'Guardar'}
+          </button>
+        </Modal.Footer>
       </Modal>
     </>
   )
