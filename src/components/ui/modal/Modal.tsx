@@ -10,6 +10,32 @@ import { ModalFooter } from './ModalFooter'
 import { ModalBackButton, ModalNextButton, ModalCancelBackButton, ModalGoToStepButton } from './ModalButtons'
 import type { ModalProps, ModalStepProps } from './types'
 
+// Animated footer wrapper that syncs with step transitions
+function AnimatedFooter({ children }: { children: React.ReactNode }) {
+  const { phase, direction } = useModalContext()
+
+  // Determine animation class based on phase and direction
+  const getAnimationClass = () => {
+    if (phase === 'exiting') {
+      return direction === 'forward' ? 'morph-footer-exit' : 'morph-footer-exit-back'
+    }
+    if (phase === 'entering') {
+      return direction === 'forward' ? 'morph-footer-enter' : 'morph-footer-enter-back'
+    }
+    // During transitioning phase, hide footer (content faded out, height animating)
+    if (phase === 'transitioning') {
+      return 'morph-footer-hidden'
+    }
+    return ''
+  }
+
+  return (
+    <div className={`morph-footer-wrapper ${getAnimationClass()}`}>
+      {children}
+    </div>
+  )
+}
+
 // Internal header component (needs context)
 function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTitle?: string }) {
   const ctx = useModalContext()
@@ -59,21 +85,44 @@ function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTit
   )
 }
 
+// Helper to separate footer from other children
+function separateFooter(children: React.ReactNode): { content: React.ReactNode; footer: React.ReactNode } {
+  let footer: React.ReactNode = null
+  const content: React.ReactNode[] = []
+
+  Children.forEach(children, (child) => {
+    if (isValidElement(child) && (child.type as any)._isModalFooter) {
+      footer = child
+    } else {
+      content.push(child)
+    }
+  })
+
+  return { content, footer }
+}
+
 // Internal body component that handles step title extraction
 function ModalBody({
   children,
   isSingleStep,
   setCurrentTitle,
+  setCurrentFooter,
 }: {
   children: React.ReactNode
   isSingleStep: boolean
   setCurrentTitle: (title: string) => void
+  setCurrentFooter: (footer: React.ReactNode) => void
 }) {
   const { currentStep } = useModalContext()
 
-  // Extract titles from Step children
+  // Extract titles and footers from Step children
   useEffect(() => {
-    if (isSingleStep) return
+    if (isSingleStep) {
+      // For single-step, extract footer from direct children
+      const { footer } = separateFooter(children)
+      setCurrentFooter(footer)
+      return
+    }
 
     const steps = Children.toArray(children).filter(
       (child): child is ReactElement<ModalStepProps> =>
@@ -82,17 +131,21 @@ function ModalBody({
 
     if (steps[currentStep]) {
       setCurrentTitle(steps[currentStep].props.title)
+      // Extract footer from current step's children
+      const { footer } = separateFooter(steps[currentStep].props.children)
+      setCurrentFooter(footer)
     }
-  }, [children, currentStep, isSingleStep, setCurrentTitle])
+  }, [children, currentStep, isSingleStep, setCurrentTitle, setCurrentFooter])
 
   if (isSingleStep) {
-    // Single-step: wrap content in morph classes for consistency
+    // Single-step: wrap content in morph classes for consistency (without footer)
+    const { content } = separateFooter(children)
     return (
       <div className="modal-body">
         <div className="morph-panel morph-panel-visible">
           <div className="morph-panel-inner">
             <div className="morph-content">
-              {children}
+              {content}
             </div>
           </div>
         </div>
@@ -109,10 +162,12 @@ function ModalBody({
   return (
     <div className="modal-body">
       {steps.map((step, index) => {
-        // Clone with internal _index prop
+        // Separate footer from step children - footer renders outside body
+        const { content } = separateFooter(step.props.children)
+        // Clone with internal _index prop, passing only non-footer content
         return (
           <ModalStep key={index} {...step.props} _index={index}>
-            {injectItemIndices(step.props.children)}
+            {injectItemIndices(content)}
           </ModalStep>
         )
       })}
@@ -154,6 +209,7 @@ function ModalRoot({
   const [render, setRender] = useState(false)
   const [closing, setClosing] = useState(false)
   const [currentTitle, setCurrentTitle] = useState('')
+  const [currentFooter, setCurrentFooter] = useState<React.ReactNode>(null)
 
   // Check if this is a single-step modal (no Modal.Step children)
   const steps = Children.toArray(children).filter(
@@ -194,6 +250,8 @@ function ModalRoot({
           singleStepTitle={isSingleStep ? title : undefined}
           isSingleStep={isSingleStep}
           setCurrentTitle={setCurrentTitle}
+          currentFooter={currentFooter}
+          setCurrentFooter={setCurrentFooter}
         >
           {children}
         </ModalInner>
@@ -211,6 +269,8 @@ function ModalInner({
   singleStepTitle,
   isSingleStep,
   setCurrentTitle,
+  currentFooter,
+  setCurrentFooter,
 }: {
   children: React.ReactNode
   closing: boolean
@@ -219,6 +279,8 @@ function ModalInner({
   singleStepTitle?: string
   isSingleStep: boolean
   setCurrentTitle: (title: string) => void
+  currentFooter: React.ReactNode
+  setCurrentFooter: (footer: React.ReactNode) => void
 }) {
   const ctx = useModalContext()
 
@@ -250,9 +312,15 @@ function ModalInner({
         onClick={(e) => e.stopPropagation()}
       >
         <ModalHeader title={title} singleStepTitle={singleStepTitle} />
-        <ModalBody isSingleStep={isSingleStep} setCurrentTitle={setCurrentTitle}>
+        <ModalBody isSingleStep={isSingleStep} setCurrentTitle={setCurrentTitle} setCurrentFooter={setCurrentFooter}>
           {children}
         </ModalBody>
+        {/* Footer rendered outside modal-body for sticky positioning */}
+        {currentFooter && (
+          <AnimatedFooter>
+            {currentFooter}
+          </AnimatedFooter>
+        )}
       </div>
     </>
   )

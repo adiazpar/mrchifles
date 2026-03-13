@@ -73,6 +73,8 @@ export interface ModalStepProps {
   hideBackButton?: boolean
   /** Override which step the back button navigates to (default: previous step) */
   backStep?: number
+  /** Additional CSS class for the step container */
+  className?: string
 }
 
 export interface ModalItemProps {

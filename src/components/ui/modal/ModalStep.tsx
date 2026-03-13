@@ -9,7 +9,7 @@ interface InternalStepProps extends ModalStepProps {
   _index?: number // Optional - injected by Modal parent
 }
 
-export function ModalStep({ children, title, hideBackButton = false, backStep, _index = 0 }: InternalStepProps) {
+export function ModalStep({ children, title, hideBackButton = false, backStep, className, _index = 0 }: InternalStepProps) {
   const {
     currentStep,
     targetStep,
@@ -82,7 +82,7 @@ export function ModalStep({ children, title, hideBackButton = false, backStep, _
 
   return (
     <div
-      className={`morph-panel ${isVisible ? 'morph-panel-visible' : 'morph-panel-hidden'}`}
+      className={`morph-panel ${isVisible ? 'morph-panel-visible' : 'morph-panel-hidden'} ${className || ''}`}
       data-step-index={_index}
       data-step-title={title}
     >
