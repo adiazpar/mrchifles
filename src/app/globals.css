@@ -4070,6 +4070,15 @@
   height: 22px;
 }
 
+/* Horizontal variant - icon on left, text on right */
+.caja-action-btn--horizontal {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: left;
+}
+
 /* ===== Empty State Animation Container ===== */
 .empty-state-animated {
   display: flex;
