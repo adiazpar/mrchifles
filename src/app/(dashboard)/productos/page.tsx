@@ -1563,20 +1563,16 @@ export default function ProductosPage() {
           <Modal.Item>
             <Modal.GoToStepButton
               step={2}
-              className="w-full py-4 px-5 rounded-xl border-2 border-error bg-error-subtle text-error hover:bg-error/10 transition-colors text-left"
+              className="caja-action-btn caja-action-btn--horizontal w-full"
               onClick={() => {
                 setAdjustmentMode('remove')
                 setAdjustmentReason('')
               }}
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-error/20 flex items-center justify-center">
-                  <IconCircleMinus className="w-7 h-7" />
-                </div>
-                <div>
-                  <div className="font-semibold text-base">Remover stock</div>
-                  <div className="text-sm opacity-80">Registrar perdidas, danos o uso interno</div>
-                </div>
+              <IconCircleMinus className="w-6 h-6 text-error flex-shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-text-primary">Remover</div>
+                <div className="text-xs text-text-tertiary">Perdidas, danos, uso interno</div>
               </div>
             </Modal.GoToStepButton>
           </Modal.Item>
@@ -1584,20 +1580,16 @@ export default function ProductosPage() {
           <Modal.Item>
             <Modal.GoToStepButton
               step={2}
-              className="w-full py-4 px-5 rounded-xl border-2 border-success bg-success-subtle text-success hover:bg-success/10 transition-colors text-left"
+              className="caja-action-btn caja-action-btn--horizontal w-full"
               onClick={() => {
                 setAdjustmentMode('add')
                 setAdjustmentReason('')
               }}
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center">
-                  <IconCirclePlus className="w-7 h-7" />
-                </div>
-                <div>
-                  <div className="font-semibold text-base">Agregar stock</div>
-                  <div className="text-sm opacity-80">Registrar correcciones o devoluciones</div>
-                </div>
+              <IconCirclePlus className="w-6 h-6 text-success flex-shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-text-primary">Agregar</div>
+                <div className="text-xs text-text-tertiary">Correcciones, devoluciones</div>
               </div>
             </Modal.GoToStepButton>
           </Modal.Item>
