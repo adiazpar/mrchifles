@@ -15,3 +15,5 @@ export type { SpinnerProps } from './spinner'
 
 export { Modal, useMorphingModal } from './modal'
 export type { ModalProps } from './modal'
+
+export { StockStepper } from './stock-stepper'
