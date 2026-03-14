@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useEffect } from 'react'
+import { useCallback, useRef, useState, useEffect } from 'react'
 
 interface StockStepperProps {
   value: number
@@ -21,6 +21,17 @@ export function StockStepper({
 }: StockStepperProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Local state for input field to allow empty/partial input while typing
+  const [inputValue, setInputValue] = useState(() =>
+    value > 0 ? `+${value}` : String(value)
+  )
+
+  // Sync local input with external value changes (e.g., from +/- buttons)
+  useEffect(() => {
+    const formatted = value > 0 ? `+${value}` : String(value)
+    setInputValue(formatted)
+  }, [value])
+
   // Clamp value within valid range
   const clamp = useCallback((v: number) => {
     const min = -currentStock
@@ -39,23 +50,29 @@ export function StockStepper({
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value
 
-    // Allow empty, minus sign, or number
-    if (raw === '' || raw === '-') {
-      // Temporarily allow for typing
-      onChange(0)
+    // Allow empty, minus sign, or plus sign for typing
+    if (raw === '' || raw === '-' || raw === '+') {
+      setInputValue(raw)
       return
     }
 
+    // Allow valid number patterns (including +/- prefix)
     const parsed = parseInt(raw, 10)
     if (!isNaN(parsed)) {
-      onChange(clamp(parsed))
+      const clamped = clamp(parsed)
+      setInputValue(raw)
+      onChange(clamped)
     }
   }, [onChange, clamp])
 
   const handleInputBlur = useCallback(() => {
-    // Ensure value is clamped on blur
-    onChange(clamp(value))
-  }, [value, onChange, clamp])
+    // On blur, parse and commit the value (default to 0 if empty/invalid)
+    const parsed = parseInt(inputValue, 10)
+    const finalValue = isNaN(parsed) ? 0 : clamp(parsed)
+    onChange(finalValue)
+    // Format the display
+    setInputValue(finalValue > 0 ? `+${finalValue}` : String(finalValue))
+  }, [inputValue, onChange, clamp])
 
   // Determine styling based on value
   const adjustmentType = value < 0 ? 'remove' : value > 0 ? 'add' : 'zero'
@@ -67,30 +84,21 @@ export function StockStepper({
         return {
           bg: 'bg-error-subtle',
           text: 'text-error',
-          buttonBg: 'bg-error/10 hover:bg-error/20 active:bg-error/30',
-          buttonText: 'text-error',
         }
       case 'add':
         return {
           bg: 'bg-success-subtle',
           text: 'text-success',
-          buttonBg: 'bg-success/10 hover:bg-success/20 active:bg-success/30',
-          buttonText: 'text-success',
         }
       default:
         return {
           bg: 'bg-bg-muted',
           text: 'text-text-secondary',
-          buttonBg: 'bg-bg-muted hover:bg-bg-elevated active:bg-bg-muted',
-          buttonText: 'text-text-primary',
         }
     }
   }
 
   const colors = getColors()
-
-  // Format display value
-  const displayValue = value > 0 ? `+${value}` : String(value)
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -101,7 +109,7 @@ export function StockStepper({
           type="button"
           onClick={handleDecrement}
           disabled={value <= -currentStock}
-          className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed ${colors.buttonBg} ${colors.buttonText}`}
+          className="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed text-text-primary active:scale-[0.98]"
         >
           -
         </button>
@@ -112,10 +120,11 @@ export function StockStepper({
             ref={inputRef}
             type="text"
             inputMode="numeric"
-            value={displayValue}
+            value={inputValue}
             onChange={handleInputChange}
             onBlur={handleInputBlur}
-            className={`w-28 h-16 text-center text-3xl font-display font-bold bg-transparent border-none outline-none ${colors.text}`}
+            placeholder="0"
+            className={`w-28 h-16 text-center text-3xl font-display font-bold bg-transparent border-none outline-none placeholder:text-text-tertiary ${colors.text}`}
           />
         </div>
 
@@ -124,7 +133,7 @@ export function StockStepper({
           type="button"
           onClick={handleIncrement}
           disabled={value >= maxAdd}
-          className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed ${colors.buttonBg} ${colors.buttonText}`}
+          className="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed text-text-primary active:scale-[0.98]"
         >
           +
         </button>
