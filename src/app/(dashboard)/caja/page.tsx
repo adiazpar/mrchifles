@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/layout'
+import { useHeader } from '@/contexts/header-context'
 import { Spinner, Modal } from '@/components/ui'
 import { IconAdd, IconIngreso, IconRetiro, IconCheck, IconClock, IconChevronRight, IconCloseDrawer, IconMovement, IconCoins, IconHistory, IconArrowUp, IconTrash } from '@/components/icons'
 import { BalanceHero } from '@/components/caja/BalanceHero'
@@ -47,6 +47,12 @@ export default function CajaPage() {
   const router = useRouter()
   const { user, pb } = useAuth()
   const { isReturning, setReturning } = useNavbar()
+
+  useHeader({
+    title: 'Caja',
+    subtitle: 'Control de efectivo',
+    isReturning,
+  })
 
   // Session state
   const [currentSession, setCurrentSession] = useState<CashSession | null>(null)
@@ -475,19 +481,14 @@ export default function CajaPage() {
 
   if (isLoading) {
     return (
-      <>
-        <PageHeader title="Caja" subtitle="Control de efectivo" isReturning={isReturning} />
-        <main className="page-loading">
-          <Spinner className="spinner-lg" />
-        </main>
-      </>
+      <main className="page-loading">
+        <Spinner className="spinner-lg" />
+      </main>
     )
   }
 
   return (
     <>
-      <PageHeader title="Caja" subtitle="Control de efectivo" isReturning={isReturning} />
-
       <main className="page-content space-y-4">
         {error && (
           <div className="p-4 bg-error-subtle text-error rounded-lg">

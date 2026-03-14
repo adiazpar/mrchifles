@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/layout'
+import { useHeader } from '@/contexts/header-context'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
 import { hashPin, verifyPin } from '@/lib/auth'
@@ -36,6 +36,11 @@ const STEP_CONFIG = {
 export default function ChangePinPage() {
   const router = useRouter()
   const { user, pb } = useAuth()
+
+  useHeader({
+    title: 'Cambiar PIN',
+    subtitle: 'Actualiza tu codigo de acceso',
+  })
 
   const [step, setStep] = useState<Step>('verify')
   const [error, setError] = useState('')
@@ -115,10 +120,7 @@ export default function ChangePinPage() {
   const config = STEP_CONFIG[step]
 
   return (
-    <div className="page-wrapper">
-      <PageHeader title="Cambiar PIN" subtitle="Actualiza tu codigo de acceso" />
-
-      <main className="change-pin-container">
+    <main className="change-pin-container">
         <div className="change-pin-content">
           {step === 'success' ? (
             <div className="change-pin-success">
@@ -192,6 +194,5 @@ export default function ChangePinPage() {
           )}
         </div>
       </main>
-    </div>
   )
 }

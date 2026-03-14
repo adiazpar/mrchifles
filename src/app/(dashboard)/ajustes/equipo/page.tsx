@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import QRCode from 'qrcode'
 import { Badge, Spinner, Modal } from '@/components/ui'
-import { PageHeader } from '@/components/layout'
+import { useHeader } from '@/contexts/header-context'
 import { IconEmployee, IconPartner, IconCheck, IconRefresh, IconCopy, IconTrash, IconAdd, IconPhone } from '@/components/icons'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { useAuth } from '@/contexts/auth-context'
@@ -50,6 +50,11 @@ function RoleCard({ icon, title, description, selected, onClick }: RoleCardProps
 
 export default function TeamPage() {
   const { user, pb } = useAuth()
+
+  useHeader({
+    title: 'Equipo',
+    subtitle: 'Gestiona tu equipo de trabajo',
+  })
 
   const [teamMembers, setTeamMembers] = useState<User[]>([])
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([])
@@ -479,19 +484,14 @@ export default function TeamPage() {
 
   if (isLoading) {
     return (
-      <>
-        <PageHeader title="Equipo" />
-        <main className="page-loading">
-          <Spinner className="spinner-lg" />
-        </main>
-      </>
+      <main className="page-loading">
+        <Spinner className="spinner-lg" />
+      </main>
     )
   }
 
   return (
     <>
-      <PageHeader title="Equipo" subtitle="Gestiona tu equipo de trabajo" />
-
       <main className="main-content space-y-6">
         {error && (
           <div className="p-4 bg-error-subtle text-error rounded-lg">
