@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
-import { Spinner, Modal, useMorphingModal } from '@/components/ui'
+import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
 import { LottiePlayer } from '@/components/animations/LottiePlayer'
 import { useHeader } from '@/contexts/header-context'
 import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconChevronDown, IconWarning, IconInventory, IconAdjust, IconCirclePlus, IconCircleMinus, IconCalendarTime } from '@/components/icons'
@@ -117,9 +117,7 @@ export default function ProductosPage() {
   const [productSaved, setProductSaved] = useState(false)
 
   // Stock adjustment form state (used in modal step 1)
-  const [adjustmentMode, setAdjustmentMode] = useState<'add' | 'remove'>('remove')
-  const [adjustmentQuantity, setAdjustmentQuantity] = useState('')
-  const [adjustmentReason, setAdjustmentReason] = useState('')
+  const [adjustmentQuantity, setAdjustmentQuantity] = useState(0)
   const [adjustmentNotes, setAdjustmentNotes] = useState('')
   const [isAdjusting, setIsAdjusting] = useState(false)
 
@@ -351,10 +349,8 @@ export default function ProductosPage() {
     // Set existing image preview
     const existingImageUrl = getProductImageUrl(product, '200x200')
     setImagePreview(existingImageUrl)
-    // Reset adjustment form state for step 1
-    setAdjustmentMode('remove')
-    setAdjustmentQuantity('')
-    setAdjustmentReason('')
+    // Reset adjustment form state
+    setAdjustmentQuantity(0)
     setAdjustmentNotes('')
     setError('')
     setIsModalOpen(true)
@@ -459,21 +455,17 @@ export default function ProductosPage() {
   const handleSaveAdjustment = useCallback(async () => {
     if (!editingProduct) return
 
-    const qty = parseInt(adjustmentQuantity, 10)
-    if (isNaN(qty) || qty <= 0) {
-      setError('Ingresa una cantidad valida')
+    if (adjustmentQuantity === 0) {
+      setError('Selecciona una cantidad diferente de 0')
       return
     }
+
+    const currentStock = editingProduct.stock ?? 0
+    const newStock = currentStock + adjustmentQuantity
 
     // Check if removing more than available
-    const currentStock = editingProduct.stock ?? 0
-    if (adjustmentMode === 'remove' && qty > currentStock) {
+    if (newStock < 0) {
       setError(`No puedes remover mas de ${currentStock} unidades`)
-      return
-    }
-
-    if (!adjustmentReason) {
-      setError('Selecciona un motivo')
       return
     }
 
@@ -481,9 +473,6 @@ export default function ProductosPage() {
     setError('')
 
     try {
-      const adjustmentQty = adjustmentMode === 'add' ? qty : -qty
-      const newStock = currentStock + adjustmentQty
-
       // Update product stock
       await pb.collection('products').update(editingProduct.id, {
         stock: newStock
@@ -494,8 +483,8 @@ export default function ProductosPage() {
         date: new Date().toISOString(),
         product: editingProduct.id,
         type: 'adjustment',
-        quantity: adjustmentQty,
-        notes: `${adjustmentReason}${adjustmentNotes ? ': ' + adjustmentNotes : ''}`,
+        quantity: adjustmentQuantity,
+        notes: adjustmentNotes || (adjustmentQuantity > 0 ? 'Ajuste positivo' : 'Ajuste negativo'),
         createdBy: user?.id,
       })
 
@@ -507,8 +496,7 @@ export default function ProductosPage() {
       )
 
       // Reset adjustment form state
-      setAdjustmentQuantity('')
-      setAdjustmentReason('')
+      setAdjustmentQuantity(0)
       setAdjustmentNotes('')
       handleCloseModal()
     } catch (err) {
@@ -517,7 +505,7 @@ export default function ProductosPage() {
     } finally {
       setIsAdjusting(false)
     }
-  }, [editingProduct, adjustmentQuantity, adjustmentMode, adjustmentReason, adjustmentNotes, pb, user?.id, handleCloseModal])
+  }, [editingProduct, adjustmentQuantity, adjustmentNotes, pb, user?.id, handleCloseModal])
 
   const scrollToTop = useCallback(() => {
     // The scrolling container is the .with-sidebar div, not window
@@ -1616,7 +1604,7 @@ export default function ProductosPage() {
             {editingProduct && (
               <>
                 {canDelete && (
-                  <Modal.GoToStepButton step={3} className="btn-icon !bg-transparent text-error hover:!bg-error-subtle rounded-lg">
+                  <Modal.GoToStepButton step={2} className="btn-icon !bg-transparent text-error hover:!bg-error-subtle rounded-lg">
                     <IconTrash className="w-5 h-5" />
                   </Modal.GoToStepButton>
                 )}
@@ -1637,9 +1625,9 @@ export default function ProductosPage() {
           </Modal.Footer>
         </Modal.Step>
 
-        {/* Adjust inventory - mode selection step */}
+        {/* Adjust inventory - single step with stepper */}
         <Modal.Step title="Ajustar inventario">
-          {/* Product info - flush layout */}
+          {/* Product info */}
           {editingProduct && (
             <Modal.Item>
               <div className="flex items-center gap-3">
@@ -1667,50 +1655,6 @@ export default function ProductosPage() {
             </Modal.Item>
           )}
 
-          {/* Mode selection buttons - stacked vertically */}
-          <Modal.Item>
-            <Modal.GoToStepButton
-              step={2}
-              className="caja-action-btn caja-action-btn--horizontal w-full"
-              onClick={() => {
-                setAdjustmentMode('remove')
-                setAdjustmentReason('')
-              }}
-            >
-              <IconCircleMinus className="w-6 h-6 text-error flex-shrink-0" />
-              <div>
-                <div className="text-sm font-medium text-text-primary">Remover</div>
-                <div className="text-xs text-text-tertiary">Perdidas, danos, uso interno</div>
-              </div>
-            </Modal.GoToStepButton>
-          </Modal.Item>
-
-          <Modal.Item>
-            <Modal.GoToStepButton
-              step={2}
-              className="caja-action-btn caja-action-btn--horizontal w-full"
-              onClick={() => {
-                setAdjustmentMode('add')
-                setAdjustmentReason('')
-              }}
-            >
-              <IconCirclePlus className="w-6 h-6 text-success flex-shrink-0" />
-              <div>
-                <div className="text-sm font-medium text-text-primary">Agregar</div>
-                <div className="text-xs text-text-tertiary">Correcciones, devoluciones</div>
-              </div>
-            </Modal.GoToStepButton>
-          </Modal.Item>
-
-          <Modal.Footer>
-            <Modal.CancelBackButton className="btn btn-secondary flex-1">
-              Cancelar
-            </Modal.CancelBackButton>
-          </Modal.Footer>
-        </Modal.Step>
-
-        {/* Adjust inventory - form step */}
-        <Modal.Step title={adjustmentMode === 'remove' ? 'Remover stock' : 'Agregar stock'}>
           {error && (
             <Modal.Item>
               <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
@@ -1719,50 +1663,16 @@ export default function ProductosPage() {
             </Modal.Item>
           )}
 
-          {/* Quantity */}
-          <Modal.Item>
-            <label className="label">Cantidad</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              value={adjustmentQuantity}
-              onChange={e => setAdjustmentQuantity(e.target.value)}
-              className="input text-lg"
-              placeholder="0"
-              min="1"
-              max={adjustmentMode === 'remove' ? (editingProduct?.stock ?? 0) : undefined}
-              autoFocus
-            />
-          </Modal.Item>
-
-          {/* Reason dropdown */}
-          <Modal.Item>
-            <label className="label">Motivo</label>
-            <select
-              value={adjustmentReason}
-              onChange={e => setAdjustmentReason(e.target.value)}
-              className="input"
-            >
-              <option value="">Seleccionar motivo...</option>
-              {adjustmentMode === 'remove' ? (
-                <>
-                  <option value="Producto danado">Producto danado</option>
-                  <option value="Producto vencido">Producto vencido</option>
-                  <option value="Perdida">Perdida</option>
-                  <option value="Conteo incorrecto">Conteo incorrecto</option>
-                  <option value="Uso interno">Uso interno</option>
-                  <option value="Otro">Otro</option>
-                </>
-              ) : (
-                <>
-                  <option value="Conteo incorrecto">Conteo incorrecto</option>
-                  <option value="Envio extra">Envio extra</option>
-                  <option value="Devolucion">Devolucion</option>
-                  <option value="Otro">Otro</option>
-                </>
-              )}
-            </select>
-          </Modal.Item>
+          {/* Stock stepper */}
+          {editingProduct && (
+            <Modal.Item>
+              <StockStepper
+                value={adjustmentQuantity}
+                onChange={setAdjustmentQuantity}
+                currentStock={editingProduct.stock ?? 0}
+              />
+            </Modal.Item>
+          )}
 
           {/* Notes */}
           <Modal.Item>
@@ -1776,35 +1686,17 @@ export default function ProductosPage() {
             />
           </Modal.Item>
 
-          {/* Preview */}
-          {editingProduct && adjustmentQuantity && (
-            <Modal.Item>
-              <div className={`p-3 rounded-lg text-sm ${adjustmentMode === 'remove' ? 'bg-error-subtle' : 'bg-success-subtle'}`}>
-                <span className="text-text-secondary">Nuevo stock: </span>
-                <span className="font-semibold">
-                  {adjustmentMode === 'add'
-                    ? (editingProduct.stock ?? 0) + parseInt(adjustmentQuantity || '0', 10)
-                    : Math.max(0, (editingProduct.stock ?? 0) - parseInt(adjustmentQuantity || '0', 10))
-                  }
-                </span>
-                <span className="text-text-tertiary ml-2">
-                  (actual: {editingProduct.stock ?? 0})
-                </span>
-              </div>
-            </Modal.Item>
-          )}
-
           <Modal.Footer>
             <Modal.CancelBackButton className="btn btn-secondary flex-1" disabled={isAdjusting}>
-              Atras
+              Cancelar
             </Modal.CancelBackButton>
             <button
               type="button"
               onClick={handleSaveAdjustment}
-              className={`btn flex-1 ${adjustmentMode === 'remove' ? 'btn-danger' : 'btn-primary'}`}
-              disabled={isAdjusting || !adjustmentQuantity || !adjustmentReason}
+              className={`btn flex-1 ${adjustmentQuantity < 0 ? 'btn-danger' : 'btn-primary'}`}
+              disabled={isAdjusting || adjustmentQuantity === 0}
             >
-              {isAdjusting ? <Spinner /> : (adjustmentMode === 'remove' ? 'Remover' : 'Agregar')}
+              {isAdjusting ? <Spinner /> : 'Guardar'}
             </button>
           </Modal.Footer>
         </Modal.Step>
