@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { PageHeader } from '@/components/layout'
+import { useHeader } from '@/contexts/header-context'
 import { Spinner } from '@/components/ui'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { FirebasePhoneVerify } from '@/components/auth/firebase-phone-verify'
@@ -57,6 +57,11 @@ function getInitialTheme(): Theme {
 export default function SettingsPage() {
   const { user, pb, changePhoneNumber } = useAuth()
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
+
+  useHeader({
+    title: 'Configuracion',
+    subtitle: 'Personaliza tu experiencia',
+  })
   const isInitialMount = useRef(true)
 
   // Transfer state (for owner)
@@ -403,9 +408,7 @@ export default function SettingsPage() {
   const currentConfig = THEME_CONFIG[theme]
 
   return (
-    <div className="page-wrapper">
-      <PageHeader title="Configuracion" subtitle="Personaliza tu experiencia" />
-
+    <>
       <main className="settings-container">
         {/* Transfer Section - Owner Only */}
         {isOwner && (
@@ -921,6 +924,6 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

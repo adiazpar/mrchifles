@@ -1,8 +1,9 @@
 'use client'
 
-import { MobileNav, Sidebar, TransferBanner } from '@/components/layout'
+import { MobileNav, Sidebar, TransferBanner, PageHeader } from '@/components/layout'
 import { AuthGuard } from '@/components/auth'
 import { NavbarProvider } from '@/contexts/navbar-context'
+import { HeaderProvider } from '@/contexts/header-context'
 
 export default function DashboardLayout({
   children,
@@ -12,21 +13,26 @@ export default function DashboardLayout({
   return (
     <AuthGuard requireAuth>
       <NavbarProvider>
-        <div className="h-full">
-          {/* Sidebar for desktop */}
-          <Sidebar />
+        <HeaderProvider>
+          <div className="h-full">
+            {/* Sidebar for desktop */}
+            <Sidebar />
 
-          {/* Main content area */}
-          <div className="with-sidebar flex flex-col h-full overflow-y-auto">
-            {/* Transfer banner for recipients with pending transfers */}
-            <TransferBanner />
+            {/* Fixed header - always visible at top */}
+            <PageHeader />
 
-            {children}
+            {/* Main content area */}
+            <div className="with-sidebar flex flex-col h-full overflow-y-auto">
+              {/* Transfer banner for recipients with pending transfers */}
+              <TransferBanner />
+
+              {children}
+            </div>
+
+            {/* Mobile navigation */}
+            <MobileNav />
           </div>
-
-          {/* Mobile navigation */}
-          <MobileNav />
-        </div>
+        </HeaderProvider>
       </NavbarProvider>
     </AuthGuard>
   )

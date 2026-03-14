@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayer } from '@/components/animations/LottiePlayer'
-import { PageHeader } from '@/components/layout'
+import { useHeader } from '@/contexts/header-context'
 import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconChevronDown, IconSelect, IconWarning, IconInventory, IconAdjust, IconCirclePlus, IconCircleMinus, IconCalendarTime } from '@/components/icons'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAuth } from '@/contexts/auth-context'
@@ -1060,23 +1060,22 @@ export default function ProductosPage() {
     pedidos: 'Pedidos a proveedores',
   }
 
+  // Set header based on active tab
+  useHeader({
+    title: 'Productos',
+    subtitle: tabSubtitles[activeTab],
+  })
+
   if (isLoading) {
     return (
-      <div className="page-wrapper">
-        <PageHeader title="Productos" subtitle={tabSubtitles[activeTab]} />
-        <main className="page-loading">
-          <Spinner className="spinner-lg" />
-        </main>
-      </div>
+      <main className="page-loading">
+        <Spinner className="spinner-lg" />
+      </main>
     )
   }
 
   return (
-    <div className="page-wrapper">
-      <PageHeader
-        title="Productos"
-        subtitle={tabSubtitles[activeTab]}
-      />
+    <>
 
       <main className="page-content space-y-4">
         {/* Section Tabs */}
@@ -3098,6 +3097,6 @@ export default function ProductosPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

@@ -1040,11 +1040,22 @@
     min-height: var(--header-height);
   }
 
-  .page-header--sticky {
-    position: sticky;
+  /* Fixed header - always visible at top like mobile nav at bottom */
+  .page-header--fixed {
+    position: fixed;
     top: 0;
-    z-index: 40;
-    flex-shrink: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-sticky);
+    /* Account for safe area on devices with notches */
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  @media (min-width: 1024px) {
+    /* On desktop, offset by sidebar width */
+    .page-header--fixed {
+      left: var(--sidebar-width);
+    }
   }
 
   @media (min-width: 640px) {
@@ -1177,6 +1188,8 @@
     flex-direction: column;
     flex: 1;
     padding: var(--page-padding);
+    /* Account for fixed header at top and mobile nav at bottom */
+    padding-top: calc(var(--header-height) + var(--page-padding) + env(safe-area-inset-top, 0));
     padding-bottom: calc(var(--mobile-nav-height) + var(--space-6) + env(safe-area-inset-bottom, 0));
   }
 
@@ -1188,6 +1201,8 @@
   @media (min-width: 1024px) {
     .page-content {
       padding: var(--space-6);
+      /* Desktop: still account for fixed header */
+      padding-top: calc(var(--header-height) + var(--space-6));
       padding-bottom: var(--space-8);
     }
 
@@ -3340,9 +3355,9 @@
     border-bottom: 1px solid var(--color-border);
     margin-bottom: var(--space-4);
     background: var(--color-bg-base);
-    /* Sticky header when scrolling */
+    /* Sticky below the fixed header */
     position: sticky;
-    top: 0;
+    top: calc(var(--header-height) + env(safe-area-inset-top, 0));
     z-index: 10;
     /* Entrance animation */
     animation: pageEnter var(--transition-normal) ease-out;

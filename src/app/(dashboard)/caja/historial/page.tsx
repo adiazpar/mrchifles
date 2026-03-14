@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { PageHeader } from '@/components/layout'
+import { useHeader } from '@/contexts/header-context'
 import { Spinner, Modal } from '@/components/ui'
 import { IconCircleCheck, IconClock, IconChevronRight, IconIngreso, IconRetiro, IconArrowUp } from '@/components/icons'
 import { useNavbar } from '@/contexts/navbar-context'
@@ -33,6 +33,19 @@ export default function HistorialPage() {
   const router = useRouter()
   const { pb } = useAuth()
   const { hide, show, setReturning } = useNavbar()
+
+  // Handle back navigation
+  const handleBack = useCallback(() => {
+    setReturning(true)
+    router.push('/caja')
+  }, [router, setReturning])
+
+  useHeader({
+    title: 'Historial',
+    subtitle: 'Sesiones de caja',
+    showBackButton: true,
+    onBack: handleBack,
+  })
 
   // Data state
   const [sessions, setSessions] = useState<CashSession[]>([])
@@ -91,12 +104,6 @@ export default function HistorialPage() {
     loadSessions()
   }, [pb])
 
-  // Handle back navigation
-  const handleBack = useCallback(() => {
-    setReturning(true)
-    router.push('/caja')
-  }, [router, setReturning])
-
   // View session detail
   const handleViewSessionDetail = async (session: CashSession) => {
     setViewingSession(session)
@@ -149,31 +156,14 @@ export default function HistorialPage() {
 
   if (isLoading) {
     return (
-      <>
-        <PageHeader
-          title="Historial"
-          subtitle="Sesiones de caja"
-          showBackButton
-          onBack={handleBack}
-          sticky
-        />
-        <main className="page-loading">
-          <Spinner className="spinner-lg" />
-        </main>
-      </>
+      <main className="page-loading">
+        <Spinner className="spinner-lg" />
+      </main>
     )
   }
 
   return (
     <div ref={scrollContainerRef} className="flex flex-col flex-1 min-h-0 overflow-y-auto">
-      <PageHeader
-        title="Historial"
-        subtitle="Sesiones de caja"
-        showBackButton
-        onBack={handleBack}
-        sticky
-      />
-
       <main className="page-content page-content--no-navbar">
         <div className="flex flex-col flex-1 gap-6 page-stagger">
           {/* Summary Stats */}

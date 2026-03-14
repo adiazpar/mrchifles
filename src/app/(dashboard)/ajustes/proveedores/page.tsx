@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Spinner, Modal } from '@/components/ui'
-import { PageHeader } from '@/components/layout'
+import { useHeader } from '@/contexts/header-context'
 import { IconAdd, IconChevronRight } from '@/components/icons'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { useAuth } from '@/contexts/auth-context'
@@ -20,6 +20,11 @@ function getProviderInitials(name: string): string {
 
 export default function ProveedoresPage() {
   const { user, pb } = useAuth()
+
+  useHeader({
+    title: 'Proveedores',
+    subtitle: 'Gestiona tus proveedores',
+  })
 
   const [providers, setProviders] = useState<Provider[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -155,19 +160,14 @@ export default function ProveedoresPage() {
 
   if (isLoading) {
     return (
-      <>
-        <PageHeader title="Proveedores" />
-        <main className="page-loading">
-          <Spinner className="spinner-lg" />
-        </main>
-      </>
+      <main className="page-loading">
+        <Spinner className="spinner-lg" />
+      </main>
     )
   }
 
   return (
     <>
-      <PageHeader title="Proveedores" subtitle="Gestiona tus proveedores" />
-
       <main className="main-content space-y-6">
         {error && !isModalOpen && (
           <div className="p-4 bg-error-subtle text-error rounded-lg">

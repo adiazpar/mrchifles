@@ -1,32 +1,18 @@
 'use client'
 
-import { ReactNode, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { UserMenu } from './user-menu'
 import { IconArrowLeft } from '@/components/icons'
+import { useHeaderContext } from '@/contexts/header-context'
 
-interface PageHeaderProps {
-  title: string
-  subtitle?: string
-  actions?: ReactNode
-  /** Show a back button that slides in from the left */
-  showBackButton?: boolean
-  /** Callback when back button is pressed */
-  onBack?: () => void
-  /** Animate titles as if returning from a sub-page (slide from right) */
-  isReturning?: boolean
-  /** Make the header sticky at the top of the page */
-  sticky?: boolean
-}
+/**
+ * Fixed page header component that reads its configuration from HeaderContext.
+ * Place this in the dashboard layout - pages use the useHeader() hook to set content.
+ */
+export function PageHeader() {
+  const { config } = useHeaderContext()
+  const { title, subtitle, actions, showBackButton, onBack, isReturning } = config
 
-export function PageHeader({
-  title,
-  subtitle,
-  actions,
-  showBackButton = false,
-  onBack,
-  isReturning = false,
-  sticky = false,
-}: PageHeaderProps) {
   // Clear returning state after animation completes
   const [showReturnAnimation, setShowReturnAnimation] = useState(isReturning)
 
@@ -36,6 +22,8 @@ export function PageHeader({
       // Clear after animation duration
       const timer = setTimeout(() => setShowReturnAnimation(false), 300)
       return () => clearTimeout(timer)
+    } else {
+      setShowReturnAnimation(false)
     }
   }, [isReturning])
 
@@ -45,8 +33,13 @@ export function PageHeader({
     return ''
   }
 
+  // Don't render if no title is set (initial state)
+  if (!title) {
+    return <header className="page-header page-header--fixed" />
+  }
+
   return (
-    <header className={`page-header${sticky ? ' page-header--sticky' : ''}`}>
+    <header className="page-header page-header--fixed">
       <div className={`page-header__content ${getContentClass()}`}>
         {showBackButton && (
           <button
