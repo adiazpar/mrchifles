@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayer } from '@/components/animations/LottiePlayer'
 import { useHeader } from '@/contexts/header-context'
-import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconChevronDown, IconSelect, IconWarning, IconInventory, IconAdjust, IconCirclePlus, IconCircleMinus, IconCalendarTime } from '@/components/icons'
+import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconChevronDown, IconWarning, IconInventory, IconAdjust, IconCirclePlus, IconCircleMinus, IconCalendarTime } from '@/components/icons'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAuth } from '@/contexts/auth-context'
 import { formatCurrency, formatDate, getProductImageUrl } from '@/lib/utils'
@@ -105,9 +105,6 @@ export default function ProductosPage() {
     return saved?.sortBy ?? 'name_asc'
   })
   const [isSortSheetOpen, setIsSortSheetOpen] = useState(false)
-  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
-  const [isSelectionMode, setIsSelectionMode] = useState(false)
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -521,56 +518,6 @@ export default function ProductosPage() {
       setIsAdjusting(false)
     }
   }, [editingProduct, adjustmentQuantity, adjustmentMode, adjustmentReason, adjustmentNotes, pb, user?.id, handleCloseModal])
-
-  // Selection mode handlers
-  const handleEnterSelectionMode = useCallback(() => {
-    setIsEditSheetOpen(false)
-    setIsSelectionMode(true)
-    setSelectedProducts(new Set())
-  }, [])
-
-  const handleExitSelectionMode = useCallback(() => {
-    setIsSelectionMode(false)
-    setSelectedProducts(new Set())
-  }, [])
-
-  const handleToggleProductSelection = useCallback((productId: string) => {
-    setSelectedProducts(prev => {
-      const next = new Set(prev)
-      if (next.has(productId)) {
-        next.delete(productId)
-      } else {
-        next.add(productId)
-      }
-      return next
-    })
-  }, [])
-
-  const handleBulkUpdateStatus = useCallback(async (newStatus: boolean) => {
-    if (selectedProducts.size === 0) return
-
-    setError('')
-
-    try {
-      const updatePromises = Array.from(selectedProducts).map(id =>
-        pb.collection('products').update<Product>(id, { active: newStatus })
-      )
-      const updatedRecords = await Promise.all(updatePromises)
-
-      // Update local state
-      setProducts(prev =>
-        prev.map(p => {
-          const updated = updatedRecords.find(r => r.id === p.id)
-          return updated || p
-        })
-      )
-
-      handleExitSelectionMode()
-    } catch (err) {
-      console.error('Error updating products:', err)
-      setError('Error al actualizar los productos')
-    }
-  }, [selectedProducts, pb, handleExitSelectionMode])
 
   const scrollToTop = useCallback(() => {
     // The scrolling container is the .with-sidebar div, not window
@@ -1191,35 +1138,17 @@ export default function ProductosPage() {
                 <div className="card p-4 space-y-4">
                   {/* Product List Header */}
                   <div className="flex items-center justify-between">
-                    {isSelectionMode ? (
-                      <>
-                        <span className="text-sm text-text-secondary">
-                          {selectedProducts.size} {selectedProducts.size === 1 ? 'seleccionado' : 'seleccionados'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleExitSelectionMode}
-                          className="btn btn-secondary btn-sm"
-                        >
-                          <IconClose className="w-4 h-4" />
-                          Cancelar
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-sm text-text-secondary">
-                          {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setIsEditSheetOpen(true)}
-                          className="btn btn-primary btn-sm"
-                        >
-                          <IconEdit className="w-4 h-4" />
-                          Editar
-                        </button>
-                      </>
-                    )}
+                    <span className="text-sm text-text-secondary">
+                      {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleOpenAdd}
+                      className="btn btn-primary btn-sm"
+                    >
+                      <IconCirclePlus className="w-4 h-4" />
+                      Agregar
+                    </button>
                   </div>
 
                   {/* Product List */}
@@ -1236,7 +1165,6 @@ export default function ProductosPage() {
                       {filteredProducts.map((product) => {
                         const imageUrl = getProductImageUrl(product, '100x100')
                         const categoryConfig = product.category ? CATEGORY_CONFIG[product.category] : null
-                        const isSelected = selectedProducts.has(product.id)
                         const stockValue = product.stock ?? 0
                         const threshold = product.lowStockThreshold ?? 10
                         const isLowStock = stockValue <= threshold
@@ -1245,47 +1173,31 @@ export default function ProductosPage() {
                           <div
                             key={product.id}
                             className="list-item-clickable list-item-flat"
-                            onClick={() => {
-                              if (isSelectionMode) {
-                                handleToggleProductSelection(product.id)
-                              } else {
-                                handleOpenEdit(product)
-                              }
-                            }}
+                            onClick={() => handleOpenEdit(product)}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault()
-                                if (isSelectionMode) {
-                                  handleToggleProductSelection(product.id)
-                                } else {
-                                  handleOpenEdit(product)
-                                }
+                                handleOpenEdit(product)
                               }
                             }}
                             tabIndex={0}
                             role="button"
                           >
-                            {/* Selection checkbox or Product Image/Icon */}
-                            {isSelectionMode ? (
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? 'bg-brand text-white' : 'bg-bg-muted text-text-tertiary'}`}>
-                                {isSelected && <IconCheck className="w-4 h-4" />}
-                              </div>
-                            ) : (
-                              <div className={`product-list-image ${isLowStock && product.active ? 'ring-2 ring-error' : ''}`}>
-                                {imageUrl ? (
-                                  <Image
-                                    src={imageUrl}
-                                    alt={product.name}
-                                    width={40}
-                                    height={40}
-                                    className="product-list-image-img"
-                                    unoptimized
-                                  />
-                                ) : (
-                                  <IconImage className="w-5 h-5 text-text-tertiary" />
-                                )}
-                              </div>
-                            )}
+                            {/* Product Image/Icon */}
+                            <div className={`product-list-image ${isLowStock && product.active ? 'ring-2 ring-error' : ''}`}>
+                              {imageUrl ? (
+                                <Image
+                                  src={imageUrl}
+                                  alt={product.name}
+                                  width={40}
+                                  height={40}
+                                  className="product-list-image-img"
+                                  unoptimized
+                                />
+                              ) : (
+                                <IconImage className="w-5 h-5 text-text-tertiary" />
+                              )}
+                            </div>
 
                             {/* Product Info */}
                             <div className="flex-1 min-w-0">
@@ -1307,12 +1219,10 @@ export default function ProductosPage() {
                               </span>
                             </div>
 
-                            {/* Chevron (only in normal mode) */}
-                            {!isSelectionMode && (
-                              <div className="text-text-tertiary ml-2">
-                                <IconChevronRight className="w-5 h-5" />
-                              </div>
-                            )}
+                            {/* Chevron */}
+                            <div className="text-text-tertiary ml-2">
+                              <IconChevronRight className="w-5 h-5" />
+                            </div>
                           </div>
                         )
                       })}
@@ -3109,61 +3019,6 @@ export default function ProductosPage() {
         </div>
       </BottomSheet>
 
-      {/* Edit options bottom sheet */}
-      <BottomSheet
-        isOpen={isEditSheetOpen}
-        onClose={() => setIsEditSheetOpen(false)}
-        title="Editar productos"
-      >
-        <div className="user-menu-items">
-          <button
-            type="button"
-            className="user-menu-item"
-            onClick={() => {
-              setIsEditSheetOpen(false)
-              handleOpenAdd()
-            }}
-          >
-            <IconAdd width={20} height={20} />
-            <span>Agregar producto</span>
-            <IconChevronRight width={16} height={16} className="user-menu-item-arrow" />
-          </button>
-          <button
-            type="button"
-            className="user-menu-item"
-            onClick={handleEnterSelectionMode}
-          >
-            <IconSelect width={20} height={20} />
-            <span>Seleccionar productos</span>
-            <IconChevronRight width={16} height={16} className="user-menu-item-arrow" />
-          </button>
-        </div>
-      </BottomSheet>
-
-      {/* Bulk action bar (fixed above mobile nav when in selection mode) */}
-      {isSelectionMode && selectedProducts.size > 0 && (
-        <div
-          className="fixed left-0 right-0 p-4 bg-bg-surface border-t border-border z-40 lg:ml-64 lg:bottom-0"
-          style={{ bottom: 'calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px))' }}
-        >
-          <div className="flex gap-3 max-w-lg mx-auto">
-            <button
-              type="button"
-              onClick={() => handleBulkUpdateStatus(true)}
-              className="btn btn-primary flex-1"
-            >
-              Activar
-            </button>
-            <button
-              type="button"
-              onClick={() => handleBulkUpdateStatus(false)}
-              className="btn btn-danger flex-1"
-            >
-              Desactivar
-            </button>
-          </div>
-        </div>
-      )}
     </>
   )
 }
