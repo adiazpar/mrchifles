@@ -899,7 +899,7 @@ export default function ProductosPage() {
     const handleClick = async () => {
       const success = await handleSubmit()
       if (success) {
-        goToStep(5) // Go to save success step
+        goToStep(4) // Go to save success step
       }
     }
 
@@ -929,7 +929,7 @@ export default function ProductosPage() {
         await pb.collection('products').delete(editingProduct.id)
         setProducts(prev => prev.filter(p => p.id !== editingProduct.id))
         setProductDeleted(true)
-        goToStep(4) // Go to delete success step
+        goToStep(3) // Go to delete success step
       } catch (err) {
         console.error('Error deleting product:', err)
         setError('Error al eliminar el producto')
