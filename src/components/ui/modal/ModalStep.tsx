@@ -9,7 +9,7 @@ interface InternalStepProps extends ModalStepProps {
   _index?: number // Optional - injected by Modal parent
 }
 
-export function ModalStep({ children, title, hideBackButton = false, backStep, className, _index = 0 }: InternalStepProps) {
+export function ModalStep({ children, title, hideBackButton = false, backStep, onBackStep, className, _index = 0 }: InternalStepProps) {
   const {
     currentStep,
     targetStep,
@@ -19,6 +19,7 @@ export function ModalStep({ children, title, hideBackButton = false, backStep, c
     _unregisterStep,
     _setCurrentStepHideBackButton,
     _setCurrentStepBackStep,
+    _setCurrentStepOnBackStep,
   } = useModalContext()
 
   // Register this step on mount
@@ -27,13 +28,14 @@ export function ModalStep({ children, title, hideBackButton = false, backStep, c
     return () => _unregisterStep(_index)
   }, [_index, _registerStep, _unregisterStep])
 
-  // Report hideBackButton and backStep when this step becomes current
+  // Report hideBackButton, backStep, and onBackStep when this step becomes current
   useEffect(() => {
     if (_index === currentStep) {
       _setCurrentStepHideBackButton(hideBackButton)
       _setCurrentStepBackStep(backStep)
+      _setCurrentStepOnBackStep(onBackStep)
     }
-  }, [_index, currentStep, hideBackButton, backStep, _setCurrentStepHideBackButton, _setCurrentStepBackStep])
+  }, [_index, currentStep, hideBackButton, backStep, onBackStep, _setCurrentStepHideBackButton, _setCurrentStepBackStep, _setCurrentStepOnBackStep])
 
   const isCurrentStep = _index === currentStep
   const isTargetStep = _index === targetStep

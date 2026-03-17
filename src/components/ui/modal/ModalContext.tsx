@@ -15,9 +15,9 @@ export function useModalContext(): ModalContextValue {
   return context
 }
 
-export function useMorphingModal(): Omit<ModalContextValue, '_registerStep' | '_unregisterStep' | '_onClose' | '_currentStepHideBackButton' | '_setCurrentStepHideBackButton' | '_currentStepBackStep' | '_setCurrentStepBackStep'> {
+export function useMorphingModal(): Omit<ModalContextValue, '_registerStep' | '_unregisterStep' | '_onClose' | '_currentStepHideBackButton' | '_setCurrentStepHideBackButton' | '_currentStepBackStep' | '_setCurrentStepBackStep' | '_currentStepOnBackStep' | '_setCurrentStepOnBackStep'> {
   const ctx = useModalContext()
-  const { _registerStep, _unregisterStep, _onClose, _currentStepHideBackButton, _setCurrentStepHideBackButton, _currentStepBackStep, _setCurrentStepBackStep, ...publicApi } = ctx
+  const { _registerStep, _unregisterStep, _onClose, _currentStepHideBackButton, _setCurrentStepHideBackButton, _currentStepBackStep, _setCurrentStepBackStep, _currentStepOnBackStep, _setCurrentStepOnBackStep, ...publicApi } = ctx
   return publicApi
 }
 
@@ -41,6 +41,12 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
   const [isLocked, setIsLocked] = useState(false)
   const [currentStepHideBackButton, setCurrentStepHideBackButton] = useState(false)
   const [currentStepBackStep, setCurrentStepBackStep] = useState<number | undefined>(undefined)
+  const [currentStepOnBackStep, setCurrentStepOnBackStepRaw] = useState<(() => void) | undefined>(undefined)
+
+  // Wrapper to properly set function state (React interprets raw functions as updaters)
+  const setCurrentStepOnBackStep = useCallback((callback: (() => void) | undefined) => {
+    setCurrentStepOnBackStepRaw(() => callback)
+  }, [])
 
   // Track timeout IDs for cleanup
   const timeoutIdsRef = useRef<NodeJS.Timeout[]>([])
@@ -57,6 +63,7 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
       setIsLocked(false)
       setCurrentStepHideBackButton(false)
       setCurrentStepBackStep(undefined)
+      setCurrentStepOnBackStepRaw(undefined)
     }
     prevIsOpen.current = isOpen
   }, [isOpen, initialStep])
@@ -161,6 +168,8 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
     _setCurrentStepHideBackButton: setCurrentStepHideBackButton,
     _currentStepBackStep: currentStepBackStep,
     _setCurrentStepBackStep: setCurrentStepBackStep,
+    _currentStepOnBackStep: currentStepOnBackStep,
+    _setCurrentStepOnBackStep: setCurrentStepOnBackStep,
   }
 
   return (

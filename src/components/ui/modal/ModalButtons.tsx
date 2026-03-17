@@ -85,9 +85,10 @@ export function ModalCancelBackButton({
   className = '',
   disabled,
   onCancel,
+  onClick,
 }: CancelBackButtonProps) {
   const ctx = useModalContext()
-  const { goBack, goToStep, isLocked, isTransitioning, isFirstStep, _currentStepBackStep } = ctx
+  const { goBack, goToStep, isLocked, isTransitioning, isFirstStep, _currentStepBackStep, _currentStepOnBackStep } = ctx
 
   const handleClick = () => {
     if (isFirstStep) {
@@ -97,6 +98,11 @@ export function ModalCancelBackButton({
         ctx._onClose()
       }
     } else {
+      // Call the step's onBackStep callback before navigating (e.g., to cancel operations)
+      _currentStepOnBackStep?.()
+      // Also call onClick if provided (for backwards compatibility)
+      onClick?.()
+
       // Respect the step's backStep prop if defined
       if (_currentStepBackStep !== undefined) {
         goToStep(_currentStepBackStep)

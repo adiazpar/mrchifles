@@ -39,7 +39,7 @@ function AnimatedFooter({ children }: { children: React.ReactNode }) {
 // Internal header component (needs context)
 function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTitle?: string }) {
   const ctx = useModalContext()
-  const { isFirstStep, isLocked, isTransitioning, goBack, goToStep, _onClose, _currentStepHideBackButton, _currentStepBackStep } = ctx
+  const { isFirstStep, isLocked, isTransitioning, goBack, goToStep, _onClose, _currentStepHideBackButton, _currentStepBackStep, _currentStepOnBackStep } = ctx
 
   // For single-step modals, use the prop title
   // For multi-step, find the current step's title from DOM (set via data attribute)
@@ -49,8 +49,11 @@ function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTit
   // Back button animates AFTER height transition (when currentStep updates during 'entering' phase)
   const showBackIcon = !singleStepTitle && !isFirstStep && !_currentStepHideBackButton
 
-  // Handle back navigation - use custom backStep if defined, otherwise default goBack
+  // Handle back navigation - call onBackStep callback first, then navigate
   const handleBack = () => {
+    // Call the step's onBackStep callback before navigating (e.g., to cancel operations)
+    _currentStepOnBackStep?.()
+
     if (_currentStepBackStep !== undefined) {
       goToStep(_currentStepBackStep)
     } else {

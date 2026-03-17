@@ -55,6 +55,8 @@ export interface ModalContextValue {
   _setCurrentStepHideBackButton: (hide: boolean) => void
   _currentStepBackStep: number | undefined
   _setCurrentStepBackStep: (step: number | undefined) => void
+  _currentStepOnBackStep: (() => void) | undefined
+  _setCurrentStepOnBackStep: (callback: (() => void) | undefined) => void
 }
 
 // Component props
@@ -75,6 +77,8 @@ export interface ModalStepProps {
   hideBackButton?: boolean
   /** Override which step the back button navigates to (default: previous step) */
   backStep?: number
+  /** Callback fired when navigating back from this step (before navigation) */
+  onBackStep?: () => void
   /** Additional CSS class for the step container */
   className?: string
 }
