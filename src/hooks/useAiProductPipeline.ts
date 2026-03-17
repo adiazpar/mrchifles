@@ -60,6 +60,69 @@ function generateRunId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+/**
+ * Compress and resize an image blob to fit within size limits.
+ * PocketBase allows max 500KB for icons, so we target ~400KB to be safe.
+ */
+async function compressIconBlob(blob: Blob, maxSize = 400000, targetDimension = 512): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      // Create canvas with target dimensions
+      const canvas = document.createElement('canvas')
+      canvas.width = targetDimension
+      canvas.height = targetDimension
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'))
+        return
+      }
+
+      // Draw image scaled to fit
+      ctx.drawImage(img, 0, 0, targetDimension, targetDimension)
+
+      // Try PNG first, if too large fall back to smaller dimensions
+      const tryCompress = (dimension: number): void => {
+        if (dimension < 64) {
+          // Give up, just use smallest size
+          canvas.width = 64
+          canvas.height = 64
+          ctx.drawImage(img, 0, 0, 64, 64)
+          canvas.toBlob((result) => {
+            if (result) resolve(result)
+            else reject(new Error('Failed to create blob'))
+          }, 'image/png')
+          return
+        }
+
+        canvas.width = dimension
+        canvas.height = dimension
+        ctx.clearRect(0, 0, dimension, dimension)
+        ctx.drawImage(img, 0, 0, dimension, dimension)
+
+        canvas.toBlob((result) => {
+          if (!result) {
+            reject(new Error('Failed to create blob'))
+            return
+          }
+          if (result.size <= maxSize) {
+            console.log(`[Pipeline] Compressed icon to ${dimension}x${dimension}, size: ${result.size}`)
+            resolve(result)
+          } else {
+            // Try smaller dimension
+            console.log(`[Pipeline] Icon at ${dimension}x${dimension} is ${result.size} bytes, trying smaller...`)
+            tryCompress(Math.floor(dimension * 0.75))
+          }
+        }, 'image/png')
+      }
+
+      tryCompress(targetDimension)
+    }
+    img.onerror = () => reject(new Error('Failed to load image for compression'))
+    img.src = URL.createObjectURL(blob)
+  })
+}
+
 export function useAiProductPipeline(): UseAiProductPipelineReturn {
   const [state, setState] = useState<PipelineState>({
     step: 'idle',
@@ -255,7 +318,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       if (!isRunActive(runId)) return
 
       // Run background removal on icon
-      const transparentIconBlob = await removeBackground(iconBlob, bgRemovalConfig)
+      const rawTransparentBlob = await removeBackground(iconBlob, bgRemovalConfig)
 
       if (!isRunActive(runId)) {
         console.log('[Pipeline] Run cancelled during bg removal 2')
@@ -263,6 +326,15 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       }
 
       console.log('[Pipeline] Background removed from emoji')
+
+      // Ensure blob has correct MIME type for PocketBase validation
+      const rawBlob = new Blob([rawTransparentBlob], { type: 'image/png' })
+
+      // Compress to fit PocketBase file size limit (500KB max, target 400KB)
+      console.log(`[Pipeline] Raw icon size: ${rawBlob.size} bytes, compressing...`)
+      const transparentIconBlob = await compressIconBlob(rawBlob)
+
+      if (!isRunActive(runId)) return
 
       // Convert to base64 for preview
       const transparentIconBase64 = await new Promise<string>((resolve, reject) => {
@@ -370,7 +442,16 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
 
       if (!isRunActive(runId)) return null
 
-      const transparentIconBlob = await removeBackground(iconBlob, bgRemovalConfig)
+      const rawTransparentBlob = await removeBackground(iconBlob, bgRemovalConfig)
+
+      if (!isRunActive(runId)) return null
+
+      // Ensure blob has correct MIME type for PocketBase validation
+      const rawBlob = new Blob([rawTransparentBlob], { type: 'image/png' })
+
+      // Compress to fit PocketBase file size limit (500KB max, target 400KB)
+      console.log(`[Pipeline] Raw regenerated icon size: ${rawBlob.size} bytes, compressing...`)
+      const transparentIconBlob = await compressIconBlob(rawBlob)
 
       if (!isRunActive(runId)) return null
 
