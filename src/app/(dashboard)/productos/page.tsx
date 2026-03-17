@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
-import { removeBackground } from '@imgly/background-removal'
+import { useAiProductPipeline, useImageCompression } from '@/hooks'
 import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
 import { LottiePlayer } from '@/components/animations/LottiePlayer'
 import { useHeader } from '@/contexts/header-context'
@@ -86,8 +86,11 @@ function saveProductFilters(filters: ProductFilters): void {
 // Stable navigator components - defined outside main component to prevent recreation on each render
 // Using ref pattern to avoid goToStep in dependency array (it changes on every phase transition)
 
-function AiFlowNavigator({ aiPhoto }: { aiPhoto: File | null }) {
-  const { goToStep } = useMorphingModal()
+import type { PipelineStep } from '@/hooks'
+
+// Navigator for AI flow - watches pipeline state and handles step transitions
+function AiPipelineNavigator({ pipelineStep, isCompressing }: { pipelineStep: PipelineStep; isCompressing: boolean }) {
+  const { goToStep, currentStep } = useMorphingModal()
   const goToStepRef = useRef(goToStep)
 
   // Keep ref updated without triggering effect
@@ -95,28 +98,19 @@ function AiFlowNavigator({ aiPhoto }: { aiPhoto: File | null }) {
     goToStepRef.current = goToStep
   })
 
+  // Navigate to processing step when compression starts or pipeline starts
   useEffect(() => {
-    if (aiPhoto) {
+    if (currentStep === 0 && (isCompressing || (pipelineStep !== 'idle' && pipelineStep !== 'complete' && pipelineStep !== 'error'))) {
       goToStepRef.current(2) // Go to AI Processing step
     }
-  }, [aiPhoto]) // Only trigger on aiPhoto change
+  }, [isCompressing, pipelineStep, currentStep])
 
-  return null
-}
-
-function AiProcessingNavigator({ aiStep }: { aiStep: string }) {
-  const { goToStep } = useMorphingModal()
-  const goToStepRef = useRef(goToStep)
-
-  useLayoutEffect(() => {
-    goToStepRef.current = goToStep
-  })
-
+  // Navigate to review step when pipeline completes
   useEffect(() => {
-    if (aiStep === 'review') {
+    if (currentStep === 2 && pipelineStep === 'complete') {
       goToStepRef.current(3) // Go to AI Review step
     }
-  }, [aiStep])
+  }, [pipelineStep, currentStep])
 
   return null
 }
@@ -194,13 +188,13 @@ export default function ProductosPage() {
   const [generatedIconBlob, setGeneratedIconBlob] = useState<Blob | null>(null) // AI-generated icon as blob for form submission
   const receiptInputRef = useRef<HTMLInputElement>(null)
 
-  // AI product creation state
-  const [aiPhoto, setAiPhoto] = useState<string | null>(null) // base64 photo for AI analysis
-  const [aiProcessing, setAiProcessing] = useState(false)
-  const [aiStep, setAiStep] = useState<'photo' | 'processing' | 'review'>('photo')
-  const [extractedData, setExtractedData] = useState<{ name: string } | null>(null)
-  const [cachedBgRemovedUrl, setCachedBgRemovedUrl] = useState<string | null>(null) // Cache for regenerations
+  // AI product creation - hooks with proper cancellation support
+  const pipeline = useAiProductPipeline()
+  const compression = useImageCompression()
   const cameraInputRef = useRef<HTMLInputElement>(null)
+
+  // Derived state from pipeline for easier access
+  const aiProcessing = pipeline.state.step !== 'idle' && pipeline.state.step !== 'complete' && pipeline.state.step !== 'error'
 
   // Permission check
   const canDelete = user?.role === 'owner' || user?.role === 'partner'
@@ -374,13 +368,33 @@ export default function ProductosPage() {
     setError('')
     setProductDeleted(false)
     setProductSaved(false)
-    // Reset AI state
-    setAiPhoto(null)
-    setAiProcessing(false)
-    setAiStep('photo')
-    setExtractedData(null)
-    setCachedBgRemovedUrl(null)
-  }, [])
+    // Only reset AI pipeline if it's actually running
+    if (pipeline.state.step !== 'idle') {
+      pipeline.reset()
+    }
+    if (compression.state.isProcessing) {
+      compression.cancel()
+    }
+  }, [pipeline, compression])
+
+  // Abort AI processing and reset all state - called when user backs out or closes modal
+  const abortAiProcessing = useCallback(() => {
+    // Only cancel if actually processing
+    if (pipeline.state.step !== 'idle') {
+      pipeline.cancel()
+    }
+    if (compression.state.isProcessing) {
+      compression.cancel()
+    }
+    // Reset UI state
+    setIconPreview(null)
+    setGeneratedIconBlob(null)
+    setName('')
+    setPrice('')
+    setCategory('')
+    setActive(true)
+    setError('')
+  }, [pipeline, compression])
 
   const handleOpenAdd = useCallback(() => {
     resetForm()
@@ -397,283 +411,83 @@ export default function ProductosPage() {
     const existingIconUrl = getProductIconUrl(product, '128x128')
     setIconPreview(existingIconUrl)
     setGeneratedIconBlob(null)
-    // Reset AI state
-    setAiPhoto(null)
-    setAiProcessing(false)
-    setAiStep('photo')
-    setExtractedData(null)
-    setCachedBgRemovedUrl(null)
+    // Only reset AI pipeline if it's actually running
+    if (pipeline.state.step !== 'idle') {
+      pipeline.reset()
+    }
+    if (compression.state.isProcessing) {
+      compression.cancel()
+    }
     // Reset adjustment form state
     setAdjustmentQuantity(0)
     setAdjustmentNotes('')
     setError('')
     setIsModalOpen(true)
-  }, [])
+  }, [pipeline, compression])
 
   const handleCloseModal = useCallback(() => {
+    // Abort any ongoing AI processing
+    abortAiProcessing()
     setIsModalOpen(false)
     // Don't reset form here - use onExitComplete to avoid flash during close animation
-  }, [])
+  }, [abortAiProcessing])
 
-  // Handle AI photo capture for product identification
+  // Handle AI photo capture - compresses image and starts pipeline
   const handleAiPhotoCapture = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file size (20MB max raw, will be compressed)
-    if (file.size > 20971520) {
-      setError('La imagen debe ser menor a 20MB')
+    setError('')
+
+    // Compress the image (handles HEIC, EXIF rotation, resizing)
+    const compressedBase64 = await compression.compressImage(file)
+
+    // Check for compression errors
+    if (compression.state.error) {
+      setError(compression.state.error)
       return
     }
 
-    setError('')
-    
-    // Immediately show processing step (includes HEIC conversion)
-    setAiStep('processing')
+    // If compression was cancelled or failed, don't continue
+    if (!compressedBase64) return
 
-    try {
-      // Check if file is HEIC/HEIF (needs server-side conversion)
-      const isHeic = file.type === 'image/heic' || 
-                     file.type === 'image/heif' || 
-                     file.name.toLowerCase().endsWith('.heic') ||
-                     file.name.toLowerCase().endsWith('.heif')
+    // Start the AI pipeline with the compressed image
+    await pipeline.startPipeline(compressedBase64)
+  }, [compression, pipeline])
 
-      let imageSource: Blob | string = file
-
-      if (isHeic) {
-        console.log('[AI] Detected HEIC image, converting server-side...')
-        
-        // Send to server for conversion
-        const formData = new FormData()
-        formData.append('file', file)
-
-        const response = await fetch('/api/convert-heic', {
-          method: 'POST',
-          body: formData,
-        })
-
-        const result = await response.json()
-
-        if (!result.success) {
-          setError('Error al convertir la imagen HEIC')
-          setAiStep('camera')
-          return
-        }
-
-        console.log('[AI] HEIC converted successfully')
-        imageSource = result.data.image // base64 data URL
-      }
-
-      // Use createImageBitmap to properly handle EXIF orientation from iPhone photos
-      let bitmap: ImageBitmap
-      if (typeof imageSource === 'string') {
-        // It's a base64 data URL from HEIC conversion
-        const response = await fetch(imageSource)
-        const blob = await response.blob()
-        bitmap = await createImageBitmap(blob, {
-          imageOrientation: 'from-image',
-        })
-      } else {
-        bitmap = await createImageBitmap(imageSource, {
-          imageOrientation: 'from-image',
-        })
-      }
-
-      // Target max dimension of 1024px for faster processing
-      const maxDim = 1024
-      let width = bitmap.width
-      let height = bitmap.height
-
-      if (width > maxDim || height > maxDim) {
-        if (width > height) {
-          height = Math.round((height * maxDim) / width)
-          width = maxDim
-        } else {
-          width = Math.round((width * maxDim) / height)
-          height = maxDim
-        }
-      }
-
-      // Create canvas and draw resized image (EXIF rotation already applied)
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        setError('Error al procesar la imagen')
-        setAiStep('camera')
-        return
-      }
-      ctx.drawImage(bitmap, 0, 0, width, height)
-      bitmap.close() // Free memory
-
-      // Compress to JPEG at 80% quality
-      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8)
-      console.log(`[AI] Image resized: ${bitmap.width}x${bitmap.height} -> ${width}x${height}, size: ~${Math.round(compressedBase64.length * 0.75 / 1024)}KB`)
-
-      setAiPhoto(compressedBase64)
-    } catch (err) {
-      console.error('Error processing image:', err)
-      setError('Error al procesar la imagen')
-      setAiStep('camera')
-    }
-  }, [])
-
-  // Process photo with AI to identify product and generate icon
-  const processAiPhoto = useCallback(async (photoBase64: string) => {
-    setAiProcessing(true)
-    setError('')
-
-    try {
-      // Step 1: Identify product using GPT-4o Mini Vision
-      const identifyResponse = await fetch('/api/ai/identify-product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: photoBase64 }),
-      })
-
-      const identifyResult = await identifyResponse.json()
-
-      if (!identifyResult.success) {
-        setError(identifyResult.error || 'Error al identificar el producto')
-        setAiStep('photo')
-        setAiProcessing(false)
-        return
-      }
-
-      setExtractedData(identifyResult.data)
-      setName(identifyResult.data.name)
-
-      // Step 2: Remove background from photo client-side (FREE, uses @imgly/background-removal)
-      console.log('[AI] GPT-4o Mini extracted:', identifyResult.data)
-      console.log('[AI] Removing background client-side...')
-
-      // Convert base64 to blob for background removal
-      const photoResponse = await fetch(photoBase64)
-      const photoBlob = await photoResponse.blob()
-
-      // Remove background using client-side ML model (runs in browser, no API cost)
-      const bgRemovedBlob = await removeBackground(photoBlob)
-      console.log('[AI] Background removed successfully')
-
-      // Convert bg-removed blob to base64 for API and caching
-      const bgRemovedBase64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result as string)
-        reader.readAsDataURL(bgRemovedBlob)
-      })
-
-      // Cache the bg-removed image for regenerations (saves processing time)
-      setCachedBgRemovedUrl(bgRemovedBase64)
-
-      // Step 3: Generate emoji icon using OpenAI GPT Image 1 Mini
-      console.log('[AI] Sending bg-removed image to OpenAI GPT Image 1 Mini')
-
-      const iconResponse = await fetch('/api/ai/generate-icon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: bgRemovedBase64 }),
-      })
-
-      const iconResult = await iconResponse.json()
-
-      if (!iconResult.success) {
-        setError(iconResult.error || 'Error al generar el icono')
-        // Still show review step with extracted data but no icon
-        setAiStep('review')
-        setAiProcessing(false)
-        return
-      }
-
-      // Step 4: Remove background from generated icon (ensures transparency)
-      console.log('[AI] Removing background from generated icon...')
-      const iconDataUrl = iconResult.data.icon
-      const iconResponse2 = await fetch(iconDataUrl)
-      const iconBlob = await iconResponse2.blob()
-      const transparentIconBlob = await removeBackground(iconBlob)
-      console.log('[AI] Icon background removed, now transparent')
-
-      // Convert transparent icon to base64 for preview
-      const transparentIconBase64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result as string)
-        reader.readAsDataURL(transparentIconBlob)
-      })
-
-      // Set icon preview with transparent background
-      setIconPreview(transparentIconBase64)
-      setGeneratedIconBlob(transparentIconBlob)
-
-      setAiStep('review')
-    } catch (err) {
-      console.error('AI processing error:', err)
-      setError('Error al procesar la imagen')
-      setAiStep('photo')
-    } finally {
-      setAiProcessing(false)
-    }
-  }, [])
-
-  // Trigger AI processing when photo is captured
+  // Sync pipeline results to local state when complete
   useEffect(() => {
-    if (aiPhoto && aiStep === 'processing' && !aiProcessing) {
-      processAiPhoto(aiPhoto)
+    if (pipeline.state.step === 'complete' && pipeline.state.result) {
+      const result = pipeline.state.result
+      setName(result.name)
+      setIconPreview(result.iconPreview)
+      setGeneratedIconBlob(result.iconBlob)
     }
-  }, [aiPhoto, aiStep, aiProcessing, processAiPhoto])
+  }, [pipeline.state.step, pipeline.state.result])
 
-  // Regenerate icon - uses cached bg-removed image (already processed client-side)
+  // Show pipeline errors
+  useEffect(() => {
+    if (pipeline.state.step === 'error' && pipeline.state.error) {
+      setError(pipeline.state.error)
+    }
+  }, [pipeline.state.step, pipeline.state.error])
+
+  // Regenerate icon - uses cached bg-removed image from pipeline
   const handleRegenerateIcon = useCallback(async () => {
-    // Need the cached bg-removed image
-    if (!cachedBgRemovedUrl) {
+    const cachedBgRemoved = pipeline.state.result?.cachedBgRemoved
+    if (!cachedBgRemoved) {
       setError('No hay imagen procesada para regenerar')
       return
     }
 
-    setAiProcessing(true)
     setError('')
+    const result = await pipeline.regenerateIcon(cachedBgRemoved)
 
-    try {
-      // Send cached bg-removed image directly to OpenAI (no bg removal needed for input)
-      console.log('[AI] Regenerating icon with cached bg-removed image')
-
-      const iconResponse = await fetch('/api/ai/generate-icon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: cachedBgRemovedUrl }),
-      })
-
-      const iconResult = await iconResponse.json()
-
-      if (!iconResult.success) {
-        setError(iconResult.error || 'Error al regenerar el icono')
-        setAiProcessing(false)
-        return
-      }
-
-      // Remove background from generated icon (ensures transparency)
-      console.log('[AI] Removing background from regenerated icon...')
-      const iconDataUrl = iconResult.data.icon
-      const iconResponse2 = await fetch(iconDataUrl)
-      const iconBlob = await iconResponse2.blob()
-      const transparentIconBlob = await removeBackground(iconBlob)
-      console.log('[AI] Icon background removed, now transparent')
-
-      // Convert transparent icon to base64 for preview
-      const transparentIconBase64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result as string)
-        reader.readAsDataURL(transparentIconBlob)
-      })
-
-      setIconPreview(transparentIconBase64)
-      setGeneratedIconBlob(transparentIconBlob)
-    } catch (err) {
-      console.error('Icon regeneration error:', err)
-      setError('Error al regenerar el icono')
-    } finally {
-      setAiProcessing(false)
+    if (result) {
+      setIconPreview(result.iconPreview)
+      setGeneratedIconBlob(result.iconBlob)
     }
-  }, [cachedBgRemovedUrl, aiPhoto])
+  }, [pipeline])
 
   // Clear icon
   const handleClearIcon = useCallback(() => {
@@ -1731,7 +1545,7 @@ export default function ProductosPage() {
         {/* Step 0: Mode Selection (only for new products) */}
         <Modal.Step title="Agregar producto">
           {/* AI Navigation Helper - handles step transitions for AI flow */}
-          <AiFlowNavigator aiPhoto={aiPhoto} />
+          <AiPipelineNavigator pipelineStep={pipeline.state.step} isCompressing={compression.state.isProcessing} />
 
           <Modal.Item>
             <p className="text-sm text-text-secondary mb-4">
@@ -1933,11 +1747,9 @@ export default function ProductosPage() {
           </Modal.Footer>
         </Modal.Step>
 
-        {/* Step 2: AI Processing */}
-        <Modal.Step title="Analizando...">
-          {/* Navigator for Step 2 → Step 3 transition */}
-          <AiProcessingNavigator aiStep={aiStep} />
-
+        {/* Step 2: AI Processing - backStep={0} goes to mode selection */}
+        <Modal.Step title="Analizando..." backStep={0}>
+          {/* Step transitions handled by AiPipelineNavigator in Step 0 */}
           <Modal.Item>
             <div className="flex flex-col items-center justify-center py-12">
               <Spinner className="spinner-lg mb-4" />
@@ -1947,7 +1759,8 @@ export default function ProductosPage() {
           </Modal.Item>
 
           <Modal.Footer>
-            <Modal.CancelBackButton />
+            {/* onClick aborts processing and resets state before navigation */}
+            <Modal.CancelBackButton onClick={abortAiProcessing} />
           </Modal.Footer>
         </Modal.Step>
 
@@ -2076,13 +1889,12 @@ export default function ProductosPage() {
           <Modal.Footer>
             <Modal.BackButton
               onClick={() => {
-                setAiPhoto(null)
-                setExtractedData(null)
+                // Reset pipeline and form state when going back
+                pipeline.reset()
                 setName('')
                 setPrice('')
                 setIconPreview(null)
                 setGeneratedIconBlob(null)
-                setCachedBgRemovedUrl(null) // Clear cache on back
               }}
               disabled={isSaving || aiProcessing}
             >
