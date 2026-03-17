@@ -6,7 +6,7 @@ import { useAiProductPipeline, useImageCompression } from '@/hooks'
 import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
 import { LottiePlayer } from '@/components/animations/LottiePlayer'
 import { useHeader } from '@/contexts/header-context'
-import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconChevronDown, IconWarning, IconInventory, IconAdjust, IconCirclePlus, IconCircleMinus, IconCalendarTime, IconPhotoFocus } from '@/components/icons'
+import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconChevronDown, IconWarning, IconInventory, IconAdjust, IconCirclePlus, IconCircleMinus, IconCalendarTime, IconPhotoFocus, IconRefresh } from '@/components/icons'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAuth } from '@/contexts/auth-context'
 import { formatCurrency, formatDate, getProductIconUrl } from '@/lib/utils'
@@ -522,7 +522,21 @@ export default function ProductosPage() {
 
       // Handle icon - either a new AI-generated icon or keep existing
       if (generatedIconBlob) {
+        console.log('[Save] Icon blob details:', {
+          type: generatedIconBlob.type,
+          size: generatedIconBlob.size,
+        })
         formData.append('icon', generatedIconBlob, 'icon.png')
+      }
+
+      // Debug: log all form data
+      console.log('[Save] FormData contents:')
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof Blob) {
+          console.log(`  ${key}: Blob(type=${value.type}, size=${value.size})`)
+        } else {
+          console.log(`  ${key}: ${value}`)
+        }
       }
 
       let record: Product
@@ -536,8 +550,15 @@ export default function ProductosPage() {
 
       setProductSaved(true)
       return true
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error saving product:', err)
+      // Log full PocketBase error details
+      if (err && typeof err === 'object' && 'data' in err) {
+        console.error('PocketBase validation errors:', JSON.stringify((err as { data: unknown }).data, null, 2))
+      }
+      if (err && typeof err === 'object' && 'message' in err) {
+        console.error('Error message:', (err as { message: string }).message)
+      }
       setError('Error al guardar el producto')
       return false
     } finally {
@@ -1772,37 +1793,32 @@ export default function ProductosPage() {
             </Modal.Item>
           )}
 
-          {/* Generated Icon Preview */}
+          {/* Generated Icon - Large, centered, prominent */}
           <Modal.Item>
-            <label className="label">Icono generado</label>
-            <div className="flex items-center gap-4">
-              <div className="w-24 h-24 rounded-xl overflow-hidden bg-bg-muted flex items-center justify-center border border-border">
+            <div className="flex flex-col items-center py-2">
+              <div className="w-40 h-40 flex items-center justify-center">
                 {iconPreview ? (
                   <Image
                     src={iconPreview}
-                    alt="Icono generado"
-                    width={96}
-                    height={96}
-                    className="object-cover"
+                    alt="Icono del producto"
+                    width={160}
+                    height={160}
+                    className="object-contain"
                     unoptimized
                   />
                 ) : (
-                  <IconImage className="w-8 h-8 text-text-tertiary" />
+                  <IconImage className="w-20 h-20 text-text-tertiary" />
                 )}
               </div>
-              <div className="flex-1 space-y-2">
-                <button
-                  type="button"
-                  onClick={handleRegenerateIcon}
-                  disabled={aiProcessing}
-                  className="btn btn-secondary btn-sm w-full"
-                >
-                  {aiProcessing ? <Spinner /> : 'Regenerar icono'}
-                </button>
-                <p className="text-xs text-text-tertiary text-center">
-                  Costo: ~$0.004
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={handleRegenerateIcon}
+                disabled={aiProcessing}
+                className="mt-2 text-sm text-text-tertiary hover:text-text-secondary flex items-center gap-1.5 transition-colors"
+              >
+                {aiProcessing ? <Spinner className="w-3.5 h-3.5" /> : <IconRefresh className="w-3.5 h-3.5" />}
+                <span>Regenerar</span>
+              </button>
             </div>
           </Modal.Item>
 
@@ -1820,68 +1836,73 @@ export default function ProductosPage() {
             />
           </Modal.Item>
 
-          {/* Price */}
+          {/* Price and Category - Inline */}
           <Modal.Item>
-            <label htmlFor="ai-price" className="label">Precio (S/) <span className="text-error">*</span></label>
-            <div className="input-number-wrapper">
-              <input
-                id="ai-price"
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0"
-                value={price}
-                onChange={e => setPrice(e.target.value)}
-                className="input"
-                placeholder="0.00"
-              />
-              <div className="input-number-spinners">
-                <button
-                  type="button"
-                  className="input-number-spinner"
-                  onClick={() => {
-                    const current = parseFloat(price) || 0
-                    setPrice((current + 1).toFixed(2))
-                  }}
-                  tabIndex={-1}
-                  aria-label="Incrementar precio"
+            <div className="grid grid-cols-2 gap-3">
+              {/* Price */}
+              <div>
+                <label htmlFor="ai-price" className="label">Precio (S/) <span className="text-error">*</span></label>
+                <div className="input-number-wrapper">
+                  <input
+                    id="ai-price"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    value={price}
+                    onChange={e => setPrice(e.target.value)}
+                    className="input"
+                    placeholder="0.00"
+                  />
+                  <div className="input-number-spinners">
+                    <button
+                      type="button"
+                      className="input-number-spinner"
+                      onClick={() => {
+                        const current = parseFloat(price) || 0
+                        setPrice((current + 1).toFixed(2))
+                      }}
+                      tabIndex={-1}
+                      aria-label="Incrementar precio"
+                    >
+                      <IconArrowUp />
+                    </button>
+                    <button
+                      type="button"
+                      className="input-number-spinner"
+                      onClick={() => {
+                        const current = parseFloat(price) || 0
+                        setPrice(Math.max(0, current - 1).toFixed(2))
+                      }}
+                      tabIndex={-1}
+                      aria-label="Decrementar precio"
+                    >
+                      <IconArrowDown />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Category */}
+              <div>
+                <label htmlFor="ai-category" className="label">Categoria</label>
+                <select
+                  id="ai-category"
+                  value={category}
+                  onChange={e => setCategory(e.target.value as ProductCategory | '')}
+                  className={`input ${category === '' ? 'select-placeholder' : ''}`}
                 >
-                  <IconArrowUp />
-                </button>
-                <button
-                  type="button"
-                  className="input-number-spinner"
-                  onClick={() => {
-                    const current = parseFloat(price) || 0
-                    setPrice(Math.max(0, current - 1).toFixed(2))
-                  }}
-                  tabIndex={-1}
-                  aria-label="Decrementar precio"
-                >
-                  <IconArrowDown />
-                </button>
+                  <option value="">Sin categoria</option>
+                  {Object.entries(CATEGORY_CONFIG)
+                    .sort(([, a], [, b]) => a.order - b.order)
+                    .map(([key, config]) => (
+                      <option key={key} value={key}>
+                        {config.label}{config.size ? ` (${config.size})` : ''}
+                      </option>
+                    ))}
+                </select>
               </div>
             </div>
-          </Modal.Item>
-
-          {/* Category (optional) */}
-          <Modal.Item>
-            <label htmlFor="ai-category" className="label">Categoria</label>
-            <select
-              id="ai-category"
-              value={category}
-              onChange={e => setCategory(e.target.value as ProductCategory | '')}
-              className={`input ${category === '' ? 'select-placeholder' : ''}`}
-            >
-              <option value="">Sin categoria</option>
-              {Object.entries(CATEGORY_CONFIG)
-                .sort(([, a], [, b]) => a.order - b.order)
-                .map(([key, config]) => (
-                  <option key={key} value={key}>
-                    {config.label}{config.size ? ` (${config.size})` : ''}
-                  </option>
-                ))}
-            </select>
           </Modal.Item>
 
           <Modal.Footer>
