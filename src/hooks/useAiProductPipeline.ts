@@ -11,16 +11,14 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
-import { removeBackground, type Config } from '@imgly/background-removal'
 
 // Pipeline steps for progress indication
 export type PipelineStep =
   | 'idle'           // Not running
   | 'compressing'    // Compressing/converting image
   | 'identifying'    // GPT identifying product
-  | 'removing-bg-1'  // First background removal (on photo)
-  | 'generating'     // GPT generating emoji
-  | 'removing-bg-2'  // Second background removal (on emoji)
+  | 'generating'     // Generating emoji icon
+  | 'removing-bg'    // Removing background from emoji
   | 'complete'       // Done successfully
   | 'error'          // Failed
 
@@ -37,20 +35,41 @@ export interface PipelineState {
   result: PipelineResult | null
 }
 
+interface PipelineOptions {
+  /** Skip background removal steps (much faster on mobile, but icons have white bg) */
+  skipBgRemoval?: boolean
+}
+
 interface UseAiProductPipelineReturn {
   state: PipelineState
-  startPipeline: (imageBase64: string) => Promise<void>
-  regenerateIcon: (cachedBgRemoved: string) => Promise<PipelineResult | null>
+  startPipeline: (imageBase64: string, options?: PipelineOptions) => Promise<void>
+  regenerateIcon: (cachedBgRemoved: string, options?: PipelineOptions) => Promise<PipelineResult | null>
   cancel: () => void
   reset: () => void
 }
 
-// Background removal config - runs in Web Worker to avoid blocking main thread
-const bgRemovalConfig: Config = {
-  debug: false,
-  proxyToWorker: true,  // Run inference in Web Worker (prevents UI freezing)
-  device: 'gpu',        // Use WebGL if available (faster), falls back to CPU
-  model: 'isnet_quint8', // Quantized model - smaller & faster, slight quality tradeoff
+/**
+ * Server-side background removal using BiRefNet via fal.ai
+ * Much faster than client-side (~1-3s vs ~10-15s)
+ */
+async function removeBackgroundServerSide(imageBase64: string): Promise<string> {
+  const response = await fetch('/api/ai/remove-background', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: imageBase64 }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Error de red' }))
+    throw new Error(error.error || 'Error al remover fondo')
+  }
+
+  const result = await response.json()
+  if (!result.success) {
+    throw new Error(result.error || 'Error al remover fondo')
+  }
+
+  return result.data.image
 }
 
 /**
@@ -58,6 +77,87 @@ const bgRemovalConfig: Config = {
  */
 function generateRunId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+/**
+ * Trim transparent pixels from an image, cropping to the bounding box of content.
+ * This ensures the subject fills the frame instead of being a tiny icon in a large transparent canvas.
+ */
+async function trimTransparentPixels(blob: Blob): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'))
+        return
+      }
+
+      ctx.drawImage(img, 0, 0)
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const { data, width, height } = imageData
+
+      // Find bounding box of non-transparent pixels
+      let minX = width, minY = height, maxX = 0, maxY = 0
+      let hasContent = false
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const alpha = data[(y * width + x) * 4 + 3]
+          if (alpha > 10) { // Threshold to ignore near-transparent pixels
+            hasContent = true
+            minX = Math.min(minX, x)
+            minY = Math.min(minY, y)
+            maxX = Math.max(maxX, x)
+            maxY = Math.max(maxY, y)
+          }
+        }
+      }
+
+      if (!hasContent) {
+        // No content found, return original
+        resolve(blob)
+        return
+      }
+
+      // Add padding (5% of the larger dimension) to avoid edge cropping
+      const contentWidth = maxX - minX + 1
+      const contentHeight = maxY - minY + 1
+      const padding = Math.max(contentWidth, contentHeight) * 0.05
+
+      minX = Math.max(0, minX - padding)
+      minY = Math.max(0, minY - padding)
+      maxX = Math.min(width - 1, maxX + padding)
+      maxY = Math.min(height - 1, maxY + padding)
+
+      const cropWidth = maxX - minX + 1
+      const cropHeight = maxY - minY + 1
+
+      // Create cropped canvas
+      const croppedCanvas = document.createElement('canvas')
+      croppedCanvas.width = cropWidth
+      croppedCanvas.height = cropHeight
+      const croppedCtx = croppedCanvas.getContext('2d')
+      if (!croppedCtx) {
+        reject(new Error('Failed to get cropped canvas context'))
+        return
+      }
+
+      croppedCtx.drawImage(canvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
+
+      console.log(`[Pipeline] Trimmed from ${width}x${height} to ${cropWidth}x${cropHeight}`)
+
+      croppedCanvas.toBlob((result) => {
+        if (result) resolve(result)
+        else reject(new Error('Failed to create trimmed blob'))
+      }, 'image/png')
+    }
+    img.onerror = () => reject(new Error('Failed to load image for trimming'))
+    img.src = URL.createObjectURL(blob)
+  })
 }
 
 /**
@@ -78,16 +178,29 @@ async function compressIconBlob(blob: Blob, maxSize = 400000, targetDimension = 
         return
       }
 
-      // Draw image scaled to fit
-      ctx.drawImage(img, 0, 0, targetDimension, targetDimension)
+      // Helper to draw image centered and scaled to fill the canvas
+      const drawCenteredScaled = (targetCanvas: HTMLCanvasElement, targetCtx: CanvasRenderingContext2D, dim: number): void => {
+        targetCanvas.width = dim
+        targetCanvas.height = dim
+        targetCtx.clearRect(0, 0, dim, dim)
+
+        // Scale to fill (cover), maintaining aspect ratio
+        const s = Math.max(dim / img.width, dim / img.height)
+        const sw = img.width * s
+        const sh = img.height * s
+        const ox = (dim - sw) / 2
+        const oy = (dim - sh) / 2
+
+        console.log(`[Pipeline] Scaling ${img.width}x${img.height} -> ${dim}x${dim} (scale: ${s.toFixed(2)}x)`)
+
+        targetCtx.drawImage(img, ox, oy, sw, sh)
+      }
 
       // Try PNG first, if too large fall back to smaller dimensions
       const tryCompress = (dimension: number): void => {
         if (dimension < 64) {
           // Give up, just use smallest size
-          canvas.width = 64
-          canvas.height = 64
-          ctx.drawImage(img, 0, 0, 64, 64)
+          drawCenteredScaled(canvas, ctx, 64)
           canvas.toBlob((result) => {
             if (result) resolve(result)
             else reject(new Error('Failed to create blob'))
@@ -95,10 +208,7 @@ async function compressIconBlob(blob: Blob, maxSize = 400000, targetDimension = 
           return
         }
 
-        canvas.width = dimension
-        canvas.height = dimension
-        ctx.clearRect(0, 0, dimension, dimension)
-        ctx.drawImage(img, 0, 0, dimension, dimension)
+        drawCenteredScaled(canvas, ctx, dimension)
 
         canvas.toBlob((result) => {
           if (!result) {
@@ -191,13 +301,15 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
   }, [isRunActive])
 
   /**
-   * Run the full AI pipeline:
-   * 1. Identify product (GPT-4o Mini Vision)
-   * 2. Remove background from photo (client-side ML)
-   * 3. Generate emoji (GPT Image 1 Mini)
-   * 4. Remove background from emoji (client-side ML)
+   * Run the full AI pipeline with PARALLEL execution:
+   * 1. Identify product + Generate emoji (run in parallel)
+   * 2. Remove background from emoji
+   *
+   * Parallel execution saves ~2-3s since identify and generate don't depend on each other.
    */
-  const startPipeline = useCallback(async (imageBase64: string): Promise<void> => {
+  const startPipeline = useCallback(async (imageBase64: string, options?: PipelineOptions): Promise<void> => {
+    const { skipBgRemoval = false } = options || {}
+
     // Cancel any existing run
     cancel()
 
@@ -207,31 +319,52 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
     abortControllerRef.current = new AbortController()
     const signal = abortControllerRef.current.signal
 
-    console.log('[Pipeline] Starting run:', runId)
+    console.log('[Pipeline] Starting run:', runId, skipBgRemoval ? '(bg removal disabled)' : '')
 
     setState({
-      step: 'identifying',
+      step: 'generating', // Show "generating" since both run in parallel
       error: null,
       result: null,
     })
 
     try {
-      // Step 1: Identify product using GPT-4o Mini Vision
-      console.log('[Pipeline] Step 1: Identifying product...')
+      // PARALLEL EXECUTION: Run identify and generate simultaneously
+      // This saves ~2-3s since they both only need the original image
+      console.log('[Pipeline] Starting parallel execution: identify + generate icon...')
+      const startTime = Date.now()
 
-      const identifyResponse = await fetch('/api/ai/identify-product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imageBase64 }),
-        signal,
-      })
+      const [identifyResponse, iconResponse] = await Promise.all([
+        // Task 1: Identify product using GPT-4o Mini Vision
+        fetch('/api/ai/identify-product', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageBase64 }),
+          signal,
+        }),
+        // Task 2: Generate emoji icon using Nano Banana Edit
+        fetch('/api/ai/generate-icon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageBase64 }),
+          signal,
+        }),
+      ])
 
       if (!isRunActive(runId)) return
 
-      const identifyResult = await identifyResponse.json()
+      const parallelTime = Date.now() - startTime
+      console.log(`[Pipeline] Parallel execution completed in ${parallelTime}ms`)
 
+      // Parse both responses
+      const [identifyResult, iconResult] = await Promise.all([
+        identifyResponse.json(),
+        iconResponse.json(),
+      ])
+
+      if (!isRunActive(runId)) return
+
+      // Check identify result
       if (!identifyResult.success) {
-        if (!isRunActive(runId)) return
         setState({
           step: 'error',
           error: identifyResult.error || 'Error al identificar el producto',
@@ -240,60 +373,8 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         return
       }
 
-      if (!isRunActive(runId)) return
-
-      const productName = identifyResult.data.name
-      console.log('[Pipeline] Product identified:', productName)
-
-      // Step 2: Remove background from photo (client-side ML)
-      if (!safeSetState(runId, { step: 'removing-bg-1' })) return
-
-      console.log('[Pipeline] Step 2: Removing background from photo...')
-
-      // Convert base64 to blob for background removal
-      const photoResponse = await fetch(imageBase64)
-      const photoBlob = await photoResponse.blob()
-
-      if (!isRunActive(runId)) return
-
-      // Run background removal - this CANNOT be cancelled, but results will be ignored if run is cancelled
-      const bgRemovedBlob = await removeBackground(photoBlob, bgRemovalConfig)
-
-      if (!isRunActive(runId)) {
-        console.log('[Pipeline] Run cancelled during bg removal 1')
-        return
-      }
-
-      console.log('[Pipeline] Background removed from photo')
-
-      // Convert to base64 for API and caching
-      const bgRemovedBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(bgRemovedBlob)
-      })
-
-      if (!isRunActive(runId)) return
-
-      // Step 3: Generate emoji icon using GPT Image 1 Mini
-      if (!safeSetState(runId, { step: 'generating' })) return
-
-      console.log('[Pipeline] Step 3: Generating emoji...')
-
-      const iconResponse = await fetch('/api/ai/generate-icon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: bgRemovedBase64 }),
-        signal,
-      })
-
-      if (!isRunActive(runId)) return
-
-      const iconResult = await iconResponse.json()
-
+      // Check icon result
       if (!iconResult.success) {
-        if (!isRunActive(runId)) return
         setState({
           step: 'error',
           error: iconResult.error || 'Error al generar el icono',
@@ -302,37 +383,48 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         return
       }
 
-      if (!isRunActive(runId)) return
-
+      const productName = identifyResult.data.name
+      console.log('[Pipeline] Product identified:', productName)
       console.log('[Pipeline] Emoji generated')
 
-      // Step 4: Remove background from generated icon
-      if (!safeSetState(runId, { step: 'removing-bg-2' })) return
-
-      console.log('[Pipeline] Step 4: Removing background from emoji...')
-
+      // Step 3: Remove background from generated icon (optional, slow on mobile)
       const iconDataUrl = iconResult.data.icon
       const iconFetchResponse = await fetch(iconDataUrl)
       const iconBlob = await iconFetchResponse.blob()
 
       if (!isRunActive(runId)) return
 
-      // Run background removal on icon
-      const rawTransparentBlob = await removeBackground(iconBlob, bgRemovalConfig)
+      let trimmedBlob: Blob
 
-      if (!isRunActive(runId)) {
-        console.log('[Pipeline] Run cancelled during bg removal 2')
-        return
+      if (skipBgRemoval) {
+        console.log('[Pipeline] Skipping bg removal (disabled)')
+        trimmedBlob = iconBlob
+      } else {
+        if (!safeSetState(runId, { step: 'removing-bg' })) return
+        console.log('[Pipeline] Step 3: Removing background via BiRefNet (server-side)...')
+
+        // Use server-side BiRefNet - much faster than client-side (~1-3s vs ~10-15s)
+        const transparentBase64 = await removeBackgroundServerSide(iconDataUrl)
+
+        if (!isRunActive(runId)) {
+          console.log('[Pipeline] Run cancelled during bg removal')
+          return
+        }
+
+        console.log('[Pipeline] Background removed from emoji')
+
+        // Convert base64 to blob
+        const fetchRes = await fetch(transparentBase64)
+        trimmedBlob = await fetchRes.blob()
+
+        console.log(`[Pipeline] Icon size after bg removal: ${trimmedBlob.size} bytes`)
+
+        if (!isRunActive(runId)) return
       }
 
-      console.log('[Pipeline] Background removed from emoji')
-
-      // Ensure blob has correct MIME type for PocketBase validation
-      const rawBlob = new Blob([rawTransparentBlob], { type: 'image/png' })
-
       // Compress to fit PocketBase file size limit (500KB max, target 400KB)
-      console.log(`[Pipeline] Raw icon size: ${rawBlob.size} bytes, compressing...`)
-      const transparentIconBlob = await compressIconBlob(rawBlob)
+      console.log(`[Pipeline] Icon size: ${trimmedBlob.size} bytes, compressing...`)
+      const transparentIconBlob = await compressIconBlob(trimmedBlob)
 
       if (!isRunActive(runId)) return
 
@@ -355,7 +447,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
           name: productName,
           iconPreview: transparentIconBase64,
           iconBlob: transparentIconBlob,
-          cachedBgRemoved: bgRemovedBase64,
+          cachedBgRemoved: imageBase64, // Cache original for regeneration
         },
       })
 
@@ -386,7 +478,9 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
    * Regenerate just the icon using cached background-removed image.
    * This skips steps 1-2 and only runs steps 3-4.
    */
-  const regenerateIcon = useCallback(async (cachedBgRemoved: string): Promise<PipelineResult | null> => {
+  const regenerateIcon = useCallback(async (cachedBgRemoved: string, options?: PipelineOptions): Promise<PipelineResult | null> => {
+    const { skipBgRemoval = false } = options || {}
+
     // Cancel any existing run
     cancel()
 
@@ -396,7 +490,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
     abortControllerRef.current = new AbortController()
     const signal = abortControllerRef.current.signal
 
-    console.log('[Pipeline] Starting regeneration run:', runId)
+    console.log('[Pipeline] Starting regeneration run:', runId, skipBgRemoval ? '(bg removal disabled)' : '')
 
     setState(prev => ({
       ...prev,
@@ -431,27 +525,39 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
 
       if (!isRunActive(runId)) return null
 
-      // Step 4: Remove background from generated icon
-      if (!safeSetState(runId, prev => ({ ...prev, step: 'removing-bg-2' }))) return null
-
-      console.log('[Pipeline] Removing background from regenerated emoji...')
-
+      // Step 4: Remove background from generated icon (optional, slow on mobile)
       const iconDataUrl = iconResult.data.icon
       const iconFetchResponse = await fetch(iconDataUrl)
       const iconBlob = await iconFetchResponse.blob()
 
       if (!isRunActive(runId)) return null
 
-      const rawTransparentBlob = await removeBackground(iconBlob, bgRemovalConfig)
+      let trimmedBlob: Blob
 
-      if (!isRunActive(runId)) return null
+      if (skipBgRemoval) {
+        console.log('[Pipeline] Skipping bg removal for regeneration (disabled)')
+        trimmedBlob = iconBlob
+      } else {
+        if (!safeSetState(runId, prev => ({ ...prev, step: 'removing-bg' }))) return null
+        console.log('[Pipeline] Removing background via BiRefNet (server-side)...')
 
-      // Ensure blob has correct MIME type for PocketBase validation
-      const rawBlob = new Blob([rawTransparentBlob], { type: 'image/png' })
+        // Use server-side BiRefNet - much faster than client-side (~1-3s vs ~10-15s)
+        const transparentBase64 = await removeBackgroundServerSide(iconDataUrl)
+
+        if (!isRunActive(runId)) return null
+
+        // Convert base64 to blob
+        const fetchRes = await fetch(transparentBase64)
+        trimmedBlob = await fetchRes.blob()
+
+        console.log(`[Pipeline] Regenerated icon size after bg removal: ${trimmedBlob.size} bytes`)
+
+        if (!isRunActive(runId)) return null
+      }
 
       // Compress to fit PocketBase file size limit (500KB max, target 400KB)
-      console.log(`[Pipeline] Raw regenerated icon size: ${rawBlob.size} bytes, compressing...`)
-      const transparentIconBlob = await compressIconBlob(rawBlob)
+      console.log(`[Pipeline] Regenerated icon size: ${trimmedBlob.size} bytes, compressing...`)
+      const transparentIconBlob = await compressIconBlob(trimmedBlob)
 
       if (!isRunActive(runId)) return null
 
