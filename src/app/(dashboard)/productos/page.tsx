@@ -1810,15 +1810,6 @@ export default function ProductosPage() {
                   <IconImage className="w-20 h-20 text-text-tertiary" />
                 )}
               </div>
-              <button
-                type="button"
-                onClick={handleRegenerateIcon}
-                disabled={aiProcessing}
-                className="mt-2 text-sm text-text-tertiary hover:text-text-secondary flex items-center gap-1.5 transition-colors"
-              >
-                {aiProcessing ? <Spinner className="w-3.5 h-3.5" /> : <IconRefresh className="w-3.5 h-3.5" />}
-                <span>Regenerar</span>
-              </button>
             </div>
           </Modal.Item>
 

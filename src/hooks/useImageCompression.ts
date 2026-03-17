@@ -24,11 +24,11 @@ interface UseImageCompressionReturn {
 // Max file size before compression (20MB)
 const MAX_FILE_SIZE = 20 * 1024 * 1024
 
-// Target max dimension
-const MAX_DIMENSION = 1024
+// Target max dimension (768px is sufficient for AI processing)
+const MAX_DIMENSION = 768
 
-// JPEG quality (0-1)
-const JPEG_QUALITY = 0.8
+// JPEG quality (0-1) - 70% is sufficient for AI processing
+const JPEG_QUALITY = 0.7
 
 export function useImageCompression(): UseImageCompressionReturn {
   const [state, setState] = useState<CompressionState>({

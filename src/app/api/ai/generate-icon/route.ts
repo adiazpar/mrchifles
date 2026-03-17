@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { fal } from '@fal-ai/client'
 
 /**
  * POST /api/ai/generate-icon
  *
- * Generates an emoji-style icon from a background-removed image.
- * Background removal is done client-side using @imgly/background-removal (FREE).
+ * Generates an emoji-style icon from a product image.
+ * Uses Nano Banana (Gemini 2.5 Flash Image) on fal.ai.
  *
- * Uses OpenAI GPT Image 1 Mini (~$0.005 per image)
+ * Cost: ~$0.039/image
+ * Speed: ~2-5 seconds
  *
  * Request body:
- * { image: string } // base64 encoded image with background removed (data URL)
+ * { image: string } // base64 encoded image (data URL)
  *
  * Response:
  * { success: true, data: { icon: string } } // base64 PNG image
@@ -27,106 +29,66 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const openaiApiKey = process.env.OPENAI_API_KEY
+    const apiKey = process.env.FAL_KEY
 
-    if (!openaiApiKey) {
+    if (!apiKey) {
       return NextResponse.json(
-        { success: false, error: 'API de OpenAI no configurada' },
+        { success: false, error: 'API de fal.ai no configurada' },
         { status: 500 }
       )
     }
 
+    // Configure fal.ai client
+    fal.config({ credentials: apiKey })
+
     // ========================================
-    // Generate emoji icon using OpenAI GPT Image 1 Mini
-    // Input: bg-removed image (done client-side)
-    // Cost: ~$0.005 per image
+    // Generate emoji icon using Nano Banana (Gemini 2.5 Flash Image)
+    // Cost: ~$0.039/image
+    // Speed: ~2-5 seconds
     // ========================================
-    console.log('[generate-icon] Generating emoji icon with GPT Image 1 Mini...')
+    console.log('[generate-icon] Generating emoji icon with Nano Banana...')
 
-    // Convert base64 data URL to buffer
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, '')
-    const imageBuffer = Buffer.from(base64Data, 'base64')
+    const startTime = Date.now()
 
-    // Create a File object with a name (required by gpt-image models)
-    const imageFile = new File([imageBuffer], 'product.png', { type: 'image/png' })
-
-    // Create FormData for OpenAI image edit API
-    // Note: gpt-image models automatically return base64 (don't use response_format)
-    const formData = new FormData()
-    formData.append('image', imageFile)
-    formData.append('prompt', 'Transform this into a clean Apple iOS emoji style icon. Simple centered single object, vibrant saturated colors, pure white background, stylized like an official Apple emoji. No shadows, no gradients on background.')
-    formData.append('model', 'gpt-image-1-mini')
-    formData.append('size', '1024x1024')
-    formData.append('n', '1')
-
-    console.log('[generate-icon] Calling OpenAI /v1/images/edits with gpt-image-1-mini...')
-
-    const iconResponse = await fetch('https://api.openai.com/v1/images/edits', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
+    // Use run() instead of subscribe() for faster direct execution (no queue overhead)
+    const result = await fal.run('fal-ai/nano-banana/edit', {
+      input: {
+        prompt:
+          'Transform into a clean Apple iOS emoji style icon. Simple centered single object, vibrant saturated colors, cartoon-like, pure white background, stylized like an official Apple emoji. No shadows, no gradients on background.',
+        image_urls: [image], // Nano Banana accepts array of image URLs/data URIs
       },
-      body: formData,
     })
 
-    if (!iconResponse.ok) {
-      const errorData = await iconResponse.json().catch(() => ({}))
-      console.error('OpenAI icon generation error:', JSON.stringify(errorData, null, 2))
+    const elapsed = Date.now() - startTime
+    console.log(`[generate-icon] Nano Banana completed in ${elapsed}ms`)
 
-      // Check for rate limit
-      if (iconResponse.status === 429) {
-        return NextResponse.json(
-          { success: false, error: 'Limite de velocidad alcanzado. Intenta de nuevo en unos segundos.' },
-          { status: 429 }
-        )
-      }
-
-      // Provide more detailed error for debugging
-      const errorMsg = errorData?.error?.message || 'Error al generar el icono'
-      return NextResponse.json(
-        { success: false, error: errorMsg },
-        { status: iconResponse.status }
-      )
-    }
-
-    const iconResult = await iconResponse.json()
-    console.log('[generate-icon] OpenAI response received, data count:', iconResult.data?.length)
-
-    // gpt-image models return base64 in data[0].b64_json automatically
-    const generatedImage = iconResult.data?.[0]
-    if (!generatedImage) {
-      console.error('No image in OpenAI response:', JSON.stringify(iconResult, null, 2))
+    // Extract the generated image URL from response
+    const images = result.data?.images
+    if (!images || images.length === 0 || !images[0].url) {
+      console.error('[generate-icon] No image in response:', JSON.stringify(result.data, null, 2))
       return NextResponse.json(
         { success: false, error: 'No se genero ninguna imagen' },
         { status: 500 }
       )
     }
 
-    let dataUrl: string
-    if (generatedImage.b64_json) {
-      // gpt-image models return base64 directly
-      dataUrl = `data:image/png;base64,${generatedImage.b64_json}`
-      console.log('[generate-icon] Success! Got base64 image directly')
-    } else if (generatedImage.url) {
-      // Fallback: fetch from URL if returned
-      console.log('[generate-icon] Success! Fetching from URL:', generatedImage.url)
-      const imageResponse = await fetch(generatedImage.url)
-      if (!imageResponse.ok) {
-        return NextResponse.json(
-          { success: false, error: 'Error al descargar el icono' },
-          { status: 500 }
-        )
-      }
-      const imageBuffer = await imageResponse.arrayBuffer()
-      const base64 = Buffer.from(imageBuffer).toString('base64')
-      dataUrl = `data:image/png;base64,${base64}`
-    } else {
-      console.error('Unknown OpenAI response format:', JSON.stringify(iconResult, null, 2))
+    const imageUrl = images[0].url
+    console.log(`[generate-icon] Success! Generated icon in ${elapsed}ms: ${imageUrl.substring(0, 80)}...`)
+
+    // Fetch the image and convert to base64 data URL for client
+    const imageResponse = await fetch(imageUrl)
+    if (!imageResponse.ok) {
+      console.error('[generate-icon] Failed to fetch generated image')
       return NextResponse.json(
-        { success: false, error: 'Formato de respuesta desconocido' },
+        { success: false, error: 'Error al obtener la imagen generada' },
         { status: 500 }
       )
     }
+
+    const imageBuffer = await imageResponse.arrayBuffer()
+    const base64 = Buffer.from(imageBuffer).toString('base64')
+    const contentType = imageResponse.headers.get('content-type') || 'image/png'
+    const dataUrl = `data:${contentType};base64,${base64}`
 
     return NextResponse.json({
       success: true,
@@ -135,7 +97,16 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error in generate-icon:', error)
+    console.error('[generate-icon] Error:', error)
+
+    // Check for rate limit
+    if (error instanceof Error && (error.message.includes('rate') || error.message.includes('quota'))) {
+      return NextResponse.json(
+        { success: false, error: 'Limite de velocidad alcanzado. Intenta de nuevo en unos segundos.' },
+        { status: 429 }
+      )
+    }
+
     return NextResponse.json(
       { success: false, error: 'Error interno del servidor' },
       { status: 500 }

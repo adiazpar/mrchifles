@@ -7,15 +7,18 @@ This document describes the AI-powered product creation flow that allows busines
 The pipeline extracts product information from a photo and generates an emoji-style icon with transparent background for visual recognition in the POS system.
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  User takes     │────►│  AI identifies  │────►│  Remove bg #1   │────►│  AI generates   │────►│  Remove bg #2   │
-│  product photo  │     │  product name   │     │  (client-side)  │     │  emoji icon     │     │  (transparent)  │
-└─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │                       │                       │
-        ▼                       ▼                       ▼                       ▼                       ▼
-   iPhone camera          GPT-4o Mini            @imgly/background      GPT Image 1 Mini       @imgly/background
-   + HEIC conversion      Vision API             -removal (FREE)        OpenAI API             -removal (FREE)
+┌─────────────────┐     ┌─────────────────────────────────┐     ┌─────────────────┐
+│  User takes     │────►│  PARALLEL EXECUTION             │────►│  Remove bg      │
+│  product photo  │     │  ┌─────────────────────────┐    │     │  (transparent)  │
+└─────────────────┘     │  │ AI identifies (GPT-4o)  │    │     └─────────────────┘
+        │               │  └─────────────────────────┘    │             │
+        ▼               │  ┌─────────────────────────┐    │             ▼
+   iPhone camera        │  │ AI generates (Nano Ban) │    │         BiRefNet
+   + HEIC conversion    │  └─────────────────────────┘    │         fal.ai (~FREE)
+                        └─────────────────────────────────┘
 ```
+
+**Parallel execution saves ~2-3 seconds** by running identification and icon generation simultaneously.
 
 ## Pipeline Steps
 
@@ -27,8 +30,8 @@ When the user takes a photo or uploads an image:
 1. Image is captured via `<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment">`
 2. If HEIC/HEIF format detected, converted server-side via `heic-convert` (with `sips` fallback on macOS)
 3. EXIF rotation is respected using `createImageBitmap({ imageOrientation: 'from-image' })`
-4. Image is resized to max 1024px dimension
-5. Compressed to JPEG at 80% quality (~100-200KB)
+4. Image is resized to max 768px dimension (sufficient for AI processing)
+5. Compressed to JPEG at 70% quality (~60-150KB)
 
 **Why:** iPhone photos are typically 12+ megapixels (4-5MB). Compression reduces upload time and API costs.
 
@@ -42,7 +45,7 @@ When the user takes a photo or uploads an image:
 |----------|-------|
 | Model | OpenAI GPT-4o Mini Vision |
 | Cost | ~$0.001 per image |
-| Time | ~5-10 seconds |
+| Time | ~1-2 seconds |
 
 The compressed image is sent to GPT-4o Mini which:
 - Analyzes the product packaging/label
@@ -57,65 +60,81 @@ Analyze this product image and identify:
 Return JSON: { "name": "..." }
 ```
 
-### Step 3: Background Removal #1 (Client-side - FREE)
-
-**Location:** `src/app/(dashboard)/productos/page.tsx`
-
-| Property | Value |
-|----------|-------|
-| Library | [@imgly/background-removal](https://github.com/imgly/background-removal-js) |
-| Cost | **FREE** (runs entirely in browser) |
-| Time | ~2-5 seconds (depends on device) |
-
-Removes background from the original product photo before sending to OpenAI:
-- No API calls needed
-- No privacy concerns (image never leaves device)
-- Works offline
-- No rate limits
-
-```typescript
-import { removeBackground } from '@imgly/background-removal'
-
-const blob = await removeBackground(imageBlob)
-```
-
-### Step 4: Emoji Icon Generation
+### Step 3: Emoji Icon Generation
 
 **Location:** `src/app/api/ai/generate-icon/route.ts`
 
 | Property | Value |
 |----------|-------|
-| Model | OpenAI GPT Image 1 Mini |
-| Cost | ~$0.005 per image |
-| Time | ~5-10 seconds |
+| Model | Nano Banana (Gemini 2.5 Flash Image via fal.ai) |
+| Cost | ~$0.039 per image |
+| Time | ~2-5 seconds |
 
-The background-removed image is sent to OpenAI's image edit API which:
+The compressed image is sent to Nano Banana on fal.ai which:
 - Transforms the product into an Apple iOS emoji style
-- Returns a 1024x1024 PNG (with white background from OpenAI)
+- Returns a square PNG with white background
+- Uses prompt guidance for consistent styling
+- Produces excellent cartoon-like emoji quality
 
 **Prompt:**
 ```
-Transform this into a clean Apple iOS emoji style icon. Simple centered
-single object, vibrant saturated colors, pure white background, stylized
-like an official Apple emoji. No shadows, no gradients on background.
+Transform into a clean Apple iOS emoji style icon. Simple centered single
+object, vibrant saturated colors, cartoon-like, pure white background,
+stylized like an official Apple emoji. No shadows, no gradients on background.
 ```
 
-### Step 5: Background Removal #2 (Client-side - FREE)
+**API Configuration:**
+```typescript
+import { fal } from '@fal-ai/client'
 
-**Location:** `src/app/(dashboard)/productos/page.tsx`
+fal.config({ credentials: process.env.FAL_KEY })
+
+// Use run() instead of subscribe() for faster direct execution (no queue overhead)
+const result = await fal.run('fal-ai/nano-banana/edit', {
+  input: {
+    prompt: '...',
+    image_urls: [base64DataUrl], // Nano Banana accepts array of image URLs/data URIs
+  },
+})
+```
+
+### Step 4: Background Removal (Server-side via BiRefNet)
+
+**Location:** `src/app/api/ai/remove-background/route.ts`
 
 | Property | Value |
 |----------|-------|
-| Library | [@imgly/background-removal](https://github.com/imgly/background-removal-js) |
-| Cost | **FREE** (runs entirely in browser) |
-| Time | ~2-5 seconds (depends on device) |
+| Model | BiRefNet (via fal.ai) |
+| Cost | **~FREE** ($0 per compute second) |
+| Time | ~1-3 seconds |
 
 Removes the white background from the generated icon to ensure transparency:
-- OpenAI returns icons with white backgrounds
-- This step guarantees a transparent PNG output
-- Runs client-side, no additional API cost
+- Nano Banana returns icons with white backgrounds
+- BiRefNet removes the background server-side (much faster than client-side)
+- Also trims transparent pixels to ensure the icon fills the frame
+
+```typescript
+// Use run() instead of subscribe() for faster direct execution (no queue overhead)
+const result = await fal.run('fal-ai/birefnet', {
+  input: {
+    image_url: iconDataUrl,
+    model: 'General Use (Light)',
+    output_format: 'png',
+    refine_foreground: true,
+  },
+})
+```
 
 **Result:** Final icon has a fully transparent background.
+
+### Step 5: Icon Compression
+
+**Location:** `src/hooks/useAiProductPipeline.ts`
+
+The final icon is compressed to fit PocketBase's 500KB file size limit:
+- Target: 400KB max (with safety margin)
+- Progressive resizing: 512 → 384 → 288 → ... until under limit
+- Output: PNG with transparency preserved
 
 ## Cost Analysis
 
@@ -126,34 +145,26 @@ Removes the white background from the generated icon to ensure transparency:
 | Photo compression | Client-side | FREE |
 | HEIC conversion | Server-side (heic-convert) | FREE |
 | Product identification | GPT-4o Mini Vision | ~$0.001 |
-| Background removal #1 | @imgly/background-removal | **FREE** |
-| Emoji generation | GPT Image 1 Mini | ~$0.005 |
-| Background removal #2 | @imgly/background-removal | **FREE** |
-| **Total** | | **~$0.006** |
+| Emoji generation | Nano Banana (fal.ai) | ~$0.039 |
+| Background removal | BiRefNet (fal.ai) | **~FREE** |
+| **Total** | | **~$0.04** |
 
 ### At Scale
 
 | Products/month | Cost/month |
 |----------------|------------|
-| 100 | $0.60 |
-| 500 | $3.00 |
-| 1,000 | $6.00 |
-| 10,000 | $60.00 |
+| 100 | ~$4.00 |
+| 500 | ~$20.00 |
+| 1,000 | ~$40.00 |
+| 10,000 | ~$400.00 |
 
-### Cost Comparison (Previous vs Current)
-
-| Component | Previous (Replicate) | Current (Client-side) |
-|-----------|---------------------|----------------------|
-| Background removal | ~$0.0005/image | **FREE** |
-| Emoji generation | ~$0.015 (FLUX) | ~$0.005 (GPT Image 1 Mini) |
-| **Total** | ~$0.016/image | **~$0.006/image** |
-| **Savings** | - | **62% cheaper** |
+**Note:** fal.ai charges ~$0.039/image for Nano Banana (Gemini 2.5 Flash Image).
 
 ## Caching Strategy
 
 When a user regenerates an icon (doesn't like the first result):
-- The background-removed photo is cached in React state (base64)
-- Only the emoji generation + final bg removal runs again (~$0.005)
+- The background-removed photo is cached in React state (`cachedBgRemoved`)
+- Only the emoji generation + final bg removal runs again (~$0.039)
 - No additional photo processing needed
 
 Cache is cleared when:
@@ -228,11 +239,13 @@ Converts HEIC/HEIF images to JPEG (server-side).
 ## Environment Variables
 
 ```bash
-# Required for product identification and icon generation
+# Required for product identification
 OPENAI_API_KEY=sk-...
 
-# NOT needed anymore (background removal is client-side)
-# REPLICATE_API_TOKEN=r8_...
+# Required for emoji icon generation (Recraft V3 on fal.ai)
+# Get from: https://fal.ai/dashboard/keys
+# Cost: ~$0.04/image
+FAL_KEY=your-fal-api-key
 ```
 
 ## Error Handling
@@ -250,77 +263,135 @@ OPENAI_API_KEY=sk-...
 
 | Option | Cost | Speed | Quality | Notes |
 |--------|------|-------|---------|-------|
-| **@imgly/background-removal** | FREE | 2-5s | Excellent | **CHOSEN** - Client-side, no API |
-| Replicate 851-labs/background-remover | $0.0005 | 3s | Good | API sometimes unavailable |
-| Replicate cjwbw/rembg | $0.0003 | 2s | Good | Requires version ID |
+| **BiRefNet (fal.ai)** | ~FREE | 1-3s | Excellent | **CHOSEN** - Server-side, very fast |
+| @imgly/background-removal | FREE | 10-30s | Excellent | Client-side, slow on mobile |
+| rembg-webgpu | FREE | 3-10s | Excellent | WebGPU acceleration, newer |
+| Bria RMBG 2.0 | $0.018 | 1-2s | Excellent | Commercial license included |
 
 ### Emoji Generation
 
-| Option | Cost | Speed | Quality | Notes |
-|--------|------|-------|---------|-------|
-| **GPT Image 1 Mini** | $0.005 | 5-10s | Excellent | **CHOSEN** - Best value |
-| GPT Image 1 | $0.015 | 5-10s | Excellent | 3x more expensive |
-| FLUX Kontext Dev | $0.015 | 10-15s | Excellent | Slower, same price as GPT-1 |
-| DALL-E 2 | $0.020 | 5-10s | Good | Being deprecated |
+| Option | Cost | Speed | Prompt Support | Notes |
+|--------|------|-------|----------------|-------|
+| **Nano Banana (fal.ai)** | $0.039 | 2-5s | **Yes** | **CHOSEN** - Best emoji quality, Gemini 2.5 Flash |
+| Google Nano Banana (direct) | $0.039 | 2-5s | Yes | No free tier, requires billing |
+| Recraft V3 | $0.04 | 3-4s | Yes | Good for icons, but too literal |
+| FLUX Dev img2img | $0.03 | 2-3s | Yes | Good quality, slightly cheaper |
+| GPT Image 1 Mini | $0.005 | 20-25s | Yes | Previous choice, slow |
+| FLUX Schnell Redux | $0.003 | 1s | **No** | Fast but no prompt guidance |
 
 ### Product Identification
 
 | Option | Cost | Speed | Quality | Notes |
 |--------|------|-------|---------|-------|
-| **GPT-4o Mini Vision** | $0.001 | 5-10s | Excellent | **CHOSEN** - Cheapest, great quality |
-| GPT-4o Vision | $0.005 | 5-10s | Excellent | Overkill for this task |
-| Claude 3 Haiku | $0.001 | 5-10s | Good | Similar pricing |
+| **GPT-4o Mini Vision** | $0.001 | 1-2s | Excellent | **CHOSEN** - Cheapest, great quality |
+| GPT-4o Vision | $0.005 | 1-2s | Excellent | Overkill for this task |
+| Claude 3 Haiku | $0.001 | 1-2s | Good | Similar pricing |
+
+## Why Nano Banana?
+
+We evaluated several models:
+
+1. **FLUX Schnell Redux** ($0.003/image) - Fast but **does not support text prompts**, only creates image variations
+2. **FLUX Dev img2img** ($0.03/image) - Good quality with prompt support
+3. **Recraft V3** ($0.04/image) - Too literal interpretation of prompts
+4. **Nano Banana** ($0.039/image) - **Best emoji quality** with Gemini 2.5 Flash Image
+
+Nano Banana (Gemini 2.5 Flash Image) via fal.ai produces the best cartoon-like emoji icons. It understands the "Apple iOS emoji style" prompt and creates stylized, simplified representations of products rather than literal interpretations.
 
 ## Architecture Benefits
 
-### Client-Side Background Removal
+### Server-Side Background Removal (BiRefNet)
 
-Moving background removal to the client provides:
+Using BiRefNet on fal.ai provides:
 
-1. **Zero API cost** - No per-image charges
-2. **No rate limits** - Process as many images as needed
-3. **Privacy** - Image never leaves user's device for this step
-4. **Reliability** - No API downtime or 404 errors
-5. **Offline capable** - Works without internet for bg removal
-6. **Faster iteration** - One less API round-trip
+1. **~FREE** - $0 per compute second pricing
+2. **Very fast** - 1-3 seconds vs 10-15 seconds client-side
+3. **Consistent performance** - No dependency on user's device
+4. **High quality** - Professional-grade edge detection
+5. **Simple integration** - Same fal.ai client already used for icon generation
 
-### Dual Background Removal
+### Nano Banana for Icon Generation
 
-Running background removal twice ensures:
+Using Nano Banana (Gemini 2.5 Flash Image) on fal.ai provides:
 
-1. **Clean input to OpenAI** - Better emoji generation quality
-2. **Guaranteed transparency** - OpenAI returns white backgrounds, second pass removes it
-3. **Consistent output** - Every icon has a transparent background
+1. **~5-10x faster** - 2-5 seconds vs 20-25 seconds (vs GPT Image 1 Mini)
+2. **Emoji-optimized** - Understands "Apple iOS emoji style" prompt naturally
+3. **Prompt-guided** - Full control over transformation style
+4. **Reliable** - fal.ai provides consistent API availability and fast inference
+
+### Single Background Removal (Post-Generation)
+
+Background removal runs once, after icon generation:
+
+1. **Simpler pipeline** - One bg removal step instead of two
+2. **Guaranteed transparency** - Nano Banana returns white backgrounds, bg removal ensures transparency
+3. **Faster overall** - Saves ~10-15 seconds by not pre-processing the photo
+
+The original photo doesn't need background removal because Nano Banana generates a completely new image - it doesn't copy the background from the input.
 
 ### Trade-offs
 
-- Depends on user's device performance (older phones may be slower)
-- Increases client bundle size (~2MB for ONNX models)
-- First use downloads model (cached after)
-- Two bg removal passes add ~4-10 seconds total
+- Requires internet for bg removal (no offline support)
+- Adds ~1-3 seconds for server round-trip
+- Depends on fal.ai availability
+
+## Performance Optimizations
+
+### Implemented Optimizations
+
+| Optimization | Savings | Details |
+|--------------|---------|---------|
+| **Parallel execution** | ~2-3s | Identification + icon generation run simultaneously |
+| **Direct API calls** | ~100-300ms | Using `fal.run()` instead of `fal.subscribe()` (no queue overhead) |
+| **Lower resolution** | ~500ms-1s | 768px instead of 1024px (sufficient for AI processing) |
+| **Lower JPEG quality** | ~50-100ms | 70% instead of 80% (sufficient for AI processing) |
+| **Server-side bg removal** | ~7-12s | BiRefNet via fal.ai instead of client-side |
+
+### Why These Optimizations Work
+
+**`fal.run()` vs `fal.subscribe()`:** The `subscribe()` method adds queue submission and polling overhead. `run()` makes direct HTTP requests with no queue involved, providing the fastest possible path.
+
+**Lower resolution (768px):** AI models don't benefit from extra resolution when generating stylized emoji icons. 768px provides the same quality output while reducing upload time and processing.
+
+**Lower JPEG quality (70%):** The AI generates entirely new stylized images, so input compression artifacts don't affect output quality.
+
+### Future Optimizations (Not Implemented)
+
+#### Enable SharedArrayBuffer
+
+Adding these headers enables SIMD + threading for 26x faster background removal:
+
+```javascript
+// next.config.js
+headers: [
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' }
+]
+```
+
+This can reduce bg removal from ~20s to ~2s per image (if using client-side).
+
+#### WebGPU Acceleration
+
+Consider `rembg-webgpu` library for 3-5x faster bg removal on supported devices.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
 | `src/app/api/ai/identify-product/route.ts` | Product identification API |
-| `src/app/api/ai/generate-icon/route.ts` | Icon generation API |
+| `src/app/api/ai/generate-icon/route.ts` | Icon generation API (Nano Banana) |
+| `src/app/api/ai/remove-background/route.ts` | Background removal API (BiRefNet) |
 | `src/app/api/convert-heic/route.ts` | HEIC to JPEG conversion API |
+| `src/hooks/useAiProductPipeline.ts` | Pipeline orchestration with cancellation |
 | `src/app/(dashboard)/productos/page.tsx` | Product creation UI with AI flow |
 | `docs/ai-product-pipeline.md` | This documentation |
 
-## Future Improvements
-
-1. **Batch generation:** Generate 4 icon variants at once, let user pick favorite
-2. **Icon library:** Pre-generate common product icons, skip AI for known products
-3. **Local emoji generation:** Explore client-side models when quality improves
-4. **Offline mode:** Queue product creation when offline, process when online
-5. **WebGPU acceleration:** Use GPU for faster client-side processing
-
 ## References
 
-- [OpenAI Image Generation API](https://platform.openai.com/docs/guides/images)
+- [fal.ai Dashboard](https://fal.ai/dashboard) - Get API key here
+- [Nano Banana Edit API](https://fal.ai/models/fal-ai/nano-banana/edit/api)
+- [BiRefNet API](https://fal.ai/models/fal-ai/birefnet/api) - Background removal
+- [@fal-ai/client](https://www.npmjs.com/package/@fal-ai/client)
 - [OpenAI Vision API](https://platform.openai.com/docs/guides/vision)
-- [@imgly/background-removal](https://github.com/imgly/background-removal-js)
-- [GPT Image 1 Mini Pricing](https://openai.com/pricing)
 - [heic-convert](https://github.com/catdad-experiments/heic-convert)
