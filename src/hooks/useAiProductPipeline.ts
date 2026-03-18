@@ -320,6 +320,8 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
     const signal = abortControllerRef.current.signal
 
     console.log('[Pipeline] Starting run:', runId, skipBgRemoval ? '(bg removal disabled)' : '')
+    console.log('%c[Pipeline] === TIMING START ===', 'color: #0ea5e9; font-weight: bold')
+    const pipelineStartTime = Date.now()
 
     setState({
       step: 'generating', // Show "generating" since both run in parallel
@@ -331,29 +333,46 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       // PARALLEL EXECUTION: Run identify and generate simultaneously
       // This saves ~2-3s since they both only need the original image
       console.log('[Pipeline] Starting parallel execution: identify + generate icon...')
-      const startTime = Date.now()
+      const parallelStartTime = Date.now()
+
+      // Track individual API times
+      let identifyTime = 0
+      let generateTime = 0
 
       const [identifyResponse, iconResponse] = await Promise.all([
         // Task 1: Identify product using GPT-4o Mini Vision
-        fetch('/api/ai/identify-product', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: imageBase64 }),
-          signal,
-        }),
+        (async () => {
+          const start = Date.now()
+          const res = await fetch('/api/ai/identify-product', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageBase64 }),
+            signal,
+          })
+          identifyTime = Date.now() - start
+          console.log(`[Pipeline] Identify API: ${(identifyTime / 1000).toFixed(1)}s`)
+          return res
+        })(),
         // Task 2: Generate emoji icon using Nano Banana Edit
-        fetch('/api/ai/generate-icon', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: imageBase64 }),
-          signal,
-        }),
+        (async () => {
+          const start = Date.now()
+          const res = await fetch('/api/ai/generate-icon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageBase64 }),
+            signal,
+          })
+          generateTime = Date.now() - start
+          console.log(`[Pipeline] Generate API: ${(generateTime / 1000).toFixed(1)}s`)
+          return res
+        })(),
       ])
 
       if (!isRunActive(runId)) return
 
-      const parallelTime = Date.now() - startTime
-      console.log(`[Pipeline] Parallel execution completed in ${parallelTime}ms`)
+      const parallelTime = Date.now() - parallelStartTime
+      const timeSaved = identifyTime + generateTime - parallelTime
+      console.log(`[Pipeline] Parallel step: ${(parallelTime / 1000).toFixed(1)}s (saved ${(timeSaved / 1000).toFixed(1)}s vs sequential)`)
 
       // Parse both responses
       const [identifyResult, iconResult] = await Promise.all([
@@ -401,17 +420,19 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         trimmedBlob = iconBlob
       } else {
         if (!safeSetState(runId, { step: 'removing-bg' })) return
-        console.log('[Pipeline] Step 3: Removing background via BiRefNet (server-side)...')
+        console.log('[Pipeline] Removing background via BiRefNet...')
+        const bgStartTime = Date.now()
 
         // Use server-side BiRefNet - much faster than client-side (~1-3s vs ~10-15s)
         const transparentBase64 = await removeBackgroundServerSide(iconDataUrl)
+
+        const bgTime = Date.now() - bgStartTime
+        console.log(`[Pipeline] BG Removal API: ${(bgTime / 1000).toFixed(1)}s`)
 
         if (!isRunActive(runId)) {
           console.log('[Pipeline] Run cancelled during bg removal')
           return
         }
-
-        console.log('[Pipeline] Background removed from emoji')
 
         // Convert base64 to blob
         const fetchRes = await fetch(transparentBase64)
@@ -439,7 +460,9 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       if (!isRunActive(runId)) return
 
       // Success!
-      console.log('[Pipeline] Complete!')
+      const totalTime = Date.now() - pipelineStartTime
+      console.log('%c[Pipeline] === TIMING COMPLETE ===', 'color: #22c55e; font-weight: bold')
+      console.log(`%c[Pipeline] TOTAL: ${(totalTime / 1000).toFixed(1)}s`, 'color: #22c55e; font-weight: bold; font-size: 14px')
       setState({
         step: 'complete',
         error: null,

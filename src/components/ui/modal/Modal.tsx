@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState, useEffect, Children, isValidElement, ReactElement } from 'react'
-import { IconClose, IconArrowLeft } from '@/components/icons'
+import { X, ArrowLeft } from 'lucide-react'
 import { ModalProvider, useModalContext } from './ModalContext'
 import { ModalStep } from './ModalStep'
 import { ModalItem } from './ModalItem'
@@ -72,7 +72,7 @@ function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTit
           disabled={isLocked || isTransitioning || !showBackIcon}
           tabIndex={showBackIcon ? 0 : -1}
         >
-          <IconArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
       </div>
       <h2 className="modal-title">{displayTitle}</h2>
@@ -83,7 +83,7 @@ function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTit
         aria-label="Cerrar"
         disabled={isLocked || isTransitioning}
       >
-        <IconClose className="w-5 h-5" />
+        <X className="w-5 h-5" />
       </button>
     </div>
   )

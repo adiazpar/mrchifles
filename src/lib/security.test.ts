@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { hashPin, generateInviteCode } from './auth'
 
 /**
- * Security-focused tests for the Mr. Chifles application
+ * Security-focused tests for Feria POS
  * These tests verify that security fixes are working correctly
  */
 

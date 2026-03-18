@@ -5,7 +5,7 @@ import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { getUserInitials, getRoleLabel, isPartnerOrOwner } from '@/lib/auth'
-import { IconUsers, IconLogout, IconChevronRight, IconSettings, IconTruck } from '@/components/icons'
+import { Users, LogOut, ChevronRight, Settings, Van } from 'lucide-react'
 
 interface UserMenuContentProps {
   onAction?: () => void
@@ -50,9 +50,9 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
             className="user-menu-item"
             onClick={onAction}
           >
-            <IconUsers width={20} height={20} />
+            <Users size={20} />
             <span>Gestionar Equipo</span>
-            <IconChevronRight width={16} height={16} className="user-menu-item-arrow" />
+            <ChevronRight size={16} className="user-menu-item-arrow" />
           </Link>
         )}
 
@@ -63,9 +63,9 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
             className="user-menu-item"
             onClick={onAction}
           >
-            <IconTruck width={20} height={20} />
+            <Van size={20} />
             <span>Proveedores</span>
-            <IconChevronRight width={16} height={16} className="user-menu-item-arrow" />
+            <ChevronRight size={16} className="user-menu-item-arrow" />
           </Link>
         )}
 
@@ -75,9 +75,9 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           className="user-menu-item"
           onClick={onAction}
         >
-          <IconSettings width={20} height={20} />
+          <Settings size={20} />
           <span>Configuracion</span>
-          <IconChevronRight width={16} height={16} className="user-menu-item-arrow" />
+          <ChevronRight size={16} className="user-menu-item-arrow" />
         </Link>
       </div>
 
@@ -91,7 +91,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           className="user-menu-item user-menu-item-danger"
           onClick={handleLogout}
         >
-          <IconLogout width={20} height={20} />
+          <LogOut size={20} />
           <span>Cerrar Sesion</span>
         </button>
       </div>

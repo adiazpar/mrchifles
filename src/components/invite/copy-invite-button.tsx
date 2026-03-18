@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { IconCopy, IconCheck } from '@/components/icons'
+import { Copy, Check } from 'lucide-react'
 import type { InviteRole } from '@/types'
 
 interface CopyInviteButtonProps {
@@ -40,7 +40,7 @@ export function CopyInviteButton({
     const textToCopy =
       variant === 'code'
         ? code
-        : `Te invito a Mr. Chifles como ${roleLabel}.\n\nTu codigo: ${code}\n\nRegistrate aqui: ${appUrl}/invite?code=${code}`
+        : `Te invito a Feria POS como ${roleLabel}.\n\nTu codigo: ${code}\n\nRegistrate aqui: ${appUrl}/invite?code=${code}`
 
     try {
       if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
@@ -78,9 +78,9 @@ export function CopyInviteButton({
         title="Copiar codigo"
       >
         {copied ? (
-          <IconCheck className="w-5 h-5 text-success" />
+          <Check className="w-5 h-5 text-success" />
         ) : (
-          <IconCopy className="w-5 h-5" />
+          <Copy className="w-5 h-5" />
         )}
       </button>
     )
@@ -95,12 +95,12 @@ export function CopyInviteButton({
     >
       {copied ? (
         <>
-          <IconCheck className="w-4 h-4 text-success" />
+          <Check className="w-4 h-4 text-success" />
           <span>Copiado</span>
         </>
       ) : (
         <>
-          <IconCopy className="w-4 h-4" />
+          <Copy className="w-4 h-4" />
           <span>Copiar invitacion</span>
         </>
       )}

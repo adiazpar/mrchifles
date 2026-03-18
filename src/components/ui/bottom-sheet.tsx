@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { IconClose } from '@/components/icons'
+import { X } from 'lucide-react'
 
 interface BottomSheetProps {
   isOpen: boolean
@@ -118,7 +118,7 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
               className="bottom-sheet-close"
               aria-label="Cerrar"
             >
-              <IconClose width={20} height={20} />
+              <X size={20} />
             </button>
           </div>
         )}

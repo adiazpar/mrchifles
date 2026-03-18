@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useHeader } from '@/contexts/header-context'
 import { Spinner, Modal } from '@/components/ui'
-import { IconCircleCheck, IconClock, IconChevronRight, IconIngreso, IconRetiro, IconArrowUp } from '@/components/icons'
+import { CheckCircle2, Clock, ChevronRight, ArrowDownCircle, ArrowUpCircle, ArrowUp } from 'lucide-react'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useAuth } from '@/contexts/auth-context'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -219,9 +219,9 @@ export default function HistorialPage() {
                           : 'bg-warning-subtle text-warning'
                       }`}>
                         {session.closedAt ? (
-                          <IconCircleCheck className="w-5 h-5" />
+                          <CheckCircle2 className="w-5 h-5" />
                         ) : (
-                          <IconClock className="w-5 h-5" />
+                          <Clock className="w-5 h-5" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -246,7 +246,7 @@ export default function HistorialPage() {
                           </span>
                           <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
                             <span>{moveCount} {moveCount === 1 ? 'movimiento' : 'movimientos'}</span>
-                            <IconChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-4 h-4" />
                           </div>
                         </div>
                       </div>
@@ -282,7 +282,7 @@ export default function HistorialPage() {
               onClick={scrollToTop}
               className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
             >
-              <IconArrowUp className="w-4 h-4" />
+              <ArrowUp className="w-4 h-4" />
               Volver arriba
             </button>
           )}
@@ -370,9 +370,9 @@ export default function HistorialPage() {
                         }`}
                       >
                         {mov.type === 'ingreso' ? (
-                          <IconIngreso className="w-5 h-5" />
+                          <ArrowDownCircle className="w-5 h-5" />
                         ) : (
-                          <IconRetiro className="w-5 h-5" />
+                          <ArrowUpCircle className="w-5 h-5" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0 h-10 flex flex-col justify-between">

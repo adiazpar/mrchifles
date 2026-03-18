@@ -5,7 +5,7 @@ import Link from 'next/link'
 import QRCode from 'qrcode'
 import { Badge, Spinner, Modal } from '@/components/ui'
 import { useHeader } from '@/contexts/header-context'
-import { IconEmployee, IconPartner, IconCheck, IconRefresh, IconCopy, IconTrash, IconAdd, IconPhone } from '@/components/icons'
+import { User, UserCircle, Check, RefreshCw, Copy, Trash2, Plus, Phone } from 'lucide-react'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { useAuth } from '@/contexts/auth-context'
 import {
@@ -43,7 +43,7 @@ function RoleCard({ icon, title, description, selected, onClick }: RoleCardProps
         <span className="role-card-title">{title}</span>
         <span className="role-card-description">{description}</span>
       </div>
-      <IconCheck className={`role-card-check ${selected ? '' : 'invisible'}`} />
+      <Check className={`role-card-check ${selected ? '' : 'invisible'}`} />
     </button>
   )
 }
@@ -510,7 +510,7 @@ export default function TeamPage() {
               onClick={handleOpenModal}
               className="btn btn-primary btn-sm"
             >
-              <IconAdd className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
               Agregar
             </button>
           )}
@@ -607,9 +607,9 @@ export default function TeamPage() {
                       title="Copiar codigo"
                     >
                       {copyFeedback === code.code ? (
-                        <IconCheck className="w-4 h-4 text-success" />
+                        <Check className="w-4 h-4 text-success" />
                       ) : (
-                        <IconCopy className="w-4 h-4" />
+                        <Copy className="w-4 h-4" />
                       )}
                     </span>
                     <span
@@ -628,7 +628,7 @@ export default function TeamPage() {
                       className="p-2 rounded-lg text-text-secondary hover:text-error hover:bg-error-subtle transition-colors"
                       title="Eliminar codigo"
                     >
-                      <IconTrash className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </span>
                   </div>
                 </button>
@@ -650,14 +650,14 @@ export default function TeamPage() {
             <label className="label">Rol del nuevo miembro</label>
             <div className="space-y-3">
               <RoleCard
-                icon={<IconEmployee className="w-5 h-5" />}
+                icon={<User className="w-5 h-5" />}
                 title="Empleado"
                 description="Puede registrar ventas y ver el resumen del dia"
                 selected={selectedRole === 'employee'}
                 onClick={() => setSelectedRole('employee')}
               />
               <RoleCard
-                icon={<IconPartner className="w-5 h-5" />}
+                icon={<UserCircle className="w-5 h-5" />}
                 title="Socio"
                 description="Acceso completo a reportes, inventario y configuracion"
                 selected={selectedRole === 'partner'}
@@ -705,7 +705,7 @@ export default function TeamPage() {
                 </>
               ) : (
                 <>
-                  <IconRefresh className="w-3.5 h-3.5" />
+                  <RefreshCw className="w-3.5 h-3.5" />
                   <span>Regenerar codigo</span>
                 </>
               )}
@@ -814,7 +814,7 @@ export default function TeamPage() {
                   onClick={handleOpenPhoneChange}
                   className="btn btn-secondary w-full justify-start gap-3"
                 >
-                  <IconPhone className="w-5 h-5" />
+                  <Phone className="w-5 h-5" />
                   <span>Cambiar numero de telefono</span>
                 </button>
 
@@ -957,14 +957,14 @@ export default function TeamPage() {
 
             <div className="space-y-3">
               <RoleCard
-                icon={<IconEmployee className="w-5 h-5" />}
+                icon={<User className="w-5 h-5" />}
                 title="Empleado"
                 description="Puede registrar ventas y ver el resumen del dia"
                 selected={newRole === 'employee'}
                 onClick={() => setNewRole('employee')}
               />
               <RoleCard
-                icon={<IconPartner className="w-5 h-5" />}
+                icon={<UserCircle className="w-5 h-5" />}
                 title="Socio"
                 description="Acceso completo a reportes, inventario y configuracion"
                 selected={newRole === 'partner'}

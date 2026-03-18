@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
-import { IconTransfer, IconClose } from '@/components/icons'
+import { ArrowLeftRight, X } from 'lucide-react'
 
 const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
 
@@ -91,7 +91,7 @@ export function TransferBanner() {
       <div className="transfer-banner">
         <div className="transfer-banner-content">
           <div className="transfer-banner-icon">
-            <IconTransfer width={24} height={24} />
+            <ArrowLeftRight size={24} />
           </div>
 
           <div className="transfer-banner-text">
@@ -119,7 +119,7 @@ export function TransferBanner() {
             className="transfer-banner-dismiss"
             aria-label="Cerrar"
           >
-            <IconClose width={18} height={18} />
+            <X size={18} />
           </button>
         </div>
       </div>
@@ -134,7 +134,7 @@ export function TransferBanner() {
       <div className="transfer-banner">
         <div className="transfer-banner-content">
           <div className="transfer-banner-icon">
-            <IconTransfer width={24} height={24} />
+            <ArrowLeftRight size={24} />
           </div>
 
           <div className="transfer-banner-text">
@@ -166,7 +166,7 @@ export function TransferBanner() {
             className="transfer-banner-dismiss"
             aria-label="Cerrar"
           >
-            <IconClose width={18} height={18} />
+            <X size={18} />
           </button>
         </div>
       </div>

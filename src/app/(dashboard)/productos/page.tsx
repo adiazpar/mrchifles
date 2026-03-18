@@ -6,7 +6,7 @@ import { useAiProductPipeline, useImageCompression } from '@/hooks'
 import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
 import { LottiePlayer } from '@/components/animations/LottiePlayer'
 import { useHeader } from '@/contexts/header-context'
-import { IconAdd, IconClose, IconTrash, IconImage, IconProducts, IconSearch, IconArrowUp, IconArrowDown, IconFilter, IconCheck, IconEdit, IconChevronRight, IconChevronDown, IconWarning, IconInventory, IconAdjust, IconCirclePlus, IconCircleMinus, IconCalendarTime, IconPhotoFocus, IconRefresh } from '@/components/icons'
+import { Plus, X, Trash2, ImageIcon, Package, Search, ArrowUp, ArrowDown, Filter, Check, Pencil, ChevronRight, ChevronDown, AlertTriangle, Warehouse, SlidersHorizontal, PlusCircle, MinusCircle, CalendarClock, Focus } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { useAuth } from '@/contexts/auth-context'
 import { formatCurrency, formatDate, getProductIconUrl } from '@/lib/utils'
@@ -1101,7 +1101,7 @@ export default function ProductosPage() {
         className="modal-action-adjust"
         title="Editar pedido"
       >
-        <IconEdit className="w-5 h-5" />
+        <Pencil className="w-5 h-5" />
       </button>
     )
   }
@@ -1185,7 +1185,7 @@ export default function ProductosPage() {
                 {/* Search Bar with Sort Button */}
                 <div className="flex gap-2">
                   <div className="search-bar flex-1">
-                    <IconSearch className="search-bar-icon" />
+                    <Search className="search-bar-icon" />
                     <input
                       type="text"
                       placeholder="Buscar productos..."
@@ -1200,7 +1200,7 @@ export default function ProductosPage() {
                         className="search-bar-clear"
                         aria-label="Limpiar busqueda"
                       >
-                        <IconClose className="w-4 h-4" />
+                        <X className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -1210,7 +1210,7 @@ export default function ProductosPage() {
                     className="btn btn-secondary btn-icon flex-shrink-0"
                     aria-label="Ordenar productos"
                   >
-                    <IconFilter className="w-4 h-4" />
+                    <Filter className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -1249,7 +1249,7 @@ export default function ProductosPage() {
                       onClick={handleOpenAdd}
                       className="btn btn-primary btn-sm"
                     >
-                      <IconCirclePlus className="w-4 h-4" />
+                      <PlusCircle className="w-4 h-4" />
                       Agregar
                     </button>
                   </div>
@@ -1257,7 +1257,7 @@ export default function ProductosPage() {
                   {/* Product List */}
                   {filteredProducts.length === 0 ? (
                     <div className="empty-state">
-                      <IconSearch className="empty-state-icon" />
+                      <Search className="empty-state-icon" />
                       <h3 className="empty-state-title">Sin resultados</h3>
                       <p className="empty-state-description">
                         No se encontraron productos con ese criterio
@@ -1298,7 +1298,7 @@ export default function ProductosPage() {
                                   unoptimized
                                 />
                               ) : (
-                                <IconImage className="w-5 h-5 text-text-tertiary" />
+                                <ImageIcon className="w-5 h-5 text-text-tertiary" />
                               )}
                             </div>
 
@@ -1324,7 +1324,7 @@ export default function ProductosPage() {
 
                             {/* Chevron */}
                             <div className="text-text-tertiary ml-2">
-                              <IconChevronRight className="w-5 h-5" />
+                              <ChevronRight className="w-5 h-5" />
                             </div>
                           </div>
                         )
@@ -1341,7 +1341,7 @@ export default function ProductosPage() {
                     onClick={scrollToTop}
                     className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
                   >
-                    <IconArrowUp className="w-4 h-4" />
+                    <ArrowUp className="w-4 h-4" />
                     Volver arriba
                   </button>
                 )}
@@ -1351,7 +1351,7 @@ export default function ProductosPage() {
             {/* Empty state - no products at all */}
             {products.length === 0 && (
               <div className="empty-state-fill">
-                <IconProducts className="empty-state-icon" />
+                <Package className="empty-state-icon" />
                 <h3 className="empty-state-title">No hay productos</h3>
                 <p className="empty-state-description">
                   Agrega tu primer producto para comenzar
@@ -1378,7 +1378,7 @@ export default function ProductosPage() {
             {/* No products yet - can't create orders */}
             {products.length === 0 ? (
               <div className="empty-state-fill">
-                <IconProducts className="empty-state-icon" />
+                <Package className="empty-state-icon" />
                 <h3 className="empty-state-title">No hay productos</h3>
                 <p className="empty-state-description">
                   Agrega productos primero para poder crear pedidos
@@ -1387,7 +1387,7 @@ export default function ProductosPage() {
             ) : orders.length === 0 ? (
               /* Products exist but no orders yet */
               <div className="empty-state-fill">
-                <IconInventory className="empty-state-icon" />
+                <Warehouse className="empty-state-icon" />
                 <h3 className="empty-state-title">No hay pedidos</h3>
                 <p className="empty-state-description">
                   Registra tu primer pedido
@@ -1405,7 +1405,7 @@ export default function ProductosPage() {
               <>
                 {/* Search Bar */}
                 <div className="search-bar">
-                  <IconSearch className="search-bar-icon" />
+                  <Search className="search-bar-icon" />
                   <input
                     type="text"
                     placeholder="Buscar por proveedor o fecha..."
@@ -1420,7 +1420,7 @@ export default function ProductosPage() {
                       className="search-bar-clear"
                       aria-label="Limpiar busqueda"
                     >
-                      <IconClose className="w-4 h-4" />
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
@@ -1462,7 +1462,7 @@ export default function ProductosPage() {
                       onClick={handleOpenNewOrder}
                       className="btn btn-primary btn-sm"
                     >
-                      <IconAdd className="w-4 h-4" />
+                      <Plus className="w-4 h-4" />
                       Nuevo Pedido
                     </button>
                   </div>
@@ -1493,7 +1493,7 @@ export default function ProductosPage() {
                                 ? 'bg-warning-subtle text-warning'
                                 : 'bg-success-subtle text-success'
                             }`}>
-                              <IconInventory className="w-5 h-5" />
+                              <Warehouse className="w-5 h-5" />
                             </div>
 
                             {/* Order info */}
@@ -1528,7 +1528,7 @@ export default function ProductosPage() {
 
                             {/* Action indicator */}
                             <div className="text-text-tertiary ml-2">
-                              <IconChevronRight className="w-5 h-5" />
+                              <ChevronRight className="w-5 h-5" />
                             </div>
                           </div>
                         )
@@ -1545,7 +1545,7 @@ export default function ProductosPage() {
                     onClick={scrollToTop}
                     className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
                   >
-                    <IconArrowUp className="w-4 h-4" />
+                    <ArrowUp className="w-4 h-4" />
                     Volver arriba
                   </button>
                 )}
@@ -1578,7 +1578,7 @@ export default function ProductosPage() {
                 }}
                 className="caja-action-btn caja-action-btn--large"
               >
-                <IconPhotoFocus className="caja-action-btn__icon text-brand" />
+                <Focus className="caja-action-btn__icon text-brand" />
                 <div className="caja-action-btn__text">
                   <span className="caja-action-btn__title">Snap to Add</span>
                   <span className="caja-action-btn__desc">Toma una foto y la IA completa los datos</span>
@@ -1590,7 +1590,7 @@ export default function ProductosPage() {
                 step={1}
                 className="caja-action-btn caja-action-btn--large"
               >
-                <IconEdit className="caja-action-btn__icon text-text-secondary" />
+                <Pencil className="caja-action-btn__icon text-text-secondary" />
                 <div className="caja-action-btn__text">
                   <span className="caja-action-btn__title">Agregar manual</span>
                   <span className="caja-action-btn__desc">Ingresa los datos del producto tu mismo</span>
@@ -1692,7 +1692,7 @@ export default function ProductosPage() {
                       tabIndex={-1}
                       aria-label="Incrementar precio"
                     >
-                      <IconArrowUp />
+                      <ArrowUp />
                     </button>
                     <button
                       type="button"
@@ -1704,7 +1704,7 @@ export default function ProductosPage() {
                       tabIndex={-1}
                       aria-label="Decrementar precio"
                     >
-                      <IconArrowDown />
+                      <ArrowDown />
                     </button>
                   </div>
                 </div>
@@ -1717,7 +1717,7 @@ export default function ProductosPage() {
                   onChange={e => setCategory(e.target.value as ProductCategory | '')}
                   className={`input ${category === '' ? 'select-placeholder' : ''}`}
                 >
-                  <option value="">Sin categoria</option>
+                  <option value="">N/A</option>
                   {Object.entries(CATEGORY_CONFIG)
                     .sort(([, a], [, b]) => a.order - b.order)
                     .map(([key, config]) => (
@@ -1753,11 +1753,11 @@ export default function ProductosPage() {
               <>
                 {canDelete && (
                   <Modal.GoToStepButton step={5} className="btn-icon !bg-transparent text-error hover:!bg-error-subtle rounded-lg">
-                    <IconTrash className="w-5 h-5" />
+                    <Trash2 className="w-5 h-5" />
                   </Modal.GoToStepButton>
                 )}
                 <Modal.GoToStepButton step={4} className="modal-action-adjust">
-                  <IconAdjust className="w-5 h-5" />
+                  <SlidersHorizontal className="w-5 h-5" />
                 </Modal.GoToStepButton>
               </>
             )}
@@ -1807,7 +1807,7 @@ export default function ProductosPage() {
                     unoptimized
                   />
                 ) : (
-                  <IconImage className="w-20 h-20 text-text-tertiary" />
+                  <ImageIcon className="w-20 h-20 text-text-tertiary" />
                 )}
               </div>
             </div>
@@ -1856,7 +1856,7 @@ export default function ProductosPage() {
                       tabIndex={-1}
                       aria-label="Incrementar precio"
                     >
-                      <IconArrowUp />
+                      <ArrowUp />
                     </button>
                     <button
                       type="button"
@@ -1868,7 +1868,7 @@ export default function ProductosPage() {
                       tabIndex={-1}
                       aria-label="Decrementar precio"
                     >
-                      <IconArrowDown />
+                      <ArrowDown />
                     </button>
                   </div>
                 </div>
@@ -1883,7 +1883,7 @@ export default function ProductosPage() {
                   onChange={e => setCategory(e.target.value as ProductCategory | '')}
                   className={`input ${category === '' ? 'select-placeholder' : ''}`}
                 >
-                  <option value="">Sin categoria</option>
+                  <option value="">N/A</option>
                   {Object.entries(CATEGORY_CONFIG)
                     .sort(([, a], [, b]) => a.order - b.order)
                     .map(([key, config]) => (
@@ -1931,7 +1931,7 @@ export default function ProductosPage() {
                       unoptimized
                     />
                   ) : (
-                    <IconImage className="w-5 h-5 text-text-tertiary" />
+                    <ImageIcon className="w-5 h-5 text-text-tertiary" />
                   )}
                 </div>
                 <div>
@@ -2108,7 +2108,7 @@ export default function ProductosPage() {
           {/* Search bar */}
           <Modal.Item>
             <div className="search-bar">
-              <IconSearch className="search-bar-icon" />
+              <Search className="search-bar-icon" />
               <input
                 type="text"
                 placeholder="Buscar producto..."
@@ -2149,7 +2149,7 @@ export default function ProductosPage() {
                           unoptimized
                         />
                       ) : (
-                        <IconImage className="w-5 h-5 text-text-tertiary" />
+                        <ImageIcon className="w-5 h-5 text-text-tertiary" />
                       )}
                     </div>
                     {/* Product name and stock */}
@@ -2164,7 +2164,7 @@ export default function ProductosPage() {
                     {/* Selection indicator */}
                     {isSelected && (
                       <div className="w-5 h-5 rounded-full bg-brand flex items-center justify-center flex-shrink-0">
-                        <IconCheck className="w-3 h-3 text-white" />
+                        <Check className="w-3 h-3 text-white" />
                       </div>
                     )}
                   </button>
@@ -2226,7 +2226,7 @@ export default function ProductosPage() {
                         unoptimized
                       />
                     ) : (
-                      <IconImage className="w-5 h-5 text-text-tertiary" />
+                      <ImageIcon className="w-5 h-5 text-text-tertiary" />
                     )}
                   </div>
                   {/* Product name */}
@@ -2243,7 +2243,7 @@ export default function ProductosPage() {
                         item.quantity <= 1 ? 'opacity-40 cursor-not-allowed' : 'active:scale-90'
                       }`}
                     >
-                      <IconCircleMinus className="w-5 h-5" />
+                      <MinusCircle className="w-5 h-5" />
                     </button>
                     <input
                       type="text"
@@ -2280,7 +2280,7 @@ export default function ProductosPage() {
                       onClick={() => handleUpdateOrderItemQuantity(item.product.id, item.quantity + 1)}
                       className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-100 active:scale-90"
                     >
-                      <IconCirclePlus className="w-5 h-5" />
+                      <PlusCircle className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
@@ -2347,7 +2347,7 @@ export default function ProductosPage() {
                       tabIndex={-1}
                       aria-label="Incrementar total"
                     >
-                      <IconArrowUp />
+                      <ArrowUp />
                     </button>
                     <button
                       type="button"
@@ -2359,7 +2359,7 @@ export default function ProductosPage() {
                       tabIndex={-1}
                       aria-label="Decrementar total"
                     >
-                      <IconArrowDown />
+                      <ArrowDown />
                     </button>
                   </div>
                 </div>
@@ -2379,7 +2379,7 @@ export default function ProductosPage() {
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>
-                  <IconChevronDown className="w-5 h-5 text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDown className="w-5 h-5 text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -2392,7 +2392,7 @@ export default function ProductosPage() {
               {/* Visual display */}
               <div className={`input w-full flex items-center justify-between pointer-events-none ${orderEstimatedArrival ? 'text-text-primary' : 'text-text-tertiary'}`}>
                 <span>{orderEstimatedArrival ? formatDate(orderEstimatedArrival) : 'Seleccionar fecha...'}</span>
-                <IconCalendarTime className="w-5 h-5 text-text-tertiary" />
+                <CalendarClock className="w-5 h-5 text-text-tertiary" />
               </div>
               {/* Invisible native date input overlay */}
               <input
@@ -2443,7 +2443,7 @@ export default function ProductosPage() {
                   }}
                   className="absolute top-2 right-2 p-1 bg-bg-surface rounded-full border border-border"
                 >
-                  <IconClose className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             ) : orderReceiptFile ? (
@@ -2457,7 +2457,7 @@ export default function ProductosPage() {
                   }}
                   className="p-1"
                 >
-                  <IconClose className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             ) : (
@@ -2467,7 +2467,7 @@ export default function ProductosPage() {
                 className="input w-full text-left text-text-tertiary flex items-center justify-between"
               >
                 <span>Adjuntar imagen o PDF...</span>
-                <IconImage className="w-5 h-5" />
+                <ImageIcon className="w-5 h-5" />
               </button>
             )}
           </Modal.Item>
@@ -2708,7 +2708,7 @@ export default function ProductosPage() {
                     className="btn-icon !bg-transparent text-error hover:!bg-error-subtle rounded-lg"
                     title="Eliminar pedido"
                   >
-                    <IconTrash className="w-5 h-5" />
+                    <Trash2 className="w-5 h-5" />
                   </Modal.GoToStepButton>
                 )}
                 <GoToEditStepButton order={viewingOrder} />
@@ -2762,7 +2762,7 @@ export default function ProductosPage() {
                           unoptimized
                         />
                       ) : (
-                        <IconImage className="w-5 h-5 text-text-tertiary" />
+                        <ImageIcon className="w-5 h-5 text-text-tertiary" />
                       )}
                     </div>
                     {/* Product name */}
@@ -2779,7 +2779,7 @@ export default function ProductosPage() {
                           item.quantity <= 1 ? 'opacity-40 cursor-not-allowed' : 'active:scale-90'
                         }`}
                       >
-                        <IconCircleMinus className="w-5 h-5" />
+                        <MinusCircle className="w-5 h-5" />
                       </button>
                       <input
                         type="text"
@@ -2815,7 +2815,7 @@ export default function ProductosPage() {
                         onClick={() => handleUpdateOrderItemQuantity(item.product.id, item.quantity + 1)}
                         className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-100 active:scale-90"
                       >
-                        <IconCirclePlus className="w-5 h-5" />
+                        <PlusCircle className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
@@ -2851,7 +2851,7 @@ export default function ProductosPage() {
                         tabIndex={-1}
                         aria-label="Incrementar total"
                       >
-                        <IconArrowUp />
+                        <ArrowUp />
                       </button>
                       <button
                         type="button"
@@ -2863,7 +2863,7 @@ export default function ProductosPage() {
                         tabIndex={-1}
                         aria-label="Decrementar total"
                       >
-                        <IconArrowDown />
+                        <ArrowDown />
                       </button>
                     </div>
                   </div>
@@ -2883,7 +2883,7 @@ export default function ProductosPage() {
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
-                    <IconChevronDown className="w-5 h-5 text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <ChevronDown className="w-5 h-5 text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -2896,7 +2896,7 @@ export default function ProductosPage() {
                 {/* Visual display */}
                 <div className={`input w-full flex items-center justify-between pointer-events-none ${orderEstimatedArrival ? 'text-text-primary' : 'text-text-tertiary'}`}>
                   <span>{orderEstimatedArrival ? formatDate(orderEstimatedArrival) : 'Seleccionar fecha...'}</span>
-                  <IconCalendarTime className="w-5 h-5 text-text-tertiary" />
+                  <CalendarClock className="w-5 h-5 text-text-tertiary" />
                 </div>
                 {/* Invisible native date input overlay */}
                 <input
@@ -3010,7 +3010,7 @@ export default function ProductosPage() {
                             unoptimized
                           />
                         ) : (
-                          <IconImage className="w-5 h-5 text-text-tertiary" />
+                          <ImageIcon className="w-5 h-5 text-text-tertiary" />
                         )}
                       </div>
                       {/* Product name and ordered qty */}
@@ -3031,7 +3031,7 @@ export default function ProductosPage() {
                             receivedQty <= 0 ? 'opacity-40 cursor-not-allowed' : 'active:scale-90'
                           }`}
                         >
-                          <IconCircleMinus className="w-5 h-5" />
+                          <MinusCircle className="w-5 h-5" />
                         </button>
                         <span className={`w-10 text-center font-semibold ${
                           receivedQty === 0 ? 'text-error' : isDifferent ? 'text-warning' : 'text-text-primary'
@@ -3046,7 +3046,7 @@ export default function ProductosPage() {
                           }))}
                           className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-100 active:scale-90"
                         >
-                          <IconCirclePlus className="w-5 h-5" />
+                          <PlusCircle className="w-5 h-5" />
                         </button>
                       </div>
                     </div>
@@ -3057,7 +3057,7 @@ export default function ProductosPage() {
 
             <Modal.Item>
               <div className="p-3 rounded-lg bg-warning-subtle text-warning text-sm">
-                <IconWarning className="w-4 h-4 inline mr-2" />
+                <AlertTriangle className="w-4 h-4 inline mr-2" />
                 Al confirmar, el stock aumentara segun las cantidades indicadas.
               </div>
             </Modal.Item>
@@ -3193,7 +3193,7 @@ export default function ProductosPage() {
                 {option.label}
               </span>
               {sortBy === option.value && (
-                <IconCheck className="w-5 h-5 text-brand" />
+                <Check className="w-5 h-5 text-brand" />
               )}
             </button>
           ))}

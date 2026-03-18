@@ -18,13 +18,13 @@ const ibmPlexSans = IBM_Plex_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Mr. Chifles',
-  description: 'Sistema de gestion para negocio de chifles',
+  title: 'Feria POS',
+  description: 'Sistema de punto de venta para ferias',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Mr. Chifles',
+    title: 'Feria POS',
   },
   icons: {
     icon: '/favicon.ico',

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { UserMenu } from './user-menu'
-import { IconArrowLeft } from '@/components/icons'
+import { ArrowLeft } from 'lucide-react'
 import { useHeaderContext } from '@/contexts/header-context'
 
 /**
@@ -48,7 +48,7 @@ export function PageHeader() {
             className="page-header__back"
             aria-label="Volver"
           >
-            <IconArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" />
           </button>
         )}
         <div className="page-header__titles">

@@ -7,7 +7,7 @@ import { Spinner } from '@/components/ui'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { FirebasePhoneVerify } from '@/components/auth/firebase-phone-verify'
 import { PinPad } from '@/components/auth/pin-pad'
-import { IconPalette, IconInfo, IconSun, IconMoon, IconMonitor, IconTransfer, IconClock, IconClose, IconPhone, IconCopy, IconCheck, IconLock } from '@/components/icons'
+import { Palette, Info, Sun, Moon, Monitor, ArrowLeftRight, Clock, X, Phone, Copy, Check, Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { formatPhoneForDisplay, isValidE164 } from '@/lib/countries'
 import { transitionModals } from '@/lib/modal-utils'
@@ -17,19 +17,19 @@ type Theme = 'light' | 'dark' | 'system'
 const THEME_CONFIG = {
   light: {
     label: 'Claro',
-    icon: IconSun,
+    icon: Sun,
     preview: 'theme-option-preview-light',
     description: 'Modo claro activado',
   },
   dark: {
     label: 'Oscuro',
-    icon: IconMoon,
+    icon: Moon,
     preview: 'theme-option-preview-dark',
     description: 'Modo oscuro activado',
   },
   system: {
     label: 'Sistema',
-    icon: IconMonitor,
+    icon: Monitor,
     preview: 'theme-option-preview-system',
     description: 'Se ajusta automaticamente segun tu dispositivo',
   },
@@ -415,7 +415,7 @@ export default function SettingsPage() {
           <section className="settings-section">
             <div className="settings-section-header">
               <div className="settings-section-icon">
-                <IconTransfer width={20} height={20} />
+                <ArrowLeftRight size={20} />
               </div>
               <h2 className="settings-section-title">Transferir propiedad</h2>
             </div>
@@ -433,7 +433,7 @@ export default function SettingsPage() {
                         {pendingTransfer.status === 'accepted' ? 'Aceptada' : 'Pendiente'}
                       </span>
                       <div className="flex items-center text-xs text-text-tertiary">
-                        <IconClock width={14} height={14} className="mr-1" />
+                        <Clock size={14} className="mr-1" />
                         {formatTimeRemaining(pendingTransfer.expiresAt)}
                       </div>
                     </div>
@@ -470,7 +470,7 @@ export default function SettingsPage() {
                         }}
                         className="btn btn-secondary flex-1"
                       >
-                        <IconCopy width={16} height={16} />
+                        <Copy size={16} />
                         <span>Copiar enlace</span>
                       </button>
                     )}
@@ -508,7 +508,7 @@ export default function SettingsPage() {
           <section className="settings-section">
             <div className="settings-section-header">
               <div className="settings-section-icon">
-                <IconTransfer width={20} height={20} />
+                <ArrowLeftRight size={20} />
               </div>
               <h2 className="settings-section-title">Transferencia pendiente</h2>
             </div>
@@ -527,7 +527,7 @@ export default function SettingsPage() {
                           Esperando confirmacion
                         </span>
                         <div className="flex items-center text-xs text-text-tertiary">
-                          <IconClock width={14} height={14} className="mr-1" />
+                          <Clock size={14} className="mr-1" />
                           {formatTimeRemaining(incomingTransfer.expiresAt)}
                         </div>
                       </div>
@@ -549,7 +549,7 @@ export default function SettingsPage() {
                             Nueva
                           </span>
                           <div className="flex items-center text-xs text-text-tertiary">
-                            <IconClock width={14} height={14} className="mr-1" />
+                            <Clock size={14} className="mr-1" />
                             {formatTimeRemaining(incomingTransfer.expiresAt)}
                           </div>
                         </div>
@@ -583,7 +583,7 @@ export default function SettingsPage() {
         <section className="settings-section">
           <div className="settings-section-header">
             <div className="settings-section-icon">
-              <IconPhone width={20} height={20} />
+              <Phone size={20} />
             </div>
             <h2 className="settings-section-title">Cuenta</h2>
           </div>
@@ -608,7 +608,7 @@ export default function SettingsPage() {
         <section className="settings-section">
           <div className="settings-section-header">
             <div className="settings-section-icon">
-              <IconLock width={20} height={20} />
+              <Lock size={20} />
             </div>
             <h2 className="settings-section-title">Seguridad</h2>
           </div>
@@ -626,7 +626,7 @@ export default function SettingsPage() {
         <section className="settings-section">
           <div className="settings-section-header">
             <div className="settings-section-icon">
-              <IconPalette width={20} height={20} />
+              <Palette size={20} />
             </div>
             <h2 className="settings-section-title">Apariencia</h2>
           </div>
@@ -671,7 +671,7 @@ export default function SettingsPage() {
         <section className="settings-section">
           <div className="settings-section-header">
             <div className="settings-section-icon">
-              <IconInfo width={20} height={20} />
+              <Info size={20} />
             </div>
             <h2 className="settings-section-title">Acerca de</h2>
           </div>
@@ -682,7 +682,7 @@ export default function SettingsPage() {
             </div>
             <div className="settings-info-row">
               <span className="settings-info-label">Desarrollado por</span>
-              <span className="settings-info-value">Mr. Chifles</span>
+              <span className="settings-info-value">Feria POS</span>
             </div>
           </div>
         </section>
@@ -699,7 +699,7 @@ export default function SettingsPage() {
                 onClick={() => setShowTransferModal(false)}
                 className="modal-close"
               >
-                <IconClose width={20} height={20} />
+                <X size={20} />
               </button>
             </div>
 
@@ -761,7 +761,7 @@ export default function SettingsPage() {
                 onClick={() => setShowTransferLinkModal(false)}
                 className="modal-close"
               >
-                <IconClose width={20} height={20} />
+                <X size={20} />
               </button>
             </div>
 
@@ -777,9 +777,9 @@ export default function SettingsPage() {
               >
                 <span className="text-sm font-mono truncate pr-2">{transferLink}</span>
                 {linkCopied ? (
-                  <IconCheck className="w-5 h-5 text-success flex-shrink-0" />
+                  <Check className="w-5 h-5 text-success flex-shrink-0" />
                 ) : (
-                  <IconCopy className="w-5 h-5 text-text-secondary flex-shrink-0" />
+                  <Copy className="w-5 h-5 text-text-secondary flex-shrink-0" />
                 )}
               </button>
 
@@ -810,7 +810,7 @@ export default function SettingsPage() {
                 onClick={() => setShowConfirmModal(false)}
                 className="modal-close"
               >
-                <IconClose width={20} height={20} />
+                <X size={20} />
               </button>
             </div>
 
@@ -862,7 +862,7 @@ export default function SettingsPage() {
                 onClick={handleClosePhoneChangeModal}
                 className="modal-close"
               >
-                <IconClose width={20} height={20} />
+                <X size={20} />
               </button>
             </div>
 

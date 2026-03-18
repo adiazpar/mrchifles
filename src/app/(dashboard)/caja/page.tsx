@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useHeader } from '@/contexts/header-context'
 import { Spinner, Modal } from '@/components/ui'
-import { IconAdd, IconIngreso, IconRetiro, IconCheck, IconClock, IconChevronRight, IconCloseDrawer, IconMovement, IconCoins, IconHistory, IconArrowUp, IconTrash } from '@/components/icons'
+import { Plus, ArrowDownCircle, ArrowUpCircle, PackageOpen, Receipt, Coins, History, ArrowUp, Trash2 } from 'lucide-react'
 import { BalanceHero } from '@/components/caja/BalanceHero'
 import { CloseDrawerModal } from '@/components/caja/CloseDrawerModal'
 import { LottiePlayer } from '@/components/animations'
@@ -520,7 +520,7 @@ export default function CajaPage() {
                 onClick={() => setIsCloseDrawerModalOpen(true)}
                 className="caja-action-btn"
               >
-                <IconCloseDrawer className="caja-action-btn__icon text-error" />
+                <PackageOpen className="caja-action-btn__icon text-error" />
                 Cerrar
               </button>
             ) : (
@@ -529,7 +529,7 @@ export default function CajaPage() {
                 onClick={() => setIsOpenDrawerModalOpen(true)}
                 className="caja-action-btn"
               >
-                <IconAdd className="caja-action-btn__icon text-success" />
+                <Plus className="caja-action-btn__icon text-success" />
                 Abrir
               </button>
             )}
@@ -538,7 +538,7 @@ export default function CajaPage() {
               onClick={() => router.push('/caja/historial')}
               className="caja-action-btn"
             >
-              <IconHistory className="caja-action-btn__icon" />
+              <History className="caja-action-btn__icon" />
               Historial
             </button>
             {/* Row 2: Movimientos, Prestamos */}
@@ -548,7 +548,7 @@ export default function CajaPage() {
               className="caja-action-btn"
               disabled={!currentSession}
             >
-              <IconMovement className="caja-action-btn__icon text-brand" />
+              <Receipt className="caja-action-btn__icon text-brand" />
               Movimientos ({movements.length})
             </button>
             <button
@@ -557,7 +557,7 @@ export default function CajaPage() {
               className="caja-action-btn"
               disabled={!currentSession}
             >
-              <IconCoins className="caja-action-btn__icon text-warning" />
+              <Coins className="caja-action-btn__icon text-warning" />
               Prestamos ({outstandingLoans.size})
             </button>
           </div>
@@ -629,9 +629,9 @@ export default function CajaPage() {
                           }`}
                         >
                           {mov.type === 'ingreso' ? (
-                            <IconIngreso className="w-5 h-5" />
+                            <ArrowDownCircle className="w-5 h-5" />
                           ) : (
-                            <IconRetiro className="w-5 h-5" />
+                            <ArrowUpCircle className="w-5 h-5" />
                           )}
                         </div>
                       )}
@@ -669,7 +669,7 @@ export default function CajaPage() {
                   onClick={scrollToTop}
                   className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
                 >
-                  <IconArrowUp className="w-4 h-4" />
+                  <ArrowUp className="w-4 h-4" />
                   Volver arriba
                 </button>
               )}
@@ -679,7 +679,6 @@ export default function CajaPage() {
           {/* Closed state - centered message */}
           {!currentSession && (
             <div className="empty-state-fill">
-              <IconCloseDrawer className="empty-state-icon" />
               <p className="empty-state-description">
                 La caja esta cerrada
               </p>
@@ -778,7 +777,7 @@ export default function CajaPage() {
                   : 'bg-bg-muted text-text-secondary hover:text-text-primary'
               }`}
             >
-              <IconIngreso className="w-5 h-5" />
+              <ArrowDownCircle className="w-5 h-5" />
               Ingreso
             </button>
             <button
@@ -793,7 +792,7 @@ export default function CajaPage() {
                   : 'bg-bg-muted text-text-secondary hover:text-text-primary'
               }`}
             >
-              <IconRetiro className="w-5 h-5" />
+              <ArrowUpCircle className="w-5 h-5" />
               Retiro
             </button>
           </div>
@@ -946,9 +945,9 @@ export default function CajaPage() {
                         }`}
                       >
                         {mov.type === 'ingreso' ? (
-                          <IconIngreso className="w-5 h-5" />
+                          <ArrowDownCircle className="w-5 h-5" />
                         ) : (
-                          <IconRetiro className="w-5 h-5" />
+                          <ArrowUpCircle className="w-5 h-5" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0 h-10 flex flex-col justify-between">
@@ -1026,7 +1025,7 @@ export default function CajaPage() {
                     : 'bg-bg-muted text-text-secondary hover:text-text-primary'
                 }`}
               >
-                <IconIngreso className="w-5 h-5" />
+                <ArrowDownCircle className="w-5 h-5" />
                 Ingreso
               </button>
               <button
@@ -1041,7 +1040,7 @@ export default function CajaPage() {
                     : 'bg-bg-muted text-text-secondary hover:text-text-primary'
                 }`}
               >
-                <IconRetiro className="w-5 h-5" />
+                <ArrowUpCircle className="w-5 h-5" />
                 Retiro
               </button>
             </div>
@@ -1093,7 +1092,7 @@ export default function CajaPage() {
 
           <Modal.Footer>
             <Modal.NextButton className="btn-icon !bg-transparent text-error hover:!bg-error-subtle rounded-lg">
-              <IconTrash className="w-5 h-5" />
+              <Trash2 className="w-5 h-5" />
             </Modal.NextButton>
             <div className="flex-1" />
             <button
