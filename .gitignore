@@ -41,9 +41,3 @@ yarn-error.log*
 
 # Testing
 coverage/
-
-# Certificates
-certificates
-
-# Serena
-.serena/
