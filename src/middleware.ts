@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Middleware for the Mr. Chifles application
+ * Middleware for Feria POS
  *
  * Note: Auth checks are handled client-side via AuthGuard component
  * because PocketBase uses localStorage (not cookies) for auth state.

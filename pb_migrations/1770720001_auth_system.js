@@ -73,7 +73,9 @@ migrate((app) => {
   // - Server-side hook enforces that only owners can change role/status of others
   users.updateRule = '@request.auth.id = id || @request.auth.role ?= "owner"'
 
-  // User creation is handled by PocketBase auth - server-side hook enforces owner uniqueness
+  // Allow public user creation for registration
+  // Server-side logic enforces: only one owner, invite code required for others
+  users.createRule = ''
 
   app.save(users)
 

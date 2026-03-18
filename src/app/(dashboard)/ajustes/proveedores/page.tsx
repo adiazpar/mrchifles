@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Spinner, Modal } from '@/components/ui'
 import { useHeader } from '@/contexts/header-context'
-import { IconAdd, IconChevronRight } from '@/components/icons'
+import { Plus, ChevronRight } from 'lucide-react'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { useAuth } from '@/contexts/auth-context'
 import { isPartnerOrOwner } from '@/lib/auth'
@@ -186,7 +186,7 @@ export default function ProveedoresPage() {
               onClick={() => handleOpenModal()}
               className="btn btn-primary btn-sm"
             >
-              <IconAdd className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
               Agregar
             </button>
           )}
@@ -226,7 +226,7 @@ export default function ProveedoresPage() {
 
               {/* Chevron indicator */}
               <div className="text-text-secondary">
-                <IconChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-5 h-5" />
               </div>
             </div>
           ))}

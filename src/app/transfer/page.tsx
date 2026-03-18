@@ -494,7 +494,7 @@ function TransferPageContent() {
           <div className="text-center mb-6">
             <h2 className="text-xl font-display font-bold mb-2">Transferencia de propiedad</h2>
             <p className="text-sm text-text-tertiary">
-              {transferInfo?.ownerName} quiere transferirte la propiedad de Mr. Chifles
+              {transferInfo?.ownerName} quiere transferirte la propiedad del negocio
             </p>
           </div>
 

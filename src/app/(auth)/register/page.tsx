@@ -173,7 +173,7 @@ export default function RegisterPage() {
   if (step === 'phone') {
     return (
       <Card padding="lg">
-        <h2 className="text-xl font-display font-bold mb-1">Bienvenido a Mr. Chifles</h2>
+        <h2 className="text-xl font-display font-bold mb-1">Bienvenido a Feria POS</h2>
         <p className="text-sm text-text-tertiary mb-6">
           Configura tu cuenta de propietario para comenzar
         </p>

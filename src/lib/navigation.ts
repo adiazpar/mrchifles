@@ -1,10 +1,10 @@
 import {
-  IconHome,
-  IconSales,
-  IconProducts,
-  IconCashDrawer,
-  IconReports,
-} from '@/components/icons'
+  Home,
+  ShoppingCart,
+  Package,
+  Banknote,
+  BarChart3,
+} from 'lucide-react'
 import type { ComponentType } from 'react'
 
 export interface NavItem {
@@ -17,9 +17,9 @@ export interface NavItem {
  * Navigation items for sidebar (desktop) and mobile bottom nav
  */
 export const NAV_ITEMS: NavItem[] = [
-  { href: '/inicio', label: 'Inicio', icon: IconHome },
-  { href: '/ventas', label: 'Ventas', icon: IconSales },
-  { href: '/caja', label: 'Caja', icon: IconCashDrawer },
-  { href: '/productos', label: 'Productos', icon: IconProducts },
-  { href: '/reportes', label: 'Reportes', icon: IconReports },
+  { href: '/inicio', label: 'Inicio', icon: Home },
+  { href: '/ventas', label: 'Ventas', icon: ShoppingCart },
+  { href: '/caja', label: 'Caja', icon: Banknote },
+  { href: '/productos', label: 'Productos', icon: Package },
+  { href: '/reportes', label: 'Reportes', icon: BarChart3 },
 ]

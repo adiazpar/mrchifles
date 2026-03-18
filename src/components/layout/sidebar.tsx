@@ -15,12 +15,12 @@ export function Sidebar() {
         <Link href="/inicio" className="sidebar-brand">
           <Image
             src="/logo.png"
-            alt="Mr. Chifles"
+            alt="Feria POS"
             width={40}
             height={40}
             className="rounded-lg"
           />
-          <span className="sidebar-brand-text">Mr. Chifles</span>
+          <span className="sidebar-brand-text">Feria POS</span>
         </Link>
       </div>
 

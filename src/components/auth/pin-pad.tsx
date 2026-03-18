@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { IconClose, IconBackspace } from '@/components/icons'
+import { X, Delete } from 'lucide-react'
 
 interface PinPadProps {
   onComplete: (pin: string) => void
@@ -109,7 +109,7 @@ export function PinPad({
           disabled={disabled}
           aria-label="Borrar todo"
         >
-          <IconClose className="w-6 h-6" />
+          <X className="w-6 h-6" />
         </button>
         <button
           type="button"
@@ -127,7 +127,7 @@ export function PinPad({
           disabled={disabled}
           aria-label="Borrar"
         >
-          <IconBackspace className="w-8 h-8" />
+          <Delete className="w-8 h-8" />
         </button>
       </div>
     </div>
