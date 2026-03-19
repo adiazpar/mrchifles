@@ -1,48 +1,34 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 /**
- * Migration: Ownership Transfers System
+ * Ownership Transfer Schema Migration
  *
- * Creates ownership_transfers collection for transferring business ownership
- * - Owner can initiate transfer to another phone number
- * - Recipient accepts via WhatsApp link
- * - Owner confirms with PIN to finalize
- * - Old owner becomes partner, recipient becomes owner
+ * Creates the ownership_transfers collection for tracking business ownership transfers
  */
 
-const OWNERSHIP_TRANSFERS_ID = "owntransfer01"
-
 migrate((app) => {
-  // ============================================
-  // OWNERSHIP_TRANSFERS COLLECTION
-  // ============================================
-  const ownershipTransfers = new Collection({
-    id: OWNERSHIP_TRANSFERS_ID,
+  const collection = new Collection({
+    id: "owntransfer01",
     name: 'ownership_transfers',
     type: 'base',
     system: false,
-    // Access rules:
-    // - Only owners can create/view their transfers
-    // - Public read for code validation (done via server endpoint)
-    // - Updates handled via server-side endpoints
-    listRule: '@request.auth.role ?= "owner"',
-    viewRule: '@request.auth.role ?= "owner"',
-    createRule: '@request.auth.role ?= "owner"',
-    updateRule: null, // Only via server-side endpoints
-    deleteRule: '@request.auth.role ?= "owner"',
+    listRule: "@request.auth.id != ''",
+    viewRule: "@request.auth.id != ''",
+    createRule: "@request.auth.role = 'owner'",
+    updateRule: "@request.auth.id != ''",
+    deleteRule: null,
     fields: [
       {
-        id: "otcode000001",
+        id: "owtcode00001",
         name: 'code',
         type: 'text',
         required: true,
-        presentable: true,
         min: 8,
         max: 8,
-        pattern: "^[A-Z0-9]{8}$",
+        pattern: '^[A-Z0-9]{8}$',
       },
       {
-        id: "otfromuser01",
+        id: "owtfromuser1",
         name: 'fromUser',
         type: 'relation',
         required: true,
@@ -51,15 +37,14 @@ migrate((app) => {
         maxSelect: 1,
       },
       {
-        id: "ottophone001",
+        id: "owttophone01",
         name: 'toPhone',
         type: 'text',
         required: true,
-        min: 10,
-        max: 20,
+        pattern: '^\\+[1-9]\\d{6,14}$',
       },
       {
-        id: "ottouser001",
+        id: "owttouser001",
         name: 'toUser',
         type: 'relation',
         required: false,
@@ -68,7 +53,7 @@ migrate((app) => {
         maxSelect: 1,
       },
       {
-        id: "otstatus0001",
+        id: "owtstatus001",
         name: 'status',
         type: 'select',
         required: true,
@@ -76,32 +61,32 @@ migrate((app) => {
         maxSelect: 1,
       },
       {
-        id: "otexpiresat1",
+        id: "owtexpires01",
         name: 'expiresAt',
         type: 'date',
         required: true,
       },
       {
-        id: "otacceptedat",
+        id: "owtaccepted1",
         name: 'acceptedAt',
         type: 'date',
         required: false,
       },
       {
-        id: "otcompleteat",
+        id: "owtcomplete1",
         name: 'completedAt',
         type: 'date',
         required: false,
       },
       {
-        id: "otcreated001",
+        id: "owtcreated01",
         name: 'created',
         type: 'autodate',
         onCreate: true,
         onUpdate: false,
       },
       {
-        id: "otupdated001",
+        id: "owtupdated01",
         name: 'updated',
         type: 'autodate',
         onCreate: true,
@@ -110,18 +95,17 @@ migrate((app) => {
     ],
     indexes: [
       "CREATE UNIQUE INDEX idx_transfer_code ON ownership_transfers (code)",
-      "CREATE INDEX idx_transfer_status ON ownership_transfers (status)",
-      "CREATE INDEX idx_transfer_from ON ownership_transfers (fromUser)"
     ],
   })
-  app.save(ownershipTransfers)
+
+  app.save(collection)
 
 }, (app) => {
   // Revert migration
   try {
-    const ownershipTransfers = app.findCollectionByNameOrId('ownership_transfers')
-    if (ownershipTransfers) {
-      app.delete(ownershipTransfers)
+    const collection = app.findCollectionByNameOrId("ownership_transfers")
+    if (collection) {
+      app.delete(collection)
     }
   } catch (e) {
     // Collection doesn't exist, skip

@@ -148,9 +148,8 @@ export default function ProductosPage() {
   const [productDeleted, setProductDeleted] = useState(false)
   const [productSaved, setProductSaved] = useState(false)
 
-  // Stock adjustment form state (used in modal step 1)
-  const [adjustmentQuantity, setAdjustmentQuantity] = useState(0)
-  const [adjustmentNotes, setAdjustmentNotes] = useState('')
+  // Stock adjustment form state (used in modal step 4)
+  const [newStockValue, setNewStockValue] = useState(0)
   const [isAdjusting, setIsAdjusting] = useState(false)
 
   // Orders state (for Pedidos tab)
@@ -418,9 +417,8 @@ export default function ProductosPage() {
     if (compression.state.isProcessing) {
       compression.cancel()
     }
-    // Reset adjustment form state
-    setAdjustmentQuantity(0)
-    setAdjustmentNotes('')
+    // Reset adjustment form state - initialize with current stock
+    setNewStockValue(product.stock ?? 0)
     setError('')
     setIsModalOpen(true)
   }, [pipeline, compression])
@@ -566,21 +564,15 @@ export default function ProductosPage() {
     }
   }, [name, price, category, active, generatedIconBlob, editingProduct, pb])
 
-  // Stock adjustment handler
+  // Stock adjustment handler - directly sets new stock value
   const handleSaveAdjustment = useCallback(async () => {
     if (!editingProduct) return
 
-    if (adjustmentQuantity === 0) {
-      setError('Selecciona una cantidad diferente de 0')
-      return
-    }
-
     const currentStock = editingProduct.stock ?? 0
-    const newStock = currentStock + adjustmentQuantity
 
-    // Check if removing more than available
-    if (newStock < 0) {
-      setError(`No puedes remover mas de ${currentStock} unidades`)
+    // No change needed
+    if (newStockValue === currentStock) {
+      handleCloseModal()
       return
     }
 
@@ -588,31 +580,18 @@ export default function ProductosPage() {
     setError('')
 
     try {
-      // Update product stock
+      // Update product stock directly
       await pb.collection('products').update(editingProduct.id, {
-        stock: newStock
-      })
-
-      // Create inventory transaction for tracking
-      await pb.collection('inventory_transactions').create({
-        date: new Date().toISOString(),
-        product: editingProduct.id,
-        type: 'adjustment',
-        quantity: adjustmentQuantity,
-        notes: adjustmentNotes || (adjustmentQuantity > 0 ? 'Ajuste positivo' : 'Ajuste negativo'),
-        createdBy: user?.id,
+        stock: newStockValue
       })
 
       // Update local state
       setProducts(prev =>
         prev.map(p =>
-          p.id === editingProduct.id ? { ...p, stock: newStock } : p
+          p.id === editingProduct.id ? { ...p, stock: newStockValue } : p
         )
       )
 
-      // Reset adjustment form state
-      setAdjustmentQuantity(0)
-      setAdjustmentNotes('')
       handleCloseModal()
     } catch (err) {
       console.error('Error adjusting stock:', err)
@@ -620,7 +599,7 @@ export default function ProductosPage() {
     } finally {
       setIsAdjusting(false)
     }
-  }, [editingProduct, adjustmentQuantity, adjustmentNotes, pb, user?.id, handleCloseModal])
+  }, [editingProduct, newStockValue, pb, handleCloseModal])
 
   const scrollToTop = useCallback(() => {
     // The scrolling container is the .with-sidebar div, not window
@@ -716,6 +695,7 @@ export default function ProductosPage() {
         await pb.collection('order_items').create({
           order: order.id,
           product: item.product.id,
+          productName: item.product.name,
           quantity: item.quantity,
         })
       }
@@ -785,6 +765,7 @@ export default function ProductosPage() {
         await pb.collection('order_items').create({
           order: editingOrder.id,
           product: item.product.id,
+          productName: item.product.name,
           quantity: item.quantity,
         })
       }
@@ -895,23 +876,6 @@ export default function ProductosPage() {
           // Get the received quantity (may be different from ordered)
           const receivedQty = receivedQuantities[item.id] ?? item.quantity
           if (receivedQty <= 0) continue // Skip items not received
-
-          // Build notes based on whether quantity differs
-          const orderedQty = item.quantity
-          const notes = receivedQty !== orderedQty
-            ? `Pedido recibido (${receivedQty} de ${orderedQty} ordenados)`
-            : `Pedido recibido`
-
-          // Create inventory transaction
-          await pb.collection('inventory_transactions').create({
-            date: now,
-            product: product.id,
-            quantity: receivedQty,
-            type: 'purchase',
-            order: viewingOrder.id,
-            createdBy: user.id,
-            notes,
-          })
 
           // Update product stock
           const currentStock = product.stock || 0
@@ -1249,7 +1213,7 @@ export default function ProductosPage() {
                       onClick={handleOpenAdd}
                       className="btn btn-primary btn-sm"
                     >
-                      <PlusCircle className="w-4 h-4" />
+                      <Plus className="w-4 h-4" />
                       Agregar
                     </button>
                   </div>
@@ -1916,30 +1880,25 @@ export default function ProductosPage() {
 
         {/* Adjust inventory - single step with stepper */}
         <Modal.Step title="Ajustar inventario" backStep={1}>
-          {/* Product info */}
+          {/* Product icon and name - large, centered, main focus */}
           {editingProduct && (
             <Modal.Item>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg overflow-hidden flex items-center justify-center bg-bg-muted">
+              <div className="flex flex-col items-center py-6">
+                <div className="w-56 h-56 rounded-3xl overflow-hidden flex items-center justify-center">
                   {editingProduct.icon ? (
                     <Image
                       src={getProductIconUrl(editingProduct)!}
                       alt={editingProduct.name}
-                      width={48}
-                      height={48}
+                      width={224}
+                      height={224}
                       className="object-cover w-full h-full"
                       unoptimized
                     />
                   ) : (
-                    <ImageIcon className="w-5 h-5 text-text-tertiary" />
+                    <ImageIcon className="w-20 h-20 text-text-tertiary" />
                   )}
                 </div>
-                <div>
-                  <div className="font-medium">{editingProduct.name}</div>
-                  <div className="text-sm text-text-secondary">
-                    Stock actual: <span className="font-medium">{editingProduct.stock ?? 0}</span>
-                  </div>
-                </div>
+                <div className="font-medium text-lg mt-4">{editingProduct.name}</div>
               </div>
             </Modal.Item>
           )}
@@ -1952,26 +1911,11 @@ export default function ProductosPage() {
             </Modal.Item>
           )}
 
-          {/* Stock stepper */}
-          {editingProduct && (
-            <Modal.Item>
-              <StockStepper
-                value={adjustmentQuantity}
-                onChange={setAdjustmentQuantity}
-                currentStock={editingProduct.stock ?? 0}
-              />
-            </Modal.Item>
-          )}
-
-          {/* Notes */}
+          {/* Stock stepper - shows and sets absolute value */}
           <Modal.Item>
-            <label className="label">Notas (opcional)</label>
-            <textarea
-              value={adjustmentNotes}
-              onChange={e => setAdjustmentNotes(e.target.value)}
-              className="input"
-              rows={2}
-              placeholder="Detalles adicionales..."
+            <StockStepper
+              value={newStockValue}
+              onChange={setNewStockValue}
             />
           </Modal.Item>
 
@@ -1982,8 +1926,8 @@ export default function ProductosPage() {
             <button
               type="button"
               onClick={handleSaveAdjustment}
-              className={`btn flex-1 ${adjustmentQuantity < 0 ? 'btn-danger' : 'btn-primary'}`}
-              disabled={isAdjusting || adjustmentQuantity === 0}
+              className="btn btn-primary flex-1"
+              disabled={isAdjusting || newStockValue === (editingProduct?.stock ?? 0)}
             >
               {isAdjusting ? <Spinner /> : 'Guardar'}
             </button>
@@ -2632,7 +2576,7 @@ export default function ProductosPage() {
               <div className="space-y-1">
                 {viewingOrder.expand?.['order_items(order)']?.map(item => (
                   <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-text-secondary">{item.expand?.product?.name || 'Producto'}</span>
+                    <span className="text-text-secondary">{item.productName}</span>
                     <span className="text-text-secondary">{item.quantity}x</span>
                   </div>
                 ))}
@@ -3015,7 +2959,7 @@ export default function ProductosPage() {
                       </div>
                       {/* Product name and ordered qty */}
                       <div className="flex-1 min-w-0">
-                        <span className="block text-sm font-medium truncate">{product?.name || 'Producto'}</span>
+                        <span className="block text-sm font-medium truncate">{item.productName}</span>
                         <span className="text-xs text-text-tertiary">Ordenado: {orderedQty}</span>
                       </div>
                       {/* Quantity controls */}
