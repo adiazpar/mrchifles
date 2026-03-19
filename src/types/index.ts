@@ -153,7 +153,8 @@ export interface Order {
 export interface OrderItem {
   id: string
   order: string // Relation ID
-  product: string // Relation ID
+  product?: string // Relation ID (optional - null if product deleted)
+  productName: string // Snapshot of product name at order time
   quantity: number // Units ordered
   created: string
   // Expanded relations
@@ -202,37 +203,6 @@ export interface CartItem {
 export interface Cart {
   items: CartItem[]
   total: number
-}
-
-// ============================================
-// INVENTORY TRANSACTION TYPES
-// ============================================
-
-export type InventoryTransactionType =
-  | 'purchase'   // Stock in from supplier order
-  | 'sale'       // Stock out from customer sale
-  | 'adjustment' // Manual stock adjustment
-  | 'waste'      // Stock lost to waste/damage
-  | 'correction' // Inventory count correction
-
-export interface InventoryTransaction {
-  id: string
-  date: string
-  product: string // Relation ID
-  quantity: number // Positive = in, Negative = out
-  type: InventoryTransactionType
-  order?: string // Relation ID (for purchase type)
-  sale?: string // Relation ID (for sale type)
-  notes?: string
-  createdBy: string // Relation ID to user
-  created: string
-  // Expanded relations
-  expand?: {
-    product?: Product
-    order?: Order
-    sale?: Sale
-    createdBy?: User
-  }
 }
 
 // ============================================
