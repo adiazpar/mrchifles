@@ -1091,7 +1091,7 @@ export default function CajaPage() {
           </Modal.Item>
 
           <Modal.Footer>
-            <Modal.NextButton className="btn-icon !bg-transparent text-error hover:!bg-error-subtle rounded-lg">
+            <Modal.NextButton className="btn btn-secondary">
               <Trash2 className="w-5 h-5" />
             </Modal.NextButton>
             <div className="flex-1" />

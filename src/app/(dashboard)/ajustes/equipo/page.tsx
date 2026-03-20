@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } fr
 import Link from 'next/link'
 import QRCode from 'qrcode'
 import { Badge, Spinner, Modal, useMorphingModal } from '@/components/ui'
+import { LottiePlayer } from '@/components/animations/LottiePlayer'
 import { useHeader } from '@/contexts/header-context'
-import { User as UserIcon, UserCircle, Check, RefreshCw, Copy, Trash2, Plus, Phone } from 'lucide-react'
+import { User as UserIcon, UserCircle, Check, RefreshCw, Copy, Trash2, Plus, Phone, ChevronRight } from 'lucide-react'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { useAuth } from '@/contexts/auth-context'
 import {
@@ -548,6 +549,10 @@ export default function TeamPage() {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
   const copyFeedbackTimerRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Code delete state
+  const [isDeletingCode, setIsDeletingCode] = useState(false)
+  const [codeDeleted, setCodeDeleted] = useState(false)
+
   // User management modal state
   const [selectedMember, setSelectedMember] = useState<User | null>(null)
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
@@ -710,15 +715,6 @@ export default function TeamPage() {
     }
   }, [])
 
-  const handleDeleteCode = useCallback(async (codeId: string) => {
-    try {
-      await pb.collection('invite_codes').delete(codeId)
-      setInviteCodes(prev => prev.filter(c => c.id !== codeId))
-    } catch (err) {
-      console.error('Error deleting code:', err)
-    }
-  }, [pb])
-
   const handleRegenerateCode = useCallback(async () => {
     if (!user || !generatedCodeId) return
 
@@ -817,6 +813,7 @@ export default function TeamPage() {
     setQrDataUrl(null)
     setError('')
     setSelectedRole('employee')
+    setCodeDeleted(false)
     // Clear copy feedback timer and state
     if (copyFeedbackTimerRef.current) {
       clearTimeout(copyFeedbackTimerRef.current)
@@ -972,6 +969,39 @@ export default function TeamPage() {
     }
   }, [selectedMember, pb])
 
+  // Delete code confirmation button (inside component to access state)
+  function ConfirmDeleteCodeButton() {
+    const { goToStep } = useMorphingModal()
+
+    const handleClick = async () => {
+      if (!generatedCodeId) return
+
+      setIsDeletingCode(true)
+
+      try {
+        await pb.collection('invite_codes').delete(generatedCodeId)
+        setInviteCodes(prev => prev.filter(c => c.id !== generatedCodeId))
+        setCodeDeleted(true)
+        goToStep(3) // Go to delete success step
+      } catch (err) {
+        console.error('Error deleting code:', err)
+      } finally {
+        setIsDeletingCode(false)
+      }
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        className="btn btn-danger flex-1"
+        disabled={isDeletingCode}
+      >
+        {isDeletingCode ? <Spinner /> : 'Eliminar'}
+      </button>
+    )
+  }
+
   if (isLoading) {
     return (
       <main className="page-content flex items-center justify-center">
@@ -989,144 +1019,126 @@ export default function TeamPage() {
           </div>
         )}
 
-        {/* Team Members */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-text-secondary">
-            {teamMembers.length} {teamMembers.length === 1 ? 'miembro' : 'miembros'}
-          </span>
-          {canManageTeam && (
-            <button
-              type="button"
-              onClick={handleOpenModal}
-              className="btn btn-primary btn-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Agregar
-            </button>
-          )}
-        </div>
-
-        <div className="space-y-1">
-          {sortedTeamMembers.map((member, index) => {
-            const isSelf = member.id === user?.id
-            return (
-              <div
-                key={member.id}
-                className={`list-item-clickable ${isEntering ? 'entering' : ''}`}
-                style={isEntering ? { animationDelay: `${index * 30}ms` } : undefined}
-                onClick={() => handleOpenUserModal(member)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    handleOpenUserModal(member)
-                  }
-                }}
-                tabIndex={0}
-                role="button"
+        {/* Team Members Card */}
+        <div className="card p-4 space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-secondary">
+              {teamMembers.length} {teamMembers.length === 1 ? 'miembro' : 'miembros'}
+            </span>
+            {canManageTeam && (
+              <button
+                type="button"
+                onClick={handleOpenModal}
+                className="btn btn-primary btn-sm"
               >
-                <div className="sidebar-user-avatar">
-                  {getUserInitials(member.name)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium truncate">{member.name}</span>
-                    {isSelf && (
-                      <span className="text-xs text-text-tertiary">(Tu)</span>
-                    )}
+                <Plus className="w-4 h-4" />
+                Agregar
+              </button>
+            )}
+          </div>
+
+          {/* Team List */}
+          <div className="space-y-2">
+            {sortedTeamMembers.map((member, index) => {
+              const isSelf = member.id === user?.id
+              return (
+                <div
+                  key={member.id}
+                  className={`list-item-clickable list-item-flat ${isEntering ? 'entering' : ''}`}
+                  style={isEntering ? { animationDelay: `${index * 30}ms` } : undefined}
+                  onClick={() => handleOpenUserModal(member)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleOpenUserModal(member)
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                >
+                  {/* Avatar */}
+                  <div className="w-12 h-12 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-brand">
+                      {getUserInitials(member.name)}
+                    </span>
                   </div>
-                  <div className="text-xs text-text-tertiary mt-0.5">
-                    {getRoleLabel(member.role)}
-                    <span className="mx-1.5">·</span>
-                    <span className={member.status === 'active' ? 'text-success' : 'text-error'}>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium truncate">{member.name}</span>
+                      {isSelf && (
+                        <span className="text-xs text-text-tertiary">(Tu)</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-text-tertiary mt-0.5 block">
+                      {getRoleLabel(member.role)}
+                    </span>
+                  </div>
+
+                  {/* Status */}
+                  <div className="text-right">
+                    <span className={`text-xs font-medium ${member.status === 'active' ? 'text-success' : 'text-error'}`}>
                       {member.status === 'active' ? 'Activo' : 'Deshabilitado'}
                     </span>
                   </div>
-                </div>
 
-                {/* Chevron indicator */}
-                <div className="text-text-secondary">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  {/* Chevron */}
+                  <div className="text-text-tertiary ml-2">
+                    <ChevronRight className="w-5 h-5" />
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
 
-        {/* Active Invite Codes Section */}
+        {/* Active Invite Codes Card */}
         {canManageTeam && inviteCodes.length > 0 && (
-          <>
-            <div className="flex items-center justify-between mt-6">
+          <div className="card p-4 space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
               <span className="text-sm text-text-secondary">
                 {inviteCodes.length} {inviteCodes.length === 1 ? 'codigo activo' : 'codigos activos'}
               </span>
             </div>
-            <div className="space-y-1">
+
+            {/* Codes List */}
+            <div className="space-y-2">
               {inviteCodes.map((code, index) => (
-                <button
+                <div
                   key={code.id}
-                  type="button"
-                  onClick={() => handleOpenExistingCode(code)}
-                  className={`list-item-clickable w-full text-left ${isEntering ? 'entering' : ''}`}
+                  className={`list-item-clickable list-item-flat ${isEntering ? 'entering' : ''}`}
                   style={isEntering ? { animationDelay: `${(sortedTeamMembers.length + index) * 30}ms` } : undefined}
+                  onClick={() => handleOpenExistingCode(code)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleOpenExistingCode(code)
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
                 >
+                  {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <code className="font-display font-bold tracking-widest">
-                        {code.code}
-                      </code>
-                    </div>
-                    <div className="text-xs text-text-tertiary mt-1">
-                      {getInviteRoleLabel(code.role)} <span className="mx-1">·</span> Expira {formatDate(code.expiresAt)}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleCopyCode(code.code)
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.stopPropagation()
-                          handleCopyCode(code.code)
-                        }
-                      }}
-                      className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-brand-subtle transition-colors"
-                      title="Copiar codigo"
-                    >
-                      {copyFeedback === code.code ? (
-                        <Check className="w-4 h-4 text-success" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </span>
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteCode(code.id)
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.stopPropagation()
-                          handleDeleteCode(code.id)
-                        }
-                      }}
-                      className="p-2 rounded-lg text-text-secondary hover:text-error hover:bg-error-subtle transition-colors"
-                      title="Eliminar codigo"
-                    >
-                      <Trash2 className="w-4 h-4" />
+                    <code className="font-display font-bold tracking-widest">
+                      {code.code}
+                    </code>
+                    <span className="text-xs text-text-tertiary mt-0.5 block">
+                      {getInviteRoleLabel(code.role)} · Expira {formatDate(code.expiresAt)}
                     </span>
                   </div>
-                </button>
+
+                  {/* Chevron */}
+                  <div className="text-text-tertiary ml-2">
+                    <ChevronRight className="w-5 h-5" />
+                  </div>
+                </div>
               ))}
             </div>
-          </>
+          </div>
         )}
       </main>
 
@@ -1161,6 +1173,9 @@ export default function TeamPage() {
             />
           )}
           <Modal.Footer>
+            <Modal.GoToStepButton step={2} className="btn btn-secondary">
+              <Trash2 className="w-5 h-5" />
+            </Modal.GoToStepButton>
             <button
               type="button"
               onClick={() => newCode && handleCopyCode(newCode)}
@@ -1173,13 +1188,77 @@ export default function TeamPage() {
                 <Copy className="w-5 h-5" />
               )}
             </button>
-            <Modal.CancelBackButton />
             <button
               type="button"
               onClick={handleCloseModal}
               className="btn btn-primary flex-1"
             >
               Listo
+            </button>
+          </Modal.Footer>
+        </Modal.Step>
+
+        {/* Delete confirmation step */}
+        <Modal.Step title="Eliminar codigo" backStep={1}>
+          <Modal.Item>
+            <div className="text-center py-4">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-error-subtle flex items-center justify-center">
+                <Trash2 className="w-8 h-8 text-error" />
+              </div>
+              <h3 className="text-lg font-semibold text-text-primary mb-2">
+                Eliminar codigo de invitacion
+              </h3>
+              <p className="text-sm text-text-secondary">
+                El codigo <code className="font-bold">{newCode}</code> sera eliminado y ya no podra ser usado para registrarse.
+              </p>
+            </div>
+          </Modal.Item>
+
+          <Modal.Footer>
+            <Modal.GoToStepButton step={1} className="btn btn-secondary flex-1" disabled={isDeletingCode}>
+              Cancelar
+            </Modal.GoToStepButton>
+            <ConfirmDeleteCodeButton />
+          </Modal.Footer>
+        </Modal.Step>
+
+        {/* Delete success step */}
+        <Modal.Step title="Codigo eliminado" hideBackButton>
+          <Modal.Item>
+            <div className="flex flex-col items-center text-center py-4">
+              {/* Lottie animation */}
+              <div style={{ width: 160, height: 160 }}>
+                {codeDeleted && (
+                  <LottiePlayer
+                    src="/animations/error.json"
+                    loop={false}
+                    autoplay
+                    speed={1}
+                  />
+                )}
+              </div>
+              <p
+                className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
+                style={{ opacity: codeDeleted ? 1 : 0 }}
+              >
+                Codigo eliminado
+              </p>
+              <p
+                className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
+                style={{ opacity: codeDeleted ? 1 : 0 }}
+              >
+                El codigo de invitacion ha sido eliminado
+              </p>
+            </div>
+          </Modal.Item>
+
+          <Modal.Footer>
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="btn btn-primary flex-1"
+            >
+              Cerrar
             </button>
           </Modal.Footer>
         </Modal.Step>

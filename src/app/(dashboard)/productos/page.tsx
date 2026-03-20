@@ -1062,7 +1062,7 @@ export default function ProductosPage() {
       <button
         type="button"
         onClick={handleClick}
-        className="modal-action-adjust"
+        className="btn btn-secondary"
         title="Editar pedido"
       >
         <Pencil className="w-5 h-5" />
@@ -1716,16 +1716,15 @@ export default function ProductosPage() {
             {editingProduct && (
               <>
                 {canDelete && (
-                  <Modal.GoToStepButton step={5} className="btn-icon !bg-transparent text-error hover:!bg-error-subtle rounded-lg">
+                  <Modal.GoToStepButton step={5} className="btn btn-secondary">
                     <Trash2 className="w-5 h-5" />
                   </Modal.GoToStepButton>
                 )}
-                <Modal.GoToStepButton step={4} className="modal-action-adjust">
+                <Modal.GoToStepButton step={4} className="btn btn-secondary">
                   <SlidersHorizontal className="w-5 h-5" />
                 </Modal.GoToStepButton>
               </>
             )}
-            <Modal.CancelBackButton disabled={isSaving} />
             <SaveProductButton />
           </Modal.Footer>
         </Modal.Step>

@@ -2135,30 +2135,6 @@
     transform: scale(0.95);
   }
 
-  /* Adjust stock button in modal footer */
-  .modal-action-adjust {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-lg);
-    color: var(--color-text-secondary);
-    background: transparent;
-    transition: background var(--transition-fast), color var(--transition-fast);
-  }
-
-  @media (hover: hover) {
-    .modal-action-adjust:hover {
-      background: var(--color-warning-subtle);
-      color: var(--color-warning);
-    }
-  }
-
-  .modal-action-adjust:active {
-    transform: scale(0.95);
-  }
-
   /* Action buttons group (Cancel/Save) aligned to the right */
   .modal-actions {
     display: flex;
