@@ -160,8 +160,9 @@ function ModalBody({
   const { currentStep, targetStep, phase } = useModalContext()
 
   // Determine which step to use for footer extraction
-  // Use targetStep during transitions so footer animates with content
-  const footerStep = phase === 'idle' ? currentStep : targetStep
+  // During exiting: keep old footer (it's being animated out)
+  // During transitioning/entering: use new footer (it will animate in)
+  const footerStep = (phase === 'idle' || phase === 'exiting') ? currentStep : targetStep
 
   // Extract titles and footers from Step children
   useEffect(() => {
