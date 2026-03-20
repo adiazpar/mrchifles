@@ -2979,26 +2979,6 @@
     margin: 0;
   }
 
-  .change-pin-success {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-5);
-    text-align: center;
-  }
-
-  .change-pin-success-icon {
-    width: 72px;
-    height: 72px;
-    border-radius: var(--radius-full);
-    background: var(--color-success-subtle);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-success);
-    animation: scaleIn var(--transition-normal);
-  }
-
   .change-pin-footer {
     display: flex;
     flex-direction: column;
@@ -3336,8 +3316,6 @@
     position: sticky;
     top: calc(var(--header-height) + env(safe-area-inset-top, 0));
     z-index: 10;
-    /* Entrance animation */
-    animation: pageEnter var(--transition-normal) ease-out;
   }
 
   .section-tab {
@@ -3485,11 +3463,6 @@
   }
 }
 
-.animate-fadeIn { animation: fadeIn 0.2s ease-out; }
-.animate-fadeInUp { animation: fadeInUp 0.25s ease-out; }
-.animate-fadeInDown { animation: fadeInDown 0.25s ease-out; }
-.animate-scaleIn { animation: scaleIn 0.2s ease-out; }
-
 /* Skeleton loading */
 .skeleton {
   background: linear-gradient(
@@ -3536,21 +3509,6 @@
 .list-item-clickable:active {
   background: var(--color-bg-muted);
 }
-
-/* Staggered entrance for clickable list items */
-.list-item-clickable.entering {
-  animation: list-item-enter var(--duration-normal) var(--ease-out-expo) backwards;
-}
-
-.list-item-clickable:nth-child(1).entering { animation-delay: 0ms; }
-.list-item-clickable:nth-child(2).entering { animation-delay: 30ms; }
-.list-item-clickable:nth-child(3).entering { animation-delay: 60ms; }
-.list-item-clickable:nth-child(4).entering { animation-delay: 90ms; }
-.list-item-clickable:nth-child(5).entering { animation-delay: 120ms; }
-.list-item-clickable:nth-child(6).entering { animation-delay: 150ms; }
-.list-item-clickable:nth-child(7).entering { animation-delay: 180ms; }
-.list-item-clickable:nth-child(8).entering { animation-delay: 210ms; }
-.list-item-clickable:nth-child(n+9).entering { animation-delay: 240ms; }
 
 /* Non-clickable list item (has hover effects but no cursor change) */
 .list-item {
@@ -3633,28 +3591,6 @@
   transition: all var(--duration-fast) var(--ease-out-expo);
 }
 
-/* Staggered entrance for list items */
-.movement-item.entering {
-  animation: list-item-enter var(--duration-normal) var(--ease-out-expo) backwards;
-}
-
-.movement-item:nth-child(1).entering { animation-delay: 0ms; }
-.movement-item:nth-child(2).entering { animation-delay: 30ms; }
-.movement-item:nth-child(3).entering { animation-delay: 60ms; }
-.movement-item:nth-child(4).entering { animation-delay: 90ms; }
-.movement-item:nth-child(5).entering { animation-delay: 120ms; }
-
-@keyframes list-item-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* ===== Session History Cards ===== */
 .session-card {
   position: relative;
@@ -3675,20 +3611,6 @@
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
-
-/* Staggered entrance for session cards */
-.session-card.entering {
-  animation: list-item-enter var(--duration-normal) var(--ease-out-expo) backwards;
-}
-
-.session-card:nth-child(1).entering { animation-delay: 0ms; }
-.session-card:nth-child(2).entering { animation-delay: 40ms; }
-.session-card:nth-child(3).entering { animation-delay: 80ms; }
-.session-card:nth-child(4).entering { animation-delay: 120ms; }
-.session-card:nth-child(5).entering { animation-delay: 160ms; }
-.session-card:nth-child(6).entering { animation-delay: 200ms; }
-.session-card:nth-child(7).entering { animation-delay: 240ms; }
-.session-card:nth-child(8).entering { animation-delay: 280ms; }
 
 /* Session stats summary */
 .session-stats {
@@ -4044,18 +3966,13 @@
   to { opacity: 1; }
 }
 
-/* ===== Page Content Stagger ===== */
-.page-stagger > * {
-  animation: content-enter var(--duration-slow) var(--ease-out-expo) backwards;
+/* ===== Stagger Animation ===== */
+/* Used by <Stagger> component - delay set via inline styles */
+.stagger-item {
+  animation: stagger-enter var(--duration-slow) var(--ease-out-expo) backwards;
 }
 
-.page-stagger > *:nth-child(1) { animation-delay: 0ms; }
-.page-stagger > *:nth-child(2) { animation-delay: 50ms; }
-.page-stagger > *:nth-child(3) { animation-delay: 100ms; }
-.page-stagger > *:nth-child(4) { animation-delay: 150ms; }
-.page-stagger > *:nth-child(5) { animation-delay: 200ms; }
-
-@keyframes content-enter {
+@keyframes stagger-enter {
   from {
     opacity: 0;
     transform: translateY(12px);
@@ -4229,78 +4146,6 @@
   border: 1px solid hsla(0, 0%, 100%, 0.08);
 }
 
-/* ===== Success Overlay (Movement Recording) ===== */
-.success-overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: hsla(0, 0%, 0%, 0.6);
-  backdrop-filter: blur(8px);
-  z-index: var(--z-modal);
-  animation: success-overlay-enter var(--duration-fast) var(--ease-out-expo);
-}
-
-.success-overlay-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-8) var(--space-10);
-  background: var(--color-bg-surface);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-xl);
-  text-align: center;
-  animation: success-content-enter var(--duration-normal) var(--ease-out-back);
-}
-
-.success-overlay-icon {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--space-2);
-}
-
-.success-overlay-title {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.success-overlay-amount {
-  font-size: var(--text-display);
-  font-weight: 700;
-  font-family: var(--font-display);
-  letter-spacing: var(--tracking-tight);
-}
-
-.success-overlay-hint {
-  font-size: var(--text-sm);
-  color: var(--color-text-tertiary);
-  margin: var(--space-4) 0 0 0;
-}
-
-@keyframes success-overlay-enter {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes success-content-enter {
-  0% {
-    transform: scale(0.9) translateY(20px);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
-}
-
 /* ===== Lottie Placeholder ===== */
 .lottie-placeholder {
   width: 100%;
@@ -4318,10 +4163,5 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-
-  .success-overlay,
-  .success-overlay-content {
-    animation: none;
   }
 }

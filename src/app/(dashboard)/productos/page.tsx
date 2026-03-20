@@ -3,7 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import { useAiProductPipeline, useImageCompression } from '@/hooks'
-import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
+import { Spinner, Modal, useMorphingModal, StockStepper, Stagger } from '@/components/ui'
 import { LottiePlayer } from '@/components/animations/LottiePlayer'
 import { useHeader } from '@/contexts/header-context'
 import { Plus, X, Trash2, ImageIcon, Package, Search, ArrowUp, ArrowDown, Filter, Check, Pencil, ChevronRight, ChevronDown, AlertTriangle, Warehouse, SlidersHorizontal, PlusCircle, MinusCircle, CalendarClock, Focus } from 'lucide-react'
@@ -1136,8 +1136,9 @@ export default function ProductosPage() {
         </div>
 
         {activeTab === 'productos' ? (
-          <div className="page-body space-y-4 page-stagger">
-            {error && !isModalOpen && (
+          <div className="page-body space-y-4">
+            <Stagger delayMs={80} maxDelayMs={300}>
+              {error && !isModalOpen && (
               <div className="p-4 bg-error-subtle text-error rounded-lg">
                 {error}
               </div>
@@ -1331,11 +1332,13 @@ export default function ProductosPage() {
                 </button>
               </div>
             )}
+            </Stagger>
           </div>
         ) : (
           /* Pedidos tab */
-          <div className="page-body space-y-4 page-stagger">
-            {error && !isOrderModalOpen && (
+          <div className="page-body space-y-4">
+            <Stagger delayMs={80} maxDelayMs={300}>
+              {error && !isOrderModalOpen && (
               <div className="p-4 bg-error-subtle text-error rounded-lg">
                 {error}
               </div>
@@ -1519,6 +1522,7 @@ export default function ProductosPage() {
                 )}
               </>
             )}
+            </Stagger>
           </div>
         )}
       </main>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useHeader } from '@/contexts/header-context'
-import { Spinner, Modal } from '@/components/ui'
+import { Spinner, Modal, Stagger } from '@/components/ui'
 import { CheckCircle2, Clock, ChevronRight, ArrowDownCircle, ArrowUpCircle, ArrowUp } from 'lucide-react'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useAuth } from '@/contexts/auth-context'
@@ -165,8 +165,9 @@ export default function HistorialPage() {
   return (
     <div ref={scrollContainerRef} className="flex flex-col flex-1 min-h-0 overflow-y-auto">
       <main className="page-content page-content--no-navbar">
-        <div className="flex flex-col flex-1 gap-6 page-stagger">
-          {/* Summary Stats */}
+        <div className="flex flex-col flex-1 gap-6">
+          <Stagger delayMs={80} maxDelayMs={300}>
+            {/* Summary Stats */}
           <div className="session-stats" role="region" aria-label="Resumen de sesiones">
             <div className="session-stat">
               <div className="session-stat__value">{sessions.length}</div>
@@ -198,8 +199,7 @@ export default function HistorialPage() {
                 return (
                   <div
                     key={session.id}
-                    className="session-card entering"
-                    style={{ animationDelay: `${Math.min(index * 40, 280)}ms` }}
+                    className="session-card"
                     onClick={() => handleViewSessionDetail(session)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
@@ -275,17 +275,18 @@ export default function HistorialPage() {
             </div>
           )}
 
-          {/* Back to top button */}
-          {sessions.length > 5 && (
-            <button
-              type="button"
-              onClick={scrollToTop}
-              className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
-            >
-              <ArrowUp className="w-4 h-4" />
-              Volver arriba
-            </button>
-          )}
+            {/* Back to top button */}
+            {sessions.length > 5 && (
+              <button
+                type="button"
+                onClick={scrollToTop}
+                className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+              >
+                <ArrowUp className="w-4 h-4" />
+                Volver arriba
+              </button>
+            )}
+          </Stagger>
         </div>
       </main>
 

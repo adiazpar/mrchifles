@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import QRCode from 'qrcode'
-import { Badge, Spinner, Modal, useMorphingModal } from '@/components/ui'
+import { Badge, Spinner, Modal, useMorphingModal, Stagger } from '@/components/ui'
 import { LottiePlayer } from '@/components/animations/LottiePlayer'
 import { useHeader } from '@/contexts/header-context'
 import { User as UserIcon, UserCircle, Check, RefreshCw, Copy, Trash2, Plus, Phone, ChevronRight } from 'lucide-react'
@@ -1000,15 +1000,16 @@ export default function TeamPage() {
 
   return (
     <>
-      <main className="page-content space-y-6 page-stagger">
-        {error && (
-          <div className="p-4 bg-error-subtle text-error rounded-lg">
-            {error}
-          </div>
-        )}
+      <main className="page-content space-y-6">
+        <Stagger delayMs={80} maxDelayMs={300}>
+          {error && (
+            <div className="p-4 bg-error-subtle text-error rounded-lg">
+              {error}
+            </div>
+          )}
 
-        {/* Team Members Card */}
-        <div className="card p-4 space-y-4">
+          {/* Team Members Card */}
+          <div className="card p-4 space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between">
             <span className="text-sm text-text-secondary">
@@ -1035,8 +1036,7 @@ export default function TeamPage() {
               return (
                 <div
                   key={member.id}
-                  className="list-item-clickable list-item-flat entering"
-                  style={{ animationDelay: `${Math.min(index * 30, 150)}ms` }}
+                  className="list-item-clickable list-item-flat"
                   onClick={() => handleOpenUserModal(member)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -1101,8 +1101,7 @@ export default function TeamPage() {
               {inviteCodes.map((code, index) => (
                 <div
                   key={code.id}
-                  className="list-item-clickable list-item-flat entering"
-                  style={{ animationDelay: `${Math.min((sortedTeamMembers.length + index) * 30, 300)}ms` }}
+                  className="list-item-clickable list-item-flat"
                   onClick={() => handleOpenExistingCode(code)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -1132,6 +1131,7 @@ export default function TeamPage() {
             </div>
           </div>
         )}
+        </Stagger>
       </main>
 
       {/* Add Member Modal */}
