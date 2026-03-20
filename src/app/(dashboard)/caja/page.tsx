@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useHeader } from '@/contexts/header-context'
-import { Spinner, Modal } from '@/components/ui'
+import { Spinner, Modal, Stagger } from '@/components/ui'
 import { Plus, ArrowDownCircle, ArrowUpCircle, PackageOpen, Receipt, Coins, History, ArrowUp, Trash2 } from 'lucide-react'
 import { BalanceHero } from '@/components/caja/BalanceHero'
 import { CloseDrawerModal } from '@/components/caja/CloseDrawerModal'
@@ -496,9 +496,10 @@ export default function CajaPage() {
           </div>
         )}
 
-        <div className="flex flex-col flex-1 gap-6 page-stagger">
-          {/* Balance Hero with status */}
-          <BalanceHero
+        <div className="flex flex-col flex-1 gap-6">
+          <Stagger delayMs={80} maxDelayMs={300}>
+            {/* Balance Hero with status */}
+            <BalanceHero
             balance={expectedBalance}
             label={currentSession ? "Saldo esperado" : ""}
             lastMovementType={lastMovementType}
@@ -598,8 +599,7 @@ export default function CajaPage() {
                   }).map((mov, index) => (
                     <div
                       key={mov.id}
-                      className="movement-item entering cursor-pointer"
-                      style={{ animationDelay: `${Math.min(index * 30, 150)}ms` }}
+                      className="movement-item cursor-pointer"
                       onClick={() => handleOpenEditModal(mov)}
                       role="button"
                       tabIndex={0}
@@ -684,6 +684,7 @@ export default function CajaPage() {
               </p>
             </div>
           )}
+          </Stagger>
         </div>
       </main>
 

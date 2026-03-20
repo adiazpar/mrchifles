@@ -6,7 +6,7 @@ import { useHeader } from '@/contexts/header-context'
 import { PinPad } from '@/components/auth/pin-pad'
 import { useAuth } from '@/contexts/auth-context'
 import { hashPin, verifyPin } from '@/lib/auth'
-import { CheckCircle2 } from 'lucide-react'
+import { SuccessFeedback } from '@/components/ui'
 
 type Step = 'verify' | 'new' | 'confirm' | 'success'
 
@@ -123,14 +123,13 @@ export default function ChangePinPage() {
     <main className="change-pin-container">
         <div className="change-pin-content">
           {step === 'success' ? (
-            <div className="change-pin-success">
-              <div className="change-pin-success-icon">
-                <CheckCircle2 className="w-10 h-10" />
-              </div>
-              <div className="change-pin-header">
-                <h2 className="change-pin-title">{config.title}</h2>
-                <p className="change-pin-subtitle">{config.subtitle}</p>
-              </div>
+            <SuccessFeedback
+              title={config.title}
+              subtitle={config.subtitle}
+              animation="success"
+              size={120}
+              delay={0}
+            >
               <button
                 type="button"
                 onClick={handleGoBack}
@@ -138,7 +137,7 @@ export default function ChangePinPage() {
               >
                 Volver
               </button>
-            </div>
+            </SuccessFeedback>
           ) : (
             <>
               {/* Header */}
