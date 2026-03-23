@@ -113,8 +113,6 @@ Examples:
         throw new Error('Invalid response structure')
       }
 
-      console.log('[identify-product] GPT-4o Mini extracted:', result)
-
       return NextResponse.json({
         success: true,
         data: {

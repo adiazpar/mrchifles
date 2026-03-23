@@ -11,7 +11,7 @@ interface BottomSheetProps {
   children: ReactNode
 }
 
-const ANIMATION_DURATION = 200 // matches --transition-normal
+const ANIMATION_DURATION = 200 // matches --duration-normal
 
 export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null)

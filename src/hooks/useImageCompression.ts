@@ -41,7 +41,6 @@ export function useImageCompression(): UseImageCompressionReturn {
   const cancelledRef = useRef(false)
 
   const cancel = useCallback(() => {
-    console.log('[Compression] Cancel requested')
     cancelledRef.current = true
 
     if (abortControllerRef.current) {
@@ -87,8 +86,6 @@ export function useImageCompression(): UseImageCompressionReturn {
       let imageSource: Blob | string = file
 
       if (isHeic) {
-        console.log('[Compression] Detected HEIC image, converting server-side...')
-
         const formData = new FormData()
         formData.append('file', file)
 
@@ -111,10 +108,7 @@ export function useImageCompression(): UseImageCompressionReturn {
           return null
         }
 
-        console.log('[Compression] HEIC converted successfully')
         imageSource = result.data.image // base64 data URL
-      } else {
-        console.log('[Compression] Non-HEIC image, processing directly')
       }
 
       if (cancelledRef.current) return null
@@ -176,7 +170,6 @@ export function useImageCompression(): UseImageCompressionReturn {
 
       // Compress to JPEG
       const compressedBase64 = canvas.toDataURL('image/jpeg', JPEG_QUALITY)
-      console.log(`[Compression] Image resized to ${width}x${height}, size: ~${Math.round(compressedBase64.length * 0.75 / 1024)}KB`)
 
       if (cancelledRef.current) return null
 
@@ -190,13 +183,11 @@ export function useImageCompression(): UseImageCompressionReturn {
     } catch (err) {
       // Check if this was an abort
       if (err instanceof Error && err.name === 'AbortError') {
-        console.log('[Compression] Aborted')
         return null
       }
 
       if (cancelledRef.current) return null
 
-      console.error('[Compression] Error:', err)
       setState({
         isProcessing: false,
         error: 'Error al procesar la imagen',

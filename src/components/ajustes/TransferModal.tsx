@@ -1,7 +1,7 @@
 'use client'
 
 import { Copy, Check } from 'lucide-react'
-import { Modal, Spinner, useMorphingModal } from '@/components/ui'
+import { Modal, Spinner } from '@/components/ui'
 import { PhoneInput } from '@/components/auth/phone-input'
 import { PinPad } from '@/components/auth/pin-pad'
 import type { PendingTransfer } from '@/hooks'
@@ -120,13 +120,15 @@ export function TransferLinkContent({
   )
 }
 
-export function TransferLinkDoneButton() {
-  const { close } = useMorphingModal()
+export interface TransferLinkDoneButtonProps {
+  onClose: () => void
+}
 
+export function TransferLinkDoneButton({ onClose }: TransferLinkDoneButtonProps) {
   return (
     <button
       type="button"
-      onClick={close}
+      onClick={onClose}
       className="btn btn-primary flex-1"
     >
       Listo

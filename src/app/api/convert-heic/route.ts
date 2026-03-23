@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[convert-heic] Converting file:', file.name, 'size:', file.size)
+    // Debug logging for HEIC conversion
 
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer()
@@ -31,9 +31,8 @@ export async function POST(request: NextRequest) {
       })
 
       jpegBuffer = Buffer.from(outputBuffer)
-      console.log('[convert-heic] Converted with heic-convert, output size:', jpegBuffer.length)
-    } catch (heicError) {
-      console.log('[convert-heic] heic-convert failed, trying sips fallback...')
+    } catch {
+      // heic-convert failed, try sips fallback (macOS only)
 
       // Fallback to macOS sips command (uses execFile for security)
       const { writeFile, unlink, readFile } = await import('fs/promises')
@@ -59,12 +58,11 @@ export async function POST(request: NextRequest) {
         ])
 
         jpegBuffer = await readFile(tempOutput)
-        console.log('[convert-heic] Converted with sips, output size:', jpegBuffer.length)
 
         // Cleanup
         await unlink(tempInput).catch(() => {})
         await unlink(tempOutput).catch(() => {})
-      } catch (sipsError) {
+      } catch {
         await unlink(tempInput).catch(() => {})
         await unlink(tempOutput).catch(() => {})
         throw new Error('Both heic-convert and sips failed')

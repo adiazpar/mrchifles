@@ -156,21 +156,17 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
 
-  /* Durations - aligned with animation philosophy */
-  --duration-instant: 100ms;  /* Button feedback */
-  --duration-fast: 150ms;     /* Micro-interactions */
-  --duration-normal: 400ms;   /* Standard transitions */
-  --duration-slow: 600ms;     /* Page/modal transitions */
+  /* Durations - consolidated animation timing */
+  --duration-instant: 100ms;  /* Button press feedback */
+  --duration-fast: 120ms;     /* Micro-interactions (hover, focus) */
+  --duration-normal: 200ms;   /* Modal/sheet animations */
+  --duration-medium: 350ms;   /* Content transitions (images, progress) */
+  --duration-slow: 600ms;     /* Page-level transitions (navbar, headers) */
   --duration-slower: 800ms;   /* Celebrations */
 
   /* Composite timing */
   --spring: var(--duration-normal) var(--ease-out-back);
   --smooth: var(--duration-normal) var(--ease-out-expo);
-
-  /* ===== Legacy Transitions (for compatibility) ===== */
-  --transition-fast: 120ms ease-out;
-  --transition-normal: 200ms ease-out;
-  --transition-slow: 350ms ease-out;
 
   /* ===== Z-Index ===== */
   --z-base: 0;
@@ -296,7 +292,7 @@
   a {
     color: var(--color-brand);
     text-decoration: none;
-    transition: color var(--transition-fast);
+    transition: color var(--duration-fast) ease-out;
   }
 
   @media (hover: hover) {

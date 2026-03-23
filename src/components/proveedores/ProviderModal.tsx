@@ -2,7 +2,7 @@
 
 import { Trash2 } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
-import { LottiePlayer } from '@/components/animations/LottiePlayer'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { PhoneInput } from '@/components/auth/phone-input'
 import type { Provider } from '@/types'
 

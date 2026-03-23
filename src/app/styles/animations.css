@@ -159,7 +159,7 @@
 }
 
 .modal-exit {
-  animation: modal-exit var(--duration-fast) var(--ease-in);
+  animation: modal-exit var(--duration-normal) var(--ease-in);
 }
 
 @keyframes modal-enter {
@@ -189,7 +189,7 @@
 }
 
 .modal-backdrop-exit {
-  animation: backdrop-exit var(--duration-fast) ease-in;
+  animation: backdrop-exit var(--duration-normal) ease-in;
 }
 
 @keyframes backdrop-enter {
@@ -231,26 +231,26 @@
 
 /* Content exit animation - staggered fade up */
 .morph-content-exit > .morph-item {
-  animation: morph-item-exit var(--duration-fast) ease-in forwards;
+  animation: morph-item-exit var(--duration-instant) ease-in forwards;
 }
 
 .morph-content-exit > .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-exit > .morph-item:nth-child(2) { animation-delay: 40ms; }
-.morph-content-exit > .morph-item:nth-child(3) { animation-delay: 80ms; }
-.morph-content-exit > .morph-item:nth-child(4) { animation-delay: 120ms; }
-.morph-content-exit > .morph-item:nth-child(5) { animation-delay: 160ms; }
+.morph-content-exit > .morph-item:nth-child(2) { animation-delay: 25ms; }
+.morph-content-exit > .morph-item:nth-child(3) { animation-delay: 50ms; }
+.morph-content-exit > .morph-item:nth-child(4) { animation-delay: 75ms; }
+.morph-content-exit > .morph-item:nth-child(5) { animation-delay: 100ms; }
 
 /* Content enter animation - staggered fade in from below */
 .morph-content-enter > .morph-item {
-  animation: morph-item-enter var(--duration-fast) ease-out forwards;
+  animation: morph-item-enter var(--duration-instant) ease-out forwards;
   opacity: 0;
 }
 
 .morph-content-enter > .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-enter > .morph-item:nth-child(2) { animation-delay: 40ms; }
-.morph-content-enter > .morph-item:nth-child(3) { animation-delay: 80ms; }
-.morph-content-enter > .morph-item:nth-child(4) { animation-delay: 120ms; }
-.morph-content-enter > .morph-item:nth-child(5) { animation-delay: 160ms; }
+.morph-content-enter > .morph-item:nth-child(2) { animation-delay: 25ms; }
+.morph-content-enter > .morph-item:nth-child(3) { animation-delay: 50ms; }
+.morph-content-enter > .morph-item:nth-child(4) { animation-delay: 75ms; }
+.morph-content-enter > .morph-item:nth-child(5) { animation-delay: 100ms; }
 
 @keyframes morph-item-exit {
   from {
@@ -276,26 +276,26 @@
 
 /* Backward exit animation - fade out downward */
 .morph-content-exit-back > .morph-item {
-  animation: morph-item-exit-back var(--duration-fast) ease-in forwards;
+  animation: morph-item-exit-back var(--duration-instant) ease-in forwards;
 }
 
 .morph-content-exit-back > .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-exit-back > .morph-item:nth-child(2) { animation-delay: 40ms; }
-.morph-content-exit-back > .morph-item:nth-child(3) { animation-delay: 80ms; }
-.morph-content-exit-back > .morph-item:nth-child(4) { animation-delay: 120ms; }
-.morph-content-exit-back > .morph-item:nth-child(5) { animation-delay: 160ms; }
+.morph-content-exit-back > .morph-item:nth-child(2) { animation-delay: 25ms; }
+.morph-content-exit-back > .morph-item:nth-child(3) { animation-delay: 50ms; }
+.morph-content-exit-back > .morph-item:nth-child(4) { animation-delay: 75ms; }
+.morph-content-exit-back > .morph-item:nth-child(5) { animation-delay: 100ms; }
 
 /* Backward enter animation - fade in from above */
 .morph-content-enter-back > .morph-item {
-  animation: morph-item-enter-back var(--duration-fast) ease-out forwards;
+  animation: morph-item-enter-back var(--duration-instant) ease-out forwards;
   opacity: 0;
 }
 
 .morph-content-enter-back > .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-enter-back > .morph-item:nth-child(2) { animation-delay: 40ms; }
-.morph-content-enter-back > .morph-item:nth-child(3) { animation-delay: 80ms; }
-.morph-content-enter-back > .morph-item:nth-child(4) { animation-delay: 120ms; }
-.morph-content-enter-back > .morph-item:nth-child(5) { animation-delay: 160ms; }
+.morph-content-enter-back > .morph-item:nth-child(2) { animation-delay: 25ms; }
+.morph-content-enter-back > .morph-item:nth-child(3) { animation-delay: 50ms; }
+.morph-content-enter-back > .morph-item:nth-child(4) { animation-delay: 75ms; }
+.morph-content-enter-back > .morph-item:nth-child(5) { animation-delay: 100ms; }
 
 @keyframes morph-item-exit-back {
   from {
@@ -355,13 +355,13 @@
 /* Footer exit animations */
 .morph-footer-exit .morph-footer,
 .morph-footer-exit-back .morph-footer {
-  animation: morph-footer-fade-out var(--duration-fast) ease-in forwards;
+  animation: morph-footer-fade-out var(--duration-instant) ease-in forwards;
 }
 
 /* Footer enter animations */
 .morph-footer-enter .morph-footer,
 .morph-footer-enter-back .morph-footer {
-  animation: morph-footer-fade-in var(--duration-fast) ease-out forwards;
+  animation: morph-footer-fade-in var(--duration-instant) ease-out forwards;
 }
 
 /* Hidden during height transition */

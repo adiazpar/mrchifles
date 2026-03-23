@@ -99,3 +99,18 @@ export interface ModalButtonProps {
   disabled?: boolean
   onClick?: () => void
 }
+
+// Component type markers for child identification
+// These are used to identify component types when iterating through children
+export interface ModalComponentWithMarker {
+  _isModalStep?: boolean
+  _isModalItem?: boolean
+  _isModalFooter?: boolean
+}
+
+// Type guard for accessing component markers
+export function hasComponentMarker(
+  type: unknown
+): type is ModalComponentWithMarker {
+  return typeof type === 'function' || typeof type === 'object'
+}

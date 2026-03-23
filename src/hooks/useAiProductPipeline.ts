@@ -83,7 +83,7 @@ function generateRunId(): string {
  * Trim transparent pixels from an image, cropping to the bounding box of content.
  * This ensures the subject fills the frame instead of being a tiny icon in a large transparent canvas.
  */
-async function trimTransparentPixels(blob: Blob): Promise<Blob> {
+async function _trimTransparentPixels(blob: Blob): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.onload = () => {
@@ -148,8 +148,6 @@ async function trimTransparentPixels(blob: Blob): Promise<Blob> {
 
       croppedCtx.drawImage(canvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
 
-      console.log(`[Pipeline] Trimmed from ${width}x${height} to ${cropWidth}x${cropHeight}`)
-
       croppedCanvas.toBlob((result) => {
         if (result) resolve(result)
         else reject(new Error('Failed to create trimmed blob'))
@@ -191,8 +189,6 @@ async function compressIconBlob(blob: Blob, maxSize = 400000, targetDimension = 
         const ox = (dim - sw) / 2
         const oy = (dim - sh) / 2
 
-        console.log(`[Pipeline] Scaling ${img.width}x${img.height} -> ${dim}x${dim} (scale: ${s.toFixed(2)}x)`)
-
         targetCtx.drawImage(img, ox, oy, sw, sh)
       }
 
@@ -216,11 +212,9 @@ async function compressIconBlob(blob: Blob, maxSize = 400000, targetDimension = 
             return
           }
           if (result.size <= maxSize) {
-            console.log(`[Pipeline] Compressed icon to ${dimension}x${dimension}, size: ${result.size}`)
             resolve(result)
           } else {
             // Try smaller dimension
-            console.log(`[Pipeline] Icon at ${dimension}x${dimension} is ${result.size} bytes, trying smaller...`)
             tryCompress(Math.floor(dimension * 0.75))
           }
         }, 'image/png')
@@ -250,8 +244,6 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
    * - Marks the run as cancelled so background removal results are ignored
    */
   const cancel = useCallback(() => {
-    console.log('[Pipeline] Cancel requested, runId:', currentRunIdRef.current)
-
     // Abort any in-flight fetch requests
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
@@ -288,7 +280,6 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
    */
   const safeSetState = useCallback((runId: string, update: Partial<PipelineState> | ((prev: PipelineState) => PipelineState)) => {
     if (!isRunActive(runId)) {
-      console.log('[Pipeline] Ignoring state update for cancelled run:', runId)
       return false
     }
 
@@ -319,10 +310,6 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
     abortControllerRef.current = new AbortController()
     const signal = abortControllerRef.current.signal
 
-    console.log('[Pipeline] Starting run:', runId, skipBgRemoval ? '(bg removal disabled)' : '')
-    console.log('%c[Pipeline] === TIMING START ===', 'color: #0ea5e9; font-weight: bold')
-    const pipelineStartTime = Date.now()
-
     setState({
       step: 'generating', // Show "generating" since both run in parallel
       error: null,
@@ -332,47 +319,24 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
     try {
       // PARALLEL EXECUTION: Run identify and generate simultaneously
       // This saves ~2-3s since they both only need the original image
-      console.log('[Pipeline] Starting parallel execution: identify + generate icon...')
-      const parallelStartTime = Date.now()
-
-      // Track individual API times
-      let identifyTime = 0
-      let generateTime = 0
-
       const [identifyResponse, iconResponse] = await Promise.all([
         // Task 1: Identify product using GPT-4o Mini Vision
-        (async () => {
-          const start = Date.now()
-          const res = await fetch('/api/ai/identify-product', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: imageBase64 }),
-            signal,
-          })
-          identifyTime = Date.now() - start
-          console.log(`[Pipeline] Identify API: ${(identifyTime / 1000).toFixed(1)}s`)
-          return res
-        })(),
+        fetch('/api/ai/identify-product', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageBase64 }),
+          signal,
+        }),
         // Task 2: Generate emoji icon using Nano Banana Edit
-        (async () => {
-          const start = Date.now()
-          const res = await fetch('/api/ai/generate-icon', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: imageBase64 }),
-            signal,
-          })
-          generateTime = Date.now() - start
-          console.log(`[Pipeline] Generate API: ${(generateTime / 1000).toFixed(1)}s`)
-          return res
-        })(),
+        fetch('/api/ai/generate-icon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageBase64 }),
+          signal,
+        }),
       ])
 
       if (!isRunActive(runId)) return
-
-      const parallelTime = Date.now() - parallelStartTime
-      const timeSaved = identifyTime + generateTime - parallelTime
-      console.log(`[Pipeline] Parallel step: ${(parallelTime / 1000).toFixed(1)}s (saved ${(timeSaved / 1000).toFixed(1)}s vs sequential)`)
 
       // Parse both responses
       const [identifyResult, iconResult] = await Promise.all([
@@ -403,8 +367,6 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       }
 
       const productName = identifyResult.data.name
-      console.log('[Pipeline] Product identified:', productName)
-      console.log('[Pipeline] Emoji generated')
 
       // Step 3: Remove background from generated icon (optional, slow on mobile)
       const iconDataUrl = iconResult.data.icon
@@ -416,21 +378,14 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       let trimmedBlob: Blob
 
       if (skipBgRemoval) {
-        console.log('[Pipeline] Skipping bg removal (disabled)')
         trimmedBlob = iconBlob
       } else {
         if (!safeSetState(runId, { step: 'removing-bg' })) return
-        console.log('[Pipeline] Removing background via BiRefNet...')
-        const bgStartTime = Date.now()
 
         // Use server-side BiRefNet - much faster than client-side (~1-3s vs ~10-15s)
         const transparentBase64 = await removeBackgroundServerSide(iconDataUrl)
 
-        const bgTime = Date.now() - bgStartTime
-        console.log(`[Pipeline] BG Removal API: ${(bgTime / 1000).toFixed(1)}s`)
-
         if (!isRunActive(runId)) {
-          console.log('[Pipeline] Run cancelled during bg removal')
           return
         }
 
@@ -438,13 +393,10 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         const fetchRes = await fetch(transparentBase64)
         trimmedBlob = await fetchRes.blob()
 
-        console.log(`[Pipeline] Icon size after bg removal: ${trimmedBlob.size} bytes`)
-
         if (!isRunActive(runId)) return
       }
 
       // Compress to fit PocketBase file size limit (500KB max, target 400KB)
-      console.log(`[Pipeline] Icon size: ${trimmedBlob.size} bytes, compressing...`)
       const transparentIconBlob = await compressIconBlob(trimmedBlob)
 
       if (!isRunActive(runId)) return
@@ -460,9 +412,6 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       if (!isRunActive(runId)) return
 
       // Success!
-      const totalTime = Date.now() - pipelineStartTime
-      console.log('%c[Pipeline] === TIMING COMPLETE ===', 'color: #22c55e; font-weight: bold')
-      console.log(`%c[Pipeline] TOTAL: ${(totalTime / 1000).toFixed(1)}s`, 'color: #22c55e; font-weight: bold; font-size: 14px')
       setState({
         step: 'complete',
         error: null,
@@ -477,18 +426,15 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
     } catch (err) {
       // Check if this was an abort
       if (err instanceof Error && err.name === 'AbortError') {
-        console.log('[Pipeline] Aborted via AbortController')
         // Don't set error state - the cancel() already reset state
         return
       }
 
       // Check if run was cancelled
       if (!isRunActive(runId)) {
-        console.log('[Pipeline] Error occurred but run was cancelled')
         return
       }
 
-      console.error('[Pipeline] Error:', err)
       setState({
         step: 'error',
         error: err instanceof Error ? err.message : 'Error al procesar la imagen',
@@ -513,8 +459,6 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
     abortControllerRef.current = new AbortController()
     const signal = abortControllerRef.current.signal
 
-    console.log('[Pipeline] Starting regeneration run:', runId, skipBgRemoval ? '(bg removal disabled)' : '')
-
     setState(prev => ({
       ...prev,
       step: 'generating',
@@ -523,8 +467,6 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
 
     try {
       // Step 3: Generate new emoji
-      console.log('[Pipeline] Regenerating emoji...')
-
       const iconResponse = await fetch('/api/ai/generate-icon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -558,11 +500,9 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       let trimmedBlob: Blob
 
       if (skipBgRemoval) {
-        console.log('[Pipeline] Skipping bg removal for regeneration (disabled)')
         trimmedBlob = iconBlob
       } else {
         if (!safeSetState(runId, prev => ({ ...prev, step: 'removing-bg' }))) return null
-        console.log('[Pipeline] Removing background via BiRefNet (server-side)...')
 
         // Use server-side BiRefNet - much faster than client-side (~1-3s vs ~10-15s)
         const transparentBase64 = await removeBackgroundServerSide(iconDataUrl)
@@ -573,13 +513,10 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         const fetchRes = await fetch(transparentBase64)
         trimmedBlob = await fetchRes.blob()
 
-        console.log(`[Pipeline] Regenerated icon size after bg removal: ${trimmedBlob.size} bytes`)
-
         if (!isRunActive(runId)) return null
       }
 
       // Compress to fit PocketBase file size limit (500KB max, target 400KB)
-      console.log(`[Pipeline] Regenerated icon size: ${trimmedBlob.size} bytes, compressing...`)
       const transparentIconBlob = await compressIconBlob(trimmedBlob)
 
       if (!isRunActive(runId)) return null
@@ -610,18 +547,15 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         },
       }))
 
-      console.log('[Pipeline] Regeneration complete!')
       return result
 
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
-        console.log('[Pipeline] Regeneration aborted via AbortController')
         return null
       }
 
       if (!isRunActive(runId)) return null
 
-      console.error('[Pipeline] Regeneration error:', err)
       setState(prev => ({
         ...prev,
         step: 'error',

@@ -1,6 +1,6 @@
 'use client'
 
-import { LottiePlayer } from '@/components/animations'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 
 export interface SuccessFeedbackProps {
   /** Title text displayed below the animation */
