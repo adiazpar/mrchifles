@@ -13,7 +13,7 @@
   background: var(--color-bg-surface);
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-lg);
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--duration-fast) ease-out;
   min-height: var(--touch-target-min);
 }
 
@@ -113,7 +113,7 @@ input[type="date"].input::-webkit-calendar-picker-indicator {
   background: var(--color-bg-muted);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -209,7 +209,7 @@ select.input option[value=""] {
   border-radius: var(--radius-full);
   cursor: pointer;
   position: relative;
-  transition: background var(--transition-fast);
+  transition: background var(--duration-fast) ease-out;
 }
 
 .toggle::before {
@@ -221,7 +221,7 @@ select.input option[value=""] {
   border-radius: var(--radius-full);
   top: 3px;
   left: 3px;
-  transition: transform var(--transition-normal);
+  transition: transform var(--duration-normal) ease-out;
 }
 
 .toggle:checked {
@@ -263,7 +263,7 @@ select.input option[value=""] {
   background: var(--color-bg-surface);
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-lg);
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--duration-fast) ease-out;
 }
 
 .search-bar-input::placeholder {
@@ -291,7 +291,7 @@ select.input option[value=""] {
   justify-content: center;
   color: var(--color-text-tertiary);
   border-radius: var(--radius-md);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -317,7 +317,7 @@ select.input option[value=""] {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
 }
 
 .image-upload-zone:hover {
@@ -352,7 +352,7 @@ select.input option[value=""] {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background var(--duration-fast) ease-out;
 }
 
 .image-preview-remove:hover {
@@ -377,7 +377,7 @@ select.input option[value=""] {
   height: 16px;
   border-radius: var(--radius-full);
   background: var(--color-border);
-  transition: background var(--transition-fast), transform var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, transform var(--duration-fast) ease-out;
 }
 
 .pin-dot.filled {
@@ -417,7 +417,7 @@ select.input option[value=""] {
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out, transform var(--duration-fast) ease-out;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }

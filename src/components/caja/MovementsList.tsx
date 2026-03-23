@@ -1,7 +1,7 @@
 'use client'
 
 import { ArrowDownCircle, ArrowUpCircle, ArrowUp } from 'lucide-react'
-import { LottiePlayer } from '@/components/animations'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { formatCurrency } from '@/lib/utils'
 import { CATEGORY_LABELS, sortMovementsByDate, formatMovementTime } from '@/lib/cash'
 import type { CashMovement } from '@/types'

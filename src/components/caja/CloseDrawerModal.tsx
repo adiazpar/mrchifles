@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Modal, useMorphingModal } from '@/components/ui'
-import { LottiePlayer } from '@/components/animations/LottiePlayer'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { formatCurrency } from '@/lib/utils'
-import type { CashSession, CashMovement } from '@/types'
+import type { CashSession, CashMovement, User } from '@/types'
+import type PocketBase from 'pocketbase'
 
 interface CloseDrawerModalProps {
   isOpen: boolean
@@ -117,8 +118,8 @@ interface CloseDrawerFormProps {
   setIsSubmitting: (value: boolean) => void
   currentSession: CashSession | null
   movements: CashMovement[]
-  user: any
-  pb: any
+  user: User | null
+  pb: PocketBase
   setShowLottie: (value: boolean) => void
   setCelebrationStats: (stats: { label: string; value: string }[]) => void
   onClose: () => void

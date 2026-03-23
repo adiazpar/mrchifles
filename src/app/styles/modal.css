@@ -52,7 +52,7 @@
   border-radius: var(--radius-lg);
   color: var(--color-text-tertiary);
   background: transparent;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition: background-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -101,7 +101,7 @@
   border-radius: var(--radius-lg);
   color: var(--color-error);
   background: transparent;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
   margin-right: auto;
 }
 
@@ -125,7 +125,7 @@
   border-radius: var(--radius-lg);
   color: var(--color-text-secondary);
   background: transparent;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -201,7 +201,7 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: var(--z-modal-backdrop);
-  animation: fadeIn var(--transition-fast);
+  animation: fadeIn var(--duration-fast) ease-out;
 }
 
 .bottom-sheet {
@@ -213,17 +213,17 @@
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
   padding-bottom: env(safe-area-inset-bottom, var(--space-4));
   z-index: var(--z-modal);
-  animation: slideUp var(--transition-normal);
+  animation: slideUp var(--duration-normal) ease-out;
   max-height: 85vh;
   overflow-y: auto;
 }
 
 .bottom-sheet-closing {
-  animation: slideDown var(--transition-normal) forwards;
+  animation: slideDown var(--duration-normal) ease-out forwards;
 }
 
 .bottom-sheet-backdrop-closing {
-  animation: fadeOut var(--transition-normal) forwards;
+  animation: fadeOut var(--duration-normal) ease-out forwards;
 }
 
 .bottom-sheet-handle {
@@ -263,7 +263,7 @@
   justify-content: center;
   color: var(--color-text-secondary);
   border-radius: var(--radius-md);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {

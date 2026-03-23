@@ -191,7 +191,7 @@ export default function HistorialPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {sessions.map((session, index) => {
+              {sessions.map((session) => {
                 const netChange = getNetChange(session)
                 const moveCount = movementCounts[session.id] || 0
 

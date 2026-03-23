@@ -43,6 +43,7 @@ import { ModalItem } from './ModalItem'
 import { ModalFooter } from './ModalFooter'
 import { ModalBackButton, ModalNextButton, ModalCancelBackButton, ModalGoToStepButton } from './ModalButtons'
 import type { ModalProps, ModalStepProps } from './types'
+import { hasComponentMarker } from './types'
 
 // Animated footer wrapper that syncs with step transitions
 // Uses CSS Grid for height animation when footer appears/disappears
@@ -135,7 +136,7 @@ function separateFooter(children: React.ReactNode): { content: React.ReactNode; 
   const content: React.ReactNode[] = []
 
   Children.forEach(children, (child) => {
-    if (isValidElement(child) && (child.type as any)._isModalFooter) {
+    if (isValidElement(child) && hasComponentMarker(child.type) && child.type._isModalFooter) {
       footer = child
     } else {
       content.push(child)
@@ -175,7 +176,7 @@ function ModalBody({
 
     const steps = Children.toArray(children).filter(
       (child): child is ReactElement<ModalStepProps> =>
-        isValidElement(child) && (child.type as any)._isModalStep
+        isValidElement(child) && hasComponentMarker(child.type) && child.type._isModalStep === true
     )
 
     // Title updates with currentStep (for header animation timing)
@@ -209,7 +210,7 @@ function ModalBody({
   // Multi-step: children are Modal.Step components
   const steps = Children.toArray(children).filter(
     (child): child is ReactElement<ModalStepProps> =>
-      isValidElement(child) && (child.type as any)._isModalStep
+      isValidElement(child) && hasComponentMarker(child.type) && child.type._isModalStep === true
   )
 
   return (
@@ -233,15 +234,15 @@ function injectItemIndices(children: React.ReactNode): React.ReactNode {
   let itemIndex = 0
 
   return Children.map(children, (child) => {
-    if (isValidElement(child)) {
+    if (isValidElement(child) && hasComponentMarker(child.type)) {
       // Check if it's a ModalItem - use React.cloneElement for proper cloning
-      if ((child.type as any)._isModalItem) {
+      if (child.type._isModalItem) {
         const cloned = React.cloneElement(child, { _index: itemIndex })
         itemIndex++
         return cloned
       }
       // ModalFooter passes through unchanged
-      if ((child.type as any)._isModalFooter) {
+      if (child.type._isModalFooter) {
         return child
       }
     }
@@ -267,7 +268,7 @@ function ModalRoot({
   // Check if this is a single-step modal (no Modal.Step children)
   const steps = Children.toArray(children).filter(
     (child): child is ReactElement<ModalStepProps> =>
-      isValidElement(child) && (child.type as any)._isModalStep
+      isValidElement(child) && hasComponentMarker(child.type) && child.type._isModalStep === true
   )
   const isSingleStep = steps.length === 0
 
@@ -282,7 +283,7 @@ function ModalRoot({
         setRender(false)
         setClosing(false)
         onExitComplete?.()
-      }, 150)
+      }, 200) // Match CSS modal-exit animation duration
       return () => clearTimeout(timer)
     }
   }, [isOpen, render, onExitComplete])

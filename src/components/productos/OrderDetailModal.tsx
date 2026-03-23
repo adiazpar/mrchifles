@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { Trash2, Pencil, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarClock, MinusCircle, PlusCircle, AlertTriangle } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
-import { LottiePlayer } from '@/components/animations/LottiePlayer'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { formatCurrency, formatDate, getProductIconUrl } from '@/lib/utils'
 import type { Provider } from '@/types'
 import type { ExpandedOrder, OrderFormItem } from '@/lib/products'

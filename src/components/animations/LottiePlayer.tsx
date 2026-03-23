@@ -42,8 +42,8 @@ export function LottiePlayer({
           setAnimationData(data)
         }
       })
-      .catch(err => {
-        console.error('Failed to load Lottie animation:', err)
+      .catch(() => {
+        // Silently fail - animation simply won't show
       })
 
     return () => {

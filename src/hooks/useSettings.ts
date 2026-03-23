@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { isValidE164 } from '@/lib/countries'
-import { transitionModals } from '@/lib/modal-utils'
 
 // ============================================
 // TYPES

@@ -46,8 +46,6 @@ export async function POST(request: NextRequest) {
     // Cost: ~$0.039/image
     // Speed: ~2-5 seconds
     // ========================================
-    console.log('[generate-icon] Generating emoji icon with Nano Banana...')
-
     const startTime = Date.now()
 
     // Use run() instead of subscribe() for faster direct execution (no queue overhead)
@@ -59,8 +57,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const elapsed = Date.now() - startTime
-    console.log(`[generate-icon] Nano Banana completed in ${elapsed}ms`)
+    const _elapsed = Date.now() - startTime
 
     // Extract the generated image URL from response
     const images = result.data?.images
@@ -73,7 +70,6 @@ export async function POST(request: NextRequest) {
     }
 
     const imageUrl = images[0].url
-    console.log(`[generate-icon] Success! Generated icon in ${elapsed}ms: ${imageUrl.substring(0, 80)}...`)
 
     // Fetch the image and convert to base64 data URL for client
     const imageResponse = await fetch(imageUrl)

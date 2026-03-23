@@ -41,8 +41,6 @@ export async function POST(request: NextRequest) {
     // Configure fal.ai client
     fal.config({ credentials: apiKey })
 
-    console.log('[remove-background] Removing background with BiRefNet...')
-
     const startTime = Date.now()
 
     // Use run() instead of subscribe() for faster direct execution (no queue overhead)
@@ -55,8 +53,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const elapsed = Date.now() - startTime
-    console.log(`[remove-background] BiRefNet completed in ${elapsed}ms`)
+    const _elapsed = Date.now() - startTime
 
     // Extract the result image URL
     const imageData = result.data?.image
@@ -69,7 +66,6 @@ export async function POST(request: NextRequest) {
     }
 
     const imageUrl = imageData.url
-    console.log(`[remove-background] Success in ${elapsed}ms: ${imageUrl.substring(0, 80)}...`)
 
     // Fetch the image and convert to base64 data URL for client
     const imageResponse = await fetch(imageUrl)

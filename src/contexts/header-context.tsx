@@ -62,22 +62,11 @@ export function useHeaderContext() {
 export function useHeader(config: HeaderConfig) {
   const { setHeader, resetHeader } = useHeaderContext()
 
-  useEffect(() => {
-    setHeader(config)
-    return () => resetHeader()
-  }, [
-    config.title,
-    config.subtitle,
-    config.showBackButton,
-    config.isReturning,
-    // Note: actions and onBack are intentionally not in deps to avoid infinite loops
-    // They should be memoized by the consumer if needed
-    setHeader,
-    resetHeader,
-  ])
+  // Extract stable values - these rarely change and trigger the effect
+  const { title, subtitle, showBackButton, isReturning, actions, onBack } = config
 
-  // Also update when actions change (for dynamic action buttons)
   useEffect(() => {
-    setHeader(config)
-  }, [config.actions, config.onBack, setHeader])
+    setHeader({ title, subtitle, showBackButton, isReturning, actions, onBack })
+    return () => resetHeader()
+  }, [title, subtitle, showBackButton, isReturning, actions, onBack, setHeader, resetHeader])
 }

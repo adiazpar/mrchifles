@@ -14,7 +14,7 @@ import {
   EditMovementModal,
   LoansModal,
 } from '@/components/caja'
-import { LottiePlayer } from '@/components/animations'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useCashSession, useCashMovements } from '@/hooks'

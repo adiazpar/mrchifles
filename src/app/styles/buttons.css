@@ -17,7 +17,7 @@
   border-radius: var(--radius-lg);
   border: none;
   cursor: pointer;
-  transition: transform 100ms ease-out, filter var(--transition-fast), background-color var(--transition-fast);
+  transition: transform var(--duration-instant) ease-out, filter var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
   touch-action: manipulation;
   user-select: none;
   min-height: var(--touch-target-min);

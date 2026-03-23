@@ -16,7 +16,7 @@
 
 .card-interactive {
   cursor: pointer;
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--duration-fast) ease-out;
 }
 
 /* Border color change on hover (NOT shadow/lift) */
@@ -172,7 +172,7 @@
   color: var(--color-text-secondary);
   text-decoration: none;
   border-radius: var(--radius-lg);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
   font-weight: 500;
 }
 
@@ -207,7 +207,7 @@
   gap: var(--space-3);
   padding: var(--space-3);
   border-radius: var(--radius-lg);
-  transition: background var(--transition-fast);
+  transition: background var(--duration-fast) ease-out;
   cursor: pointer;
 }
 
@@ -294,7 +294,7 @@
   font-size: 11px;
   font-weight: 500;
   text-decoration: none;
-  transition: color var(--transition-fast);
+  transition: color var(--duration-fast) ease-out;
   padding: var(--space-2);
   position: relative;
   min-height: var(--touch-target-min);
@@ -393,7 +393,7 @@
   cursor: pointer;
   transition: background var(--duration-fast) ease;
   /* Animation: slide in from left */
-  animation: page-header-back-enter var(--duration-normal) var(--ease-out-expo) backwards;
+  animation: page-header-back-enter var(--duration-slow) var(--ease-out-expo) backwards;
 }
 
 .page-header__back:hover {
@@ -411,12 +411,12 @@
 }
 
 .page-header__content--with-back .page-header__titles {
-  animation: page-header-titles-shift var(--duration-normal) var(--ease-out-expo) backwards;
+  animation: page-header-titles-shift var(--duration-slow) var(--ease-out-expo) backwards;
 }
 
 /* Return animation - titles slide from right (reverse of entering sub-page) */
 .page-header__content--returning .page-header__titles {
-  animation: page-header-titles-return var(--duration-normal) var(--ease-out-expo) backwards;
+  animation: page-header-titles-return var(--duration-slow) var(--ease-out-expo) backwards;
 }
 
 /* ===== Main Content ===== */
@@ -506,7 +506,7 @@
   justify-content: center;
   box-shadow: var(--shadow-lg);
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+  transition: transform var(--duration-fast) ease-out, box-shadow var(--duration-fast) ease-out, filter var(--duration-fast) ease-out;
   z-index: var(--z-sticky);
 }
 
@@ -658,7 +658,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-2xl);
   cursor: pointer;
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
+  transition: transform var(--duration-normal) ease-out, box-shadow var(--duration-normal) ease-out, border-color var(--duration-normal) ease-out;
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -700,7 +700,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--transition-slow);
+  transition: transform var(--duration-medium) ease-out;
 }
 
 .product-card-image-placeholder {
@@ -839,7 +839,7 @@
   gap: var(--space-3);
   padding: var(--space-3);
   border-radius: var(--radius-lg);
-  transition: background var(--transition-fast);
+  transition: background var(--duration-fast) ease-out;
   margin-bottom: var(--space-2);
 }
 
@@ -883,7 +883,7 @@
   background: var(--color-bg-muted);
   border-radius: var(--radius-md);
   color: var(--color-text-secondary);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -951,7 +951,7 @@
   font-weight: 600;
   font-size: var(--text-sm);
   min-height: 64px;
-  transition: filter var(--transition-fast), border-color var(--transition-fast);
+  transition: filter var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out;
   color: white;
 }
 
@@ -1152,7 +1152,7 @@
   border-radius: var(--radius-md);
   color: rgba(255, 255, 255, 0.7);
   background: transparent;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition: background-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -1272,7 +1272,7 @@
 }
 
 .table tbody tr {
-  transition: background var(--transition-fast);
+  transition: background var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -1325,7 +1325,7 @@
   height: 100%;
   background: var(--color-brand);
   border-radius: var(--radius-full);
-  transition: width var(--transition-slow);
+  transition: width var(--duration-medium) ease-out;
 }
 
 /* ===== Quick Actions (Dashboard) ===== */
@@ -1339,7 +1339,7 @@
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  transition: transform 100ms ease-out, border-color var(--transition-fast), background var(--transition-fast);
+  transition: transform var(--duration-instant) ease-out, border-color var(--duration-fast) ease-out, background var(--duration-fast) ease-out;
   cursor: pointer;
   text-decoration: none;
   text-align: center;
@@ -1368,7 +1368,7 @@
   background: var(--color-brand-subtle);
   color: var(--color-brand);
   flex-shrink: 0;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -1484,13 +1484,13 @@
 .dropdown-content.position-top {
   bottom: 100%;
   margin-bottom: var(--space-2);
-  animation: fadeInUp var(--transition-fast);
+  animation: fadeInUp var(--duration-fast) ease-out;
 }
 
 .dropdown-content.position-bottom {
   top: 100%;
   margin-top: var(--space-2);
-  animation: fadeInDown var(--transition-fast);
+  animation: fadeInDown var(--duration-fast) ease-out;
 }
 
 .dropdown-content.align-left {
@@ -1511,7 +1511,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
   text-align: left;
   width: 100%;
 }
@@ -1538,7 +1538,7 @@
   justify-content: center;
   color: var(--color-text-secondary);
   flex-shrink: 0;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
 .role-card-selected .role-card-icon,
@@ -1607,7 +1607,7 @@
   color: var(--color-text-tertiary);
   padding: var(--space-2);
   border-radius: var(--radius-md);
-  transition: color var(--transition-fast);
+  transition: color var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -1765,7 +1765,7 @@
   font-size: var(--text-base);
   color: var(--color-text-primary);
   text-decoration: none;
-  transition: background var(--transition-fast);
+  transition: background var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -1862,7 +1862,7 @@
 .change-pin-back {
   font-size: var(--text-sm);
   color: var(--color-text-tertiary);
-  transition: color var(--transition-fast);
+  transition: color var(--duration-fast) ease-out;
   padding: var(--space-1) var(--space-2);
 }
 
@@ -1888,7 +1888,7 @@
   height: 8px;
   border-radius: var(--radius-full);
   background: var(--color-border);
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast) ease-out;
 }
 
 .change-pin-dot.active {
@@ -1983,7 +1983,7 @@
   border: 2px solid var(--color-border);
   border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -2084,7 +2084,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-full);
   cursor: pointer;
-  transition: all var(--transition-fast), transform 100ms ease-out;
+  transition: all var(--duration-fast) ease-out, transform var(--duration-instant) ease-out;
   white-space: nowrap;
 }
 
@@ -2128,7 +2128,7 @@
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: all var(--transition-fast), transform 100ms ease-out;
+  transition: all var(--duration-fast) ease-out, transform var(--duration-instant) ease-out;
   text-align: center;
 }
 
@@ -2176,7 +2176,7 @@ gap: var(--space-3);
 padding: var(--space-3);
 border-radius: var(--radius-lg);
 cursor: pointer;
-transition: background var(--transition-fast);
+transition: background var(--duration-fast) ease-out;
 -webkit-tap-highlight-color: transparent;
 }
 
@@ -2204,7 +2204,7 @@ align-items: center;
 gap: var(--space-3);
 padding: var(--space-3);
 border-radius: var(--radius-lg);
-transition: background var(--transition-fast);
+transition: background var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -2277,7 +2277,7 @@ color: var(--color-text-secondary);
 font-size: var(--text-xs);
 font-weight: 500;
 cursor: pointer;
-transition: transform 100ms ease-out, filter var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+transition: transform var(--duration-instant) ease-out, filter var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
 }
 
 .caja-action-btn:disabled {

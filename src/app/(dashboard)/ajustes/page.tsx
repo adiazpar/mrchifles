@@ -287,7 +287,7 @@ export default function SettingsPage() {
             onCopy={handleCopyTransferLink}
           />
           <Modal.Footer>
-            <TransferLinkDoneButton />
+            <TransferLinkDoneButton onClose={handleCloseTransferModal} />
           </Modal.Footer>
         </Modal.Step>
 
