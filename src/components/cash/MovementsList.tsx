@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowDownCircle, ArrowUpCircle, ArrowUp } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, ArrowUp, ChevronRight } from 'lucide-react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { formatCurrency } from '@/lib/utils'
 import { CATEGORY_LABELS, sortMovementsByDate, formatMovementTime } from '@/lib/cash'
@@ -40,76 +40,91 @@ export function MovementsList({
 
   return (
     <>
-      {/* Movements Header */}
-      <div className="flex items-center">
-        <span className="text-sm text-text-secondary">
-          {movements.length} {movements.length === 1 ? 'movement' : 'movements'}
-        </span>
-      </div>
+      {/* Movements Card */}
+      <div className="card p-4 space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-text-secondary">
+            {movements.length} {movements.length === 1 ? 'movement' : 'movements'}
+          </span>
+        </div>
 
-      {/* Movements List */}
-      <div className="space-y-2">
-        {sortedMovements.map((mov) => (
-          <div
-            key={mov.id}
-            className="movement-item cursor-pointer"
-            onClick={() => onMovementClick(mov)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onMovementClick(mov)
-              }
-            }}
-          >
-            {mov.id === newMovementId ? (
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
-                <LottiePlayer
-                  src="/animations/success.lottie"
-                  loop={false}
-                  autoplay={true}
-                  style={{ width: 56, height: 56 }}
-                  onComplete={onAnimationComplete}
-                />
+        <hr className="border-border" />
+
+        {/* Movements List */}
+        <div className="space-y-2">
+          {sortedMovements.map((mov) => (
+            <div
+              key={mov.id}
+              className="list-item-clickable list-item-flat"
+              onClick={() => onMovementClick(mov)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onMovementClick(mov)
+                }
+              }}
+            >
+              {/* Icon */}
+              {mov.id === newMovementId ? (
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <LottiePlayer
+                    src="/animations/success.lottie"
+                    loop={false}
+                    autoplay={true}
+                    style={{ width: 56, height: 56 }}
+                    onComplete={onAnimationComplete}
+                  />
+                </div>
+              ) : (
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    mov.type === 'deposit'
+                      ? 'bg-success-subtle text-success'
+                      : 'bg-error-subtle text-error'
+                  }`}
+                >
+                  {mov.type === 'deposit' ? (
+                    <ArrowDownCircle className="w-5 h-5" />
+                  ) : (
+                    <ArrowUpCircle className="w-5 h-5" />
+                  )}
+                </div>
+              )}
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <span className="font-medium truncate block">
+                  {CATEGORY_LABELS[mov.category]}
+                </span>
+                <span className="text-xs text-text-tertiary truncate block">
+                  {mov.note || '-'}
+                </span>
               </div>
-            ) : (
-              <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  mov.type === 'deposit'
-                    ? 'bg-success-subtle text-success'
-                    : 'bg-error-subtle text-error'
-                }`}
-              >
-                {mov.type === 'deposit' ? (
-                  <ArrowDownCircle className="w-5 h-5" />
-                ) : (
-                  <ArrowUpCircle className="w-5 h-5" />
-                )}
+
+              {/* Amount and Time */}
+              <div className="text-right">
+                <span
+                  className={`font-medium block ${
+                    mov.type === 'deposit' ? 'text-success' : 'text-error'
+                  }`}
+                >
+                  {mov.type === 'deposit' ? '+' : '-'}{formatCurrency(mov.amount)}
+                </span>
+                <span className="text-xs text-text-tertiary block">
+                  {formatMovementTime(mov.createdAt)}
+                </span>
               </div>
-            )}
-            <div className="flex-1 min-w-0 h-10 flex flex-col justify-between">
-              <span className="font-medium truncate">
-                {CATEGORY_LABELS[mov.category]}
-              </span>
-              <span className="text-xs text-text-tertiary truncate">
-                {mov.note || '-'}
-              </span>
+
+              {/* Chevron */}
+              <div className="text-text-tertiary ml-2">
+                <ChevronRight className="w-5 h-5" />
+              </div>
             </div>
-            <div className="text-right h-10 flex flex-col justify-between flex-shrink-0">
-              <span
-                className={`font-medium ${
-                  mov.type === 'deposit' ? 'text-success' : 'text-error'
-                }`}
-              >
-                {mov.type === 'deposit' ? '+' : '-'}{formatCurrency(mov.amount)}
-              </span>
-              <span className="text-xs text-text-tertiary">
-                {formatMovementTime(mov.createdAt)}
-              </span>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Back to top button */}
