@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useHeader } from '@/contexts/header-context'
 import { Spinner, Modal } from '@/components/ui'
 import { CheckCircle2, Clock, ChevronRight, ArrowDownCircle, ArrowUpCircle, ArrowUp } from 'lucide-react'
 import { useNavbar } from '@/contexts/navbar-context'
@@ -15,9 +14,7 @@ import type { CashSession, CashMovement, CashMovementCategory } from '@/types'
 
 const CATEGORY_LABELS: Record<CashMovementCategory, string> = {
   sale: 'Sale',
-  employee_loan: 'Loan',
   bank_withdrawal: 'Bank withdrawal',
-  loan_repayment: 'Loan repayment',
   bank_deposit: 'Bank deposit',
   other: 'Other',
 }
@@ -375,9 +372,7 @@ export default function HistoryPage() {
                           {CATEGORY_LABELS[mov.category]}
                         </span>
                         <span className="text-xs text-text-tertiary truncate">
-                          {(mov.category === 'employee_loan' || mov.category === 'loan_repayment') && mov.employee
-                            ? mov.employee.name
-                            : mov.note || '-'}
+                          {mov.note || '-'}
                         </span>
                       </div>
                       <div className="text-right h-10 flex flex-col justify-between flex-shrink-0">
