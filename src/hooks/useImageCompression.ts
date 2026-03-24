@@ -103,7 +103,7 @@ export function useImageCompression(): UseImageCompressionReturn {
           if (cancelledRef.current) return null
           setState({
             isProcessing: false,
-            error: 'Error al convertir la imagen HEIC',
+            error: 'Failed to convert HEIC image',
           })
           return null
         }
@@ -158,7 +158,7 @@ export function useImageCompression(): UseImageCompressionReturn {
         if (cancelledRef.current) return null
         setState({
           isProcessing: false,
-          error: 'Error al procesar la imagen',
+          error: 'Failed to process image',
         })
         return null
       }
@@ -190,7 +190,7 @@ export function useImageCompression(): UseImageCompressionReturn {
 
       setState({
         isProcessing: false,
-        error: 'Error al procesar la imagen',
+        error: 'Failed to process image',
       })
       return null
     }

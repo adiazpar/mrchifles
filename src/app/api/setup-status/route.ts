@@ -1,40 +1,37 @@
 import { NextResponse } from 'next/server'
-import PocketBase from 'pocketbase'
-
-const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
+import { db, users, appConfig } from '@/db'
+import { eq } from 'drizzle-orm'
 
 /**
  * GET /api/setup-status
  *
  * Checks if initial setup (owner registration) is needed.
- * Uses the app_config collection which has public read access.
  */
 export async function GET() {
   try {
-    const pb = new PocketBase(POCKETBASE_URL)
+    // Check if there's an owner in the system
+    const [owner] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.role, 'owner'))
+      .limit(1)
 
-    // app_config has public read access (listRule: "", viewRule: "")
-    // The migration creates one record with setupComplete = false initially
-    const configs = await pb.collection('app_config').getList(1, 1)
+    // Check app config if exists
+    const [config] = await db
+      .select()
+      .from(appConfig)
+      .limit(1)
 
-    if (configs.totalItems === 0) {
-      // No config record = fresh install, needs setup
-      return NextResponse.json({
-        setupComplete: false,
-        ownerExists: false,
-      })
-    }
-
-    const config = configs.items[0]
-    const setupComplete = config.setupComplete === true
+    const ownerExists = !!owner
+    const setupComplete = config?.setupComplete ?? ownerExists
 
     return NextResponse.json({
       setupComplete,
-      ownerExists: setupComplete,
+      ownerExists,
     })
   } catch (error) {
     console.error('Error checking setup status:', error)
-    // On error, assume setup is complete to avoid blocking existing users
+    // In case of error, assume setup is complete to allow app to function
     return NextResponse.json({
       setupComplete: true,
       ownerExists: true,

@@ -34,13 +34,13 @@ export function CopyInviteButton({
   }, [])
 
   const handleCopy = useCallback(async () => {
-    const roleLabel = role === 'partner' ? 'Socio' : 'Empleado'
+    const roleLabel = role === 'partner' ? 'Partner' : 'Employee'
     const appUrl = window.location.origin
 
     const textToCopy =
       variant === 'code'
         ? code
-        : `Te invito a Feria POS como ${roleLabel}.\n\nTu codigo: ${code}\n\nRegistrate aqui: ${appUrl}/invite?code=${code}`
+        : `I invite you to Feria POS as ${roleLabel}.\n\nYour code: ${code}\n\nRegister here: ${appUrl}/invite?code=${code}`
 
     try {
       if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
@@ -75,7 +75,7 @@ export function CopyInviteButton({
         type="button"
         onClick={handleCopy}
         className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-brand-subtle transition-colors"
-        title="Copiar codigo"
+        title="Copy code"
       >
         {copied ? (
           <Check className="w-5 h-5 text-success" />
@@ -96,12 +96,12 @@ export function CopyInviteButton({
       {copied ? (
         <>
           <Check className="w-4 h-4 text-success" />
-          <span>Copiado</span>
+          <span>Copied</span>
         </>
       ) : (
         <>
           <Copy className="w-4 h-4" />
-          <span>Copiar invitacion</span>
+          <span>Copy invitation</span>
         </>
       )}
     </button>

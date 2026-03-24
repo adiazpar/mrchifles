@@ -12,7 +12,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <Link href="/inicio" className="sidebar-brand">
+        <Link href="/home" className="sidebar-brand">
           <Image
             src="/logo.png"
             alt="Feria POS"

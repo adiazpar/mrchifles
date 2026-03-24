@@ -10,8 +10,7 @@ A mobile-first point-of-sale system for small businesses selling at ferias (mark
 - **Inventory** - Track stock levels and supplier orders
 - **Dashboard** - Daily summaries and business insights
 - **Team Management** - Invite partners/employees with role-based access
-- **Phone Auth** - SMS OTP verification via Firebase
-- **PIN Login** - Fast 4-digit PIN after phone verification
+- **Email/PIN Auth** - Email login with fast 4-digit PIN for daily access
 - **PWA** - Works offline, installable on mobile
 
 ## Tech Stack
@@ -20,31 +19,30 @@ A mobile-first point-of-sale system for small businesses selling at ferias (mark
 |-----------|------------|
 | **Frontend** | Next.js 15, React 18, TypeScript |
 | **Styling** | Tailwind CSS |
-| **Backend** | PocketBase (SQLite + Auth + Realtime) |
-| **Auth** | Phone SMS OTP (Firebase) + PIN |
+| **Database** | Turso (libSQL) + Drizzle ORM |
+| **Auth** | Simple JWT (jose) + bcryptjs |
 | **Icons** | Lucide React |
-| **Hosting** | Vercel (frontend) + PocketHost (backend) |
+| **Hosting** | Vercel |
 
 ## Quick Start
 
 ```bash
 npm install
-npm run pb:download
-npm run dev:all
+npm run dev
 ```
 
 | Service | URL |
 |---------|-----|
 | App | http://localhost:3000 |
-| PocketBase Admin | http://127.0.0.1:8090/_/ |
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev:all` | Start Next.js + PocketBase |
+| `npm run dev` | Start Next.js development server |
 | `npm run build` | Build for production |
-| `npm run db:reset` | Reset database and run migrations |
+| `npm run db:push` | Push schema to database |
+| `npm run db:studio` | Open Drizzle Studio |
 
 ## Environment Variables
 
@@ -53,6 +51,11 @@ Copy `.env.example` to `.env.local`:
 ```bash
 cp .env.example .env.local
 ```
+
+Required variables:
+- `TURSO_DATABASE_URL` - Turso database URL
+- `TURSO_AUTH_TOKEN` - Turso auth token
+- `JWT_SECRET` - Secret for JWT signing
 
 ## Project Structure
 
@@ -63,8 +66,8 @@ src/
 ├── contexts/      # React contexts
 ├── hooks/         # Custom hooks
 ├── lib/           # Utilities
+│   └── db/        # Drizzle schema & client
 └── types/         # TypeScript types
-pb_migrations/     # Database migrations
 ```
 
 ## Development Guidelines

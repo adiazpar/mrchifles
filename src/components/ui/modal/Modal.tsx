@@ -31,7 +31,7 @@
 // 2. If footer buttons need useMorphingModal(), create separate button components
 // 3. Place Modal.Footer as direct child of Modal.Step in the modal JSX
 //
-// See: src/app/(dashboard)/ajustes/equipo/page.tsx for examples
+// See: src/app/(dashboard)/settings/team/page.tsx for examples
 //
 'use client'
 

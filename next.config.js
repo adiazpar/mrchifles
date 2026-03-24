@@ -6,11 +6,6 @@ const nextConfig = {
   // Optimize for production
   poweredByHeader: false,
 
-  // Environment variables available on client
-  env: {
-    POCKETBASE_URL: process.env.POCKETBASE_URL || 'http://127.0.0.1:8090',
-  },
-
   // Security headers
   async headers() {
     return [

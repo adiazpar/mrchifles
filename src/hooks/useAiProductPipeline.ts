@@ -60,13 +60,13 @@ async function removeBackgroundServerSide(imageBase64: string): Promise<string> 
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Error de red' }))
-    throw new Error(error.error || 'Error al remover fondo')
+    const error = await response.json().catch(() => ({ error: 'Network error' }))
+    throw new Error(error.error || 'Failed to remove background')
   }
 
   const result = await response.json()
   if (!result.success) {
-    throw new Error(result.error || 'Error al remover fondo')
+    throw new Error(result.error || 'Failed to remove background')
   }
 
   return result.data.image
@@ -160,7 +160,7 @@ async function _trimTransparentPixels(blob: Blob): Promise<Blob> {
 
 /**
  * Compress and resize an image blob to fit within size limits.
- * PocketBase allows max 500KB for icons, so we target ~400KB to be safe.
+ * Target ~400KB to stay within typical upload limits.
  */
 async function compressIconBlob(blob: Blob, maxSize = 400000, targetDimension = 512): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -350,7 +350,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       if (!identifyResult.success) {
         setState({
           step: 'error',
-          error: identifyResult.error || 'Error al identificar el producto',
+          error: identifyResult.error || 'Failed to identify product',
           result: null,
         })
         return
@@ -360,7 +360,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       if (!iconResult.success) {
         setState({
           step: 'error',
-          error: iconResult.error || 'Error al generar el icono',
+          error: iconResult.error || 'Failed to generate icon',
           result: null,
         })
         return
@@ -396,7 +396,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         if (!isRunActive(runId)) return
       }
 
-      // Compress to fit PocketBase file size limit (500KB max, target 400KB)
+      // Compress to fit file upload size limits (target 400KB)
       const transparentIconBlob = await compressIconBlob(trimmedBlob)
 
       if (!isRunActive(runId)) return
@@ -437,7 +437,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
 
       setState({
         step: 'error',
-        error: err instanceof Error ? err.message : 'Error al procesar la imagen',
+        error: err instanceof Error ? err.message : 'Failed to process image',
         result: null,
       })
     }
@@ -483,7 +483,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         setState(prev => ({
           ...prev,
           step: 'error',
-          error: iconResult.error || 'Error al regenerar el icono',
+          error: iconResult.error || 'Failed to regenerate icon',
         }))
         return null
       }
@@ -516,7 +516,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         if (!isRunActive(runId)) return null
       }
 
-      // Compress to fit PocketBase file size limit (500KB max, target 400KB)
+      // Compress to fit file upload size limits (target 400KB)
       const transparentIconBlob = await compressIconBlob(trimmedBlob)
 
       if (!isRunActive(runId)) return null
@@ -559,7 +559,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       setState(prev => ({
         ...prev,
         step: 'error',
-        error: err instanceof Error ? err.message : 'Error al regenerar el icono',
+        error: err instanceof Error ? err.message : 'Failed to regenerate icon',
       }))
       return null
     }

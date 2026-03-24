@@ -1,0 +1,206 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { db, cashMovements, cashSessions, users } from '@/db'
+import { eq, and } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/sqlite-core'
+import { nanoid } from 'nanoid'
+import { z } from 'zod'
+import { getCurrentUser } from '@/lib/simple-auth'
+
+// Alias users table for multiple joins
+const creators = alias(users, 'creators')
+const employees = alias(users, 'employees')
+
+const createMovementSchema = z.object({
+  sessionId: z.string().min(1),
+  type: z.enum(['deposit', 'withdrawal']),
+  category: z.enum(['sale', 'employee_loan', 'bank_withdrawal', 'loan_repayment', 'bank_deposit', 'other']),
+  amount: z.number().positive('Amount must be greater than 0'),
+  note: z.string().nullable().optional(),
+  employeeId: z.string().nullable().optional(),
+})
+
+/**
+ * GET /api/cash/movements
+ *
+ * List cash movements for a session.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getCurrentUser()
+    if (!session || !session.businessId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const sessionId = searchParams.get('sessionId')
+
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'sessionId is required' },
+        { status: 400 }
+      )
+    }
+
+    // Verify session belongs to business
+    const [cashSession] = await db
+      .select()
+      .from(cashSessions)
+      .where(
+        and(
+          eq(cashSessions.id, sessionId),
+          eq(cashSessions.businessId, session.businessId)
+        )
+      )
+      .limit(1)
+
+    if (!cashSession) {
+      return NextResponse.json(
+        { error: 'Cash session not found' },
+        { status: 404 }
+      )
+    }
+
+    const movementsList = await db
+      .select({
+        id: cashMovements.id,
+        sessionId: cashMovements.sessionId,
+        type: cashMovements.type,
+        category: cashMovements.category,
+        amount: cashMovements.amount,
+        note: cashMovements.note,
+        saleId: cashMovements.saleId,
+        employeeId: cashMovements.employeeId,
+        createdBy: cashMovements.createdBy,
+        editedBy: cashMovements.editedBy,
+        createdAt: cashMovements.createdAt,
+        updatedAt: cashMovements.updatedAt,
+        creatorName: creators.name,
+        employeeName: employees.name,
+      })
+      .from(cashMovements)
+      .leftJoin(creators, eq(cashMovements.createdBy, creators.id))
+      .leftJoin(employees, eq(cashMovements.employeeId, employees.id))
+      .where(eq(cashMovements.sessionId, sessionId))
+
+    return NextResponse.json({
+      success: true,
+      movements: movementsList.map(m => ({
+        ...m,
+        creator: m.creatorName ? { name: m.creatorName } : null,
+        employee: m.employeeName ? { name: m.employeeName } : null,
+      })),
+    })
+  } catch (error) {
+    console.error('Get cash movements error:', error)
+    return NextResponse.json(
+      { error: 'Failed to get cash movements' },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * POST /api/cash/movements
+ *
+ * Create a new cash movement.
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getCurrentUser()
+    if (!session || !session.businessId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const validation = createMovementSchema.safeParse(body)
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors[0].message },
+        { status: 400 }
+      )
+    }
+
+    const { sessionId, type, category, amount, note, employeeId } = validation.data
+
+    // Verify session belongs to business and is open
+    const [cashSession] = await db
+      .select()
+      .from(cashSessions)
+      .where(
+        and(
+          eq(cashSessions.id, sessionId),
+          eq(cashSessions.businessId, session.businessId)
+        )
+      )
+      .limit(1)
+
+    if (!cashSession) {
+      return NextResponse.json(
+        { error: 'Cash session not found' },
+        { status: 404 }
+      )
+    }
+
+    if (cashSession.closedAt) {
+      return NextResponse.json(
+        { error: 'Cash session is already closed' },
+        { status: 400 }
+      )
+    }
+
+    const movementId = nanoid()
+    const now = new Date()
+
+    await db.insert(cashMovements).values({
+      id: movementId,
+      sessionId,
+      type,
+      category,
+      amount,
+      note: note || null,
+      employeeId: employeeId || null,
+      createdBy: session.userId,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const [newMovement] = await db
+      .select({
+        id: cashMovements.id,
+        sessionId: cashMovements.sessionId,
+        type: cashMovements.type,
+        category: cashMovements.category,
+        amount: cashMovements.amount,
+        note: cashMovements.note,
+        saleId: cashMovements.saleId,
+        employeeId: cashMovements.employeeId,
+        createdBy: cashMovements.createdBy,
+        editedBy: cashMovements.editedBy,
+        createdAt: cashMovements.createdAt,
+        updatedAt: cashMovements.updatedAt,
+        creatorName: creators.name,
+        employeeName: employees.name,
+      })
+      .from(cashMovements)
+      .leftJoin(creators, eq(cashMovements.createdBy, creators.id))
+      .leftJoin(employees, eq(cashMovements.employeeId, employees.id))
+      .where(eq(cashMovements.id, movementId))
+      .limit(1)
+
+    return NextResponse.json({
+      success: true,
+      movement: {
+        ...newMovement,
+        creator: newMovement.creatorName ? { name: newMovement.creatorName } : null,
+        employee: newMovement.employeeName ? { name: newMovement.employeeName } : null,
+      },
+    })
+  } catch (error) {
+    console.error('Create cash movement error:', error)
+    return NextResponse.json(
+      { error: 'Failed to create cash movement' },
+      { status: 500 }
+    )
+  }
+}

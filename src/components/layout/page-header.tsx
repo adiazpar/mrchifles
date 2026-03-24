@@ -46,7 +46,7 @@ export function PageHeader() {
             type="button"
             onClick={onBack}
             className="page-header__back"
-            aria-label="Volver"
+            aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>

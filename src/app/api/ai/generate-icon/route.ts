@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     if (!image || typeof image !== 'string') {
       return NextResponse.json(
-        { success: false, error: 'Se requiere una imagen' },
+        { success: false, error: 'Image is required' },
         { status: 400 }
       )
     }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { success: false, error: 'API de fal.ai no configurada' },
+        { success: false, error: 'fal.ai API not configured' },
         { status: 500 }
       )
     }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     if (!images || images.length === 0 || !images[0].url) {
       console.error('[generate-icon] No image in response:', JSON.stringify(result.data, null, 2))
       return NextResponse.json(
-        { success: false, error: 'No se genero ninguna imagen' },
+        { success: false, error: 'No image was generated' },
         { status: 500 }
       )
     }
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     if (!imageResponse.ok) {
       console.error('[generate-icon] Failed to fetch generated image')
       return NextResponse.json(
-        { success: false, error: 'Error al obtener la imagen generada' },
+        { success: false, error: 'Failed to fetch generated image' },
         { status: 500 }
       )
     }
@@ -98,13 +98,13 @@ export async function POST(request: NextRequest) {
     // Check for rate limit
     if (error instanceof Error && (error.message.includes('rate') || error.message.includes('quota'))) {
       return NextResponse.json(
-        { success: false, error: 'Limite de velocidad alcanzado. Intenta de nuevo en unos segundos.' },
+        { success: false, error: 'Rate limit reached. Try again in a few seconds.' },
         { status: 429 }
       )
     }
 
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     )
   }

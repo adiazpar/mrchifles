@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     if (!image || typeof image !== 'string') {
       return NextResponse.json(
-        { success: false, error: 'Se requiere una imagen' },
+        { success: false, error: 'Image is required' },
         { status: 400 }
       )
     }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { success: false, error: 'API de fal.ai no configurada' },
+        { success: false, error: 'fal.ai API not configured' },
         { status: 500 }
       )
     }
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     if (!imageData?.url) {
       console.error('[remove-background] No image in response:', JSON.stringify(result.data, null, 2))
       return NextResponse.json(
-        { success: false, error: 'No se proceso la imagen' },
+        { success: false, error: 'Image was not processed' },
         { status: 500 }
       )
     }
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     if (!imageResponse.ok) {
       console.error('[remove-background] Failed to fetch processed image')
       return NextResponse.json(
-        { success: false, error: 'Error al obtener la imagen procesada' },
+        { success: false, error: 'Failed to fetch processed image' },
         { status: 500 }
       )
     }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     console.error('[remove-background] Error:', error)
 
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     )
   }

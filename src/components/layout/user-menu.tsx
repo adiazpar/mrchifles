@@ -50,7 +50,7 @@ export function UserMenu({ variant }: UserMenuProps) {
             <button
               type="button"
               className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
-              aria-label="Menu de usuario"
+              aria-label="User menu"
               style={avatarStyles}
             >
               {getUserInitials(user.name)}
@@ -79,7 +79,7 @@ export function UserMenu({ variant }: UserMenuProps) {
         <BottomSheet
           isOpen={menuOpen}
           onClose={handleClose}
-          title="Cuenta y Ajustes"
+          title="Account and Settings"
         >
           <UserMenuContent onAction={handleClose} />
         </BottomSheet>

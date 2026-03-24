@@ -125,7 +125,7 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
               type="button"
               onClick={onClose}
               className="bottom-sheet-close"
-              aria-label="Cerrar"
+              aria-label="Close"
             >
               <X size={20} />
             </button>

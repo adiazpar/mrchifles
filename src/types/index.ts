@@ -7,22 +7,15 @@ export type UserStatus = 'active' | 'pending' | 'disabled'
 
 export interface User {
   id: string
-  email: string // Formatted phone as email (51987654321@phone.local) for PocketBase auth
-  phoneNumber: string // E.164 format (+51987654321) for WhatsApp/display
-  phoneVerified: boolean // Whether phone was verified via OTP
+  email: string
   name: string
   role: UserRole
   status: UserStatus
-  pin?: string // Stored as SHA-256 hash for PIN verification
-  pinResetRequired?: boolean // If true, user must reset PIN on next login
-  invitedBy?: string // Relation ID to user who invited them
-  avatar?: string // Optional avatar file
-  created: string
-  updated: string
-  // Expanded relations
-  expand?: {
-    invitedBy?: User
-  }
+  businessId?: string | null
+  invitedBy?: string | null
+  avatar?: string | null
+  createdAt: Date | string
+  updatedAt: Date | string
 }
 
 // ============================================
@@ -35,12 +28,11 @@ export interface InviteCode {
   id: string
   code: string // 6 uppercase alphanumeric chars
   role: InviteRole
-  createdBy: string // Relation ID to owner
-  usedBy?: string // Relation ID to user who used it
-  expiresAt: string // ISO date string
+  createdBy: string
+  usedBy?: string
+  expiresAt: Date | string
   used: boolean
-  created: string
-  // Expanded relations
+  createdAt: Date | string
   expand?: {
     createdBy?: User
     usedBy?: User
@@ -51,41 +43,39 @@ export interface InviteCode {
 // PRODUCT TYPES
 // ============================================
 
-export type ProductCategory = 'chifles_grande' | 'chifles_chico' | 'miel' | 'algarrobina' | 'postres'
+export type ProductCategory = 'food' | 'beverage' | 'snack' | 'dessert' | 'other'
 
 export interface Product {
   id: string
-  collectionId: string // Needed for icon URL
-  collectionName: string // Needed for icon URL
+  businessId: string
   name: string
-  price: number // Selling price per unit
-  costPrice?: number // Estimated cost per unit (optional)
-  active: boolean
-  category?: ProductCategory // Product category for grouping
-  icon?: string // Filename from PocketBase (AI-generated emoji icon)
-  stock?: number // Current stock quantity
-  lowStockThreshold?: number // Alert threshold (default: 10)
-  created: string
-  updated: string
+  price: number
+  costPrice?: number | null
+  active: boolean | null
+  category?: ProductCategory | null
+  icon?: string | null
+  stock?: number | null
+  lowStockThreshold?: number | null
+  createdAt: Date | string
+  updatedAt: Date | string
 }
 
 // ============================================
 // SALE TYPES
 // ============================================
 
-export type PaymentMethod = 'cash' | 'yape' | 'pos'
-export type SalesChannel = 'feria' | 'whatsapp'
+export type PaymentMethod = 'cash' | 'card' | 'other'
+export type SalesChannel = 'in_store' | 'online'
 
 export interface Sale {
   id: string
-  date: string
+  date: Date | string
   total: number
   paymentMethod: PaymentMethod
   channel: SalesChannel
-  employee: string // Relation ID to users
+  employeeId: string
   notes?: string
-  created: string
-  // Expanded relations
+  createdAt: Date | string
   expand?: {
     'sale_items(sale)'?: SaleItem[]
     employee?: User
@@ -94,14 +84,13 @@ export interface Sale {
 
 export interface SaleItem {
   id: string
-  sale: string // Relation ID
-  product?: string // Relation ID (optional - can be null if product was deleted)
-  productName: string // Snapshot of product name at time of sale
+  saleId: string
+  productId?: string | null
+  productName: string
   quantity: number
-  unitPrice: number // Price charged (after any promo)
+  unitPrice: number
   subtotal: number
-  created: string
-  // Expanded relations
+  createdAt: Date | string
   expand?: {
     sale?: Sale
     product?: Product
@@ -115,12 +104,12 @@ export interface SaleItem {
 export interface Provider {
   id: string
   name: string
-  phone?: string
-  email?: string
-  notes?: string
+  phone?: string | null
+  email?: string | null
+  notes?: string | null
   active: boolean
-  created: string
-  updated: string
+  createdAt: Date | string
+  updatedAt: Date | string
 }
 
 // ============================================
@@ -131,37 +120,28 @@ export type OrderStatus = 'pending' | 'received'
 
 export interface Order {
   id: string
-  collectionId: string // Needed for file URL
-  collectionName: string // Needed for file URL
-  date: string
-  receivedDate?: string
-  total: number // Total paid to supplier
+  businessId: string
+  providerId?: string | null
+  date: Date | string
+  receivedDate?: Date | string | null
+  total: number
   status: OrderStatus
-  estimatedArrival?: string // Estimated delivery date
-  receipt?: string // Proof of purchase file (receipt, Yape screenshot)
-  notes?: string
-  provider?: string // Relation ID to provider
-  created: string
-  updated: string
-  // Expanded relations
-  expand?: {
-    'order_items(order)'?: OrderItem[]
-    provider?: Provider
-  }
+  estimatedArrival?: Date | string | null
+  receipt?: string | null
+  notes?: string | null
+  createdAt: Date | string
+  updatedAt: Date | string
 }
 
 export interface OrderItem {
   id: string
-  order: string // Relation ID
-  product?: string // Relation ID (optional - null if product deleted)
-  productName: string // Snapshot of product name at order time
-  quantity: number // Units ordered
-  created: string
-  // Expanded relations
-  expand?: {
-    order?: Order
-    product?: Product
-  }
+  orderId: string
+  productId?: string | null
+  productName: string
+  quantity: number
+  unitCost?: number | null
+  subtotal?: number | null
+  createdAt: Date | string
 }
 
 // ============================================
@@ -172,17 +152,16 @@ export type TransferStatus = 'pending' | 'accepted' | 'completed' | 'expired' | 
 
 export interface OwnershipTransfer {
   id: string
-  code: string // 8-char uppercase code
-  fromUser: string // Relation ID to current owner
-  toPhone: string // E.164 format
-  toUser?: string // Relation ID to recipient (set when accepted)
+  code: string
+  fromUser: string
+  toEmail: string
+  toUser?: string
   status: TransferStatus
-  expiresAt: string // ISO date string
-  acceptedAt?: string // ISO date string
-  completedAt?: string // ISO date string
-  created: string
-  updated: string
-  // Expanded relations
+  expiresAt: Date | string
+  acceptedAt?: Date | string
+  completedAt?: Date | string
+  createdAt: Date | string
+  updatedAt: Date | string
   expand?: {
     fromUser?: User
     toUser?: User
@@ -190,13 +169,13 @@ export interface OwnershipTransfer {
 }
 
 // ============================================
-// CART TYPES (for UI state, not stored in DB)
+// CART TYPES (UI state only)
 // ============================================
 
 export interface CartItem {
   product: Product
   quantity: number
-  unitPrice: number // May differ from product.price if promo applied
+  unitPrice: number
   subtotal: number
 }
 
@@ -209,54 +188,47 @@ export interface Cart {
 // CASH DRAWER TYPES
 // ============================================
 
-export type CashMovementType = 'ingreso' | 'retiro'
+export type CashMovementType = 'deposit' | 'withdrawal'
 
 export type CashMovementCategory =
-  | 'venta'              // Cash sale (ingreso) - auto from ventas
-  | 'prestamo_empleado'  // Employee loan to drawer (ingreso)
-  | 'retiro_banco'       // Bank withdrawal (ingreso)
-  | 'devolucion_prestamo' // Repaying employee loan (retiro)
-  | 'deposito_banco'     // Bank deposit (retiro)
-  | 'otro'               // Other
+  | 'sale'            // Cash sale (deposit)
+  | 'employee_loan'   // Employee loan to drawer (deposit)
+  | 'bank_withdrawal' // Bank withdrawal (deposit)
+  | 'loan_repayment'  // Repaying employee loan (withdrawal)
+  | 'bank_deposit'    // Bank deposit (withdrawal)
+  | 'other'           // Other
 
 export interface CashSession {
   id: string
-  openedAt: string
-  closedAt?: string
+  businessId: string
+  openedAt: Date | string
+  closedAt?: Date | string | null
   openedBy: string
-  closedBy?: string
+  closedBy?: string | null
   openingBalance: number
-  closingBalance?: number
-  expectedBalance?: number
-  discrepancy?: number
-  discrepancyNote?: string
-  created: string
-  updated: string
-  expand?: {
-    openedBy?: User
-    closedBy?: User
-    'cash_movements(session)'?: CashMovement[]
-  }
+  closingBalance?: number | null
+  expectedBalance?: number | null
+  discrepancy?: number | null
+  discrepancyNote?: string | null
+  createdAt: Date | string
+  updatedAt: Date | string
+  opener?: { name: string } | null
+  closer?: { name: string } | null
 }
 
 export interface CashMovement {
   id: string
-  session: string
+  sessionId: string
   type: CashMovementType
   category: CashMovementCategory
   amount: number
-  note?: string
-  sale?: string
-  employee?: string
+  note?: string | null
+  saleId?: string | null
+  employeeId?: string | null
   createdBy: string
-  editedBy?: string
-  created: string
-  updated: string
-  expand?: {
-    session?: CashSession
-    sale?: Sale
-    employee?: User
-    createdBy?: User
-    editedBy?: User
-  }
+  editedBy?: string | null
+  createdAt: Date | string
+  updatedAt: Date | string
+  creator?: { name: string } | null
+  employee?: { name: string } | null
 }

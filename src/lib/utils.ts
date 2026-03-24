@@ -1,54 +1,51 @@
 /**
- * Format currency in Peruvian Soles
+ * Format currency in US Dollars
  */
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('es-PE', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'PEN',
+    currency: 'USD',
     minimumFractionDigits: 2,
   }).format(amount)
 }
 
 /**
- * Format date in Peruvian format (DD/MM/YYYY)
+ * Format date in US format (MM/DD/YYYY)
  */
 export function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('es-PE', {
-    day: '2-digit',
+  return new Intl.DateTimeFormat('en-US', {
     month: '2-digit',
+    day: '2-digit',
     year: 'numeric',
-    timeZone: 'America/Lima',
+    timeZone: 'America/New_York',
   }).format(d)
 }
 
 /**
  * Format time in 12-hour format
- * Fixes es-PE locale quirk: "1:30 a. m." -> "1:30 a.m."
  */
 export function formatTime(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat('en-US', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
-    timeZone: 'America/Lima',
+    timeZone: 'America/New_York',
   }).format(d)
-    .replace(/a\.\s*m\./gi, 'a.m.')
-    .replace(/p\.\s*m\./gi, 'p.m.')
 }
 
 /**
- * Get time-of-day greeting in Spanish
- * 6am-12pm: Buenos dias
- * 12pm-6pm: Buenas tardes
- * 6pm-6am: Buenas noches
+ * Get time-of-day greeting
+ * 6am-12pm: Good morning
+ * 12pm-6pm: Good afternoon
+ * 6pm-6am: Good evening
  */
 export function getGreeting(): string {
   const hour = new Date().getHours()
-  if (hour >= 6 && hour < 12) return 'Buenos dias'
-  if (hour >= 12 && hour < 18) return 'Buenas tardes'
-  return 'Buenas noches'
+  if (hour >= 6 && hour < 12) return 'Good morning'
+  if (hour >= 12 && hour < 18) return 'Good afternoon'
+  return 'Good evening'
 }
 
 /**
@@ -62,25 +59,27 @@ export function cn(...classes: (string | undefined | false)[]): string {
 // PRODUCT UTILITIES
 // ============================================
 
-import { POCKETBASE_URL } from './pocketbase'
-
 /**
- * Get product icon URL from PocketBase
- * @param product - Product with id, collectionId, and optional icon filename
- * @param thumb - Optional thumbnail size ('64x64' or '128x128') or baseURL for full icon
- * @returns Full URL to the icon or null if no icon
+ * Get product icon - either a URL or emoji
+ * In the new system, icon is stored as either:
+ * - A full URL (R2, external, etc.)
+ * - An emoji string
+ * - Null/undefined
+ *
+ * @param product - Product with optional icon
+ * @returns The icon string (URL or emoji) or null
  */
 export function getProductIconUrl(
-  product: { id: string; collectionId: string; icon?: string },
-  thumb?: '64x64' | '128x128' | string
+  product: { icon?: string | null },
 ): string | null {
   if (!product.icon) return null
+  return product.icon
+}
 
-  const baseUrl = `${POCKETBASE_URL}/api/files/${product.collectionId}/${product.id}/${product.icon}`
-
-  if (thumb === '64x64' || thumb === '128x128') {
-    return `${baseUrl}?thumb=${thumb}`
-  }
-
-  return baseUrl
+/**
+ * Check if a string is an emoji (vs a URL)
+ */
+export function isEmoji(str: string): boolean {
+  // Simple check: URLs start with http or /, emojis don't
+  return !str.startsWith('http') && !str.startsWith('/')
 }

@@ -131,7 +131,7 @@ const result = await fal.run('fal-ai/birefnet', {
 
 **Location:** `src/hooks/useAiProductPipeline.ts`
 
-The final icon is compressed to fit PocketBase's 500KB file size limit:
+The final icon is compressed to fit typical upload size limits:
 - Target: 400KB max (with safety margin)
 - Progressive resizing: 512 → 384 → 288 → ... until under limit
 - Output: PNG with transparency preserved
