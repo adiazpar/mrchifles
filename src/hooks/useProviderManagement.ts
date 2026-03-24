@@ -45,7 +45,7 @@ export interface UseProviderManagementReturn {
 }
 
 export function useProviderManagement(): UseProviderManagementReturn {
-  const { user, pb } = useAuth()
+  const { user } = useAuth()
 
   // Data state
   const [providers, setProviders] = useState<Provider[]>([])
@@ -71,21 +71,26 @@ export function useProviderManagement(): UseProviderManagementReturn {
   const canManage = isPartnerOrOwner(user)
 
   // Load providers
+  // TODO: Implement with Drizzle API routes
   useEffect(() => {
     let cancelled = false
 
     async function loadData() {
       try {
-        const providersList = await pb.collection('providers').getFullList<Provider>({
-          sort: 'name',
-          requestKey: null,
-        })
+        const response = await fetch('/api/providers')
+        const data = await response.json()
+
         if (cancelled) return
-        setProviders(providersList)
+
+        if (response.ok && data.success) {
+          setProviders(data.providers)
+        } else {
+          setError('Failed to load providers')
+        }
       } catch (err) {
         if (cancelled) return
         console.error('Error loading providers:', err)
-        setError('Error al cargar los proveedores')
+        setError('Failed to load providers')
       } finally {
         if (!cancelled) {
           setIsLoading(false)
@@ -98,7 +103,7 @@ export function useProviderManagement(): UseProviderManagementReturn {
     return () => {
       cancelled = true
     }
-  }, [pb])
+  }, [])
 
   // Sort providers: active first, then by name
   const sortedProviders = useMemo(() => {
@@ -145,6 +150,7 @@ export function useProviderManagement(): UseProviderManagementReturn {
     resetForm()
   }, [resetForm])
 
+  // TODO: Implement with Drizzle API routes
   const handleSubmit = useCallback(async (): Promise<boolean> => {
     if (!name.trim()) {
       setError('El nombre es obligatorio')
@@ -155,7 +161,7 @@ export function useProviderManagement(): UseProviderManagementReturn {
     setError('')
 
     try {
-      const data = {
+      const providerData = {
         name: name.trim(),
         phone: phone.trim() || null,
         email: email.trim() || null,
@@ -163,30 +169,44 @@ export function useProviderManagement(): UseProviderManagementReturn {
         active,
       }
 
-      if (editingProvider) {
-        await pb.collection('providers').update(editingProvider.id, data)
-      } else {
-        await pb.collection('providers').create(data)
+      const url = editingProvider
+        ? `/api/providers/${editingProvider.id}`
+        : '/api/providers'
+      const method = editingProvider ? 'PATCH' : 'POST'
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(providerData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to save provider')
+        return false
       }
 
       // Reload providers
-      const providersList = await pb.collection('providers').getFullList<Provider>({
-        sort: 'name',
-        requestKey: null,
-      })
-      setProviders(providersList)
-      setProviderSaved(true)
+      const listResponse = await fetch('/api/providers')
+      const listData = await listResponse.json()
 
+      if (listResponse.ok && listData.success) {
+        setProviders(listData.providers)
+      }
+
+      setProviderSaved(true)
       return true
     } catch (err) {
       console.error('Error saving provider:', err)
-      setError('Error al guardar el proveedor')
+      setError('Failed to save provider')
       return false
     } finally {
       setIsSaving(false)
     }
-  }, [name, phone, email, notes, active, editingProvider, pb])
+  }, [name, phone, email, notes, active, editingProvider])
 
+  // TODO: Implement with Drizzle API routes
   const handleDelete = useCallback(async (): Promise<boolean> => {
     if (!editingProvider) return false
 
@@ -194,25 +214,35 @@ export function useProviderManagement(): UseProviderManagementReturn {
     setError('')
 
     try {
-      await pb.collection('providers').delete(editingProvider.id)
+      const response = await fetch(`/api/providers/${editingProvider.id}`, {
+        method: 'DELETE',
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to delete provider')
+        return false
+      }
 
       // Reload providers
-      const providersList = await pb.collection('providers').getFullList<Provider>({
-        sort: 'name',
-        requestKey: null,
-      })
-      setProviders(providersList)
-      setProviderDeleted(true)
+      const listResponse = await fetch('/api/providers')
+      const listData = await listResponse.json()
 
+      if (listResponse.ok && listData.success) {
+        setProviders(listData.providers)
+      }
+
+      setProviderDeleted(true)
       return true
     } catch (err) {
       console.error('Error deleting provider:', err)
-      setError('Error al eliminar el proveedor')
+      setError('Failed to delete provider')
       return false
     } finally {
       setIsDeleting(false)
     }
-  }, [editingProvider, pb])
+  }, [editingProvider])
 
   return {
     // Data

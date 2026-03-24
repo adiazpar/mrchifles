@@ -32,11 +32,11 @@ A **mobile-first point-of-sale system** for small businesses selling at ferias (
 |-------|------------|
 | **Frontend** | Next.js 15+ (App Router), React 18, TypeScript |
 | **Styling** | Tailwind CSS |
-| **Backend** | PocketBase (SQLite + Auth + Realtime) |
-| **Phone Auth** | Firebase SMS OTP |
+| **Database** | Turso (libSQL - edge SQLite) |
+| **ORM** | Drizzle ORM |
+| **Auth** | Simple JWT (jose + bcryptjs) |
 | **Icons** | Lucide React |
-| **Frontend Hosting** | Vercel |
-| **Backend Hosting** | PocketHost |
+| **Hosting** | Vercel |
 
 ---
 
@@ -56,88 +56,59 @@ src/
 │   └── api/              # API routes
 ├── components/
 │   ├── ui/               # Base UI components
-│   ├── auth/             # Auth components (PIN pad, OTP)
+│   ├── auth/             # Auth components (AuthGuard)
 │   ├── layout/           # Layout components
-│   └── caja/             # Cash drawer components
+│   ├── caja/             # Cash drawer components
+│   └── ajustes/          # Settings components
 ├── contexts/             # React contexts
+├── db/                   # Database (Drizzle schema + client)
 ├── hooks/                # Custom hooks
 ├── lib/                  # Utilities
 └── types/                # TypeScript types
-pb_migrations/            # PocketBase schema migrations
 ```
 
 ---
 
-## Database Schema (PocketBase)
+## Database Schema (Drizzle + Turso)
 
-### users
-Extended auth collection with phone auth and PIN login.
+Schema defined in `src/db/schema.ts`. All tables use `businessId` for multi-tenant isolation.
 
-### products
-```javascript
-{
-  name: "text",           // Required
-  price: "number",        // Selling price
-  costPrice: "number",    // Cost price (optional)
-  category: "select",     // Product category
-  stock: "number",        // Current stock
-  active: "bool"          // Default: true
-}
-```
+### Core Tables
 
-### sales
-```javascript
-{
-  date: "date",
-  total: "number",
-  paymentMethod: "select",  // cash, yape, plin
-  channel: "select",        // feria, whatsapp
-  notes: "text"
-}
-```
+| Table | Description |
+|-------|-------------|
+| `businesses` | Business/store entities |
+| `users` | User accounts with email/password auth |
+| `products` | Product catalog with pricing and stock |
+| `sales` | Sale transactions |
+| `sale_items` | Line items for each sale |
+| `providers` | Supplier information |
+| `orders` | Purchase orders from suppliers |
+| `order_items` | Line items for orders |
+| `cash_sessions` | Cash drawer sessions |
+| `cash_movements` | Cash movements (deposits/withdrawals) |
+| `invite_codes` | Team member invitations |
+| `ownership_transfers` | Business ownership transfer records |
+| `app_config` | Application configuration |
 
-### sale_items
-```javascript
-{
-  sale: "relation",       // -> sales
-  product: "relation",    // -> products (nullable)
-  productName: "text",    // Snapshot at time of sale
-  quantity: "number",
-  unitPrice: "number",
-  subtotal: "number"
-}
-```
+### Schema Changes Workflow
 
-### cash_sessions
-Cash drawer sessions with opening/closing balances.
+1. Edit `src/db/schema.ts`
+2. Push to development: `npm run db:push`
+3. Test changes locally
+4. Push to production: `npm run db:push:prod`
 
-### cash_movements
-Individual cash movements (ingresos/retiros) within a session.
-
-### orders
-Purchase orders from suppliers.
-
-### order_items
-Line items for orders.
-
-### providers
-Supplier/vendor information.
-
-### invite_codes
-Team member invite codes.
-
-### ownership_transfers
-Business ownership transfer records.
+**Note:** `db:push` uses `--force` flag for development speed. For production, review changes carefully.
 
 ---
 
 ## Development Guidelines
 
 ### Localization
-- **Language**: All UI text in Spanish (es-PE)
-- **Currency**: Peruvian Sol (S/) with 2 decimal places
-- **Date Format**: DD/MM/YYYY
-- **Time Zone**: America/Lima (UTC-5)
+- **Language**: All UI text in English
+- **Currency**: US Dollar ($) with 2 decimal places
+- **Date Format**: MM/DD/YYYY (US format)
+- **Time Zone**: America/New_York (default, will be configurable)
 - **Number Format**: Comma for thousands, period for decimals (1,234.56)
 
 ### Code Standards
@@ -145,25 +116,24 @@ Business ownership transfer records.
 - Use TypeScript strict mode
 - Validate inputs with Zod
 - Use React Server Components where possible
-- Plans go in `.claude/plans/` directory
+- Plans go in `docs/plans/` directory
 
-### Time Formatting (es-PE Locale)
-The Spanish Peru locale adds spaces in AM/PM. Always clean it:
+### Time Formatting
 ```typescript
-const time = now.toLocaleTimeString('es-PE', {
+const time = now.toLocaleTimeString('en-US', {
   hour: '2-digit',
   minute: '2-digit',
-  timeZone: 'America/Lima',
-}).replace(/a\.\s*m\./gi, 'a.m.').replace(/p\.\s*m\./gi, 'p.m.')
+  timeZone: 'America/New_York',
+})
 ```
 
 ### Time-of-Day Greetings
 ```typescript
 function getGreeting(): string {
   const hour = new Date().getHours()
-  if (hour >= 6 && hour < 12) return 'Buenos dias'
-  if (hour >= 12 && hour < 18) return 'Buenas tardes'
-  return 'Buenas noches'
+  if (hour >= 6 && hour < 12) return 'Good morning'
+  if (hour >= 12 && hour < 18) return 'Good afternoon'
+  return 'Good evening'
 }
 ```
 
@@ -173,34 +143,38 @@ function getGreeting(): string {
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev:all` | Start Next.js + PocketBase concurrently |
+| `npm run dev` | Start Next.js development server |
 | `npm run build` | Build for production |
-| `npm run db:reset` | Reset database and run migrations |
-| `npm run pb:download` | Download PocketBase binary |
+| `npm run db:push` | Push schema changes to dev database |
+| `npm run db:push:prod` | Push schema changes to production database |
+| `npm run db:studio` | Open Drizzle Studio (database GUI) |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run tests with Vitest |
 
-### Starting/Restarting Dev Servers (IMPORTANT)
+### Starting Dev Server
 
-**ALWAYS use `npm run dev:all` to start development servers.** Run it as a background task.
+```bash
+npm run dev
+```
 
-To restart servers:
-1. Kill processes on ports 3000 and 8090: `lsof -ti:3000,8090 | xargs kill -9`
-2. Start fresh: `npm run dev:all` (as background task)
+Access via Tailscale IP for mobile testing: http://100.113.9.34:3000
 
-### Dev Server URLs (Tailscale)
+### Database Commands
 
-Access via Tailscale IP for both local and remote development:
+**Push schema to development:**
+```bash
+npm run db:push
+```
 
-| Service | URL |
-|---------|-----|
-| Next.js | http://100.113.9.34:3000 |
-| PocketBase API | http://100.113.9.34:8090/api/ |
-| PocketBase Admin | http://127.0.0.1:8090/_/ |
+**Push schema to production (requires TURSO_PROD_* env vars):**
+```bash
+npm run db:push:prod
+```
 
-### Database Reset Workflow
-After modifying migrations in `pb_migrations/`:
-1. Stop `dev:all` (kill the background task)
-2. Run `npm run db:reset`
-3. Restart `dev:all` (as background task)
+**Open Drizzle Studio to browse data:**
+```bash
+npm run db:studio
+```
 
 ---
 
@@ -322,13 +296,13 @@ const [itemDeleted, setItemDeleted] = useState(false)
 
 // In your delete handler:
 const handleDelete = async () => {
-  await pb.collection('items').delete(id)
+  await fetch(`/api/items/${id}`, { method: 'DELETE' })
   setItemDeleted(true)  // Triggers animation
   goToStep(3)           // Navigate to success step
 }
 
 // Success/Error step with Lottie:
-<Modal.Step title="Item eliminado" hideBackButton>
+<Modal.Step title="Item Deleted" hideBackButton>
   <Modal.Item>
     <div className="flex flex-col items-center text-center py-4">
       {/* Fixed-size container prevents layout shift */}
@@ -348,20 +322,20 @@ const handleDelete = async () => {
         className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
         style={{ opacity: itemDeleted ? 1 : 0 }}
       >
-        Item eliminado
+        Item Deleted
       </p>
       <p
         className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
         style={{ opacity: itemDeleted ? 1 : 0 }}
       >
-        El item ha sido eliminado correctamente
+        The item has been deleted successfully
       </p>
     </div>
   </Modal.Item>
 
   <Modal.Footer>
     <button onClick={handleClose} className="btn btn-primary flex-1">
-      Listo
+      Done
     </button>
   </Modal.Footer>
 </Modal.Step>
@@ -379,24 +353,111 @@ const handleDelete = async () => {
 
 ---
 
+## API Routes
+
+All API routes use Drizzle ORM with Turso. Authentication is via JWT in HTTP-only cookies.
+
+### Authentication
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/auth/register` | POST | Register new owner account |
+| `/api/auth/login` | POST | Login with email/password |
+| `/api/auth/logout` | POST | Logout (clear cookie) |
+| `/api/auth/me` | GET | Get current user |
+| `/api/setup-status` | GET | Check if app is set up |
+
+### Team Management
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/team` | GET | List team members and invite codes |
+| `/api/invite/create` | POST | Create invite code |
+| `/api/invite/delete` | POST | Delete invite code |
+| `/api/invite/regenerate` | POST | Regenerate invite code |
+| `/api/invite/validate` | GET | Validate invite code |
+| `/api/invite/register` | POST | Register via invite code |
+| `/api/users/toggle-status` | POST | Toggle user active/disabled |
+| `/api/users/change-role` | POST | Change user role |
+
+### Products
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/products` | GET | List products |
+| `/api/products` | POST | Create product (FormData) |
+| `/api/products/[id]` | PATCH | Update product (FormData) |
+| `/api/products/[id]` | DELETE | Delete product |
+| `/api/products/[id]/stock` | PATCH | Adjust stock |
+
+### Providers
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/providers` | GET | List providers |
+| `/api/providers` | POST | Create provider |
+| `/api/providers/[id]` | PATCH | Update provider |
+| `/api/providers/[id]` | DELETE | Delete provider |
+
+### Orders (Purchase Orders)
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/orders` | GET | List orders with items |
+| `/api/orders` | POST | Create order (FormData) |
+| `/api/orders/[id]` | PATCH | Update order (FormData) |
+| `/api/orders/[id]` | DELETE | Delete order |
+| `/api/orders/[id]/receive` | POST | Receive order, update stock |
+
+### Cash Drawer
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/cash/sessions` | GET | List cash sessions |
+| `/api/cash/sessions` | POST | Open cash drawer |
+| `/api/cash/sessions/current` | GET | Get current open session |
+| `/api/cash/sessions/[id]` | GET | Get specific session |
+| `/api/cash/sessions/[id]/close` | POST | Close session |
+| `/api/cash/movements` | GET | List movements (query: sessionId) |
+| `/api/cash/movements` | POST | Create movement |
+| `/api/cash/movements/[id]` | PATCH | Update movement |
+| `/api/cash/movements/[id]` | DELETE | Delete movement |
+| `/api/cash/movements/counts` | GET | Get movement counts per session |
+
+---
+
 ## Environment Variables
 
 Copy `.env.example` to `.env.local`:
 
 | Variable | Description |
 |----------|-------------|
-| `POCKETBASE_URL` | PocketBase server URL |
-| `PB_ADMIN_EMAIL` | Admin email for db:reset |
-| `PB_ADMIN_PASSWORD` | Admin password for db:reset |
-| `NEXT_PUBLIC_FIREBASE_*` | Firebase config for phone auth |
+| `AUTH_SECRET` | JWT signing secret (min 32 chars) |
+| `TURSO_DATABASE_URL` | Turso dev database URL |
+| `TURSO_AUTH_TOKEN` | Turso dev auth token |
+| `TURSO_PROD_DATABASE_URL` | Turso prod database URL (for db:push:prod) |
+| `TURSO_PROD_AUTH_TOKEN` | Turso prod auth token (for db:push:prod) |
+| `OPENAI_API_KEY` | OpenAI API key (optional, for AI features) |
+| `FAL_KEY` | fal.ai API key (optional, for emoji generation) |
+
+### Setting Up Turso
+
+```bash
+# Install CLI
+brew install tursodatabase/tap/turso
+
+# Login
+turso auth login
+
+# Create dev database
+turso db create pos-dev
+
+# Get URL and token
+turso db show pos-dev --url
+turso db tokens create pos-dev
+```
 
 ---
 
-## Payment Methods (Peru)
+## Payment Methods
 
 | Method | Notes |
 |--------|-------|
-| **Cash (Efectivo)** | Track in cash drawer |
-| **Yape** | BCP's mobile payment (QR/phone) |
-| **Plin** | Interoperable with Yape since 2023 |
+| **Cash** | Track in cash drawer |
+| **Card** | Credit/debit card payments |
+| **Other** | Other digital payments |
 

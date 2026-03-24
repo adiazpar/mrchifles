@@ -109,7 +109,7 @@ export function StockStepper({
 
       {/* Label */}
       <div className="text-xs text-text-secondary">
-        unidades
+        units
       </div>
     </div>
   )

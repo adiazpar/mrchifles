@@ -3,7 +3,6 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { useAuth } from '@/contexts/auth-context'
 import { useAiProductPipeline, useImageCompression } from '@/hooks'
 import type { Product, ProductCategory } from '@/types'
 
@@ -82,8 +81,6 @@ export function useProductCrud({
   onProductSaved,
   onProductDeleted,
 }: UseProductCrudOptions = {}): UseProductCrudReturn {
-  const { pb } = useAuth()
-
   // Form state
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
@@ -182,7 +179,7 @@ export function useProductCrud({
     setName(product.name)
     setPrice(product.price.toString())
     setCategory(product.category || '')
-    setActive(product.active)
+    setActive(product.active ?? true)
     // Note: iconPreview should be set by caller using getProductIconUrl
     setGeneratedIconBlob(null)
     if (pipeline.state.step !== 'idle') {
@@ -238,6 +235,7 @@ export function useProductCrud({
   }, [])
 
   // Submit product
+  // TODO: Implement with Drizzle API routes
   const handleSubmit = useCallback(async (): Promise<boolean> => {
     if (!name.trim()) {
       setError('El nombre es requerido')
@@ -266,26 +264,37 @@ export function useProductCrud({
         formData.append('icon', generatedIconBlob, 'icon.png')
       }
 
-      let record: Product
-      if (editingProduct) {
-        record = await pb.collection('products').update<Product>(editingProduct.id, formData)
-      } else {
-        record = await pb.collection('products').create<Product>(formData)
+      const url = editingProduct
+        ? `/api/products/${editingProduct.id}`
+        : '/api/products'
+      const method = editingProduct ? 'PATCH' : 'POST'
+
+      const response = await fetch(url, {
+        method,
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to save product')
+        return false
       }
 
       setProductSaved(true)
-      onProductSaved?.(record)
+      onProductSaved?.(data.product)
       return true
     } catch (err) {
       console.error('Error saving product:', err)
-      setError('Error al guardar el producto')
+      setError('Failed to save product')
       return false
     } finally {
       setIsSaving(false)
     }
-  }, [name, price, category, active, generatedIconBlob, editingProduct, pb, onProductSaved])
+  }, [name, price, category, active, generatedIconBlob, editingProduct, onProductSaved])
 
   // Save stock adjustment
+  // TODO: Implement with Drizzle API routes
   const handleSaveAdjustment = useCallback(async () => {
     if (!editingProduct) return
 
@@ -296,19 +305,30 @@ export function useProductCrud({
     setError('')
 
     try {
-      await pb.collection('products').update(editingProduct.id, {
-        stock: newStockValue
+      const response = await fetch(`/api/products/${editingProduct.id}/stock`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stock: newStockValue }),
       })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to adjust inventory')
+        return
+      }
+
       onProductSaved?.({ ...editingProduct, stock: newStockValue })
     } catch (err) {
       console.error('Error adjusting stock:', err)
-      setError('Error al ajustar el inventario')
+      setError('Failed to adjust inventory')
     } finally {
       setIsAdjusting(false)
     }
-  }, [editingProduct, newStockValue, pb, onProductSaved])
+  }, [editingProduct, newStockValue, onProductSaved])
 
   // Delete product
+  // TODO: Implement with Drizzle API routes
   const handleDelete = useCallback(async (): Promise<boolean> => {
     if (!editingProduct) return false
 
@@ -316,18 +336,28 @@ export function useProductCrud({
     setError('')
 
     try {
-      await pb.collection('products').delete(editingProduct.id)
+      const response = await fetch(`/api/products/${editingProduct.id}`, {
+        method: 'DELETE',
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to delete product')
+        return false
+      }
+
       setProductDeleted(true)
       onProductDeleted?.(editingProduct.id)
       return true
     } catch (err) {
       console.error('Error deleting product:', err)
-      setError('Error al eliminar el producto')
+      setError('Failed to delete product')
       return false
     } finally {
       setIsDeleting(false)
     }
-  }, [editingProduct, pb, onProductDeleted])
+  }, [editingProduct, onProductDeleted])
 
   return {
     formState: {

@@ -9,7 +9,7 @@ export interface UseCashMovementsReturn {
   movements: CashMovement[]
   isLoading: boolean
   newMovementId: string | null
-  lastMovementType: 'ingreso' | 'retiro' | null
+  lastMovementType: 'deposit' | 'withdrawal' | null
 
   // Actions
   loadMovements: (sessionId: string) => Promise<void>
@@ -33,31 +33,33 @@ export interface UseCashMovementsReturn {
 }
 
 export function useCashMovements(): UseCashMovementsReturn {
-  const { user, pb } = useAuth()
+  const { user } = useAuth()
 
   const [movements, setMovements] = useState<CashMovement[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [newMovementId, setNewMovementId] = useState<string | null>(null)
-  const [lastMovementType, setLastMovementType] = useState<'ingreso' | 'retiro' | null>(null)
+  const [lastMovementType, setLastMovementType] = useState<'deposit' | 'withdrawal' | null>(null)
 
   // Load movements for a session
+  // TODO: Implement with Drizzle API routes
   const loadMovements = useCallback(async (sessionId: string): Promise<void> => {
     setIsLoading(true)
     try {
-      // Use simple getList with client-side filtering (workaround for SDK issue)
-      const result = await pb.collection('cash_movements').getList<CashMovement>(1, 50, {
-        expand: 'employee',
-      })
-      const movs = result.items.filter(m => m.session === sessionId)
-      setMovements(movs)
+      const response = await fetch(`/api/cash/movements?sessionId=${sessionId}`)
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setMovements(data.movements)
+      }
     } catch (err) {
       console.error('Error loading movements:', err)
     } finally {
       setIsLoading(false)
     }
-  }, [pb])
+  }, [])
 
   // Record a new movement
+  // TODO: Implement with Drizzle API routes
   const recordMovement = useCallback(async (
     session: CashSession,
     type: CashMovementType,
@@ -67,38 +69,42 @@ export function useCashMovements(): UseCashMovementsReturn {
   ): Promise<CashMovement> => {
     if (!user) throw new Error('User not authenticated')
 
-    const newMovement = await pb.collection('cash_movements').create<CashMovement>({
-      session: session.id,
-      type,
-      category,
-      amount,
-      note: note.trim() || null,
-      createdBy: user.id,
-      employee: (category === 'prestamo_empleado' || category === 'devolucion_prestamo') ? user.id : null,
+    const response = await fetch('/api/cash/movements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: session.id,
+        type,
+        category,
+        amount,
+        note: note.trim() || null,
+        employeeId: (category === 'employee_loan' || category === 'loan_repayment') ? user.id : null,
+      }),
     })
 
-    // Add expanded employee data for immediate display
-    const movementWithExpand: CashMovement = {
-      ...newMovement,
-      expand: (category === 'prestamo_empleado' || category === 'devolucion_prestamo')
-        ? { employee: user }
-        : undefined
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Error recording movement')
     }
 
+    const newMovement: CashMovement = data.movement
+
     // Update local state
-    setMovements(prev => [...prev, movementWithExpand])
+    setMovements(prev => [...prev, newMovement])
 
     // Trigger balance animation
     setLastMovementType(type)
     setTimeout(() => setLastMovementType(null), 500)
 
     // Track new movement for inline animation
-    setNewMovementId(movementWithExpand.id)
+    setNewMovementId(newMovement.id)
 
-    return movementWithExpand
-  }, [user, pb])
+    return newMovement
+  }, [user])
 
   // Update an existing movement
+  // TODO: Implement with Drizzle API routes
   const updateMovement = useCallback(async (
     movement: CashMovement,
     type: CashMovementType,
@@ -108,33 +114,46 @@ export function useCashMovements(): UseCashMovementsReturn {
   ): Promise<CashMovement> => {
     if (!user) throw new Error('User not authenticated')
 
-    const updatedMovement = await pb.collection('cash_movements').update<CashMovement>(movement.id, {
-      type,
-      category,
-      amount,
-      note: note.trim() || null,
-      employee: (category === 'prestamo_empleado' || category === 'devolucion_prestamo') ? user.id : null,
-      editedBy: user.id,
+    const response = await fetch(`/api/cash/movements/${movement.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type,
+        category,
+        amount,
+        note: note.trim() || null,
+        employeeId: (category === 'employee_loan' || category === 'loan_repayment') ? user.id : null,
+      }),
     })
 
-    // Update local state with expanded employee data
-    const movementWithExpand: CashMovement = {
-      ...updatedMovement,
-      expand: (category === 'prestamo_empleado' || category === 'devolucion_prestamo')
-        ? { employee: user }
-        : movement.expand
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Error updating movement')
     }
 
-    setMovements(prev => prev.map(m => m.id === movement.id ? movementWithExpand : m))
+    const updatedMovement: CashMovement = data.movement
 
-    return movementWithExpand
-  }, [user, pb])
+    setMovements(prev => prev.map(m => m.id === movement.id ? updatedMovement : m))
+
+    return updatedMovement
+  }, [user])
 
   // Delete a movement
+  // TODO: Implement with Drizzle API routes
   const deleteMovement = useCallback(async (movementId: string): Promise<void> => {
-    await pb.collection('cash_movements').delete(movementId)
+    const response = await fetch(`/api/cash/movements/${movementId}`, {
+      method: 'DELETE',
+    })
+
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Error deleting movement')
+    }
+
     setMovements(prev => prev.filter(m => m.id !== movementId))
-  }, [pb])
+  }, [])
 
   // Clear new movement ID (used after animation completes)
   const clearNewMovementId = useCallback(() => {

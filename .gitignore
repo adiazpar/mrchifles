@@ -5,11 +5,6 @@ node_modules/
 .next/
 out/
 
-# PocketBase
-pb_data/
-pocketbase
-pocketbase.exe
-
 # Environment
 .env
 .env.local

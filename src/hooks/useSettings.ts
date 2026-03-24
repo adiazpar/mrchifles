@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
-import { isValidE164 } from '@/lib/countries'
 
 // ============================================
 // TYPES
@@ -12,7 +11,7 @@ type Theme = 'light' | 'dark' | 'system'
 
 export interface PendingTransfer {
   code: string
-  toPhone: string
+  toEmail: string
   status: 'pending' | 'accepted'
   expiresAt: string
   toUser?: {
@@ -46,8 +45,6 @@ export const THEME_CONFIG = {
 // ============================================
 // HELPERS
 // ============================================
-
-const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
 
 function getInitialTheme(): Theme {
   if (typeof window === 'undefined') return 'system'
@@ -98,8 +95,8 @@ export interface UseSettingsReturn {
   isTransferModalOpen: boolean
   transferStep: number
   setTransferStep: (step: number) => void
-  transferPhone: string
-  setTransferPhone: (phone: string) => void
+  transferEmail: string
+  setTransferEmail: (email: string) => void
   transferLink: string
   transferError: string
   transferLoading: boolean
@@ -112,24 +109,9 @@ export interface UseSettingsReturn {
   handleInitiateTransfer: (e: React.FormEvent) => Promise<void>
   handleCopyTransferLink: () => Promise<void>
   handleCancelTransfer: () => Promise<void>
-  handleConfirmTransfer: (pin: string) => Promise<void>
+  handleConfirmTransfer: (password: string) => Promise<void>
   handleShowTransferLink: () => void
   handleAcceptIncomingTransfer: () => Promise<void>
-
-  // Phone change state
-  isPhoneModalOpen: boolean
-  phoneChangeStep: 'phone' | 'verify'
-  newPhone: string
-  setNewPhone: (phone: string) => void
-  phoneChangeError: string
-  phoneChangeLoading: boolean
-
-  // Phone change actions
-  handleOpenPhoneModal: () => void
-  handleClosePhoneModal: () => void
-  handlePhoneModalExitComplete: () => void
-  handlePhoneSubmit: (e: React.FormEvent) => void
-  handlePhoneVerified: (idToken: string) => Promise<void>
 }
 
 // ============================================
@@ -137,7 +119,7 @@ export interface UseSettingsReturn {
 // ============================================
 
 export function useSettings(): UseSettingsReturn {
-  const { user, pb, changePhoneNumber } = useAuth()
+  const { user } = useAuth()
   const isOwner = user?.role === 'owner'
 
   // Theme state
@@ -149,25 +131,19 @@ export function useSettings(): UseSettingsReturn {
   const [isLoadingTransfer, setIsLoadingTransfer] = useState(false)
 
   // Incoming transfer state (for non-owner recipients)
-  const [incomingTransfer, setIncomingTransfer] = useState<IncomingTransfer | null>(null)
+  // TODO: Implement loading incoming transfers for non-owner users
+  const [incomingTransfer, _setIncomingTransfer] = useState<IncomingTransfer | null>(null)
   const [isLoadingIncoming, setIsLoadingIncoming] = useState(false)
   const [acceptingTransfer, setAcceptingTransfer] = useState(false)
 
   // Transfer modal state
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
   const [transferStep, setTransferStep] = useState(0)
-  const [transferPhone, setTransferPhone] = useState('')
+  const [transferEmail, setTransferEmail] = useState('')
   const [transferError, setTransferError] = useState('')
   const [transferLoading, setTransferLoading] = useState(false)
   const [transferLink, setTransferLink] = useState('')
   const [linkCopied, setLinkCopied] = useState(false)
-
-  // Phone change state
-  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false)
-  const [phoneChangeStep, setPhoneChangeStep] = useState<'phone' | 'verify'>('phone')
-  const [newPhone, setNewPhone] = useState('')
-  const [phoneChangeError, setPhoneChangeError] = useState('')
-  const [phoneChangeLoading, setPhoneChangeLoading] = useState(false)
 
   // ============================================
   // EFFECTS
@@ -177,49 +153,53 @@ export function useSettings(): UseSettingsReturn {
   useEffect(() => {
     if (!isOwner) return
 
-    const fetchPendingTransfer = async () => {
+    async function fetchPendingTransfer() {
       setIsLoadingTransfer(true)
       try {
-        const response = await fetch(`${POCKETBASE_URL}/api/transfer/pending`, {
-          headers: {
-            'Authorization': pb.authStore.token,
-          },
-        })
+        const response = await fetch('/api/transfer/pending')
         const data = await response.json()
-        setPendingTransfer(data.transfer || null)
+
+        if (response.ok && data.success && data.transfer) {
+          setPendingTransfer(data.transfer)
+        } else {
+          setPendingTransfer(null)
+        }
       } catch (err) {
         console.error('Error fetching pending transfer:', err)
+        setPendingTransfer(null)
       } finally {
         setIsLoadingTransfer(false)
       }
     }
 
     fetchPendingTransfer()
-  }, [isOwner, pb])
+  }, [isOwner])
 
   // Fetch incoming transfer for non-owners
   useEffect(() => {
     if (isOwner) return
 
-    const fetchIncomingTransfer = async () => {
+    async function fetchIncomingTransfer() {
       setIsLoadingIncoming(true)
       try {
-        const response = await fetch(`${POCKETBASE_URL}/api/transfer/incoming`, {
-          headers: {
-            'Authorization': pb.authStore.token,
-          },
-        })
+        const response = await fetch('/api/transfer/incoming')
         const data = await response.json()
-        setIncomingTransfer(data.transfer || null)
+
+        if (response.ok && data.success && data.transfer) {
+          _setIncomingTransfer(data.transfer)
+        } else {
+          _setIncomingTransfer(null)
+        }
       } catch (err) {
         console.error('Error fetching incoming transfer:', err)
+        _setIncomingTransfer(null)
       } finally {
         setIsLoadingIncoming(false)
       }
     }
 
     fetchIncomingTransfer()
-  }, [isOwner, pb])
+  }, [isOwner])
 
   // Apply theme changes only when user changes theme (not on mount)
   useEffect(() => {
@@ -259,7 +239,7 @@ export function useSettings(): UseSettingsReturn {
 
   const handleOpenTransferModal = useCallback(() => {
     setTransferStep(0)
-    setTransferPhone('')
+    setTransferEmail('')
     setTransferError('')
     setIsTransferModalOpen(true)
   }, [])
@@ -270,7 +250,7 @@ export function useSettings(): UseSettingsReturn {
 
   const handleTransferModalExitComplete = useCallback(() => {
     setTransferStep(0)
-    setTransferPhone('')
+    setTransferEmail('')
     setTransferError('')
     setTransferLink('')
     setLinkCopied(false)
@@ -280,27 +260,26 @@ export function useSettings(): UseSettingsReturn {
     e.preventDefault()
     setTransferError('')
 
-    if (!transferPhone || !isValidE164(transferPhone)) {
-      setTransferError('Ingresa un numero de telefono valido')
+    // Validate email
+    if (!transferEmail || !transferEmail.includes('@')) {
+      setTransferError('Ingresa un email valido')
       return
     }
 
     setTransferLoading(true)
 
     try {
-      const response = await fetch(`${POCKETBASE_URL}/api/transfer/initiate`, {
+      // TODO: Call /api/transfer/initiate with Drizzle
+      const response = await fetch('/api/transfer/initiate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': pb.authStore.token,
-        },
-        body: JSON.stringify({ toPhone: transferPhone }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toEmail: transferEmail }),
       })
 
       const data = await response.json()
 
-      if (!data.success) {
-        setTransferError(data.error || 'Error al iniciar transferencia')
+      if (!response.ok || !data.success) {
+        setTransferError(data.error || 'Failed to initiate transfer')
         setTransferLoading(false)
         return
       }
@@ -312,12 +291,12 @@ export function useSettings(): UseSettingsReturn {
       // Update pending transfer
       setPendingTransfer({
         code: data.code,
-        toPhone: transferPhone,
+        toEmail: transferEmail,
         status: 'pending',
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       })
 
-      setTransferPhone('')
+      setTransferEmail('')
       setTransferStep(1) // Go to link step
     } catch (err) {
       console.error('Transfer initiate error:', err)
@@ -325,7 +304,7 @@ export function useSettings(): UseSettingsReturn {
     } finally {
       setTransferLoading(false)
     }
-  }, [transferPhone, pb])
+  }, [transferEmail])
 
   const handleCopyTransferLink = useCallback(async () => {
     try {
@@ -355,12 +334,9 @@ export function useSettings(): UseSettingsReturn {
     setTransferLoading(true)
 
     try {
-      const response = await fetch(`${POCKETBASE_URL}/api/transfer/cancel`, {
+      const response = await fetch('/api/transfer/cancel', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': pb.authStore.token,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: pendingTransfer.code }),
       })
 
@@ -374,27 +350,24 @@ export function useSettings(): UseSettingsReturn {
     } finally {
       setTransferLoading(false)
     }
-  }, [pendingTransfer, pb])
+  }, [pendingTransfer])
 
-  const handleConfirmTransfer = useCallback(async (pin: string) => {
+  const handleConfirmTransfer = useCallback(async (password: string) => {
     if (!pendingTransfer) return
 
     setTransferLoading(true)
 
     try {
-      const response = await fetch(`${POCKETBASE_URL}/api/transfer/confirm`, {
+      const response = await fetch('/api/transfer/confirm', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': pb.authStore.token,
-        },
-        body: JSON.stringify({ code: pendingTransfer.code, pin }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: pendingTransfer.code, password }),
       })
 
       const data = await response.json()
 
-      if (!data.success) {
-        setTransferError(data.error || 'Error al confirmar transferencia')
+      if (!response.ok || !data.success) {
+        setTransferError(data.error || 'Failed to confirm transfer')
         setTransferLoading(false)
         return
       }
@@ -407,7 +380,7 @@ export function useSettings(): UseSettingsReturn {
     } finally {
       setTransferLoading(false)
     }
-  }, [pendingTransfer, pb])
+  }, [pendingTransfer])
 
   const handleShowTransferLink = useCallback(() => {
     if (pendingTransfer) {
@@ -423,12 +396,9 @@ export function useSettings(): UseSettingsReturn {
     setAcceptingTransfer(true)
 
     try {
-      const response = await fetch(`${POCKETBASE_URL}/api/transfer/accept`, {
+      const response = await fetch('/api/transfer/accept', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': pb.authStore.token,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: incomingTransfer.code }),
       })
 
@@ -442,66 +412,7 @@ export function useSettings(): UseSettingsReturn {
     } finally {
       setAcceptingTransfer(false)
     }
-  }, [incomingTransfer, pb])
-
-  // ============================================
-  // PHONE CHANGE HANDLERS
-  // ============================================
-
-  const handleOpenPhoneModal = useCallback(() => {
-    setPhoneChangeStep('phone')
-    setNewPhone('')
-    setPhoneChangeError('')
-    setIsPhoneModalOpen(true)
-  }, [])
-
-  const handleClosePhoneModal = useCallback(() => {
-    setIsPhoneModalOpen(false)
-  }, [])
-
-  const handlePhoneModalExitComplete = useCallback(() => {
-    setPhoneChangeStep('phone')
-    setNewPhone('')
-    setPhoneChangeError('')
-  }, [])
-
-  const handlePhoneSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
-    setPhoneChangeError('')
-
-    if (!newPhone || !isValidE164(newPhone)) {
-      setPhoneChangeError('Ingresa un numero de telefono valido')
-      return
-    }
-
-    if (user?.phoneNumber === newPhone) {
-      setPhoneChangeError('El nuevo numero debe ser diferente al actual')
-      return
-    }
-
-    setPhoneChangeStep('verify')
-  }, [newPhone, user?.phoneNumber])
-
-  const handlePhoneVerified = useCallback(async (idToken: string) => {
-    setPhoneChangeLoading(true)
-    setPhoneChangeError('')
-
-    try {
-      const result = await changePhoneNumber(newPhone, idToken)
-
-      if (!result.success) {
-        setPhoneChangeError(result.error || 'Error al cambiar el numero')
-        setPhoneChangeLoading(false)
-        return
-      }
-
-      handleClosePhoneModal()
-    } catch {
-      setPhoneChangeError('Error de conexion')
-    } finally {
-      setPhoneChangeLoading(false)
-    }
-  }, [newPhone, changePhoneNumber, handleClosePhoneModal])
+  }, [incomingTransfer])
 
   // ============================================
   // RETURN
@@ -530,8 +441,8 @@ export function useSettings(): UseSettingsReturn {
     isTransferModalOpen,
     transferStep,
     setTransferStep,
-    transferPhone,
-    setTransferPhone,
+    transferEmail,
+    setTransferEmail,
     transferLink,
     transferError,
     transferLoading,
@@ -547,20 +458,5 @@ export function useSettings(): UseSettingsReturn {
     handleConfirmTransfer,
     handleShowTransferLink,
     handleAcceptIncomingTransfer,
-
-    // Phone change state
-    isPhoneModalOpen,
-    phoneChangeStep,
-    newPhone,
-    setNewPhone,
-    phoneChangeError,
-    phoneChangeLoading,
-
-    // Phone change actions
-    handleOpenPhoneModal,
-    handleClosePhoneModal,
-    handlePhoneModalExitComplete,
-    handlePhoneSubmit,
-    handlePhoneVerified,
   }
 }

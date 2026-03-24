@@ -1,0 +1,336 @@
+'use client'
+
+import { Trash2 } from 'lucide-react'
+import { Spinner, Modal, useMorphingModal } from '@/components/ui'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
+import type { Provider } from '@/types'
+
+// ============================================
+// BUTTON COMPONENTS
+// ============================================
+
+interface SaveProviderButtonProps {
+  onSubmit: () => Promise<boolean>
+  isSaving: boolean
+  disabled: boolean
+}
+
+function SaveProviderButton({ onSubmit, isSaving, disabled }: SaveProviderButtonProps) {
+  const { goToStep } = useMorphingModal()
+
+  const handleClick = async () => {
+    const success = await onSubmit()
+    if (success) {
+      goToStep(2) // Go to save success step
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="btn btn-primary flex-1"
+      disabled={disabled}
+    >
+      {isSaving ? <Spinner /> : 'Save'}
+    </button>
+  )
+}
+
+interface ConfirmDeleteButtonProps {
+  onDelete: () => Promise<boolean>
+  isDeleting: boolean
+}
+
+function ConfirmDeleteButton({ onDelete, isDeleting }: ConfirmDeleteButtonProps) {
+  const { goToStep } = useMorphingModal()
+
+  const handleClick = async () => {
+    const success = await onDelete()
+    if (success) {
+      goToStep(3) // Go to delete success step
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="btn btn-danger flex-1"
+      disabled={isDeleting}
+    >
+      {isDeleting ? <Spinner /> : 'Delete'}
+    </button>
+  )
+}
+
+// ============================================
+// PROPS INTERFACE
+// ============================================
+
+export interface ProviderModalProps {
+  // Modal state
+  isOpen: boolean
+  onClose: () => void
+  onExitComplete: () => void
+
+  // Form state
+  name: string
+  onNameChange: (name: string) => void
+  phone: string
+  onPhoneChange: (phone: string) => void
+  email: string
+  onEmailChange: (email: string) => void
+  notes: string
+  onNotesChange: (notes: string) => void
+  active: boolean
+  onActiveChange: (active: boolean) => void
+
+  // Editing state
+  editingProvider: Provider | null
+
+  // Operation states
+  isSaving: boolean
+  isDeleting: boolean
+  error: string
+
+  // Success states
+  providerSaved: boolean
+  providerDeleted: boolean
+
+  // Handlers
+  onSubmit: () => Promise<boolean>
+  onDelete: () => Promise<boolean>
+
+  // Permissions
+  canDelete: boolean
+}
+
+// ============================================
+// COMPONENT
+// ============================================
+
+export function ProviderModal({
+  isOpen,
+  onClose,
+  onExitComplete,
+  name,
+  onNameChange,
+  phone,
+  onPhoneChange,
+  email,
+  onEmailChange,
+  notes,
+  onNotesChange,
+  active,
+  onActiveChange,
+  editingProvider,
+  isSaving,
+  isDeleting,
+  error,
+  providerSaved,
+  providerDeleted,
+  onSubmit,
+  onDelete,
+  canDelete,
+}: ProviderModalProps) {
+  const isFormValid = name.trim().length > 0
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      onExitComplete={onExitComplete}
+      title={editingProvider ? 'Edit provider' : 'Add provider'}
+    >
+      {/* Step 0: Form */}
+      <Modal.Step title={editingProvider ? 'Edit provider' : 'Add provider'}>
+        {error && (
+          <Modal.Item>
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+              {error}
+            </div>
+          </Modal.Item>
+        )}
+
+        {/* Name */}
+        <Modal.Item>
+          <label htmlFor="provider-name" className="label">Name <span className="text-error">*</span></label>
+          <input
+            id="provider-name"
+            type="text"
+            value={name}
+            onChange={e => onNameChange(e.target.value)}
+            className="input"
+            placeholder="Provider name"
+            autoComplete="off"
+          />
+        </Modal.Item>
+
+        {/* Phone */}
+        <Modal.Item>
+          <label htmlFor="provider-phone" className="label">Phone (optional)</label>
+          <input
+            id="provider-phone"
+            type="tel"
+            value={phone}
+            onChange={e => onPhoneChange(e.target.value)}
+            className="input"
+            placeholder="999 999 999"
+          />
+        </Modal.Item>
+
+        {/* Email */}
+        <Modal.Item>
+          <label htmlFor="provider-email" className="label">Email (optional)</label>
+          <input
+            id="provider-email"
+            type="email"
+            value={email}
+            onChange={e => onEmailChange(e.target.value)}
+            className="input"
+            placeholder="email@example.com"
+          />
+        </Modal.Item>
+
+        {/* Notes */}
+        <Modal.Item>
+          <label htmlFor="provider-notes" className="label">Notes (optional)</label>
+          <textarea
+            id="provider-notes"
+            value={notes}
+            onChange={e => onNotesChange(e.target.value)}
+            className="input"
+            rows={3}
+            placeholder="Notes about the provider..."
+          />
+        </Modal.Item>
+
+        {/* Active toggle */}
+        <Modal.Item>
+          <div className="flex items-center justify-between py-2">
+            <div>
+              <span className="label mb-0">Active</span>
+              <p className="text-xs text-text-tertiary mt-0.5">
+                Show in the provider list
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={e => onActiveChange(e.target.checked)}
+              className="toggle"
+            />
+          </div>
+        </Modal.Item>
+
+        <Modal.Footer>
+          {editingProvider && canDelete && (
+            <Modal.GoToStepButton step={1} className="btn btn-secondary">
+              <Trash2 className="w-5 h-5" />
+            </Modal.GoToStepButton>
+          )}
+          <SaveProviderButton onSubmit={onSubmit} isSaving={isSaving} disabled={isSaving || !isFormValid} />
+        </Modal.Footer>
+      </Modal.Step>
+
+      {/* Step 1: Delete confirmation */}
+      <Modal.Step title="Delete provider" backStep={0}>
+        <Modal.Item>
+          <p className="text-text-secondary">
+            Are you sure you want to delete <strong>{editingProvider?.name}</strong>? This action cannot be undone.
+          </p>
+        </Modal.Item>
+
+        <Modal.Footer>
+          <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
+            Cancel
+          </Modal.GoToStepButton>
+          <ConfirmDeleteButton onDelete={onDelete} isDeleting={isDeleting} />
+        </Modal.Footer>
+      </Modal.Step>
+
+      {/* Step 2: Save success */}
+      <Modal.Step title={editingProvider ? 'Provider updated' : 'Provider added'} hideBackButton>
+        <Modal.Item>
+          <div className="flex flex-col items-center text-center py-4">
+            <div style={{ width: 160, height: 160 }}>
+              {providerSaved && (
+                <LottiePlayer
+                  src="/animations/success.json"
+                  loop={false}
+                  autoplay={true}
+                  delay={500}
+                  style={{ width: 160, height: 160 }}
+                />
+              )}
+            </div>
+            <p
+              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
+              style={{ opacity: providerSaved ? 1 : 0 }}
+            >
+              {editingProvider ? 'Changes saved!' : 'Provider added!'}
+            </p>
+            <p
+              className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
+              style={{ opacity: providerSaved ? 1 : 0 }}
+            >
+              {editingProvider ? 'The provider has been updated' : 'The provider has been created successfully'}
+            </p>
+          </div>
+        </Modal.Item>
+
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-primary flex-1"
+          >
+            Done
+          </button>
+        </Modal.Footer>
+      </Modal.Step>
+
+      {/* Step 3: Delete success */}
+      <Modal.Step title="Provider deleted" hideBackButton>
+        <Modal.Item>
+          <div className="flex flex-col items-center text-center py-4">
+            <div style={{ width: 160, height: 160 }}>
+              {providerDeleted && (
+                <LottiePlayer
+                  src="/animations/error.json"
+                  loop={false}
+                  autoplay={true}
+                  delay={500}
+                  style={{ width: 160, height: 160 }}
+                />
+              )}
+            </div>
+            <p
+              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
+              style={{ opacity: providerDeleted ? 1 : 0 }}
+            >
+              Provider deleted
+            </p>
+            <p
+              className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
+              style={{ opacity: providerDeleted ? 1 : 0 }}
+            >
+              The provider has been deleted successfully
+            </p>
+          </div>
+        </Modal.Item>
+
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-primary flex-1"
+          >
+            Done
+          </button>
+        </Modal.Footer>
+      </Modal.Step>
+    </Modal>
+  )
+}

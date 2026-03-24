@@ -1,28 +1,22 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { Suspense, useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Input, Card, Spinner } from '@/components/ui'
-import { PhoneInput } from '@/components/auth/phone-input'
-import { FirebasePhoneVerify } from '@/components/auth/firebase-phone-verify'
-import { PinPad } from '@/components/auth/pin-pad'
-import { useAuth } from '@/contexts/auth-context'
-import { employeeRegistrationSchema, getInviteRoleLabel } from '@/lib/auth'
-import { isValidE164, formatPhoneForDisplay } from '@/lib/countries'
+import { getInviteRoleLabel } from '@/lib/auth'
 import type { InviteRole } from '@/types'
 
-type InviteStep = 'loading' | 'code' | 'phone' | 'otp' | 'info' | 'pin'
+type InviteStep = 'loading' | 'code' | 'info'
 
 interface InviteInfo {
   code: string
   role: InviteRole
 }
 
-export default function InvitePage() {
+function InvitePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { registerWithInvite, verifyFirebaseToken } = useAuth()
   const hasAutoValidated = useRef(false)
 
   // Check for code in URL query parameter
@@ -31,8 +25,7 @@ export default function InvitePage() {
   const [step, setStep] = useState<InviteStep>(codeFromUrl ? 'loading' : 'code')
   const [inviteCode, setInviteCode] = useState(codeFromUrl?.toUpperCase() || '')
   const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null)
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [_firebaseToken, setFirebaseToken] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
@@ -48,14 +41,13 @@ export default function InvitePage() {
       const code = codeFromUrl.trim().toUpperCase()
 
       if (!code || code.length !== 6) {
-        setErrors({ code: 'Codigo invalido' })
+        setErrors({ code: 'Invalid code' })
         setStep('code')
         return
       }
 
       try {
-        const pocketbaseUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
-        const response = await fetch(`${pocketbaseUrl}/api/validate-invite`, {
+        const response = await fetch('/api/invite/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
@@ -64,7 +56,7 @@ export default function InvitePage() {
         const result = await response.json()
 
         if (!result.valid) {
-          setErrors({ code: result.error || 'Codigo invalido o expirado' })
+          setErrors({ code: result.error || 'Invalid or expired code' })
           setStep('code')
           return
         }
@@ -73,10 +65,10 @@ export default function InvitePage() {
           code,
           role: result.role as InviteRole,
         })
-        setStep('phone')
+        setStep('info')
       } catch (err) {
         console.error('Code validation error:', err)
-        setErrors({ code: 'Error al verificar el codigo' })
+        setErrors({ code: 'Failed to verify code' })
         setStep('code')
       }
     }
@@ -92,16 +84,14 @@ export default function InvitePage() {
       const code = inviteCode.trim().toUpperCase()
 
       if (!code || code.length !== 6) {
-        setErrors({ code: 'El codigo debe tener 6 caracteres' })
+        setErrors({ code: 'Code must be 6 characters' })
         return
       }
 
       setIsLoading(true)
 
       try {
-        // Use server-side validation endpoint (rate-limited, prevents enumeration)
-        const pocketbaseUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
-        const response = await fetch(`${pocketbaseUrl}/api/validate-invite`, {
+        const response = await fetch('/api/invite/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
@@ -110,14 +100,13 @@ export default function InvitePage() {
         const result = await response.json()
 
         if (response.status === 429) {
-          // Rate limited
-          setErrors({ code: result.error || 'Demasiados intentos' })
+          setErrors({ code: result.error || 'Too many attempts' })
           setIsLoading(false)
           return
         }
 
         if (!result.valid) {
-          setErrors({ code: result.error || 'Codigo invalido o expirado' })
+          setErrors({ code: result.error || 'Invalid or expired code' })
           setIsLoading(false)
           return
         }
@@ -126,10 +115,10 @@ export default function InvitePage() {
           code,
           role: result.role as InviteRole,
         })
-        setStep('phone')
+        setStep('info')
       } catch (err) {
         console.error('Code validation error:', err)
-        setErrors({ code: 'Error al verificar el codigo' })
+        setErrors({ code: 'Failed to verify code' })
       } finally {
         setIsLoading(false)
       }
@@ -137,112 +126,73 @@ export default function InvitePage() {
     [inviteCode]
   )
 
-  const handlePhoneSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault()
-      setErrors({})
-
-      if (!phoneNumber || !isValidE164(phoneNumber)) {
-        setErrors({ phone: 'Ingresa un numero de telefono valido' })
-        return
-      }
-
-      setStep('otp')
-    },
-    [phoneNumber]
-  )
-
-  const handleOtpVerified = useCallback(
-    async (idToken: string) => {
-      setIsLoading(true)
-      setErrors({})
-
-      // Verify the token with our server
-      const result = await verifyFirebaseToken(phoneNumber, idToken, 'registration')
-
-      if (!result.valid) {
-        setErrors({ otp: result.error || 'Error al verificar' })
-        setIsLoading(false)
-        return
-      }
-
-      // Store token for later use
-      setFirebaseToken(idToken)
-      setIsLoading(false)
-      setStep('info')
-    },
-    [phoneNumber, verifyFirebaseToken]
-  )
-
   const handleInfoSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault()
       setErrors({})
 
       // Validate passwords match
       if (password !== passwordConfirm) {
-        setErrors({ passwordConfirm: 'Las contrasenas no coinciden' })
+        setErrors({ passwordConfirm: 'Passwords do not match' })
         return
       }
 
-      // Validate with Zod (except PIN which comes next)
-      const validation = employeeRegistrationSchema.safeParse({
-        inviteCode: inviteInfo?.code || '',
-        phoneNumber,
-        password,
-        name,
-        pin: '0000', // Placeholder, will be set in next step
-      })
-
-      if (!validation.success) {
-        const fieldErrors: Record<string, string> = {}
-        validation.error.errors.forEach((err) => {
-          if (err.path[0] && err.path[0] !== 'pin' && err.path[0] !== 'inviteCode') {
-            fieldErrors[err.path[0] as string] = err.message
-          }
-        })
-        setErrors(fieldErrors)
+      // Validate password length
+      if (password.length < 8) {
+        setErrors({ password: 'Password must be at least 8 characters' })
         return
       }
 
-      setStep('pin')
-    },
-    [phoneNumber, password, passwordConfirm, name, inviteInfo]
-  )
+      // Validate name
+      if (name.trim().length < 2) {
+        setErrors({ name: 'Name must be at least 2 characters' })
+        return
+      }
 
-  const handlePinComplete = useCallback(
-    async (pin: string) => {
-      if (!inviteInfo) return
+      // Validate email
+      if (!email.includes('@')) {
+        setErrors({ email: 'Invalid email' })
+        return
+      }
 
       setIsLoading(true)
 
       try {
-        await registerWithInvite({
-          inviteCode: inviteInfo.code,
-          phoneNumber,
-          password,
-          name,
-          pin,
+        const response = await fetch('/api/invite/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            inviteCode: inviteInfo?.code,
+            email,
+            password,
+            name,
+          }),
         })
 
-        router.push('/inicio')
+        const data = await response.json()
+
+        if (!response.ok) {
+          const errorMessage = data.error || 'Failed to create account'
+
+          // Check for specific error messages
+          if (errorMessage.includes('email')) {
+            setErrors({ email: errorMessage })
+          } else {
+            setErrors({ general: errorMessage })
+          }
+          setIsLoading(false)
+          return
+        }
+
+        router.push('/home')
       } catch (err) {
         console.error('Registration error:', err)
-        const errorMessage = err instanceof Error ? err.message : 'Error al crear la cuenta'
-
-        // Check for specific error messages
-        if (errorMessage.includes('numero') || errorMessage.includes('phone')) {
-          setErrors({ phone: errorMessage })
-          setStep('phone')
-        } else {
-          setErrors({ general: errorMessage })
-          setStep('info')
-        }
+        setErrors({ general: 'Failed to create account' })
       } finally {
         setIsLoading(false)
       }
     },
-    [inviteInfo, phoneNumber, password, name, registerWithInvite, router]
+    [inviteInfo, email, password, passwordConfirm, name, router]
   )
 
   const handleBackToCode = useCallback(() => {
@@ -251,24 +201,13 @@ export default function InvitePage() {
     setInviteInfo(null)
   }, [])
 
-  const handleBackToPhone = useCallback(() => {
-    setStep('phone')
-    setErrors({})
-    setFirebaseToken(null)
-  }, [])
-
-  const handleBackToInfo = useCallback(() => {
-    setStep('info')
-    setErrors({})
-  }, [])
-
   // Loading state (auto-validating code from URL)
   if (step === 'loading') {
     return (
       <Card padding="lg">
         <div className="flex flex-col items-center py-8">
           <Spinner className="spinner-lg" />
-          <p className="text-text-secondary mt-4">Verificando codigo...</p>
+          <p className="text-text-secondary mt-4">Verifying code...</p>
         </div>
       </Card>
     )
@@ -279,14 +218,14 @@ export default function InvitePage() {
     return (
       <>
         <Card padding="lg">
-          <h2 className="text-xl font-display font-bold mb-1">Codigo de invitacion</h2>
+          <h2 className="text-xl font-display font-bold mb-1">Invite code</h2>
           <p className="text-sm text-text-tertiary mb-6">
-            Ingresa el codigo que te compartio el dueno
+            Enter the code shared by the owner
           </p>
 
           <form onSubmit={handleCodeSubmit} className="space-y-4">
             <Input
-              label="Codigo"
+              label="Code"
               type="text"
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
@@ -306,10 +245,10 @@ export default function InvitePage() {
               {isLoading ? (
                 <>
                   <Spinner />
-                  <span className="sr-only">Verificando...</span>
+                  <span className="sr-only">Verifying...</span>
                 </>
               ) : (
-                'Verificar codigo'
+                'Verify code'
               )}
             </button>
           </form>
@@ -317,194 +256,126 @@ export default function InvitePage() {
 
         <div className="auth-footer">
           <p className="auth-footer-link">
-            Ya tienes cuenta? <Link href="/login">Iniciar sesion</Link>
+            Already have an account? <Link href="/login">Log in</Link>
           </p>
         </div>
       </>
-    )
-  }
-
-  // Phone step
-  if (step === 'phone') {
-    return (
-      <>
-        <Card padding="lg">
-          {inviteInfo && (
-            <div className="mb-6 p-3 bg-brand-subtle rounded-lg text-center">
-              <p className="text-sm text-text-secondary">Te uniras como</p>
-              <p className="font-display font-bold text-brand">
-                {getInviteRoleLabel(inviteInfo.role)}
-              </p>
-            </div>
-          )}
-
-          <h2 className="text-xl font-display font-bold mb-1">Tu numero de telefono</h2>
-          <p className="text-sm text-text-tertiary mb-6">
-            Te enviaremos un codigo de verificacion por SMS
-          </p>
-
-          <form onSubmit={handlePhoneSubmit} className="space-y-4">
-            <PhoneInput
-              label="Numero de telefono"
-              value={phoneNumber}
-              onChange={setPhoneNumber}
-              error={errors.phone}
-              autoFocus
-            />
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg w-full"
-            >
-              Continuar
-            </button>
-          </form>
-        </Card>
-
-        <div className="auth-footer">
-          <p className="auth-footer-link">
-            <button
-              type="button"
-              onClick={handleBackToCode}
-              className="text-brand hover:underline"
-            >
-              Usar otro codigo
-            </button>
-          </p>
-        </div>
-      </>
-    )
-  }
-
-  // OTP step - use Firebase component
-  if (step === 'otp') {
-    return (
-      <Card padding="lg">
-        <FirebasePhoneVerify
-          phoneNumber={phoneNumber}
-          onVerified={handleOtpVerified}
-          onBack={handleBackToPhone}
-        />
-      </Card>
     )
   }
 
   // Info step
-  if (step === 'info') {
-    return (
-      <>
-        <Card padding="lg">
-          <div className="mb-4">
-            <p className="text-sm text-text-tertiary">Registrando</p>
-            <p className="font-medium text-text-primary">
-              {formatPhoneForDisplay(phoneNumber)}
-            </p>
-          </div>
-
-          <form onSubmit={handleInfoSubmit} className="space-y-4">
-            {errors.general && (
-              <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-                {errors.general}
-              </div>
-            )}
-
-            <Input
-              label="Nombre completo"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Juan Perez"
-              autoComplete="name"
-              autoFocus
-              error={errors.name}
-            />
-
-            <div>
-              <Input
-                label="Contrasena"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimo 8 caracteres"
-                autoComplete="new-password"
-                error={errors.password}
-              />
-              <p className="text-xs text-text-tertiary mt-1">
-                Esta contrasena protege tu cuenta
-              </p>
-            </div>
-
-            <Input
-              label="Confirmar contrasena"
-              type="password"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              placeholder="Repite tu contrasena"
-              autoComplete="new-password"
-              error={errors.passwordConfirm}
-            />
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg w-full"
-              disabled={isLoading}
-            >
-              Continuar
-            </button>
-          </form>
-        </Card>
-
-        <div className="auth-footer">
-          <p className="auth-footer-link">
-            <button
-              type="button"
-              onClick={handleBackToPhone}
-              className="text-brand hover:underline"
-            >
-              Usar otro numero
-            </button>
-          </p>
-        </div>
-      </>
-    )
-  }
-
-  // PIN step
   return (
     <>
       <Card padding="lg">
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-display font-bold mb-1">Configura tu PIN</h2>
-          <p className="text-sm text-text-tertiary">
-            Este PIN de 4 digitos te permite acceder rapidamente cada dia sin ingresar tu contrasena
-          </p>
-        </div>
-
-        {isLoading ? (
-          <div className="flex flex-col items-center py-8">
-            <Spinner className="spinner-lg" />
-            <p className="text-text-secondary mt-4">Creando tu cuenta...</p>
+        {inviteInfo && (
+          <div className="mb-6 p-3 bg-brand-subtle rounded-lg text-center">
+            <p className="text-sm text-text-secondary">You will join as</p>
+            <p className="font-display font-bold text-brand">
+              {getInviteRoleLabel(inviteInfo.role)}
+            </p>
           </div>
-        ) : (
-          <PinPad
-            onComplete={handlePinComplete}
-            disabled={isLoading}
-          />
         )}
+
+        <form onSubmit={handleInfoSubmit} className="space-y-4">
+          {errors.general && (
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+              {errors.general}
+            </div>
+          )}
+
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            autoComplete="email"
+            autoFocus
+            error={errors.email}
+          />
+
+          <Input
+            label="Full name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="John Doe"
+            autoComplete="name"
+            error={errors.name}
+          />
+
+          <div>
+            <Input
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Minimum 8 characters"
+              autoComplete="new-password"
+              error={errors.password}
+            />
+            <p className="text-xs text-text-tertiary mt-1">
+              This password protects your account
+            </p>
+          </div>
+
+          <Input
+            label="Confirm password"
+            type="password"
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            placeholder="Repeat your password"
+            autoComplete="new-password"
+            error={errors.passwordConfirm}
+          />
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Spinner />
+                <span className="sr-only">Creating account...</span>
+              </>
+            ) : (
+              'Create account'
+            )}
+          </button>
+        </form>
       </Card>
 
       <div className="auth-footer">
         <p className="auth-footer-link">
           <button
             type="button"
-            onClick={handleBackToInfo}
+            onClick={handleBackToCode}
             className="text-brand hover:underline"
-            disabled={isLoading}
           >
-            Volver
+            Use another code
           </button>
         </p>
       </div>
     </>
+  )
+}
+
+function InvitePageFallback() {
+  return (
+    <Card padding="lg">
+      <div className="flex flex-col items-center py-8">
+        <Spinner className="spinner-lg" />
+        <p className="text-text-secondary mt-4">Loading...</p>
+      </div>
+    </Card>
+  )
+}
+
+export default function InvitePage() {
+  return (
+    <Suspense fallback={<InvitePageFallback />}>
+      <InvitePageContent />
+    </Suspense>
   )
 }

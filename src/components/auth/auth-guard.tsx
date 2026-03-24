@@ -1,11 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
-import { LoadingPage, Card } from '@/components/ui'
-import { PinPad } from './pin-pad'
-import { isValidPin } from '@/lib/auth'
+import { LoadingPage } from '@/components/ui'
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -19,13 +17,7 @@ export function AuthGuard({
   redirectTo,
 }: AuthGuardProps) {
   const router = useRouter()
-  const { user, isLoading, requiresPinVerification, requiresPinReset, verifyPinForSession, resetPin, logout } = useAuth()
-  const [pinError, setPinError] = useState('')
-  const [isVerifying, setIsVerifying] = useState(false)
-
-  // PIN reset state
-  const [resetStep, setResetStep] = useState<'new' | 'confirm'>('new')
-  const [newPinValue, setNewPinValue] = useState('')
+  const { user, isLoading } = useAuth()
 
   useEffect(() => {
     if (isLoading) return
@@ -33,78 +25,11 @@ export function AuthGuard({
     if (requireAuth && !user) {
       // User not authenticated, redirect to login
       router.replace(redirectTo || '/login')
-    } else if (!requireAuth && user && !requiresPinVerification) {
-      // User authenticated and PIN verified, shouldn't be on auth pages
-      router.replace(redirectTo || '/inicio')
+    } else if (!requireAuth && user) {
+      // User authenticated, shouldn't be on auth pages
+      router.replace(redirectTo || '/home')
     }
-  }, [user, isLoading, requireAuth, requiresPinVerification, redirectTo, router])
-
-  const handlePinComplete = useCallback(async (pin: string) => {
-    setPinError('')
-    setIsVerifying(true)
-    try {
-      const success = await verifyPinForSession(pin)
-      if (!success) {
-        setPinError('PIN incorrecto')
-      }
-    } catch {
-      setPinError('Error al verificar PIN')
-    } finally {
-      setIsVerifying(false)
-    }
-  }, [verifyPinForSession])
-
-  const handlePinInput = useCallback(() => {
-    setPinError('')
-  }, [])
-
-  const handleChangeUser = useCallback(() => {
-    logout()
-    router.replace('/login')
-  }, [logout, router])
-
-  // PIN reset handlers
-  const handleNewPinComplete = useCallback((pin: string) => {
-    if (!isValidPin(pin)) {
-      setPinError('El PIN debe tener 4 digitos')
-      return
-    }
-    setNewPinValue(pin)
-    setResetStep('confirm')
-    setPinError('')
-  }, [])
-
-  const handleConfirmPinComplete = useCallback(async (pin: string) => {
-    setPinError('')
-
-    if (pin !== newPinValue) {
-      setPinError('Los PINs no coinciden')
-      return
-    }
-
-    setIsVerifying(true)
-    try {
-      const result = await resetPin(pin)
-      if (!result.success) {
-        setPinError(result.error || 'Error al cambiar el PIN')
-        setResetStep('new')
-        setNewPinValue('')
-      }
-      // Success - the auth context will update and requiresPinReset will become false
-    } catch {
-      setPinError('Error al cambiar el PIN')
-      setResetStep('new')
-      setNewPinValue('')
-    } finally {
-      setIsVerifying(false)
-    }
-  }, [newPinValue, resetPin])
-
-  const handleResetBack = useCallback(() => {
-    setResetStep('new')
-    setNewPinValue('')
-    setPinError('')
-  }, [])
+  }, [user, isLoading, requireAuth, redirectTo, router])
 
   // Show loading while checking auth
   if (isLoading) {
@@ -116,123 +41,9 @@ export function AuthGuard({
     return <LoadingPage />
   }
 
-  // If auth is NOT required (auth pages) and user IS authenticated and PIN verified
-  if (!requireAuth && user && !requiresPinVerification) {
+  // If auth is NOT required (auth pages) and user IS authenticated
+  if (!requireAuth && user) {
     return <LoadingPage />
-  }
-
-  // Show PIN reset overlay if required
-  if (requireAuth && requiresPinReset) {
-    const firstName = user?.name?.split(' ')[0]
-    return (
-      <div className="auth-container">
-        <div className="auth-card">
-          {/* Logo */}
-          <div className="auth-logo">
-            <h1 className="auth-logo-title">
-              <span className="text-brand">Mr.</span>
-              <span>Chifles</span>
-            </h1>
-            <p className="auth-logo-subtitle">
-              Sistema de Gestion de Ventas
-            </p>
-          </div>
-
-          <Card padding="lg">
-            <div className="text-center mb-4">
-              <h2 className="font-display font-semibold text-lg text-text-primary mb-1">
-                {firstName ? `${firstName}, ` : ''}Crea un nuevo PIN
-              </h2>
-              <p className="text-text-secondary">
-                {resetStep === 'new'
-                  ? 'Ingresa un nuevo PIN de 4 digitos'
-                  : 'Confirma tu nuevo PIN'}
-              </p>
-            </div>
-
-            <PinPad
-              onComplete={resetStep === 'new' ? handleNewPinComplete : handleConfirmPinComplete}
-              onInput={handlePinInput}
-              disabled={isVerifying}
-              error={pinError}
-            />
-
-            {resetStep === 'confirm' && (
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={handleResetBack}
-                  className="text-sm text-brand hover:underline"
-                >
-                  Volver a ingresar PIN
-                </button>
-              </div>
-            )}
-          </Card>
-
-          <div className="auth-footer">
-            <p className="auth-footer-link">
-              <button
-                type="button"
-                onClick={handleChangeUser}
-                className="text-brand hover:underline"
-              >
-                Cambiar usuario
-              </button>
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Show PIN verification overlay if needed
-  if (requireAuth && requiresPinVerification) {
-    const firstName = user?.name?.split(' ')[0]
-    return (
-      <div className="auth-container">
-        <div className="auth-card">
-          {/* Logo */}
-          <div className="auth-logo">
-            <h1 className="auth-logo-title">
-              <span className="text-brand">Mr.</span>
-              <span>Chifles</span>
-            </h1>
-            <p className="auth-logo-subtitle">
-              Sistema de Gestion de Ventas
-            </p>
-          </div>
-
-          <Card padding="lg">
-            <div className="text-center mb-4">
-              <h2 className="font-display font-semibold text-lg text-text-primary mb-1">
-                {firstName ? `Hola, ${firstName}` : 'Bienvenido'}
-              </h2>
-              <p className="text-text-secondary">Ingresa tu PIN de 4 digitos</p>
-            </div>
-
-            <PinPad
-              onComplete={handlePinComplete}
-              onInput={handlePinInput}
-              disabled={isVerifying}
-              error={pinError}
-            />
-          </Card>
-
-          <div className="auth-footer">
-            <p className="auth-footer-link">
-              <button
-                type="button"
-                onClick={handleChangeUser}
-                className="text-brand hover:underline"
-              >
-                Cambiar usuario
-              </button>
-            </p>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return <>{children}</>

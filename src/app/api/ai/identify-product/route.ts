@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     if (!image) {
       return NextResponse.json(
-        { success: false, error: 'Se requiere una imagen' },
+        { success: false, error: 'Image is required' },
         { status: 400 }
       )
     }
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
       return NextResponse.json(
-        { success: false, error: 'API de OpenAI no configurada' },
+        { success: false, error: 'OpenAI API not configured' },
         { status: 500 }
       )
     }
@@ -84,7 +84,7 @@ Examples:
       const errorData = await response.json().catch(() => ({}))
       console.error('OpenAI API error:', errorData)
       return NextResponse.json(
-        { success: false, error: 'Error al analizar la imagen' },
+        { success: false, error: 'Failed to analyze image' },
         { status: 500 }
       )
     }
@@ -94,7 +94,7 @@ Examples:
 
     if (!content) {
       return NextResponse.json(
-        { success: false, error: 'No se pudo identificar el producto' },
+        { success: false, error: 'Could not identify product' },
         { status: 500 }
       )
     }
@@ -122,14 +122,14 @@ Examples:
     } catch {
       console.error('Failed to parse GPT response:', content)
       return NextResponse.json(
-        { success: false, error: 'No se pudo procesar la respuesta' },
+        { success: false, error: 'Failed to process response' },
         { status: 500 }
       )
     }
   } catch (error) {
     console.error('Error in identify-product:', error)
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     )
   }

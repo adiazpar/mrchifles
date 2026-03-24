@@ -46,12 +46,12 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
         {/* Team Management (owner/partner only) */}
         {canManageTeam && (
           <Link
-            href="/ajustes/equipo"
+            href="/settings/team"
             className="user-menu-item"
             onClick={onAction}
           >
             <Users size={20} />
-            <span>Gestionar Equipo</span>
+            <span>Manage Team</span>
             <ChevronRight size={16} className="user-menu-item-arrow" />
           </Link>
         )}
@@ -59,24 +59,24 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
         {/* Providers (owner/partner only) */}
         {canManageTeam && (
           <Link
-            href="/ajustes/proveedores"
+            href="/settings/providers"
             className="user-menu-item"
             onClick={onAction}
           >
             <Van size={20} />
-            <span>Proveedores</span>
+            <span>Providers</span>
             <ChevronRight size={16} className="user-menu-item-arrow" />
           </Link>
         )}
 
         {/* Settings */}
         <Link
-          href="/ajustes"
+          href="/settings"
           className="user-menu-item"
           onClick={onAction}
         >
           <Settings size={20} />
-          <span>Configuracion</span>
+          <span>Settings</span>
           <ChevronRight size={16} className="user-menu-item-arrow" />
         </Link>
       </div>
@@ -92,7 +92,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           onClick={handleLogout}
         >
           <LogOut size={20} />
-          <span>Cerrar Sesion</span>
+          <span>Log Out</span>
         </button>
       </div>
     </div>

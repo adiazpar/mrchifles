@@ -1,180 +1,77 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Input, Card, Spinner } from '@/components/ui'
-import { PhoneInput } from '@/components/auth/phone-input'
 import { useAuth } from '@/contexts/auth-context'
-import { isValidE164, formatPhoneForDisplay } from '@/lib/countries'
 
-type LoginStep = 'checking' | 'phone' | 'password'
-
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter()
-  const {
-    loginWithPassword,
-    getRememberedPhone,
-    setupComplete,
-    isCheckingSetup,
-  } = useAuth()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect') || '/home'
+  const { login } = useAuth()
 
-  const [step, setStep] = useState<LoginStep>('checking')
-  const [phoneNumber, setPhoneNumber] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // Check setup state on mount
-  useEffect(() => {
-    if (isCheckingSetup) return
-
-    // If setup is not complete, redirect to register for first-time setup
-    if (!setupComplete) {
-      router.replace('/register')
-      return
-    }
-
-    // Pre-fill phone if remembered
-    const rememberedPhone = getRememberedPhone()
-    if (rememberedPhone) {
-      setPhoneNumber(rememberedPhone)
-    }
-
-    setStep('phone')
-  }, [getRememberedPhone, setupComplete, isCheckingSetup, router])
-
-  const handlePhoneSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault()
-      setError('')
-
-      if (!phoneNumber || !isValidE164(phoneNumber)) {
-        setError('Ingresa un numero de telefono valido')
-        return
-      }
-
-      setStep('password')
-    },
-    [phoneNumber]
-  )
-
-  const handlePasswordSubmit = useCallback(
+  const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault()
       setError('')
-
-      if (!password) {
-        setError('Por favor ingresa tu contrasena')
-        return
-      }
-
       setIsLoading(true)
 
       try {
-        await loginWithPassword(phoneNumber, password)
-        router.push('/inicio')
-      } catch (err) {
-        if (err && typeof err === 'object' && 'status' in err) {
-          const pbErr = err as { status: number; message?: string }
-          if (pbErr.message && pbErr.message.includes('deshabilitada')) {
-            setError(pbErr.message)
-          } else if (pbErr.status === 400) {
-            setError('Numero o contrasena incorrectos')
-          } else {
-            setError('Error al iniciar sesion')
-          }
-        } else {
-          setError('Error al iniciar sesion')
+        const result = await login(email, password)
+
+        if (!result.success) {
+          setError(result.error || 'Failed to log in')
+          return
         }
+
+        // Redirect to intended page or dashboard
+        router.push(redirect)
+        router.refresh()
+      } catch {
+        setError('Connection error')
       } finally {
         setIsLoading(false)
       }
     },
-    [phoneNumber, password, loginWithPassword, router]
+    [email, password, redirect, router, login]
   )
 
-  const handleBackToPhone = useCallback(() => {
-    setPassword('')
-    setError('')
-    setStep('phone')
-  }, [])
-
-  // Checking state
-  if (step === 'checking' || isCheckingSetup) {
-    return (
-      <Card padding="lg">
-        <div className="flex flex-col items-center py-8">
-          <Spinner className="spinner-lg" />
-          <p className="text-text-secondary mt-4">Cargando...</p>
-        </div>
-      </Card>
-    )
-  }
-
-  // Phone step
-  if (step === 'phone') {
-    return (
-      <>
-        <Card padding="lg">
-          <form onSubmit={handlePhoneSubmit} className="space-y-4">
-            <PhoneInput
-              label="Numero de telefono"
-              value={phoneNumber}
-              onChange={setPhoneNumber}
-              error={error}
-              autoFocus
-            />
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg w-full"
-              disabled={isLoading}
-            >
-              Continuar
-            </button>
-          </form>
-        </Card>
-
-        <div className="auth-footer">
-          <p className="auth-footer-link">
-            <Link href="/invite">Tengo un codigo de invitacion</Link>
-          </p>
-        </div>
-      </>
-    )
-  }
-
-  // Password step
   return (
     <>
       <Card padding="lg">
-        <div className="mb-4">
-          <p className="text-sm text-text-tertiary">Iniciando sesion como</p>
-          <p className="font-medium text-text-primary">
-            {formatPhoneForDisplay(phoneNumber)}
-          </p>
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handlePasswordSubmit} className="space-y-4">
-          <input
-            type="tel"
-            value={phoneNumber}
-            autoComplete="username"
-            readOnly
-            className="sr-only"
-            tabIndex={-1}
-            aria-hidden="true"
-          />
           <Input
-            label="Contrasena"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            autoComplete="email"
+            autoFocus
+            required
+          />
+
+          <Input
+            label="Password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Tu contrasena"
+            placeholder="Your password"
             autoComplete="current-password"
-            autoFocus
-            error={error}
+            required
           />
 
           <button
@@ -185,10 +82,10 @@ export default function LoginPage() {
             {isLoading ? (
               <>
                 <Spinner />
-                <span className="sr-only">Iniciando sesion...</span>
+                <span className="sr-only">Logging in...</span>
               </>
             ) : (
-              'Iniciar sesion'
+              'Log in'
             )}
           </button>
         </form>
@@ -196,15 +93,31 @@ export default function LoginPage() {
 
       <div className="auth-footer">
         <p className="auth-footer-link">
-          <button
-            type="button"
-            onClick={handleBackToPhone}
-            className="text-brand hover:underline"
-          >
-            Usar otro numero
-          </button>
+          <span className="text-text-tertiary">Don't have an account? </span>
+          <Link href="/register" className="text-brand hover:underline">
+            Sign up
+          </Link>
         </p>
       </div>
     </>
+  )
+}
+
+function LoginPageFallback() {
+  return (
+    <Card padding="lg">
+      <div className="flex flex-col items-center py-8">
+        <Spinner className="spinner-lg" />
+        <p className="text-text-secondary mt-4">Loading...</p>
+      </div>
+    </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginPageFallback />}>
+      <LoginPageContent />
+    </Suspense>
   )
 }

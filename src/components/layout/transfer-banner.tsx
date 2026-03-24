@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { ArrowLeftRight, X } from 'lucide-react'
 
-const POCKETBASE_URL = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
-
 interface IncomingTransfer {
   code: string
   fromUser: {
@@ -19,7 +17,7 @@ interface IncomingTransfer {
 
 interface PendingTransfer {
   code: string
-  toPhone: string
+  toEmail: string
   status: 'pending' | 'accepted'
   expiresAt: string
   toUser?: {
@@ -30,7 +28,7 @@ interface PendingTransfer {
 
 export function TransferBanner() {
   const router = useRouter()
-  const { user, pb } = useAuth()
+  const { user } = useAuth()
   const [incomingTransfer, setIncomingTransfer] = useState<IncomingTransfer | null>(null)
   const [pendingTransfer, setPendingTransfer] = useState<PendingTransfer | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -39,6 +37,7 @@ export function TransferBanner() {
   const isOwner = user?.role === 'owner'
 
   // Fetch transfer data on mount
+  // TODO: Implement with Drizzle API routes
   useEffect(() => {
     if (!user) {
       setIsLoading(false)
@@ -49,22 +48,18 @@ export function TransferBanner() {
       try {
         if (isOwner) {
           // Owner: check for pending transfers that are accepted
-          const response = await fetch(`${POCKETBASE_URL}/api/transfer/pending`, {
-            headers: {
-              'Authorization': pb.authStore.token,
-            },
-          })
+          const response = await fetch('/api/transfer/pending')
           const data = await response.json()
-          setPendingTransfer(data.transfer || null)
+          if (response.ok && data.success) {
+            setPendingTransfer(data.transfer || null)
+          }
         } else {
           // Non-owner: check for incoming transfers
-          const response = await fetch(`${POCKETBASE_URL}/api/transfer/incoming`, {
-            headers: {
-              'Authorization': pb.authStore.token,
-            },
-          })
+          const response = await fetch('/api/transfer/incoming')
           const data = await response.json()
-          setIncomingTransfer(data.transfer || null)
+          if (response.ok && data.success) {
+            setIncomingTransfer(data.transfer || null)
+          }
         }
       } catch (err) {
         console.error('Error fetching transfer:', err)
@@ -74,10 +69,10 @@ export function TransferBanner() {
     }
 
     fetchTransferData()
-  }, [user, pb, isOwner])
+  }, [user, isOwner])
 
   const handleGoToSettings = useCallback(() => {
-    router.push('/ajustes')
+    router.push('/settings')
   }, [router])
 
   // Don't show if loading or dismissed
@@ -96,10 +91,10 @@ export function TransferBanner() {
 
           <div className="transfer-banner-text">
             <p className="transfer-banner-title">
-              Transferencia lista para confirmar
+              Transfer ready to confirm
             </p>
             <p className="transfer-banner-subtitle">
-              <strong>{pendingTransfer.toUser?.name || 'El destinatario'}</strong> ha aceptado la transferencia. Confirma con tu PIN para completar.
+              <strong>{pendingTransfer.toUser?.name || 'The recipient'}</strong> has accepted the transfer. Confirm with your PIN to complete.
             </p>
           </div>
 
@@ -109,7 +104,7 @@ export function TransferBanner() {
               onClick={handleGoToSettings}
               className="btn btn-primary btn-sm"
             >
-              Confirmar
+              Confirm
             </button>
           </div>
 
@@ -117,7 +112,7 @@ export function TransferBanner() {
             type="button"
             onClick={() => setIsDismissed(true)}
             className="transfer-banner-dismiss"
-            aria-label="Cerrar"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
@@ -139,13 +134,13 @@ export function TransferBanner() {
 
           <div className="transfer-banner-text">
             <p className="transfer-banner-title">
-              {isAccepted ? 'Esperando confirmacion' : 'Transferencia de propiedad'}
+              {isAccepted ? 'Awaiting confirmation' : 'Ownership transfer'}
             </p>
             <p className="transfer-banner-subtitle">
               {isAccepted ? (
-                <>Esperando a que <strong>{incomingTransfer.fromUser?.name || 'el propietario'}</strong> confirme la transferencia</>
+                <>Waiting for <strong>{incomingTransfer.fromUser?.name || 'the owner'}</strong> to confirm the transfer</>
               ) : (
-                <><strong>{incomingTransfer.fromUser?.name || 'El propietario'}</strong> quiere transferirte la propiedad del negocio</>
+                <><strong>{incomingTransfer.fromUser?.name || 'The owner'}</strong> wants to transfer ownership of the business to you</>
               )}
             </p>
           </div>
@@ -156,7 +151,7 @@ export function TransferBanner() {
               onClick={handleGoToSettings}
               className="btn btn-primary btn-sm"
             >
-              {isAccepted ? 'Ver estado' : 'Aceptar'}
+              {isAccepted ? 'View status' : 'Accept'}
             </button>
           </div>
 
@@ -164,7 +159,7 @@ export function TransferBanner() {
             type="button"
             onClick={() => setIsDismissed(true)}
             className="transfer-banner-dismiss"
-            aria-label="Cerrar"
+            aria-label="Close"
           >
             <X size={18} />
           </button>

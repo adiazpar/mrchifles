@@ -38,7 +38,7 @@ export interface UseCashSessionOptions {
 }
 
 export function useCashSession({ movements }: UseCashSessionOptions): UseCashSessionReturn {
-  const { user, pb } = useAuth()
+  const { user } = useAuth()
 
   const [currentSession, setCurrentSession] = useState<CashSession | null>(null)
   const [sessions, setSessions] = useState<CashSession[]>([])
@@ -59,18 +59,15 @@ export function useCashSession({ movements }: UseCashSessionOptions): UseCashSes
   }, [sessions])
 
   // Load current open session
+  // TODO: Implement with Drizzle API routes
   const loadCurrentSession = useCallback(async (): Promise<string | null> => {
     try {
-      const openSessions = await pb.collection('cash_sessions').getList<CashSession>(1, 1, {
-        filter: 'closedAt = null',
-        sort: '-openedAt',
-        expand: 'openedBy',
-        requestKey: null,
-      })
+      const response = await fetch('/api/cash/sessions/current')
+      const data = await response.json()
 
-      if (openSessions.items.length > 0) {
-        setCurrentSession(openSessions.items[0])
-        return openSessions.items[0].id
+      if (response.ok && data.success && data.session) {
+        setCurrentSession(data.session)
+        return data.session.id
       } else {
         setCurrentSession(null)
         return null
@@ -79,23 +76,25 @@ export function useCashSession({ movements }: UseCashSessionOptions): UseCashSes
       console.error('Error loading current session:', err)
       return null
     }
-  }, [pb])
+  }, [])
 
   // Load all sessions
+  // TODO: Implement with Drizzle API routes
   const loadSessions = useCallback(async (): Promise<void> => {
     try {
-      const sess = await pb.collection('cash_sessions').getFullList<CashSession>({
-        sort: '-openedAt',
-        expand: 'openedBy,closedBy',
-        requestKey: null,
-      })
-      setSessions(sess)
+      const response = await fetch('/api/cash/sessions')
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setSessions(data.sessions)
+      }
     } catch (err) {
       console.error('Error loading sessions:', err)
     }
-  }, [pb])
+  }, [])
 
   // Open a new cash drawer session
+  // TODO: Implement with Drizzle API routes
   const openDrawer = useCallback(async (
     openingBalance: number,
     setMovements: (movements: CashMovement[]) => void,
@@ -105,13 +104,19 @@ export function useCashSession({ movements }: UseCashSessionOptions): UseCashSes
     if (!user) return
 
     try {
-      const now = new Date().toISOString()
-
-      const session = await pb.collection('cash_sessions').create<CashSession>({
-        openedAt: now,
-        openedBy: user.id,
-        openingBalance: openingBalance,
+      const response = await fetch('/api/cash/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ openingBalance }),
       })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Error opening drawer')
+      }
+
+      const session: CashSession = data.session
 
       // Transition from open drawer modal to opening animation
       transitionModals(
@@ -125,10 +130,10 @@ export function useCashSession({ movements }: UseCashSessionOptions): UseCashSes
       )
     } catch (err) {
       console.error('Error opening drawer:', err)
-      setError('Error al abrir la caja')
+      setError('Failed to open cash drawer')
       throw err
     }
-  }, [user, pb, loadSessions])
+  }, [user, loadSessions])
 
   // Handle successful drawer close
   const handleCloseDrawerSuccess = useCallback(async (): Promise<void> => {

@@ -3,7 +3,8 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { PRODUCT_FILTERS_KEY } from '@/lib/constants'
+
+const PRODUCT_FILTERS_KEY = 'feria-pos-product-filters'
 import {
   CATEGORY_CONFIG,
   FILTER_CONFIG,

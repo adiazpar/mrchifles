@@ -101,7 +101,7 @@ export function useOrderManagement({
   onOrdersUpdated,
   onProductsUpdated,
 }: UseOrderManagementOptions): UseOrderManagementReturn {
-  const { pb, user } = useAuth()
+  const { user } = useAuth()
 
   // Order form state
   const [orderItems, setOrderItems] = useState<OrderFormItem[]>([])
@@ -147,10 +147,12 @@ export function useOrderManagement({
   }, [onOrdersUpdated])
 
   // Get receipt URL
+  // TODO: Update for new file storage system
   const getOrderReceiptUrl = useCallback((order: ExpandedOrder): string | null => {
     if (!order.receipt) return null
-    const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://127.0.0.1:8090'
-    return `${pbUrl}/api/files/${order.collectionId}/${order.id}/${order.receipt}`
+    // When using Drizzle/Turso, receipts will be stored differently
+    // For now, return the receipt field directly if it's a URL
+    return order.receipt
   }, [])
 
   // Filtered products for order selection
@@ -241,7 +243,7 @@ export function useOrderManagement({
     setOrderTotal(order.total.toString())
     setOrderNotes(order.notes || '')
     setOrderEstimatedArrival(order.estimatedArrival ? new Date(order.estimatedArrival).toISOString().split('T')[0] : '')
-    setOrderProvider(order.provider || '')
+    setOrderProvider(order.providerId || '')
     setOrderReceiptFile(null)
     setOrderReceiptPreview(null)
     setOrderProductSearchQuery('')
@@ -250,9 +252,10 @@ export function useOrderManagement({
   }, [])
 
   // Save new order
+  // TODO: Implement with Drizzle API routes
   const handleSaveOrder = useCallback(async (): Promise<boolean> => {
     if (orderItems.length === 0) {
-      setError('Agrega al menos un producto')
+      setError('Add at least one product')
       return false
     }
 
@@ -280,42 +283,51 @@ export function useOrderManagement({
         formData.append('receipt', orderReceiptFile)
       }
       if (orderProvider) {
-        formData.append('provider', orderProvider)
+        formData.append('providerId', orderProvider)
       }
+      formData.append('items', JSON.stringify(orderItems.map(item => ({
+        productId: item.product.id,
+        productName: item.product.name,
+        quantity: item.quantity,
+      }))))
 
-      const order = await pb.collection('orders').create<ExpandedOrder>(formData)
-
-      for (const item of orderItems) {
-        await pb.collection('order_items').create({
-          order: order.id,
-          product: item.product.id,
-          productName: item.product.name,
-          quantity: item.quantity,
-        })
-      }
-
-      const updatedOrders = await pb.collection('orders').getFullList<ExpandedOrder>({
-        sort: '-date',
-        expand: 'order_items(order).product,provider',
-        requestKey: null,
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        body: formData,
       })
-      updateOrders(updatedOrders)
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to save order')
+        return false
+      }
+
+      // Reload orders
+      const ordersResponse = await fetch('/api/orders')
+      const ordersData = await ordersResponse.json()
+
+      if (ordersResponse.ok && ordersData.success) {
+        updateOrders(ordersData.orders)
+      }
+
       setOrderSaved(true)
       return true
     } catch (err) {
       console.error('Error saving order:', err)
-      setError('Error al guardar el pedido')
+      setError('Failed to save order')
       return false
     } finally {
       setIsSavingOrder(false)
     }
-  }, [orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, pb, updateOrders])
+  }, [orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, updateOrders])
 
   // Save edit order
+  // TODO: Implement with Drizzle API routes
   const handleSaveEditOrder = useCallback(async (): Promise<boolean> => {
     if (!editingOrder) return false
     if (orderItems.length === 0) {
-      setError('Agrega al menos un producto')
+      setError('Add at least one product')
       return false
     }
 
@@ -334,48 +346,50 @@ export function useOrderManagement({
       formData.append('notes', orderNotes.trim() || '')
       if (orderEstimatedArrival) {
         formData.append('estimatedArrival', new Date(orderEstimatedArrival).toISOString())
-      } else {
-        formData.append('estimatedArrival', '')
       }
       if (orderReceiptFile) {
         formData.append('receipt', orderReceiptFile)
       }
-      formData.append('provider', orderProvider || '')
+      formData.append('providerId', orderProvider || '')
+      formData.append('items', JSON.stringify(orderItems.map(item => ({
+        productId: item.product.id,
+        productName: item.product.name,
+        quantity: item.quantity,
+      }))))
 
-      await pb.collection('orders').update(editingOrder.id, formData)
-
-      const existingItems = editingOrder.expand?.['order_items(order)'] || []
-      for (const item of existingItems) {
-        await pb.collection('order_items').delete(item.id)
-      }
-
-      for (const item of orderItems) {
-        await pb.collection('order_items').create({
-          order: editingOrder.id,
-          product: item.product.id,
-          productName: item.product.name,
-          quantity: item.quantity,
-        })
-      }
-
-      const updatedOrders = await pb.collection('orders').getFullList<ExpandedOrder>({
-        sort: '-date',
-        expand: 'order_items(order).product,provider',
-        requestKey: null,
+      const response = await fetch(`/api/orders/${editingOrder.id}`, {
+        method: 'PATCH',
+        body: formData,
       })
-      updateOrders(updatedOrders)
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to save order')
+        return false
+      }
+
+      // Reload orders
+      const ordersResponse = await fetch('/api/orders')
+      const ordersData = await ordersResponse.json()
+
+      if (ordersResponse.ok && ordersData.success) {
+        updateOrders(ordersData.orders)
+      }
+
       setEditOrderSaved(true)
       return true
     } catch (err) {
       console.error('Error saving order:', err)
-      setError('Error al guardar el pedido')
+      setError('Failed to save order')
       return false
     } finally {
       setIsSavingOrder(false)
     }
-  }, [orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, editingOrder, pb, updateOrders])
+  }, [orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, editingOrder, updateOrders])
 
   // Receive order
+  // TODO: Implement with Drizzle API routes
   const handleReceiveOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder || !user) return false
 
@@ -383,53 +397,50 @@ export function useOrderManagement({
     setError('')
 
     try {
-      const now = new Date().toISOString()
-      const orderItemsList = viewingOrder.expand?.['order_items(order)'] || []
-
-      for (const item of orderItemsList) {
-        const product = item.expand?.product
-        if (!product) continue
-
-        const receivedQty = receivedQuantities[item.id] ?? item.quantity
-        if (receivedQty <= 0) continue
-
-        const currentStock = product.stock || 0
-        await pb.collection('products').update(product.id, {
-          stock: currentStock + receivedQty,
-        })
-      }
-
-      await pb.collection('orders').update(viewingOrder.id, {
-        status: 'received',
-        receivedDate: now,
+      const response = await fetch(`/api/orders/${viewingOrder.id}/receive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ receivedQuantities }),
       })
 
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to receive order')
+        return false
+      }
+
+      // Reload products and orders
       const [productsRes, ordersRes] = await Promise.all([
-        pb.collection('products').getFullList<Product>({
-          sort: 'name',
-          requestKey: null,
-        }),
-        pb.collection('orders').getFullList<ExpandedOrder>({
-          sort: '-date',
-          expand: 'order_items(order).product,provider',
-          requestKey: null,
-        }),
+        fetch('/api/products'),
+        fetch('/api/orders'),
       ])
 
-      onProductsUpdated?.(productsRes)
-      updateOrders(ordersRes)
+      const [productsData, ordersData] = await Promise.all([
+        productsRes.json(),
+        ordersRes.json(),
+      ])
+
+      if (productsRes.ok && productsData.success) {
+        onProductsUpdated?.(productsData.products)
+      }
+      if (ordersRes.ok && ordersData.success) {
+        updateOrders(ordersData.orders)
+      }
+
       setOrderReceived(true)
       return true
     } catch (err) {
       console.error('Error receiving order:', err)
-      setError('Error al recibir el pedido')
+      setError('Failed to receive order')
       return false
     } finally {
       setIsReceiving(false)
     }
-  }, [viewingOrder, user, receivedQuantities, pb, onProductsUpdated, updateOrders])
+  }, [viewingOrder, user, receivedQuantities, onProductsUpdated, updateOrders])
 
   // Delete order
+  // TODO: Implement with Drizzle API routes
   const handleDeleteOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder) return false
 
@@ -437,12 +448,16 @@ export function useOrderManagement({
     setError('')
 
     try {
-      const orderItemsList = viewingOrder.expand?.['order_items(order)'] || []
-      for (const item of orderItemsList) {
-        await pb.collection('order_items').delete(item.id)
-      }
+      const response = await fetch(`/api/orders/${viewingOrder.id}`, {
+        method: 'DELETE',
+      })
 
-      await pb.collection('orders').delete(viewingOrder.id)
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Failed to delete order')
+        return false
+      }
 
       setOrders(prev => prev.filter(o => o.id !== viewingOrder.id))
       onOrdersUpdated?.(orders.filter(o => o.id !== viewingOrder.id))
@@ -450,12 +465,12 @@ export function useOrderManagement({
       return true
     } catch (err) {
       console.error('Error deleting order:', err)
-      setError('Error al eliminar el pedido')
+      setError('Failed to delete order')
       return false
     } finally {
       setIsDeletingOrder(false)
     }
-  }, [viewingOrder, pb, orders, onOrdersUpdated])
+  }, [viewingOrder, orders, onOrdersUpdated])
 
   return {
     orderItems,

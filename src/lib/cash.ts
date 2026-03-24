@@ -9,24 +9,24 @@ import type { CashMovementCategory, CashMovementType, CashMovement, CashSession 
 // ============================================
 
 export const CATEGORY_LABELS: Record<CashMovementCategory, string> = {
-  venta: 'Venta',
-  prestamo_empleado: 'Prestamo',
-  retiro_banco: 'Retiro de banco',
-  devolucion_prestamo: 'Devolucion',
-  deposito_banco: 'Deposito a banco',
-  otro: 'Otro',
+  sale: 'Sale',
+  employee_loan: 'Employee Loan',
+  bank_withdrawal: 'Bank Withdrawal',
+  loan_repayment: 'Loan Repayment',
+  bank_deposit: 'Bank Deposit',
+  other: 'Other',
 }
 
-export const INGRESO_CATEGORIES: CashMovementCategory[] = [
-  'prestamo_empleado',
-  'retiro_banco',
-  'otro'
+export const DEPOSIT_CATEGORIES: CashMovementCategory[] = [
+  'employee_loan',
+  'bank_withdrawal',
+  'other'
 ]
 
-export const EGRESO_CATEGORIES: CashMovementCategory[] = [
-  'devolucion_prestamo',
-  'deposito_banco',
-  'otro'
+export const WITHDRAWAL_CATEGORIES: CashMovementCategory[] = [
+  'loan_repayment',
+  'bank_deposit',
+  'other'
 ]
 
 // ============================================
@@ -45,7 +45,7 @@ export function calculateExpectedBalance(
   let balance = session.openingBalance
 
   for (const mov of movements) {
-    if (mov.type === 'ingreso') {
+    if (mov.type === 'deposit') {
       balance += mov.amount
     } else {
       balance -= mov.amount
@@ -64,22 +64,22 @@ export function calculateOutstandingLoans(
   const loans = new Map<string, { name: string; amount: number }>()
 
   for (const mov of movements) {
-    if (mov.category === 'prestamo_empleado' && mov.employee) {
-      const employeeName = mov.expand?.employee?.name || 'Empleado'
-      const current = loans.get(mov.employee) || { name: employeeName, amount: 0 }
-      if (mov.expand?.employee?.name) {
-        current.name = mov.expand.employee.name
+    if (mov.category === 'employee_loan' && mov.employeeId) {
+      const employeeName = mov.employee?.name || 'Employee'
+      const current = loans.get(mov.employeeId) || { name: employeeName, amount: 0 }
+      if (mov.employee?.name) {
+        current.name = mov.employee.name
       }
       current.amount += mov.amount
-      loans.set(mov.employee, current)
-    } else if (mov.category === 'devolucion_prestamo' && mov.employee) {
-      const employeeName = mov.expand?.employee?.name || 'Empleado'
-      const current = loans.get(mov.employee) || { name: employeeName, amount: 0 }
-      if (mov.expand?.employee?.name) {
-        current.name = mov.expand.employee.name
+      loans.set(mov.employeeId, current)
+    } else if (mov.category === 'loan_repayment' && mov.employeeId) {
+      const employeeName = mov.employee?.name || 'Employee'
+      const current = loans.get(mov.employeeId) || { name: employeeName, amount: 0 }
+      if (mov.employee?.name) {
+        current.name = mov.employee.name
       }
       current.amount -= mov.amount
-      loans.set(mov.employee, current)
+      loans.set(mov.employeeId, current)
     }
   }
 
@@ -97,7 +97,7 @@ export function calculateOutstandingLoans(
  * Get categories for a movement type
  */
 export function getCategoriesForType(type: CashMovementType): CashMovementCategory[] {
-  return type === 'ingreso' ? INGRESO_CATEGORIES : EGRESO_CATEGORIES
+  return type === 'deposit' ? DEPOSIT_CATEGORIES : WITHDRAWAL_CATEGORIES
 }
 
 /**
@@ -105,43 +105,43 @@ export function getCategoriesForType(type: CashMovementType): CashMovementCatego
  */
 export function sortMovementsByDate(movements: CashMovement[]): CashMovement[] {
   return [...movements].sort((a, b) => {
-    if (a.created && b.created) {
-      const timeA = new Date(a.created).getTime()
-      const timeB = new Date(b.created).getTime()
+    if (a.createdAt && b.createdAt) {
+      const timeA = new Date(a.createdAt).getTime()
+      const timeB = new Date(b.createdAt).getTime()
       if (!isNaN(timeA) && !isNaN(timeB)) {
         return timeB - timeA
       }
     }
-    // Fallback: compare IDs (PocketBase IDs are lexicographically sortable)
+    // Fallback: compare IDs (lexicographically sortable)
     return b.id.localeCompare(a.id)
   })
 }
 
 /**
- * Format datetime for display (es-PE locale)
+ * Format datetime for display (en-US locale)
  */
-export function formatDateTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  return date.toLocaleString('es-PE', {
-    day: '2-digit',
+export function formatDateTime(dateStr: Date | string): string {
+  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr
+  return date.toLocaleString('en-US', {
     month: '2-digit',
+    day: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'America/Lima',
-  }).replace(/a\.\s*m\./gi, 'a.m.').replace(/p\.\s*m\./gi, 'p.m.')
+    timeZone: 'America/New_York',
+  })
 }
 
 /**
- * Format time for display (es-PE locale)
+ * Format time for display (en-US locale)
  */
-export function formatMovementTime(dateStr: string | undefined): string {
-  if (!dateStr) return 'Ahora'
-  const date = new Date(dateStr)
-  if (isNaN(date.getTime())) return 'Ahora'
-  return date.toLocaleTimeString('es-PE', {
+export function formatMovementTime(dateStr: Date | string | undefined | null): string {
+  if (!dateStr) return 'Now'
+  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr
+  if (isNaN(date.getTime())) return 'Now'
+  return date.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'America/Lima',
-  }).replace(/a\.\s*m\./gi, 'a.m.').replace(/p\.\s*m\./gi, 'p.m.')
+    timeZone: 'America/New_York',
+  })
 }
