@@ -201,12 +201,14 @@ export default function CajaPage() {
 
             {/* Movements Section (only when session is open) */}
             {sessionHook.currentSession && (
-              <MovementsList
-                movements={movementsHook.movements}
-                newMovementId={movementsHook.newMovementId}
-                onMovementClick={handleOpenEditModal}
-                onAnimationComplete={movementsHook.clearNewMovementId}
-              />
+              <div className="mt-2">
+                <MovementsList
+                  movements={movementsHook.movements}
+                  newMovementId={movementsHook.newMovementId}
+                  onMovementClick={handleOpenEditModal}
+                  onAnimationComplete={movementsHook.clearNewMovementId}
+                />
+              </div>
             )}
 
             {/* Closed state - centered message */}
