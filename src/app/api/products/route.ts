@@ -30,6 +30,7 @@ export async function GET() {
       .where(eq(products.businessId, session.businessId))
 
     return NextResponse.json({
+      success: true,
       products: productsList,
     })
   } catch (error) {
