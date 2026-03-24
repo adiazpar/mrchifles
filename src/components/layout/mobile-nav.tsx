@@ -9,11 +9,8 @@ import { useNavbar } from '@/contexts/navbar-context'
 export function MobileNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const { isVisible } = useNavbar()
+  const { isVisible, pendingHref, setPendingHref } = useNavbar()
   const navRef = useRef<HTMLElement>(null)
-
-  // Optimistic active state for instant feedback
-  const [pendingHref, setPendingHref] = useState<string | null>(null)
 
   // Local state to control the hidden class
   const [isHidden, setIsHidden] = useState(false)
@@ -24,11 +21,6 @@ export function MobileNav() {
       router.prefetch(item.href)
     })
   }, [router])
-
-  // Clear pending state when pathname changes
-  useEffect(() => {
-    setPendingHref(null)
-  }, [pathname])
 
   useEffect(() => {
     if (!isVisible) {
