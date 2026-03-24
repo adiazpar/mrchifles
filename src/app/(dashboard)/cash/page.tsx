@@ -198,7 +198,7 @@ export default function CajaPage() {
                 disabled={!sessionHook.currentSession}
               >
                 <Receipt className="caja-action-btn__icon text-brand" />
-                Movements ({movementsHook.movements.length})
+                Activity ({movementsHook.movements.length})
               </button>
             </div>
 
