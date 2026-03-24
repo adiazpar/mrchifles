@@ -59,9 +59,6 @@ export default function CajaPage() {
         if (sessionId && !cancelled) {
           await movementsHook.loadMovements(sessionId)
         }
-        if (!cancelled) {
-          await sessionHook.loadSessions()
-        }
       } catch (err) {
         if (!cancelled) {
           console.error('Error loading data:', err)
@@ -145,7 +142,7 @@ export default function CajaPage() {
           </div>
         )}
 
-        <div className="flex flex-col flex-1 gap-6">
+        <div className="flex flex-col flex-1 gap-4">
           {/* Balance Hero with status */}
             <BalanceHero
               balance={sessionHook.expectedBalance}
