@@ -1298,17 +1298,21 @@
 }
 
 /* ===== Page Loading State ===== */
-/* Centers spinner in the middle of the page between header and navbar */
+/* Centers spinner in the middle of the visible area between header and navbar */
 .page-loading {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Account for fixed header at top and mobile nav at bottom to center spinner */
+  padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0));
   padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0));
 }
 
 @media (min-width: 1024px) {
   .page-loading {
+    /* Desktop: still account for fixed header, no mobile nav */
+    padding-top: var(--header-height);
     padding-bottom: 0;
   }
 }
