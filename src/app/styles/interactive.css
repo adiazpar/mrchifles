@@ -2254,8 +2254,7 @@ color: var(--color-text-tertiary);
 
 /* ===== Caja Action Buttons ===== */
 .caja-actions {
-display: grid;
-grid-template-columns: repeat(2, 1fr);
+display: flex;
 gap: var(--space-3);
 }
 
@@ -2266,12 +2265,13 @@ gap: var(--space-3);
 }
 
 .caja-action-btn {
+flex: 1;
 display: flex;
 flex-direction: column;
 align-items: center;
 justify-content: center;
 gap: var(--space-1);
-padding: var(--space-3) var(--space-4);
+padding: var(--space-3) var(--space-2);
 border-radius: var(--radius-lg);
 border: 1px solid var(--color-border);
 background: var(--color-bg-surface);
