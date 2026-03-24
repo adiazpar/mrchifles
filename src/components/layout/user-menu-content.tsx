@@ -51,7 +51,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
             onClick={onAction}
           >
             <Users size={20} />
-            <span>Manage Team</span>
+            <span>Team</span>
             <ChevronRight size={16} className="user-menu-item-arrow" />
           </Link>
         )}
