@@ -4,15 +4,19 @@ import { usePathname, useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { getRouteConfig } from '@/lib/navigation'
 import { UserMenu } from './user-menu'
+import { useNavbar } from '@/contexts/navbar-context'
 
 /**
- * Simple page header that reads title/subtitle from route config.
- * No context or hooks needed - just reads the current pathname.
+ * Page header with optimistic title updates.
+ * Uses pendingHref from context to show the target page title immediately on navigation.
  */
 export function PageHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const config = getRouteConfig(pathname)
+  const { pendingHref } = useNavbar()
+
+  // Use pending route config if navigating, otherwise current pathname
+  const config = getRouteConfig(pendingHref || pathname)
 
   const { title, subtitle, backTo } = config
 

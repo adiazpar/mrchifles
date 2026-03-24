@@ -1,18 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { NAV_ITEMS } from '@/lib/navigation'
 import { UserMenu } from './user-menu'
+import { useNavbar } from '@/contexts/navbar-context'
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-
-  // Optimistic active state for instant feedback
-  const [pendingHref, setPendingHref] = useState<string | null>(null)
+  const { pendingHref, setPendingHref } = useNavbar()
 
   // Prefetch all routes on mount for instant navigation
   useEffect(() => {
@@ -20,11 +19,6 @@ export function Sidebar() {
       router.prefetch(item.href)
     })
   }, [router])
-
-  // Clear pending state when pathname changes
-  useEffect(() => {
-    setPendingHref(null)
-  }, [pathname])
 
   const handleClick = (href: string) => {
     if (href !== pathname) {
