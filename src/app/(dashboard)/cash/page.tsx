@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useHeader } from '@/contexts/header-context'
 import { Spinner } from '@/components/ui'
-import { Plus, PackageOpen, Receipt, Coins, History } from 'lucide-react'
+import { Plus, PackageOpen, Receipt, History } from 'lucide-react'
 import {
   BalanceHero,
   CloseDrawerModal,
@@ -12,7 +11,6 @@ import {
   MovementsList,
   AddMovementModal,
   EditMovementModal,
-  LoansModal,
 } from '@/components/cash'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
@@ -26,11 +24,7 @@ export default function CajaPage() {
   const { user } = useAuth()
   const { isReturning, setReturning } = useNavbar()
 
-  useHeader({
-    title: 'Cash Drawer',
-    subtitle: 'Cash control',
-    isReturning,
-  })
+  // Header is set optimistically by nav component
 
   // Use extracted hooks
   const movementsHook = useCashMovements()
@@ -40,7 +34,6 @@ export default function CajaPage() {
   const [isOpenDrawerModalOpen, setIsOpenDrawerModalOpen] = useState(false)
   const [isCloseDrawerModalOpen, setIsCloseDrawerModalOpen] = useState(false)
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false)
-  const [isLoansModalOpen, setIsLoansModalOpen] = useState(false)
   const [isEditMovementModalOpen, setIsEditMovementModalOpen] = useState(false)
   const [editingMovement, setEditingMovement] = useState<CashMovement | null>(null)
 
@@ -207,15 +200,6 @@ export default function CajaPage() {
                 <Receipt className="caja-action-btn__icon text-brand" />
                 Movements ({movementsHook.movements.length})
               </button>
-              <button
-                type="button"
-                onClick={() => setIsLoansModalOpen(true)}
-                className="caja-action-btn"
-                disabled={!sessionHook.currentSession}
-              >
-                <Coins className="caja-action-btn__icon text-warning" />
-                Loans ({sessionHook.outstandingLoans.size})
-              </button>
             </div>
 
             {/* Movements Section (only when session is open) */}
@@ -271,12 +255,6 @@ export default function CajaPage() {
         movement={editingMovement}
         onSave={handleSaveEdit}
         onDelete={handleDeleteMovement}
-      />
-
-      <LoansModal
-        isOpen={isLoansModalOpen}
-        onClose={() => setIsLoansModalOpen(false)}
-        outstandingLoans={sessionHook.outstandingLoans}
       />
 
       {/* Opening animation overlay */}
