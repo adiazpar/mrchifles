@@ -75,7 +75,7 @@ export function CloseDrawerModal({
       onClose={handleClose}
     >
       <Modal.Step title="Close drawer">
-        <CloseDrawerForm
+        <CloseDrawerFormContent
           expectedBalance={expectedBalance}
           closingBalance={closingBalance}
           setClosingBalance={setClosingBalance}
@@ -83,29 +83,52 @@ export function CloseDrawerModal({
           discrepancyNote={discrepancyNote}
           setDiscrepancyNote={setDiscrepancyNote}
           isSubmitting={isSubmitting}
-          setIsSubmitting={setIsSubmitting}
-          currentSession={currentSession}
-          movements={movements}
-          user={user}
-          setShowLottie={setShowLottie}
-          setCelebrationStats={setCelebrationStats}
-          onClose={handleClose}
         />
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="btn btn-secondary flex-1"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <CloseDrawerSubmitButton
+            isSubmitting={isSubmitting}
+            setIsSubmitting={setIsSubmitting}
+            currentSession={currentSession}
+            movements={movements}
+            user={user}
+            expectedBalance={expectedBalance}
+            closingBalance={closingBalance}
+            closingDiscrepancy={closingDiscrepancy}
+            discrepancyNote={discrepancyNote}
+            setShowLottie={setShowLottie}
+            setCelebrationStats={setCelebrationStats}
+          />
+        </Modal.Footer>
       </Modal.Step>
 
       <Modal.Step title="Drawer closed" hideBackButton>
-        <CelebrationContent
+        <CelebrationStepContent
           showLottie={showLottie}
           celebrationStats={celebrationStats}
-          onClose={handleClose}
         />
+        <Modal.Footer>
+          <button
+            className="btn btn-primary flex-1"
+            onClick={handleClose}
+          >
+            Continue
+          </button>
+        </Modal.Footer>
       </Modal.Step>
     </Modal>
   )
 }
 
-// Form step content - extracted to use hook
-interface CloseDrawerFormProps {
+// Form content - returns only Modal.Item elements
+interface CloseDrawerFormContentProps {
   expectedBalance: number
   closingBalance: string
   setClosingBalance: (value: string) => void
@@ -113,16 +136,9 @@ interface CloseDrawerFormProps {
   discrepancyNote: string
   setDiscrepancyNote: (value: string) => void
   isSubmitting: boolean
-  setIsSubmitting: (value: boolean) => void
-  currentSession: CashSession | null
-  movements: CashMovement[]
-  user: User | null
-  setShowLottie: (value: boolean) => void
-  setCelebrationStats: (stats: { label: string; value: string }[]) => void
-  onClose: () => void
 }
 
-function CloseDrawerForm({
+function CloseDrawerFormContent({
   expectedBalance,
   closingBalance,
   setClosingBalance,
@@ -130,70 +146,7 @@ function CloseDrawerForm({
   discrepancyNote,
   setDiscrepancyNote,
   isSubmitting,
-  setIsSubmitting,
-  currentSession,
-  movements,
-  user,
-  setShowLottie,
-  setCelebrationStats,
-  onClose,
-}: CloseDrawerFormProps) {
-  const { goNext, lock, unlock } = useMorphingModal()
-
-  // TODO: Implement with Drizzle API routes
-  const handleSubmit = async () => {
-    if (!user || !currentSession) return
-
-    const actualBalance = parseFloat(closingBalance)
-    if (isNaN(actualBalance) || actualBalance < 0) return
-
-    setIsSubmitting(true)
-    lock() // Prevent close during submission
-
-    try {
-      // Calculate stats for celebration
-      const totalDeposits = movements.filter(m => m.type === 'deposit').reduce((sum, m) => sum + m.amount, 0)
-      const totalWithdrawals = movements.filter(m => m.type === 'withdrawal').reduce((sum, m) => sum + m.amount, 0)
-
-      // Update session with closing info via API
-      const response = await fetch(`/api/cash/sessions/${currentSession.id}/close`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          closingBalance: actualBalance,
-          expectedBalance: expectedBalance,
-          discrepancy: closingDiscrepancy,
-          discrepancyNote: discrepancyNote.trim() || null,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Error closing drawer')
-      }
-
-      // Set up celebration stats
-      setCelebrationStats([
-        { label: 'Movements', value: String(movements.length) },
-        { label: 'Deposits', value: formatCurrency(totalDeposits) },
-        { label: 'Withdrawals', value: formatCurrency(totalWithdrawals) },
-      ])
-
-      // Start showing Lottie
-      setShowLottie(true)
-
-      // Navigate to celebration step - Modal handles the transition
-      unlock()
-      goNext()
-    } catch (err) {
-      console.error('Error closing drawer:', err)
-      alert('Error closing the drawer')
-      setIsSubmitting(false)
-      unlock()
-    }
-  }
-
+}: CloseDrawerFormContentProps) {
   return (
     <>
       <Modal.Item>
@@ -263,46 +216,113 @@ function CloseDrawerForm({
           />
         </Modal.Item>
       )}
-
-      <Modal.Footer>
-        <button
-          type="button"
-          onClick={onClose}
-          className="btn btn-secondary flex-1"
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="btn btn-primary flex-1"
-          disabled={isSubmitting || !closingBalance || parseFloat(closingBalance) < 0}
-        >
-          {isSubmitting ? <Spinner /> : 'Close'}
-        </button>
-      </Modal.Footer>
     </>
   )
 }
 
-// Celebration step content
-interface CelebrationContentProps {
-  showLottie: boolean
-  celebrationStats: { label: string; value: string }[]
-  onClose: () => void
+// Submit button - uses useMorphingModal for navigation
+interface CloseDrawerSubmitButtonProps {
+  isSubmitting: boolean
+  setIsSubmitting: (value: boolean) => void
+  currentSession: CashSession | null
+  movements: CashMovement[]
+  user: User | null
+  expectedBalance: number
+  closingBalance: string
+  closingDiscrepancy: number
+  discrepancyNote: string
+  setShowLottie: (value: boolean) => void
+  setCelebrationStats: (stats: { label: string; value: string }[]) => void
 }
 
-function CelebrationContent({
+function CloseDrawerSubmitButton({
+  isSubmitting,
+  setIsSubmitting,
+  currentSession,
+  movements,
+  user,
+  expectedBalance,
+  closingBalance,
+  closingDiscrepancy,
+  discrepancyNote,
+  setShowLottie,
+  setCelebrationStats,
+}: CloseDrawerSubmitButtonProps) {
+  const { goNext, lock, unlock } = useMorphingModal()
+
+  const handleSubmit = async () => {
+    if (!user || !currentSession) return
+
+    const actualBalance = parseFloat(closingBalance)
+    if (isNaN(actualBalance) || actualBalance < 0) return
+
+    setIsSubmitting(true)
+    lock()
+
+    try {
+      const totalDeposits = movements.filter(m => m.type === 'deposit').reduce((sum, m) => sum + m.amount, 0)
+      const totalWithdrawals = movements.filter(m => m.type === 'withdrawal').reduce((sum, m) => sum + m.amount, 0)
+
+      const response = await fetch(`/api/cash/sessions/${currentSession.id}/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          closingBalance: actualBalance,
+          expectedBalance: expectedBalance,
+          discrepancy: closingDiscrepancy,
+          discrepancyNote: discrepancyNote.trim() || null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Error closing drawer')
+      }
+
+      setCelebrationStats([
+        { label: 'Movements', value: String(movements.length) },
+        { label: 'Deposits', value: formatCurrency(totalDeposits) },
+        { label: 'Withdrawals', value: formatCurrency(totalWithdrawals) },
+      ])
+
+      setShowLottie(true)
+      unlock()
+      goNext()
+    } catch (err) {
+      console.error('Error closing drawer:', err)
+      alert('Error closing the drawer')
+      setIsSubmitting(false)
+      unlock()
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleSubmit}
+      className="btn btn-primary flex-1"
+      disabled={isSubmitting || !closingBalance || parseFloat(closingBalance) < 0}
+    >
+      {isSubmitting ? <Spinner /> : 'Close'}
+    </button>
+  )
+}
+
+// Celebration step content - returns only Modal.Item elements
+interface CelebrationStepContentProps {
+  showLottie: boolean
+  celebrationStats: { label: string; value: string }[]
+}
+
+function CelebrationStepContent({
   showLottie,
   celebrationStats,
-  onClose,
-}: CelebrationContentProps) {
+}: CelebrationStepContentProps) {
   return (
     <>
       <Modal.Item>
         <div className="flex flex-col items-center text-center">
-          {/* Lottie container */}
           <div className="mb-6" style={{ width: 200, height: 200 }}>
             {showLottie && (
               <LottiePlayer
@@ -341,15 +361,6 @@ function CelebrationContent({
           )}
         </div>
       </Modal.Item>
-
-      <Modal.Footer>
-        <button
-          className="btn btn-primary flex-1"
-          onClick={onClose}
-        >
-          Continue
-        </button>
-      </Modal.Footer>
     </>
   )
 }
