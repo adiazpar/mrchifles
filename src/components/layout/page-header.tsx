@@ -51,8 +51,9 @@ export function PageHeader() {
 
   return (
     <header className={`page-header page-header--fixed ${isScrolled ? 'page-header--scrolled' : ''}`}>
-      <div className={`page-header__content ${backTo ? 'page-header__content--with-back' : ''}`}>
-        {backTo && (
+      {/* Left column - back button or empty for balance */}
+      <div className="page-header__content">
+        {backTo ? (
           <button
             type="button"
             onClick={handleBack}
@@ -61,13 +62,17 @@ export function PageHeader() {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-        )}
-        <div className="page-header__titles">
-          <h1 className="page-title">{title}</h1>
-          {subtitle && <p className="page-subtitle">{subtitle}</p>}
-        </div>
+        ) : null}
       </div>
-      <div className="flex items-center gap-2">
+
+      {/* Center column - titles */}
+      <div className="page-header__titles">
+        <h1 className="page-title">{title}</h1>
+        {subtitle && <p className="page-subtitle">{subtitle}</p>}
+      </div>
+
+      {/* Right column - actions */}
+      <div className="page-header__actions">
         <div className="lg:hidden">
           <UserMenu variant="mobile" />
         </div>
