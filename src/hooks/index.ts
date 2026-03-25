@@ -30,5 +30,5 @@ export type { UseCashMovementsReturn } from './useCashMovements'
 export { useProviderManagement } from './useProviderManagement'
 export type { UseProviderManagementReturn } from './useProviderManagement'
 
-export { useSettings, formatTimeRemaining, THEME_CONFIG } from './useSettings'
-export type { UseSettingsReturn, PendingTransfer, IncomingTransfer } from './useSettings'
+export { useAccountSettings, formatTimeRemaining, THEME_CONFIG } from './useAccountSettings'
+export type { UseAccountSettingsReturn, PendingTransfer, IncomingTransfer } from './useAccountSettings'

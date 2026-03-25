@@ -2,7 +2,7 @@
 
 import { ArrowLeftRight, Mail, Palette, Info } from 'lucide-react'
 import { Spinner, Modal } from '@/components/ui'
-import { useSettings } from '@/hooks'
+import { useAccountSettings } from '@/hooks'
 import {
   PendingTransferCard,
   IncomingTransferCard,
@@ -12,9 +12,9 @@ import {
   TransferLinkContent,
   TransferLinkDoneButton,
   TransferConfirmContent,
-} from '@/components/settings'
+} from '@/components/account'
 
-export default function SettingsPage() {
+export default function AccountSettingsPage() {
   const {
     // User
     user,
@@ -55,7 +55,7 @@ export default function SettingsPage() {
     handleConfirmTransfer,
     handleShowTransferLink,
     handleAcceptIncomingTransfer,
-  } = useSettings()
+  } = useAccountSettings()
 
   return (
     <>
