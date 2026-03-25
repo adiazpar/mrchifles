@@ -76,14 +76,14 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           </Link>
         )}
 
-        {/* Settings */}
+        {/* Account Settings */}
         <Link
-          href="/settings"
+          href="/account"
           className="user-menu-item"
-          onClick={() => handleLinkClick('/settings')}
+          onClick={() => handleLinkClick('/account')}
         >
           <Settings size={20} />
-          <span>Settings</span>
+          <span>Account Settings</span>
           <ChevronRight size={16} className="user-menu-item-arrow" />
         </Link>
       </div>

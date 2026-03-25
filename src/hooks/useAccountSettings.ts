@@ -73,7 +73,7 @@ export function formatTimeRemaining(expiresAt: string): string {
 // HOOK RETURN TYPE
 // ============================================
 
-export interface UseSettingsReturn {
+export interface UseAccountSettingsReturn {
   // User
   user: ReturnType<typeof useAuth>['user']
   isOwner: boolean
@@ -119,7 +119,7 @@ export interface UseSettingsReturn {
 // HOOK
 // ============================================
 
-export function useSettings(): UseSettingsReturn {
+export function useAccountSettings(): UseAccountSettingsReturn {
   const { user } = useAuth()
   const isOwner = user?.role === 'owner'
 

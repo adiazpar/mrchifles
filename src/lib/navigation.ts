@@ -28,7 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
  * Additional routes to prefetch for instant navigation
  */
 export const PREFETCH_ROUTES: string[] = [
-  '/settings',
+  '/account',
   '/team',
   '/providers',
   '/cash/history',
@@ -51,7 +51,7 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
   '/cash/history': { title: 'History', subtitle: 'Cash drawer sessions', backTo: '/cash' },
   '/products': { title: 'Products', subtitle: 'Manage your catalog' },
   '/reports': { title: 'Reports', subtitle: 'Sales analytics' },
-  '/settings': { title: 'Settings', subtitle: 'Customize your experience' },
+  '/account': { title: 'Account Settings', subtitle: 'Customize your experience' },
   '/team': { title: 'Team', subtitle: 'Manage your team' },
   '/providers': { title: 'Providers', subtitle: 'Manage your providers' },
 }
