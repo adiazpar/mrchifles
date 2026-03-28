@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { db, users, appConfig } from '@/db'
+import { db, businessUsers, appConfig } from '@/db'
 import { eq } from 'drizzle-orm'
 
 /**
@@ -11,9 +11,9 @@ export async function GET() {
   try {
     // Check if there's an owner in the system
     const [owner] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.role, 'owner'))
+      .select({ id: businessUsers.id })
+      .from(businessUsers)
+      .where(eq(businessUsers.role, 'owner'))
       .limit(1)
 
     // Check app config if exists

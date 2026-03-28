@@ -178,11 +178,13 @@
   --z-tooltip: 400;
 
   /* ===== Layout ===== */
-  --sidebar-width: 260px;
   --mobile-nav-height: 80px;
   --header-height: 80px;
   --page-padding: 16px;
   --touch-target-min: 40px;
+
+  /* Mobile-only viewport constraint */
+  --max-viewport-width: 430px;
 }
 
 /* ===== Dark Mode ===== */
@@ -249,6 +251,8 @@
     /* Prevent body scroll - only inner containers should scroll */
     height: 100%;
     overflow: hidden;
+    /* Background for larger screens (outside mobile viewport) */
+    background-color: var(--neutral-900);
   }
 
   body {
@@ -262,6 +266,9 @@
     height: 100dvh;
     height: 100vh; /* Fallback for older browsers */
     overflow: hidden;
+    /* Mobile-only constraint - center on larger screens */
+    max-width: var(--max-viewport-width);
+    margin-inline: auto;
   }
 
   /* Support for dvh - modern browsers */

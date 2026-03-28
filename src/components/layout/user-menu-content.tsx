@@ -5,14 +5,18 @@ import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
-import { getUserInitials, getRoleLabel, isPartnerOrOwner } from '@/lib/auth'
-import { Users, LogOut, ChevronRight, Settings, Van } from 'lucide-react'
+import { getUserInitials } from '@/lib/auth'
+import { LogOut, ChevronRight, Settings } from 'lucide-react'
 
 interface UserMenuContentProps {
   onAction?: () => void
   showHeader?: boolean
 }
 
+/**
+ * User menu content - user-level settings only.
+ * Business-specific settings (Team, Providers) belong in business settings page.
+ */
 export function UserMenuContent({ onAction, showHeader = true }: UserMenuContentProps) {
   const router = useRouter()
   const { user, logout } = useAuth()
@@ -31,8 +35,6 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
 
   if (!user) return null
 
-  const canManageTeam = isPartnerOrOwner(user)
-
   return (
     <div className="user-menu-content">
       {/* User Info Header */}
@@ -43,39 +45,12 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           </div>
           <div className="user-menu-info">
             <div className="user-menu-name">{user.name}</div>
-            <div className="user-menu-role">{getRoleLabel(user.role)}</div>
           </div>
         </div>
       )}
 
       {/* Menu Items */}
       <div className="user-menu-items">
-        {/* Team Management (owner/partner only) */}
-        {canManageTeam && (
-          <Link
-            href="/team"
-            className="user-menu-item"
-            onClick={() => handleLinkClick('/team')}
-          >
-            <Users size={20} />
-            <span>Team</span>
-            <ChevronRight size={16} className="user-menu-item-arrow" />
-          </Link>
-        )}
-
-        {/* Providers (owner/partner only) */}
-        {canManageTeam && (
-          <Link
-            href="/providers"
-            className="user-menu-item"
-            onClick={() => handleLinkClick('/providers')}
-          >
-            <Van size={20} />
-            <span>Providers</span>
-            <ChevronRight size={16} className="user-menu-item-arrow" />
-          </Link>
-        )}
-
         {/* Account Settings */}
         <Link
           href="/account"

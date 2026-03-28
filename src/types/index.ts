@@ -9,9 +9,7 @@ export interface User {
   id: string
   email: string
   name: string
-  role: UserRole
   status: UserStatus
-  businessId?: string | null
   invitedBy?: string | null
   avatar?: string | null
   createdAt: Date | string

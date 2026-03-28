@@ -5,6 +5,10 @@ import { useAuth } from '@/contexts/auth-context'
 import { fetchDeduped } from '@/lib/fetch'
 import type { CashMovement, CashMovementType, CashMovementCategory, CashSession } from '@/types'
 
+export interface UseCashMovementsOptions {
+  businessId: string | null
+}
+
 export interface UseCashMovementsReturn {
   // State
   movements: CashMovement[]
@@ -33,7 +37,7 @@ export interface UseCashMovementsReturn {
   clearNewMovementId: () => void
 }
 
-export function useCashMovements(): UseCashMovementsReturn {
+export function useCashMovements({ businessId }: UseCashMovementsOptions): UseCashMovementsReturn {
   const { user } = useAuth()
 
   const [movements, setMovements] = useState<CashMovement[]>([])
@@ -42,11 +46,11 @@ export function useCashMovements(): UseCashMovementsReturn {
   const [lastMovementType, setLastMovementType] = useState<'deposit' | 'withdrawal' | null>(null)
 
   // Load movements for a session
-  // TODO: Implement with Drizzle API routes
   const loadMovements = useCallback(async (sessionId: string): Promise<void> => {
+    if (!businessId) return
     setIsLoading(true)
     try {
-      const response = await fetchDeduped(`/api/cash/movements?sessionId=${sessionId}`)
+      const response = await fetchDeduped(`/api/businesses/${businessId}/cash/movements?sessionId=${sessionId}`)
       const data = await response.json()
 
       if (response.ok && data.success) {
@@ -57,10 +61,9 @@ export function useCashMovements(): UseCashMovementsReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [businessId])
 
   // Record a new movement
-  // TODO: Implement with Drizzle API routes
   const recordMovement = useCallback(async (
     session: CashSession,
     type: CashMovementType,
@@ -69,8 +72,9 @@ export function useCashMovements(): UseCashMovementsReturn {
     note: string
   ): Promise<CashMovement> => {
     if (!user) throw new Error('User not authenticated')
+    if (!businessId) throw new Error('No business context')
 
-    const response = await fetch('/api/cash/movements', {
+    const response = await fetch(`/api/businesses/${businessId}/cash/movements`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -101,10 +105,9 @@ export function useCashMovements(): UseCashMovementsReturn {
     setNewMovementId(newMovement.id)
 
     return newMovement
-  }, [user])
+  }, [user, businessId])
 
   // Update an existing movement
-  // TODO: Implement with Drizzle API routes
   const updateMovement = useCallback(async (
     movement: CashMovement,
     type: CashMovementType,
@@ -113,8 +116,9 @@ export function useCashMovements(): UseCashMovementsReturn {
     note: string
   ): Promise<CashMovement> => {
     if (!user) throw new Error('User not authenticated')
+    if (!businessId) throw new Error('No business context')
 
-    const response = await fetch(`/api/cash/movements/${movement.id}`, {
+    const response = await fetch(`/api/businesses/${businessId}/cash/movements/${movement.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -136,12 +140,12 @@ export function useCashMovements(): UseCashMovementsReturn {
     setMovements(prev => prev.map(m => m.id === movement.id ? updatedMovement : m))
 
     return updatedMovement
-  }, [user])
+  }, [user, businessId])
 
   // Delete a movement
-  // TODO: Implement with Drizzle API routes
   const deleteMovement = useCallback(async (movementId: string): Promise<void> => {
-    const response = await fetch(`/api/cash/movements/${movementId}`, {
+    if (!businessId) throw new Error('No business context')
+    const response = await fetch(`/api/businesses/${businessId}/cash/movements/${movementId}`, {
       method: 'DELETE',
     })
 
@@ -152,7 +156,7 @@ export function useCashMovements(): UseCashMovementsReturn {
     }
 
     setMovements(prev => prev.filter(m => m.id !== movementId))
-  }, [])
+  }, [businessId])
 
   // Clear new movement ID (used after animation completes)
   const clearNewMovementId = useCallback(() => {

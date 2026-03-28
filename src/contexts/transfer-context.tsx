@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import { useAuth } from './auth-context'
+import { useBusiness } from './business-context'
+import { isOwner } from '@/lib/business-role'
 import { fetchDeduped } from '@/lib/fetch'
 
 // ============================================
@@ -53,22 +55,23 @@ const TransferContext = createContext<TransferContextType | null>(null)
 
 export function TransferProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
+  const { role, businessId } = useBusiness()
   const [pendingTransfer, setPendingTransfer] = useState<PendingTransfer | null>(null)
   const [incomingTransfer, setIncomingTransfer] = useState<IncomingTransfer | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const isOwner = user?.role === 'owner'
+  const userIsOwner = isOwner(role)
 
   const fetchTransferData = useCallback(async () => {
-    if (!user) {
+    if (!user || !businessId) {
       setIsLoading(false)
       return
     }
 
     setIsLoading(true)
     try {
-      if (isOwner) {
-        const response = await fetchDeduped('/api/transfer/pending')
+      if (userIsOwner) {
+        const response = await fetchDeduped(`/api/businesses/${businessId}/transfer/pending`)
         const data = await response.json()
         if (response.ok && data.success) {
           setPendingTransfer(data.transfer || null)
@@ -76,20 +79,16 @@ export function TransferProvider({ children }: { children: ReactNode }) {
           setPendingTransfer(null)
         }
       } else {
-        const response = await fetchDeduped('/api/transfer/incoming')
-        const data = await response.json()
-        if (response.ok && data.success) {
-          setIncomingTransfer(data.transfer || null)
-        } else {
-          setIncomingTransfer(null)
-        }
+        // Non-owners check for incoming transfers - this endpoint may need to be created
+        // For now, skip if not owner since the route doesn't exist yet
+        setIncomingTransfer(null)
       }
     } catch (err) {
       console.error('Error fetching transfer:', err)
     } finally {
       setIsLoading(false)
     }
-  }, [user, isOwner])
+  }, [user, userIsOwner, businessId])
 
   // Fetch on mount and when user changes
   useEffect(() => {

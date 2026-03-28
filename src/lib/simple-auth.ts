@@ -44,8 +44,6 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 export interface JWTPayload {
   userId: string
   email: string
-  role: string
-  businessId: string | null
   [key: string]: unknown // Required for jose compatibility
 }
 
@@ -136,3 +134,4 @@ export async function requireAuth(): Promise<JWTPayload> {
   }
   return user
 }
+

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, users, businesses } from '@/db'
+import { db, users, businesses, businessUsers } from '@/db'
 import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       updatedAt: now,
     })
 
-    // Create user
+    // Create user (with legacy fields for backwards compatibility)
     const [newUser] = await db
       .insert(users)
       .values({
@@ -77,12 +77,22 @@ export async function POST(request: NextRequest) {
       })
       .returning()
 
-    // Create JWT token
+    // Create business_users entry for multi-business support
+    await db.insert(businessUsers).values({
+      id: nanoid(),
+      userId,
+      businessId,
+      role: 'owner',
+      status: 'active',
+      joinedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    // Create JWT token (simplified - only user identity)
     const token = await createToken({
       userId: newUser.id,
       email: newUser.email,
-      role: newUser.role,
-      businessId: newUser.businessId,
     })
 
     // Set auth cookie

@@ -21,11 +21,28 @@ export const users = sqliteTable('users', {
   email: text('email').unique().notNull(),
   password: text('password').notNull(), // bcrypt hash
   name: text('name').notNull(),
+  // Legacy fields - kept for migration, will be removed in Phase 9
   role: text('role', { enum: ['owner', 'partner', 'employee'] }).notNull(),
   status: text('status', { enum: ['active', 'pending', 'disabled'] }).default('active').notNull(),
   businessId: text('business_id').references(() => businesses.id),
   invitedBy: text('invited_by'),
   avatar: text('avatar'), // File URL
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+})
+
+// ===========================================
+// BUSINESS USERS (Multi-business membership)
+// ===========================================
+// Join table enabling users to belong to multiple businesses
+export const businessUsers = sqliteTable('business_users', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  businessId: text('business_id').references(() => businesses.id, { onDelete: 'cascade' }).notNull(),
+  role: text('role', { enum: ['owner', 'partner', 'employee'] }).notNull(),
+  status: text('status', { enum: ['active', 'pending', 'disabled'] }).default('active').notNull(),
+  joinedAt: integer('joined_at', { mode: 'timestamp' }).notNull(),
+  invitedBy: text('invited_by').references(() => users.id),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
@@ -213,7 +230,7 @@ export const inviteCodes = sqliteTable('invite_codes', {
 export const ownershipTransfers = sqliteTable('ownership_transfers', {
   id: text('id').primaryKey(),
   businessId: text('business_id').references(() => businesses.id).notNull(),
-  code: text('code').unique().notNull(), // 8 uppercase alphanumeric
+  code: text('code').unique().notNull(), // 6 uppercase alphanumeric
   fromUser: text('from_user').references(() => users.id).notNull(),
   toEmail: text('to_email').notNull(), // Email instead of phone
   toUser: text('to_user').references(() => users.id),
@@ -244,6 +261,7 @@ export const appConfig = sqliteTable('app_config', {
 
 export const businessesRelations = relations(businesses, ({ one, many }) => ({
   users: many(users),
+  businessUsers: many(businessUsers),
   products: many(products),
   productCategories: many(productCategories),
   productSettings: one(productSettings),
@@ -264,10 +282,26 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.invitedBy],
     references: [users.id],
   }),
+  businessMemberships: many(businessUsers),
   sales: many(sales),
   cashSessionsOpened: many(cashSessions),
   cashMovementsCreated: many(cashMovements),
   inviteCodesCreated: many(inviteCodes),
+}))
+
+export const businessUsersRelations = relations(businessUsers, ({ one }) => ({
+  user: one(users, {
+    fields: [businessUsers.userId],
+    references: [users.id],
+  }),
+  business: one(businesses, {
+    fields: [businessUsers.businessId],
+    references: [businesses.id],
+  }),
+  inviter: one(users, {
+    fields: [businessUsers.invitedBy],
+    references: [users.id],
+  }),
 }))
 
 export const productsRelations = relations(products, ({ one, many }) => ({

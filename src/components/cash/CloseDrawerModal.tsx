@@ -5,6 +5,7 @@ import { Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
+import { useBusiness } from '@/contexts/business-context'
 import { formatCurrency } from '@/lib/utils'
 import type { CashSession, CashMovement, User } from '@/types'
 
@@ -24,6 +25,7 @@ export function CloseDrawerModal({
   movements,
 }: CloseDrawerModalProps) {
   const { user } = useAuth()
+  const { businessId } = useBusiness()
 
   // Form state
   const [closingBalance, setClosingBalance] = useState('')
@@ -99,6 +101,7 @@ export function CloseDrawerModal({
             currentSession={currentSession}
             movements={movements}
             user={user}
+            businessId={businessId}
             expectedBalance={expectedBalance}
             closingBalance={closingBalance}
             closingDiscrepancy={closingDiscrepancy}
@@ -227,6 +230,7 @@ interface CloseDrawerSubmitButtonProps {
   currentSession: CashSession | null
   movements: CashMovement[]
   user: User | null
+  businessId: string | null
   expectedBalance: number
   closingBalance: string
   closingDiscrepancy: number
@@ -241,6 +245,7 @@ function CloseDrawerSubmitButton({
   currentSession,
   movements,
   user,
+  businessId,
   expectedBalance,
   closingBalance,
   closingDiscrepancy,
@@ -251,7 +256,7 @@ function CloseDrawerSubmitButton({
   const { goNext, lock, unlock } = useMorphingModal()
 
   const handleSubmit = async () => {
-    if (!user || !currentSession) return
+    if (!user || !currentSession || !businessId) return
 
     const actualBalance = parseFloat(closingBalance)
     if (isNaN(actualBalance) || actualBalance < 0) return
@@ -263,7 +268,7 @@ function CloseDrawerSubmitButton({
       const totalDeposits = movements.filter(m => m.type === 'deposit').reduce((sum, m) => sum + m.amount, 0)
       const totalWithdrawals = movements.filter(m => m.type === 'withdrawal').reduce((sum, m) => sum + m.amount, 0)
 
-      const response = await fetch(`/api/cash/sessions/${currentSession.id}/close`, {
+      const response = await fetch(`/api/businesses/${businessId}/cash/sessions/${currentSession.id}/close`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

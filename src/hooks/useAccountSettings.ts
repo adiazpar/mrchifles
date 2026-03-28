@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
+import { useBusiness } from '@/contexts/business-context'
 import { useTransfer } from '@/contexts/transfer-context'
+import { isOwner as checkIsOwner } from '@/lib/business-role'
 
 // ============================================
 // TYPES
@@ -121,7 +123,8 @@ export interface UseAccountSettingsReturn {
 
 export function useAccountSettings(): UseAccountSettingsReturn {
   const { user } = useAuth()
-  const isOwner = user?.role === 'owner'
+  const { role, businessId } = useBusiness()
+  const isOwner = checkIsOwner(role)
 
   // Get transfer data from shared context (fetched once in layout)
   const {
@@ -218,8 +221,13 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     setTransferLoading(true)
 
     try {
-      // TODO: Call /api/transfer/initiate with Drizzle
-      const response = await fetch('/api/transfer/initiate', {
+      if (!businessId) {
+        setTransferError('No business context')
+        setTransferLoading(false)
+        return
+      }
+
+      const response = await fetch(`/api/businesses/${businessId}/transfer/initiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ toEmail: transferEmail }),
@@ -253,7 +261,7 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     } finally {
       setTransferLoading(false)
     }
-  }, [transferEmail])
+  }, [transferEmail, businessId])
 
   const handleCopyTransferLink = useCallback(async () => {
     try {
@@ -278,12 +286,12 @@ export function useAccountSettings(): UseAccountSettingsReturn {
   }, [transferLink])
 
   const handleCancelTransfer = useCallback(async () => {
-    if (!pendingTransfer) return
+    if (!pendingTransfer || !businessId) return
 
     setTransferLoading(true)
 
     try {
-      const response = await fetch('/api/transfer/cancel', {
+      const response = await fetch(`/api/businesses/${businessId}/transfer/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: pendingTransfer.code }),
@@ -299,15 +307,15 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     } finally {
       setTransferLoading(false)
     }
-  }, [pendingTransfer])
+  }, [pendingTransfer, businessId])
 
   const handleConfirmTransfer = useCallback(async (password: string) => {
-    if (!pendingTransfer) return
+    if (!pendingTransfer || !businessId) return
 
     setTransferLoading(true)
 
     try {
-      const response = await fetch('/api/transfer/confirm', {
+      const response = await fetch(`/api/businesses/${businessId}/transfer/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: pendingTransfer.code, password }),
@@ -329,7 +337,7 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     } finally {
       setTransferLoading(false)
     }
-  }, [pendingTransfer])
+  }, [pendingTransfer, businessId])
 
   const handleShowTransferLink = useCallback(() => {
     if (pendingTransfer) {
@@ -340,6 +348,9 @@ export function useAccountSettings(): UseAccountSettingsReturn {
   }, [pendingTransfer])
 
   const handleAcceptIncomingTransfer = useCallback(async () => {
+    // Note: Incoming transfer acceptance is a user-level action (not business-level)
+    // since the recipient may not yet have access to the business.
+    // This route needs to be implemented at /api/transfer/accept (user-level)
     if (!incomingTransfer) return
 
     setAcceptingTransfer(true)

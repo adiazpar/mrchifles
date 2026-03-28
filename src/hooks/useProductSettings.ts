@@ -55,6 +55,10 @@ function setCachedSettings(settings: ProductSettings): void {
 // HOOK INTERFACE
 // ============================================
 
+export interface UseProductSettingsOptions {
+  businessId: string
+}
+
 export interface UseProductSettingsReturn {
   // Categories
   categories: ProductCategory[]
@@ -88,7 +92,7 @@ export interface UseProductSettingsReturn {
 // HOOK IMPLEMENTATION
 // ============================================
 
-export function useProductSettings(): UseProductSettingsReturn {
+export function useProductSettings({ businessId }: UseProductSettingsOptions): UseProductSettingsReturn {
   // State
   const [categories, setCategoriesState] = useState<ProductCategory[]>(() => getCachedCategories() || [])
   const [settings, setSettingsState] = useState<ProductSettings | null>(() => getCachedSettings())
@@ -125,7 +129,7 @@ export function useProductSettings(): UseProductSettingsReturn {
   const refreshCategories = useCallback(async () => {
     setIsLoadingCategories(true)
     try {
-      const response = await fetchDeduped('/api/categories')
+      const response = await fetchDeduped(`/api/businesses/${businessId}/categories`)
       const data = await response.json()
 
       if (response.ok && data.success) {
@@ -139,13 +143,13 @@ export function useProductSettings(): UseProductSettingsReturn {
     } finally {
       setIsLoadingCategories(false)
     }
-  }, [setCategories])
+  }, [businessId, setCategories])
 
   // Load settings on mount if not cached
   const refreshSettings = useCallback(async () => {
     setIsLoadingSettings(true)
     try {
-      const response = await fetchDeduped('/api/product-settings')
+      const response = await fetchDeduped(`/api/businesses/${businessId}/product-settings`)
       const data = await response.json()
 
       if (response.ok && data.success) {
@@ -159,7 +163,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     } finally {
       setIsLoadingSettings(false)
     }
-  }, [setSettings])
+  }, [businessId, setSettings])
 
   // Initial load
   useEffect(() => {
@@ -180,7 +184,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     setError('')
 
     try {
-      const response = await fetch('/api/categories', {
+      const response = await fetch(`/api/businesses/${businessId}/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -201,7 +205,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     } finally {
       setIsCreating(false)
     }
-  }, [setCategories])
+  }, [businessId, setCategories])
 
   // Update category
   const updateCategory = useCallback(async (id: string, name: string): Promise<ProductCategory | null> => {
@@ -209,7 +213,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     setError('')
 
     try {
-      const response = await fetch(`/api/categories/${id}`, {
+      const response = await fetch(`/api/businesses/${businessId}/categories/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -230,7 +234,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     } finally {
       setIsUpdating(false)
     }
-  }, [setCategories])
+  }, [businessId, setCategories])
 
   // Delete category
   const deleteCategory = useCallback(async (id: string): Promise<boolean> => {
@@ -238,7 +242,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     setError('')
 
     try {
-      const response = await fetch(`/api/categories/${id}`, {
+      const response = await fetch(`/api/businesses/${businessId}/categories/${id}`, {
         method: 'DELETE',
       })
       const data = await response.json()
@@ -263,7 +267,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     } finally {
       setIsDeleting(false)
     }
-  }, [setCategories, setSettings, settings?.defaultCategoryId])
+  }, [businessId, setCategories, setSettings, settings?.defaultCategoryId])
 
   // Reorder categories
   const reorderCategories = useCallback(async (categoryIds: string[]): Promise<boolean> => {
@@ -281,7 +285,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     setCategories(reorderedCategories)
 
     try {
-      const response = await fetch('/api/categories/reorder', {
+      const response = await fetch(`/api/businesses/${businessId}/categories/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ categoryIds }),
@@ -305,7 +309,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     } finally {
       setIsUpdating(false)
     }
-  }, [categories, setCategories])
+  }, [businessId, categories, setCategories])
 
   // Update settings
   const updateSettings = useCallback(async (updates: { defaultCategoryId?: string | null; sortPreference?: SortPreference }): Promise<ProductSettings | null> => {
@@ -313,7 +317,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     setError('')
 
     try {
-      const response = await fetch('/api/product-settings', {
+      const response = await fetch(`/api/businesses/${businessId}/product-settings`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
@@ -334,7 +338,7 @@ export function useProductSettings(): UseProductSettingsReturn {
     } finally {
       setIsSavingSettings(false)
     }
-  }, [setSettings])
+  }, [businessId, setSettings])
 
   // Clear error
   const clearError = useCallback(() => setError(''), [])

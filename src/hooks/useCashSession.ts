@@ -66,10 +66,11 @@ export interface UseCashSessionReturn {
 }
 
 export interface UseCashSessionOptions {
+  businessId: string | null
   movements: CashMovement[]
 }
 
-export function useCashSession({ movements }: UseCashSessionOptions): UseCashSessionReturn {
+export function useCashSession({ businessId, movements }: UseCashSessionOptions): UseCashSessionReturn {
   const { user } = useAuth()
 
   // Initialize from cache if available
@@ -103,8 +104,9 @@ export function useCashSession({ movements }: UseCashSessionOptions): UseCashSes
     }
 
     // No cache - must fetch from server
+    if (!businessId) return null
     try {
-      const response = await fetchDeduped('/api/cash/sessions/current')
+      const response = await fetchDeduped(`/api/businesses/${businessId}/cash/sessions/current`)
       const data = await response.json()
 
       if (response.ok && data.success && data.session) {
@@ -120,13 +122,13 @@ export function useCashSession({ movements }: UseCashSessionOptions): UseCashSes
       console.error('Error loading current session:', err)
       return null
     }
-  }, [])
+  }, [businessId])
 
   // Load all sessions
-  // TODO: Implement with Drizzle API routes
   const loadSessions = useCallback(async (): Promise<void> => {
+    if (!businessId) return
     try {
-      const response = await fetchDeduped('/api/cash/sessions')
+      const response = await fetchDeduped(`/api/businesses/${businessId}/cash/sessions`)
       const data = await response.json()
 
       if (response.ok && data.success) {
@@ -135,20 +137,19 @@ export function useCashSession({ movements }: UseCashSessionOptions): UseCashSes
     } catch (err) {
       console.error('Error loading sessions:', err)
     }
-  }, [])
+  }, [businessId])
 
   // Open a new cash drawer session
-  // TODO: Implement with Drizzle API routes
   const openDrawer = useCallback(async (
     openingBalance: number,
     setMovements: (movements: CashMovement[]) => void,
     setShowOpenAnimation: (show: boolean) => void,
     closeModal: () => void
   ): Promise<void> => {
-    if (!user) return
+    if (!user || !businessId) return
 
     try {
-      const response = await fetch('/api/cash/sessions', {
+      const response = await fetch(`/api/businesses/${businessId}/cash/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ openingBalance }),
@@ -180,7 +181,7 @@ export function useCashSession({ movements }: UseCashSessionOptions): UseCashSes
       setError('Failed to open cash drawer')
       throw err
     }
-  }, [user, loadSessions])
+  }, [user, loadSessions, businessId])
 
   // Handle successful drawer close
   const handleCloseDrawerSuccess = useCallback(async (): Promise<void> => {

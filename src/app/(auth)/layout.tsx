@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 export default function AuthLayout({
   children,
 }: {
@@ -8,12 +10,22 @@ export default function AuthLayout({
       <div className="auth-card">
         {/* Logo */}
         <div className="auth-logo">
-          <h1 className="auth-logo-title">
-            <span className="text-brand">Kasero</span>
-          </h1>
-          <p className="auth-logo-subtitle">
-            Multi-Business Management
-          </p>
+          <Image
+            src="/kasero-logo-light.png"
+            alt="Kasero - Business Made Easy"
+            width={320}
+            height={107}
+            className="logo-light"
+            priority
+          />
+          <Image
+            src="/kasero-logo-dark.png"
+            alt="Kasero - Business Made Easy"
+            width={320}
+            height={107}
+            className="logo-dark"
+            priority
+          />
         </div>
 
         {children}
