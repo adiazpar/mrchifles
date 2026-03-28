@@ -2,10 +2,10 @@
 
 import { ChevronRight } from 'lucide-react'
 import { getRoleLabel, getUserInitials } from '@/lib/auth'
-import type { User } from '@/types'
+import type { TeamMember } from '@/hooks/useTeamManagement'
 
 export interface TeamMemberListItemProps {
-  member: User
+  member: TeamMember
   isSelf: boolean
   onClick: () => void
 }

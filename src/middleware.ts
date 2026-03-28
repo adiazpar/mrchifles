@@ -7,19 +7,24 @@ import { getTokenFromRequest, verifyToken } from '@/lib/simple-auth'
  *
  * Protects dashboard routes - redirects to login if not authenticated.
  * Public routes (login, register, etc.) are accessible without auth.
+ *
+ * Route patterns:
+ * - / - Hub page (authenticated, picks business)
+ * - /[businessId]/* - Business-scoped routes
+ * - /account - User-level settings
+ * - /join - Join business with invite code (authenticated)
+ * - /login, /register - Public auth routes
  */
 
 // Routes that don't require authentication
 const publicPaths = [
   '/login',
   '/register',
-  '/invite',
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/logout',
   '/api/auth/me', // Auth check endpoint - returns { user: null } if not authenticated
   '/api/setup-status',
-  '/api/invite/validate',
 ]
 
 // Check if path is public
@@ -34,6 +39,12 @@ function shouldSkip(pathname: string): boolean {
     pathname.startsWith('/api/') ||
     pathname.includes('.') // Static files (favicon.ico, etc.)
   )
+}
+
+// Validate businessId format (nanoid pattern - 21 chars alphanumeric with - and _)
+function isValidBusinessId(id: string): boolean {
+  // nanoid default: 21 chars, A-Za-z0-9_-
+  return /^[A-Za-z0-9_-]{21}$/.test(id)
 }
 
 export async function middleware(request: NextRequest) {
@@ -67,6 +78,22 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // For business-scoped routes, validate businessId format
+  // The actual access validation happens in BusinessContext
+  const segments = pathname.split('/').filter(Boolean)
+  if (segments.length > 0) {
+    const potentialBusinessId = segments[0]
+    // Check if this looks like a business route (not a known route like 'account', 'business')
+    const knownRoutes = ['account', 'business', 'login', 'register', 'join']
+    if (!knownRoutes.includes(potentialBusinessId)) {
+      // This might be a business ID route - validate format
+      if (!isValidBusinessId(potentialBusinessId)) {
+        // Invalid businessId format - redirect to hub
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+    }
   }
 
   // Token is valid - allow request

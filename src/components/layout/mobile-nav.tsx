@@ -1,29 +1,43 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { NAV_ITEMS, PREFETCH_ROUTES } from '@/lib/navigation'
+import { Plus, UserPlus } from 'lucide-react'
+import { getNavItems, getPrefetchRoutes } from '@/lib/navigation'
 import { useNavbar } from '@/contexts/navbar-context'
+import { useOptionalBusiness } from '@/contexts/business-context'
 
 export function MobileNav() {
   const pathname = usePathname()
   const router = useRouter()
   const { isVisible, pendingHref, setPendingHref } = useNavbar()
+  const businessContext = useOptionalBusiness()
+  const businessId = businessContext?.businessId ?? null
   const navRef = useRef<HTMLElement>(null)
+
+  // Determine if we're in hub context (no business provider)
+  const isHubContext = !businessContext
 
   // Local state to control the hidden class
   const [isHidden, setIsHidden] = useState(false)
 
+  // Get nav items for current business
+  const navItems = useMemo(() => {
+    if (!businessId) return []
+    return getNavItems(businessId)
+  }, [businessId])
+
   // Prefetch all routes on mount for instant navigation
   useEffect(() => {
-    NAV_ITEMS.forEach((item) => {
+    if (!businessId) return
+    navItems.forEach((item) => {
       router.prefetch(item.href)
     })
-    PREFETCH_ROUTES.forEach((route) => {
+    getPrefetchRoutes(businessId).forEach((route) => {
       router.prefetch(route)
     })
-  }, [router])
+  }, [router, businessId, navItems])
 
   useEffect(() => {
     if (!isVisible) {
@@ -42,12 +56,55 @@ export function MobileNav() {
     }
   }
 
+  const handleCreateBusiness = () => {
+    router.push('/business/new')
+  }
+
+  const handleJoinBusiness = () => {
+    router.push('/join')
+  }
+
+  // Hub context: render action buttons (primary/secondary style)
+  // Hide on /join page since it has its own actions
+  if (isHubContext) {
+    if (pathname === '/join') {
+      return null
+    }
+
+    return (
+      <nav
+        ref={navRef}
+        className={`mobile-nav mobile-nav--hub ${isHidden ? 'mobile-nav--hidden' : ''}`}
+      >
+        <button
+          type="button"
+          className="btn btn-primary flex-1"
+          onClick={handleCreateBusiness}
+        >
+          <Plus className="w-5 h-5" />
+          Create
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary flex-1"
+          onClick={handleJoinBusiness}
+        >
+          <UserPlus className="w-5 h-5" />
+          Join
+        </button>
+      </nav>
+    )
+  }
+
+  // Business context: render nav items
+  if (!businessId) return null
+
   return (
     <nav
       ref={navRef}
       className={`mobile-nav ${isHidden ? 'mobile-nav--hidden' : ''}`}
     >
-      {NAV_ITEMS.map((item) => {
+      {navItems.map((item) => {
         const isCurrentPath = pathname === item.href || pathname.startsWith(`${item.href}/`)
         const isPending = pendingHref === item.href
         // Only show current path as active if there's no pending navigation

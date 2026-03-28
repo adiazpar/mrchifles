@@ -62,9 +62,6 @@
   }
 }
 
-.modal-close:active {
-  transform: scale(0.95);
-}
 
 .modal-body {
   padding: var(--space-5);
@@ -111,9 +108,6 @@
   }
 }
 
-.modal-action-delete:active {
-  transform: scale(0.95);
-}
 
 /* Edit button in modal footer */
 .modal-action-edit {
@@ -135,9 +129,6 @@
   }
 }
 
-.modal-action-edit:active {
-  transform: scale(0.95);
-}
 
 /* Action buttons group (Cancel/Save) aligned to the right */
 .modal-actions {

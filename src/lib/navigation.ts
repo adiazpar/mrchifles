@@ -14,25 +14,38 @@ export interface NavItem {
 }
 
 /**
- * Bottom navigation items
+ * Navigation item templates (without businessId prefix)
  */
-export const NAV_ITEMS: NavItem[] = [
-  { href: '/home', label: 'Home', icon: Home },
-  { href: '/sales', label: 'Sales', icon: ShoppingCart },
-  { href: '/cash', label: 'Cash', icon: Banknote },
-  { href: '/products', label: 'Products', icon: Package },
-  { href: '/reports', label: 'Reports', icon: BarChart3 },
+const NAV_ITEM_TEMPLATES = [
+  { path: '/home', label: 'Home', icon: Home },
+  { path: '/sales', label: 'Sales', icon: ShoppingCart },
+  { path: '/cash', label: 'Cash', icon: Banknote },
+  { path: '/products', label: 'Products', icon: Package },
+  { path: '/reports', label: 'Reports', icon: BarChart3 },
 ]
 
 /**
- * Additional routes to prefetch for instant navigation
+ * Get navigation items with business-scoped URLs
  */
-export const PREFETCH_ROUTES: string[] = [
-  '/account',
-  '/team',
-  '/providers',
-  '/cash/history',
-]
+export function getNavItems(businessId: string): NavItem[] {
+  return NAV_ITEM_TEMPLATES.map(item => ({
+    href: `/${businessId}${item.path}`,
+    label: item.label,
+    icon: item.icon,
+  }))
+}
+
+/**
+ * Get prefetch routes for a business
+ */
+export function getPrefetchRoutes(businessId: string): string[] {
+  return [
+    '/account',
+    `/${businessId}/team`,
+    `/${businessId}/providers`,
+    `/${businessId}/cash/history`,
+  ]
+}
 
 /**
  * Route config for page headers
@@ -41,44 +54,74 @@ export const PREFETCH_ROUTES: string[] = [
  * In the multi-business architecture:
  * - Header title = Business name (from BusinessContext)
  * - Header subtitle = Page name (from this config)
- * - backTo = Parent route for nested pages (back button goes here instead of hub)
+ * - backTo = Parent route for nested pages (relative path, businessId added dynamically)
  */
 export interface RouteConfig {
   pageTitle: string // Displays as subtitle under business name
-  backTo?: string   // If set, back button goes here instead of hub
+  backTo?: string   // Relative path (e.g., '/cash'), businessId prefix added dynamically
 }
 
-export const ROUTE_CONFIG: Record<string, RouteConfig> = {
-  '/home': { pageTitle: 'Home' },
-  '/sales': { pageTitle: 'Sales' },
-  '/cash': { pageTitle: 'Cash Drawer' },
-  '/cash/history': { pageTitle: 'History', backTo: '/cash' },
-  '/products': { pageTitle: 'Products' },
-  '/reports': { pageTitle: 'Reports' },
+// Route configs keyed by the path segment after businessId
+const ROUTE_CONFIGS: Record<string, RouteConfig> = {
+  'home': { pageTitle: 'Home' },
+  'sales': { pageTitle: 'Sales' },
+  'cash': { pageTitle: 'Cash Drawer' },
+  'cash/history': { pageTitle: 'History', backTo: '/cash' },
+  'products': { pageTitle: 'Products' },
+  'reports': { pageTitle: 'Reports' },
+  'team': { pageTitle: 'Team' },
+  'providers': { pageTitle: 'Providers' },
+}
+
+// User-level routes (no businessId prefix)
+const USER_ROUTE_CONFIGS: Record<string, RouteConfig> = {
   '/account': { pageTitle: 'Account Settings' },
-  '/team': { pageTitle: 'Team' },
-  '/providers': { pageTitle: 'Providers' },
 }
 
 /**
  * Get route config for a pathname
- * Falls back to a default if route not found
+ * Handles both business-scoped routes (/{businessId}/...) and user-level routes (/account)
  */
-export function getRouteConfig(pathname: string): RouteConfig {
-  // Exact match first
-  if (ROUTE_CONFIG[pathname]) {
-    return ROUTE_CONFIG[pathname]
+export function getRouteConfig(pathname: string): RouteConfig & { businessId?: string } {
+  // Check user-level routes first
+  if (USER_ROUTE_CONFIGS[pathname]) {
+    return USER_ROUTE_CONFIGS[pathname]
+  }
+
+  // Parse business-scoped routes: /{businessId}/{rest}
+  const segments = pathname.split('/').filter(Boolean)
+  if (segments.length === 0) {
+    return { pageTitle: '' }
+  }
+
+  // First segment is businessId
+  const businessId = segments[0]
+  const routePath = segments.slice(1).join('/')
+
+  // Look up route config
+  const config = ROUTE_CONFIGS[routePath]
+  if (config) {
+    return { ...config, businessId }
   }
 
   // Try parent paths for nested routes
-  const segments = pathname.split('/').filter(Boolean)
-  while (segments.length > 0) {
-    segments.pop()
-    const parentPath = '/' + segments.join('/')
-    if (ROUTE_CONFIG[parentPath]) {
-      return ROUTE_CONFIG[parentPath]
+  const routeSegments = routePath.split('/')
+  while (routeSegments.length > 0) {
+    routeSegments.pop()
+    const parentPath = routeSegments.join('/')
+    if (ROUTE_CONFIGS[parentPath]) {
+      return { ...ROUTE_CONFIGS[parentPath], businessId }
     }
   }
 
-  return { pageTitle: '' }
+  return { pageTitle: '', businessId }
+}
+
+/**
+ * Build a full URL with businessId prefix
+ */
+export function buildBusinessUrl(businessId: string, path: string): string {
+  // Handle paths that already start with /
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  return `/${businessId}${cleanPath}`
 }

@@ -93,19 +93,9 @@ export function getInviteRoleLabel(role: InviteRole): string {
   return labels[role]
 }
 
-/**
- * Check if user has owner privileges
- */
-export function isOwner(user: User | null): boolean {
-  return user?.role === 'owner'
-}
-
-/**
- * Check if user has partner or owner privileges
- */
-export function isPartnerOrOwner(user: User | null): boolean {
-  return user?.role === 'owner' || user?.role === 'partner'
-}
+// NOTE: Role-based permission checks (isOwner, isPartnerOrOwner) have been moved
+// to src/lib/business-auth.ts since role is now per-business in business_users table.
+// Use isOwner(role: BusinessRole) and canManageBusiness(role: BusinessRole) instead.
 
 // ============================================
 // VALIDATION SCHEMAS (using Zod)

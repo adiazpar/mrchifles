@@ -5,9 +5,10 @@ import { Modal, useMorphingModal } from '@/components/ui'
 import { getRoleLabel, getUserInitials } from '@/lib/auth'
 import { formatDate } from '@/lib/utils'
 import type { User } from '@/types'
+import type { TeamMember } from '@/hooks/useTeamManagement'
 
 export interface UserDetailsStepProps {
-  member: User
+  member: TeamMember
   currentUser: User | null
   canManageTeam: boolean
   onToggleStatus: () => void
@@ -28,7 +29,7 @@ export function UserDetailsStep({
       <Modal.Item>
         {/* Member header */}
         <div className="flex items-center gap-3">
-          <div className="sidebar-user-avatar w-11 h-11 text-sm">
+          <div className="avatar w-11 h-11 text-sm">
             {getUserInitials(member.name)}
           </div>
           <div>
@@ -121,8 +122,8 @@ export function UserDetailsStep({
         <Modal.Item>
           <p className="text-xs text-text-tertiary text-center">
             To change your settings, go to{' '}
-            <Link href="/settings" className="text-brand hover:underline">
-              Settings
+            <Link href="/account" className="text-brand hover:underline">
+              Account Settings
             </Link>.
           </p>
         </Modal.Item>

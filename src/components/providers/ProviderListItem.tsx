@@ -30,7 +30,7 @@ export function ProviderListItem({ provider, onClick }: ProviderListItemProps) {
       tabIndex={0}
       role="button"
     >
-      <div className="sidebar-user-avatar">
+      <div className="avatar">
         {getProviderInitials(provider.name)}
       </div>
       <div className="flex-1 min-w-0">

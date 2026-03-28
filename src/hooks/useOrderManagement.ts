@@ -15,6 +15,7 @@ import { formatDate } from '@/lib/utils'
 export type OrderStatusFilter = 'all' | 'pending' | 'received'
 
 export interface UseOrderManagementOptions {
+  businessId: string
   products: Product[]
   providers: Provider[]
   onOrdersUpdated?: (orders: ExpandedOrder[]) => void
@@ -96,6 +97,7 @@ export interface UseOrderManagementReturn {
 // ============================================
 
 export function useOrderManagement({
+  businessId,
   products,
   providers: _providers,
   onOrdersUpdated,
@@ -291,7 +293,7 @@ export function useOrderManagement({
         quantity: item.quantity,
       }))))
 
-      const response = await fetch('/api/orders', {
+      const response = await fetch(`/api/businesses/${businessId}/orders`, {
         method: 'POST',
         body: formData,
       })
@@ -304,7 +306,7 @@ export function useOrderManagement({
       }
 
       // Reload orders
-      const ordersResponse = await fetch('/api/orders')
+      const ordersResponse = await fetch(`/api/businesses/${businessId}/orders`)
       const ordersData = await ordersResponse.json()
 
       if (ordersResponse.ok && ordersData.success) {
@@ -320,7 +322,7 @@ export function useOrderManagement({
     } finally {
       setIsSavingOrder(false)
     }
-  }, [orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, updateOrders])
+  }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, updateOrders])
 
   // Save edit order
   // TODO: Implement with Drizzle API routes
@@ -357,7 +359,7 @@ export function useOrderManagement({
         quantity: item.quantity,
       }))))
 
-      const response = await fetch(`/api/orders/${editingOrder.id}`, {
+      const response = await fetch(`/api/businesses/${businessId}/orders/${editingOrder.id}`, {
         method: 'PATCH',
         body: formData,
       })
@@ -370,7 +372,7 @@ export function useOrderManagement({
       }
 
       // Reload orders
-      const ordersResponse = await fetch('/api/orders')
+      const ordersResponse = await fetch(`/api/businesses/${businessId}/orders`)
       const ordersData = await ordersResponse.json()
 
       if (ordersResponse.ok && ordersData.success) {
@@ -386,7 +388,7 @@ export function useOrderManagement({
     } finally {
       setIsSavingOrder(false)
     }
-  }, [orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, editingOrder, updateOrders])
+  }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, editingOrder, updateOrders])
 
   // Receive order
   // TODO: Implement with Drizzle API routes
@@ -397,7 +399,7 @@ export function useOrderManagement({
     setError('')
 
     try {
-      const response = await fetch(`/api/orders/${viewingOrder.id}/receive`, {
+      const response = await fetch(`/api/businesses/${businessId}/orders/${viewingOrder.id}/receive`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ receivedQuantities }),
@@ -412,8 +414,8 @@ export function useOrderManagement({
 
       // Reload products and orders
       const [productsRes, ordersRes] = await Promise.all([
-        fetch('/api/products'),
-        fetch('/api/orders'),
+        fetch(`/api/businesses/${businessId}/products`),
+        fetch(`/api/businesses/${businessId}/orders`),
       ])
 
       const [productsData, ordersData] = await Promise.all([
@@ -437,7 +439,7 @@ export function useOrderManagement({
     } finally {
       setIsReceiving(false)
     }
-  }, [viewingOrder, user, receivedQuantities, onProductsUpdated, updateOrders])
+  }, [businessId, viewingOrder, user, receivedQuantities, onProductsUpdated, updateOrders])
 
   // Delete order
   // TODO: Implement with Drizzle API routes
@@ -448,7 +450,7 @@ export function useOrderManagement({
     setError('')
 
     try {
-      const response = await fetch(`/api/orders/${viewingOrder.id}`, {
+      const response = await fetch(`/api/businesses/${businessId}/orders/${viewingOrder.id}`, {
         method: 'DELETE',
       })
 
@@ -470,7 +472,7 @@ export function useOrderManagement({
     } finally {
       setIsDeletingOrder(false)
     }
-  }, [viewingOrder, orders, onOrdersUpdated])
+  }, [businessId, viewingOrder, orders, onOrdersUpdated])
 
   return {
     orderItems,

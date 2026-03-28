@@ -20,6 +20,7 @@ export interface ProductFormState {
 }
 
 export interface UseProductCrudOptions {
+  businessId: string
   onProductSaved?: (product: Product) => void
   onProductDeleted?: (productId: string) => void
   defaultCategoryId?: string | null
@@ -79,10 +80,11 @@ export interface UseProductCrudReturn {
 // ============================================
 
 export function useProductCrud({
+  businessId,
   onProductSaved,
   onProductDeleted,
   defaultCategoryId,
-}: UseProductCrudOptions = {}): UseProductCrudReturn {
+}: UseProductCrudOptions): UseProductCrudReturn {
   // Form state
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
@@ -267,8 +269,8 @@ export function useProductCrud({
       }
 
       const url = editingProduct
-        ? `/api/products/${editingProduct.id}`
-        : '/api/products'
+        ? `/api/businesses/${businessId}/products/${editingProduct.id}`
+        : `/api/businesses/${businessId}/products`
       const method = editingProduct ? 'PATCH' : 'POST'
 
       const response = await fetch(url, {
@@ -293,7 +295,7 @@ export function useProductCrud({
     } finally {
       setIsSaving(false)
     }
-  }, [name, price, categoryId, active, generatedIconBlob, editingProduct, onProductSaved])
+  }, [businessId, name, price, categoryId, active, generatedIconBlob, editingProduct, onProductSaved])
 
   // Save stock adjustment
   // TODO: Implement with Drizzle API routes
@@ -307,7 +309,7 @@ export function useProductCrud({
     setError('')
 
     try {
-      const response = await fetch(`/api/products/${editingProduct.id}/stock`, {
+      const response = await fetch(`/api/businesses/${businessId}/products/${editingProduct.id}/stock`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stock: newStockValue }),
@@ -327,7 +329,7 @@ export function useProductCrud({
     } finally {
       setIsAdjusting(false)
     }
-  }, [editingProduct, newStockValue, onProductSaved])
+  }, [businessId, editingProduct, newStockValue, onProductSaved])
 
   // Delete product
   // TODO: Implement with Drizzle API routes
@@ -338,7 +340,7 @@ export function useProductCrud({
     setError('')
 
     try {
-      const response = await fetch(`/api/products/${editingProduct.id}`, {
+      const response = await fetch(`/api/businesses/${businessId}/products/${editingProduct.id}`, {
         method: 'DELETE',
       })
 
@@ -359,7 +361,7 @@ export function useProductCrud({
     } finally {
       setIsDeleting(false)
     }
-  }, [editingProduct, onProductDeleted])
+  }, [businessId, editingProduct, onProductDeleted])
 
   return {
     formState: {

@@ -1,46 +1,61 @@
 import { NextResponse } from 'next/server'
-import { db, ownershipTransfers, users } from '@/db'
-import { eq, and, or } from 'drizzle-orm'
+import { db, ownershipTransfers, users, businesses } from '@/db'
+import { eq, and, gt, inArray } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/simple-auth'
 
 /**
  * GET /api/transfer/incoming
  *
- * Get any incoming ownership transfer for the current user (for non-owners).
- * Looks for transfers where toEmail matches the user's email.
+ * Fetches any pending or accepted incoming ownership transfer for the current user.
+ * User-level endpoint for displaying transfer notifications.
+ *
+ * Returns the transfer with sender info if one exists.
  */
 export async function GET() {
   try {
-    const session = await getCurrentUser()
-    if (!session) {
+    // Require authentication
+    const user = await getCurrentUser()
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get current user's email
-    const [currentUser] = await db
-      .select()
+    const currentUserData = await db
+      .select({ email: users.email })
       .from(users)
-      .where(eq(users.id, session.userId))
-      .limit(1)
+      .where(eq(users.id, user.userId))
+      .get()
 
-    if (!currentUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!currentUserData) {
+      return NextResponse.json({
+        success: true,
+        transfer: null,
+      })
     }
 
-    // Find pending or accepted transfer to this user's email
-    const [transfer] = await db
-      .select()
+    const now = new Date()
+
+    // Find incoming transfer for this user's email
+    const transfer = await db
+      .select({
+        id: ownershipTransfers.id,
+        code: ownershipTransfers.code,
+        status: ownershipTransfers.status,
+        expiresAt: ownershipTransfers.expiresAt,
+        businessId: ownershipTransfers.businessId,
+        businessName: businesses.name,
+        fromUserId: ownershipTransfers.fromUser,
+      })
       .from(ownershipTransfers)
+      .innerJoin(businesses, eq(ownershipTransfers.businessId, businesses.id))
       .where(
         and(
-          eq(ownershipTransfers.toEmail, currentUser.email),
-          or(
-            eq(ownershipTransfers.status, 'pending'),
-            eq(ownershipTransfers.status, 'accepted')
-          )
+          eq(ownershipTransfers.toEmail, currentUserData.email.toLowerCase()),
+          inArray(ownershipTransfers.status, ['pending', 'accepted']),
+          gt(ownershipTransfers.expiresAt, now)
         )
       )
-      .limit(1)
+      .get()
 
     if (!transfer) {
       return NextResponse.json({
@@ -49,51 +64,32 @@ export async function GET() {
       })
     }
 
-    // Check if expired
-    if (transfer.status === 'pending' && new Date(transfer.expiresAt) < new Date()) {
-      // Mark as expired
-      await db
-        .update(ownershipTransfers)
-        .set({
-          status: 'expired',
-          updatedAt: new Date(),
-        })
-        .where(eq(ownershipTransfers.id, transfer.id))
-
-      return NextResponse.json({
-        success: true,
-        transfer: null,
-      })
-    }
-
-    // Get sender info
-    let fromUser = null
-    const [sender] = await db
-      .select({
-        id: users.id,
-        name: users.name,
-      })
+    // Get the from user's name
+    const fromUser = await db
+      .select({ id: users.id, name: users.name })
       .from(users)
-      .where(eq(users.id, transfer.fromUser))
-      .limit(1)
-
-    fromUser = sender || null
+      .where(eq(users.id, transfer.fromUserId))
+      .get()
 
     return NextResponse.json({
       success: true,
       transfer: {
         code: transfer.code,
-        fromUser,
         status: transfer.status,
-        expiresAt: transfer.expiresAt instanceof Date
-          ? transfer.expiresAt.toISOString()
-          : transfer.expiresAt,
+        expiresAt: transfer.expiresAt.toISOString(),
+        business: {
+          id: transfer.businessId,
+          name: transfer.businessName,
+        },
+        fromUser: fromUser
+          ? { id: fromUser.id, name: fromUser.name }
+          : null,
       },
     })
   } catch (error) {
-    console.error('Get incoming transfer error:', error)
+    console.error('Fetch incoming transfer error:', error)
     return NextResponse.json(
-      { error: 'Failed to get transfer' },
+      { success: false, error: 'Failed to fetch incoming transfer' },
       { status: 500 }
     )
   }

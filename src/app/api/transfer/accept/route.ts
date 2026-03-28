@@ -1,23 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db, ownershipTransfers, users } from '@/db'
-import { eq } from 'drizzle-orm'
+import { eq, and, gt, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
 
 const acceptSchema = z.object({
-  code: z.string().min(1, 'Code is required'),
+  code: z.string().min(1, 'Code is required').toUpperCase(),
 })
 
 /**
  * POST /api/transfer/accept
  *
- * Accept an incoming ownership transfer.
- * The recipient must be logged in and their email must match the transfer's toEmail.
+ * Accepts an ownership transfer by code.
+ * User-level endpoint (not business-scoped) because the recipient
+ * may not yet have access to the business.
+ *
+ * - Validates the transfer code
+ * - Verifies recipient email matches current user
+ * - Updates transfer status to 'accepted'
+ * - Links the transfer to the current user
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getCurrentUser()
-    if (!session) {
+    // Require authentication
+    const user = await getCurrentUser()
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -26,89 +33,84 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return NextResponse.json(
-        { error: validation.error.errors[0].message },
+        { success: false, error: validation.error.errors[0].message },
         { status: 400 }
       )
     }
 
     const { code } = validation.data
+    const now = new Date()
 
-    // Get current user's email
-    const [currentUser] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, session.userId))
-      .limit(1)
-
-    if (!currentUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Find the transfer by code
-    const [transfer] = await db
-      .select()
+    // Find the transfer
+    const transfer = await db
+      .select({
+        id: ownershipTransfers.id,
+        code: ownershipTransfers.code,
+        status: ownershipTransfers.status,
+        toEmail: ownershipTransfers.toEmail,
+        expiresAt: ownershipTransfers.expiresAt,
+        businessId: ownershipTransfers.businessId,
+      })
       .from(ownershipTransfers)
-      .where(eq(ownershipTransfers.code, code))
-      .limit(1)
+      .where(
+        and(
+          eq(ownershipTransfers.code, code),
+          inArray(ownershipTransfers.status, ['pending']),
+          gt(ownershipTransfers.expiresAt, now)
+        )
+      )
+      .get()
 
     if (!transfer) {
-      return NextResponse.json(
-        { error: 'Transfer not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid, expired, or already accepted transfer code',
+      })
     }
 
-    // Verify the email matches
-    if (transfer.toEmail.toLowerCase() !== currentUser.email.toLowerCase()) {
-      return NextResponse.json(
-        { error: 'This transfer is not for you' },
-        { status: 403 }
-      )
+    // Get current user's email
+    const currentUserData = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, user.userId))
+      .get()
+
+    if (!currentUserData) {
+      return NextResponse.json({
+        success: false,
+        error: 'User not found',
+      })
     }
 
-    // Check if still pending
-    if (transfer.status !== 'pending') {
-      return NextResponse.json(
-        { error: 'This transfer is no longer available' },
-        { status: 400 }
-      )
+    // Verify email matches
+    const isRecipient = currentUserData.email.toLowerCase() === transfer.toEmail.toLowerCase()
+
+    if (!isRecipient) {
+      return NextResponse.json({
+        success: false,
+        error: 'This transfer is for a different email address',
+      })
     }
-
-    // Check if expired
-    if (new Date(transfer.expiresAt) < new Date()) {
-      // Mark as expired
-      await db
-        .update(ownershipTransfers)
-        .set({
-          status: 'expired',
-          updatedAt: new Date(),
-        })
-        .where(eq(ownershipTransfers.id, transfer.id))
-
-      return NextResponse.json(
-        { error: 'This transfer has expired' },
-        { status: 400 }
-      )
-    }
-
-    const now = new Date()
 
     // Update transfer to accepted
     await db
       .update(ownershipTransfers)
       .set({
         status: 'accepted',
-        toUser: session.userId,
+        toUser: user.userId,
         acceptedAt: now,
         updatedAt: now,
       })
       .where(eq(ownershipTransfers.id, transfer.id))
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({
+      success: true,
+      businessId: transfer.businessId,
+    })
   } catch (error) {
-    console.error('Transfer accept error:', error)
+    console.error('Accept transfer error:', error)
     return NextResponse.json(
-      { error: 'Failed to accept transfer' },
+      { success: false, error: 'Failed to accept transfer' },
       { status: 500 }
     )
   }

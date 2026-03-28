@@ -53,7 +53,7 @@ export function OrdersTab({
   isModalOpen,
 }: OrdersTabProps) {
   const scrollToTop = () => {
-    const scrollContainer = document.querySelector('.with-sidebar')
+    const scrollContainer = document.querySelector('.main-scroll-container')
     if (scrollContainer) {
       scrollContainer.scrollTo({ top: 0, behavior: 'smooth' })
     }

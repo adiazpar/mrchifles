@@ -1,34 +1,42 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronDown } from 'lucide-react'
-import { getRouteConfig } from '@/lib/navigation'
+import { getRouteConfig, buildBusinessUrl } from '@/lib/navigation'
 import { UserMenu } from './user-menu'
 import { useNavbar } from '@/contexts/navbar-context'
+import { useOptionalBusiness } from '@/contexts/business-context'
 
 /**
- * Page header with business context and optimistic title updates.
+ * Page header that works in both hub and business contexts.
  *
- * Structure:
+ * Hub context (no BusinessProvider):
+ * - Left: Empty spacer
+ * - Center: App name "Kasero"
+ * - Right: User avatar menu
+ *
+ * Business context:
  * - Left: Back button (to hub for top-level pages, to parent for nested pages)
  * - Center: Business name (tappable switcher) + Page name as subtitle
  * - Right: User avatar menu
- *
- * Uses pendingHref from context to show the target page title immediately on navigation.
  */
 export function PageHeader() {
   const pathname = usePathname()
   const router = useRouter()
   const { pendingHref } = useNavbar()
+  const businessContext = useOptionalBusiness()
   const [isScrolled, setIsScrolled] = useState(false)
 
-  // TODO: Get from BusinessContext once implemented
-  const businessName = 'My Business'
+  // Determine if we're in hub context (no business provider)
+  const isHubContext = !businessContext
+  const business = businessContext?.business ?? null
+  const businessId = businessContext?.businessId ?? null
 
   // Track scroll position to show shadow
   useEffect(() => {
-    const scrollContainer = document.querySelector('.with-sidebar')
+    const scrollContainer = document.querySelector('.main-scroll-container')
     if (!scrollContainer) return
 
     const handleScroll = () => {
@@ -48,57 +56,79 @@ export function PageHeader() {
   const { pageTitle, backTo } = config
 
   // Determine back button behavior:
-  // - If backTo is set (nested page), go to parent route
+  // - If backTo is set (nested page), go to parent route within business
   // - Otherwise (top-level business page), go to hub
   const handleBack = () => {
-    if (backTo) {
-      router.push(backTo)
+    if (backTo && businessId) {
+      // Build business-scoped URL for parent page
+      router.push(buildBusinessUrl(businessId, backTo))
     } else {
-      // TODO: Navigate to hub once implemented
-      // For now, this will be the hub route
+      // Go to hub (business selector)
       router.push('/')
     }
   }
 
-  // TODO: Open business switcher dropdown/drawer
+  // Navigate to hub to switch business
   const handleBusinessClick = () => {
-    // Will be implemented with BusinessSwitcher component
-    console.log('Business switcher clicked')
+    router.push('/')
   }
 
   return (
     <header className={`page-header page-header--fixed ${isScrolled ? 'page-header--scrolled' : ''}`}>
-      {/* Left column - back button (always visible in business context) */}
+      {/* Left column */}
       <div className="page-header__content">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="page-header__back"
-          aria-label={backTo ? 'Go back' : 'Go to hub'}
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
+        {!isHubContext && (
+          <button
+            type="button"
+            onClick={handleBack}
+            className="page-header__back"
+            aria-label={backTo ? 'Go back' : 'Go to hub'}
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
-      {/* Center column - business name (tappable) + page name */}
+      {/* Center column */}
       <div className="page-header__titles">
-        <button
-          type="button"
-          onClick={handleBusinessClick}
-          className="page-header__business-btn"
-          aria-label="Switch business"
-        >
-          <h1 className="page-title">{businessName}</h1>
-          <ChevronDown className="page-header__business-chevron" />
-        </button>
-        {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
+        {isHubContext ? (
+          <div className="page-header__logo">
+            <Image
+              src="/kasero-logo-light.png"
+              alt="Kasero"
+              width={160}
+              height={56}
+              className="logo-light"
+              priority
+            />
+            <Image
+              src="/kasero-logo-dark.png"
+              alt="Kasero"
+              width={160}
+              height={56}
+              className="logo-dark"
+              priority
+            />
+          </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={handleBusinessClick}
+              className="page-header__business-btn"
+              aria-label="Switch business"
+            >
+              <h1 className="page-title">{business?.name || 'Loading...'}</h1>
+              <ChevronDown className="page-header__business-chevron" />
+            </button>
+            {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
+          </>
+        )}
       </div>
 
       {/* Right column - user menu */}
       <div className="page-header__actions">
-        <div className="lg:hidden">
-          <UserMenu variant="mobile" />
-        </div>
+        <UserMenu />
       </div>
     </header>
   )

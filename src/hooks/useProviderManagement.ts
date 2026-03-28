@@ -2,9 +2,14 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/contexts/auth-context'
-import { isPartnerOrOwner } from '@/lib/auth'
+import { useBusiness } from '@/contexts/business-context'
+import { canManageBusiness } from '@/lib/business-role'
 import { fetchDeduped } from '@/lib/fetch'
 import type { Provider } from '@/types'
+
+export interface UseProviderManagementOptions {
+  businessId: string
+}
 
 export interface UseProviderManagementReturn {
   // Data
@@ -45,8 +50,9 @@ export interface UseProviderManagementReturn {
   setError: (error: string) => void
 }
 
-export function useProviderManagement(): UseProviderManagementReturn {
+export function useProviderManagement({ businessId }: UseProviderManagementOptions): UseProviderManagementReturn {
   const { user } = useAuth()
+  const { role } = useBusiness()
 
   // Data state
   const [providers, setProviders] = useState<Provider[]>([])
@@ -69,7 +75,7 @@ export function useProviderManagement(): UseProviderManagementReturn {
   const [active, setActive] = useState(true)
 
   // Check if current user can manage providers
-  const canManage = isPartnerOrOwner(user)
+  const canManage = canManageBusiness(role)
 
   // Load providers
   // TODO: Implement with Drizzle API routes
@@ -78,7 +84,7 @@ export function useProviderManagement(): UseProviderManagementReturn {
 
     async function loadData() {
       try {
-        const response = await fetchDeduped('/api/providers')
+        const response = await fetchDeduped(`/api/businesses/${businessId}/providers`)
         const data = await response.json()
 
         if (cancelled) return
@@ -104,7 +110,7 @@ export function useProviderManagement(): UseProviderManagementReturn {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [businessId])
 
   // Sort providers: active first, then by name
   const sortedProviders = useMemo(() => {
@@ -171,8 +177,8 @@ export function useProviderManagement(): UseProviderManagementReturn {
       }
 
       const url = editingProvider
-        ? `/api/providers/${editingProvider.id}`
-        : '/api/providers'
+        ? `/api/businesses/${businessId}/providers/${editingProvider.id}`
+        : `/api/businesses/${businessId}/providers`
       const method = editingProvider ? 'PATCH' : 'POST'
 
       const response = await fetch(url, {
@@ -189,7 +195,7 @@ export function useProviderManagement(): UseProviderManagementReturn {
       }
 
       // Reload providers
-      const listResponse = await fetch('/api/providers')
+      const listResponse = await fetch(`/api/businesses/${businessId}/providers`)
       const listData = await listResponse.json()
 
       if (listResponse.ok && listData.success) {
@@ -205,7 +211,7 @@ export function useProviderManagement(): UseProviderManagementReturn {
     } finally {
       setIsSaving(false)
     }
-  }, [name, phone, email, notes, active, editingProvider])
+  }, [businessId, name, phone, email, notes, active, editingProvider])
 
   // TODO: Implement with Drizzle API routes
   const handleDelete = useCallback(async (): Promise<boolean> => {
@@ -215,7 +221,7 @@ export function useProviderManagement(): UseProviderManagementReturn {
     setError('')
 
     try {
-      const response = await fetch(`/api/providers/${editingProvider.id}`, {
+      const response = await fetch(`/api/businesses/${businessId}/providers/${editingProvider.id}`, {
         method: 'DELETE',
       })
 
@@ -227,7 +233,7 @@ export function useProviderManagement(): UseProviderManagementReturn {
       }
 
       // Reload providers
-      const listResponse = await fetch('/api/providers')
+      const listResponse = await fetch(`/api/businesses/${businessId}/providers`)
       const listData = await listResponse.json()
 
       if (listResponse.ok && listData.success) {

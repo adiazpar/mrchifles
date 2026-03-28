@@ -3,18 +3,28 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import QRCode from 'qrcode'
 import { useAuth } from '@/contexts/auth-context'
+import { useBusiness } from '@/contexts/business-context'
 import { fetchDeduped } from '@/lib/fetch'
 import {
   generateInviteCode,
   getInviteCodeExpiration,
-  isOwner,
 } from '@/lib/auth'
-import type { User, InviteCode, InviteRole } from '@/types'
+import { isOwner } from '@/lib/business-role'
+import type { User, InviteCode, InviteRole, UserRole } from '@/types'
+
+// Team member includes role from business_users table
+export interface TeamMember extends User {
+  role: UserRole
+}
+
+export interface UseTeamManagementOptions {
+  businessId: string
+}
 
 export interface UseTeamManagementReturn {
   // Data
-  teamMembers: User[]
-  sortedTeamMembers: User[]
+  teamMembers: TeamMember[]
+  sortedTeamMembers: TeamMember[]
   inviteCodes: InviteCode[]
   isLoading: boolean
   error: string
@@ -47,24 +57,25 @@ export interface UseTeamManagementReturn {
   handleModalExitComplete: () => void
 
   // User management state
-  selectedMember: User | null
+  selectedMember: TeamMember | null
   isUserModalOpen: boolean
   newRole: 'partner' | 'employee'
   setNewRole: (role: 'partner' | 'employee') => void
   roleChangeLoading: boolean
 
   // User management actions
-  handleOpenUserModal: (member: User) => void
+  handleOpenUserModal: (member: TeamMember) => void
   handleCloseUserModal: () => void
   handleUserModalExitComplete: () => void
   handleToggleUserStatus: () => Promise<void>
   handleSubmitRoleChange: () => Promise<boolean>
 }
 
-export function useTeamManagement(): UseTeamManagementReturn {
+export function useTeamManagement({ businessId }: UseTeamManagementOptions): UseTeamManagementReturn {
   const { user } = useAuth()
+  const { role } = useBusiness()
 
-  const [teamMembers, setTeamMembers] = useState<User[]>([])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -82,7 +93,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
   const [codeDeleted, setCodeDeleted] = useState(false)
 
   // User management modal state
-  const [selectedMember, setSelectedMember] = useState<User | null>(null)
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null)
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
 
   // Role change state
@@ -90,13 +101,13 @@ export function useTeamManagement(): UseTeamManagementReturn {
   const [roleChangeLoading, setRoleChangeLoading] = useState(false)
 
   // Check if current user is owner
-  const canManageTeam = isOwner(user)
+  const canManageTeam = isOwner(role)
 
   // Load team members and invite codes
   useEffect(() => {
     const loadTeamData = async () => {
       try {
-        const response = await fetchDeduped('/api/team')
+        const response = await fetchDeduped(`/api/businesses/${businessId}/team`)
         if (!response.ok) {
           throw new Error('Failed to load team data')
         }
@@ -112,7 +123,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
     }
 
     loadTeamData()
-  }, [])
+  }, [businessId])
 
   // Sort team members: owner first, then partners, then employees
   const sortedTeamMembers = useMemo(() => {
@@ -139,8 +150,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
       const code = generateInviteCode()
       const expiresAt = getInviteCodeExpiration()
 
-      // TODO: Call /api/invite/create with Drizzle
-      const response = await fetch('/api/invite/create', {
+      const response = await fetch(`/api/businesses/${businessId}/invite/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -187,7 +197,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
     } finally {
       setIsGenerating(false)
     }
-  }, [user, selectedRole])
+  }, [user, selectedRole, businessId])
 
   const handleCopyCode = useCallback(async (code: string) => {
     try {
@@ -230,8 +240,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
       const code = generateInviteCode()
       const expiresAt = getInviteCodeExpiration()
 
-      // TODO: Call /api/invite/regenerate with Drizzle
-      const response = await fetch('/api/invite/regenerate', {
+      const response = await fetch(`/api/businesses/${businessId}/invite/regenerate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -280,7 +289,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
     } finally {
       setIsGenerating(false)
     }
-  }, [user, generatedCodeId, selectedRole])
+  }, [user, generatedCodeId, selectedRole, businessId])
 
   const handleDeleteCode = useCallback(async (): Promise<boolean> => {
     if (!generatedCodeId) return false
@@ -288,8 +297,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
     setIsDeletingCode(true)
 
     try {
-      // TODO: Call /api/invite/delete with Drizzle
-      const response = await fetch('/api/invite/delete', {
+      const response = await fetch(`/api/businesses/${businessId}/invite/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: generatedCodeId }),
@@ -310,7 +318,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
     } finally {
       setIsDeletingCode(false)
     }
-  }, [generatedCodeId])
+  }, [generatedCodeId, businessId])
 
   const handleOpenModal = useCallback(() => {
     // Close user modal if open (mutual exclusivity)
@@ -370,7 +378,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
   }, [])
 
   // User management modal handlers
-  const handleOpenUserModal = useCallback((member: User) => {
+  const handleOpenUserModal = useCallback((member: TeamMember) => {
     // Close add member modal if open (mutual exclusivity)
     setIsModalOpen(false)
     // Open user modal
@@ -394,8 +402,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
     if (!selectedMember) return
     const newStatus = selectedMember.status === 'active' ? 'disabled' : 'active'
     try {
-      // TODO: Call /api/users/toggle-status with Drizzle
-      const response = await fetch('/api/users/toggle-status', {
+      const response = await fetch(`/api/businesses/${businessId}/users/toggle-status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: selectedMember.id, status: newStatus }),
@@ -408,7 +415,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
         return
       }
 
-      const updatedMember = { ...selectedMember, status: newStatus as User['status'] }
+      const updatedMember = { ...selectedMember, status: newStatus as TeamMember['status'] }
       setSelectedMember(updatedMember)
       setTeamMembers(prev =>
         prev.map(m => m.id === selectedMember.id ? updatedMember : m)
@@ -416,7 +423,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
     } catch (err) {
       console.error('Error updating user status:', err)
     }
-  }, [selectedMember])
+  }, [selectedMember, businessId])
 
   const handleSubmitRoleChange = useCallback(async (): Promise<boolean> => {
     if (!selectedMember) return false
@@ -424,8 +431,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
     setRoleChangeLoading(true)
 
     try {
-      // TODO: Call /api/users/change-role with Drizzle
-      const response = await fetch('/api/users/change-role', {
+      const response = await fetch(`/api/businesses/${businessId}/users/change-role`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: selectedMember.id, role: newRole }),
@@ -452,7 +458,7 @@ export function useTeamManagement(): UseTeamManagementReturn {
     } finally {
       setRoleChangeLoading(false)
     }
-  }, [selectedMember, newRole])
+  }, [selectedMember, newRole, businessId])
 
   return {
     // Data
