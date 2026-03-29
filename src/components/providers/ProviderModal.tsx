@@ -1,7 +1,7 @@
 'use client'
 
 import { Trash2 } from 'lucide-react'
-import { Spinner, Modal, useMorphingModal, ConfirmationAnimation } from '@/components/ui'
+import { Spinner, Modal, useMorphingModal, ConfirmationAnimation, DeleteConfirmationStep } from '@/components/ui'
 import type { Provider } from '@/types'
 
 // ============================================
@@ -36,32 +36,6 @@ function SaveProviderButton({ onSubmit, isSaving, disabled }: SaveProviderButton
   )
 }
 
-interface ConfirmDeleteButtonProps {
-  onDelete: () => Promise<boolean>
-  isDeleting: boolean
-}
-
-function ConfirmDeleteButton({ onDelete, isDeleting }: ConfirmDeleteButtonProps) {
-  const { goToStep } = useMorphingModal()
-
-  const handleClick = async () => {
-    const success = await onDelete()
-    if (success) {
-      goToStep(3) // Go to delete success step
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="btn btn-danger flex-1"
-      disabled={isDeleting}
-    >
-      {isDeleting ? <Spinner /> : 'Delete'}
-    </button>
-  )
-}
 
 // ============================================
 // PROPS INTERFACE
@@ -234,20 +208,14 @@ export function ProviderModal({
       </Modal.Step>
 
       {/* Step 1: Delete confirmation */}
-      <Modal.Step title="Delete provider" backStep={0}>
-        <Modal.Item>
-          <p className="text-text-secondary">
-            Are you sure you want to delete <strong>{editingProvider?.name}</strong>? This action cannot be undone.
-          </p>
-        </Modal.Item>
-
-        <Modal.Footer>
-          <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
-            Cancel
-          </Modal.GoToStepButton>
-          <ConfirmDeleteButton onDelete={onDelete} isDeleting={isDeleting} />
-        </Modal.Footer>
-      </Modal.Step>
+      <DeleteConfirmationStep
+        title="Delete provider"
+        itemName={editingProvider?.name || ''}
+        cancelStep={0}
+        onConfirm={onDelete}
+        successStep={3}
+        isDeleting={isDeleting}
+      />
 
       {/* Step 2: Save success */}
       <Modal.Step title={editingProvider ? 'Provider updated' : 'Provider added'} hideBackButton>
