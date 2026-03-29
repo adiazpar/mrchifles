@@ -182,16 +182,18 @@ export async function POST(
       updatedAt: now,
     })
 
-    // Create order items
-    for (const item of items) {
-      await db.insert(orderItems).values({
-        id: nanoid(),
-        orderId,
-        productId: item.productId,
-        productName: item.productName,
-        quantity: item.quantity,
-        createdAt: now,
-      })
+    // Create order items in a single batch insert
+    if (items.length > 0) {
+      await db.insert(orderItems).values(
+        items.map(item => ({
+          id: nanoid(),
+          orderId,
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          createdAt: now,
+        }))
+      )
     }
 
     return NextResponse.json({
