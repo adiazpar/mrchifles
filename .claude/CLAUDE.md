@@ -51,25 +51,44 @@ A **multi-business management system** for small businesses. Built for speed, si
 ```
 src/
 ├── app/                   # Next.js App Router
-│   ├── (auth)/           # Login, registration, invite flows
-│   ├── (dashboard)/      # Main app routes (protected)
+│   ├── (auth)/           # Public auth routes
+│   │   ├── login/        # Login page
+│   │   └── register/     # Registration page
+│   ├── (hub)/            # Business hub (authenticated, no business context)
+│   │   ├── page.tsx      # Hub home - list/select businesses
+│   │   ├── account/      # User account settings
+│   │   └── join/         # Join business with invite code
+│   ├── [businessId]/     # Business context routes (protected)
 │   │   ├── home/         # Dashboard home
 │   │   ├── sales/        # Sales register
 │   │   ├── products/     # Product catalog
+│   │   ├── providers/    # Supplier management
+│   │   ├── team/         # Team management
 │   │   ├── cash/         # Cash drawer
-│   │   ├── reports/      # Reports
-│   │   └── settings/     # Settings (team, providers)
+│   │   │   └── history/  # Cash session history
+│   │   └── reports/      # Reports
 │   └── api/              # API routes
+│       ├── auth/         # Authentication endpoints
+│       ├── businesses/   # Multi-business API
+│       │   ├── list/     # List user's businesses
+│       │   ├── create/   # Create new business
+│       │   └── [businessId]/  # Business-scoped endpoints
+│       ├── invite/       # Invite code validation/joining
+│       ├── transfer/     # Ownership transfer (incoming)
+│       └── ai/           # AI features (icons, product ID)
 ├── components/
-│   ├── ui/               # Base UI components
-│   ├── auth/             # Auth components (AuthGuard)
-│   ├── layout/           # Layout components
+│   ├── ui/               # Base UI components (Modal, Input, etc.)
+│   ├── auth/             # Auth components (AuthGuard, ContentGuard)
+│   ├── layout/           # Layout components (PageHeader, MobileNav)
 │   ├── cash/             # Cash drawer components
 │   ├── products/         # Product components
 │   ├── providers/        # Provider components
-│   ├── settings/         # Settings components
-│   └── team/             # Team management components
-├── contexts/             # React contexts
+│   ├── team/             # Team management components
+│   ├── invite/           # Invite code components
+│   ├── account/          # Account settings components
+│   ├── icons/            # Custom SVG icons
+│   └── animations/       # Lottie animation components
+├── contexts/             # React contexts (Auth, Business, Navbar)
 ├── db/                   # Database (Drizzle schema + client)
 ├── hooks/                # Custom hooks
 ├── lib/                  # Utilities
@@ -88,7 +107,10 @@ Schema defined in `src/db/schema.ts`. All tables use `businessId` for multi-tena
 |-------|-------------|
 | `businesses` | Business/store entities |
 | `users` | User accounts with email/password auth |
+| `business_users` | Join table - users to businesses (role, status) |
 | `products` | Product catalog with pricing and stock |
+| `product_categories` | Custom categories per business |
+| `product_settings` | Sort preferences, default category |
 | `sales` | Sale transactions |
 | `sale_items` | Line items for each sale |
 | `providers` | Supplier information |
@@ -96,8 +118,9 @@ Schema defined in `src/db/schema.ts`. All tables use `businessId` for multi-tena
 | `order_items` | Line items for orders |
 | `cash_sessions` | Cash drawer sessions |
 | `cash_movements` | Cash movements (deposits/withdrawals) |
-| `invite_codes` | Team member invitations |
+| `invite_codes` | Team member invitations (6-char codes) |
 | `ownership_transfers` | Business ownership transfer records |
+| `business_archives` | Deleted business recovery data |
 | `app_config` | Application configuration |
 
 ### Schema Changes Workflow
@@ -239,7 +262,7 @@ When creating multi-step modals, `Modal.Footer` **MUST be a direct child** of `M
 2. If footer buttons need `useMorphingModal()`, create separate button components
 3. Place `Modal.Footer` as direct child of `Modal.Step`
 
-See `src/components/ui/modal/Modal.tsx` header comments and `src/app/(dashboard)/settings/team/page.tsx` for examples.
+See `src/components/ui/modal/Modal.tsx` header comments and `src/app/[businessId]/team/page.tsx` for examples.
 
 ### Multi-Step Modals with Variable Footers
 
@@ -366,63 +389,112 @@ All API routes use Drizzle ORM with Turso. Authentication is via JWT in HTTP-onl
 ### Authentication
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/auth/register` | POST | Register new owner account |
+| `/api/auth/register` | POST | Register new user account |
 | `/api/auth/login` | POST | Login with email/password |
 | `/api/auth/logout` | POST | Logout (clear cookie) |
 | `/api/auth/me` | GET | Get current user |
 | `/api/setup-status` | GET | Check if app is set up |
 
+### Business Management
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/businesses/list` | GET | List user's businesses |
+| `/api/businesses/create` | POST | Create new business |
+| `/api/businesses/[businessId]/access` | GET | Validate user access to business |
+| `/api/businesses/[businessId]/leave` | POST | Leave a business |
+
+### Invite Codes (Global)
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/invite/validate` | GET | Validate invite code |
+| `/api/invite/join` | POST | Join business with invite code |
+
+### Ownership Transfer (Incoming)
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/transfer/incoming` | GET | Get pending incoming transfers |
+| `/api/transfer/accept` | POST | Accept ownership transfer |
+
+---
+
+**All routes below are scoped to `/api/businesses/[businessId]/`**
+
 ### Team Management
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/team` | GET | List team members and invite codes |
-| `/api/invite/create` | POST | Create invite code |
-| `/api/invite/delete` | POST | Delete invite code |
-| `/api/invite/regenerate` | POST | Regenerate invite code |
-| `/api/invite/validate` | GET | Validate invite code |
-| `/api/invite/register` | POST | Register via invite code |
-| `/api/users/toggle-status` | POST | Toggle user active/disabled |
-| `/api/users/change-role` | POST | Change user role |
+| `/team` | GET | List team members and invite codes |
+| `/invite/create` | POST | Create invite code |
+| `/invite/delete` | POST | Delete invite code |
+| `/invite/regenerate` | POST | Regenerate invite code |
+| `/users/toggle-status` | POST | Toggle user active/disabled |
+| `/users/change-role` | POST | Change user role |
+
+### Ownership Transfer (Outgoing)
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/transfer/initiate` | POST | Initiate ownership transfer |
+| `/transfer/pending` | GET | Get pending outgoing transfer |
+| `/transfer/cancel` | POST | Cancel pending transfer |
+| `/transfer/confirm` | POST | Confirm transfer after acceptance |
 
 ### Products
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/products` | GET | List products |
-| `/api/products` | POST | Create product (FormData) |
-| `/api/products/[id]` | PATCH | Update product (FormData) |
-| `/api/products/[id]` | DELETE | Delete product |
-| `/api/products/[id]/stock` | PATCH | Adjust stock |
+| `/products` | GET | List products |
+| `/products` | POST | Create product (FormData) |
+| `/products/[id]` | PATCH | Update product (FormData) |
+| `/products/[id]` | DELETE | Delete product |
+| `/products/[id]/stock` | PATCH | Adjust stock |
+| `/product-settings` | GET | Get sort preferences |
+| `/product-settings` | PATCH | Update settings |
+
+### Categories
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/categories` | GET | List categories |
+| `/categories` | POST | Create category |
+| `/categories/[id]` | PATCH | Update category |
+| `/categories/[id]` | DELETE | Delete category |
+| `/categories/reorder` | POST | Reorder categories |
 
 ### Providers
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/providers` | GET | List providers |
-| `/api/providers` | POST | Create provider |
-| `/api/providers/[id]` | PATCH | Update provider |
-| `/api/providers/[id]` | DELETE | Delete provider |
+| `/providers` | GET | List providers |
+| `/providers` | POST | Create provider |
+| `/providers/[id]` | PATCH | Update provider |
+| `/providers/[id]` | DELETE | Delete provider |
 
 ### Orders (Purchase Orders)
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/orders` | GET | List orders with items |
-| `/api/orders` | POST | Create order (FormData) |
-| `/api/orders/[id]` | PATCH | Update order (FormData) |
-| `/api/orders/[id]` | DELETE | Delete order |
-| `/api/orders/[id]/receive` | POST | Receive order, update stock |
+| `/orders` | GET | List orders with items |
+| `/orders` | POST | Create order (FormData) |
+| `/orders/[id]` | PATCH | Update order (FormData) |
+| `/orders/[id]` | DELETE | Delete order |
+| `/orders/[id]/receive` | POST | Receive order, update stock |
 
 ### Cash Drawer
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/cash/sessions` | GET | List cash sessions |
-| `/api/cash/sessions` | POST | Open cash drawer |
-| `/api/cash/sessions/current` | GET | Get current open session |
-| `/api/cash/sessions/[id]` | GET | Get specific session |
-| `/api/cash/sessions/[id]/close` | POST | Close session |
-| `/api/cash/movements` | GET | List movements (query: sessionId) |
-| `/api/cash/movements` | POST | Create movement |
-| `/api/cash/movements/[id]` | PATCH | Update movement |
-| `/api/cash/movements/[id]` | DELETE | Delete movement |
-| `/api/cash/movements/counts` | GET | Get movement counts per session |
+| `/cash/sessions` | GET | List cash sessions |
+| `/cash/sessions` | POST | Open cash drawer |
+| `/cash/sessions/current` | GET | Get current open session |
+| `/cash/sessions/[id]` | GET | Get specific session |
+| `/cash/sessions/[id]/close` | POST | Close session |
+| `/cash/movements` | GET | List movements (query: sessionId) |
+| `/cash/movements` | POST | Create movement |
+| `/cash/movements/[id]` | PATCH | Update movement |
+| `/cash/movements/[id]` | DELETE | Delete movement |
+| `/cash/movements/counts` | GET | Get movement counts per session |
+
+### AI Features (Global)
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/ai/identify-product` | POST | Identify product from image |
+| `/api/ai/generate-icon` | POST | Generate emoji icon from image |
+| `/api/ai/remove-background` | POST | Remove image background |
+| `/api/convert-heic` | POST | Convert HEIC to JPEG |
 
 ---
 

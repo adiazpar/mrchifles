@@ -23,6 +23,12 @@
   min-height: var(--touch-target-min);
 }
 
+.btn svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
 /* Luminance shift hover (NOT translateY) */
 @media (hover: hover) {
   .btn:hover:not(:disabled) {

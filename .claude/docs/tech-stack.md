@@ -47,7 +47,7 @@ Kasero is a multi-business management system optimized for:
 | **Auth** | Simple JWT (jose + bcryptjs) | $0 |
 | **Icons** | Lucide React | $0 |
 | **Hosting** | Vercel (free tier) | $0 |
-| **File Storage** | Local files (dev) / Base64 in DB (prod) | $0 |
+| **File Storage** | Base64 in DB (icons) / Cloudflare R2 (receipts) | $0 |
 
 **Total monthly cost: $0**
 
@@ -217,23 +217,42 @@ Login: Email + Password → JWT cookie → Dashboard
 
 ## Multi-Tenant Architecture
 
-The database supports multiple businesses (tenants) through a `businessId` column on all relevant tables.
+The database supports multiple businesses (tenants) with a many-to-many relationship between users and businesses.
+
+**Core Relationship:**
+```
+User (1) ──── (Many) BusinessUsers ──── (Many) Businesses
+```
+
+- One user can own/manage multiple businesses
+- One business can have multiple team members with different roles
+- The `businessUsers` table stores role (owner/partner/employee) and status per membership
 
 ```typescript
 // Every query filters by businessId
 const products = await db.query.products.findMany({
-  where: eq(products.businessId, currentUser.businessId)
+  where: eq(products.businessId, businessId)
+})
+
+// User access validated via businessUsers table
+const membership = await db.query.businessUsers.findFirst({
+  where: and(
+    eq(businessUsers.userId, userId),
+    eq(businessUsers.businessId, businessId)
+  )
 })
 ```
 
 **Benefits:**
 - Single database, lower cost
 - Shared infrastructure
-- Easy to add new businesses
+- Users can manage multiple businesses
+- Role-based access per business
 
 **Data isolation:**
 - All queries include businessId filter
-- API routes validate user belongs to business
+- API routes validate user membership via businessUsers table
+- Role-based permissions (owner > partner > employee)
 - No cross-tenant data access possible
 
 ---
@@ -289,19 +308,19 @@ FAL_KEY=...
 
 ## Future Considerations
 
-### Product Icon Storage
-Product icons are stored differently per environment:
+### File Storage
 
-**Development:** Files saved to `public/media/products/` (gitignored)
-- Faster iteration, no database overhead
-- Icons served directly from file system
-
-**Production:** Base64 data URLs stored in Turso database
+**Product Icons:** Base64 data URLs stored in Turso database
+- AI-generated emoji icons (~50-100KB each)
 - No external storage service needed
-- Icons included in database row (max 100KB per icon)
-- Turso free tier (500M row reads, 10M writes, 5GB storage) supports ~1,000-2,000 businesses
+- Icons included in database row
 
-If larger images are needed in the future, consider Cloudflare R2 (10GB free, S3-compatible).
+**Order Receipts:** Cloudflare R2 (S3-compatible)
+- Receipt images uploaded to R2 bucket
+- 10GB free tier
+- URLs stored in `orders.receipt` column
+
+Turso free tier (500M row reads, 10M writes, 5GB storage) supports ~1,000-2,000 businesses.
 
 ### Offline Sync (Turso Embedded Replicas)
 For true offline capability:

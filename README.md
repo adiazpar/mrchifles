@@ -4,12 +4,14 @@ A multi-business management system for small businesses.
 
 ## Features
 
+- **Multi-Business** - Manage multiple businesses from one account
 - **Sales Register** - Record transactions with cash, card, or other payments
-- **Product Catalog** - Manage products with prices and cost tracking
+- **Product Catalog** - AI-powered product icons, categories, stock tracking
 - **Cash Drawer** - Opening/closing balance and reconciliation
 - **Inventory** - Track stock levels and supplier orders
-- **Dashboard** - Daily summaries and business insights
 - **Team Management** - Invite partners/employees with role-based access
+- **Ownership Transfer** - Transfer business ownership to another user
+- **Dashboard** - Daily summaries and business insights
 - **Email Auth** - Simple email/password authentication
 - **PWA** - Works offline, installable on mobile
 
@@ -61,13 +63,17 @@ Required variables:
 
 ```
 src/
-├── app/           # Next.js App Router
-├── components/    # React components
-├── contexts/      # React contexts
-├── db/            # Drizzle schema & client
-├── hooks/         # Custom hooks
-├── lib/           # Utilities
-└── types/         # TypeScript types
+├── app/
+│   ├── (auth)/        # Login, register
+│   ├── (hub)/         # Business hub (select/create business)
+│   ├── [businessId]/  # Business routes (dashboard, sales, products, etc.)
+│   └── api/           # API routes
+├── components/        # React components
+├── contexts/          # React contexts (Auth, Business)
+├── db/                # Drizzle schema & client
+├── hooks/             # Custom hooks
+├── lib/               # Utilities
+└── types/             # TypeScript types
 ```
 
 ## Development Guidelines
