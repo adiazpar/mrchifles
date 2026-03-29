@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { Spinner } from '@/components/ui'
@@ -141,7 +141,7 @@ interface CloseDrawerFormContentProps {
   isSubmitting: boolean
 }
 
-function CloseDrawerFormContent({
+const CloseDrawerFormContent = memo(function CloseDrawerFormContent({
   expectedBalance,
   closingBalance,
   setClosingBalance,
@@ -221,7 +221,7 @@ function CloseDrawerFormContent({
       )}
     </>
   )
-}
+})
 
 // Submit button - uses useMorphingModal for navigation
 interface CloseDrawerSubmitButtonProps {
@@ -320,7 +320,7 @@ interface CelebrationStepContentProps {
   celebrationStats: { label: string; value: string }[]
 }
 
-function CelebrationStepContent({
+const CelebrationStepContent = memo(function CelebrationStepContent({
   showLottie,
   celebrationStats,
 }: CelebrationStepContentProps) {
@@ -368,4 +368,4 @@ function CelebrationStepContent({
       </Modal.Item>
     </>
   )
-}
+})

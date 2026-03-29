@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import Link from 'next/link'
 import { Modal, useMorphingModal } from '@/components/ui'
 import { getRoleLabel, getUserInitials } from '@/lib/auth'
@@ -14,7 +15,7 @@ export interface UserDetailsStepProps {
   onToggleStatus: () => void
 }
 
-export function UserDetailsStep({
+export const UserDetailsStep = memo(function UserDetailsStep({
   member,
   currentUser,
   canManageTeam,
@@ -130,4 +131,4 @@ export function UserDetailsStep({
       )}
     </>
   )
-}
+})
