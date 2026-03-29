@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 
 // ===========================================
@@ -41,7 +41,11 @@ export const businessUsers = sqliteTable('business_users', {
   invitedBy: text('invited_by').references(() => users.id),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  userIdIdx: index('idx_business_users_user_id').on(table.userId),
+  businessIdIdx: index('idx_business_users_business_id').on(table.businessId),
+  statusIdx: index('idx_business_users_status').on(table.status),
+}))
 
 // ===========================================
 // PRODUCT CATEGORIES
@@ -53,7 +57,9 @@ export const productCategories = sqliteTable('product_categories', {
   sortOrder: integer('sort_order').notNull().default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  businessIdIdx: index('idx_product_categories_business_id').on(table.businessId),
+}))
 
 // ===========================================
 // PRODUCT SETTINGS
@@ -88,7 +94,10 @@ export const products = sqliteTable('products', {
   active: integer('active', { mode: 'boolean' }).default(true),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  businessIdIdx: index('idx_products_business_id').on(table.businessId),
+  categoryIdIdx: index('idx_products_category_id').on(table.categoryId),
+}))
 
 // ===========================================
 // SALES
@@ -103,7 +112,10 @@ export const sales = sqliteTable('sales', {
   employeeId: text('employee_id').references(() => users.id),
   notes: text('notes'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  businessIdIdx: index('idx_sales_business_id').on(table.businessId),
+  dateIdx: index('idx_sales_date').on(table.date),
+}))
 
 // ===========================================
 // SALE ITEMS
@@ -117,7 +129,9 @@ export const saleItems = sqliteTable('sale_items', {
   unitPrice: real('unit_price').notNull(),
   subtotal: real('subtotal').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  saleIdIdx: index('idx_sale_items_sale_id').on(table.saleId),
+}))
 
 // ===========================================
 // PROVIDERS (Suppliers)
@@ -132,7 +146,9 @@ export const providers = sqliteTable('providers', {
   active: integer('active', { mode: 'boolean' }).default(true),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  businessIdIdx: index('idx_providers_business_id').on(table.businessId),
+}))
 
 // ===========================================
 // ORDERS (Purchase orders from suppliers)
@@ -150,7 +166,11 @@ export const orders = sqliteTable('orders', {
   notes: text('notes'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  businessIdIdx: index('idx_orders_business_id').on(table.businessId),
+  providerIdIdx: index('idx_orders_provider_id').on(table.providerId),
+  dateIdx: index('idx_orders_date').on(table.date),
+}))
 
 // ===========================================
 // ORDER ITEMS
@@ -164,7 +184,9 @@ export const orderItems = sqliteTable('order_items', {
   unitCost: real('unit_cost'),
   subtotal: real('subtotal'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  orderIdIdx: index('idx_order_items_order_id').on(table.orderId),
+}))
 
 // ===========================================
 // CASH SESSIONS
@@ -183,7 +205,10 @@ export const cashSessions = sqliteTable('cash_sessions', {
   discrepancyNote: text('discrepancy_note'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  businessIdIdx: index('idx_cash_sessions_business_id').on(table.businessId),
+  closedAtIdx: index('idx_cash_sessions_closed_at').on(table.closedAt),
+}))
 
 // ===========================================
 // CASH MOVEMENTS
@@ -202,7 +227,9 @@ export const cashMovements = sqliteTable('cash_movements', {
   editedBy: text('edited_by').references(() => users.id),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  sessionIdIdx: index('idx_cash_movements_session_id').on(table.sessionId),
+}))
 
 // ===========================================
 // INVITE CODES
@@ -218,7 +245,10 @@ export const inviteCodes = sqliteTable('invite_codes', {
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   used: integer('used', { mode: 'boolean' }).default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  businessIdIdx: index('idx_invite_codes_business_id').on(table.businessId),
+  usedExpiresIdx: index('idx_invite_codes_used_expires').on(table.used, table.expiresAt),
+}))
 
 // ===========================================
 // OWNERSHIP TRANSFERS
@@ -238,7 +268,10 @@ export const ownershipTransfers = sqliteTable('ownership_transfers', {
   completedAt: integer('completed_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
+}, (table) => ({
+  businessIdIdx: index('idx_ownership_transfers_business_id').on(table.businessId),
+  statusIdx: index('idx_ownership_transfers_status').on(table.status),
+}))
 
 // ===========================================
 // BUSINESS ARCHIVES (Deleted business recovery)
