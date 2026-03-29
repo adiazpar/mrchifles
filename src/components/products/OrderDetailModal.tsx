@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { Trash2, Pencil, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarClock, MinusCircle, PlusCircle, AlertTriangle } from 'lucide-react'
-import { Spinner, Modal, useMorphingModal } from '@/components/ui'
+import { Spinner, Modal, useMorphingModal, DeleteConfirmationStep } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { formatCurrency, formatDate, getProductIconUrl } from '@/lib/utils'
 import type { Provider } from '@/types'
@@ -129,27 +129,6 @@ function ConfirmReceiveButton({ onReceive, isReceiving }: { onReceive: () => Pro
   )
 }
 
-function ConfirmDeleteButton({ onDelete, isDeleting }: { onDelete: () => Promise<boolean>; isDeleting: boolean }) {
-  const { goToStep } = useMorphingModal()
-
-  const handleClick = async () => {
-    const success = await onDelete()
-    if (success) {
-      goToStep(6)
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="btn btn-danger flex-1"
-      disabled={isDeleting}
-    >
-      {isDeleting ? <Spinner /> : 'Delete'}
-    </button>
-  )
-}
 
 function ConfirmEditOrderButton({ onSave, isSaving, disabled }: { onSave: () => Promise<boolean>; isSaving: boolean; disabled: boolean }) {
   const { goToStep } = useMorphingModal()
@@ -663,20 +642,14 @@ export function OrderDetailModal({
       </Modal.Step>
 
       {/* Step 4: Delete Confirmation */}
-      <Modal.Step title="Delete order" backStep={0}>
-        <Modal.Item>
-          <p className="text-text-secondary">
-            Are you sure you want to delete the order from <strong>{formatDate(new Date(order.date))}</strong>? This action cannot be undone.
-          </p>
-        </Modal.Item>
-
-        <Modal.Footer>
-          <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1">
-            Cancel
-          </Modal.GoToStepButton>
-          <ConfirmDeleteButton onDelete={onDeleteOrder} isDeleting={isDeleting} />
-        </Modal.Footer>
-      </Modal.Step>
+      <DeleteConfirmationStep
+        title="Delete order"
+        itemName={`order from ${formatDate(new Date(order.date))}`}
+        cancelStep={0}
+        onConfirm={onDeleteOrder}
+        successStep={6}
+        isDeleting={isDeleting}
+      />
 
       {/* Step 5: Receive Success */}
       <Modal.Step title="Order received" hideBackButton>
