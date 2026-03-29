@@ -43,6 +43,7 @@ export { CrownIcon } from './CrownIcon'
 // Settings icons
 export { SettingsIcon } from './SettingsIcon'
 export { LogoutIcon } from './LogoutIcon'
+export { HelpIcon } from './HelpIcon'
 
 // Money/Cash icons
 export { DepositIcon } from './DepositIcon'
