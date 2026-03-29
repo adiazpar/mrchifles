@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { getUserInitials } from '@/lib/auth'
-import { LogOut, ChevronRight, Settings } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
+import { SettingsIcon, HelpIcon, LogoutIcon } from '@/components/icons'
 
 interface UserMenuContentProps {
   onAction?: () => void
@@ -45,35 +46,39 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           </div>
           <div className="user-menu-info">
             <div className="user-menu-name">{user.name}</div>
+            <div className="user-menu-email">{user.email}</div>
           </div>
         </div>
       )}
 
       {/* Menu Items */}
       <div className="user-menu-items">
-        {/* Account Settings */}
         <Link
           href="/account"
           className="user-menu-item"
           onClick={() => handleLinkClick('/account')}
         >
-          <Settings size={20} />
+          <SettingsIcon />
           <span>Account Settings</span>
           <ChevronRight size={16} className="user-menu-item-arrow" />
         </Link>
-      </div>
 
-      {/* Divider */}
-      <div className="user-menu-divider" />
+        <Link
+          href="/support"
+          className="user-menu-item"
+          onClick={() => handleLinkClick('/support')}
+        >
+          <HelpIcon />
+          <span>Support</span>
+          <ChevronRight size={16} className="user-menu-item-arrow" />
+        </Link>
 
-      {/* Logout */}
-      <div className="user-menu-items">
         <button
           type="button"
-          className="user-menu-item user-menu-item-danger"
+          className="user-menu-item"
           onClick={handleLogout}
         >
-          <LogOut size={20} />
+          <LogoutIcon />
           <span>Log Out</span>
         </button>
       </div>
