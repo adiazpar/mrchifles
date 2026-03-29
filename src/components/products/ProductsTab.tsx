@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import Image from 'next/image'
 import { Search, X, Filter, Plus, ArrowUp, Package, ChevronRight, ImageIcon, Settings } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
@@ -186,70 +187,14 @@ export function ProductsTab({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {filteredProducts.map((product) => {
-                    const iconUrl = getProductIconUrl(product)
-                    const categoryName = getCategoryName(product.categoryId)
-                    const stockValue = product.stock ?? 0
-                    const threshold = product.lowStockThreshold ?? 10
-                    const isLowStock = stockValue <= threshold
-
-                    return (
-                      <div
-                        key={product.id}
-                        className="list-item-clickable list-item-flat"
-                        onClick={() => onEditProduct(product)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            onEditProduct(product)
-                          }
-                        }}
-                        tabIndex={0}
-                        role="button"
-                      >
-                        {/* Product Icon */}
-                        <div className={`product-list-image ${isLowStock && product.active ? 'ring-2 ring-error' : ''}`}>
-                          {iconUrl ? (
-                            <Image
-                              src={iconUrl}
-                              alt={product.name}
-                              width={40}
-                              height={40}
-                              className="product-list-image-img"
-                              unoptimized
-                            />
-                          ) : (
-                            <ImageIcon className="w-5 h-5 text-text-tertiary" />
-                          )}
-                        </div>
-
-                        {/* Product Info */}
-                        <div className="flex-1 min-w-0">
-                          <span className={`font-medium truncate block ${!product.active ? 'text-text-tertiary' : ''}`}>
-                            {product.name}
-                          </span>
-                          <span className="text-xs text-text-tertiary mt-0.5 block">
-                            {categoryName}
-                          </span>
-                        </div>
-
-                        {/* Price and Stock */}
-                        <div className="text-right">
-                          <span className={`font-medium block ${!product.active ? 'text-text-tertiary' : 'text-text-primary'}`}>
-                            ${product.price.toFixed(2)}
-                          </span>
-                          <span className={`text-xs mt-0.5 block ${isLowStock && product.active ? 'text-error' : 'text-text-tertiary'}`}>
-                            {stockValue} units
-                          </span>
-                        </div>
-
-                        {/* Chevron */}
-                        <div className="text-text-tertiary ml-2">
-                          <ChevronRight className="w-5 h-5" />
-                        </div>
-                      </div>
-                    )
-                  })}
+                  {filteredProducts.map((product) => (
+                    <ProductListItem
+                      key={product.id}
+                      product={product}
+                      categoryName={getCategoryName(product.categoryId)}
+                      onEdit={onEditProduct}
+                    />
+                  ))}
                 </div>
               )}
             </div>
@@ -331,3 +276,80 @@ export function ProductsTab({
     </div>
   )
 }
+
+// ============================================
+// MEMOIZED LIST ITEM
+// ============================================
+
+interface ProductListItemProps {
+  product: Product
+  categoryName: string
+  onEdit: (product: Product) => void
+}
+
+const ProductListItem = memo(function ProductListItem({
+  product,
+  categoryName,
+  onEdit,
+}: ProductListItemProps) {
+  const iconUrl = getProductIconUrl(product)
+  const stockValue = product.stock ?? 0
+  const threshold = product.lowStockThreshold ?? 10
+  const isLowStock = stockValue <= threshold
+
+  return (
+    <div
+      className="list-item-clickable list-item-flat"
+      onClick={() => onEdit(product)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onEdit(product)
+        }
+      }}
+      tabIndex={0}
+      role="button"
+    >
+      {/* Product Icon */}
+      <div className={`product-list-image ${isLowStock && product.active ? 'ring-2 ring-error' : ''}`}>
+        {iconUrl ? (
+          <Image
+            src={iconUrl}
+            alt={product.name}
+            width={40}
+            height={40}
+            className="product-list-image-img"
+            unoptimized
+          />
+        ) : (
+          <ImageIcon className="w-5 h-5 text-text-tertiary" />
+        )}
+      </div>
+
+      {/* Product Info */}
+      <div className="flex-1 min-w-0">
+        <span className={`font-medium truncate block ${!product.active ? 'text-text-tertiary' : ''}`}>
+          {product.name}
+        </span>
+        <span className="text-xs text-text-tertiary mt-0.5 block">
+          {categoryName}
+        </span>
+      </div>
+
+      {/* Price and Stock */}
+      <div className="text-right">
+        <span className={`font-medium block ${!product.active ? 'text-text-tertiary' : 'text-text-primary'}`}>
+          ${product.price.toFixed(2)}
+        </span>
+        <span className={`text-xs mt-0.5 block ${isLowStock && product.active ? 'text-error' : 'text-text-tertiary'}`}>
+          {stockValue} units
+        </span>
+      </div>
+
+      {/* Chevron */}
+      <div className="text-text-tertiary ml-2">
+        <ChevronRight className="w-5 h-5" />
+      </div>
+    </div>
+  )
+})

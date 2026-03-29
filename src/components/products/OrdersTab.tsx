@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { Search, X, Plus, ArrowUp, Package, Warehouse, ChevronRight } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { scrollToTop } from '@/lib/scroll'
@@ -163,65 +164,13 @@ export function OrdersTab({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {filteredOrders.map((order) => {
-                    const items = order.expand?.['order_items(order)'] || []
-                    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-                    const isPending = order.status === 'pending'
-
-                    return (
-                      <div
-                        key={order.id}
-                        className="list-item-clickable list-item-flat"
-                        onClick={() => onViewOrder(order)}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        {/* Status indicator */}
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          isPending
-                            ? 'bg-warning-subtle text-warning'
-                            : 'bg-success-subtle text-success'
-                        }`}>
-                          <Warehouse className="w-5 h-5" />
-                        </div>
-
-                        {/* Order info */}
-                        <div className="flex-1 min-w-0">
-                          <span className="font-medium block">
-                            {formatDate(new Date(order.date))}
-                          </span>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-text-tertiary">
-                              {itemCount} {itemCount === 1 ? 'unit' : 'units'}
-                            </span>
-                            {order.expand?.provider && (
-                              <>
-                                <span className="text-text-muted">·</span>
-                                <span className="text-xs text-text-tertiary truncate">
-                                  {order.expand.provider.name}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Total and Status */}
-                        <div className="text-right">
-                          <span className="font-medium block text-error">
-                            -{formatCurrency(order.total)}
-                          </span>
-                          <span className={`text-xs mt-0.5 block ${isPending ? 'text-warning' : 'text-success'}`}>
-                            {isPending ? 'Pending' : 'Received'}
-                          </span>
-                        </div>
-
-                        {/* Action indicator */}
-                        <div className="text-text-tertiary ml-2">
-                          <ChevronRight className="w-5 h-5" />
-                        </div>
-                      </div>
-                    )
-                  })}
+                  {filteredOrders.map((order) => (
+                    <OrderListItem
+                      key={order.id}
+                      order={order}
+                      onView={onViewOrder}
+                    />
+                  ))}
                 </div>
               )}
             </div>
@@ -242,3 +191,80 @@ export function OrdersTab({
     </div>
   )
 }
+
+// ============================================
+// MEMOIZED LIST ITEM
+// ============================================
+
+interface OrderListItemProps {
+  order: ExpandedOrder
+  onView: (order: ExpandedOrder) => void
+}
+
+const OrderListItem = memo(function OrderListItem({
+  order,
+  onView,
+}: OrderListItemProps) {
+  const items = order.expand?.['order_items(order)'] || []
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  const isPending = order.status === 'pending'
+
+  return (
+    <div
+      className="list-item-clickable list-item-flat"
+      onClick={() => onView(order)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onView(order)
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
+      {/* Status indicator */}
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+        isPending
+          ? 'bg-warning-subtle text-warning'
+          : 'bg-success-subtle text-success'
+      }`}>
+        <Warehouse className="w-5 h-5" />
+      </div>
+
+      {/* Order info */}
+      <div className="flex-1 min-w-0">
+        <span className="font-medium block">
+          {formatDate(new Date(order.date))}
+        </span>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-xs text-text-tertiary">
+            {itemCount} {itemCount === 1 ? 'unit' : 'units'}
+          </span>
+          {order.expand?.provider && (
+            <>
+              <span className="text-text-muted">·</span>
+              <span className="text-xs text-text-tertiary truncate">
+                {order.expand.provider.name}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Total and Status */}
+      <div className="text-right">
+        <span className="font-medium block text-error">
+          -{formatCurrency(order.total)}
+        </span>
+        <span className={`text-xs mt-0.5 block ${isPending ? 'text-warning' : 'text-success'}`}>
+          {isPending ? 'Pending' : 'Received'}
+        </span>
+      </div>
+
+      {/* Action indicator */}
+      <div className="text-text-tertiary ml-2">
+        <ChevronRight className="w-5 h-5" />
+      </div>
+    </div>
+  )
+})

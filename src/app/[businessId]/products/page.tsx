@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { fetchDeduped } from '@/lib/fetch'
 import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
-import { useProductFilters, useProductSettings } from '@/hooks'
+import { useProductFilters, useProductSettings, createSessionCache, CACHE_KEYS } from '@/hooks'
 import { Spinner } from '@/components/ui'
 import {
   ProductsTab,
@@ -29,66 +29,9 @@ import type { Product, Provider, SortPreference } from '@/types'
 // SESSION CACHE
 // ============================================
 
-const PRODUCTS_CACHE_KEY = 'products_cache'
-const PROVIDERS_CACHE_KEY = 'providers_cache'
-const ORDERS_CACHE_KEY = 'orders_cache'
-
-function getCachedProducts(): Product[] | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const cached = sessionStorage.getItem(PRODUCTS_CACHE_KEY)
-    return cached ? JSON.parse(cached) : null
-  } catch {
-    return null
-  }
-}
-
-function setCachedProducts(products: Product[]): void {
-  if (typeof window === 'undefined') return
-  try {
-    sessionStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(products))
-  } catch {
-    // Storage error, ignore
-  }
-}
-
-function getCachedProviders(): Provider[] | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const cached = sessionStorage.getItem(PROVIDERS_CACHE_KEY)
-    return cached ? JSON.parse(cached) : null
-  } catch {
-    return null
-  }
-}
-
-function setCachedProviders(providers: Provider[]): void {
-  if (typeof window === 'undefined') return
-  try {
-    sessionStorage.setItem(PROVIDERS_CACHE_KEY, JSON.stringify(providers))
-  } catch {
-    // Storage error, ignore
-  }
-}
-
-function getCachedOrders(): ExpandedOrder[] | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const cached = sessionStorage.getItem(ORDERS_CACHE_KEY)
-    return cached ? JSON.parse(cached) : null
-  } catch {
-    return null
-  }
-}
-
-function setCachedOrders(orders: ExpandedOrder[]): void {
-  if (typeof window === 'undefined') return
-  try {
-    sessionStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(orders))
-  } catch {
-    // Storage error, ignore
-  }
-}
+const productsCache = createSessionCache<Product[]>(CACHE_KEYS.PRODUCTS)
+const providersCache = createSessionCache<Provider[]>(CACHE_KEYS.PROVIDERS)
+const ordersCache = createSessionCache<ExpandedOrder[]>(CACHE_KEYS.ORDERS)
 
 export default function ProductosPage() {
   const { user } = useAuth()
@@ -98,17 +41,17 @@ export default function ProductosPage() {
   const [activeTab, setActiveTab] = useState<PageTab>('products')
 
   // Data state - initialize from cache
-  const [products, setProductsState] = useState<Product[]>(() => getCachedProducts() || [])
-  const [orders, setOrdersState] = useState<ExpandedOrder[]>(() => getCachedOrders() || [])
-  const [providers, setProvidersState] = useState<Provider[]>(() => getCachedProviders() || [])
-  const [isLoading, setIsLoading] = useState(() => !getCachedProducts())
+  const [products, setProductsState] = useState<Product[]>(() => productsCache.get() || [])
+  const [orders, setOrdersState] = useState<ExpandedOrder[]>(() => ordersCache.get() || [])
+  const [providers, setProvidersState] = useState<Provider[]>(() => providersCache.get() || [])
+  const [isLoading, setIsLoading] = useState(() => !productsCache.get())
   const [error, setError] = useState('')
 
   // Wrapper functions that update both state and cache
   const setProducts = useCallback((updater: Product[] | ((prev: Product[]) => Product[])) => {
     setProductsState(prev => {
       const newProducts = typeof updater === 'function' ? updater(prev) : updater
-      setCachedProducts(newProducts)
+      productsCache.set(newProducts)
       return newProducts
     })
   }, [])
@@ -116,7 +59,7 @@ export default function ProductosPage() {
   const setProviders = useCallback((updater: Provider[] | ((prev: Provider[]) => Provider[])) => {
     setProvidersState(prev => {
       const newProviders = typeof updater === 'function' ? updater(prev) : updater
-      setCachedProviders(newProviders)
+      providersCache.set(newProviders)
       return newProviders
     })
   }, [])
@@ -124,7 +67,7 @@ export default function ProductosPage() {
   const setOrders = useCallback((updater: ExpandedOrder[] | ((prev: ExpandedOrder[]) => ExpandedOrder[])) => {
     setOrdersState(prev => {
       const newOrders = typeof updater === 'function' ? updater(prev) : updater
-      setCachedOrders(newOrders)
+      ordersCache.set(newOrders)
       return newOrders
     })
   }, [])
@@ -236,13 +179,13 @@ export default function ProductosPage() {
   const canDelete = canManage
 
   // Track if orders have been loaded (check cache on init)
-  const [ordersLoaded, setOrdersLoaded] = useState(() => !!getCachedOrders())
+  const [ordersLoaded, setOrdersLoaded] = useState(() => !!ordersCache.get())
 
   // Load products and providers on mount if not cached
   useEffect(() => {
     // If we have cached data, skip the API calls
-    const cachedProducts = getCachedProducts()
-    const cachedProviders = getCachedProviders()
+    const cachedProducts = productsCache.get()
+    const cachedProviders = providersCache.get()
 
     if (cachedProducts && cachedProviders) {
       // Data already loaded from cache in useState
