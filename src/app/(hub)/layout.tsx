@@ -1,7 +1,8 @@
 'use client'
 
-import { PageHeader, MobileNav } from '@/components/layout'
+import { PageHeader, MobileNav, PageTransition } from '@/components/layout'
 import { NavbarProvider } from '@/contexts/navbar-context'
+import { JoinBusinessProvider } from '@/contexts/join-business-context'
 
 /**
  * Hub layout - Zone 2 navigation
@@ -15,13 +16,17 @@ export default function HubLayout({
 }) {
   return (
     <NavbarProvider>
-      <div className="h-full">
-        <PageHeader />
-        <div className="main-scroll-container flex flex-col h-full overflow-y-auto">
-          {children}
+      <JoinBusinessProvider>
+        <div className="h-full">
+          <PageHeader />
+          <div className="main-scroll-container flex flex-col h-full overflow-y-auto">
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </div>
+          <MobileNav />
         </div>
-        <MobileNav />
-      </div>
+      </JoinBusinessProvider>
     </NavbarProvider>
   )
 }

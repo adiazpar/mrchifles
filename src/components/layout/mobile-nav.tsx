@@ -7,12 +7,14 @@ import { PlusIcon, JoinIcon } from '@/components/icons'
 import { getNavItems, getPrefetchRoutes } from '@/lib/navigation'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useOptionalBusiness } from '@/contexts/business-context'
+import { useJoinBusinessModal } from '@/contexts/join-business-context'
 
 export function MobileNav() {
   const pathname = usePathname()
   const router = useRouter()
   const { isVisible, pendingHref, setPendingHref } = useNavbar()
   const businessContext = useOptionalBusiness()
+  const { openJoinModal } = useJoinBusinessModal()
   const businessId = businessContext?.businessId ?? null
   const navRef = useRef<HTMLElement>(null)
 
@@ -61,16 +63,11 @@ export function MobileNav() {
   }
 
   const handleJoinBusiness = () => {
-    router.push('/join')
+    openJoinModal()
   }
 
   // Hub context: render action buttons (primary/secondary style)
-  // Hide on /join page since it has its own actions
   if (isHubContext) {
-    if (pathname === '/join') {
-      return null
-    }
-
     return (
       <nav
         ref={navRef}
