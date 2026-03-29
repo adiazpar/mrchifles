@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
+import { BusinessIcon } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { Spinner } from '@/components/ui'
 
@@ -67,7 +68,7 @@ export default function HubPage() {
     return (
       <main className="page-loading">
         <div className="empty-state">
-          <Building2 className="empty-state-icon" />
+          <BusinessIcon className="empty-state-icon" />
           <h3 className="empty-state-title">No businesses yet</h3>
           <p className="empty-state-description">
             Create your own business or join an existing one with an invite code
@@ -99,7 +100,7 @@ export default function HubPage() {
               onClick={() => handleEnterBusiness(business.id)}
             >
               <div className="hub-business-card__icon">
-                <Building2 className="w-6 h-6" />
+                <BusinessIcon />
               </div>
               <div className="hub-business-card__info">
                 <span className="hub-business-card__name">{business.name}</span>
