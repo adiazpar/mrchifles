@@ -1,7 +1,8 @@
 # Codebase Optimization Plan
 
 **Created:** 2026-03-29
-**Status:** Draft
+**Updated:** 2026-03-29
+**Status:** In Progress - Phase 2 Complete
 **Scope:** Code cleanup, deduplication, and performance optimization
 
 ---
@@ -1144,23 +1145,32 @@ These have the same `isSaving`, `resetForm`, `handleClose` pattern.
 
 ## 6. Implementation Priority
 
-### Phase 1: Critical Performance (Week 1)
+### Phase 1: Critical Performance - COMPLETE
 
-| Task | File(s) | Impact | Effort |
+| Task | File(s) | Impact | Status |
 |------|---------|--------|--------|
-| Add database indexes | `src/db/schema.ts` | High | Low |
-| Fix N+1 in orders GET | `orders/route.ts` | High | Medium |
-| Use .returning() in INSERTs | 5 route files | Medium | Low |
-| Batch order item inserts | `orders/route.ts` | Medium | Low |
+| Add database indexes | `src/db/schema.ts` | High | Done (21 indexes) |
+| Fix N+1 in orders GET | `orders/route.ts` | High | Done |
+| Use .returning() in INSERTs | 5 route files | Medium | Done (-47 lines) |
+| Batch order item inserts | `orders/route.ts` | Medium | Done |
 
-### Phase 2: Code Consolidation (Week 2)
+**Commits:**
+- `cf67da2` - perf: add database indexes for multi-tenant queries
+- `addd9e4` - perf: use .returning() instead of SELECT after INSERT
+- `684ca0c` - perf: batch order item inserts
+- `a380848` - perf: fix N+1 query in orders GET endpoint
 
-| Task | File(s) | Lines Saved | Effort |
+### Phase 2: Code Consolidation - COMPLETE
+
+| Task | File(s) | Lines Saved | Status |
 |------|---------|-------------|--------|
-| Create scrollToTop utility | New + 3 files | ~20 | Low |
-| Create QR code utility | New + 1 file | ~30 | Low |
-| Create useFormModal hook | New + 5 files | ~200 | Medium |
-| Create ConfirmationAnimation | New + 4 files | ~160 | Medium |
+| Create scrollToTop utility | New + 3 files | ~20 | Done |
+| Create QR code utility | New + 1 file | ~30 | Done |
+| Create useFormModal hook | New + 2 modals | ~15 | Done |
+| Create ConfirmationAnimation | New + 1 modal | ~40 | Done |
+
+**Commits:**
+- `1a9a5a6` - refactor: extract shared utilities and components (Phase 2)
 
 ### Phase 3: API Improvements (Week 3)
 
