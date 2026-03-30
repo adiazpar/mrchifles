@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
-import { getDefaultsForLocale } from '@/lib/locale-config'
+import { getDefaultsForLocale, getLocaleByCountryCode } from '@/lib/locale-config'
 
 interface CreateBusinessResponse extends ApiResponse {
   business?: {
@@ -107,9 +107,31 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
     setCreatedBusiness(null)
   }, [])
 
-  const handleOpen = useCallback(() => {
+  const handleOpen = useCallback(async () => {
     resetState()
     setIsOpen(true)
+
+    // Fetch geolocation to set locale defaults
+    try {
+      const res = await fetch('/api/geolocation')
+      if (res.ok) {
+        const geo = await res.json()
+        if (geo.country) {
+          const locale = getLocaleByCountryCode(geo.country)
+          if (locale) {
+            setFormData(prev => ({
+              ...prev,
+              locale: locale.code,
+              currency: locale.currency,
+              // Use Vercel's detected timezone if available, otherwise use locale default
+              timezone: geo.timezone || locale.timezone,
+            }))
+          }
+        }
+      }
+    } catch {
+      // Silently fail - defaults will be used
+    }
   }, [resetState])
 
   const handleClose = useCallback(() => {
