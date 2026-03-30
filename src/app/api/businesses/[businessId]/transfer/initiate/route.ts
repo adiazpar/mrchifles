@@ -5,9 +5,10 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const initiateSchema = z.object({
-  toEmail: z.string().email('Invalid email'),
+  toEmail: Schemas.email(),
 })
 
 /**

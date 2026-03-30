@@ -5,9 +5,10 @@ import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { validationError } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const joinSchema = z.object({
-  code: z.string().min(1, 'Code is required').toUpperCase(),
+  code: Schemas.code(),
 })
 
 /**

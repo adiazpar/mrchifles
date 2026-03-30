@@ -6,9 +6,10 @@ import { isOwner } from '@/lib/business-auth'
 import { verifyPassword } from '@/lib/simple-auth'
 import { nanoid } from 'nanoid'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const confirmSchema = z.object({
-  code: z.string().min(1, 'Code is required'),
+  code: Schemas.code(),
   password: z.string().min(1, 'Password is required'),
 })
 

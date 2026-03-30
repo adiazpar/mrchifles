@@ -4,6 +4,7 @@ import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { uploadProductIcon, deleteProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
 import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 /**
  * PATCH /api/businesses/[businessId]/products/[id]
@@ -43,17 +44,17 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   const updateData: Record<string, unknown> = {}
 
   if (name !== null) {
-    const nameValidation = z.string().min(1).safeParse(name)
+    const nameValidation = Schemas.name().safeParse(name)
     if (!nameValidation.success) {
-      return HttpResponse.badRequest('Name is required')
+      return HttpResponse.badRequest(nameValidation.error.errors[0]?.message || 'Invalid name')
     }
     updateData.name = nameValidation.data
   }
 
   if (price !== null) {
-    const priceValidation = z.coerce.number().min(0).safeParse(price)
+    const priceValidation = Schemas.amount().safeParse(price)
     if (!priceValidation.success) {
-      return HttpResponse.badRequest('Price must be 0 or greater')
+      return HttpResponse.badRequest(priceValidation.error.errors[0]?.message || 'Invalid price')
     }
     updateData.price = priceValidation.data
   }

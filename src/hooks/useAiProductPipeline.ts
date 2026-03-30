@@ -11,6 +11,20 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
+import { apiPost, ApiError, type ApiResponse } from '@/lib/api-client'
+
+// API response types
+type IdentifyProductResponse = ApiResponse & {
+  data: { name: string }
+}
+
+type GenerateIconResponse = ApiResponse & {
+  data: { icon: string }
+}
+
+type RemoveBackgroundResponse = ApiResponse & {
+  data: { image: string }
+}
 
 // Pipeline steps for progress indication
 export type PipelineStep =
@@ -53,22 +67,10 @@ interface UseAiProductPipelineReturn {
  * Much faster than client-side (~1-3s vs ~10-15s)
  */
 async function removeBackgroundServerSide(imageBase64: string): Promise<string> {
-  const response = await fetch('/api/ai/remove-background', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image: imageBase64 }),
-  })
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Network error' }))
-    throw new Error(error.error || 'Failed to remove background')
-  }
-
-  const result = await response.json()
-  if (!result.success) {
-    throw new Error(result.error || 'Failed to remove background')
-  }
-
+  const result = await apiPost<RemoveBackgroundResponse>(
+    '/api/ai/remove-background',
+    { image: imageBase64 }
+  )
   return result.data.image
 }
 
@@ -319,52 +321,22 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
     try {
       // PARALLEL EXECUTION: Run identify and generate simultaneously
       // This saves ~2-3s since they both only need the original image
-      const [identifyResponse, iconResponse] = await Promise.all([
-        // Task 1: Identify product using GPT-4o Mini Vision
-        fetch('/api/ai/identify-product', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: imageBase64 }),
-          signal,
-        }),
-        // Task 2: Generate emoji icon using Nano Banana Edit
-        fetch('/api/ai/generate-icon', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: imageBase64 }),
-          signal,
-        }),
-      ])
-
-      if (!isRunActive(runId)) return
-
-      // Parse both responses
       const [identifyResult, iconResult] = await Promise.all([
-        identifyResponse.json(),
-        iconResponse.json(),
+        // Task 1: Identify product using GPT-4o Mini Vision
+        apiPost<IdentifyProductResponse>(
+          '/api/ai/identify-product',
+          { image: imageBase64 },
+          { signal }
+        ),
+        // Task 2: Generate emoji icon using Nano Banana Edit
+        apiPost<GenerateIconResponse>(
+          '/api/ai/generate-icon',
+          { image: imageBase64 },
+          { signal }
+        ),
       ])
 
       if (!isRunActive(runId)) return
-
-      // Check identify result
-      if (!identifyResult.success) {
-        setState({
-          step: 'error',
-          error: identifyResult.error || 'Failed to identify product',
-          result: null,
-        })
-        return
-      }
-
-      // Check icon result
-      if (!iconResult.success) {
-        setState({
-          step: 'error',
-          error: iconResult.error || 'Failed to generate icon',
-          result: null,
-        })
-        return
-      }
 
       const productName = identifyResult.data.name
 
@@ -435,9 +407,16 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         return
       }
 
+      // Handle ApiError or generic errors
+      const errorMessage = err instanceof ApiError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : 'Failed to process image'
+
       setState({
         step: 'error',
-        error: err instanceof Error ? err.message : 'Failed to process image',
+        error: errorMessage,
         result: null,
       })
     }
@@ -467,26 +446,11 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
 
     try {
       // Step 3: Generate new emoji
-      const iconResponse = await fetch('/api/ai/generate-icon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: cachedBgRemoved }),
-        signal,
-      })
-
-      if (!isRunActive(runId)) return null
-
-      const iconResult = await iconResponse.json()
-
-      if (!iconResult.success) {
-        if (!isRunActive(runId)) return null
-        setState(prev => ({
-          ...prev,
-          step: 'error',
-          error: iconResult.error || 'Failed to regenerate icon',
-        }))
-        return null
-      }
+      const iconResult = await apiPost<GenerateIconResponse>(
+        '/api/ai/generate-icon',
+        { image: cachedBgRemoved },
+        { signal }
+      )
 
       if (!isRunActive(runId)) return null
 
@@ -556,10 +520,17 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
 
       if (!isRunActive(runId)) return null
 
+      // Handle ApiError or generic errors
+      const errorMessage = err instanceof ApiError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : 'Failed to regenerate icon'
+
       setState(prev => ({
         ...prev,
         step: 'error',
-        error: err instanceof Error ? err.message : 'Failed to regenerate icon',
+        error: errorMessage,
       }))
       return null
     }

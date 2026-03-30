@@ -5,11 +5,12 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { hashPassword, createToken, setAuthCookie } from '@/lib/simple-auth'
 import { validationError } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const registerSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: Schemas.email(),
+  password: Schemas.password(),
+  name: Schemas.name(2),
 })
 
 /**
@@ -29,11 +30,11 @@ export async function POST(request: NextRequest) {
 
     const { email, password, name } = validation.data
 
-    // Check if email already exists
+    // Check if email already exists (email is already normalized to lowercase by schema)
     const existingUser = await db
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.email, email.toLowerCase()))
+      .where(eq(users.email, email))
       .get()
 
     if (existingUser) {
@@ -49,12 +50,12 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const userId = nanoid()
 
-    // Create user account
+    // Create user account (email is already normalized to lowercase by schema)
     const [newUser] = await db
       .insert(users)
       .values({
         id: userId,
-        email: email.toLowerCase(),
+        email,
         password: passwordHash,
         name,
         status: 'active',

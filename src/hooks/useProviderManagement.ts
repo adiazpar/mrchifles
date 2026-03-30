@@ -1,14 +1,21 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
 import { canManageBusiness } from '@/lib/business-role'
-import { fetchDeduped } from '@/lib/fetch'
+import { apiRequest, apiPost, apiPatch, apiDelete, ApiError, ApiResponse } from '@/lib/api-client'
 import type { Provider } from '@/types'
 
 export interface UseProviderManagementOptions {
   businessId: string
+}
+
+interface ProvidersResponse extends ApiResponse {
+  providers: Provider[]
+}
+
+interface ProviderResponse extends ApiResponse {
+  provider: Provider
 }
 
 export interface UseProviderManagementReturn {
@@ -51,7 +58,6 @@ export interface UseProviderManagementReturn {
 }
 
 export function useProviderManagement({ businessId }: UseProviderManagementOptions): UseProviderManagementReturn {
-  const { user } = useAuth()
   const { role } = useBusiness()
 
   // Data state
@@ -83,20 +89,19 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
 
     async function loadData() {
       try {
-        const response = await fetchDeduped(`/api/businesses/${businessId}/providers`)
-        const data = await response.json()
+        const data = await apiRequest<ProvidersResponse>(`/api/businesses/${businessId}/providers`)
 
         if (cancelled) return
 
-        if (response.ok && data.success) {
-          setProviders(data.providers)
-        } else {
-          setError('Failed to load providers')
-        }
+        setProviders(data.providers)
       } catch (err) {
         if (cancelled) return
         console.error('Error loading providers:', err)
-        setError('Failed to load providers')
+        if (err instanceof ApiError) {
+          setError(err.message)
+        } else {
+          setError('Failed to load providers')
+        }
       } finally {
         if (!cancelled) {
           setIsLoading(false)
@@ -174,37 +179,31 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
         active,
       }
 
-      const url = editingProvider
-        ? `/api/businesses/${businessId}/providers/${editingProvider.id}`
-        : `/api/businesses/${businessId}/providers`
-      const method = editingProvider ? 'PATCH' : 'POST'
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(providerData),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to save provider')
-        return false
+      if (editingProvider) {
+        await apiPatch<ProviderResponse>(
+          `/api/businesses/${businessId}/providers/${editingProvider.id}`,
+          providerData
+        )
+      } else {
+        await apiPost<ProviderResponse>(
+          `/api/businesses/${businessId}/providers`,
+          providerData
+        )
       }
 
       // Reload providers
-      const listResponse = await fetch(`/api/businesses/${businessId}/providers`)
-      const listData = await listResponse.json()
-
-      if (listResponse.ok && listData.success) {
-        setProviders(listData.providers)
-      }
+      const listData = await apiRequest<ProvidersResponse>(`/api/businesses/${businessId}/providers`)
+      setProviders(listData.providers)
 
       setProviderSaved(true)
       return true
     } catch (err) {
       console.error('Error saving provider:', err)
-      setError('Failed to save provider')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Failed to save provider')
+      }
       return false
     } finally {
       setIsSaving(false)
@@ -218,35 +217,26 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/providers/${editingProvider.id}`, {
-        method: 'DELETE',
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to delete provider')
-        return false
-      }
+      await apiDelete<ProviderResponse>(`/api/businesses/${businessId}/providers/${editingProvider.id}`)
 
       // Reload providers
-      const listResponse = await fetch(`/api/businesses/${businessId}/providers`)
-      const listData = await listResponse.json()
-
-      if (listResponse.ok && listData.success) {
-        setProviders(listData.providers)
-      }
+      const listData = await apiRequest<ProvidersResponse>(`/api/businesses/${businessId}/providers`)
+      setProviders(listData.providers)
 
       setProviderDeleted(true)
       return true
     } catch (err) {
       console.error('Error deleting provider:', err)
-      setError('Failed to delete provider')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Failed to delete provider')
+      }
       return false
     } finally {
       setIsDeleting(false)
     }
-  }, [editingProvider])
+  }, [businessId, editingProvider])
 
   return {
     // Data

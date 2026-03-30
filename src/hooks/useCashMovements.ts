@@ -2,8 +2,18 @@
 
 import { useState, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
-import { fetchDeduped } from '@/lib/fetch'
+import { apiRequest, apiPost, apiPatch, apiDelete, ApiError, ApiResponse } from '@/lib/api-client'
 import type { CashMovement, CashMovementType, CashMovementCategory, CashSession } from '@/types'
+
+interface MovementsResponse extends ApiResponse {
+  movements: CashMovement[]
+}
+
+interface MovementResponse extends ApiResponse {
+  movement: CashMovement
+}
+
+type DeleteResponse = ApiResponse
 
 export interface UseCashMovementsOptions {
   businessId: string | null
@@ -50,14 +60,16 @@ export function useCashMovements({ businessId }: UseCashMovementsOptions): UseCa
     if (!businessId) return
     setIsLoading(true)
     try {
-      const response = await fetchDeduped(`/api/businesses/${businessId}/cash/movements?sessionId=${sessionId}`)
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        setMovements(data.movements)
-      }
+      const data = await apiRequest<MovementsResponse>(
+        `/api/businesses/${businessId}/cash/movements?sessionId=${sessionId}`
+      )
+      setMovements(data.movements)
     } catch (err) {
-      console.error('Error loading movements:', err)
+      if (err instanceof ApiError) {
+        console.error('Error loading movements:', err.message)
+      } else {
+        console.error('Error loading movements:', err)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -74,37 +86,37 @@ export function useCashMovements({ businessId }: UseCashMovementsOptions): UseCa
     if (!user) throw new Error('User not authenticated')
     if (!businessId) throw new Error('No business context')
 
-    const response = await fetch(`/api/businesses/${businessId}/cash/movements`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: session.id,
-        type,
-        category,
-        amount,
-        note: note.trim() || null,
-      }),
-    })
+    try {
+      const data = await apiPost<MovementResponse>(
+        `/api/businesses/${businessId}/cash/movements`,
+        {
+          sessionId: session.id,
+          type,
+          category,
+          amount,
+          note: note.trim() || null,
+        }
+      )
 
-    const data = await response.json()
+      const newMovement = data.movement
 
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || 'Error recording movement')
+      // Update local state
+      setMovements(prev => [...prev, newMovement])
+
+      // Trigger balance animation
+      setLastMovementType(type)
+      setTimeout(() => setLastMovementType(null), 500)
+
+      // Track new movement for inline animation
+      setNewMovementId(newMovement.id)
+
+      return newMovement
+    } catch (err) {
+      if (err instanceof ApiError) {
+        throw new Error(err.message)
+      }
+      throw err
     }
-
-    const newMovement: CashMovement = data.movement
-
-    // Update local state
-    setMovements(prev => [...prev, newMovement])
-
-    // Trigger balance animation
-    setLastMovementType(type)
-    setTimeout(() => setLastMovementType(null), 500)
-
-    // Track new movement for inline animation
-    setNewMovementId(newMovement.id)
-
-    return newMovement
   }, [user, businessId])
 
   // Update an existing movement
@@ -118,44 +130,46 @@ export function useCashMovements({ businessId }: UseCashMovementsOptions): UseCa
     if (!user) throw new Error('User not authenticated')
     if (!businessId) throw new Error('No business context')
 
-    const response = await fetch(`/api/businesses/${businessId}/cash/movements/${movement.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type,
-        category,
-        amount,
-        note: note.trim() || null,
-      }),
-    })
+    try {
+      const data = await apiPatch<MovementResponse>(
+        `/api/businesses/${businessId}/cash/movements/${movement.id}`,
+        {
+          type,
+          category,
+          amount,
+          note: note.trim() || null,
+        }
+      )
 
-    const data = await response.json()
+      const updatedMovement = data.movement
 
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || 'Error updating movement')
+      setMovements(prev => prev.map(m => m.id === movement.id ? updatedMovement : m))
+
+      return updatedMovement
+    } catch (err) {
+      if (err instanceof ApiError) {
+        throw new Error(err.message)
+      }
+      throw err
     }
-
-    const updatedMovement: CashMovement = data.movement
-
-    setMovements(prev => prev.map(m => m.id === movement.id ? updatedMovement : m))
-
-    return updatedMovement
   }, [user, businessId])
 
   // Delete a movement
   const deleteMovement = useCallback(async (movementId: string): Promise<void> => {
     if (!businessId) throw new Error('No business context')
-    const response = await fetch(`/api/businesses/${businessId}/cash/movements/${movementId}`, {
-      method: 'DELETE',
-    })
 
-    const data = await response.json()
+    try {
+      await apiDelete<DeleteResponse>(
+        `/api/businesses/${businessId}/cash/movements/${movementId}`
+      )
 
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || 'Error deleting movement')
+      setMovements(prev => prev.filter(m => m.id !== movementId))
+    } catch (err) {
+      if (err instanceof ApiError) {
+        throw new Error(err.message)
+      }
+      throw err
     }
-
-    setMovements(prev => prev.filter(m => m.id !== movementId))
   }, [businessId])
 
   // Clear new movement ID (used after animation completes)

@@ -4,9 +4,10 @@ import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const deleteInviteSchema = z.object({
-  id: z.string().min(1),
+  id: Schemas.id(),
 })
 
 /**

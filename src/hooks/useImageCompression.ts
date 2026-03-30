@@ -9,10 +9,17 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
+import { apiPostForm, ApiError, ApiResponse } from '@/lib/api-client'
 
 export interface CompressionState {
   isProcessing: boolean
   error: string | null
+}
+
+interface HeicConversionResponse extends ApiResponse {
+  data?: {
+    image: string
+  }
 }
 
 interface UseImageCompressionReturn {
@@ -89,26 +96,15 @@ export function useImageCompression(): UseImageCompressionReturn {
         const formData = new FormData()
         formData.append('file', file)
 
-        const response = await fetch('/api/convert-heic', {
-          method: 'POST',
-          body: formData,
-          signal,
-        })
+        const result = await apiPostForm<HeicConversionResponse>(
+          '/api/convert-heic',
+          formData,
+          { signal }
+        )
 
         if (cancelledRef.current) return null
 
-        const result = await response.json()
-
-        if (!result.success) {
-          if (cancelledRef.current) return null
-          setState({
-            isProcessing: false,
-            error: 'Failed to convert HEIC image',
-          })
-          return null
-        }
-
-        imageSource = result.data.image // base64 data URL
+        imageSource = result.data!.image // base64 data URL
       }
 
       if (cancelledRef.current) return null
@@ -188,9 +184,14 @@ export function useImageCompression(): UseImageCompressionReturn {
 
       if (cancelledRef.current) return null
 
+      // Use ApiError message if available, otherwise generic message
+      const errorMessage = err instanceof ApiError
+        ? err.message
+        : 'Failed to process image'
+
       setState({
         isProcessing: false,
-        error: 'Failed to process image',
+        error: errorMessage,
       })
       return null
     }

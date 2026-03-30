@@ -5,9 +5,10 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const regenerateInviteSchema = z.object({
-  oldCodeId: z.string().min(1),
+  oldCodeId: Schemas.id(),
   newCode: z.string().length(6).toUpperCase(),
   role: z.enum(['partner', 'employee']),
   expiresAt: z.string().datetime(),

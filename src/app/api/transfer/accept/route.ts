@@ -4,9 +4,10 @@ import { eq, and, gt, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { validationError } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const acceptSchema = z.object({
-  code: z.string().min(1, 'Code is required').toUpperCase(),
+  code: Schemas.code(),
 })
 
 /**

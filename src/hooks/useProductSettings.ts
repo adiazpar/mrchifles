@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react'
-import { fetchDeduped } from '@/lib/fetch'
+import { apiRequest, apiPost, apiPatch, apiDelete, ApiError, type ApiResponse } from '@/lib/api-client'
 import type { ProductCategory, ProductSettings, SortPreference } from '@/types'
 
 // ============================================
@@ -50,6 +50,26 @@ function setCachedSettings(settings: ProductSettings): void {
     // Storage error, ignore
   }
 }
+
+// ============================================
+// API RESPONSE TYPES
+// ============================================
+
+type CategoriesResponse = ApiResponse & {
+  categories: ProductCategory[]
+}
+
+type CategoryResponse = ApiResponse & {
+  category: ProductCategory
+}
+
+type SettingsResponse = ApiResponse & {
+  settings: ProductSettings
+}
+
+type DeleteResponse = ApiResponse
+
+type ReorderResponse = ApiResponse
 
 // ============================================
 // HOOK INTERFACE
@@ -129,17 +149,15 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
   const refreshCategories = useCallback(async () => {
     setIsLoadingCategories(true)
     try {
-      const response = await fetchDeduped(`/api/businesses/${businessId}/categories`)
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        setCategories(data.categories)
-      } else {
-        setError(data.error || 'Failed to load categories')
-      }
+      const data = await apiRequest<CategoriesResponse>(`/api/businesses/${businessId}/categories`)
+      setCategories(data.categories)
     } catch (err) {
-      console.error('Error loading categories:', err)
-      setError('Failed to load categories')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        console.error('Error loading categories:', err)
+        setError('Failed to load categories')
+      }
     } finally {
       setIsLoadingCategories(false)
     }
@@ -149,17 +167,15 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
   const refreshSettings = useCallback(async () => {
     setIsLoadingSettings(true)
     try {
-      const response = await fetchDeduped(`/api/businesses/${businessId}/product-settings`)
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        setSettings(data.settings)
-      } else {
-        setError(data.error || 'Failed to load settings')
-      }
+      const data = await apiRequest<SettingsResponse>(`/api/businesses/${businessId}/product-settings`)
+      setSettings(data.settings)
     } catch (err) {
-      console.error('Error loading settings:', err)
-      setError('Failed to load settings')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        console.error('Error loading settings:', err)
+        setError('Failed to load settings')
+      }
     } finally {
       setIsLoadingSettings(false)
     }
@@ -184,23 +200,16 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/categories`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to create category')
-        return null
-      }
-
+      const data = await apiPost<CategoryResponse>(`/api/businesses/${businessId}/categories`, { name })
       setCategories(prev => [...prev, data.category])
       return data.category
     } catch (err) {
-      console.error('Error creating category:', err)
-      setError('Failed to create category')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        console.error('Error creating category:', err)
+        setError('Failed to create category')
+      }
       return null
     } finally {
       setIsCreating(false)
@@ -213,23 +222,16 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/categories/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to update category')
-        return null
-      }
-
+      const data = await apiPatch<CategoryResponse>(`/api/businesses/${businessId}/categories/${id}`, { name })
       setCategories(prev => prev.map(c => c.id === id ? data.category : c))
       return data.category
     } catch (err) {
-      console.error('Error updating category:', err)
-      setError('Failed to update category')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        console.error('Error updating category:', err)
+        setError('Failed to update category')
+      }
       return null
     } finally {
       setIsUpdating(false)
@@ -242,16 +244,7 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/categories/${id}`, {
-        method: 'DELETE',
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to delete category')
-        return false
-      }
-
+      await apiDelete<DeleteResponse>(`/api/businesses/${businessId}/categories/${id}`)
       setCategories(prev => prev.filter(c => c.id !== id))
 
       // Clear default category if this was the default
@@ -261,8 +254,12 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
 
       return true
     } catch (err) {
-      console.error('Error deleting category:', err)
-      setError('Failed to delete category')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        console.error('Error deleting category:', err)
+        setError('Failed to delete category')
+      }
       return false
     } finally {
       setIsDeleting(false)
@@ -285,26 +282,17 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
     setCategories(reorderedCategories)
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/categories/reorder`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categoryIds }),
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        // Rollback on failure
-        setCategories(previousCategories)
-        setError(data.error || 'Failed to reorder categories')
-        return false
-      }
-
+      await apiPost<ReorderResponse>(`/api/businesses/${businessId}/categories/reorder`, { categoryIds })
       return true
     } catch (err) {
-      console.error('Error reordering categories:', err)
       // Rollback on error
       setCategories(previousCategories)
-      setError('Failed to reorder categories')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        console.error('Error reordering categories:', err)
+        setError('Failed to reorder categories')
+      }
       return false
     } finally {
       setIsUpdating(false)
@@ -317,23 +305,16 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/product-settings`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to update settings')
-        return null
-      }
-
+      const data = await apiPatch<SettingsResponse>(`/api/businesses/${businessId}/product-settings`, updates)
       setSettings(data.settings)
       return data.settings
     } catch (err) {
-      console.error('Error updating settings:', err)
-      setError('Failed to update settings')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        console.error('Error updating settings:', err)
+        setError('Failed to update settings')
+      }
       return null
     } finally {
       setIsSavingSettings(false)

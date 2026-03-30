@@ -4,9 +4,10 @@ import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { verifyPassword, createToken, setAuthCookie } from '@/lib/simple-auth'
 import { validationError } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email'),
+  email: Schemas.email(),
   password: z.string().min(1, 'Password is required'),
 })
 
@@ -26,11 +27,11 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = validation.data
 
-    // Find user by email
+    // Find user by email (email is already normalized to lowercase by schema)
     const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.email, email.toLowerCase()))
+      .where(eq(users.email, email))
       .limit(1)
 
     if (!user) {

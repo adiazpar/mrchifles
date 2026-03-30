@@ -5,16 +5,17 @@ import { alias } from 'drizzle-orm/sqlite-core'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 // Alias users table for multiple joins
 const creators = alias(users, 'creators')
 
 const createMovementSchema = z.object({
-  sessionId: z.string().min(1),
+  sessionId: Schemas.id(),
   type: z.enum(['deposit', 'withdrawal']),
   category: z.enum(['sale', 'bank_withdrawal', 'bank_deposit', 'other']),
-  amount: z.number().positive('Amount must be greater than 0'),
-  note: z.string().nullable().optional(),
+  amount: Schemas.positiveAmount(),
+  note: Schemas.notes(),
 })
 
 /**

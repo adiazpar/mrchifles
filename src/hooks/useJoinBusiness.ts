@@ -2,6 +2,19 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
+
+interface ValidateCodeResponse extends ApiResponse {
+  valid?: boolean
+  type?: CodeType
+  business?: BusinessInfo
+  role?: string
+  fromUser?: FromUserInfo
+}
+
+interface JoinOrAcceptResponse extends ApiResponse {
+  businessId?: string
+}
 
 interface BusinessInfo {
   id: string
@@ -96,22 +109,18 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
     setError(null)
 
     try {
-      const res = await fetch('/api/invite/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code.trim().toUpperCase() }),
+      const data = await apiPost<ValidateCodeResponse>('/api/invite/validate', {
+        code: code.trim().toUpperCase(),
       })
 
-      const data = await res.json()
-
       if (data.valid) {
-        setCodeType(data.type)
-        setBusiness(data.business)
+        setCodeType(data.type ?? null)
+        setBusiness(data.business ?? null)
 
         if (data.type === 'invite') {
-          setRole(data.role)
+          setRole(data.role ?? null)
         } else if (data.type === 'transfer') {
-          setFromUser(data.fromUser)
+          setFromUser(data.fromUser ?? null)
         }
 
         setIsValidating(false)
@@ -121,8 +130,12 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
         setIsValidating(false)
         return false
       }
-    } catch {
-      setError('Failed to validate code')
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Failed to validate code')
+      }
       setIsValidating(false)
       return false
     }
@@ -137,29 +150,23 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
         ? '/api/transfer/accept'
         : '/api/invite/join'
 
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code.toUpperCase() }),
+      const data = await apiPost<JoinOrAcceptResponse>(endpoint, {
+        code: code.toUpperCase(),
       })
 
-      const data = await res.json()
-
-      if (data.success) {
-        setJoinSuccess(true)
-        // Redirect to the business after a brief delay
-        setTimeout(() => {
-          setIsOpen(false)
-          router.push(`/${data.businessId}/home`)
-        }, 1500)
-        return true
+      setJoinSuccess(true)
+      // Redirect to the business after a brief delay
+      setTimeout(() => {
+        setIsOpen(false)
+        router.push(`/${data.businessId}/home`)
+      }, 1500)
+      return true
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message)
       } else {
-        setError(data.error || 'Failed to complete action')
-        setIsJoining(false)
-        return false
+        setError('Failed to complete action')
       }
-    } catch {
-      setError('Failed to complete action')
       setIsJoining(false)
       return false
     }

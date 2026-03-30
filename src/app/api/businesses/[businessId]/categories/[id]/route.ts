@@ -4,9 +4,10 @@ import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const updateCategorySchema = z.object({
-  name: z.string().min(1, 'Name is required').max(50, 'Name too long'),
+  name: Schemas.name().max(50, 'Name too long'),
 })
 
 /**

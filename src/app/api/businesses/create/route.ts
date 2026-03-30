@@ -4,9 +4,10 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { validationError } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const createBusinessSchema = z.object({
-  name: z.string().min(1, 'Business name is required').max(100),
+  name: Schemas.name().max(100),
 })
 
 /**

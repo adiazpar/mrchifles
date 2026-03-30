@@ -5,7 +5,21 @@ import { useAuth } from '@/contexts/auth-context'
 import { transitionModals } from '@/lib/modal-utils'
 import { calculateExpectedBalance } from '@/lib/cash'
 import { fetchDeduped } from '@/lib/fetch'
+import { apiPost, ApiError, type ApiResponse } from '@/lib/api-client'
 import type { CashSession, CashMovement } from '@/types'
+
+// API Response types
+interface CurrentSessionResponse extends ApiResponse {
+  session?: CashSession
+}
+
+interface SessionsResponse extends ApiResponse {
+  sessions: CashSession[]
+}
+
+interface OpenSessionResponse extends ApiResponse {
+  session: CashSession
+}
 
 // ============================================
 // SESSION CACHE
@@ -106,10 +120,15 @@ export function useCashSession({ businessId, movements }: UseCashSessionOptions)
     // No cache - must fetch from server
     if (!businessId) return null
     try {
+      // Use fetchDeduped for request deduplication, then parse response
       const response = await fetchDeduped(`/api/businesses/${businessId}/cash/sessions/current`)
-      const data = await response.json()
+      const data = (await response.json()) as CurrentSessionResponse
 
-      if (response.ok && data.success && data.session) {
+      if (!response.ok || data.success === false) {
+        throw new ApiError(response.status, data, data.error)
+      }
+
+      if (data.session) {
         setCurrentSession(data.session)
         setCachedSession(data.session)
         return data.session.id
@@ -119,7 +138,11 @@ export function useCashSession({ businessId, movements }: UseCashSessionOptions)
         return null
       }
     } catch (err) {
-      console.error('Error loading current session:', err)
+      if (err instanceof ApiError) {
+        console.error('Error loading current session:', err.message)
+      } else {
+        console.error('Error loading current session:', err)
+      }
       return null
     }
   }, [businessId])
@@ -128,14 +151,21 @@ export function useCashSession({ businessId, movements }: UseCashSessionOptions)
   const loadSessions = useCallback(async (): Promise<void> => {
     if (!businessId) return
     try {
+      // Use fetchDeduped for request deduplication, then parse response
       const response = await fetchDeduped(`/api/businesses/${businessId}/cash/sessions`)
-      const data = await response.json()
+      const data = (await response.json()) as SessionsResponse
 
-      if (response.ok && data.success) {
-        setSessions(data.sessions)
+      if (!response.ok || data.success === false) {
+        throw new ApiError(response.status, data, data.error)
       }
+
+      setSessions(data.sessions)
     } catch (err) {
-      console.error('Error loading sessions:', err)
+      if (err instanceof ApiError) {
+        console.error('Error loading sessions:', err.message)
+      } else {
+        console.error('Error loading sessions:', err)
+      }
     }
   }, [businessId])
 
@@ -149,19 +179,12 @@ export function useCashSession({ businessId, movements }: UseCashSessionOptions)
     if (!user || !businessId) return
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/cash/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ openingBalance }),
-      })
+      const data = await apiPost<OpenSessionResponse>(
+        `/api/businesses/${businessId}/cash/sessions`,
+        { openingBalance }
+      )
 
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Error opening drawer')
-      }
-
-      const session: CashSession = data.session
+      const session = data.session
 
       // Update cache
       setCachedSession(session)
@@ -177,8 +200,13 @@ export function useCashSession({ businessId, movements }: UseCashSessionOptions)
         }
       )
     } catch (err) {
-      console.error('Error opening drawer:', err)
-      setError('Failed to open cash drawer')
+      if (err instanceof ApiError) {
+        console.error('Error opening drawer:', err.message)
+        setError(err.message)
+      } else {
+        console.error('Error opening drawer:', err)
+        setError('Failed to open cash drawer')
+      }
       throw err
     }
   }, [user, loadSessions, businessId])

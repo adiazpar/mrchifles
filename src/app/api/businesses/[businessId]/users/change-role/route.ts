@@ -4,10 +4,11 @@ import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const changeRoleSchema = z.object({
-  userId: z.string().min(1),
-  role: z.enum(['partner', 'employee']),
+  userId: Schemas.id(),
+  role: Schemas.role().exclude(['owner']),
 })
 
 /**
