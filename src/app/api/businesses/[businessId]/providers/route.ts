@@ -5,12 +5,13 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const createProviderSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  phone: z.string().nullable().optional(),
-  email: z.string().email('Invalid email').nullable().optional(),
-  notes: z.string().nullable().optional(),
+  name: Schemas.name(),
+  phone: Schemas.phone(),
+  email: Schemas.email().nullable().optional(),
+  notes: Schemas.notes(),
   active: z.boolean().default(true),
 })
 

@@ -4,10 +4,11 @@ import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const orderItemSchema = z.object({
-  productId: z.string().min(1),
-  productName: z.string().min(1),
+  productId: Schemas.id(),
+  productName: Schemas.name(),
   quantity: z.number().int().positive(),
 })
 
@@ -52,11 +53,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   const updateData: Record<string, unknown> = {}
 
   if (totalStr !== null) {
-    const total = parseFloat(totalStr)
-    if (isNaN(total) || total <= 0) {
-      return HttpResponse.badRequest('Total must be greater than 0')
+    const totalValidation = Schemas.positiveAmount().safeParse(totalStr)
+    if (!totalValidation.success) {
+      return HttpResponse.badRequest(totalValidation.error.errors[0]?.message || 'Invalid total')
     }
-    updateData.total = total
+    updateData.total = totalValidation.data
   }
 
   if (notes !== null) {

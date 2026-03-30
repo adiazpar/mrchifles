@@ -5,13 +5,14 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { uploadProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const createProductSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  price: z.coerce.number().min(0, 'Price must be 0 or greater'),
+  name: Schemas.name(),
+  price: Schemas.amount(),
   category: z.enum(['food', 'beverage', 'snack', 'dessert', 'other']).optional(),
-  categoryId: z.string().optional(),
-  active: z.preprocess((val) => val === 'true' || val === true, z.boolean()).default(true),
+  categoryId: Schemas.id().optional(),
+  active: Schemas.activeFlag(),
 })
 
 /**

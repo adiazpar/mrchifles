@@ -4,7 +4,29 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useAiProductPipeline, useImageCompression } from '@/hooks'
+import {
+  apiPostForm,
+  apiPatchForm,
+  apiPatch,
+  apiDelete,
+  ApiError,
+  ApiResponse,
+} from '@/lib/api-client'
 import type { Product } from '@/types'
+
+// ============================================
+// API RESPONSE TYPES
+// ============================================
+
+interface ProductResponse extends ApiResponse {
+  product: Product
+}
+
+interface StockResponse extends ApiResponse {
+  product: Product
+}
+
+type DeleteResponse = ApiResponse
 
 // ============================================
 // HOOK INTERFACE
@@ -267,29 +289,29 @@ export function useProductCrud({
         formData.append('icon', generatedIconBlob, 'icon.png')
       }
 
-      const url = editingProduct
-        ? `/api/businesses/${businessId}/products/${editingProduct.id}`
-        : `/api/businesses/${businessId}/products`
-      const method = editingProduct ? 'PATCH' : 'POST'
-
-      const response = await fetch(url, {
-        method,
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to save product')
-        return false
+      let data: ProductResponse
+      if (editingProduct) {
+        data = await apiPatchForm<ProductResponse>(
+          `/api/businesses/${businessId}/products/${editingProduct.id}`,
+          formData
+        )
+      } else {
+        data = await apiPostForm<ProductResponse>(
+          `/api/businesses/${businessId}/products`,
+          formData
+        )
       }
 
       setProductSaved(true)
       onProductSaved?.(data.product)
       return true
     } catch (err) {
-      console.error('Error saving product:', err)
-      setError('Failed to save product')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        console.error('Error saving product:', err)
+        setError('Failed to save product')
+      }
       return false
     } finally {
       setIsSaving(false)
@@ -307,23 +329,19 @@ export function useProductCrud({
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/products/${editingProduct.id}/stock`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stock: newStockValue }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to adjust inventory')
-        return
-      }
+      await apiPatch<StockResponse>(
+        `/api/businesses/${businessId}/products/${editingProduct.id}/stock`,
+        { stock: newStockValue }
+      )
 
       onProductSaved?.({ ...editingProduct, stock: newStockValue })
     } catch (err) {
-      console.error('Error adjusting stock:', err)
-      setError('Failed to adjust inventory')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        console.error('Error adjusting stock:', err)
+        setError('Failed to adjust inventory')
+      }
     } finally {
       setIsAdjusting(false)
     }
@@ -337,23 +355,20 @@ export function useProductCrud({
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/products/${editingProduct.id}`, {
-        method: 'DELETE',
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to delete product')
-        return false
-      }
+      await apiDelete<DeleteResponse>(
+        `/api/businesses/${businessId}/products/${editingProduct.id}`
+      )
 
       setProductDeleted(true)
       onProductDeleted?.(editingProduct.id)
       return true
     } catch (err) {
-      console.error('Error deleting product:', err)
-      setError('Failed to delete product')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        console.error('Error deleting product:', err)
+        setError('Failed to delete product')
+      }
       return false
     } finally {
       setIsDeleting(false)

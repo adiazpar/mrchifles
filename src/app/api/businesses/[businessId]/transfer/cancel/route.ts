@@ -4,9 +4,10 @@ import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { Schemas } from '@/lib/schemas'
 
 const cancelSchema = z.object({
-  code: z.string().min(1, 'Code is required'),
+  code: Schemas.code(),
 })
 
 /**

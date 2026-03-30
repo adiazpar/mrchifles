@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
 import { useTransfer } from '@/contexts/transfer-context'
 import { isOwner as checkIsOwner } from '@/lib/business-role'
+import { apiPost, ApiError } from '@/lib/api-client'
 
 // ============================================
 // TYPES
@@ -132,7 +133,6 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     incomingTransfer,
     isLoading: isLoadingTransfer,
     setPendingTransfer,
-    setIncomingTransfer,
   } = useTransfer()
 
   // Theme state
@@ -218,28 +218,18 @@ export function useAccountSettings(): UseAccountSettingsReturn {
       return
     }
 
+    if (!businessId) {
+      setTransferError('No business context')
+      return
+    }
+
     setTransferLoading(true)
 
     try {
-      if (!businessId) {
-        setTransferError('No business context')
-        setTransferLoading(false)
-        return
-      }
-
-      const response = await fetch(`/api/businesses/${businessId}/transfer/initiate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toEmail: transferEmail }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setTransferError(data.error || 'Failed to initiate transfer')
-        setTransferLoading(false)
-        return
-      }
+      const data = await apiPost<{ success: boolean; code: string }>(
+        `/api/businesses/${businessId}/transfer/initiate`,
+        { toEmail: transferEmail }
+      )
 
       // Generate transfer link for manual sharing
       const link = `${window.location.origin}/transfer?code=${data.code}`
@@ -256,12 +246,16 @@ export function useAccountSettings(): UseAccountSettingsReturn {
       setTransferEmail('')
       setTransferStep(1) // Go to link step
     } catch (err) {
-      console.error('Transfer initiate error:', err)
-      setTransferError('Connection error')
+      if (err instanceof ApiError) {
+        setTransferError(err.message)
+      } else {
+        console.error('Transfer initiate error:', err)
+        setTransferError('Connection error')
+      }
     } finally {
       setTransferLoading(false)
     }
-  }, [transferEmail, businessId])
+  }, [transferEmail, businessId, setPendingTransfer])
 
   const handleCopyTransferLink = useCallback(async () => {
     try {
@@ -291,23 +285,16 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     setTransferLoading(true)
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/transfer/cancel`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: pendingTransfer.code }),
+      await apiPost(`/api/businesses/${businessId}/transfer/cancel`, {
+        code: pendingTransfer.code,
       })
-
-      const data = await response.json()
-
-      if (data.success) {
-        setPendingTransfer(null)
-      }
+      setPendingTransfer(null)
     } catch (err) {
       console.error('Cancel transfer error:', err)
     } finally {
       setTransferLoading(false)
     }
-  }, [pendingTransfer, businessId])
+  }, [pendingTransfer, businessId, setPendingTransfer])
 
   const handleConfirmTransfer = useCallback(async (password: string) => {
     if (!pendingTransfer || !businessId) return
@@ -315,25 +302,20 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     setTransferLoading(true)
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/transfer/confirm`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: pendingTransfer.code, password }),
+      await apiPost(`/api/businesses/${businessId}/transfer/confirm`, {
+        code: pendingTransfer.code,
+        password,
       })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setTransferError(data.error || 'Failed to confirm transfer')
-        setTransferLoading(false)
-        return
-      }
 
       // Transfer complete - reload page to reflect new role
       window.location.reload()
     } catch (err) {
-      console.error('Confirm transfer error:', err)
-      setTransferError('Connection error')
+      if (err instanceof ApiError) {
+        setTransferError(err.message)
+      } else {
+        console.error('Confirm transfer error:', err)
+        setTransferError('Connection error')
+      }
     } finally {
       setTransferLoading(false)
     }
@@ -356,17 +338,8 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     setAcceptingTransfer(true)
 
     try {
-      const response = await fetch('/api/transfer/accept', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: incomingTransfer.code }),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        window.location.reload()
-      }
+      await apiPost('/api/transfer/accept', { code: incomingTransfer.code })
+      window.location.reload()
     } catch (err) {
       console.error('Accept incoming transfer error:', err)
     } finally {

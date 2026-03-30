@@ -183,8 +183,8 @@
   --page-padding: 16px;
   --touch-target-min: 40px;
 
-  /* Mobile-only viewport constraint (iPhone 16 Pro: 393px) */
-  --max-viewport-width: 393px;
+  /* Mobile-only viewport constraint (iPhone Pro Max: 430-440px) */
+  --max-viewport-width: 440px;
 }
 
 /* ===== Dark Mode ===== */

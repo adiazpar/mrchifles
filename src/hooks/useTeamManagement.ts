@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
-import { fetchDeduped } from '@/lib/fetch'
+import { apiRequest, apiPost, ApiError } from '@/lib/api-client'
 import {
   generateInviteCode,
   getInviteCodeExpiration,
@@ -71,6 +71,27 @@ export interface UseTeamManagementReturn {
   handleSubmitRoleChange: () => Promise<boolean>
 }
 
+interface TeamDataResponse {
+  success?: boolean
+  teamMembers?: TeamMember[]
+  inviteCodes?: InviteCode[]
+  error?: string
+  [key: string]: unknown
+}
+
+interface InviteCodeResponse {
+  success?: boolean
+  id: string
+  error?: string
+  [key: string]: unknown
+}
+
+interface ApiSuccessResponse {
+  success?: boolean
+  error?: string
+  [key: string]: unknown
+}
+
 export function useTeamManagement({ businessId }: UseTeamManagementOptions): UseTeamManagementReturn {
   const { user } = useAuth()
   const { role } = useBusiness()
@@ -107,16 +128,16 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
   useEffect(() => {
     const loadTeamData = async () => {
       try {
-        const response = await fetchDeduped(`/api/businesses/${businessId}/team`)
-        if (!response.ok) {
-          throw new Error('Failed to load team data')
-        }
-        const data = await response.json()
+        const data = await apiRequest<TeamDataResponse>(`/api/businesses/${businessId}/team`)
         setTeamMembers(data.teamMembers || [])
         setInviteCodes(data.inviteCodes || [])
       } catch (err) {
         console.error('Error loading team data:', err)
-        setError('Failed to load team')
+        if (err instanceof ApiError) {
+          setError(err.message)
+        } else {
+          setError('Failed to load team')
+        }
       } finally {
         setIsLoading(false)
       }
@@ -150,23 +171,14 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       const code = generateInviteCode()
       const expiresAt = getInviteCodeExpiration()
 
-      const response = await fetch(`/api/businesses/${businessId}/invite/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const data = await apiPost<InviteCodeResponse>(
+        `/api/businesses/${businessId}/invite/create`,
+        {
           code,
           role: selectedRole,
           expiresAt: expiresAt.toISOString(),
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to generate code')
-        setIsGenerating(false)
-        return
-      }
+        }
+      )
 
       setGeneratedCodeId(data.id)
       setNewCode(code)
@@ -188,7 +200,11 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       setInviteCodes(prev => [...prev, newInviteCode])
     } catch (err) {
       console.error('Error generating invite code:', err)
-      setError('Failed to generate code')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Failed to generate code')
+      }
     } finally {
       setIsGenerating(false)
     }
@@ -235,24 +251,15 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       const code = generateInviteCode()
       const expiresAt = getInviteCodeExpiration()
 
-      const response = await fetch(`/api/businesses/${businessId}/invite/regenerate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const data = await apiPost<InviteCodeResponse>(
+        `/api/businesses/${businessId}/invite/regenerate`,
+        {
           oldCodeId: generatedCodeId,
           newCode: code,
           role: selectedRole,
           expiresAt: expiresAt.toISOString(),
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to regenerate code')
-        setIsGenerating(false)
-        return
-      }
+        }
+      )
 
       const oldCodeId = generatedCodeId
       setGeneratedCodeId(data.id)
@@ -275,7 +282,11 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       setInviteCodes(prev => [...prev.filter(c => c.id !== oldCodeId), newInviteCode])
     } catch (err) {
       console.error('Error regenerating code:', err)
-      setError('Failed to regenerate code')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Failed to regenerate code')
+      }
     } finally {
       setIsGenerating(false)
     }
@@ -287,17 +298,10 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     setIsDeletingCode(true)
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/invite/delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: generatedCodeId }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        return false
-      }
+      await apiPost<ApiSuccessResponse>(
+        `/api/businesses/${businessId}/invite/delete`,
+        { id: generatedCodeId }
+      )
 
       setInviteCodes(prev => prev.filter(c => c.id !== generatedCodeId))
       setCodeDeleted(true)
@@ -387,18 +391,10 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     if (!selectedMember) return
     const newStatus = selectedMember.status === 'active' ? 'disabled' : 'active'
     try {
-      const response = await fetch(`/api/businesses/${businessId}/users/toggle-status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: selectedMember.id, status: newStatus }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        console.error('Error updating user status:', data.error)
-        return
-      }
+      await apiPost<ApiSuccessResponse>(
+        `/api/businesses/${businessId}/users/toggle-status`,
+        { userId: selectedMember.id, status: newStatus }
+      )
 
       const updatedMember = { ...selectedMember, status: newStatus as TeamMember['status'] }
       setSelectedMember(updatedMember)
@@ -416,18 +412,10 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     setRoleChangeLoading(true)
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/users/change-role`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: selectedMember.id, role: newRole }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        console.error('Error changing role:', data.error)
-        return false
-      }
+      await apiPost<ApiSuccessResponse>(
+        `/api/businesses/${businessId}/users/change-role`,
+        { userId: selectedMember.id, role: newRole }
+      )
 
       // Update local state
       const updatedMember = { ...selectedMember, role: newRole }

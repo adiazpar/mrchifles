@@ -6,9 +6,10 @@ import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
 import { DEFAULT_CATEGORIES } from '@/lib/products'
+import { Schemas } from '@/lib/schemas'
 
 const createCategorySchema = z.object({
-  name: z.string().min(1, 'Name is required').max(50, 'Name too long'),
+  name: Schemas.name().max(50, 'Name too long'),
 })
 
 /**

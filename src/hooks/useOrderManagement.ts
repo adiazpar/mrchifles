@@ -7,6 +7,32 @@ import { useAuth } from '@/contexts/auth-context'
 import type { Product, Provider } from '@/types'
 import type { ExpandedOrder, OrderFormItem } from '@/lib/products'
 import { formatDate } from '@/lib/utils'
+import { apiRequest, apiPostForm, apiPatchForm, apiPost, apiDelete, ApiError } from '@/lib/api-client'
+
+// ============================================
+// API RESPONSE TYPES
+// ============================================
+
+interface OrderResponse {
+  success: boolean
+  order?: ExpandedOrder
+  error?: string
+  [key: string]: unknown
+}
+
+interface OrdersResponse {
+  success: boolean
+  orders: ExpandedOrder[]
+  error?: string
+  [key: string]: unknown
+}
+
+interface ProductsResponse {
+  success: boolean
+  products: Product[]
+  error?: string
+  [key: string]: unknown
+}
 
 // ============================================
 // HOOK INTERFACE
@@ -291,31 +317,21 @@ export function useOrderManagement({
         quantity: item.quantity,
       }))))
 
-      const response = await fetch(`/api/businesses/${businessId}/orders`, {
-        method: 'POST',
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to save order')
-        return false
-      }
+      await apiPostForm<OrderResponse>(`/api/businesses/${businessId}/orders`, formData)
 
       // Reload orders
-      const ordersResponse = await fetch(`/api/businesses/${businessId}/orders`)
-      const ordersData = await ordersResponse.json()
-
-      if (ordersResponse.ok && ordersData.success) {
-        updateOrders(ordersData.orders)
-      }
+      const ordersData = await apiRequest<OrdersResponse>(`/api/businesses/${businessId}/orders`)
+      updateOrders(ordersData.orders)
 
       setOrderSaved(true)
       return true
     } catch (err) {
       console.error('Error saving order:', err)
-      setError('Failed to save order')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Failed to save order')
+      }
       return false
     } finally {
       setIsSavingOrder(false)
@@ -356,31 +372,21 @@ export function useOrderManagement({
         quantity: item.quantity,
       }))))
 
-      const response = await fetch(`/api/businesses/${businessId}/orders/${editingOrder.id}`, {
-        method: 'PATCH',
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to save order')
-        return false
-      }
+      await apiPatchForm<OrderResponse>(`/api/businesses/${businessId}/orders/${editingOrder.id}`, formData)
 
       // Reload orders
-      const ordersResponse = await fetch(`/api/businesses/${businessId}/orders`)
-      const ordersData = await ordersResponse.json()
-
-      if (ordersResponse.ok && ordersData.success) {
-        updateOrders(ordersData.orders)
-      }
+      const ordersData = await apiRequest<OrdersResponse>(`/api/businesses/${businessId}/orders`)
+      updateOrders(ordersData.orders)
 
       setEditOrderSaved(true)
       return true
     } catch (err) {
       console.error('Error saving order:', err)
-      setError('Failed to save order')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Failed to save order')
+      }
       return false
     } finally {
       setIsSavingOrder(false)
@@ -395,42 +401,29 @@ export function useOrderManagement({
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/orders/${viewingOrder.id}/receive`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receivedQuantities }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to receive order')
-        return false
-      }
+      await apiPost<OrderResponse>(
+        `/api/businesses/${businessId}/orders/${viewingOrder.id}/receive`,
+        { receivedQuantities }
+      )
 
       // Reload products and orders
-      const [productsRes, ordersRes] = await Promise.all([
-        fetch(`/api/businesses/${businessId}/products`),
-        fetch(`/api/businesses/${businessId}/orders`),
-      ])
-
       const [productsData, ordersData] = await Promise.all([
-        productsRes.json(),
-        ordersRes.json(),
+        apiRequest<ProductsResponse>(`/api/businesses/${businessId}/products`),
+        apiRequest<OrdersResponse>(`/api/businesses/${businessId}/orders`),
       ])
 
-      if (productsRes.ok && productsData.success) {
-        onProductsUpdated?.(productsData.products)
-      }
-      if (ordersRes.ok && ordersData.success) {
-        updateOrders(ordersData.orders)
-      }
+      onProductsUpdated?.(productsData.products)
+      updateOrders(ordersData.orders)
 
       setOrderReceived(true)
       return true
     } catch (err) {
       console.error('Error receiving order:', err)
-      setError('Failed to receive order')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Failed to receive order')
+      }
       return false
     } finally {
       setIsReceiving(false)
@@ -445,16 +438,7 @@ export function useOrderManagement({
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/orders/${viewingOrder.id}`, {
-        method: 'DELETE',
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to delete order')
-        return false
-      }
+      await apiDelete<OrderResponse>(`/api/businesses/${businessId}/orders/${viewingOrder.id}`)
 
       setOrders(prev => prev.filter(o => o.id !== viewingOrder.id))
       onOrdersUpdated?.(orders.filter(o => o.id !== viewingOrder.id))
@@ -462,7 +446,11 @@ export function useOrderManagement({
       return true
     } catch (err) {
       console.error('Error deleting order:', err)
-      setError('Failed to delete order')
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Failed to delete order')
+      }
       return false
     } finally {
       setIsDeletingOrder(false)
