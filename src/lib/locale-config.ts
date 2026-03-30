@@ -28,7 +28,7 @@ export interface BusinessTypeConfig {
 
 // Business types
 export const BUSINESS_TYPES: BusinessTypeConfig[] = [
-  { value: 'food', label: 'Food & Beverage', icon: '🍽️' },
+  { value: 'food', label: 'Culinary', icon: '🍽️' },
   { value: 'retail', label: 'Retail', icon: '🛍️' },
   { value: 'services', label: 'Services', icon: '✂️' },
   { value: 'wholesale', label: 'Wholesale', icon: '📦' },
