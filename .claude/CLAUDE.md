@@ -97,6 +97,48 @@ src/
 
 ---
 
+## Business Features
+
+### Business Types & Icons
+
+Businesses have a `type` and optional `icon` field:
+
+| Type | Default Icon | Description |
+|------|--------------|-------------|
+| `food` | 🍽️ | Food & beverage |
+| `retail` | 🛍️ | Retail stores |
+| `services` | ✂️ | Service providers |
+| `wholesale` | 📦 | Wholesale distributors |
+| `manufacturing` | 🏭 | Manufacturing |
+| `other` | 💼 | General business |
+
+**Icon priority in display:**
+1. Custom logo (base64 image stored in `icon` field)
+2. Custom emoji (stored in `icon` field)
+3. Default emoji for business type
+4. Generic BusinessIcon component
+
+**Logo upload:**
+- Supported formats: PNG, JPG
+- Max size: 2MB
+- Stored as base64 in the `icon` field
+- Displayed with `Image` component using `unoptimized` prop
+
+### Hub Page Search
+
+The hub page includes a search bar to filter businesses:
+- Case-insensitive filtering by business name
+- Search icon (custom SVG) on the left
+- Clear button (X) appears when text is entered
+- Shows "No businesses found" message when no matches
+
+**Note:** The search input uses inline styles for padding to override the `.input` class:
+```tsx
+style={{ paddingLeft: '2.75rem', paddingRight: '2.5rem' }}
+```
+
+---
+
 ## Database Schema (Drizzle + Turso)
 
 Schema defined in `src/db/schema.ts`. All tables use `businessId` for multi-tenant isolation.

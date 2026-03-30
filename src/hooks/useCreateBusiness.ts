@@ -21,6 +21,8 @@ export interface BusinessFormData {
   currency: string
   timezone: string
   icon: string | null
+  logoFile: File | null
+  logoPreview: string | null
 }
 
 export interface UseCreateBusinessReturn {
@@ -38,6 +40,8 @@ export interface UseCreateBusinessReturn {
   setCurrency: (currency: string) => void
   setTimezone: (timezone: string) => void
   setIcon: (icon: string | null) => void
+  setLogoFile: (file: File | null) => void
+  clearLogo: () => void
 
   // Submit state
   isCreating: boolean
@@ -61,6 +65,8 @@ function getInitialFormData(): BusinessFormData {
     currency: 'USD',
     timezone: 'America/New_York',
     icon: null,
+    logoFile: null,
+    logoPreview: null,
   }
 }
 
@@ -143,8 +149,48 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
   }, [])
 
   const setIcon = useCallback((icon: string | null) => {
-    setFormData(prev => ({ ...prev, icon }))
+    // When selecting an emoji, clear the logo
+    setFormData(prev => ({
+      ...prev,
+      icon,
+      logoFile: null,
+      logoPreview: null,
+    }))
   }, [])
+
+  const setLogoFile = useCallback((file: File | null) => {
+    if (file) {
+      // Create preview URL and convert to base64
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64 = reader.result as string
+        setFormData(prev => ({
+          ...prev,
+          logoFile: file,
+          logoPreview: base64,
+          icon: base64, // Store base64 as icon for submission
+        }))
+      }
+      reader.readAsDataURL(file)
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        logoFile: null,
+        logoPreview: null,
+      }))
+    }
+  }, [])
+
+  const clearLogo = useCallback(() => {
+    // Reset to default emoji for business type
+    const typeConfig = BUSINESS_TYPES.find(t => t.value === formData.type)
+    setFormData(prev => ({
+      ...prev,
+      logoFile: null,
+      logoPreview: null,
+      icon: typeConfig?.icon || null,
+    }))
+  }, [formData.type])
 
   const handleCreateBusiness = useCallback(async (): Promise<boolean> => {
     if (!isStep1Valid || !isStep2Valid) {
@@ -205,6 +251,8 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
     setCurrency,
     setTimezone,
     setIcon,
+    setLogoFile,
+    clearLogo,
 
     // Submit state
     isCreating,
