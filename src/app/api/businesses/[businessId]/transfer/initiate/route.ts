@@ -12,15 +12,13 @@ const initiateSchema = z.object({
 })
 
 /**
- * Generate a random 6-character uppercase alphanumeric code
+ * Generate a cryptographically secure 6-character uppercase alphanumeric code
  */
 function generateTransferCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let code = ''
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return code
+  const randomValues = new Uint32Array(6)
+  crypto.getRandomValues(randomValues)
+  return Array.from(randomValues, (v) => chars[v % chars.length]).join('')
 }
 
 /**

@@ -48,10 +48,17 @@ export const Schemas = {
   notes: () => z.string().nullable().optional(),
 
   /**
-   * Password with minimum length requirement.
+   * Password with security requirements:
+   * - Minimum 8 characters
+   * - At least one uppercase letter
+   * - At least one number
    */
   password: (minLength = 8) =>
-    z.string().min(minLength, `Password must be at least ${minLength} characters`),
+    z
+      .string()
+      .min(minLength, `Password must be at least ${minLength} characters`)
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[0-9]/, 'Password must contain at least one number'),
 
   /**
    * Non-negative numeric amount (for prices, costs, etc).

@@ -1,4 +1,4 @@
-import type { User, UserRole, InviteRole } from '@/types'
+import type { UserRole, InviteRole } from '@/types'
 
 // ============================================
 // SECURE CODE GENERATION

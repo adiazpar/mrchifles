@@ -4,6 +4,7 @@ import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
+import { canManageBusiness } from '@/lib/business-auth'
 import { Schemas } from '@/lib/schemas'
 
 const orderItemSchema = z.object({
@@ -18,6 +19,11 @@ const orderItemSchema = z.object({
  * Update an order and its items.
  */
 export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
+  // Only partners and owners can modify orders
+  if (!canManageBusiness(access.role)) {
+    return HttpResponse.forbidden('Only partners and owners can modify orders')
+  }
+
   const id = routeParams?.id
   if (!id) {
     return HttpResponse.badRequest('Order ID is required')
@@ -121,6 +127,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
  * Delete an order and its items.
  */
 export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
+  // Only partners and owners can delete orders
+  if (!canManageBusiness(access.role)) {
+    return HttpResponse.forbidden('Only partners and owners can delete orders')
+  }
+
   const id = routeParams?.id
   if (!id) {
     return HttpResponse.badRequest('Order ID is required')

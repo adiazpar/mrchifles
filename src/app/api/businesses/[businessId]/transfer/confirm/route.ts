@@ -10,7 +10,7 @@ import { Schemas } from '@/lib/schemas'
 
 const confirmSchema = z.object({
   code: Schemas.code(),
-  password: z.string().min(1, 'Password is required'),
+  password: Schemas.password(),
 })
 
 /**
