@@ -79,4 +79,29 @@ export const Schemas = {
    * Role field with allowed values.
    */
   role: () => z.enum(['owner', 'partner', 'employee']),
+
+  /**
+   * Business type field.
+   */
+  businessType: () => z.enum(['food', 'retail', 'services', 'wholesale', 'manufacturing', 'other']),
+
+  /**
+   * Locale code (e.g., 'en-US', 'es-MX').
+   */
+  locale: () => z.string().regex(/^[a-z]{2}-[A-Z]{2}$/, 'Invalid locale format'),
+
+  /**
+   * Currency code (ISO 4217, e.g., 'USD', 'MXN').
+   */
+  currency: () => z.string().length(3, 'Currency must be 3 characters').toUpperCase(),
+
+  /**
+   * Timezone (IANA format, e.g., 'America/New_York').
+   */
+  timezone: () => z.string().min(1, 'Timezone is required'),
+
+  /**
+   * Business icon (emoji or base64 image).
+   */
+  businessIcon: () => z.string().nullable().optional(),
 }

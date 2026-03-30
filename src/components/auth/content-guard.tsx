@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
-import { useNavbar } from '@/contexts/navbar-context'
 import { Spinner } from '@/components/ui'
 
 /**
@@ -12,13 +11,13 @@ import { Spinner } from '@/components/ui'
  * Shows a spinner during auth or business loading.
  * Redirects to login if not authenticated.
  * Business access validation is handled by BusinessContext.
- * Fades out content during navigation for smooth transitions.
+ *
+ * Note: Page transitions are handled by PageTransition wrapper in the layout.
  */
 export function ContentGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const { isLoading: businessLoading, error: businessError } = useBusiness()
-  const { pendingHref } = useNavbar()
 
   useEffect(() => {
     if (authLoading) return
@@ -56,13 +55,6 @@ export function ContentGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Fade out content during navigation, new page handles its own loading
-  return (
-    <div
-      className="flex-1 flex flex-col transition-opacity duration-150"
-      style={{ opacity: pendingHref ? 0 : 1 }}
-    >
-      {children}
-    </div>
-  )
+  // Render children - transitions handled by PageTransition in layout
+  return <>{children}</>
 }

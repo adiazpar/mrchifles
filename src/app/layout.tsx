@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { DM_Sans, IBM_Plex_Sans } from 'next/font/google'
 import { AuthProvider } from '@/contexts/auth-context'
+import { NavbarProvider } from '@/contexts/navbar-context'
+import { AppShell } from '@/components/layout'
 import './globals.css'
 
 const dmSans = DM_Sans({
@@ -81,7 +83,11 @@ export default function RootLayout({
       </head>
       <body className="h-full antialiased bg-bg-base text-text-primary">
         <AuthProvider>
-          {children}
+          <NavbarProvider>
+            <AppShell>
+              {children}
+            </AppShell>
+          </NavbarProvider>
         </AuthProvider>
       </body>
     </html>

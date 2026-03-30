@@ -1,37 +1,23 @@
 'use client'
 
-import { use } from 'react'
-import { MobileNav, PageHeader } from '@/components/layout'
+import { PageTransition } from '@/components/layout'
 import { ContentGuard } from '@/components/auth'
-import { NavbarProvider } from '@/contexts/navbar-context'
-import { BusinessProvider } from '@/contexts/business-context'
 
-interface BusinessLayoutProps {
-  children: React.ReactNode
-  params: Promise<{
-    businessId: string
-  }>
-}
-
+/**
+ * Business layout.
+ * Shell (header, nav) and BusinessProvider are provided by AppShell in root layout.
+ * This layout just adds page transition and content guard.
+ */
 export default function BusinessLayout({
   children,
-  params,
-}: BusinessLayoutProps) {
-  const { businessId } = use(params)
-
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <BusinessProvider businessId={businessId}>
-      <NavbarProvider>
-        <div className="h-full">
-          <PageHeader />
-          <div className="main-scroll-container flex flex-col h-full overflow-y-auto">
-            <ContentGuard>
-              {children}
-            </ContentGuard>
-          </div>
-          <MobileNav />
-        </div>
-      </NavbarProvider>
-    </BusinessProvider>
+    <PageTransition>
+      <ContentGuard>
+        {children}
+      </ContentGuard>
+    </PageTransition>
   )
 }

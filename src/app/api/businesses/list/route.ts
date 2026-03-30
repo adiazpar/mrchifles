@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db, businesses, businessUsers } from '@/db'
-import { eq } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/simple-auth'
 
 /**
@@ -31,17 +31,41 @@ export async function GET() {
       .innerJoin(businesses, eq(businessUsers.businessId, businesses.id))
       .where(eq(businessUsers.userId, session.userId))
 
+    // Get active memberships
+    const activeMemberships = memberships.filter(m => m.status === 'active')
+
+    // Get member counts for each business
+    const businessIds = activeMemberships.map(m => m.businessId)
+    const memberCounts: Record<string, number> = {}
+
+    if (businessIds.length > 0) {
+      const counts = await db
+        .select({
+          businessId: businessUsers.businessId,
+          count: sql<number>`count(*)`.as('count'),
+        })
+        .from(businessUsers)
+        .where(and(
+          sql`${businessUsers.businessId} IN (${sql.join(businessIds.map(id => sql`${id}`), sql`, `)})`,
+          eq(businessUsers.status, 'active')
+        ))
+        .groupBy(businessUsers.businessId)
+
+      for (const row of counts) {
+        memberCounts[row.businessId] = Number(row.count)
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      businesses: memberships
-        .filter(m => m.status === 'active')
-        .map(m => ({
-          id: m.businessId,
-          name: m.businessName,
-          role: m.role,
-          isOwner: m.businessOwnerId === session.userId,
-          createdAt: m.businessCreatedAt,
-        })),
+      businesses: activeMemberships.map(m => ({
+        id: m.businessId,
+        name: m.businessName,
+        role: m.role,
+        isOwner: m.businessOwnerId === session.userId,
+        createdAt: m.businessCreatedAt,
+        memberCount: memberCounts[m.businessId] || 1,
+      })),
     })
   } catch (error) {
     console.error('List businesses error:', error)

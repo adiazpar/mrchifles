@@ -8,6 +8,16 @@ export const businesses = sqliteTable('businesses', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   ownerId: text('owner_id').notNull(),
+  // Business profile
+  type: text('type', {
+    enum: ['food', 'retail', 'services', 'wholesale', 'manufacturing', 'other']
+  }),
+  icon: text('icon'), // Emoji or base64 image
+  // Localization
+  locale: text('locale').default('en-US'), // e.g., 'en-US', 'es-MX', 'fr-FR'
+  currency: text('currency').default('USD'), // ISO 4217 code
+  timezone: text('timezone').default('America/New_York'), // IANA timezone
+  // Timestamps
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })

@@ -1,0 +1,222 @@
+'use client'
+
+import { useState, useCallback, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
+import { getDefaultsForLocale, BUSINESS_TYPES } from '@/lib/locale-config'
+
+interface CreateBusinessResponse extends ApiResponse {
+  business?: {
+    id: string
+    name: string
+  }
+}
+
+export type BusinessType = 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other'
+
+export interface BusinessFormData {
+  name: string
+  type: BusinessType | null
+  locale: string
+  currency: string
+  timezone: string
+  icon: string | null
+}
+
+export interface UseCreateBusinessReturn {
+  // Modal state
+  isOpen: boolean
+  handleOpen: () => void
+  handleClose: () => void
+  handleExitComplete: () => void
+
+  // Form data
+  formData: BusinessFormData
+  setName: (name: string) => void
+  setType: (type: BusinessType) => void
+  setLocale: (locale: string) => void
+  setCurrency: (currency: string) => void
+  setTimezone: (timezone: string) => void
+  setIcon: (icon: string | null) => void
+
+  // Submit state
+  isCreating: boolean
+  createSuccess: boolean
+  error: string | null
+  createdBusiness: { id: string; name: string } | null
+
+  // Validation
+  isStep1Valid: boolean
+  isStep2Valid: boolean
+
+  // Actions
+  handleCreateBusiness: () => Promise<boolean>
+}
+
+function getInitialFormData(): BusinessFormData {
+  return {
+    name: '',
+    type: null,
+    locale: 'en-US',
+    currency: 'USD',
+    timezone: 'America/New_York',
+    icon: null,
+  }
+}
+
+export function useCreateBusiness(): UseCreateBusinessReturn {
+  const router = useRouter()
+
+  // Modal state
+  const [isOpen, setIsOpen] = useState(false)
+
+  // Form data
+  const [formData, setFormData] = useState<BusinessFormData>(getInitialFormData)
+
+  // Submit state
+  const [isCreating, setIsCreating] = useState(false)
+  const [createSuccess, setCreateSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [createdBusiness, setCreatedBusiness] = useState<{ id: string; name: string } | null>(null)
+
+  // Auto-update currency and timezone when locale changes
+  useEffect(() => {
+    const defaults = getDefaultsForLocale(formData.locale)
+    setFormData(prev => ({
+      ...prev,
+      currency: defaults.currency,
+      timezone: defaults.timezone,
+    }))
+  }, [formData.locale])
+
+  // Validation
+  const isStep1Valid = formData.name.trim().length > 0 && formData.type !== null
+  const isStep2Valid = formData.locale.length > 0 && formData.currency.length > 0 && formData.timezone.length > 0
+
+  const resetState = useCallback(() => {
+    setFormData(getInitialFormData())
+    setError(null)
+    setIsCreating(false)
+    setCreateSuccess(false)
+    setCreatedBusiness(null)
+  }, [])
+
+  const handleOpen = useCallback(() => {
+    resetState()
+    setIsOpen(true)
+  }, [resetState])
+
+  const handleClose = useCallback(() => {
+    setIsOpen(false)
+  }, [])
+
+  const handleExitComplete = useCallback(() => {
+    resetState()
+  }, [resetState])
+
+  // Form setters
+  const setName = useCallback((name: string) => {
+    setFormData(prev => ({ ...prev, name }))
+  }, [])
+
+  const setType = useCallback((type: BusinessType) => {
+    // Auto-set icon to default for business type if not already set
+    const typeConfig = BUSINESS_TYPES.find(t => t.value === type)
+    setFormData(prev => ({
+      ...prev,
+      type,
+      icon: prev.icon || typeConfig?.icon || null,
+    }))
+  }, [])
+
+  const setLocale = useCallback((locale: string) => {
+    setFormData(prev => ({ ...prev, locale }))
+    // Currency and timezone will auto-update via useEffect
+  }, [])
+
+  const setCurrency = useCallback((currency: string) => {
+    setFormData(prev => ({ ...prev, currency }))
+  }, [])
+
+  const setTimezone = useCallback((timezone: string) => {
+    setFormData(prev => ({ ...prev, timezone }))
+  }, [])
+
+  const setIcon = useCallback((icon: string | null) => {
+    setFormData(prev => ({ ...prev, icon }))
+  }, [])
+
+  const handleCreateBusiness = useCallback(async (): Promise<boolean> => {
+    if (!isStep1Valid || !isStep2Valid) {
+      setError('Please fill in all required fields')
+      return false
+    }
+
+    setIsCreating(true)
+    setError(null)
+
+    try {
+      const data = await apiPost<CreateBusinessResponse>('/api/businesses/create', {
+        name: formData.name.trim(),
+        type: formData.type,
+        locale: formData.locale,
+        currency: formData.currency,
+        timezone: formData.timezone,
+        icon: formData.icon,
+      })
+
+      if (data.success && data.business) {
+        setCreatedBusiness(data.business)
+        setCreateSuccess(true)
+        // Redirect to the new business after a brief delay
+        setTimeout(() => {
+          setIsOpen(false)
+          router.push(`/${data.business!.id}/home`)
+        }, 1500)
+        return true
+      } else {
+        setError(data.error || 'Failed to create business')
+        setIsCreating(false)
+        return false
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message)
+      } else {
+        setError('Failed to create business')
+      }
+      setIsCreating(false)
+      return false
+    }
+  }, [formData, isStep1Valid, isStep2Valid, router])
+
+  return {
+    // Modal state
+    isOpen,
+    handleOpen,
+    handleClose,
+    handleExitComplete,
+
+    // Form data
+    formData,
+    setName,
+    setType,
+    setLocale,
+    setCurrency,
+    setTimezone,
+    setIcon,
+
+    // Submit state
+    isCreating,
+    createSuccess,
+    error,
+    createdBusiness,
+
+    // Validation
+    isStep1Valid,
+    isStep2Valid,
+
+    // Actions
+    handleCreateBusiness,
+  }
+}
