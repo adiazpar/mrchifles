@@ -26,6 +26,8 @@ export async function GET() {
         businessName: businesses.name,
         businessOwnerId: businesses.ownerId,
         businessCreatedAt: businesses.createdAt,
+        businessType: businesses.type,
+        businessIcon: businesses.icon,
       })
       .from(businessUsers)
       .innerJoin(businesses, eq(businessUsers.businessId, businesses.id))
@@ -61,10 +63,10 @@ export async function GET() {
       businesses: activeMemberships.map(m => ({
         id: m.businessId,
         name: m.businessName,
-        role: m.role,
         isOwner: m.businessOwnerId === session.userId,
-        createdAt: m.businessCreatedAt,
         memberCount: memberCounts[m.businessId] || 1,
+        type: m.businessType,
+        icon: m.businessIcon,
       })),
     })
   } catch (error) {

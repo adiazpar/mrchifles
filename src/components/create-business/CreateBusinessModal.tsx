@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback, useState } from 'react'
-import { ChevronDown, Check } from 'lucide-react'
+import { useCallback, useState, useRef } from 'react'
+import Image from 'next/image'
+import { ChevronDown, Check, Upload, X } from 'lucide-react'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import {
@@ -28,7 +29,8 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
     setLocale,
     setCurrency,
     setTimezone,
-    setIcon,
+    setLogoFile,
+    clearLogo,
     isCreating,
     createSuccess,
     error,
@@ -79,12 +81,13 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 2: Icon Selection */}
-      <Modal.Step title="Business Icon">
-        <IconContent
-          icon={formData.icon}
-          setIcon={setIcon}
+      {/* Step 2: Logo Upload */}
+      <Modal.Step title="Business Logo">
+        <LogoUploadContent
           businessType={formData.type}
+          logoPreview={formData.logoPreview}
+          setLogoFile={setLogoFile}
+          clearLogo={clearLogo}
         />
         <Modal.Footer>
           <Modal.BackButton className="btn btn-secondary flex-1" />
@@ -307,64 +310,100 @@ function LocaleContent({
 }
 
 // ============================================
-// STEP 2: ICON CONTENT
+// STEP 2: LOGO UPLOAD
 // ============================================
 
-interface IconContentProps {
-  icon: string | null
-  setIcon: (icon: string | null) => void
+interface LogoUploadContentProps {
   businessType: BusinessType | null
+  logoPreview: string | null
+  setLogoFile: (file: File | null) => void
+  clearLogo: () => void
 }
 
-// Common business-related emojis
-const ICON_OPTIONS = [
-  // Food & Beverage
-  '🍽️', '🍕', '🍔', '🌮', '🍜', '🍣', '🥗', '☕', '🍰', '🍦',
-  // Retail
-  '🛍️', '👕', '👗', '👟', '💎', '🎁', '📱', '💻', '🎮', '📚',
-  // Services
-  '✂️', '💇', '💅', '🧹', '🔧', '🚗', '📸', '🎨', '✏️', '🏋️',
-  // Wholesale/Manufacturing
-  '📦', '🏭', '🔩', '⚙️', '🧱', '🪵', '🧵', '🧶', '🪡', '🔨',
-  // General Business
-  '💼', '🏪', '🏢', '🛒', '💰', '📊', '🎯', '⭐', '🚀', '💡',
-]
-
-function IconContent({ icon, setIcon, businessType }: IconContentProps) {
+function LogoUploadContent({
+  businessType,
+  logoPreview,
+  setLogoFile,
+  clearLogo,
+}: LogoUploadContentProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const typeConfig = BUSINESS_TYPES.find(t => t.value === businessType)
   const defaultIcon = typeConfig?.icon || '💼'
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        return
+      }
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        return
+      }
+      setLogoFile(file)
+    }
+  }
 
   return (
     <>
       <Modal.Item>
         <p className="text-sm text-text-secondary text-center">
-          Choose an icon for your business (optional)
+          Upload your business logo (optional)
         </p>
       </Modal.Item>
       <Modal.Item>
         <div className="flex justify-center mb-4">
-          <div className="w-24 h-24 rounded-2xl bg-brand-subtle flex items-center justify-center text-5xl">
-            {icon || defaultIcon}
+          <div className="relative">
+            <div className="w-24 h-24 rounded-2xl bg-brand-subtle flex items-center justify-center overflow-hidden">
+              {logoPreview ? (
+                <Image
+                  src={logoPreview}
+                  alt="Business logo"
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <span className="text-5xl">{defaultIcon}</span>
+              )}
+            </div>
+            {logoPreview && (
+              <button
+                type="button"
+                onClick={clearLogo}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center shadow-md hover:bg-error-hover transition-colors"
+                aria-label="Remove logo"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </Modal.Item>
+
       <Modal.Item>
-        <div className="grid grid-cols-5 gap-2">
-          {ICON_OPTIONS.map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              onClick={() => setIcon(emoji)}
-              className={`aspect-square rounded-xl text-2xl flex items-center justify-center transition-all ${
-                icon === emoji
-                  ? 'bg-brand-subtle border-2 border-brand'
-                  : 'bg-surface-secondary hover:bg-surface-tertiary border-2 border-transparent'
-              }`}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-border hover:border-brand hover:bg-brand-subtle transition-all text-text-secondary hover:text-brand"
+        >
+          <Upload className="w-5 h-5" />
+          <span className="text-sm font-medium">
+            {logoPreview ? 'Change Logo' : 'Upload Logo'}
+          </span>
+        </button>
+        <p className="text-xs text-text-tertiary text-center mt-2">
+          PNG, JPG up to 2MB
+        </p>
       </Modal.Item>
     </>
   )
@@ -411,7 +450,7 @@ function CreateButton({ isCreating, onCreate }: CreateButtonProps) {
       disabled={isCreating}
       className="btn btn-primary flex-1"
     >
-      {isCreating ? <Spinner size="sm" /> : 'Create Business'}
+      {isCreating ? <Spinner size="sm" /> : "Let's Go!"}
     </button>
   )
 }

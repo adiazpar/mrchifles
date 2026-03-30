@@ -2,17 +2,32 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { ChevronRight, X } from 'lucide-react'
 import { BusinessIcon, SearchIcon } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { Spinner } from '@/components/ui'
 
+type BusinessType = 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other'
+
 interface Business {
   id: string
   name: string
   isOwner: boolean
   memberCount: number
+  type: BusinessType | null
+  icon: string | null
+}
+
+// Default emojis for each business type
+const DEFAULT_TYPE_ICONS: Record<BusinessType, string> = {
+  food: '🍽️',
+  retail: '🛍️',
+  services: '✂️',
+  wholesale: '📦',
+  manufacturing: '🏭',
+  other: '💼',
 }
 
 /**
@@ -95,6 +110,37 @@ export default function HubPage() {
     )
   }
 
+  const getBusinessIcon = (business: Business) => {
+    const { icon, type } = business
+
+    // If icon is a base64 image (uploaded logo)
+    if (icon && icon.startsWith('data:')) {
+      return (
+        <Image
+          src={icon}
+          alt={business.name}
+          width={48}
+          height={48}
+          className="w-full h-full object-cover rounded-xl"
+          unoptimized
+        />
+      )
+    }
+
+    // If icon is an emoji
+    if (icon) {
+      return <span className="text-2xl">{icon}</span>
+    }
+
+    // Fall back to default emoji for business type
+    if (type && DEFAULT_TYPE_ICONS[type]) {
+      return <span className="text-2xl">{DEFAULT_TYPE_ICONS[type]}</span>
+    }
+
+    // Ultimate fallback
+    return <BusinessIcon className="w-6 h-6 text-brand" />
+  }
+
   const renderBusinessItem = (business: Business) => (
     <div
       key={business.id}
@@ -110,8 +156,8 @@ export default function HubPage() {
       role="button"
     >
       {/* Icon */}
-      <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
-        <BusinessIcon className="w-6 h-6 text-brand" />
+      <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0 overflow-hidden">
+        {getBusinessIcon(business)}
       </div>
 
       {/* Info */}
@@ -141,7 +187,8 @@ export default function HubPage() {
           placeholder="Search businesses..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="input pl-10 pr-10 w-full"
+          className="input w-full"
+          style={{ paddingLeft: '2.75rem', paddingRight: '2.5rem' }}
         />
         {searchQuery && (
           <button
