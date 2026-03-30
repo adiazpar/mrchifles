@@ -183,8 +183,8 @@
   --page-padding: 16px;
   --touch-target-min: 40px;
 
-  /* Mobile-only viewport constraint */
-  --max-viewport-width: 430px;
+  /* Mobile-only viewport constraint (iPhone 16 Pro: 393px) */
+  --max-viewport-width: 393px;
 }
 
 /* ===== Dark Mode ===== */
@@ -252,7 +252,7 @@
     height: 100%;
     overflow: hidden;
     /* Background for larger screens (outside mobile viewport) */
-    background-color: var(--neutral-900);
+    background-color: #000000;
   }
 
   body {

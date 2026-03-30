@@ -120,8 +120,10 @@
 .mobile-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--max-viewport-width);
   height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0));
   background: var(--color-bg-surface);
   border-top: 1px solid var(--color-border);
@@ -129,12 +131,11 @@
   z-index: var(--z-sticky);
   padding-bottom: env(safe-area-inset-bottom, 0);
   /* Animation properties for hide/show */
-  transform: translateY(0);
   transition: transform var(--duration-slow) var(--ease-out-expo);
 }
 
 .mobile-nav--hidden {
-  transform: translateY(100%);
+  transform: translateX(-50%) translateY(100%);
 }
 
 
@@ -382,8 +383,10 @@
 .page-header--fixed {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--max-viewport-width);
   z-index: var(--z-sticky);
   /* Account for safe area on devices with notches */
   padding-top: env(safe-area-inset-top, 0);
@@ -434,8 +437,10 @@
   animation: page-header-back-enter var(--duration-slow) var(--ease-out-expo) backwards;
 }
 
-.page-header__back:hover {
-  background: var(--color-bg-muted);
+@media (hover: hover) {
+  .page-header__back:hover {
+    background: var(--color-bg-muted);
+  }
 }
 
 
@@ -486,8 +491,10 @@
   transition: background var(--duration-fast) ease-out;
 }
 
-.page-header__business-btn:hover {
-  background: var(--color-bg-muted);
+@media (hover: hover) {
+  .page-header__business-btn:hover {
+    background: var(--color-bg-muted);
+  }
 }
 
 
@@ -1575,10 +1582,16 @@
   transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
-.role-card-selected .role-card-icon,
-.role-card:hover .role-card-icon {
+.role-card-selected .role-card-icon {
   background: var(--color-brand);
   color: white;
+}
+
+@media (hover: hover) {
+  .role-card:hover .role-card-icon {
+    background: var(--color-brand);
+    color: white;
+  }
 }
 
 .role-card-content {
@@ -2206,9 +2219,9 @@ border-radius: 0;
 }
 
 @media (hover: hover) {
-.list-item-clickable:hover {
-  background: var(--color-bg-muted);
-}
+  .list-item-clickable:hover {
+    background: var(--color-bg-muted);
+  }
 }
 
 .list-item-clickable:active {
@@ -2226,9 +2239,9 @@ transition: background var(--duration-fast) ease-out;
 }
 
 @media (hover: hover) {
-.list-item:hover {
-  background: var(--color-bg-muted);
-}
+  .list-item:hover {
+    background: var(--color-bg-muted);
+  }
 }
 
 /* ===== Balance Hero Container ===== */
@@ -2384,9 +2397,11 @@ cursor: pointer;
 transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 
-.session-card:hover {
-border-color: var(--color-brand);
-background: var(--color-brand-subtle);
+@media (hover: hover) {
+  .session-card:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
 }
 
 .session-card:focus-visible {
