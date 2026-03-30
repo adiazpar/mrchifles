@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { validateBusinessAccess, isOwner } from '@/lib/business-auth'
+import type { RouteParams } from '@/lib/api-middleware'
 import {
   db,
   businesses,
@@ -21,12 +22,6 @@ import {
 } from '@/db'
 import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
-
-interface RouteParams {
-  params: Promise<{
-    businessId: string
-  }>
-}
 
 /**
  * DELETE /api/businesses/[businessId]

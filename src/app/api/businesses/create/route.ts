@@ -3,6 +3,7 @@ import { db, businesses, businessUsers } from '@/db'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
+import { validationError } from '@/lib/api-middleware'
 
 const createBusinessSchema = z.object({
   name: z.string().min(1, 'Business name is required').max(100),
@@ -26,10 +27,7 @@ export async function POST(request: NextRequest) {
     const validation = createBusinessSchema.safeParse(body)
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.errors[0].message },
-        { status: 400 }
-      )
+      return validationError(validation)
     }
 
     const { name } = validation.data

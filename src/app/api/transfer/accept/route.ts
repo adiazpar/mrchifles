@@ -3,6 +3,7 @@ import { db, ownershipTransfers, users } from '@/db'
 import { eq, and, gt, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
+import { validationError } from '@/lib/api-middleware'
 
 const acceptSchema = z.object({
   code: z.string().min(1, 'Code is required').toUpperCase(),
@@ -32,10 +33,7 @@ export async function POST(request: NextRequest) {
     const validation = acceptSchema.safeParse(body)
 
     if (!validation.success) {
-      return NextResponse.json(
-        { success: false, error: validation.error.errors[0].message },
-        { status: 400 }
-      )
+      return validationError(validation)
     }
 
     const { code } = validation.data

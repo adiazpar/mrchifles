@@ -3,6 +3,7 @@ import { db, users } from '@/db'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { verifyPassword, createToken, setAuthCookie } from '@/lib/simple-auth'
+import { validationError } from '@/lib/api-middleware'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email'),
@@ -20,10 +21,7 @@ export async function POST(request: NextRequest) {
     const validation = loginSchema.safeParse(body)
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.errors[0].message },
-        { status: 400 }
-      )
+      return validationError(validation)
     }
 
     const { email, password } = validation.data
