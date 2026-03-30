@@ -7,6 +7,7 @@
 
 import fs from 'fs/promises'
 import path from 'path'
+import { isBase64DataUrl } from './utils'
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 const MEDIA_DIR = path.join(process.cwd(), 'public', 'media', 'products')
@@ -30,13 +31,6 @@ export async function blobToBase64(blob: Blob): Promise<string> {
   const base64 = buffer.toString('base64')
   const mimeType = blob.type || 'image/png'
   return `data:${mimeType};base64,${base64}`
-}
-
-/**
- * Check if a string is a valid base64 data URL
- */
-export function isBase64DataUrl(str: string): boolean {
-  return str.startsWith('data:image/')
 }
 
 /**

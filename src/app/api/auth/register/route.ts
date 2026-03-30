@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { hashPassword, createToken, setAuthCookie } from '@/lib/simple-auth'
+import { validationError } from '@/lib/api-middleware'
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email'),
@@ -23,10 +24,7 @@ export async function POST(request: NextRequest) {
     const validation = registerSchema.safeParse(body)
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.errors[0].message },
-        { status: 400 }
-      )
+      return validationError(validation)
     }
 
     const { email, password, name } = validation.data

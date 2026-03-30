@@ -4,6 +4,7 @@ import { eq, and, gt } from 'drizzle-orm'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import { getCurrentUser } from '@/lib/simple-auth'
+import { validationError } from '@/lib/api-middleware'
 
 const joinSchema = z.object({
   code: z.string().min(1, 'Code is required').toUpperCase(),
@@ -27,10 +28,7 @@ export async function POST(request: NextRequest) {
     const validation = joinSchema.safeParse(body)
 
     if (!validation.success) {
-      return NextResponse.json(
-        { success: false, error: validation.error.errors[0].message },
-        { status: 400 }
-      )
+      return validationError(validation)
     }
 
     const { code } = validation.data
