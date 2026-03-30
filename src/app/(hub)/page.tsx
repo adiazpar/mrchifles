@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { BusinessIcon } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
+import { useNavbar } from '@/contexts/navbar-context'
 import { Spinner } from '@/components/ui'
 
 interface Business {
   id: string
   name: string
-  role: string
   isOwner: boolean
-  createdAt: string
+  memberCount: number
 }
 
 /**
@@ -23,6 +23,7 @@ interface Business {
 export default function HubPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
+  const { setPendingHref } = useNavbar()
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -51,7 +52,9 @@ export default function HubPage() {
   }, [user, authLoading, router])
 
   const handleEnterBusiness = (businessId: string) => {
-    router.push(`/${businessId}/home`)
+    const href = `/${businessId}/home`
+    setPendingHref(href)
+    router.push(href)
   }
 
   if (authLoading || isLoading) {
@@ -62,6 +65,8 @@ export default function HubPage() {
     )
   }
 
+  const ownedBusinesses = businesses.filter((b) => b.isOwner)
+  const joinedBusinesses = businesses.filter((b) => !b.isOwner)
   const hasBusinesses = businesses.length > 0
 
   if (!hasBusinesses) {
@@ -78,42 +83,69 @@ export default function HubPage() {
     )
   }
 
-  return (
-    <main className="hub-content">
-      <div className="hub-greeting">
-        <h2 className="hub-greeting__title">
-          Welcome{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
-        </h2>
-        <p className="hub-greeting__subtitle">
-          Select a business to continue
-        </p>
+  const renderBusinessItem = (business: Business) => (
+    <div
+      key={business.id}
+      className="list-item-clickable list-item-flat"
+      onClick={() => handleEnterBusiness(business.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleEnterBusiness(business.id)
+        }
+      }}
+      tabIndex={0}
+      role="button"
+    >
+      {/* Icon */}
+      <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
+        <BusinessIcon className="w-6 h-6 text-brand" />
       </div>
 
-      <div className="hub-businesses">
-        <h3 className="hub-section-title">Your Businesses</h3>
-        <div className="hub-business-list">
-          {businesses.map((business) => (
-            <button
-              key={business.id}
-              type="button"
-              className="hub-business-card"
-              onClick={() => handleEnterBusiness(business.id)}
-            >
-              <div className="hub-business-card__icon">
-                <BusinessIcon />
-              </div>
-              <div className="hub-business-card__info">
-                <span className="hub-business-card__name">{business.name}</span>
-                <span className="hub-business-card__role">
-                  {business.role === 'owner' ? 'Owner' :
-                   business.role === 'partner' ? 'Partner' : 'Employee'}
-                </span>
-              </div>
-              <ArrowRight className="hub-business-card__arrow" />
-            </button>
-          ))}
-        </div>
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <span className="font-medium truncate block">{business.name}</span>
+        <span className="text-xs text-text-tertiary mt-0.5 block">
+          {business.memberCount} {business.memberCount === 1 ? 'member' : 'members'}
+        </span>
       </div>
+
+      {/* Chevron */}
+      <div className="text-text-tertiary ml-2">
+        <ChevronRight className="w-5 h-5" />
+      </div>
+    </div>
+  )
+
+  return (
+    <main className="hub-content space-y-4">
+      {ownedBusinesses.length > 0 && (
+        <div className="card p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-secondary">
+              {ownedBusinesses.length === 1 ? 'Your Business' : 'Your Businesses'}
+            </span>
+          </div>
+          <hr className="border-border" />
+          <div className="space-y-2">
+            {ownedBusinesses.map(renderBusinessItem)}
+          </div>
+        </div>
+      )}
+
+      {joinedBusinesses.length > 0 && (
+        <div className="card p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-secondary">
+              {joinedBusinesses.length === 1 ? 'Joined Business' : 'Joined Businesses'}
+            </span>
+          </div>
+          <hr className="border-border" />
+          <div className="space-y-2">
+            {joinedBusinesses.map(renderBusinessItem)}
+          </div>
+        </div>
+      )}
     </main>
   )
 }

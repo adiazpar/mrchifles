@@ -13,6 +13,21 @@ export interface NavItem {
   icon: ComponentType<{ className?: string }>
 }
 
+// Reserved top-level paths that are not business IDs
+const RESERVED_PATHS = ['login', 'register', 'account', 'join']
+
+/**
+ * Extract businessId from pathname if it's a business route.
+ * Returns null for hub routes and reserved paths.
+ */
+export function getBusinessIdFromPath(pathname: string): string | null {
+  const segments = pathname.split('/').filter(Boolean)
+  if (segments.length === 0) return null
+  const firstSegment = segments[0]
+  if (RESERVED_PATHS.includes(firstSegment)) return null
+  return firstSegment || null
+}
+
 /**
  * Navigation item templates (without businessId prefix)
  */

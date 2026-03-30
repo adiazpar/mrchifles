@@ -1,13 +1,11 @@
 'use client'
 
-import { PageHeader, MobileNav, PageTransition } from '@/components/layout'
-import { NavbarProvider } from '@/contexts/navbar-context'
-import { JoinBusinessProvider } from '@/contexts/join-business-context'
+import { PageTransition } from '@/components/layout'
 
 /**
  * Hub layout - Zone 2 navigation
- * Uses PageHeader in hub mode (app name, no back button)
- * Uses MobileNav in hub mode (action buttons instead of nav items)
+ * Shell (header, nav) is provided by AppShell in root layout.
+ * This layout just adds the page transition wrapper.
  */
 export default function HubLayout({
   children,
@@ -15,18 +13,8 @@ export default function HubLayout({
   children: React.ReactNode
 }) {
   return (
-    <NavbarProvider>
-      <JoinBusinessProvider>
-        <div className="h-full">
-          <PageHeader />
-          <div className="main-scroll-container flex flex-col h-full overflow-y-auto">
-            <PageTransition>
-              {children}
-            </PageTransition>
-          </div>
-          <MobileNav />
-        </div>
-      </JoinBusinessProvider>
-    </NavbarProvider>
+    <PageTransition>
+      {children}
+    </PageTransition>
   )
 }

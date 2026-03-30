@@ -47,7 +47,7 @@ const BusinessContext = createContext<BusinessContextType | null>(null)
 
 interface BusinessProviderProps {
   children: ReactNode
-  businessId: string
+  businessId: string | null
 }
 
 export function BusinessProvider({ children, businessId }: BusinessProviderProps) {
@@ -59,6 +59,15 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // No business ID - reset state and skip validation
+    if (!businessId) {
+      setBusiness(null)
+      setRole(null)
+      setIsLoading(false)
+      setError(null)
+      return
+    }
+
     // Wait for auth to be ready
     if (authLoading) return
 

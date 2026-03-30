@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronDown } from 'lucide-react'
-import { getRouteConfig, buildBusinessUrl } from '@/lib/navigation'
+import { getRouteConfig, buildBusinessUrl, getBusinessIdFromPath } from '@/lib/navigation'
 import { UserMenu } from './user-menu'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useOptionalBusiness } from '@/contexts/business-context'
@@ -25,17 +25,27 @@ import { useOptionalBusiness } from '@/contexts/business-context'
 export function PageHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const { pendingHref } = useNavbar()
+  const { pendingHref, setPendingHref } = useNavbar()
   const businessContext = useOptionalBusiness()
   const [isScrolled, setIsScrolled] = useState(false)
 
-  // Determine if we're in hub context (no business provider)
-  const isHubContext = !businessContext
+  // Get businessId from pathname (immediate) for context detection
+  // This prevents flicker while waiting for context API to load
+  const businessIdFromPath = getBusinessIdFromPath(pathname)
+
+  // Determine if we're in hub context based on pathname
+  const isHubContext = !businessIdFromPath
   const business = businessContext?.business ?? null
-  const businessId = businessContext?.businessId ?? null
+  const businessId = businessContext?.businessId ?? businessIdFromPath
 
   // Some hub pages (like account) should show a back button
   const isHubPageWithBackButton = isHubContext && pathname === '/account'
+
+  // Fade out during cross-context navigation (hub <-> business)
+  const isCrossContextNav = pendingHref && (
+    (isHubContext && !pendingHref.startsWith('/account') && !pendingHref.startsWith('/join')) ||
+    (!isHubContext && (pendingHref === '/' || pendingHref.startsWith('/account') || pendingHref.startsWith('/join')))
+  )
 
   // Track scroll position to show shadow
   useEffect(() => {
@@ -68,22 +78,34 @@ export function PageHeader() {
       router.back()
     } else if (backTo && businessId) {
       // Build business-scoped URL for parent page
-      router.push(buildBusinessUrl(businessId, backTo))
+      const href = buildBusinessUrl(businessId, backTo)
+      setPendingHref(href)
+      router.push(href)
     } else {
       // Go to hub (business selector)
+      setPendingHref('/')
       router.push('/')
     }
   }
 
   // Navigate to hub to switch business
   const handleBusinessClick = () => {
+    setPendingHref('/')
     router.push('/')
   }
 
+  // Style for fading inner content during cross-context navigation
+  const contentFadeStyle = {
+    opacity: isCrossContextNav ? 0 : 1,
+    transition: 'opacity 150ms ease-out',
+  }
+
   return (
-    <header className={`page-header page-header--fixed ${isScrolled ? 'page-header--scrolled' : ''}`}>
+    <header
+      className={`page-header page-header--fixed ${isScrolled ? 'page-header--scrolled' : ''}`}
+    >
       {/* Left column */}
-      <div className="page-header__content">
+      <div className="page-header__content" style={contentFadeStyle}>
         {(!isHubContext || isHubPageWithBackButton) && (
           <button
             type="button"
@@ -97,7 +119,7 @@ export function PageHeader() {
       </div>
 
       {/* Center column */}
-      <div className="page-header__titles">
+      <div className="page-header__titles" style={contentFadeStyle}>
         {isHubPageWithBackButton && title ? (
           // Hub pages with back button show title instead of logo
           <>
@@ -140,7 +162,7 @@ export function PageHeader() {
       </div>
 
       {/* Right column - user menu */}
-      <div className="page-header__actions">
+      <div className="page-header__actions" style={contentFadeStyle}>
         <UserMenu />
       </div>
     </header>
