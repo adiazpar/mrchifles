@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronRight, X } from 'lucide-react'
-import { BusinessIcon, SearchIcon } from '@/components/icons'
+import { BusinessIcon, SearchIcon, FoodBeverageIcon, ServicesIcon } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { Spinner } from '@/components/ui'
@@ -20,14 +20,20 @@ interface Business {
   icon: string | null
 }
 
-// Default emojis for each business type
-const DEFAULT_TYPE_ICONS: Record<BusinessType, string> = {
+// Default emojis for each business type (fallback for types without custom icons)
+const DEFAULT_TYPE_EMOJIS: Record<BusinessType, string> = {
   food: '🍽️',
   retail: '🛍️',
   services: '✂️',
   wholesale: '📦',
   manufacturing: '🏭',
   other: '💼',
+}
+
+// Custom icon components for business types (takes precedence over emojis)
+const BUSINESS_TYPE_ICONS: Partial<Record<BusinessType, React.ComponentType<{ className?: string }>>> = {
+  food: FoodBeverageIcon,
+  services: ServicesIcon,
 }
 
 /**
@@ -127,14 +133,20 @@ export default function HubPage() {
       )
     }
 
-    // If icon is an emoji
+    // If icon is an emoji (custom set by user)
     if (icon) {
       return <span className="text-2xl">{icon}</span>
     }
 
+    // Use custom icon component for business type if available
+    if (type && BUSINESS_TYPE_ICONS[type]) {
+      const IconComponent = BUSINESS_TYPE_ICONS[type]
+      return <IconComponent className="w-8 h-8 text-brand" />
+    }
+
     // Fall back to default emoji for business type
-    if (type && DEFAULT_TYPE_ICONS[type]) {
-      return <span className="text-2xl">{DEFAULT_TYPE_ICONS[type]}</span>
+    if (type && DEFAULT_TYPE_EMOJIS[type]) {
+      return <span className="text-2xl">{DEFAULT_TYPE_EMOJIS[type]}</span>
     }
 
     // Ultimate fallback

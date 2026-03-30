@@ -105,7 +105,7 @@ Businesses have a `type` and optional `icon` field:
 
 | Type | Default Icon | Description |
 |------|--------------|-------------|
-| `food` | 🍽️ | Food & beverage |
+| `food` | 🍽️ | Culinary |
 | `retail` | 🛍️ | Retail stores |
 | `services` | ✂️ | Service providers |
 | `wholesale` | 📦 | Wholesale distributors |

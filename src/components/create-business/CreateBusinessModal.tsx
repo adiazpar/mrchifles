@@ -12,6 +12,7 @@ import {
   COMMON_TIMEZONES,
   getCurrencyConfig,
 } from '@/lib/locale-config'
+import { FoodBeverageIcon, ServicesIcon } from '@/components/icons'
 import type { UseCreateBusinessReturn, BusinessType } from '@/hooks'
 
 interface CreateBusinessModalProps {
@@ -130,6 +131,24 @@ interface NameAndTypeContentProps {
   setType: (type: BusinessType) => void
 }
 
+// Custom icon components for business types (takes precedence over emojis)
+const BUSINESS_TYPE_ICONS: Partial<Record<string, React.ComponentType<{ className?: string }>>> = {
+  food: FoodBeverageIcon,
+  services: ServicesIcon,
+}
+
+function getBusinessTypeIcon(typeValue: string, emoji: string, isSelected: boolean) {
+  const IconComponent = BUSINESS_TYPE_ICONS[typeValue]
+  if (IconComponent) {
+    return (
+      <IconComponent
+        className={`w-8 h-8 ${isSelected ? 'text-brand' : 'text-text-secondary'}`}
+      />
+    )
+  }
+  return <span className="text-2xl">{emoji}</span>
+}
+
 function NameAndTypeContent({ name, setName, type, setType }: NameAndTypeContentProps) {
   return (
     <>
@@ -169,7 +188,7 @@ function NameAndTypeContent({ name, setName, type, setType }: NameAndTypeContent
                   : 'border-border hover:border-brand-300'
               }`}
             >
-              <span className="text-2xl">{bt.icon}</span>
+              {getBusinessTypeIcon(bt.value, bt.icon, type === bt.value)}
               <span className="text-sm font-medium text-text-primary">{bt.label}</span>
             </button>
           ))}
@@ -320,6 +339,18 @@ interface LogoUploadContentProps {
   clearLogo: () => void
 }
 
+function getDefaultIconForType(businessType: BusinessType | null) {
+  if (!businessType) return <span className="text-5xl">💼</span>
+
+  const IconComponent = BUSINESS_TYPE_ICONS[businessType]
+  if (IconComponent) {
+    return <IconComponent className="w-14 h-14 text-brand" />
+  }
+
+  const typeConfig = BUSINESS_TYPES.find(t => t.value === businessType)
+  return <span className="text-5xl">{typeConfig?.icon || '💼'}</span>
+}
+
 function LogoUploadContent({
   businessType,
   logoPreview,
@@ -327,8 +358,6 @@ function LogoUploadContent({
   clearLogo,
 }: LogoUploadContentProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const typeConfig = BUSINESS_TYPES.find(t => t.value === businessType)
-  const defaultIcon = typeConfig?.icon || '💼'
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -366,7 +395,7 @@ function LogoUploadContent({
                   unoptimized
                 />
               ) : (
-                <span className="text-5xl">{defaultIcon}</span>
+                getDefaultIconForType(businessType)
               )}
             </div>
             {logoPreview && (
