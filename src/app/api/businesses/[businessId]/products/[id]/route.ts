@@ -4,6 +4,7 @@ import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { uploadProductIcon, deleteProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
 import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
+import { canManageBusiness } from '@/lib/business-auth'
 import { Schemas } from '@/lib/schemas'
 
 /**
@@ -12,6 +13,11 @@ import { Schemas } from '@/lib/schemas'
  * Update a product. Accepts FormData with optional icon file.
  */
 export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
+  // Only partners and owners can modify products
+  if (!canManageBusiness(access.role)) {
+    return HttpResponse.forbidden('Only partners and owners can modify products')
+  }
+
   const id = routeParams?.id
   if (!id) {
     return HttpResponse.badRequest('Product ID is required')
@@ -129,6 +135,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
  * Delete a product.
  */
 export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
+  // Only partners and owners can delete products
+  if (!canManageBusiness(access.role)) {
+    return HttpResponse.forbidden('Only partners and owners can delete products')
+  }
+
   const id = routeParams?.id
   if (!id) {
     return HttpResponse.badRequest('Product ID is required')

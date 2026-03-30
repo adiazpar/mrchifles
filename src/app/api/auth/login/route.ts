@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { verifyPassword, createToken, setAuthCookie } from '@/lib/simple-auth'
 import { validationError } from '@/lib/api-middleware'
 import { Schemas } from '@/lib/schemas'
+import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
 
 const loginSchema = z.object({
   email: Schemas.email(),
@@ -18,6 +19,21 @@ const loginSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit by IP
+    const clientIp = getClientIp(request)
+    const rateLimitResult = checkRateLimit(`login:${clientIp}`, RateLimits.login)
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
+          },
+        }
+      )
+    }
+
     const body = await request.json()
     const validation = loginSchema.safeParse(body)
 
