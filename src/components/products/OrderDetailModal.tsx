@@ -510,19 +510,19 @@ export function OrderDetailModal({
                   src="/animations/success.json"
                   loop={false}
                   autoplay={true}
-                  delay={500}
+                  delay={300}
                   style={{ width: 160, height: 160 }}
                 />
               )}
             </div>
             <p
-              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
+              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: editOrderSaved ? 1 : 0 }}
             >
               Order updated!
             </p>
             <p
-              className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
+              className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: editOrderSaved ? 1 : 0 }}
             >
               Changes have been saved
@@ -659,19 +659,19 @@ export function OrderDetailModal({
                   src="/animations/success.json"
                   loop={false}
                   autoplay={true}
-                  delay={500}
+                  delay={300}
                   style={{ width: 160, height: 160 }}
                 />
               )}
             </div>
             <p
-              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
+              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: orderReceived ? 1 : 0 }}
             >
               Stock updated!
             </p>
             <p
-              className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
+              className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: orderReceived ? 1 : 0 }}
             >
               The order has been received and inventory updated
@@ -700,19 +700,19 @@ export function OrderDetailModal({
                   src="/animations/error.json"
                   loop={false}
                   autoplay={true}
-                  delay={500}
+                  delay={300}
                   style={{ width: 160, height: 160 }}
                 />
               )}
             </div>
             <p
-              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
+              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: orderDeleted ? 1 : 0 }}
             >
               Order deleted
             </p>
             <p
-              className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
+              className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: orderDeleted ? 1 : 0 }}
             >
               The order has been deleted successfully

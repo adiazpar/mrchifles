@@ -121,15 +121,11 @@ export function NewOrderModal({
 }: NewOrderModalProps) {
   const receiptInputRef = useRef<HTMLInputElement>(null)
 
-  const handleClose = () => {
-    onClose()
-    onResetForm()
-  }
-
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleClose}
+      onClose={onClose}
+      onExitComplete={onResetForm}
       title="New Order"
       size="large"
     >
@@ -219,7 +215,7 @@ export function NewOrderModal({
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={handleClose}
+                onClick={onClose}
                 className="btn btn-secondary flex-1"
               >
                 Cancel
@@ -599,19 +595,19 @@ export function NewOrderModal({
                   src="/animations/success.json"
                   loop={false}
                   autoplay={true}
-                  delay={500}
+                  delay={300}
                   style={{ width: 160, height: 160 }}
                 />
               )}
             </div>
             <p
-              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
+              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: orderSaved ? 1 : 0 }}
             >
               Order registered!
             </p>
             <p
-              className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
+              className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: orderSaved ? 1 : 0 }}
             >
               The order has been saved successfully
@@ -622,7 +618,7 @@ export function NewOrderModal({
         <Modal.Footer>
           <button
             type="button"
-            onClick={handleClose}
+            onClick={onClose}
             className="btn btn-primary flex-1"
           >
             Close
