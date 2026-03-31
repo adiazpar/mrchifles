@@ -144,37 +144,73 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   const orderId = nanoid()
   const now = new Date()
+  const orderDate = new Date(dateStr)
+  const orderStatus = status === 'received' ? 'received' : 'pending'
+  const estimatedArrival = estimatedArrivalStr ? new Date(estimatedArrivalStr) : null
 
-  await db.insert(orders).values({
-    id: orderId,
-    businessId: access.businessId,
-    providerId: providerId || null,
-    date: new Date(dateStr),
-    total,
-    status: status === 'received' ? 'received' : 'pending',
-    estimatedArrival: estimatedArrivalStr ? new Date(estimatedArrivalStr) : null,
-    receipt: null,
-    notes: notes || null,
+  // Batch insert order + items in a single transaction
+  const itemValues = items.map(item => ({
+    id: nanoid(),
+    orderId,
+    productId: item.productId,
+    productName: item.productName,
+    quantity: item.quantity,
     createdAt: now,
-    updatedAt: now,
-  })
+  }))
 
-  // Create order items in a single batch insert
-  if (items.length > 0) {
-    await db.insert(orderItems).values(
-      items.map(item => ({
-        id: nanoid(),
-        orderId,
-        productId: item.productId,
-        productName: item.productName,
-        quantity: item.quantity,
-        createdAt: now,
-      }))
-    )
+  await db.batch([
+    db.insert(orders).values({
+      id: orderId,
+      businessId: access.businessId,
+      providerId: providerId || null,
+      date: orderDate,
+      total,
+      status: orderStatus,
+      estimatedArrival,
+      receipt: null,
+      notes: notes || null,
+      createdAt: now,
+      updatedAt: now,
+    }),
+    ...(itemValues.length > 0
+      ? [db.insert(orderItems).values(itemValues)]
+      : []),
+  ])
+
+  // Look up provider if needed
+  let provider = null
+  if (providerId) {
+    provider = await db
+      .select()
+      .from(providers)
+      .where(eq(providers.id, providerId))
+      .get() || null
   }
 
+  // Return full expanded order so client can append without refetching
   return NextResponse.json({
     success: true,
-    orderId,
+    order: {
+      id: orderId,
+      businessId: access.businessId,
+      providerId: providerId || null,
+      date: orderDate,
+      total,
+      status: orderStatus,
+      estimatedArrival,
+      receipt: null,
+      notes: notes || null,
+      createdAt: now,
+      updatedAt: now,
+      expand: {
+        provider,
+        'order_items(order)': itemValues.map(item => ({
+          ...item,
+          unitCost: null,
+          subtotal: null,
+          expand: { product: null },
+        })),
+      },
+    },
   })
 })

@@ -51,11 +51,10 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
   // Track timeout IDs for cleanup
   const timeoutIdsRef = useRef<NodeJS.Timeout[]>([])
 
-  // Reset state when modal opens (Fix #3: moved from render to useEffect)
+  // Reset state when modal opens
   const prevIsOpen = useRef(isOpen)
   useEffect(() => {
     if (isOpen && !prevIsOpen.current) {
-      // Modal just opened - reset to initial state
       setCurrentStep(initialStep)
       setTargetStep(initialStep)
       setPhase('idle')

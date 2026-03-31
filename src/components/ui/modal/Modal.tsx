@@ -35,7 +35,7 @@
 //
 'use client'
 
-import React, { useState, useEffect, Children, isValidElement, ReactElement } from 'react'
+import React, { useState, useEffect, useRef, Children, isValidElement, ReactElement } from 'react'
 import { X, ArrowLeft } from 'lucide-react'
 import { ModalProvider, useModalContext } from './ModalContext'
 import { ModalStep } from './ModalStep'
@@ -265,6 +265,10 @@ function ModalRoot({
   const [currentTitle, setCurrentTitle] = useState('')
   const [currentFooter, setCurrentFooter] = useState<React.ReactNode>(null)
 
+  // Ref for onExitComplete to avoid restarting close animation on parent re-renders
+  const onExitCompleteRef = useRef(onExitComplete)
+  onExitCompleteRef.current = onExitComplete
+
   // Check if this is a single-step modal (no Modal.Step children)
   const steps = Children.toArray(children).filter(
     (child): child is ReactElement<ModalStepProps> =>
@@ -282,11 +286,11 @@ function ModalRoot({
       const timer = setTimeout(() => {
         setRender(false)
         setClosing(false)
-        onExitComplete?.()
+        onExitCompleteRef.current?.()
       }, 200) // Match CSS modal-exit animation duration
       return () => clearTimeout(timer)
     }
-  }, [isOpen, render, onExitComplete])
+  }, [isOpen, render])
 
   if (!render) return null
 

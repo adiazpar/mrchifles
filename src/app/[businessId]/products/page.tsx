@@ -134,6 +134,7 @@ function AddProductModalWrapper({
 interface EditProductModalWrapperProps {
   isOpen: boolean
   onClose: () => void
+  onExitCleanup: () => void
   categories: ProductCategory[]
   editingProduct: Product | null
   onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<boolean>
@@ -146,6 +147,7 @@ interface EditProductModalWrapperProps {
 function EditProductModalWrapper({
   isOpen,
   onClose,
+  onExitCleanup,
   categories,
   editingProduct,
   onSubmit,
@@ -165,7 +167,8 @@ function EditProductModalWrapper({
 
   const handleExitComplete = useCallback(() => {
     resetForm(defaultCategoryId)
-  }, [resetForm, defaultCategoryId])
+    onExitCleanup()
+  }, [resetForm, defaultCategoryId, onExitCleanup])
 
   return (
     <EditProductModal
@@ -519,7 +522,6 @@ export default function ProductosPage() {
     if (compression.state.isProcessing) {
       compression.cancel()
     }
-    setEditingProduct(null)
     setIsModalOpen(false)
   }, [pipeline, compression])
 
@@ -604,50 +606,38 @@ export default function ProductosPage() {
 
     setIsSavingOrder(true)
     setError('')
+    setOrderSaved(true)
 
-    try {
-      const formData = new FormData()
-      formData.append('date', new Date().toISOString())
-      formData.append('total', totalNum.toString())
-      formData.append('status', 'pending')
-      if (orderNotes.trim()) formData.append('notes', orderNotes.trim())
-      if (orderEstimatedArrival) formData.append('estimatedArrival', new Date(orderEstimatedArrival).toISOString())
-      if (orderReceiptFile) formData.append('receipt', orderReceiptFile)
-      if (orderProvider) formData.append('providerId', orderProvider)
-      formData.append('items', JSON.stringify(orderItems.map(item => ({
-        productId: item.product.id,
-        productName: item.product.name,
-        quantity: item.quantity,
-      }))))
+    const formData = new FormData()
+    formData.append('date', new Date().toISOString())
+    formData.append('total', totalNum.toString())
+    formData.append('status', 'pending')
+    if (orderNotes.trim()) formData.append('notes', orderNotes.trim())
+    if (orderEstimatedArrival) formData.append('estimatedArrival', new Date(orderEstimatedArrival).toISOString())
+    if (orderReceiptFile) formData.append('receipt', orderReceiptFile)
+    if (orderProvider) formData.append('providerId', orderProvider)
+    formData.append('items', JSON.stringify(orderItems.map(item => ({
+      productId: item.product.id,
+      productName: item.product.name,
+      quantity: item.quantity,
+    }))))
 
-      const response = await fetch(`/api/businesses/${businessId}/orders`, {
-        method: 'POST',
-        body: formData,
-      })
+    // Fire and forget — append new order when API responds
+    fetch(`/api/businesses/${businessId}/orders`, {
+      method: 'POST',
+      body: formData,
+    }).then(async (response) => {
       const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to save order')
-        return false
+      if (response.ok && data.success && data.order) {
+        setOrders(prev => [data.order, ...prev])
       }
-
-      // Reload orders
-      const ordersResponse = await fetchDeduped(`/api/businesses/${businessId}/orders`)
-      const ordersData = await ordersResponse.json()
-
-      if (ordersResponse.ok && ordersData.success) {
-        setOrders(ordersData.orders)
-      }
-
-      setOrderSaved(true)
-      return true
-    } catch (err) {
+    }).catch(err => {
       console.error('Error saving order:', err)
-      setError('Failed to save order')
-      return false
-    } finally {
+    }).finally(() => {
       setIsSavingOrder(false)
-    }
+    })
+
+    return true
   }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, setOrders])
 
   const handleSaveEditOrder = useCallback(async (): Promise<boolean> => {
@@ -917,6 +907,7 @@ export default function ProductosPage() {
         <EditProductModalWrapper
           isOpen={isModalOpen && !!editingProduct}
           onClose={handleCloseModal}
+          onExitCleanup={() => setEditingProduct(null)}
           categories={categories}
           editingProduct={editingProduct}
           onSubmit={handleSubmitProduct}

@@ -159,7 +159,7 @@
 }
 
 .modal-exit {
-  animation: modal-exit var(--duration-normal) var(--ease-in);
+  animation: modal-exit var(--duration-normal) var(--ease-in) forwards;
 }
 
 @keyframes modal-enter {
@@ -189,7 +189,7 @@
 }
 
 .modal-backdrop-exit {
-  animation: backdrop-exit var(--duration-normal) ease-in;
+  animation: backdrop-exit var(--duration-normal) ease-in forwards;
 }
 
 @keyframes backdrop-enter {
