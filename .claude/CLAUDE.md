@@ -7,6 +7,7 @@ All project documentation and plans live in `.claude/docs/`:
 - **Guides** (read before building features that touch these areas):
   - `.claude/docs/backend-patterns.md` - API routes, auth, validation, rate limiting
   - `.claude/docs/performance-patterns.md` - Optimistic UI, access caching, session caches, icon uploads
+  - `.claude/docs/modal-system.md` - Modal compound component API, rules, and patterns
   - `.claude/docs/ai-product-pipeline.md` - AI snap-to-add pipeline
 
 ## Project Overview
@@ -236,85 +237,15 @@ import { SearchIcon, BusinessIcon, CashIcon } from '@/components/icons'
 
 **Custom icons include:** Business type icons (FoodBeverageIcon, RetailIcon, ServicesIcon, WholesaleIcon), navigation icons (HomeIcon, SalesIcon, CashIcon, ProductsIcon, ReportsIcon), and many utility icons. Check `src/components/icons/` for the full list.
 
-### Modal Component (IMPORTANT)
-When creating multi-step modals, `Modal.Footer` **MUST be a direct child** of `Modal.Step`:
+### Modal Component
 
-```tsx
-// CORRECT - Footer extracted properly, no extra padding
-<Modal.Step title="Example">
-  <MyContentComponent />   {/* Returns only Modal.Item elements */}
-  <Modal.Footer>           {/* Direct child - works! */}
-    <button>Save</button>
-  </Modal.Footer>
-</Modal.Step>
+**MUST READ before building modals:** `.claude/docs/modal-system.md`
 
-// WRONG - Footer inside sub-component, gets double padding
-<Modal.Step title="Example">
-  <MyStepComponent />      {/* Returns Modal.Item + Modal.Footer - broken! */}
-</Modal.Step>
-```
-
-**Why:** Modal scans direct children for `_isModalStep` and `_isModalFooter` markers. Wrapper components that return `Modal.Step` or `Modal.Footer` are invisible to this scan — they get filtered out, breaking step indices and footer detection.
-
-**Rules:**
-1. `Modal.Step` must be a **direct child** of `Modal` (no wrapper components like `DeleteConfirmationStep`)
-2. `Modal.Footer` must be a **direct child** of `Modal.Step`
-3. For reusable content, extract content-only components that return `Modal.Item` elements
-4. For buttons needing `useMorphingModal()`, create separate button components
-
-### Multi-Step Modal Navigation
-
-- Use `goToStep(index)` from `useMorphingModal()` to jump between steps
-- Use `backStep` prop on `Modal.Step` to override default back navigation
-- Footer updates based on `targetStep` during transitions, animates height automatically
-
-### Modal Lottie Animations
-
-Use **optimistic UI** for success/error steps — navigate instantly, API runs in background:
-
-```tsx
-// Handler: instant feedback, API in background
-const handleDelete = () => {
-  setItemDeleted(true)
-  goToStep(3)
-  onDelete(itemId) // fire and forget
-}
-
-// Success step with Lottie:
-<Modal.Step title="Item Deleted" hideBackButton>
-  <Modal.Item>
-    <div className="flex flex-col items-center text-center py-4">
-      <div style={{ width: 160, height: 160 }}>
-        {itemDeleted && (
-          <LottiePlayer
-            src="/animations/error.json"
-            loop={false}
-            autoplay={true}
-            delay={300}  // Match modal transition duration
-            style={{ width: 160, height: 160 }}
-          />
-        )}
-      </div>
-      <p
-        className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
-        style={{ opacity: itemDeleted ? 1 : 0 }}
-      >Item Deleted</p>
-    </div>
-  </Modal.Item>
-  <Modal.Footer>
-    <button onClick={handleClose} className="btn btn-primary flex-1">Done</button>
-  </Modal.Footer>
-</Modal.Step>
-```
-
-**Key points:**
-- `delay={300}` matches modal transition so Lottie plays when fade-in completes
-- Set state and navigate BEFORE the API call (optimistic)
-- See `.claude/docs/performance-patterns.md` for full optimistic UI guidelines
-
-**Available animations:**
-- `/animations/success.json` - Green checkmark (save, create, receive)
-- `/animations/error.json` - Red X (deletions)
+Key rules (see guide for details):
+- `Modal.Step` and `Modal.Footer` must be **direct children** (no wrapper components)
+- Separate add/edit into different modals (never combine with conditional rendering)
+- Clean up state in `onExitComplete`, never in `onClose`
+- Use optimistic UI for success steps (navigate before API call)
 
 ---
 
