@@ -457,7 +457,7 @@ export default function ProductosPage() {
       const data = new FormData()
       data.append('name', formData.name.trim())
       data.append('price', priceNum.toString())
-      if (formData.categoryId) data.append('categoryId', formData.categoryId)
+      data.append('categoryId', formData.categoryId || '')
       data.append('active', formData.active.toString())
       if (formData.generatedIconBlob) {
         data.append('icon', formData.generatedIconBlob, 'icon.png')

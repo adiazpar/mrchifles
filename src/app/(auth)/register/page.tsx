@@ -12,7 +12,6 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [name, setName] = useState('')
-  const [businessName, setBusinessName] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -43,7 +42,6 @@ export default function RegisterPage() {
             email,
             password,
             name,
-            businessName: businessName || undefined,
           }),
         })
 
@@ -55,7 +53,7 @@ export default function RegisterPage() {
         }
 
         // Success - redirect to dashboard
-        router.push('/home')
+        router.push('/')
         router.refresh()
       } catch {
         setError('Connection error')
@@ -63,7 +61,7 @@ export default function RegisterPage() {
         setIsLoading(false)
       }
     },
-    [email, password, passwordConfirm, name, businessName, router]
+    [email, password, passwordConfirm, name, router]
   )
 
   return (
@@ -100,14 +98,6 @@ export default function RegisterPage() {
             placeholder="tu@email.com"
             autoComplete="email"
             required
-          />
-
-          <Input
-            label="Business name (optional)"
-            type="text"
-            value={businessName}
-            onChange={(e) => setBusinessName(e.target.value)}
-            placeholder="My Business"
           />
 
           <div>
