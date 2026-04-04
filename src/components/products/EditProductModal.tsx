@@ -199,7 +199,7 @@ export function EditProductModal({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-sm text-text-tertiary">
-              {!iconPreview ? 'No icon' : presetEmoji ? (getPresetIcon(presetEmoji)?.label || 'Preset') : 'Custom'}
+              {!iconPreview ? 'No icon' : presetEmoji ? `Preset ${PRESET_ICONS.findIndex(p => p.id === presetEmoji) + 1}` : 'Custom'}
             </span>
             <button
               type="button"
