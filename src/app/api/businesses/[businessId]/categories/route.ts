@@ -5,7 +5,6 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
-import { DEFAULT_CATEGORIES } from '@/lib/products'
 import { Schemas } from '@/lib/schemas'
 
 const createCategorySchema = z.object({
@@ -20,32 +19,14 @@ const createCategorySchema = z.object({
  */
 export const GET = withBusinessAuth(async (_request, access) => {
   // Check for existing categories
-  let categories = await db
+  const categories = await db
     .select()
     .from(productCategories)
     .where(eq(productCategories.businessId, access.businessId))
     .orderBy(asc(productCategories.sortOrder), asc(productCategories.name))
 
-  // If no categories exist, seed with defaults
-  if (categories.length === 0) {
-    const now = new Date()
-    const newCategories = DEFAULT_CATEGORIES.map((cat) => ({
-      id: nanoid(),
-      businessId: access.businessId,
-      name: cat.name,
-      sortOrder: cat.sortOrder,
-      createdAt: now,
-      updatedAt: now,
-    }))
-
-    await db.insert(productCategories).values(newCategories)
-
-    categories = await db
-      .select()
-      .from(productCategories)
-      .where(eq(productCategories.businessId, access.businessId))
-      .orderBy(asc(productCategories.sortOrder), asc(productCategories.name))
-  }
+  // TODO: Add auto-seeding of default categories based on business type
+  // For now, users create their own categories via Product Settings
 
   return NextResponse.json({
     success: true,
