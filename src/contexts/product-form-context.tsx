@@ -3,6 +3,8 @@
 import { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react'
 import type { Product } from '@/types'
 import type { PipelineStep } from '@/hooks'
+import type { IconType } from '@/components/products/ProductModal'
+import { isEmoji } from '@/lib/utils'
 
 // ============================================
 // TYPES
@@ -16,6 +18,8 @@ interface ProductFormState {
   active: boolean
   iconPreview: string | null
   generatedIconBlob: Blob | null
+  iconType: IconType
+  presetEmoji: string | null
 
   // Editing state
   editingProduct: Product | null
@@ -47,6 +51,8 @@ interface ProductFormActions {
   setActive: (active: boolean) => void
   setIconPreview: (preview: string | null) => void
   setGeneratedIconBlob: (blob: Blob | null) => void
+  setIconType: (type: IconType) => void
+  setPresetEmoji: (emoji: string | null) => void
   clearIcon: () => void
 
   // Editing state
@@ -102,6 +108,8 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
   const [active, setActive] = useState(true)
   const [iconPreview, setIconPreview] = useState<string | null>(null)
   const [generatedIconBlob, setGeneratedIconBlob] = useState<Blob | null>(null)
+  const [iconType, setIconType] = useState<IconType>(null)
+  const [presetEmoji, setPresetEmoji] = useState<string | null>(null)
 
   // Editing state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -133,6 +141,8 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
   const clearIcon = useCallback(() => {
     setIconPreview(null)
     setGeneratedIconBlob(null)
+    setIconType(null)
+    setPresetEmoji(null)
   }, [])
 
   // Reset form
@@ -143,6 +153,8 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     setActive(true)
     setIconPreview(null)
     setGeneratedIconBlob(null)
+    setIconType(null)
+    setPresetEmoji(null)
     setEditingProduct(null)
     setError('')
     setProductDeleted(false)
@@ -158,8 +170,20 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     setPrice(product.price.toFixed(2))
     setCategoryId(product.categoryId || '')
     setActive(product.status === 'active')
-    setIconPreview(getIconUrl(product))
+    const iconUrl = getIconUrl(product)
+    setIconPreview(iconUrl)
     setGeneratedIconBlob(null)
+    // Detect icon type
+    if (iconUrl && isEmoji(iconUrl)) {
+      setIconType('preset')
+      setPresetEmoji(iconUrl)
+    } else if (iconUrl) {
+      setIconType('custom')
+      setPresetEmoji(null)
+    } else {
+      setIconType(null)
+      setPresetEmoji(null)
+    }
     setNewStockValue(product.stock ?? 0)
     setError('')
     setPipelineStep('idle')
@@ -174,6 +198,8 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     active,
     iconPreview,
     generatedIconBlob,
+    iconType,
+    presetEmoji,
     editingProduct,
     newStockValue,
     isAdjusting,
@@ -193,6 +219,8 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     setActive,
     setIconPreview,
     setGeneratedIconBlob,
+    setIconType,
+    setPresetEmoji,
     clearIcon,
     setEditingProduct,
     setNewStockValue,
@@ -239,12 +267,15 @@ export function useProductForm() {
 
 /** Hook for form validation state */
 export function useProductFormValidation() {
-  const { name, price, editingProduct, categoryId, active, generatedIconBlob, iconPreview } = useProductForm()
+  const { name, price, editingProduct, categoryId, active, generatedIconBlob, iconPreview, iconType, presetEmoji } = useProductForm()
 
   const isFormValid = name.trim() && price && parseFloat(price) >= 0
 
-  // Detect icon changes: new icon set, or existing icon cleared
-  const iconChanged = generatedIconBlob !== null || (editingProduct?.icon && !iconPreview)
+  // Detect icon changes: new blob, preset changed, or icon cleared
+  const iconChanged = generatedIconBlob !== null ||
+    (editingProduct?.icon && !iconPreview) ||
+    (iconType === 'preset' && presetEmoji !== editingProduct?.icon) ||
+    (iconType === null && !!editingProduct?.icon)
 
   const hasChanges = !editingProduct || (
     name.trim() !== editingProduct.name ||

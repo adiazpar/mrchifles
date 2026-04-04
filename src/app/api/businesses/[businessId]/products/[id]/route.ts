@@ -23,22 +23,6 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     return HttpResponse.badRequest('Product ID is required')
   }
 
-  // Verify product exists and belongs to business
-  const [existingProduct] = await db
-    .select()
-    .from(products)
-    .where(
-      and(
-        eq(products.id, id),
-        eq(products.businessId, access.businessId)
-      )
-    )
-    .limit(1)
-
-  if (!existingProduct) {
-    return HttpResponse.notFound('Product not found')
-  }
-
   const formData = await request.formData()
   const name = formData.get('name') as string | null
   const price = formData.get('price') as string | null
@@ -46,6 +30,8 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   const categoryId = formData.get('categoryId') as string | null
   const active = formData.get('active') as string | null
   const iconFile = formData.get('icon') as File | null
+  const presetIcon = formData.get('presetIcon') as string | null
+  const clearIconFlag = formData.get('clearIcon') as string | null
 
   const updateData: Record<string, unknown> = {}
 
@@ -89,21 +75,28 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     updateData.status = active === 'true' ? 'active' : 'inactive'
   }
 
-  // Upload new icon if provided
+  // Handle icon changes
   if (iconFile && iconFile.size > 0) {
+    // Custom icon upload (AI-generated or user-uploaded)
     try {
       const base64ForValidation = await fileToBase64(iconFile)
       const { valid } = validateIconSize(base64ForValidation)
       if (!valid) {
         return HttpResponse.badRequest('Icon is too large. Maximum size is 100KB.')
       }
-      if (existingProduct.icon) {
-        await deleteProductIcon(existingProduct.icon, id)
-      }
+      await deleteProductIcon(null, id)
       updateData.icon = await uploadProductIcon(iconFile, id)
     } catch (err) {
       console.error('Error uploading icon:', err)
     }
+  } else if (presetIcon) {
+    // Preset emoji icon - store the emoji string directly
+    await deleteProductIcon(null, id)
+    updateData.icon = presetIcon
+  } else if (clearIconFlag === 'true') {
+    // Icon was cleared
+    await deleteProductIcon(null, id)
+    updateData.icon = null
   }
 
   if (Object.keys(updateData).length === 0) {
@@ -112,16 +105,22 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
 
   updateData.updatedAt = new Date()
 
+  // Update with ownership check in WHERE (no separate verify query needed)
   await db
     .update(products)
     .set(updateData)
-    .where(eq(products.id, id))
+    .where(and(eq(products.id, id), eq(products.businessId, access.businessId)))
 
+  // Re-fetch full product for consistent response
   const [updatedProduct] = await db
     .select()
     .from(products)
     .where(eq(products.id, id))
     .limit(1)
+
+  if (!updatedProduct) {
+    return HttpResponse.notFound('Product not found')
+  }
 
   return NextResponse.json({
     success: true,

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { X, Plus, ChevronUp, ChevronRight } from 'lucide-react'
 import { TagsIcon, FilterIcon, SearchIcon, ImageAttachIcon } from '@/components/icons'
 import { Modal } from '@/components/ui'
-import { getProductIconUrl } from '@/lib/utils'
+import { getProductIconUrl, isEmoji } from '@/lib/utils'
 import { scrollToTop } from '@/lib/scroll'
 import {
   SORT_OPTIONS,
@@ -338,7 +338,9 @@ const ProductListItem = memo(function ProductListItem({
     >
       {/* Product Icon */}
       <div className="product-list-image">
-        {iconUrl ? (
+        {iconUrl && isEmoji(iconUrl) ? (
+          <span style={{ fontSize: 24 }}>{iconUrl}</span>
+        ) : iconUrl ? (
           <Image
             src={iconUrl}
             alt={product.name}

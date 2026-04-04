@@ -74,6 +74,13 @@ export function getProductIconUrl(
 }
 
 /**
+ * Check if a string is an emoji (not a URL or path)
+ */
+export function isEmoji(str: string): boolean {
+  return !str.startsWith('/') && !str.startsWith('data:') && !str.startsWith('http')
+}
+
+/**
  * Check if a string is a base64 data URL
  */
 export function isBase64DataUrl(str: string): boolean {

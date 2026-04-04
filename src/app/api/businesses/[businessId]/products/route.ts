@@ -45,6 +45,7 @@ export const POST = withBusinessAuth(async (request, access) => {
   const categoryId = formData.get('categoryId') as string | null
   const active = formData.get('active') as string
   const iconFile = formData.get('icon') as File | null
+  const presetIcon = formData.get('presetIcon') as string | null
 
   const validation = createProductSchema.safeParse({
     name,
@@ -63,7 +64,7 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   const productId = nanoid()
 
-  // Upload icon if provided
+  // Resolve icon: custom upload, preset emoji, or null
   let iconData: string | null = null
   if (iconFile && iconFile.size > 0) {
     try {
@@ -76,6 +77,8 @@ export const POST = withBusinessAuth(async (request, access) => {
     } catch (err) {
       console.error('Error processing icon:', err)
     }
+  } else if (presetIcon) {
+    iconData = presetIcon
   }
 
   const now = new Date()
