@@ -462,6 +462,11 @@ export default function ProductosPage() {
       data.append('active', formData.active.toString())
       if (formData.generatedIconBlob) {
         data.append('icon', formData.generatedIconBlob, 'icon.png')
+      } else if (formData.iconType === 'preset' && formData.presetEmoji) {
+        data.append('presetIcon', formData.presetEmoji)
+      } else if (formData.iconType === null) {
+        // Icon was cleared
+        data.append('clearIcon', 'true')
       }
 
       const url = editingProductId

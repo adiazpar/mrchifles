@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Plus, Minus } from 'lucide-react'
 import { CameraIcon, JoinIcon, ImageAttachIcon } from '@/components/icons'
+import { isEmoji } from '@/lib/utils'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
@@ -15,20 +16,6 @@ import type { ProductFormData } from './ProductModal'
 // ============================================
 
 const PRESET_ICONS = ['🛒', '📦', '🍽️', '☕', '🧴']
-
-function emojiToBlob(emoji: string): Promise<Blob> {
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 256
-    canvas.height = 256
-    const ctx = canvas.getContext('2d')!
-    ctx.font = '180px serif'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(emoji, 128, 140)
-    canvas.toBlob((blob) => resolve(blob!), 'image/png')
-  })
-}
 
 // ============================================
 // AI PIPELINE NAVIGATOR
@@ -79,7 +66,7 @@ export interface AddProductModalProps {
 // ============================================
 
 function SaveButton({ onSubmit }: { onSubmit: AddProductModalProps['onSubmit'] }) {
-  const { name, price, categoryId, active, generatedIconBlob, isSaving, setProductSaved } = useProductForm()
+  const { name, price, categoryId, active, generatedIconBlob, iconType, presetEmoji: formPresetEmoji, isSaving, setProductSaved } = useProductForm()
   const { isFormValid, hasChanges } = useProductFormValidation()
   const { goToStep } = useMorphingModal()
 
@@ -87,7 +74,7 @@ function SaveButton({ onSubmit }: { onSubmit: AddProductModalProps['onSubmit'] }
     setProductSaved(true)
     goToStep(4)
     onSubmit(
-      { name, price, categoryId, active, generatedIconBlob },
+      { name, price, categoryId, active, generatedIconBlob, iconType, presetEmoji: formPresetEmoji },
       null
     )
   }
@@ -119,13 +106,6 @@ export function AddProductModal({
   onAiPhotoCapture,
   onOpenSettings,
 }: AddProductModalProps) {
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
-
-  // Reset selected preset when modal opens/closes
-  useEffect(() => {
-    if (isOpen) setSelectedPreset(null)
-  }, [isOpen])
-
   const {
     name,
     setName,
@@ -138,6 +118,9 @@ export function AddProductModal({
     iconPreview,
     setIconPreview,
     setGeneratedIconBlob,
+    setIconType,
+    setPresetEmoji,
+    presetEmoji,
     clearIcon,
     isSaving,
     error,
@@ -219,7 +202,9 @@ export function AddProductModal({
           <label className="label">Icon</label>
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 rounded-lg overflow-hidden bg-bg-muted flex items-center justify-center flex-shrink-0">
-              {iconPreview ? (
+              {iconPreview && isEmoji(iconPreview) ? (
+                <span style={{ fontSize: 36 }}>{iconPreview}</span>
+              ) : iconPreview ? (
                 <Image
                   src={iconPreview}
                   alt="Product icon"
@@ -239,19 +224,17 @@ export function AddProductModal({
                 <button
                   key={emoji}
                   type="button"
-                  onClick={async () => {
-                    if (selectedPreset === emoji) {
-                      setSelectedPreset(null)
+                  onClick={() => {
+                    if (presetEmoji === emoji) {
                       clearIcon()
                       return
                     }
-                    setSelectedPreset(emoji)
-                    const blob = await emojiToBlob(emoji)
-                    const url = URL.createObjectURL(blob)
-                    setIconPreview(url)
-                    setGeneratedIconBlob(blob)
+                    setIconPreview(emoji)
+                    setGeneratedIconBlob(null)
+                    setIconType('preset')
+                    setPresetEmoji(emoji)
                   }}
-                  className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${selectedPreset === emoji ? 'bg-brand-subtle ring-2 ring-brand' : 'hover:bg-brand-subtle'}`}
+                  className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${presetEmoji === emoji ? 'bg-brand-subtle ring-2 ring-brand' : 'hover:bg-brand-subtle'}`}
                 >
                   <span style={{ fontSize: 26 }}>{emoji}</span>
                 </button>
@@ -261,12 +244,11 @@ export function AddProductModal({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-sm text-text-tertiary">
-              {!iconPreview ? 'No icon' : selectedPreset ? `Preset ${PRESET_ICONS.indexOf(selectedPreset) + 1}` : 'Custom'}
+              {!iconPreview ? 'No icon' : presetEmoji ? `Preset ${PRESET_ICONS.indexOf(presetEmoji) + 1}` : 'Custom'}
             </span>
             <button
               type="button"
               onClick={() => {
-                setSelectedPreset(null)
                 clearIcon()
               }}
               disabled={!iconPreview}
@@ -410,7 +392,9 @@ export function AddProductModal({
           <label className="label">Icon</label>
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 rounded-lg overflow-hidden bg-bg-muted flex items-center justify-center flex-shrink-0">
-              {iconPreview ? (
+              {iconPreview && isEmoji(iconPreview) ? (
+                <span style={{ fontSize: 36 }}>{iconPreview}</span>
+              ) : iconPreview ? (
                 <Image
                   src={iconPreview}
                   alt="Product icon"
@@ -430,19 +414,17 @@ export function AddProductModal({
                 <button
                   key={emoji}
                   type="button"
-                  onClick={async () => {
-                    if (selectedPreset === emoji) {
-                      setSelectedPreset(null)
+                  onClick={() => {
+                    if (presetEmoji === emoji) {
                       clearIcon()
                       return
                     }
-                    setSelectedPreset(emoji)
-                    const blob = await emojiToBlob(emoji)
-                    const url = URL.createObjectURL(blob)
-                    setIconPreview(url)
-                    setGeneratedIconBlob(blob)
+                    setIconPreview(emoji)
+                    setGeneratedIconBlob(null)
+                    setIconType('preset')
+                    setPresetEmoji(emoji)
                   }}
-                  className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${selectedPreset === emoji ? 'bg-brand-subtle ring-2 ring-brand' : 'hover:bg-brand-subtle'}`}
+                  className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${presetEmoji === emoji ? 'bg-brand-subtle ring-2 ring-brand' : 'hover:bg-brand-subtle'}`}
                 >
                   <span style={{ fontSize: 26 }}>{emoji}</span>
                 </button>
@@ -452,12 +434,11 @@ export function AddProductModal({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-sm text-text-tertiary">
-              {!iconPreview ? 'No icon' : selectedPreset ? `Preset ${PRESET_ICONS.indexOf(selectedPreset) + 1}` : 'Custom'}
+              {!iconPreview ? 'No icon' : presetEmoji ? `Preset ${PRESET_ICONS.indexOf(presetEmoji) + 1}` : 'Custom'}
             </span>
             <button
               type="button"
               onClick={() => {
-                setSelectedPreset(null)
                 clearIcon()
               }}
               disabled={!iconPreview}
