@@ -131,7 +131,12 @@
   z-index: var(--z-sticky);
   padding-bottom: env(safe-area-inset-bottom, 0);
   /* Animation properties for hide/show */
-  transition: transform var(--duration-slow) var(--ease-out-expo);
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  transition: transform var(--duration-slow) var(--ease-out-expo), box-shadow var(--duration-normal) ease;
+}
+
+.mobile-nav--shadow {
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .mobile-nav--hidden {

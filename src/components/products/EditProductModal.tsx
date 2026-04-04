@@ -1,8 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { ImageIcon, ArrowUp, ArrowDown } from 'lucide-react'
-import { TrashIcon, SlidersIcon } from '@/components/icons'
+import { ArrowUp, ArrowDown } from 'lucide-react'
+import { TrashIcon, SlidersIcon, ImageAttachIcon } from '@/components/icons'
 import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
@@ -269,11 +269,11 @@ export function EditProductModal({
         <Modal.Footer>
           {canDelete && (
             <Modal.GoToStepButton step={2} className="btn btn-secondary btn-icon">
-              <TrashIcon style={{ width: 16, height: 16 }} />
+              <TrashIcon className="text-error" style={{ width: 16, height: 16 }} />
             </Modal.GoToStepButton>
           )}
           <Modal.GoToStepButton step={1} className="btn btn-secondary btn-icon">
-            <SlidersIcon style={{ width: 16, height: 16 }} />
+            <SlidersIcon className="text-brand" style={{ width: 16, height: 16 }} />
           </Modal.GoToStepButton>
           <SaveButton onSubmit={onSubmit} />
         </Modal.Footer>
@@ -284,7 +284,7 @@ export function EditProductModal({
         {editingProduct && (
           <Modal.Item>
             <div className="flex flex-col items-center py-6">
-              <div className="w-56 h-56 rounded-3xl overflow-hidden flex items-center justify-center">
+              <div className="w-56 h-56 rounded-3xl overflow-hidden flex items-center justify-center bg-bg-muted">
                 {iconPreview ? (
                   <Image
                     src={iconPreview}
@@ -295,7 +295,7 @@ export function EditProductModal({
                     unoptimized
                   />
                 ) : (
-                  <ImageIcon className="w-20 h-20 text-text-tertiary" />
+                  <ImageAttachIcon className="w-20 h-20 text-text-tertiary" />
                 )}
               </div>
               <div className="font-medium text-lg mt-4">{editingProduct.name}</div>
