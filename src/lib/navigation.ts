@@ -1,10 +1,5 @@
-import {
-  Home,
-  ShoppingCart,
-  Package,
-  Banknote,
-  BarChart3,
-} from 'lucide-react'
+import { BarChart3 } from 'lucide-react'
+import { HomeIcon, SalesIcon, CashIcon, TagsIcon } from '@/components/icons'
 import type { ComponentType } from 'react'
 
 export interface NavItem {
@@ -32,10 +27,10 @@ export function getBusinessIdFromPath(pathname: string): string | null {
  * Navigation item templates (without businessId prefix)
  */
 const NAV_ITEM_TEMPLATES = [
-  { path: '/home', label: 'Home', icon: Home },
-  { path: '/sales', label: 'Sales', icon: ShoppingCart },
-  { path: '/cash', label: 'Cash', icon: Banknote },
-  { path: '/products', label: 'Products', icon: Package },
+  { path: '/home', label: 'Home', icon: HomeIcon },
+  { path: '/sales', label: 'Sales', icon: SalesIcon },
+  { path: '/cash', label: 'Cash', icon: CashIcon },
+  { path: '/products', label: 'Products', icon: TagsIcon },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
 ]
 
