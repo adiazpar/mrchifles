@@ -123,6 +123,19 @@ export function ProductSettingsModal({
   const [actionCompleted, setActionCompleted] = useState(false)
   const [actionMessage, setActionMessage] = useState('')
 
+  // Local preferences state (saved on Done, not on change)
+  const [localDefaultCategoryId, setLocalDefaultCategoryId] = useState<string | null>(defaultCategoryId)
+  const [localSortPreference, setLocalSortPreference] = useState<SortPreference>(sortPreference)
+
+  // Sync local state when props change (e.g., after save)
+  useEffect(() => {
+    setLocalDefaultCategoryId(defaultCategoryId)
+  }, [defaultCategoryId])
+
+  useEffect(() => {
+    setLocalSortPreference(sortPreference)
+  }, [sortPreference])
+
   // Reset form state when modal closes
   useEffect(() => {
     if (!isOpen) {
@@ -131,9 +144,11 @@ export function ProductSettingsModal({
       setDeletingCategory(null)
       setActionCompleted(false)
       setActionMessage('')
+      setLocalDefaultCategoryId(defaultCategoryId)
+      setLocalSortPreference(sortPreference)
       onClearError()
     }
-  }, [isOpen, onClearError])
+  }, [isOpen, onClearError, defaultCategoryId, sortPreference])
 
   // Handle category save (create or update)
   const handleSaveCategory = async () => {
@@ -396,13 +411,9 @@ export function ProductSettingsModal({
           <label htmlFor="default-category" className="label">Default Category</label>
           <select
             id="default-category"
-            value={defaultCategoryId || ''}
-            onChange={async (e) => {
-              const value = e.target.value || null
-              await onUpdateSettings({ defaultCategoryId: value })
-            }}
-            className={`input ${!defaultCategoryId ? 'select-placeholder' : ''}`}
-            disabled={isSavingSettings}
+            value={localDefaultCategoryId || ''}
+            onChange={(e) => setLocalDefaultCategoryId(e.target.value || null)}
+            className={`input ${!localDefaultCategoryId ? 'select-placeholder' : ''}`}
           >
             <option value="">None</option>
             {categories.map(cat => (
@@ -420,13 +431,9 @@ export function ProductSettingsModal({
           <label htmlFor="sort-preference" className="label">Default Sort</label>
           <select
             id="sort-preference"
-            value={sortPreference}
-            onChange={async (e) => {
-              const value = e.target.value as SortPreference
-              await onUpdateSettings({ sortPreference: value })
-            }}
+            value={localSortPreference}
+            onChange={(e) => setLocalSortPreference(e.target.value as SortPreference)}
             className="input"
-            disabled={isSavingSettings}
           >
             {SORT_OPTIONS.map(option => (
               <option key={option.value} value={option.value}>
@@ -440,9 +447,22 @@ export function ProductSettingsModal({
         </Modal.Item>
 
         <Modal.Footer>
-          <Modal.CancelBackButton className="btn btn-primary flex-1">
-            Done
+          <Modal.CancelBackButton className="btn btn-secondary flex-1">
+            Back
           </Modal.CancelBackButton>
+          <button
+            type="button"
+            className="btn btn-primary flex-1"
+            disabled={isSavingSettings || (localDefaultCategoryId === defaultCategoryId && localSortPreference === sortPreference)}
+            onClick={() => {
+              onUpdateSettings({
+                defaultCategoryId: localDefaultCategoryId,
+                sortPreference: localSortPreference,
+              })
+            }}
+          >
+            Save
+          </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
