@@ -2022,7 +2022,6 @@
 .section-tabs {
   display: flex;
   border-bottom: 1px solid var(--color-border);
-  margin-bottom: var(--space-4);
   background: var(--color-bg-base);
   /* Sticky below the fixed header */
   position: sticky;
@@ -2208,6 +2207,12 @@ filter: brightness(0.88);
 .caja-action-btn__icon {
 width: 22px;
 height: 22px;
+}
+
+/* Ghost variant - no background or border */
+.caja-action-btn--ghost {
+background: transparent;
+border-color: transparent;
 }
 
 /* Horizontal variant - icon on left, text on right */
