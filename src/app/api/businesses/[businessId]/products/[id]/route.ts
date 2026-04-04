@@ -161,11 +161,17 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
     return HttpResponse.notFound('Product not found')
   }
 
-  // Archive instead of hard delete — preserve icon for historical rendering
+  // Delete icon if it exists
+  if (existingProduct.icon) {
+    await deleteProductIcon(existingProduct.icon, id)
+  }
+
+  // Archive and clear icon reference
   await db
     .update(products)
     .set({
       status: 'archived',
+      icon: null,
       updatedAt: new Date(),
     })
     .where(eq(products.id, id))
