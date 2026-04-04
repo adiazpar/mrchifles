@@ -212,7 +212,7 @@ export function AddProductModal({
                   unoptimized
                 />
               ) : (
-                <ImageAttachIcon className="w-6 h-6 text-text-tertiary" />
+                <ImageAttachIcon size={36} className="text-text-tertiary" />
               )}
             </div>
             <div className="w-px self-stretch bg-border flex-shrink-0" />
@@ -402,7 +402,7 @@ export function AddProductModal({
                   unoptimized
                 />
               ) : (
-                <ImageAttachIcon className="w-6 h-6 text-text-tertiary" />
+                <ImageAttachIcon size={36} className="text-text-tertiary" />
               )}
             </div>
             <div className="w-px self-stretch bg-border flex-shrink-0" />
