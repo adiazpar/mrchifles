@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import Image from 'next/image'
-import { ImageIcon, ArrowUp, ArrowDown } from 'lucide-react'
+import { ImageIcon, Plus, Minus } from 'lucide-react'
 import { CameraIcon, JoinIcon } from '@/components/icons'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
@@ -255,7 +255,7 @@ export function AddProductModal({
                     tabIndex={-1}
                     aria-label="Increase price"
                   >
-                    <ArrowUp />
+                    <Plus />
                   </button>
                   <button
                     type="button"
@@ -267,7 +267,7 @@ export function AddProductModal({
                     tabIndex={-1}
                     aria-label="Decrease price"
                   >
-                    <ArrowDown />
+                    <Minus />
                   </button>
                 </div>
               </div>
@@ -403,7 +403,7 @@ export function AddProductModal({
                     tabIndex={-1}
                     aria-label="Increase price"
                   >
-                    <ArrowUp />
+                    <Plus />
                   </button>
                   <button
                     type="button"
@@ -415,7 +415,7 @@ export function AddProductModal({
                     tabIndex={-1}
                     aria-label="Decrease price"
                   >
-                    <ArrowDown />
+                    <Minus />
                   </button>
                 </div>
               </div>
