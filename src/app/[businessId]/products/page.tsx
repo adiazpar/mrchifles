@@ -250,6 +250,7 @@ export default function ProductosPage() {
     createCategory,
     updateCategory,
     deleteCategory,
+    reorderCategories,
     updateSettings,
     isCreating: isCreatingCategory,
     isUpdating: isUpdatingCategory,
@@ -949,6 +950,7 @@ export default function ProductosPage() {
           }
           return success
         }}
+        onReorderCategories={reorderCategories}
         defaultCategoryId={settings?.defaultCategoryId || null}
         sortPreference={settings?.sortPreference || 'name_asc'}
         isSavingSettings={isSavingSettings}

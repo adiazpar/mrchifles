@@ -1,8 +1,26 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, ChevronRight } from 'lucide-react'
+import { Plus, ChevronRight, GripVertical } from 'lucide-react'
 import { TrashIcon, EditIcon } from '@/components/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { SORT_OPTIONS } from '@/lib/products'
@@ -25,6 +43,7 @@ export interface ProductSettingsModalProps {
   onCreateCategory: (name: string) => Promise<ProductCategory | null>
   onUpdateCategory: (id: string, name: string) => Promise<ProductCategory | null>
   onDeleteCategory: (id: string) => Promise<boolean>
+  onReorderCategories: (categoryIds: string[]) => Promise<boolean>
 
   // Settings
   defaultCategoryId: string | null
@@ -81,6 +100,125 @@ interface DeleteCategoryButtonProps {
   onSetMessage: (v: string) => void
 }
 
+// ============================================
+// SORTABLE CATEGORY ITEM
+// ============================================
+
+interface SortableCategoryItemProps {
+  category: ProductCategory
+  onEditClick: () => void
+  onDeleteClick: () => void
+}
+
+function SortableCategoryItem({ category, onEditClick, onDeleteClick }: SortableCategoryItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="list-item-clickable list-item-flat"
+    >
+      <button
+        type="button"
+        className="p-1 text-text-tertiary cursor-grab active:cursor-grabbing touch-none"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical style={{ width: 16, height: 16 }} />
+      </button>
+      <div className="flex-1 min-w-0">
+        <span className="font-medium block truncate">{category.name}</span>
+      </div>
+      <button
+        type="button"
+        onClick={onEditClick}
+        className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
+        aria-label="Edit category"
+      >
+        <EditIcon style={{ width: 16, height: 16 }} />
+      </button>
+      <button
+        type="button"
+        onClick={onDeleteClick}
+        className="p-1 text-error hover:text-error transition-colors"
+        aria-label="Delete category"
+      >
+        <TrashIcon style={{ width: 16, height: 16 }} />
+      </button>
+    </div>
+  )
+}
+
+// ============================================
+// SORTABLE CATEGORY LIST
+// ============================================
+
+interface SortableCategoryListProps {
+  categories: ProductCategory[]
+  onReorder: (categoryIds: string[]) => Promise<boolean>
+  onEditCategory: (category: ProductCategory) => void
+  onDeleteCategory: (category: ProductCategory) => void
+}
+
+function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteCategory }: SortableCategoryListProps) {
+  const { goToStep } = useMorphingModal()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = categories.findIndex(c => c.id === active.id)
+    const newIndex = categories.findIndex(c => c.id === over.id)
+    const reordered = arrayMove(categories, oldIndex, newIndex)
+    onReorder(reordered.map(c => c.id))
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
+        {categories.map(category => (
+          <SortableCategoryItem
+            key={category.id}
+            category={category}
+            onEditClick={() => {
+              onEditCategory(category)
+              goToStep(2)
+            }}
+            onDeleteClick={() => {
+              onDeleteCategory(category)
+              goToStep(3)
+            }}
+          />
+        ))}
+      </SortableContext>
+    </DndContext>
+  )
+}
+
+// ============================================
+// BUTTON COMPONENTS (continued)
+// ============================================
+
 function DeleteCategoryButton({ onDelete, isDeleting, onSetCompleted, onSetMessage }: DeleteCategoryButtonProps) {
   const { goToStep } = useMorphingModal()
 
@@ -118,6 +256,7 @@ export function ProductSettingsModal({
   onCreateCategory,
   onUpdateCategory,
   onDeleteCategory,
+  onReorderCategories,
   defaultCategoryId,
   sortPreference,
   isSavingSettings,
@@ -234,39 +373,19 @@ export function ProductSettingsModal({
         )}
 
         <Modal.Item>
-          <div>
-            {categories.map(category => (
-              <div
-                key={category.id}
-                className="list-item-clickable list-item-flat"
-              >
-                <div className="flex-1 min-w-0">
-                  <span className="font-medium block truncate">{category.name}</span>
-                </div>
-                <Modal.GoToStepButton
-                  step={2}
-                  onClick={() => {
-                    setEditingCategory(category)
-                    setCategoryName(category.name)
-                    setActionCompleted(false)
-                  }}
-                  className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
-                >
-                  <EditIcon style={{ width: 16, height: 16 }} />
-                </Modal.GoToStepButton>
-                <Modal.GoToStepButton
-                  step={3}
-                  onClick={() => {
-                    setDeletingCategory(category)
-                    setActionCompleted(false)
-                  }}
-                  className="p-1 text-error hover:text-error transition-colors"
-                >
-                  <TrashIcon style={{ width: 16, height: 16 }} />
-                </Modal.GoToStepButton>
-              </div>
-            ))}
-          </div>
+          <SortableCategoryList
+            categories={categories}
+            onReorder={onReorderCategories}
+            onEditCategory={(category) => {
+              setEditingCategory(category)
+              setCategoryName(category.name)
+              setActionCompleted(false)
+            }}
+            onDeleteCategory={(category) => {
+              setDeletingCategory(category)
+              setActionCompleted(false)
+            }}
+          />
         </Modal.Item>
 
         <Modal.Footer>
