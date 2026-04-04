@@ -2,8 +2,8 @@
 
 import { memo } from 'react'
 import Image from 'next/image'
-import { X, Plus, ArrowUp, ChevronRight, ImageIcon } from 'lucide-react'
-import { TagsIcon, FilterIcon, SearchIcon } from '@/components/icons'
+import { X, Plus, ChevronUp, ChevronRight } from 'lucide-react'
+import { TagsIcon, FilterIcon, SearchIcon, ImageAttachIcon } from '@/components/icons'
 import { Modal } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { scrollToTop } from '@/lib/scroll'
@@ -184,7 +184,7 @@ export function ProductsTab({
                 onClick={scrollToTop}
                 className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
               >
-                <ArrowUp className="w-4 h-4" />
+                <ChevronUp className="w-4 h-4" />
                 Back to top
               </button>
             )}
@@ -350,7 +350,7 @@ const ProductListItem = memo(function ProductListItem({
             unoptimized
           />
         ) : (
-          <ImageIcon className="w-5 h-5 text-text-tertiary" />
+          <ImageAttachIcon className="w-5 h-5 text-text-tertiary" />
         )}
       </div>
 

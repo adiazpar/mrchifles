@@ -2,7 +2,8 @@
 
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import Image from 'next/image'
-import { ImageIcon, ArrowUp, ArrowDown, Pencil, Focus } from 'lucide-react'
+import { ImageIcon, ArrowUp, ArrowDown } from 'lucide-react'
+import { CameraIcon, JoinIcon } from '@/components/icons'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
@@ -134,7 +135,7 @@ export function AddProductModal({
               onClick={() => cameraInputRef.current?.click()}
               className="caja-action-btn caja-action-btn--large"
             >
-              <Focus className="caja-action-btn__icon text-brand" />
+              <CameraIcon className="caja-action-btn__icon text-brand" />
               <div className="caja-action-btn__text">
                 <span className="caja-action-btn__title">Snap to Add</span>
                 <span className="caja-action-btn__desc">Take a photo and AI fills the data</span>
@@ -145,7 +146,7 @@ export function AddProductModal({
               step={1}
               className="caja-action-btn caja-action-btn--large"
             >
-              <Pencil className="caja-action-btn__icon text-text-secondary" />
+              <JoinIcon className="caja-action-btn__icon text-text-secondary" />
               <div className="caja-action-btn__text">
                 <span className="caja-action-btn__title">Add manually</span>
                 <span className="caja-action-btn__desc">Enter the product data yourself</span>

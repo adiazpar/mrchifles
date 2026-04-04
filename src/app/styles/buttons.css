@@ -95,10 +95,7 @@
 
 /* Icon-only button (square) */
 .btn-icon {
-  padding: var(--space-2);
-  width: 40px;
-  height: 40px;
-  min-height: 40px;
+  padding: var(--space-3);
 }
 
 /* Payment buttons */
@@ -129,8 +126,3 @@
   min-height: 56px;
 }
 
-.btn-icon {
-  aspect-ratio: 1;
-  min-height: var(--touch-target-min);
-  padding: 0;
-}

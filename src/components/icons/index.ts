@@ -10,6 +10,7 @@ export { BusinessIcon } from './BusinessIcon'
 export { JoinIcon } from './JoinIcon'
 
 // Action icons
+export { CameraIcon } from './CameraIcon'
 export { PlusIcon } from './PlusIcon'
 export { TrashIcon } from './TrashIcon'
 export { EditIcon } from './EditIcon'
@@ -55,6 +56,7 @@ export { TagsIcon } from './TagsIcon'
 export { PackageIcon } from './PackageIcon'
 export { WarehouseIcon } from './WarehouseIcon'
 export { ImageIcon } from './ImageIcon'
+export { ImageAttachIcon } from './ImageAttachIcon'
 export { VanIcon } from './VanIcon'
 
 // Business type icons

@@ -1,7 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { Trash2, ImageIcon, ArrowUp, ArrowDown, SlidersHorizontal } from 'lucide-react'
+import { ImageIcon, ArrowUp, ArrowDown } from 'lucide-react'
+import { TrashIcon, SlidersIcon } from '@/components/icons'
 import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
@@ -267,12 +268,12 @@ export function EditProductModal({
 
         <Modal.Footer>
           {canDelete && (
-            <Modal.GoToStepButton step={2} className="btn btn-secondary">
-              <Trash2 className="w-5 h-5" />
+            <Modal.GoToStepButton step={2} className="btn btn-secondary btn-icon">
+              <TrashIcon style={{ width: 16, height: 16 }} />
             </Modal.GoToStepButton>
           )}
-          <Modal.GoToStepButton step={1} className="btn btn-secondary">
-            <SlidersHorizontal className="w-5 h-5" />
+          <Modal.GoToStepButton step={1} className="btn btn-secondary btn-icon">
+            <SlidersIcon style={{ width: 16, height: 16 }} />
           </Modal.GoToStepButton>
           <SaveButton onSubmit={onSubmit} />
         </Modal.Footer>
