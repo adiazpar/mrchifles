@@ -217,18 +217,17 @@ export function EditProductModal({
             </div>
             </div>
           </div>
-          {iconPreview && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedPreset(null)
-                clearIcon()
-              }}
-              className="text-xs text-text-tertiary hover:text-text-primary transition-colors mt-1"
-            >
-              Reset icon
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedPreset(null)
+              clearIcon()
+            }}
+            disabled={!iconPreview}
+            className="text-sm text-error hover:text-error transition-colors mt-2 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            Reset icon
+          </button>
         </Modal.Item>
 
         {/* Name */}

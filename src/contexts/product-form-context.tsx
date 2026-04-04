@@ -239,16 +239,19 @@ export function useProductForm() {
 
 /** Hook for form validation state */
 export function useProductFormValidation() {
-  const { name, price, editingProduct, categoryId, active, generatedIconBlob } = useProductForm()
+  const { name, price, editingProduct, categoryId, active, generatedIconBlob, iconPreview } = useProductForm()
 
   const isFormValid = name.trim() && price && parseFloat(price) >= 0
+
+  // Detect icon changes: new icon set, or existing icon cleared
+  const iconChanged = generatedIconBlob !== null || (editingProduct?.icon && !iconPreview)
 
   const hasChanges = !editingProduct || (
     name.trim() !== editingProduct.name ||
     parseFloat(price) !== editingProduct.price ||
     (categoryId || null) !== (editingProduct.categoryId || null) ||
     active !== (editingProduct.status === 'active') ||
-    generatedIconBlob !== null
+    iconChanged
   )
 
   return { isFormValid, hasChanges }
