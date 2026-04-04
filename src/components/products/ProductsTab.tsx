@@ -164,7 +164,7 @@ export function ProductsTab({
                   <p>No products found matching that criteria</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div>
                   {filteredProducts.map((product) => (
                     <ProductListItem
                       key={product.id}
