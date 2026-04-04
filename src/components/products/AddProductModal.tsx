@@ -120,6 +120,12 @@ export function AddProductModal({
   onOpenSettings,
 }: AddProductModalProps) {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
+
+  // Reset selected preset when modal opens/closes
+  useEffect(() => {
+    if (isOpen) setSelectedPreset(null)
+  }, [isOpen])
+
   const {
     name,
     setName,
@@ -227,7 +233,8 @@ export function AddProductModal({
               )}
             </div>
             <div className="w-px self-stretch bg-border flex-shrink-0" />
-            <div className="flex-1 min-w-0 flex items-center gap-2 overflow-x-auto scrollbar-hidden">
+            <div className="flex-1 min-w-0 h-16 rounded-lg bg-bg-muted overflow-hidden">
+            <div className="h-full flex items-center gap-2 px-2 overflow-x-auto scrollbar-hidden">
               {PRESET_ICONS.map((emoji) => (
                 <button
                   key={emoji}
@@ -244,13 +251,26 @@ export function AddProductModal({
                     setIconPreview(url)
                     setGeneratedIconBlob(blob)
                   }}
-                  className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${selectedPreset === emoji ? 'bg-brand-subtle ring-2 ring-brand' : 'bg-bg-muted hover:bg-brand-subtle'}`}
+                  className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${selectedPreset === emoji ? 'bg-brand-subtle ring-2 ring-brand' : 'hover:bg-brand-subtle'}`}
                 >
-                  <span style={{ fontSize: 28 }}>{emoji}</span>
+                  <span style={{ fontSize: 26 }}>{emoji}</span>
                 </button>
               ))}
             </div>
+            </div>
           </div>
+          {iconPreview && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPreset(null)
+                clearIcon()
+              }}
+              className="text-xs text-text-tertiary hover:text-text-primary transition-colors mt-1"
+            >
+              Reset icon
+            </button>
+          )}
         </Modal.Item>
 
         <Modal.Item>
@@ -400,7 +420,8 @@ export function AddProductModal({
               )}
             </div>
             <div className="w-px self-stretch bg-border flex-shrink-0" />
-            <div className="flex-1 min-w-0 flex items-center gap-2 overflow-x-auto scrollbar-hidden">
+            <div className="flex-1 min-w-0 h-16 rounded-lg bg-bg-muted overflow-hidden">
+            <div className="h-full flex items-center gap-2 px-2 overflow-x-auto scrollbar-hidden">
               {PRESET_ICONS.map((emoji) => (
                 <button
                   key={emoji}
@@ -417,13 +438,26 @@ export function AddProductModal({
                     setIconPreview(url)
                     setGeneratedIconBlob(blob)
                   }}
-                  className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${selectedPreset === emoji ? 'bg-brand-subtle ring-2 ring-brand' : 'bg-bg-muted hover:bg-brand-subtle'}`}
+                  className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${selectedPreset === emoji ? 'bg-brand-subtle ring-2 ring-brand' : 'hover:bg-brand-subtle'}`}
                 >
-                  <span style={{ fontSize: 28 }}>{emoji}</span>
+                  <span style={{ fontSize: 26 }}>{emoji}</span>
                 </button>
               ))}
             </div>
+            </div>
           </div>
+          {iconPreview && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPreset(null)
+                clearIcon()
+              }}
+              className="text-xs text-text-tertiary hover:text-text-primary transition-colors mt-1"
+            >
+              Reset icon
+            </button>
+          )}
         </Modal.Item>
 
         <Modal.Item>
