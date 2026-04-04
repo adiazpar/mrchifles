@@ -259,17 +259,22 @@ export function AddProductModal({
             </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedPreset(null)
-              clearIcon()
-            }}
-            disabled={!iconPreview}
-            className="text-sm text-error hover:text-error transition-colors mt-2 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            Reset
-          </button>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-sm text-text-tertiary">
+              {!iconPreview ? 'No icon' : selectedPreset ? `Preset ${PRESET_ICONS.indexOf(selectedPreset) + 1}` : 'Custom'}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPreset(null)
+                clearIcon()
+              }}
+              disabled={!iconPreview}
+              className="text-sm text-error hover:text-error transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Reset
+            </button>
+          </div>
         </Modal.Item>
 
         <Modal.Item>
@@ -445,17 +450,22 @@ export function AddProductModal({
             </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedPreset(null)
-              clearIcon()
-            }}
-            disabled={!iconPreview}
-            className="text-sm text-error hover:text-error transition-colors mt-2 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            Reset
-          </button>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-sm text-text-tertiary">
+              {!iconPreview ? 'No icon' : selectedPreset ? `Preset ${PRESET_ICONS.indexOf(selectedPreset) + 1}` : 'Custom'}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedPreset(null)
+                clearIcon()
+              }}
+              disabled={!iconPreview}
+              className="text-sm text-error hover:text-error transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Reset
+            </button>
+          </div>
         </Modal.Item>
 
         <Modal.Item>
