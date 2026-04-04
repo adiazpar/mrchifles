@@ -2,8 +2,8 @@
 
 import { memo } from 'react'
 import Image from 'next/image'
-import { X, Plus, ArrowUp, ChevronRight, ImageIcon, ArrowUpDown } from 'lucide-react'
-import { TagsIcon, SettingsIcon, SearchIcon } from '@/components/icons'
+import { X, Plus, ArrowUp, ChevronRight, ImageIcon } from 'lucide-react'
+import { TagsIcon, FilterIcon, SearchIcon } from '@/components/icons'
 import { Modal } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { scrollToTop } from '@/lib/scroll'
@@ -93,66 +93,68 @@ export function ProductsTab({
         {/* Search, Filter, and List Header - only show when products exist */}
         {products.length > 0 && (
           <>
-            {/* Search Bar with Sort Button */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                <SearchIcon size={20} className="text-text-tertiary" />
+            {/* Search Bar + Sort & Filter Button */}
+            <div className="flex gap-2 items-stretch">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                  <SearchIcon size={20} className="text-text-tertiary" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={e => onSearchChange(e.target.value)}
+                  className="input w-full"
+                  style={{ paddingLeft: '2.75rem', paddingRight: '2.5rem' }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => onSearchChange('')}
+                    className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
               </div>
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={e => onSearchChange(e.target.value)}
-                className="input w-full"
-                style={{ paddingLeft: '2.75rem', paddingRight: '2.5rem' }}
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => onSearchChange('')}
-                  className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-                  aria-label="Clear search"
-                >
-                  <X size={18} />
-                </button>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="caja-actions">
-              <button
-                type="button"
-                onClick={onAddProduct}
-                className="caja-action-btn"
-              >
-                <Plus className="caja-action-btn__icon text-success" />
-                Add
-              </button>
               <button
                 type="button"
                 onClick={() => onSortSheetOpenChange(true)}
-                className="caja-action-btn"
+                className="btn btn-secondary btn-icon flex-shrink-0"
+                style={{ height: 'auto', width: 'auto', aspectRatio: '1' }}
+                aria-label="Sort and filter"
               >
-                <ArrowUpDown className="caja-action-btn__icon text-brand" />
-                Sort
-              </button>
-              <button
-                type="button"
-                onClick={onOpenSettings}
-                className="caja-action-btn"
-              >
-                <SettingsIcon className="caja-action-btn__icon" />
-                Settings
+                <FilterIcon size={20} />
               </button>
             </div>
 
             {/* Product List Card */}
             <div className="card p-4 space-y-4">
-              {/* Product List Header */}
+              {/* List Header */}
               <div className="flex items-center justify-between">
-                <span className="text-sm text-text-secondary">
-                  {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-text-secondary">
+                    {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+                  </span>
+                  <span className="text-text-tertiary">&#183;</span>
+                  <button
+                    type="button"
+                    onClick={onOpenSettings}
+                    className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    Settings
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={onAddProduct}
+                  className="btn btn-primary"
+                  style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
+                >
+                  <Plus style={{ width: 14, height: 14 }} />
+                  Add
+                </button>
               </div>
 
               <hr className="border-border" />
@@ -209,37 +211,97 @@ export function ProductsTab({
           </div>
         )}
 
-      {/* Sort bottom sheet */}
-      <BottomSheet
+      {/* Sort & Filter Modal */}
+      <Modal
         isOpen={isSortSheetOpen}
         onClose={() => onSortSheetOpenChange(false)}
-        title="Sort by"
       >
-        <div className="space-y-1">
-          {SORT_OPTIONS.map(option => (
+        <Modal.Step title="Sort & Filter">
+          {/* Sort Section */}
+          <Modal.Item>
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">Sort by</span>
+              <div className="space-y-1">
+                {SORT_OPTIONS.map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => onSortChange(option.value)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
+                  >
+                    <span className={sortBy === option.value ? 'font-medium text-brand' : 'text-text-primary'}>
+                      {option.label}
+                    </span>
+                    {sortBy === option.value && (
+                      <span className="w-5 h-5 text-brand">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Modal.Item>
+
+          {/* Filter Section */}
+          {availableFilters.length > 0 && (
+            <Modal.Item>
+              <div className="space-y-2">
+                <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">Filter by category</span>
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => onFilterChange('all')}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
+                  >
+                    <span className={selectedFilter === 'all' ? 'font-medium text-brand' : 'text-text-primary'}>
+                      All
+                    </span>
+                    {selectedFilter === 'all' && (
+                      <span className="w-5 h-5 text-brand">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                    )}
+                  </button>
+                  {availableFilters.map(filter => (
+                    <button
+                      key={filter}
+                      type="button"
+                      onClick={() => onFilterChange(filter)}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
+                    >
+                      <span className={selectedFilter === filter ? 'font-medium text-brand' : 'text-text-primary'}>
+                        {getFilterLabel(filter, categories)}
+                      </span>
+                      {selectedFilter === filter && (
+                        <span className="w-5 h-5 text-brand">
+                          <svg viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Modal.Item>
+          )}
+
+          <Modal.Footer>
             <button
-              key={option.value}
               type="button"
-              onClick={() => {
-                onSortChange(option.value)
-                onSortSheetOpenChange(false)
-              }}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-left hover:bg-bg-muted transition-colors"
+              onClick={() => onSortSheetOpenChange(false)}
+              className="btn btn-primary flex-1"
             >
-              <span className={sortBy === option.value ? 'font-medium text-brand' : 'text-text-primary'}>
-                {option.label}
-              </span>
-              {sortBy === option.value && (
-                <span className="w-5 h-5 text-brand">
-                  <svg viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </span>
-              )}
+              Done
             </button>
-          ))}
-        </div>
-      </BottomSheet>
+          </Modal.Footer>
+        </Modal.Step>
+      </Modal>
     </div>
   )
 }
@@ -266,7 +328,7 @@ const ProductListItem = memo(function ProductListItem({
 
   return (
     <div
-      className="list-item-clickable list-item-flat"
+      className="list-item-clickable"
       onClick={() => onEdit(product)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -278,7 +340,7 @@ const ProductListItem = memo(function ProductListItem({
       role="button"
     >
       {/* Product Icon */}
-      <div className={`product-list-image ${isLowStock && product.status === 'active' ? 'ring-2 ring-error' : ''}`}>
+      <div className="product-list-image">
         {iconUrl ? (
           <Image
             src={iconUrl}

@@ -250,7 +250,7 @@
     scroll-behavior: smooth;
     /* Prevent body scroll - only inner containers should scroll */
     height: 100%;
-    overflow: hidden;
+    overflow: clip;
     /* Background for larger screens (outside mobile viewport) */
     background-color: #000000;
   }
@@ -265,7 +265,7 @@
     /* Fixed height with dvh for mobile browser chrome */
     height: 100dvh;
     height: 100vh; /* Fallback for older browsers */
-    overflow: hidden;
+    overflow: clip;
     /* Mobile-only constraint - center on larger screens */
     max-width: var(--max-viewport-width);
     margin-inline: auto;
