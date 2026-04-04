@@ -310,9 +310,10 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
     setError('')
 
     try {
-      const data = await apiPatch<SettingsResponse>(`/api/businesses/${businessId}/product-settings`, updates)
-      setSettings(data.settings)
-      return data.settings
+      // Optimistic update - apply changes immediately
+      setSettings(prev => prev ? { ...prev, ...updates } : null)
+      await apiPatch<SettingsResponse>(`/api/businesses/${businessId}/product-settings`, updates)
+      return settings ? { ...settings, ...updates } : null
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message)
@@ -324,7 +325,7 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
     } finally {
       setIsSavingSettings(false)
     }
-  }, [businessId, setSettings])
+  }, [businessId, settings, setSettings])
 
   // Clear error
   const clearError = useCallback(() => setError(''), [])
