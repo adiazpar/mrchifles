@@ -373,6 +373,11 @@ export function ProductSettingsModal({
         )}
 
         <Modal.Item>
+          {categories.length === 0 ? (
+            <div className="text-center py-8 text-text-secondary">
+              <p>No categories yet</p>
+            </div>
+          ) : (
           <SortableCategoryList
             categories={categories}
             onReorder={onReorderCategories}
@@ -386,6 +391,7 @@ export function ProductSettingsModal({
               setActionCompleted(false)
             }}
           />
+          )}
         </Modal.Item>
 
         <Modal.Footer>

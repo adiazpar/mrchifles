@@ -169,7 +169,7 @@ export function AddProductModal({
           <button
             type="button"
             onClick={onOpenSettings}
-            className="btn btn-secondary flex-1"
+            className="btn btn-primary flex-1"
           >
             Settings
           </button>
