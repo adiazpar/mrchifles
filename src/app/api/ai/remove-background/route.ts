@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
+import sharp from 'sharp'
+
+const ICON_SIZE = 256
+const ICON_PADDING = 24 // pixels of transparent padding around the subject
 
 /**
  * POST /api/ai/remove-background
@@ -77,10 +81,46 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const imageBuffer = await imageResponse.arrayBuffer()
-    const base64 = Buffer.from(imageBuffer).toString('base64')
-    const contentType = imageResponse.headers.get('content-type') || 'image/png'
-    const dataUrl = `data:${contentType};base64,${base64}`
+    const rawBuffer = Buffer.from(await imageResponse.arrayBuffer())
+
+    // Standardize: trim transparent pixels, add padding, resize to fixed canvas
+    const trimmed = sharp(rawBuffer).trim()
+    const trimmedBuffer = await trimmed.toBuffer()
+    const trimmedMeta = await sharp(trimmedBuffer).metadata()
+
+    const subjectW = trimmedMeta.width || ICON_SIZE
+    const subjectH = trimmedMeta.height || ICON_SIZE
+
+    // Calculate the size the subject should fit into (canvas minus padding)
+    const innerSize = ICON_SIZE - ICON_PADDING * 2
+
+    // Scale subject to fit within innerSize, preserving aspect ratio
+    const scale = Math.min(innerSize / subjectW, innerSize / subjectH)
+    const fitW = Math.round(subjectW * scale)
+    const fitH = Math.round(subjectH * scale)
+
+    const resizedSubject = await sharp(trimmedBuffer)
+      .resize(fitW, fitH, { fit: 'inside' })
+      .toBuffer()
+
+    // Place centered on a transparent canvas
+    const standardized = await sharp({
+      create: {
+        width: ICON_SIZE,
+        height: ICON_SIZE,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      },
+    })
+      .composite([{
+        input: resizedSubject,
+        gravity: 'centre',
+      }])
+      .png()
+      .toBuffer()
+
+    const base64 = standardized.toString('base64')
+    const dataUrl = `data:image/png;base64,${base64}`
 
     return NextResponse.json({
       success: true,
