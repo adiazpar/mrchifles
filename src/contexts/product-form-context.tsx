@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, useRef, useMemo } fro
 import type { Product } from '@/types'
 import type { PipelineStep } from '@/hooks'
 import type { IconType } from '@/components/products/ProductModal'
-import { isEmoji } from '@/lib/utils'
+import { isPresetIcon } from '@/lib/preset-icons'
 
 // ============================================
 // TYPES
@@ -174,7 +174,7 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     setIconPreview(iconUrl)
     setGeneratedIconBlob(null)
     // Detect icon type
-    if (iconUrl && isEmoji(iconUrl)) {
+    if (iconUrl && isPresetIcon(iconUrl)) {
       setIconType('preset')
       setPresetEmoji(iconUrl)
     } else if (iconUrl) {

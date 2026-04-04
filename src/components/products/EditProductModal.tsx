@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { Plus, Minus } from 'lucide-react'
 import { TrashIcon, SlidersIcon, ImageAttachIcon } from '@/components/icons'
-import { isEmoji } from '@/lib/utils'
+import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
@@ -13,8 +13,6 @@ import type { ProductFormData, StockAdjustmentData } from './ProductModal'
 // ============================================
 // PRESET ICONS
 // ============================================
-
-const PRESET_ICONS = ['🛒', '📦', '🍽️', '☕', '🧴']
 
 // ============================================
 // PROPS
@@ -159,8 +157,8 @@ export function EditProductModal({
           <label className="label">Icon</label>
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 rounded-lg overflow-hidden bg-bg-muted flex items-center justify-center flex-shrink-0">
-              {iconPreview && isEmoji(iconPreview) ? (
-                <span style={{ fontSize: 36 }}>{iconPreview}</span>
+              {iconPreview && isPresetIcon(iconPreview) ? (
+                (() => { const p = getPresetIcon(iconPreview); return p ? <p.icon size={36} className="text-text-primary" /> : null })()
               ) : iconPreview ? (
                 <Image
                   src={iconPreview}
@@ -177,23 +175,23 @@ export function EditProductModal({
             <div className="w-px self-stretch bg-border flex-shrink-0" />
             <div className="flex-1 min-w-0 h-16 rounded-lg bg-bg-muted overflow-hidden">
             <div className="h-full flex items-center gap-2 px-2 overflow-x-auto scrollbar-hidden">
-              {PRESET_ICONS.map((emoji) => (
+              {PRESET_ICONS.map((preset) => (
                 <button
-                  key={emoji}
+                  key={preset.id}
                   type="button"
                   onClick={() => {
-                    if (presetEmoji === emoji) {
+                    if (presetEmoji === preset.id) {
                       clearIcon()
                       return
                     }
-                    setIconPreview(emoji)
+                    setIconPreview(preset.id)
                     setGeneratedIconBlob(null)
                     setIconType('preset')
-                    setPresetEmoji(emoji)
+                    setPresetEmoji(preset.id)
                   }}
-                  className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${presetEmoji === emoji ? 'bg-brand-subtle ring-2 ring-brand' : 'hover:bg-brand-subtle'}`}
+                  className={`w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${presetEmoji === preset.id ? 'bg-brand-subtle ring-2 ring-brand' : 'hover:bg-brand-subtle'}`}
                 >
-                  <span style={{ fontSize: 26 }}>{emoji}</span>
+                  <preset.icon size={22} className="text-text-primary" />
                 </button>
               ))}
             </div>
@@ -201,7 +199,7 @@ export function EditProductModal({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-sm text-text-tertiary">
-              {!iconPreview ? 'No icon' : presetEmoji ? `Preset ${PRESET_ICONS.indexOf(presetEmoji) + 1}` : 'Custom'}
+              {!iconPreview ? 'No icon' : presetEmoji ? (getPresetIcon(presetEmoji)?.label || 'Preset') : 'Custom'}
             </span>
             <button
               type="button"
@@ -337,8 +335,8 @@ export function EditProductModal({
           <Modal.Item>
             <div className="flex flex-col items-center py-6">
               <div className="w-56 h-56 rounded-3xl overflow-hidden flex items-center justify-center bg-bg-muted">
-                {iconPreview && isEmoji(iconPreview) ? (
-                  <span style={{ fontSize: 120 }}>{iconPreview}</span>
+                {iconPreview && isPresetIcon(iconPreview) ? (
+                  (() => { const p = getPresetIcon(iconPreview); return p ? <p.icon size={120} className="text-text-primary" /> : null })()
                 ) : iconPreview ? (
                   <Image
                     src={iconPreview}
