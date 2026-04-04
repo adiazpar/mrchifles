@@ -268,7 +268,7 @@ export function AddProductModal({
             disabled={!iconPreview}
             className="text-sm text-error hover:text-error transition-colors mt-2 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Reset icon
+            Reset
           </button>
         </Modal.Item>
 
@@ -454,7 +454,7 @@ export function AddProductModal({
             disabled={!iconPreview}
             className="text-sm text-error hover:text-error transition-colors mt-2 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Reset icon
+            Reset
           </button>
         </Modal.Item>
 
