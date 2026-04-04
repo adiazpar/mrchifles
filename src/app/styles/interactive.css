@@ -2077,6 +2077,11 @@
   object-fit: cover;
 }
 
+.list-item-clickable:hover .product-list-image,
+.list-item-clickable:active .product-list-image {
+  background: var(--color-bg-surface);
+}
+
 /* Clickable list item (mobile-friendly hover) */
 .list-item-clickable {
 display: flex;
