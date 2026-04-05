@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Plus, Minus, ScanLine } from 'lucide-react'
+import { Plus, Minus } from 'lucide-react'
 import { BarcodeScanner } from './BarcodeScanner'
 import { TrashIcon, SlidersIcon, ImageAttachIcon } from '@/components/icons'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -304,29 +304,29 @@ export function EditProductModal({
           </div>
         </Modal.Item>
 
-        {/* Active + Barcode */}
+        {/* Barcode */}
         <Modal.Item>
-          <div className="flex gap-4">
+          <button
+            type="button"
+            className="btn btn-secondary w-full"
+          >
+            {barcode || 'No Barcode Set'}
+          </button>
+        </Modal.Item>
+
+        {/* Active */}
+        <Modal.Item>
+          <div className="flex items-center justify-between">
             <div>
-              <span className="label">Active</span>
-              <input
-                type="checkbox"
-                checked={active}
-                onChange={e => setActive(e.target.checked)}
-                className="toggle"
-              />
+              <span className="label mb-0">Active</span>
+              <span className="text-sm text-text-tertiary leading-tight">Toggles visibility in sales page</span>
             </div>
-            <div className="flex-1">
-              <span className="label">Barcode</span>
-              <button
-                type="button"
-                onClick={() => setIsScannerOpen(true)}
-                className="btn btn-secondary w-full"
-              >
-                <ScanLine style={{ width: 16, height: 16 }} />
-                {barcode || 'Scan'}
-              </button>
-            </div>
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={e => setActive(e.target.checked)}
+              className="toggle"
+            />
           </div>
         </Modal.Item>
 
