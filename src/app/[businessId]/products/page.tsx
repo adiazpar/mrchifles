@@ -461,6 +461,8 @@ export default function ProductosPage() {
       data.append('categoryId', formData.categoryId || '')
       data.append('active', formData.active.toString())
       data.append('barcode', formData.barcode || '')
+      data.append('barcodeFormat', formData.barcodeFormat || '')
+      data.append('barcodeSource', formData.barcodeSource || '')
       if (formData.generatedIconBlob) {
         data.append('icon', formData.generatedIconBlob, 'icon.png')
       } else if (formData.iconType === 'preset' && formData.presetEmoji) {
@@ -479,7 +481,7 @@ export default function ProductosPage() {
       const result = await response.json()
 
       if (!response.ok || !result.success) {
-        return false
+        throw new Error(result.error || 'Failed to save product')
       }
 
       const record: Product = result.product
@@ -492,7 +494,10 @@ export default function ProductosPage() {
       return true
     } catch (err) {
       console.error('Error saving product:', err)
-      return false
+      if (err instanceof Error) {
+        throw err
+      }
+      throw new Error('Failed to save product')
     }
   }, [businessId, setProducts])
 

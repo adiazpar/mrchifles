@@ -1,3 +1,5 @@
+import type { BarcodeFormat, BarcodeSource } from '@/types'
+
 // Shared types for product modals
 
 export type IconType = 'preset' | 'custom' | null
@@ -11,6 +13,8 @@ export interface ProductFormData {
   iconType: IconType
   presetEmoji: string | null
   barcode: string
+  barcodeFormat: BarcodeFormat | null
+  barcodeSource: BarcodeSource | null
 }
 
 export interface StockAdjustmentData {

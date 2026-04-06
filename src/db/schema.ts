@@ -97,6 +97,12 @@ export const products = sqliteTable('products', {
   lowStockThreshold: integer('low_stock_threshold').default(10),
   icon: text('icon'), // Base64-encoded image data
   barcode: text('barcode'), // Physical barcode/QR code value
+  barcodeFormat: text('barcode_format', {
+    enum: ['CODABAR', 'CODE_39', 'CODE_93', 'CODE_128', 'ITF', 'EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'UPC_EAN_EXTENSION']
+  }),
+  barcodeSource: text('barcode_source', {
+    enum: ['scanned', 'generated', 'manual']
+  }),
   status: text('status', { enum: ['active', 'inactive', 'archived'] }).default('active').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
@@ -105,6 +111,8 @@ export const products = sqliteTable('products', {
   categoryIdIdx: index('idx_products_category_id').on(table.categoryId),
   businessStatusIdx: index('idx_products_business_status').on(table.businessId, table.status),
   barcodeIdx: index('idx_products_barcode').on(table.barcode),
+  barcodeFormatIdx: index('idx_products_barcode_format').on(table.barcodeFormat),
+  barcodeSourceIdx: index('idx_products_barcode_source').on(table.barcodeSource),
 }))
 
 // ===========================================

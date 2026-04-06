@@ -1,10 +1,25 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
+import { isBarcodeFormat } from '@/lib/barcodes'
+import type { BarcodeFormat } from '@/types'
+
+const SUPPORTED_BARCODE_FORMATS = [
+  Html5QrcodeSupportedFormats.CODABAR,
+  Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.CODE_93,
+  Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.ITF,
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.UPC_A,
+  Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
+]
 
 interface BarcodeScannerProps {
-  onScan: (value: string) => void
+  onScan: (payload: { value: string; format: BarcodeFormat | null }) => void
   onClose: () => void
 }
 
@@ -13,7 +28,10 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const scanner = new Html5Qrcode('barcode-reader')
+    const scanner = new Html5Qrcode('barcode-reader', {
+      verbose: false,
+      formatsToSupport: SUPPORTED_BARCODE_FORMATS,
+    })
     scannerRef.current = scanner
 
     scanner.start(
@@ -22,8 +40,10 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         fps: 10,
         qrbox: { width: 250, height: 150 },
       },
-      (decodedText) => {
-        onScan(decodedText)
+      (decodedText, decodedResult) => {
+        const formatName = decodedResult.result.format?.formatName || null
+        const format = formatName && isBarcodeFormat(formatName) ? formatName : null
+        onScan({ value: decodedText, format })
         scanner.stop().catch(() => {})
       },
       () => {} // Ignore scan failures (happens every frame until a code is found)
@@ -58,7 +78,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
             </div>
           )}
           <div className="p-4 text-center text-text-tertiary text-xs">
-            Point your camera at a barcode or QR code
+            Point your camera at a product barcode
           </div>
         </div>
       </div>

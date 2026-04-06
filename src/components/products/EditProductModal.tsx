@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Plus, Minus } from 'lucide-react'
 import { BarcodeScanner } from './BarcodeScanner'
+import { BarcodeFields } from './BarcodeFields'
 import { TrashIcon, SlidersIcon, ImageAttachIcon } from '@/components/icons'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { Spinner, Modal, useMorphingModal, StockStepper, TabContainer } from '@/components/ui'
@@ -62,17 +63,49 @@ function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<bool
 // ============================================
 
 function SaveButton({ onSubmit }: { onSubmit: EditProductModalProps['onSubmit'] }) {
-  const { name, price, categoryId, active, generatedIconBlob, iconType, presetEmoji: formPresetEmoji, barcode, editingProduct, isSaving, setProductSaved } = useProductForm()
+  const {
+    name,
+    price,
+    categoryId,
+    active,
+    generatedIconBlob,
+    iconType,
+    presetEmoji: formPresetEmoji,
+    barcode,
+    barcodeFormat,
+    barcodeSource,
+    editingProduct,
+    isSaving,
+    setIsSaving,
+    setError,
+    setProductSaved,
+  } = useProductForm()
   const { isFormValid, hasChanges } = useProductFormValidation()
   const { goToStep } = useMorphingModal()
 
-  const handleClick = () => {
-    setProductSaved(true)
-    goToStep(4)
-    onSubmit(
-      { name, price, categoryId, active, generatedIconBlob, iconType, presetEmoji: formPresetEmoji, barcode },
-      editingProduct?.id || null
-    )
+  const handleClick = async () => {
+    setError('')
+    setIsSaving(true)
+    setProductSaved(false)
+
+    try {
+      const success = await onSubmit(
+        { name, price, categoryId, active, generatedIconBlob, iconType, presetEmoji: formPresetEmoji, barcode, barcodeFormat, barcodeSource },
+        editingProduct?.id || null
+      )
+
+      if (!success) {
+        setError('Failed to save product')
+        return
+      }
+
+      setProductSaved(true)
+      goToStep(4)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save product')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -124,8 +157,9 @@ export function EditProductModal({
     setPresetEmoji,
     presetEmoji,
     clearIcon,
-    barcode,
     setBarcode,
+    setBarcodeFormat,
+    setBarcodeSource,
     editingProduct,
     newStockValue,
     setNewStockValue,
@@ -349,9 +383,7 @@ export function EditProductModal({
 
           <TabContainer.Tab id="barcode">
             <Modal.Item>
-              <div className="text-center py-8 text-text-tertiary">
-                <p>Barcode tab content coming soon</p>
-              </div>
+              <BarcodeFields onOpenScanner={() => setIsScannerOpen(true)} />
             </Modal.Item>
           </TabContainer.Tab>
         </TabContainer>
@@ -518,8 +550,10 @@ export function EditProductModal({
 
     {isScannerOpen && (
       <BarcodeScanner
-        onScan={(value) => {
+        onScan={({ value, format }) => {
           setBarcode(value)
+          setBarcodeFormat(format)
+          setBarcodeSource('scanned')
           setIsScannerOpen(false)
         }}
         onClose={() => setIsScannerOpen(false)}

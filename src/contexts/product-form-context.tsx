@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react'
-import type { Product } from '@/types'
+import type { Product, BarcodeFormat, BarcodeSource } from '@/types'
 import type { PipelineStep } from '@/hooks'
 import type { IconType } from '@/components/products/ProductModal'
 import { isPresetIcon } from '@/lib/preset-icons'
@@ -21,6 +21,8 @@ interface ProductFormState {
   iconType: IconType
   presetEmoji: string | null
   barcode: string
+  barcodeFormat: BarcodeFormat | null
+  barcodeSource: BarcodeSource | null
 
   // Editing state
   editingProduct: Product | null
@@ -55,6 +57,8 @@ interface ProductFormActions {
   setIconType: (type: IconType) => void
   setPresetEmoji: (emoji: string | null) => void
   setBarcode: (barcode: string) => void
+  setBarcodeFormat: (barcodeFormat: BarcodeFormat | null) => void
+  setBarcodeSource: (barcodeSource: BarcodeSource | null) => void
   clearIcon: () => void
 
   // Editing state
@@ -113,6 +117,8 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
   const [iconType, setIconType] = useState<IconType>(null)
   const [presetEmoji, setPresetEmoji] = useState<string | null>(null)
   const [barcode, setBarcode] = useState('')
+  const [barcodeFormat, setBarcodeFormat] = useState<BarcodeFormat | null>(null)
+  const [barcodeSource, setBarcodeSource] = useState<BarcodeSource | null>(null)
 
   // Editing state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -159,6 +165,8 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     setIconType(null)
     setPresetEmoji(null)
     setBarcode('')
+    setBarcodeFormat(null)
+    setBarcodeSource(null)
     setEditingProduct(null)
     setError('')
     setProductDeleted(false)
@@ -189,6 +197,8 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
       setPresetEmoji(null)
     }
     setBarcode(product.barcode || '')
+    setBarcodeFormat(product.barcodeFormat || null)
+    setBarcodeSource(product.barcodeSource || null)
     setNewStockValue(product.stock ?? 0)
     setError('')
     setPipelineStep('idle')
@@ -206,6 +216,8 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     iconType,
     presetEmoji,
     barcode,
+    barcodeFormat,
+    barcodeSource,
     editingProduct,
     newStockValue,
     isAdjusting,
@@ -228,6 +240,8 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     setIconType,
     setPresetEmoji,
     setBarcode,
+    setBarcodeFormat,
+    setBarcodeSource,
     clearIcon,
     setEditingProduct,
     setNewStockValue,
@@ -243,10 +257,11 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     resetForm,
     populateFromProduct,
   }), [
-    name, price, categoryId, active, iconPreview, generatedIconBlob,
+    name, price, categoryId, active, iconPreview, generatedIconBlob, iconType, presetEmoji, barcode,
     editingProduct, newStockValue, isAdjusting, isSaving, isDeleting,
     error, productSaved, productDeleted, pipelineStep, isCompressing,
     aiProcessing, clearIcon, resetForm, populateFromProduct, cameraInputRef,
+    barcodeFormat, barcodeSource,
   ])
 
   return (
@@ -274,7 +289,7 @@ export function useProductForm() {
 
 /** Hook for form validation state */
 export function useProductFormValidation() {
-  const { name, price, editingProduct, categoryId, active, generatedIconBlob, iconPreview, iconType, presetEmoji, barcode } = useProductForm()
+  const { name, price, editingProduct, categoryId, active, generatedIconBlob, iconPreview, iconType, presetEmoji, barcode, barcodeFormat, barcodeSource } = useProductForm()
 
   const isFormValid = name.trim() && price && parseFloat(price) >= 0
 
@@ -290,7 +305,9 @@ export function useProductFormValidation() {
     (categoryId || null) !== (editingProduct.categoryId || null) ||
     active !== (editingProduct.status === 'active') ||
     iconChanged ||
-    (barcode || '') !== (editingProduct.barcode || '')
+    (barcode || '') !== (editingProduct.barcode || '') ||
+    (barcodeFormat || null) !== (editingProduct.barcodeFormat || null) ||
+    (barcodeSource || null) !== (editingProduct.barcodeSource || null)
   )
 
   return { isFormValid, hasChanges }

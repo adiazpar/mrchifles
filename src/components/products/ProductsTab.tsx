@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import Image from 'next/image'
-import { X, Plus, ChevronUp, ChevronRight } from 'lucide-react'
+import { X, Plus, ChevronUp, ChevronRight, Barcode } from 'lucide-react'
 import { TagsIcon, FilterIcon, SearchIcon, ImageAttachIcon } from '@/components/icons'
 import { Modal } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
@@ -323,10 +323,11 @@ const ProductListItem = memo(function ProductListItem({
   const stockValue = product.stock ?? 0
   const threshold = product.lowStockThreshold ?? 10
   const isLowStock = stockValue <= threshold
+  const hasBarcode = !!product.barcode
 
   return (
     <div
-      className="list-item-clickable"
+      className={`list-item-clickable ${hasBarcode ? 'items-start' : ''}`}
       onClick={() => onEdit(product)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -337,47 +338,62 @@ const ProductListItem = memo(function ProductListItem({
       tabIndex={0}
       role="button"
     >
-      {/* Product Icon */}
-      <div className="product-list-image">
-        {iconUrl && isPresetIcon(iconUrl) ? (
-          (() => { const p = getPresetIcon(iconUrl); return p ? <p.icon size={24} className="text-text-primary" /> : null })()
-        ) : iconUrl ? (
-          <Image
-            src={iconUrl}
-            alt={product.name}
-            width={40}
-            height={40}
-            className="product-list-image-img"
-            unoptimized
-          />
-        ) : (
-          <ImageAttachIcon className="w-5 h-5 text-text-tertiary" />
-        )}
-      </div>
-
-      {/* Product Info */}
       <div className="flex-1 min-w-0">
-        <span className={`font-medium truncate block ${product.status !== 'active' ? 'text-text-tertiary' : ''}`}>
-          {product.name}
-        </span>
-        <span className="text-xs text-text-tertiary mt-0.5 block">
-          {categoryName}
-        </span>
-      </div>
+        <div className="flex items-center gap-3">
+          {/* Product Icon */}
+          <div className="product-list-image">
+            {iconUrl && isPresetIcon(iconUrl) ? (
+              (() => { const p = getPresetIcon(iconUrl); return p ? <p.icon size={24} className="text-text-primary" /> : null })()
+            ) : iconUrl ? (
+              <Image
+                src={iconUrl}
+                alt={product.name}
+                width={40}
+                height={40}
+                className="product-list-image-img"
+                unoptimized
+              />
+            ) : (
+              <ImageAttachIcon className="w-5 h-5 text-text-tertiary" />
+            )}
+          </div>
 
-      {/* Price and Stock */}
-      <div className="text-right">
-        <span className={`font-medium block ${product.status !== 'active' ? 'text-text-tertiary' : 'text-text-primary'}`}>
-          ${product.price.toFixed(2)}
-        </span>
-        <span className={`text-xs mt-0.5 block ${isLowStock && product.status === 'active' ? 'text-error' : 'text-text-tertiary'}`}>
-          {stockValue} units
-        </span>
-      </div>
+          {/* Product Info */}
+          <div className="flex-1 min-w-0">
+            <span className={`font-medium truncate block ${product.status !== 'active' ? 'text-text-tertiary' : ''}`}>
+              {product.name}
+            </span>
+            <span className="text-xs text-text-tertiary mt-0.5 block">
+              {categoryName}
+            </span>
+          </div>
 
-      {/* Chevron */}
-      <div className="text-text-tertiary ml-2">
-        <ChevronRight className="w-5 h-5" />
+          {/* Price and Stock */}
+          <div className="text-right flex-shrink-0">
+            <span className={`font-medium block ${product.status !== 'active' ? 'text-text-tertiary' : 'text-text-primary'}`}>
+              ${product.price.toFixed(2)}
+            </span>
+            <span className={`text-xs mt-0.5 block ${isLowStock && product.status === 'active' ? 'text-error' : 'text-text-tertiary'}`}>
+              {stockValue} units
+            </span>
+          </div>
+
+          {/* Chevron */}
+          <div className="text-text-tertiary ml-2 flex-shrink-0">
+            <ChevronRight className="w-5 h-5" />
+          </div>
+        </div>
+
+        {hasBarcode && (
+          <div className="mt-3 flex items-center gap-3 text-left">
+            <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
+              <Barcode className="w-4 h-4 text-text-tertiary" />
+            </div>
+            <span className="text-xs text-text-tertiary break-all block min-w-0">
+              {product.barcode}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )

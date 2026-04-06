@@ -72,6 +72,20 @@ export interface ProductSettings {
 // PRODUCT TYPES
 // ============================================
 
+export type BarcodeFormat =
+  | 'CODABAR'
+  | 'CODE_39'
+  | 'CODE_93'
+  | 'CODE_128'
+  | 'ITF'
+  | 'EAN_13'
+  | 'EAN_8'
+  | 'UPC_A'
+  | 'UPC_E'
+  | 'UPC_EAN_EXTENSION'
+
+export type BarcodeSource = 'scanned' | 'generated' | 'manual'
+
 export interface Product {
   id: string
   businessId: string
@@ -83,6 +97,8 @@ export interface Product {
   productCategory?: ProductCategory | null
   icon?: string | null
   barcode?: string | null
+  barcodeFormat?: BarcodeFormat | null
+  barcodeSource?: BarcodeSource | null
   stock?: number | null
   lowStockThreshold?: number | null
   createdAt: Date | string
