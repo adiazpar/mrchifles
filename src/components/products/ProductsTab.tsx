@@ -2,8 +2,8 @@
 
 import { memo } from 'react'
 import Image from 'next/image'
-import { X, Plus, ChevronUp, ChevronRight, Barcode } from 'lucide-react'
-import { TagsIcon, FilterIcon, ImageAttachIcon } from '@/components/icons'
+import { X, Plus, ChevronUp, ChevronRight, Barcode, Loader2 } from 'lucide-react'
+import { TagsIcon, FilterIcon, BarcodeScanIcon, ImageAttachIcon } from '@/components/icons'
 import { Modal } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -51,6 +51,11 @@ export interface ProductsTabProps {
   // Error state
   error?: string
   isModalOpen?: boolean
+
+  // Scan-to-search
+  onScanClick?: () => void
+  scanBusy?: boolean
+  scanHiddenInput?: React.ReactNode
 }
 
 // ============================================
@@ -75,6 +80,9 @@ export function ProductsTab({
   onOpenSettings,
   error,
   isModalOpen,
+  onScanClick,
+  scanBusy,
+  scanHiddenInput,
 }: ProductsTabProps) {
   // Helper to get category name by ID
   const getCategoryName = (categoryId: string | null | undefined) => {
@@ -94,7 +102,7 @@ export function ProductsTab({
         {/* Search, Filter, and List Header - only show when products exist */}
         {products.length > 0 && (
           <>
-            {/* Search Bar + Sort & Filter Button */}
+            {/* Search Bar + Scan + Sort & Filter Buttons */}
             <div className="flex gap-2 items-stretch">
               <div className="relative flex-1">
                 <input
@@ -116,6 +124,21 @@ export function ProductsTab({
                   </button>
                 )}
               </div>
+              {onScanClick && (
+                <button
+                  type="button"
+                  onClick={onScanClick}
+                  disabled={scanBusy}
+                  className="btn btn-secondary btn-icon flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Scan barcode to find product"
+                >
+                  {scanBusy ? (
+                    <Loader2 className="w-[18px] h-[18px] animate-spin" />
+                  ) : (
+                    <BarcodeScanIcon size={18} />
+                  )}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => onSortSheetOpenChange(true)}
@@ -125,6 +148,7 @@ export function ProductsTab({
                 <FilterIcon style={{ width: 18, height: 18 }} />
               </button>
             </div>
+            {scanHiddenInput}
 
             {/* Product List Card */}
             <div className="card p-4 space-y-4">
