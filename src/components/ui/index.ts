@@ -24,3 +24,4 @@ export type { SuccessFeedbackProps } from './success-feedback'
 export { ConfirmationAnimation } from './ConfirmationAnimation'
 
 export { DeleteConfirmationStep } from './DeleteConfirmationStep'
+export { TabContainer } from './TabContainer'
