@@ -105,7 +105,7 @@ export function ProductsTab({
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={e => onSearchChange(e.target.value)}
-                  className="input w-full"
+                  className="input w-full h-full"
                   style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingLeft: '2.25rem', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
                 />
                 {searchQuery && (
