@@ -6,6 +6,7 @@ import { CreateBusinessModal } from '@/components/create-business'
 
 interface CreateBusinessContextValue {
   openCreateModal: () => void
+  isCreateModalOpen: boolean
 }
 
 const CreateBusinessContext = createContext<CreateBusinessContextValue | null>(null)
@@ -14,7 +15,7 @@ export function useCreateBusinessModal(): CreateBusinessContextValue {
   const context = useContext(CreateBusinessContext)
   if (!context) {
     // Return a no-op if not in hub context (business pages don't have this provider)
-    return { openCreateModal: () => {} }
+    return { openCreateModal: () => {}, isCreateModalOpen: false }
   }
   return context
 }
@@ -32,6 +33,7 @@ export function CreateBusinessProvider({ children }: CreateBusinessProviderProps
 
   const value: CreateBusinessContextValue = {
     openCreateModal: createBusiness.handleOpen,
+    isCreateModalOpen: createBusiness.isOpen,
   }
 
   return (

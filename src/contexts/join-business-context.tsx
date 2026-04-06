@@ -7,6 +7,7 @@ import { JoinBusinessModal } from '@/components/join'
 
 interface JoinBusinessContextValue {
   openJoinModal: () => void
+  isJoinModalOpen: boolean
 }
 
 const JoinBusinessContext = createContext<JoinBusinessContextValue | null>(null)
@@ -15,7 +16,7 @@ export function useJoinBusinessModal(): JoinBusinessContextValue {
   const context = useContext(JoinBusinessContext)
   if (!context) {
     // Return a no-op if not in hub context (business pages don't have this provider)
-    return { openJoinModal: () => {} }
+    return { openJoinModal: () => {}, isJoinModalOpen: false }
   }
   return context
 }
@@ -67,6 +68,7 @@ function JoinBusinessProviderInner({ children }: JoinBusinessProviderProps) {
 
   const value: JoinBusinessContextValue = {
     openJoinModal: joinBusiness.handleOpen,
+    isJoinModalOpen: joinBusiness.isOpen,
   }
 
   return (
