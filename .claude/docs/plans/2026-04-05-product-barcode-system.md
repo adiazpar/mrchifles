@@ -19,7 +19,8 @@ Attach physical product barcodes to products for identification, display, search
 - Product list rows show a barcode indicator with the raw value when one is attached
 - Product form context tracks barcode changes including format
 - Duplicate active barcodes are rejected per business
-- Batch printing and scan-to-search are still pending
+- Scan-to-search on the products page opens the matched product or populates the search input on no match
+- Batch printing and sales register scan-to-add are still pending
 
 ## Scope
 
