@@ -1,34 +1,17 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { Check, Copy, Plus, Printer, ScanBarcode } from 'lucide-react'
 import { useProductForm } from '@/contexts/product-form-context'
-import { BARCODE_FORMATS, generateInternalProductBarcode, getBarcodeFormatLabel, isBarcodeFormat } from '@/lib/barcodes'
+import { BARCODE_FORMATS, generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
+import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { renderBarcodeSvg } from '@/lib/barcode-render'
 import { BarcodeDisplay } from './BarcodeDisplay'
 import type { BarcodeSource, BarcodeFormat } from '@/types'
 
-const SUPPORTED_BARCODE_FORMATS = [
-  Html5QrcodeSupportedFormats.CODABAR,
-  Html5QrcodeSupportedFormats.CODE_39,
-  Html5QrcodeSupportedFormats.CODE_93,
-  Html5QrcodeSupportedFormats.CODE_128,
-  Html5QrcodeSupportedFormats.ITF,
-  Html5QrcodeSupportedFormats.EAN_13,
-  Html5QrcodeSupportedFormats.EAN_8,
-  Html5QrcodeSupportedFormats.UPC_A,
-  Html5QrcodeSupportedFormats.UPC_E,
-  Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
-]
-
-const SCAN_HOST_ID = 'barcode-scan-host'
-
 export function BarcodeFields() {
   const [copied, setCopied] = useState(false)
-  const [scanBusy, setScanBusy] = useState(false)
   const copyTimeoutRef = useRef<number | null>(null)
-  const scanInputRef = useRef<HTMLInputElement | null>(null)
   const {
     name,
     barcode,
@@ -39,6 +22,17 @@ export function BarcodeFields() {
     setBarcodeSource,
     setError,
   } = useProductForm()
+
+  const { open: openScanner, busy: scanBusy, hiddenInput: scanHiddenInput } = useBarcodeScan({
+    onResult: ({ value, format }) => {
+      setBarcode(value)
+      setBarcodeFormat(format)
+      setBarcodeSource('scanned')
+    },
+    onError: (message) => {
+      setError(message)
+    },
+  })
 
   const handleBarcodeChange = useCallback((value: string) => {
     setBarcode(value)
@@ -58,41 +52,8 @@ export function BarcodeFields() {
 
   const handleScanClick = useCallback(() => {
     setError('')
-    scanInputRef.current?.click()
-  }, [setError])
-
-  const handleScanFile = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    setError('')
-    setScanBusy(true)
-    const scanner = new Html5Qrcode(SCAN_HOST_ID, {
-      verbose: false,
-      formatsToSupport: SUPPORTED_BARCODE_FORMATS,
-    })
-
-    try {
-      const result = await scanner.scanFileV2(file, false)
-      const formatName = result.result.format?.formatName || null
-      const format = formatName && isBarcodeFormat(formatName) ? formatName : null
-      setBarcode(result.decodedText)
-      setBarcodeFormat(format)
-      setBarcodeSource('scanned')
-    } catch {
-      setError('No barcode detected in that image. Try a clearer photo.')
-    } finally {
-      setScanBusy(false)
-      try {
-        await scanner.clear()
-      } catch {
-        // ignore
-      }
-      if (scanInputRef.current) {
-        scanInputRef.current.value = ''
-      }
-    }
-  }, [setBarcode, setBarcodeFormat, setBarcodeSource, setError])
+    openScanner()
+  }, [openScanner, setError])
 
   const handleGenerate = useCallback(() => {
     setBarcode(generateInternalProductBarcode())
@@ -390,15 +351,7 @@ export function BarcodeFields() {
         </button>
       </div>
 
-      <input
-        ref={scanInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-        capture="environment"
-        onChange={handleScanFile}
-        className="hidden"
-      />
-      <div id={SCAN_HOST_ID} className="hidden" />
+      {scanHiddenInput}
 
       <div className="caja-actions mt-4">
         <button
