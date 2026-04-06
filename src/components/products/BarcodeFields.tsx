@@ -1,7 +1,7 @@
 'use client'
 
-import { useCallback } from 'react'
-import { Plus, Printer, ScanBarcode } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Check, Copy, Plus, Printer, ScanBarcode } from 'lucide-react'
 import { useProductForm } from '@/contexts/product-form-context'
 import { BARCODE_FORMATS, generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
 import { renderBarcodeSvg } from '@/lib/barcode-render'
@@ -13,6 +13,8 @@ interface BarcodeFieldsProps {
 }
 
 export function BarcodeFields({ onOpenScanner }: BarcodeFieldsProps) {
+  const [copied, setCopied] = useState(false)
+  const copyTimeoutRef = useRef<number | null>(null)
   const {
     name,
     barcode,
@@ -195,21 +197,87 @@ export function BarcodeFields({ onOpenScanner }: BarcodeFieldsProps) {
     }, 50)
   }, [barcode, barcodeFormat, name])
 
+  const handleCopy = useCallback(async () => {
+    const normalizedValue = barcode.trim()
+    if (!normalizedValue) return
+
+    const fallbackCopy = () => {
+      const textArea = document.createElement('textarea')
+      textArea.value = normalizedValue
+      textArea.setAttribute('readonly', '')
+      textArea.style.position = 'absolute'
+      textArea.style.left = '-9999px'
+      document.body.appendChild(textArea)
+      textArea.select()
+      const copiedWithFallback = document.execCommand('copy')
+      document.body.removeChild(textArea)
+      return copiedWithFallback
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(normalizedValue)
+      } else if (!fallbackCopy()) {
+        throw new Error('Copy failed')
+      }
+
+      setCopied(true)
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current)
+      }
+      copyTimeoutRef.current = window.setTimeout(() => setCopied(false), 1500)
+    } catch {
+      if (fallbackCopy()) {
+        setCopied(true)
+        if (copyTimeoutRef.current) {
+          window.clearTimeout(copyTimeoutRef.current)
+        }
+        copyTimeoutRef.current = window.setTimeout(() => setCopied(false), 1500)
+        return
+      }
+
+      setCopied(false)
+    }
+  }, [barcode])
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current)
+      }
+    }
+  }, [])
+
   return (
     <>
       <div className="space-y-3">
         <div className="flex gap-3 items-start">
           <div className="flex-[1.9] min-w-0">
             <label htmlFor="product-barcode" className="label">Barcode value</label>
-            <input
-              id="product-barcode"
-              type="text"
-              value={barcode}
-              onChange={(e) => handleBarcodeChange(e.target.value)}
-              className="input"
-              placeholder="Scan or enter code"
-              autoComplete="off"
-            />
+            <div className="relative">
+              <input
+                id="product-barcode"
+                type="text"
+                value={barcode}
+                onChange={(e) => handleBarcodeChange(e.target.value)}
+                className="input w-full"
+                style={{ paddingRight: 'var(--space-10)' }}
+                placeholder="Scan or enter code"
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                onClick={handleCopy}
+                disabled={!barcode.trim()}
+                style={{ right: 'var(--space-3)' }}
+                className={`absolute top-1/2 -translate-y-1/2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                  copied ? 'text-success' : 'text-text-tertiary hover:text-text-secondary'
+                }`}
+                aria-label={copied ? 'Barcode copied' : 'Copy barcode value'}
+              >
+                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
 
           <div className="flex-[1.1] min-w-0">
