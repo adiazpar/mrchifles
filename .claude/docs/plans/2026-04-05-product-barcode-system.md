@@ -15,9 +15,11 @@ Attach physical product barcodes to products for identification, display, search
 - Barcode preview is rendered in the barcode tab from stored `barcode` + `barcodeFormat`
 - Barcode tab metadata now distinguishes `scanned`, `generated`, and `manual` sources
 - Print action is wired from the barcode tab and opens the native browser print flow
+- Copy-to-clipboard is wired from the barcode tab with success state feedback
+- Product list rows show a barcode indicator with the raw value when one is attached
 - Product form context tracks barcode changes including format
 - Duplicate active barcodes are rejected per business
-- Copy and scan-to-search are still pending
+- Batch printing and scan-to-search are still pending
 
 ## Scope
 

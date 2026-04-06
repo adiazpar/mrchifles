@@ -3,7 +3,7 @@
 import { memo } from 'react'
 import Image from 'next/image'
 import { X, Plus, ChevronUp, ChevronRight, Barcode } from 'lucide-react'
-import { TagsIcon, FilterIcon, SearchIcon, ImageAttachIcon } from '@/components/icons'
+import { TagsIcon, FilterIcon, ImageAttachIcon } from '@/components/icons'
 import { Modal } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -97,16 +97,13 @@ export function ProductsTab({
             {/* Search Bar + Sort & Filter Button */}
             <div className="flex gap-2 items-stretch">
               <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                  <SearchIcon size={16} className="text-text-tertiary" style={{ marginTop: '-2px' }} />
-                </div>
                 <input
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={e => onSearchChange(e.target.value)}
                   className="input w-full h-full"
-                  style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingLeft: '2.25rem', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
+                  style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
                 />
                 {searchQuery && (
                   <button
