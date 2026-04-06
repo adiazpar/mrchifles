@@ -24,7 +24,7 @@ export interface BarcodeScanResult {
 }
 
 export interface UseBarcodeScanOptions {
-  onResult: (result: BarcodeScanResult) => void
+  onResult: (result: BarcodeScanResult) => void | Promise<void>
   onError: (message: string) => void
 }
 
@@ -62,14 +62,7 @@ export function useBarcodeScan({ onResult, onError }: UseBarcodeScanOptions): Us
       formatsToSupport: SUPPORTED_BARCODE_FORMATS,
     })
 
-    try {
-      const result = await scanner.scanFileV2(file, false)
-      const formatName = result.result.format?.formatName || null
-      const format = formatName && isBarcodeFormat(formatName) ? formatName : null
-      onResultRef.current({ value: result.decodedText, format })
-    } catch {
-      onErrorRef.current('No barcode detected in that image. Try a clearer photo.')
-    } finally {
+    const cleanup = async () => {
       setBusy(false)
       try {
         await scanner.clear()
@@ -79,6 +72,26 @@ export function useBarcodeScan({ onResult, onError }: UseBarcodeScanOptions): Us
       if (inputRef.current) {
         inputRef.current.value = ''
       }
+    }
+
+    let decoded: BarcodeScanResult
+    try {
+      const result = await scanner.scanFileV2(file, false)
+      const formatName = result.result.format?.formatName || null
+      const format = formatName && isBarcodeFormat(formatName) ? formatName : null
+      decoded = { value: result.decodedText, format }
+    } catch {
+      onErrorRef.current('No barcode detected in that image. Try a clearer photo.')
+      await cleanup()
+      return
+    }
+
+    // Keep busy=true while the caller handles the result (e.g., API lookup)
+    // so the scan button's loading indicator covers the full decode + lookup window.
+    try {
+      await onResultRef.current(decoded)
+    } finally {
+      await cleanup()
     }
   }, [])
 
