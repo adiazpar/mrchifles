@@ -28,6 +28,7 @@ import {
 } from '@/lib/products'
 import { getProductIconUrl, formatDate } from '@/lib/utils'
 import { useAiProductPipeline, useImageCompression } from '@/hooks'
+import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import type { Product, Provider, SortPreference, ProductCategory } from '@/types'
 
 // ============================================
@@ -493,7 +494,7 @@ export default function ProductosPage() {
 
       return true
     } catch (err) {
-      console.error('Error saving product:', err)
+      console.warn('Error saving product:', err)
       if (err instanceof Error) {
         throw err
       }
@@ -571,6 +572,39 @@ export default function ProductosPage() {
     setEditingProduct(product)
     setIsModalOpen(true)
   }, [pipeline, compression])
+
+  const handleBarcodeScanResult = useCallback(async ({ value }: { value: string }) => {
+    setError('')
+    try {
+      const response = await fetch(
+        `/api/businesses/${businessId}/products?barcode=${encodeURIComponent(value)}`
+      )
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        setError('Unable to look up barcode. Please try again.')
+        return
+      }
+
+      const matched: Product[] = data.products || []
+      if (matched.length > 0) {
+        handleOpenEdit(matched[0])
+      } else {
+        setSearchQuery(value)
+      }
+    } catch {
+      setError('Unable to look up barcode. Please try again.')
+    }
+  }, [businessId, handleOpenEdit, setError, setSearchQuery])
+
+  const {
+    open: openBarcodeScan,
+    busy: barcodeScanBusy,
+    hiddenInput: barcodeScanInput,
+  } = useBarcodeScan({
+    onResult: handleBarcodeScanResult,
+    onError: setError,
+  })
 
   const handleAiPhotoCapture = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -885,6 +919,9 @@ export default function ProductosPage() {
             onOpenSettings={() => setIsSettingsModalOpen(true)}
             error={error}
             isModalOpen={isModalOpen}
+            onScanClick={openBarcodeScan}
+            scanBusy={barcodeScanBusy}
+            scanHiddenInput={barcodeScanInput}
           />
         ) : (
           <OrdersTab
