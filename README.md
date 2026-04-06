@@ -6,7 +6,7 @@ A multi-business management system for small businesses.
 
 - **Multi-Business** - Manage multiple businesses from one account
 - **Sales Register** - Record transactions with cash, card, or other payments
-- **Product Catalog** - AI-powered product icons, categories, stock tracking
+- **Product Catalog** - AI-powered product icons, categories, stock tracking, barcode scanning and generation
 - **Cash Drawer** - Opening/closing balance and reconciliation
 - **Inventory** - Track stock levels and supplier orders
 - **Team Management** - Invite partners/employees with role-based access
@@ -24,6 +24,7 @@ A multi-business management system for small businesses.
 | **Database** | Turso (libSQL) + Drizzle ORM |
 | **Auth** | Simple JWT (jose) + bcryptjs |
 | **Icons** | Lucide React |
+| **Barcodes** | html5-qrcode (decode) + bwip-js (render) |
 | **Hosting** | Vercel |
 
 ## Quick Start
