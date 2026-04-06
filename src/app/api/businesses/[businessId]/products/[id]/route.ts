@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { db, products } from '@/db'
-import { eq, and } from 'drizzle-orm'
-import { z } from 'zod'
+import { eq, and, ne } from 'drizzle-orm'
 import { uploadProductIcon, deleteProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
 import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
 import { canManageBusiness } from '@/lib/business-auth'
+import { isBarcodeFormat, normalizeBarcodeValue } from '@/lib/barcodes'
 import { Schemas } from '@/lib/schemas'
 
 /**
@@ -31,7 +31,9 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   const iconFile = formData.get('icon') as File | null
   const presetIcon = formData.get('presetIcon') as string | null
   const clearIconFlag = formData.get('clearIcon') as string | null
-  const barcodeValue = formData.get('barcode') as string | null
+  const barcodeValue = normalizeBarcodeValue(formData.get('barcode') as string | null)
+  const barcodeFormatValue = normalizeBarcodeValue(formData.get('barcodeFormat') as string | null)
+  const barcodeSourceValue = normalizeBarcodeValue(formData.get('barcodeSource') as string | null)
 
   const updateData: Record<string, unknown> = {}
 
@@ -63,8 +65,59 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     updateData.status = active === 'true' ? 'active' : 'inactive'
   }
 
-  if (barcodeValue !== null) {
+  const hasBarcodeValue = formData.has('barcode')
+  const hasBarcodeFormat = formData.has('barcodeFormat')
+  const hasBarcodeSource = formData.has('barcodeSource')
+
+  if (hasBarcodeFormat) {
+    if (barcodeFormatValue && !isBarcodeFormat(barcodeFormatValue)) {
+      return HttpResponse.badRequest('Unsupported barcode format')
+    }
+    updateData.barcodeFormat = barcodeFormatValue || null
+  }
+
+  if (hasBarcodeSource) {
+    if (barcodeSourceValue && !['scanned', 'generated', 'manual'].includes(barcodeSourceValue)) {
+      return HttpResponse.badRequest('Unsupported barcode source')
+    }
+    updateData.barcodeSource = barcodeSourceValue || null
+  }
+
+  if (hasBarcodeValue) {
+    if (barcodeValue) {
+      const duplicateBarcode = await db
+        .select({ id: products.id })
+        .from(products)
+        .where(
+          and(
+            eq(products.businessId, access.businessId),
+            eq(products.barcode, barcodeValue),
+            ne(products.id, id),
+            ne(products.status, 'archived')
+          )
+        )
+        .get()
+
+      if (duplicateBarcode) {
+        return HttpResponse.badRequest('Another product already uses this barcode')
+      }
+    }
+
     updateData.barcode = barcodeValue || null
+
+    if (!barcodeValue && !hasBarcodeFormat) {
+      updateData.barcodeFormat = null
+    }
+    if (!barcodeValue && !hasBarcodeSource) {
+      updateData.barcodeSource = null
+    }
+  }
+
+  if (hasBarcodeValue && !barcodeValue && barcodeFormatValue) {
+    return HttpResponse.badRequest('Barcode format requires a barcode value')
+  }
+  if (hasBarcodeValue && !barcodeValue && barcodeSourceValue) {
+    return HttpResponse.badRequest('Barcode source requires a barcode value')
   }
 
   // Handle icon changes

@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { uploadProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { isBarcodeFormat, normalizeBarcodeValue } from '@/lib/barcodes'
 import { Schemas } from '@/lib/schemas'
 
 const createProductSchema = z.object({
@@ -12,6 +13,9 @@ const createProductSchema = z.object({
   price: Schemas.amount(),
   categoryId: Schemas.id().optional(),
   active: Schemas.activeFlag(),
+  barcode: z.string().optional(),
+  barcodeFormat: z.string().optional(),
+  barcodeSource: z.enum(['scanned', 'generated', 'manual']).optional(),
 })
 
 /**
@@ -44,21 +48,66 @@ export const POST = withBusinessAuth(async (request, access) => {
   const active = formData.get('active') as string
   const iconFile = formData.get('icon') as File | null
   const presetIcon = formData.get('presetIcon') as string | null
-  const barcodeValue = formData.get('barcode') as string | null
+  const barcodeValue = normalizeBarcodeValue(formData.get('barcode') as string | null)
+  const barcodeFormatValue = normalizeBarcodeValue(formData.get('barcodeFormat') as string | null)
+  const barcodeSourceValue = normalizeBarcodeValue(formData.get('barcodeSource') as string | null)
 
   const validation = createProductSchema.safeParse({
     name,
     price,
     categoryId: categoryId || undefined,
     active,
+    barcode: barcodeValue || undefined,
+    barcodeFormat: barcodeFormatValue || undefined,
+    barcodeSource: barcodeSourceValue || undefined,
   })
 
   if (!validation.success) {
     return validationError(validation)
   }
 
-  const { name: validName, price: validPrice, categoryId: validCategoryId, active: validActive } = validation.data
+  const {
+    name: validName,
+    price: validPrice,
+    categoryId: validCategoryId,
+    active: validActive,
+    barcodeSource: validBarcodeSource,
+  } = validation.data
   const status = validActive ? 'active' : 'inactive'
+  const barcodeFormat = barcodeFormatValue
+    ? (isBarcodeFormat(barcodeFormatValue) ? barcodeFormatValue : null)
+    : null
+  const barcodeSource = validBarcodeSource ?? null
+
+  if (barcodeFormatValue && !barcodeFormat) {
+    return HttpResponse.badRequest('Unsupported barcode format')
+  }
+
+  if (!barcodeValue && barcodeFormat) {
+    return HttpResponse.badRequest('Barcode format requires a barcode value')
+  }
+
+  if (!barcodeValue && barcodeSource) {
+    return HttpResponse.badRequest('Barcode source requires a barcode value')
+  }
+
+  if (barcodeValue) {
+    const duplicateBarcode = await db
+      .select({ id: products.id })
+      .from(products)
+      .where(
+        and(
+          eq(products.businessId, access.businessId),
+          eq(products.barcode, barcodeValue),
+          ne(products.status, 'archived')
+        )
+      )
+      .get()
+
+    if (duplicateBarcode) {
+      return HttpResponse.badRequest('Another product already uses this barcode')
+    }
+  }
 
   const productId = nanoid()
 
@@ -105,6 +154,8 @@ export const POST = withBusinessAuth(async (request, access) => {
         categoryId: validCategoryId || null,
         icon: iconData ?? archivedMatch.icon,
         barcode: barcodeValue || null,
+        barcodeFormat,
+        barcodeSource,
         status,
         updatedAt: now,
       })
@@ -130,6 +181,8 @@ export const POST = withBusinessAuth(async (request, access) => {
     categoryId: validCategoryId || null,
     icon: iconData,
     barcode: barcodeValue || null,
+    barcodeFormat,
+    barcodeSource,
     status,
     stock: 0,
     createdAt: now,
