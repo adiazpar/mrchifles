@@ -129,9 +129,9 @@ export default function HubPage() {
         <Image
           src={icon}
           alt={business.name}
-          width={48}
-          height={48}
-          className="w-full h-full object-cover rounded-xl"
+          width={40}
+          height={40}
+          className="product-list-image-img"
           unoptimized
         />
       )
@@ -145,7 +145,7 @@ export default function HubPage() {
     // Use custom icon component for business type if available
     if (type && BUSINESS_TYPE_ICONS[type]) {
       const IconComponent = BUSINESS_TYPE_ICONS[type]
-      return <IconComponent className="w-8 h-8 text-brand" />
+      return <IconComponent className="w-6 h-6 text-brand" />
     }
 
     // Fall back to default emoji for business type
@@ -154,7 +154,7 @@ export default function HubPage() {
     }
 
     // Ultimate fallback
-    return <BusinessIcon className="w-6 h-6 text-brand" />
+    return <BusinessIcon className="w-5 h-5 text-brand" />
   }
 
   const renderBusinessItem = (business: Business) => (
