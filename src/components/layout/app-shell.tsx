@@ -20,7 +20,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
 
   if (isAuthRoute) {
-    return <>{children}</>
+    return (
+      <div className="h-full">
+        <div className="main-scroll-container flex flex-col h-full overflow-y-auto">
+          {children}
+        </div>
+      </div>
+    )
   }
 
   // Extract businessId from pathname for business routes
