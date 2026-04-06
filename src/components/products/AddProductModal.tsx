@@ -3,7 +3,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Plus, Minus } from 'lucide-react'
-import { BarcodeScanner } from './BarcodeScanner'
 import { BarcodeFields } from './BarcodeFields'
 import { CameraIcon, JoinIcon, ImageAttachIcon } from '@/components/icons'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -137,7 +136,6 @@ export function AddProductModal({
   onAiPhotoCapture,
   onOpenSettings,
 }: AddProductModalProps) {
-  const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'details' | 'barcode'>('details')
 
   // Reset tab when modal opens
@@ -161,9 +159,6 @@ export function AddProductModal({
     setPresetEmoji,
     presetEmoji,
     clearIcon,
-    setBarcode,
-    setBarcodeFormat,
-    setBarcodeSource,
     isSaving,
     error,
     productSaved,
@@ -423,7 +418,7 @@ export function AddProductModal({
 
           <TabContainer.Tab id="barcode">
             <Modal.Item>
-              <BarcodeFields onOpenScanner={() => setIsScannerOpen(true)} />
+              <BarcodeFields />
             </Modal.Item>
           </TabContainer.Tab>
         </TabContainer>
@@ -684,17 +679,6 @@ export function AddProductModal({
       </Modal.Step>
     </Modal>
 
-    {isScannerOpen && (
-      <BarcodeScanner
-        onScan={({ value, format }) => {
-          setBarcode(value)
-          setBarcodeFormat(format)
-          setBarcodeSource('scanned')
-          setIsScannerOpen(false)
-        }}
-        onClose={() => setIsScannerOpen(false)}
-      />
-    )}
     </>
   )
 }

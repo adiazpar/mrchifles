@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Plus, Minus } from 'lucide-react'
-import { BarcodeScanner } from './BarcodeScanner'
 import { BarcodeFields } from './BarcodeFields'
 import { TrashIcon, SlidersIcon, ImageAttachIcon } from '@/components/icons'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -134,7 +133,6 @@ export function EditProductModal({
   onSaveAdjustment,
   canDelete,
 }: EditProductModalProps) {
-  const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'details' | 'barcode'>('details')
 
   // Reset tab when modal opens
@@ -157,9 +155,6 @@ export function EditProductModal({
     setPresetEmoji,
     presetEmoji,
     clearIcon,
-    setBarcode,
-    setBarcodeFormat,
-    setBarcodeSource,
     editingProduct,
     newStockValue,
     setNewStockValue,
@@ -383,7 +378,7 @@ export function EditProductModal({
 
           <TabContainer.Tab id="barcode">
             <Modal.Item>
-              <BarcodeFields onOpenScanner={() => setIsScannerOpen(true)} />
+              <BarcodeFields />
             </Modal.Item>
           </TabContainer.Tab>
         </TabContainer>
@@ -548,17 +543,6 @@ export function EditProductModal({
       </Modal.Step>
     </Modal>
 
-    {isScannerOpen && (
-      <BarcodeScanner
-        onScan={({ value, format }) => {
-          setBarcode(value)
-          setBarcodeFormat(format)
-          setBarcodeSource('scanned')
-          setIsScannerOpen(false)
-        }}
-        onClose={() => setIsScannerOpen(false)}
-      />
-    )}
   </>
   )
 }

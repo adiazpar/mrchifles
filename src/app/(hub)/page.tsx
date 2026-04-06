@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronRight, X } from 'lucide-react'
-import { BusinessIcon, SearchIcon, FoodBeverageIcon, ServicesIcon, RetailIcon, WholesaleIcon, ManufacturingIcon, OtherBusinessIcon } from '@/components/icons'
+import { BusinessIcon, FilterIcon, FoodBeverageIcon, ServicesIcon, RetailIcon, WholesaleIcon, ManufacturingIcon, OtherBusinessIcon } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { Spinner } from '@/components/ui'
@@ -160,7 +160,7 @@ export default function HubPage() {
   const renderBusinessItem = (business: Business) => (
     <div
       key={business.id}
-      className="list-item-clickable list-item-flat"
+      className="list-item-clickable"
       onClick={() => handleEnterBusiness(business.id)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -171,22 +171,26 @@ export default function HubPage() {
       tabIndex={0}
       role="button"
     >
-      {/* Icon */}
-      <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0 overflow-hidden">
-        {getBusinessIcon(business)}
-      </div>
-
-      {/* Info */}
       <div className="flex-1 min-w-0">
-        <span className="font-medium truncate block">{business.name}</span>
-        <span className="text-xs text-text-tertiary mt-0.5 block">
-          {business.memberCount} {business.memberCount === 1 ? 'member' : 'members'}
-        </span>
-      </div>
+        <div className="flex items-center gap-3">
+          {/* Business Icon */}
+          <div className="product-list-image">
+            {getBusinessIcon(business)}
+          </div>
 
-      {/* Chevron */}
-      <div className="text-text-tertiary ml-2">
-        <ChevronRight className="w-5 h-5" />
+          {/* Business Info */}
+          <div className="flex-1 min-w-0">
+            <span className="font-medium truncate block">{business.name}</span>
+            <span className="text-xs text-text-tertiary mt-0.5 block">
+              {business.memberCount} {business.memberCount === 1 ? 'member' : 'members'}
+            </span>
+          </div>
+
+          {/* Chevron */}
+          <div className="text-text-tertiary ml-2 flex-shrink-0">
+            <ChevronRight className="w-5 h-5" />
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -194,27 +198,35 @@ export default function HubPage() {
   return (
     <main className="hub-content space-y-4">
       {/* Search Bar */}
-      <div className="relative">
-        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-          <SearchIcon size={16} className="text-text-tertiary" style={{ marginTop: '-2px' }} />
+      <div className="flex gap-2 items-stretch">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Search businesses..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="input w-full h-full"
+            style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+              aria-label="Clear search"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
-        <input
-          type="text"
-          placeholder="Search businesses..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="input w-full"
-          style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingLeft: '2.25rem', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery('')}
-            className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-          >
-            <X size={18} />
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => {}}
+          className="btn btn-secondary btn-icon flex-shrink-0"
+          aria-label="Sort and filter"
+        >
+          <FilterIcon style={{ width: 18, height: 18 }} />
+        </button>
       </div>
 
       {/* No search results */}
@@ -232,7 +244,7 @@ export default function HubPage() {
             </span>
           </div>
           <hr className="border-border" />
-          <div className="space-y-2">
+          <div>
             {ownedBusinesses.map(renderBusinessItem)}
           </div>
         </div>
@@ -246,7 +258,7 @@ export default function HubPage() {
             </span>
           </div>
           <hr className="border-border" />
-          <div className="space-y-2">
+          <div>
             {joinedBusinesses.map(renderBusinessItem)}
           </div>
         </div>

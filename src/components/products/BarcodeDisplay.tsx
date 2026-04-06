@@ -19,7 +19,7 @@ export function BarcodeDisplay({ value, format }: BarcodeDisplayProps) {
   if (!normalizedValue) {
     return (
       <div className="text-sm text-text-tertiary">
-        Barcode visual appears here once you scan or create a code.
+        Barcode visual appears here once you scan or generate a code.
       </div>
     )
   }
