@@ -46,6 +46,7 @@ Kasero is a multi-business management system optimized for:
 | **ORM** | Drizzle ORM | $0 |
 | **Auth** | Simple JWT (jose + bcryptjs) | $0 |
 | **Icons** | Lucide React | $0 |
+| **Barcodes** | html5-qrcode (decode) + bwip-js (render) | $0 |
 | **Hosting** | Vercel (free tier) | $0 |
 | **File Storage** | Base64 in DB (icons) / Cloudflare R2 (receipts) | $0 |
 
@@ -194,6 +195,33 @@ Login: Email + Password → JWT cookie → Dashboard
 2. **Consistent style** - Clean, minimal aesthetic
 3. **Large library** - 1000+ icons
 4. **React-native** - First-class React components
+
+---
+
+### Barcodes: html5-qrcode + bwip-js
+
+**What they are:** Two complementary libraries for barcode handling. `html5-qrcode` decodes barcodes from an image or camera stream. `bwip-js` renders barcodes as SVG/canvas from a value + format.
+
+**Why we chose them:**
+
+1. **Zero cost** - Both MIT licensed, no API keys, no service dependencies
+2. **Client-side** - Decode and render both run in the browser; no server round-trip for rendering, and decode can work on a camera-captured image without uploading
+3. **Format coverage** - Between the two, we support UPC-A/E, EAN-8/13, Code 128, Code 39, Code 93, Codabar, and ITF
+4. **Device-aware capture** - We use a hidden `<input type="file" accept="image/*" capture="environment">` that opens the camera on mobile and the file picker on desktop, then hand the image to `html5-qrcode`'s `scanFileV2`. This avoids the Secure Context requirement of `getUserMedia` on plain HTTP LAN addresses.
+
+**Where they live:**
+- Decode pipeline: `src/hooks/useBarcodeScan.tsx` (shared hook consumed by `BarcodeFields` in the product modal and the scan button on the products page)
+- Render pipeline: `src/lib/barcode-render.ts` + `src/components/products/BarcodeDisplay.tsx`
+- Internal CODE_128 generator for products without physical barcodes: `src/lib/barcodes.ts`
+
+**Alternatives considered:**
+
+| Option | Rejected Because |
+|--------|------------------|
+| ZXing (zxing-js) | Larger bundle, more setup overhead, overlap with html5-qrcode |
+| JsBarcode | Render-only, Code 128 focus, weaker UPC/EAN output |
+| Server-side decode | Requires uploading images, adds latency, defeats offline-friendliness |
+| Native camera libraries | Web-only deployment, no Capacitor/Cordova in scope |
 
 ---
 

@@ -46,6 +46,7 @@ A **multi-business management system** for small businesses. Built for speed, si
 | **ORM** | Drizzle ORM |
 | **Auth** | Simple JWT (jose + bcryptjs) |
 | **Icons** | Lucide React |
+| **Barcodes** | html5-qrcode (decode) + bwip-js (render) |
 | **Hosting** | Vercel |
 
 ---
@@ -127,7 +128,7 @@ Schema defined in `src/db/schema.ts`. All tables use `businessId` for multi-tena
 | `businesses` | Business/store entities |
 | `users` | User accounts with email/password auth |
 | `business_users` | Join table - users to businesses (role, status) |
-| `products` | Product catalog with pricing and stock |
+| `products` | Product catalog with pricing, stock, and barcode (value, format, source) |
 | `product_categories` | Custom categories per business |
 | `product_settings` | Sort preferences, default category |
 | `sales` | Sale transactions |
@@ -307,7 +308,7 @@ All API routes use Drizzle ORM with Turso. Authentication is via JWT in HTTP-onl
 ### Products
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/products` | GET | List products |
+| `/products` | GET | List products (optional `?barcode=<value>` for exact-match lookup) |
 | `/products` | POST | Create product (FormData) |
 | `/products/[id]` | PATCH | Update product (FormData) |
 | `/products/[id]` | DELETE | Delete product |
