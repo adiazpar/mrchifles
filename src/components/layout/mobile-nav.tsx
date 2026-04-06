@@ -15,8 +15,8 @@ export function MobileNav() {
   const router = useRouter()
   const { isVisible, pendingHref, setPendingHref } = useNavbar()
   const businessContext = useOptionalBusiness()
-  const { openJoinModal } = useJoinBusinessModal()
-  const { openCreateModal } = useCreateBusinessModal()
+  const { openJoinModal, isJoinModalOpen } = useJoinBusinessModal()
+  const { openCreateModal, isCreateModalOpen } = useCreateBusinessModal()
   const navRef = useRef<HTMLElement>(null)
 
   // Get businessId from pathname (immediate) for context detection
@@ -84,29 +84,29 @@ export function MobileNav() {
     transition: 'opacity 150ms ease-out',
   }
 
-  // Hub context: render action buttons (primary/secondary style)
+  // Hub context: render action items styled like the business navbar
   if (isHubContext) {
     return (
       <nav
         ref={navRef}
-        className={`mobile-nav mobile-nav--hub ${isHidden ? 'mobile-nav--hidden' : ''}`}
+        className={`mobile-nav ${isHidden ? 'mobile-nav--hidden' : ''}`}
       >
-        <div className="flex gap-3 w-full" style={contentFadeStyle}>
+        <div className="flex w-full" style={contentFadeStyle}>
           <button
             type="button"
-            className="btn btn-primary flex-1"
             onClick={handleCreateBusiness}
+            className={`mobile-nav-item ${isCreateModalOpen ? 'active' : ''}`}
           >
-            <PlusIcon />
-            Create
+            <PlusIcon className="mobile-nav-icon" />
+            <span>Create Business</span>
           </button>
           <button
             type="button"
-            className="btn btn-secondary flex-1"
             onClick={handleJoinBusiness}
+            className={`mobile-nav-item ${isJoinModalOpen ? 'active' : ''}`}
           >
-            <JoinIcon />
-            Join
+            <JoinIcon className="mobile-nav-icon" />
+            <span>Join a Business</span>
           </button>
         </div>
       </nav>
