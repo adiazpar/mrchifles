@@ -209,7 +209,7 @@ export function AddProductModal({
         )}
 
         {/* Tabs */}
-        <div className="section-tabs section-tabs--modal">
+        <div className="section-tabs section-tabs--modal morph-item">
           <button
             type="button"
             onClick={() => setActiveTab('details')}
@@ -428,7 +428,7 @@ export function AddProductModal({
         )}
 
         {/* Tabs */}
-        <div className="section-tabs section-tabs--modal">
+        <div className="section-tabs section-tabs--modal morph-item">
           <button
             type="button"
             onClick={() => setActiveTab('details')}

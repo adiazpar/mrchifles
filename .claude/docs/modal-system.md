@@ -210,6 +210,50 @@ Steps are numbered by their order as direct children of `<Modal>`. If you condit
 
 ---
 
+## TabContainer
+
+For modals that need tabs within a single step (e.g., Details / Barcode tabs), use `TabContainer` from `@/components/ui`:
+
+```tsx
+import { TabContainer } from '@/components/ui'
+
+<Modal.Step title="Edit product">
+  {/* Tab buttons - add morph-item class so they fade with content */}
+  <div className="section-tabs section-tabs--modal morph-item">
+    <button onClick={() => setActiveTab('details')} className={`section-tab ${activeTab === 'details' ? 'section-tab-active' : ''}`}>
+      Details
+    </button>
+    <button onClick={() => setActiveTab('barcode')} className={`section-tab ${activeTab === 'barcode' ? 'section-tab-active' : ''}`}>
+      Barcode
+    </button>
+  </div>
+
+  <TabContainer activeTab={activeTab}>
+    <TabContainer.Tab id="details">
+      <Modal.Item>...</Modal.Item>
+      <Modal.Item>...</Modal.Item>
+    </TabContainer.Tab>
+    <TabContainer.Tab id="barcode">
+      <Modal.Item>...</Modal.Item>
+    </TabContainer.Tab>
+  </TabContainer>
+
+  <Modal.Footer>...</Modal.Footer>
+</Modal.Step>
+```
+
+**How it works:**
+- All tab content renders in a CSS grid stacked in the same cell
+- Inactive tabs are `visibility: hidden` with `pointer-events: none`
+- The container sizes to the tallest tab automatically (no resize on switch)
+- Modal.Items inside tabs still receive enter/exit animations (via descendant selectors)
+
+**Tabs styling:**
+- Use `section-tabs--modal` modifier for modal context (no sticky positioning, no top padding)
+- Add `morph-item` class to the tabs container so it participates in step transition animations
+
+---
+
 ## Examples
 
 **Simple edit modal:** `src/components/providers/ProviderModal.tsx`

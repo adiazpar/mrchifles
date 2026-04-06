@@ -231,27 +231,27 @@
 }
 
 /* Content exit animation - staggered fade up */
-.morph-content-exit > .morph-item {
+.morph-content-exit .morph-item {
   animation: morph-item-exit var(--duration-instant) ease-in forwards;
 }
 
-.morph-content-exit > .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-exit > .morph-item:nth-child(2) { animation-delay: 25ms; }
-.morph-content-exit > .morph-item:nth-child(3) { animation-delay: 50ms; }
-.morph-content-exit > .morph-item:nth-child(4) { animation-delay: 75ms; }
-.morph-content-exit > .morph-item:nth-child(5) { animation-delay: 100ms; }
+.morph-content-exit .morph-item:nth-child(1) { animation-delay: 0ms; }
+.morph-content-exit .morph-item:nth-child(2) { animation-delay: 25ms; }
+.morph-content-exit .morph-item:nth-child(3) { animation-delay: 50ms; }
+.morph-content-exit .morph-item:nth-child(4) { animation-delay: 75ms; }
+.morph-content-exit .morph-item:nth-child(5) { animation-delay: 100ms; }
 
 /* Content enter animation - staggered fade in from below */
-.morph-content-enter > .morph-item {
+.morph-content-enter .morph-item {
   animation: morph-item-enter var(--duration-instant) ease-out forwards;
   opacity: 0;
 }
 
-.morph-content-enter > .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-enter > .morph-item:nth-child(2) { animation-delay: 25ms; }
-.morph-content-enter > .morph-item:nth-child(3) { animation-delay: 50ms; }
-.morph-content-enter > .morph-item:nth-child(4) { animation-delay: 75ms; }
-.morph-content-enter > .morph-item:nth-child(5) { animation-delay: 100ms; }
+.morph-content-enter .morph-item:nth-child(1) { animation-delay: 0ms; }
+.morph-content-enter .morph-item:nth-child(2) { animation-delay: 25ms; }
+.morph-content-enter .morph-item:nth-child(3) { animation-delay: 50ms; }
+.morph-content-enter .morph-item:nth-child(4) { animation-delay: 75ms; }
+.morph-content-enter .morph-item:nth-child(5) { animation-delay: 100ms; }
 
 @keyframes morph-item-exit {
   from {
@@ -276,27 +276,27 @@
 }
 
 /* Backward exit animation - fade out downward */
-.morph-content-exit-back > .morph-item {
+.morph-content-exit-back .morph-item {
   animation: morph-item-exit-back var(--duration-instant) ease-in forwards;
 }
 
-.morph-content-exit-back > .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-exit-back > .morph-item:nth-child(2) { animation-delay: 25ms; }
-.morph-content-exit-back > .morph-item:nth-child(3) { animation-delay: 50ms; }
-.morph-content-exit-back > .morph-item:nth-child(4) { animation-delay: 75ms; }
-.morph-content-exit-back > .morph-item:nth-child(5) { animation-delay: 100ms; }
+.morph-content-exit-back .morph-item:nth-child(1) { animation-delay: 0ms; }
+.morph-content-exit-back .morph-item:nth-child(2) { animation-delay: 25ms; }
+.morph-content-exit-back .morph-item:nth-child(3) { animation-delay: 50ms; }
+.morph-content-exit-back .morph-item:nth-child(4) { animation-delay: 75ms; }
+.morph-content-exit-back .morph-item:nth-child(5) { animation-delay: 100ms; }
 
 /* Backward enter animation - fade in from above */
-.morph-content-enter-back > .morph-item {
+.morph-content-enter-back .morph-item {
   animation: morph-item-enter-back var(--duration-instant) ease-out forwards;
   opacity: 0;
 }
 
-.morph-content-enter-back > .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-enter-back > .morph-item:nth-child(2) { animation-delay: 25ms; }
-.morph-content-enter-back > .morph-item:nth-child(3) { animation-delay: 50ms; }
-.morph-content-enter-back > .morph-item:nth-child(4) { animation-delay: 75ms; }
-.morph-content-enter-back > .morph-item:nth-child(5) { animation-delay: 100ms; }
+.morph-content-enter-back .morph-item:nth-child(1) { animation-delay: 0ms; }
+.morph-content-enter-back .morph-item:nth-child(2) { animation-delay: 25ms; }
+.morph-content-enter-back .morph-item:nth-child(3) { animation-delay: 50ms; }
+.morph-content-enter-back .morph-item:nth-child(4) { animation-delay: 75ms; }
+.morph-content-enter-back .morph-item:nth-child(5) { animation-delay: 100ms; }
 
 @keyframes morph-item-exit-back {
   from {
