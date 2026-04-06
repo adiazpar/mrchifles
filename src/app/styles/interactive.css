@@ -2029,6 +2029,16 @@
   z-index: 10;
 }
 
+/* Modal variant - no sticky positioning, no top padding on tabs */
+.section-tabs--modal {
+  position: static;
+  background: transparent;
+}
+
+.section-tabs--modal .section-tab {
+  padding-top: 0;
+}
+
 .section-tab {
   flex: 1;
   padding: var(--space-3) var(--space-4);

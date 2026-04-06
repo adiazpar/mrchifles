@@ -6,7 +6,7 @@ import { Plus, Minus } from 'lucide-react'
 import { BarcodeScanner } from './BarcodeScanner'
 import { CameraIcon, JoinIcon, ImageAttachIcon } from '@/components/icons'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { Spinner, Modal, useMorphingModal } from '@/components/ui'
+import { Spinner, Modal, useMorphingModal, TabContainer } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
 import type { ProductCategory } from '@/types'
@@ -106,6 +106,13 @@ export function AddProductModal({
   onOpenSettings,
 }: AddProductModalProps) {
   const [isScannerOpen, setIsScannerOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'details' | 'barcode'>('details')
+
+  // Reset tab when modal opens
+  useEffect(() => {
+    if (isOpen) setActiveTab('details')
+  }, [isOpen])
+
   const {
     name,
     setName,
@@ -201,6 +208,26 @@ export function AddProductModal({
           </Modal.Item>
         )}
 
+        {/* Tabs */}
+        <div className="section-tabs section-tabs--modal">
+          <button
+            type="button"
+            onClick={() => setActiveTab('details')}
+            className={`section-tab ${activeTab === 'details' ? 'section-tab-active' : ''}`}
+          >
+            Details
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('barcode')}
+            className={`section-tab ${activeTab === 'barcode' ? 'section-tab-active' : ''}`}
+          >
+            Barcode
+          </button>
+        </div>
+
+        <TabContainer activeTab={activeTab}>
+          <TabContainer.Tab id="details">
         <Modal.Item>
           <label className="label">Icon</label>
           <div className="flex items-center gap-3">
@@ -344,17 +371,7 @@ export function AddProductModal({
           </div>
         </Modal.Item>
 
-        {/* Barcode */}
-        <Modal.Item>
-          <button
-            type="button"
-            className="btn btn-secondary w-full"
-          >
-            {barcode || 'No Barcode Set'}
-          </button>
-        </Modal.Item>
-
-        {/* Active */}
+{/* Active */}
         <Modal.Item>
           <div className="flex items-center justify-between">
             <div>
@@ -369,6 +386,16 @@ export function AddProductModal({
             />
           </div>
         </Modal.Item>
+          </TabContainer.Tab>
+
+          <TabContainer.Tab id="barcode">
+            <Modal.Item>
+              <div className="text-center py-8 text-text-tertiary">
+                <p>Barcode tab content coming soon</p>
+              </div>
+            </Modal.Item>
+          </TabContainer.Tab>
+        </TabContainer>
 
         <Modal.Footer>
           <SaveButton onSubmit={onSubmit} />
@@ -400,6 +427,26 @@ export function AddProductModal({
           </Modal.Item>
         )}
 
+        {/* Tabs */}
+        <div className="section-tabs section-tabs--modal">
+          <button
+            type="button"
+            onClick={() => setActiveTab('details')}
+            className={`section-tab ${activeTab === 'details' ? 'section-tab-active' : ''}`}
+          >
+            Details
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('barcode')}
+            className={`section-tab ${activeTab === 'barcode' ? 'section-tab-active' : ''}`}
+          >
+            Barcode
+          </button>
+        </div>
+
+        <TabContainer activeTab={activeTab}>
+          <TabContainer.Tab id="details">
         <Modal.Item>
           <label className="label">Icon</label>
           <div className="flex items-center gap-3">
@@ -542,6 +589,16 @@ export function AddProductModal({
             </div>
           </div>
         </Modal.Item>
+          </TabContainer.Tab>
+
+          <TabContainer.Tab id="barcode">
+            <Modal.Item>
+              <div className="text-center py-8 text-text-tertiary">
+                <p>Barcode tab content coming soon</p>
+              </div>
+            </Modal.Item>
+          </TabContainer.Tab>
+        </TabContainer>
 
         <Modal.Footer>
           <Modal.BackButton
