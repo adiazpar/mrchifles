@@ -19,6 +19,7 @@ export { CheckIcon } from './CheckIcon'
 export { CloseIcon } from './CloseIcon'
 export { SearchIcon } from './SearchIcon'
 export { FilterIcon } from './FilterIcon'
+export { BarcodeScanIcon } from './BarcodeScanIcon'
 
 // Status icons
 export { ClockIcon } from './ClockIcon'
