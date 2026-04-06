@@ -21,13 +21,26 @@ const createProductSchema = z.object({
 /**
  * GET /api/businesses/[businessId]/products
  *
- * List all products for the specified business.
+ * List all products for the specified business. Accepts an optional
+ * ?barcode=<value> query param for exact-match lookup.
  */
 export const GET = withBusinessAuth(async (request, access) => {
+  const url = new URL(request.url)
+  const barcodeParam = url.searchParams.get('barcode')?.trim() || null
+
+  const conditions = [
+    eq(products.businessId, access.businessId),
+    ne(products.status, 'archived'),
+  ]
+
+  if (barcodeParam) {
+    conditions.push(eq(products.barcode, barcodeParam))
+  }
+
   const productsList = await db
     .select()
     .from(products)
-    .where(and(eq(products.businessId, access.businessId), ne(products.status, 'archived')))
+    .where(and(...conditions))
 
   return NextResponse.json({
     success: true,
