@@ -274,6 +274,9 @@ export function AddProductModal({
       {/* Step 1: AI - Product photo */}
       <Modal.Step title="Take a product photo" backStep={0}>
         <Modal.Item>
+          <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2">
+            Step 1 of 2
+          </div>
           <p className="text-sm text-text-secondary mb-4">
             Take a clear, well-lit photo of the product. Center it in the frame and avoid glare.
           </p>
@@ -287,6 +290,9 @@ export function AddProductModal({
       {/* Step 2: AI - Barcode */}
       <Modal.Step title="Add a barcode" backStep={1}>
         <Modal.Item>
+          <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-3">
+            Step 2 of 2
+          </div>
           <AiBarcodeStepBody />
         </Modal.Item>
         <Modal.Footer>
