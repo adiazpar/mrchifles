@@ -41,6 +41,8 @@ export function SuggestedCategoryStep({
     try {
       const newId = await onCreate(trimmed)
       if (!newId) setError('Failed to create category')
+    } catch {
+      setError('Failed to create category')
     } finally {
       setIsCreating(false)
     }

@@ -658,6 +658,8 @@ export default function ProductosPage() {
     if (!pendingAiImage) return
     pipeline.startPipeline(pendingAiImage, {
       categories: categories.map((c) => ({ id: c.id, name: c.name })),
+    }).catch((err) => {
+      setError(err instanceof Error ? err.message : 'Failed to start AI pipeline')
     })
   }, [pendingAiImage, pipeline, categories])
 
