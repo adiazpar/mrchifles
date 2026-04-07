@@ -64,8 +64,8 @@ export function AiBarcodeStepBody() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-text-secondary">
-        Scan the product&apos;s existing barcode, generate a new one to print
-        and stick on your items, or skip if this product has no barcode.
+        Scan the product&apos;s existing barcode, generate a new one, or skip
+        to complete this setup later.
       </p>
 
       <div className="rounded-xl border border-border bg-bg-muted p-4 min-h-36 flex items-center justify-center text-center">
