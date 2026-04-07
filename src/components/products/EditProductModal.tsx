@@ -27,6 +27,8 @@ export interface EditProductModalProps {
   onDelete: (productId: string) => Promise<boolean>
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
+  /** Step the modal opens to. Defaults to 0 (Edit form). Use 1 to open at "Adjust inventory". */
+  initialStep?: number
 }
 
 // ============================================
@@ -130,6 +132,7 @@ export function EditProductModal({
   onDelete,
   onSaveAdjustment,
   canDelete,
+  initialStep = 0,
 }: EditProductModalProps) {
   const {
     iconPreview,
@@ -160,6 +163,7 @@ export function EditProductModal({
       onClose={onClose}
       onExitComplete={onExitComplete}
       title="Edit product"
+      initialStep={initialStep}
     >
       {/* Step 0: Edit Form */}
       <Modal.Step title="Edit product">

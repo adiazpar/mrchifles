@@ -25,3 +25,5 @@ export { ConfirmationAnimation } from './ConfirmationAnimation'
 
 export { DeleteConfirmationStep } from './DeleteConfirmationStep'
 export { TabContainer } from './TabContainer'
+export { SwipeableRow } from './SwipeableRow'
+export type { SwipeAction, SwipeActionVariant } from './SwipeableRow'

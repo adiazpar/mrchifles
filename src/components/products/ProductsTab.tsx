@@ -2,9 +2,9 @@
 
 import { memo } from 'react'
 import Image from 'next/image'
-import { X, Plus, ChevronUp, ChevronRight, Barcode, Loader2 } from 'lucide-react'
+import { X, Plus, ChevronUp, ChevronRight, Barcode, Loader2, Boxes, Eye, EyeOff } from 'lucide-react'
 import { TagsIcon, FilterIcon, BarcodeScanIcon, ImageAttachIcon } from '@/components/icons'
-import { Modal } from '@/components/ui'
+import { Modal, SwipeableRow } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { scrollToTop } from '@/lib/scroll'
@@ -46,7 +46,12 @@ export interface ProductsTabProps {
   // Handlers
   onAddProduct: () => void
   onEditProduct: (product: Product) => void
+  onAdjustInventory?: (product: Product) => void
+  onToggleActive?: (product: Product) => void
   onOpenSettings: () => void
+
+  // Permissions
+  canModify?: boolean
 
   // Error state
   error?: string
@@ -77,7 +82,10 @@ export function ProductsTab({
   onSortSheetOpenChange,
   onAddProduct,
   onEditProduct,
+  onAdjustInventory,
+  onToggleActive,
   onOpenSettings,
+  canModify = false,
   error,
   isModalOpen,
   onScanClick,
@@ -193,6 +201,9 @@ export function ProductsTab({
                       product={product}
                       categoryName={getCategoryName(product.categoryId)}
                       onEdit={onEditProduct}
+                      onAdjustInventory={onAdjustInventory}
+                      onToggleActive={onToggleActive}
+                      canModify={canModify}
                     />
                   ))}
                 </div>
@@ -333,32 +344,60 @@ interface ProductListItemProps {
   product: Product
   categoryName: string
   onEdit: (product: Product) => void
+  onAdjustInventory?: (product: Product) => void
+  onToggleActive?: (product: Product) => void
+  canModify?: boolean
 }
 
 const ProductListItem = memo(function ProductListItem({
   product,
   categoryName,
   onEdit,
+  onAdjustInventory,
+  onToggleActive,
+  canModify = false,
 }: ProductListItemProps) {
   const iconUrl = getProductIconUrl(product)
   const stockValue = product.stock ?? 0
   const threshold = product.lowStockThreshold ?? 10
   const isLowStock = stockValue <= threshold
   const hasBarcode = !!product.barcode
+  const isActive = product.status === 'active'
+
+  // Swipe actions render left-to-right; the rightmost is exposed first as the row slides.
+  // Inventory is the most-frequently-used action, so it sits on the right (revealed first);
+  // Enable/Disable sits to its left (revealed on a deeper swipe).
+  const swipeActions = canModify && onAdjustInventory && onToggleActive
+    ? [
+        {
+          icon: isActive ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />,
+          label: isActive ? 'Disable' : 'Enable',
+          variant: 'neutral' as const,
+          onClick: () => onToggleActive(product),
+        },
+        {
+          icon: <Boxes className="w-5 h-5" />,
+          label: 'Inventory',
+          variant: 'info' as const,
+          onClick: () => onAdjustInventory(product),
+        },
+      ]
+    : []
 
   return (
-    <div
-      className={`list-item-clickable ${hasBarcode ? 'items-start' : ''}`}
-      onClick={() => onEdit(product)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onEdit(product)
-        }
-      }}
-      tabIndex={0}
-      role="button"
-    >
+    <SwipeableRow actions={swipeActions}>
+      <div
+        className={`list-item-clickable ${hasBarcode ? 'items-start' : ''}`}
+        onClick={() => onEdit(product)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onEdit(product)
+          }
+        }}
+        tabIndex={0}
+        role="button"
+      >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3">
           {/* Product Icon */}
@@ -415,7 +454,8 @@ const ProductListItem = memo(function ProductListItem({
             </span>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </SwipeableRow>
   )
 })

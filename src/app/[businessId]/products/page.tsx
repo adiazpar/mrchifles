@@ -188,6 +188,7 @@ interface EditProductModalWrapperProps {
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
   defaultCategoryId?: string | null
+  initialStep?: number
 }
 
 function EditProductModalWrapper({
@@ -201,6 +202,7 @@ function EditProductModalWrapper({
   onSaveAdjustment,
   canDelete,
   defaultCategoryId,
+  initialStep,
 }: EditProductModalWrapperProps) {
   const { populateFromProduct, resetForm } = useProductForm()
 
@@ -226,6 +228,7 @@ function EditProductModalWrapper({
       onDelete={onDelete}
       onSaveAdjustment={onSaveAdjustment}
       canDelete={canDelete}
+      initialStep={initialStep}
     />
   )
 }
@@ -445,6 +448,7 @@ export default function ProductosPage() {
 
   // Track which product is being edited (for passing to modal wrapper)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [editInitialStep, setEditInitialStep] = useState(0)
 
   // Filtered products for order selection
   const orderFilteredProducts = useMemo(() => {
@@ -602,9 +606,47 @@ export default function ProductosPage() {
     if (compression.state.isProcessing) {
       compression.cancel()
     }
+    setEditInitialStep(0)
     setEditingProduct(product)
     setIsModalOpen(true)
   }, [pipeline, compression])
+
+  const handleAdjustInventory = useCallback((product: Product) => {
+    if (pipeline.state.step !== 'idle') {
+      pipeline.reset()
+    }
+    if (compression.state.isProcessing) {
+      compression.cancel()
+    }
+    setEditInitialStep(1)
+    setEditingProduct(product)
+    setIsModalOpen(true)
+  }, [pipeline, compression])
+
+  const handleToggleActive = useCallback(async (product: Product) => {
+    const nextActive = product.status !== 'active'
+    // Optimistic update
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === product.id ? { ...p, status: nextActive ? 'active' : 'inactive' } : p
+      )
+    )
+    try {
+      const fd = new FormData()
+      fd.set('active', nextActive ? 'true' : 'false')
+      const response = await fetch(`/api/businesses/${businessId}/products/${product.id}`, {
+        method: 'PATCH',
+        body: fd,
+      })
+      if (!response.ok) throw new Error('PATCH failed')
+    } catch (err) {
+      console.error('Error toggling product status:', err)
+      // Revert
+      setProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? { ...p, status: product.status } : p))
+      )
+    }
+  }, [businessId, setProducts])
 
   const handleBarcodeScanResult = useCallback(async ({ value }: { value: string }) => {
     setError('')
@@ -971,6 +1013,9 @@ export default function ProductosPage() {
               onSortSheetOpenChange={setIsSortSheetOpen}
               onAddProduct={handleOpenAdd}
               onEditProduct={handleOpenEdit}
+              onAdjustInventory={handleAdjustInventory}
+              onToggleActive={handleToggleActive}
+              canModify={canManage}
               onOpenSettings={() => setIsSettingsModalOpen(true)}
               error={error}
               isModalOpen={isModalOpen}
@@ -1040,6 +1085,7 @@ export default function ProductosPage() {
           onSaveAdjustment={handleSaveAdjustment}
           canDelete={canDelete}
           defaultCategoryId={settings?.defaultCategoryId}
+          initialStep={editInitialStep}
         />
       </ProductFormProvider>
 

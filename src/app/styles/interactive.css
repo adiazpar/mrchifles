@@ -181,6 +181,24 @@
   height: 28px;
 }
 
+/* ===== SwipeableRow action buttons ===== */
+.swipeable-row-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 100%;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--duration-fast) ease-out;
+}
+
+.swipeable-row-action:active {
+  transform: scale(0.92);
+}
+
 /* ===== Hub Header (Zone 2 - No business context) ===== */
 .hub-header {
   display: grid;
