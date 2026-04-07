@@ -1,7 +1,7 @@
 'use client'
 
 import { useLayoutEffect, useRef, useEffect } from 'react'
-import { CameraIcon, JoinIcon } from '@/components/icons'
+import { CameraIcon, MagicWandIcon, JoinIcon } from '@/components/icons'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm } from '@/contexts/product-form-context'
@@ -267,7 +267,7 @@ export function AddProductModal({
         <Modal.Item>
           <div className="caja-actions caja-actions--stacked">
             <Modal.GoToStepButton step={1} className="caja-action-btn caja-action-btn--large">
-              <CameraIcon className="caja-action-btn__icon text-brand" />
+              <MagicWandIcon className="caja-action-btn__icon text-brand" />
               <div className="caja-action-btn__text">
                 <span className="caja-action-btn__title">Snap to Add</span>
                 <span className="caja-action-btn__desc">Take a photo and AI fills the data</span>

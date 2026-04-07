@@ -11,6 +11,7 @@ export { JoinIcon } from './JoinIcon'
 
 // Action icons
 export { CameraIcon } from './CameraIcon'
+export { MagicWandIcon } from './MagicWandIcon'
 export { PlusIcon } from './PlusIcon'
 export { TrashIcon } from './TrashIcon'
 export { EditIcon } from './EditIcon'
