@@ -313,6 +313,13 @@ export function AddProductModal({
 
       {/* Step 2: AI - Barcode */}
       <Modal.Step title="Add a barcode" backStep={1}>
+        {error && (
+          <Modal.Item>
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+              {error}
+            </div>
+          </Modal.Item>
+        )}
         <Modal.Item>
           <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-3">
             Step 2 of 2
