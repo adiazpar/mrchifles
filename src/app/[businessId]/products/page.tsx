@@ -54,7 +54,13 @@ interface AddProductModalWrapperProps {
   categories: ProductCategory[]
   pipelineState: {
     step: PipelineStep
-    result?: { name: string; iconPreview: string; iconBlob: Blob } | null
+    result?: {
+      name: string
+      categoryId: string | null
+      suggestedNewCategoryName: string | null
+      iconPreview: string
+      iconBlob: Blob
+    } | null
     error?: string | null
   }
   isCompressing: boolean
@@ -62,6 +68,8 @@ interface AddProductModalWrapperProps {
   onAbortAiProcessing: () => void
   onPipelineReset: () => void
   onAiPhotoCapture: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>
+  onStartAiPipeline: () => void
+  onCreateCategory: (name: string) => Promise<string | null>
   onOpenSettings: () => void
   defaultCategoryId?: string | null
 }
@@ -76,6 +84,8 @@ function AddProductModalWrapper({
   onAbortAiProcessing,
   onPipelineReset,
   onAiPhotoCapture,
+  onStartAiPipeline,
+  onCreateCategory,
   onOpenSettings,
   defaultCategoryId,
 }: AddProductModalWrapperProps) {
@@ -84,8 +94,11 @@ function AddProductModalWrapper({
     setPipelineStep,
     setIsCompressing,
     setName,
+    setCategoryId,
     setIconPreview,
     setGeneratedIconBlob,
+    setIconType,
+    setPresetEmoji,
     setError,
     resetForm,
   } = useProductForm()
@@ -102,10 +115,24 @@ function AddProductModalWrapper({
     if (pipelineState.step === 'complete' && pipelineState.result) {
       const result = pipelineState.result
       setName(result.name)
-      setIconPreview(result.iconPreview)
+      if (result.categoryId) {
+        setCategoryId(result.categoryId)
+      }
       setGeneratedIconBlob(result.iconBlob)
+      setIconPreview(result.iconPreview)
+      setIconType('custom')
+      setPresetEmoji(null)
     }
-  }, [pipelineState.step, pipelineState.result, setName, setIconPreview, setGeneratedIconBlob])
+  }, [
+    pipelineState.step,
+    pipelineState.result,
+    setName,
+    setCategoryId,
+    setGeneratedIconBlob,
+    setIconPreview,
+    setIconType,
+    setPresetEmoji,
+  ])
 
   useEffect(() => {
     if (pipelineState.step === 'error' && pipelineState.error) {
@@ -126,6 +153,8 @@ function AddProductModalWrapper({
     onClose()
   }, [onOpenSettings, onClose])
 
+  const suggestedCategoryName = pipelineState.result?.suggestedNewCategoryName ?? null
+
   return (
     <AddProductModal
       isOpen={isOpen}
@@ -137,6 +166,9 @@ function AddProductModalWrapper({
       onPipelineReset={onPipelineReset}
       onAiPhotoCapture={onAiPhotoCapture}
       onOpenSettings={handleOpenSettings}
+      suggestedCategoryName={suggestedCategoryName}
+      onCreateCategory={onCreateCategory}
+      onStartAiPipeline={onStartAiPipeline}
     />
   )
 }
@@ -548,6 +580,7 @@ export default function ProductosPage() {
     if (compression.state.isProcessing) {
       compression.cancel()
     }
+    setPendingAiImage(null)
     setIsModalOpen(false)
   }, [pipeline, compression])
 
@@ -606,6 +639,8 @@ export default function ProductosPage() {
     onError: setError,
   })
 
+  const [pendingAiImage, setPendingAiImage] = useState<string | null>(null)
+
   const handleAiPhotoCapture = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -616,8 +651,22 @@ export default function ProductosPage() {
       return
     }
 
-    await pipeline.startPipeline(compressedBase64)
-  }, [compression, pipeline])
+    setPendingAiImage(compressedBase64)
+  }, [compression])
+
+  const handleStartAiPipeline = useCallback(() => {
+    if (!pendingAiImage) return
+    pipeline.startPipeline(pendingAiImage, {
+      categories: categories.map((c) => ({ id: c.id, name: c.name })),
+    }).catch((err) => {
+      setError(err instanceof Error ? err.message : 'Failed to start AI pipeline')
+    })
+  }, [pendingAiImage, pipeline, categories])
+
+  const handleCreateCategory = useCallback(async (name: string): Promise<string | null> => {
+    const created = await createCategory(name)
+    return created?.id ?? null
+  }, [createCategory])
 
   // Order handlers
   const resetOrderForm = useCallback(() => {
@@ -970,8 +1019,13 @@ export default function ProductosPage() {
             pipeline.cancel()
             compression.cancel()
           }}
-          onPipelineReset={() => pipeline.reset()}
+          onPipelineReset={() => {
+            pipeline.reset()
+            setPendingAiImage(null)
+          }}
           onAiPhotoCapture={handleAiPhotoCapture}
+          onStartAiPipeline={handleStartAiPipeline}
+          onCreateCategory={handleCreateCategory}
           onOpenSettings={() => setIsSettingsModalOpen(true)}
           defaultCategoryId={settings?.defaultCategoryId}
         />
