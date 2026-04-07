@@ -47,6 +47,7 @@ A **multi-business management system** for small businesses. Built for speed, si
 | **Auth** | Simple JWT (jose + bcryptjs) |
 | **Icons** | Lucide React |
 | **Barcodes** | html5-qrcode (decode) + bwip-js (render) |
+| **Gestures** | framer-motion (drag, swipe, pan) |
 | **Hosting** | Vercel |
 
 ---
