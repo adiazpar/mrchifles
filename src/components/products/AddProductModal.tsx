@@ -7,6 +7,8 @@ import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductFormValidation } from '@/contexts/product-form-context'
 import { ProductForm } from './ProductForm'
+import { AiBarcodeStepBody } from './AiBarcodeStep'
+import { SuggestedCategoryStep } from './SuggestedCategoryStep'
 import type { ProductCategory } from '@/types'
 import type { ProductFormData } from './ProductModal'
 
@@ -14,7 +16,11 @@ import type { ProductFormData } from './ProductModal'
 // AI PIPELINE NAVIGATOR
 // ============================================
 
-function AiPipelineNavigator() {
+function AiPipelineNavigator({
+  needsCategory,
+}: {
+  needsCategory: boolean
+}) {
   const { pipelineStep, isCompressing } = useProductForm()
   const { goToStep, currentStep } = useMorphingModal()
   const goToStepRef = useRef(goToStep)
@@ -23,19 +29,100 @@ function AiPipelineNavigator() {
     goToStepRef.current = goToStep
   })
 
+  // While the pipeline is running, ensure we're on the analyzing step (3)
   useEffect(() => {
-    if (currentStep === 0 && (isCompressing || (pipelineStep !== 'idle' && pipelineStep !== 'complete' && pipelineStep !== 'error'))) {
-      goToStepRef.current(2)
+    const inProgress =
+      isCompressing ||
+      (pipelineStep !== 'idle' &&
+        pipelineStep !== 'complete' &&
+        pipelineStep !== 'error')
+    if (inProgress && currentStep === 2) {
+      goToStepRef.current(3)
     }
   }, [isCompressing, pipelineStep, currentStep])
 
+  // When the pipeline completes, advance to either suggested-category (4) or form (5)
   useEffect(() => {
-    if (currentStep === 2 && pipelineStep === 'complete') {
-      goToStepRef.current(3)
+    if (currentStep === 3 && pipelineStep === 'complete') {
+      goToStepRef.current(needsCategory ? 4 : 5)
     }
-  }, [pipelineStep, currentStep])
+  }, [pipelineStep, currentStep, needsCategory])
 
   return null
+}
+
+// ============================================
+// AI PHOTO STEP INPUT
+// ============================================
+
+function AiPhotoStepInput({
+  onAiPhotoCapture,
+}: {
+  onAiPhotoCapture: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>
+}) {
+  const { goToStep } = useMorphingModal()
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => cameraInputRef.current?.click()}
+        className="caja-action-btn caja-action-btn--large w-full"
+      >
+        <CameraIcon className="caja-action-btn__icon text-brand" />
+        <div className="caja-action-btn__text">
+          <span className="caja-action-btn__title">Open camera</span>
+          <span className="caja-action-btn__desc">We&apos;ll move on once you snap the photo</span>
+        </div>
+      </button>
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+        capture="environment"
+        onChange={async (e) => {
+          await onAiPhotoCapture(e)
+          goToStep(2)
+        }}
+        className="hidden"
+      />
+    </>
+  )
+}
+
+// ============================================
+// SUGGESTED CATEGORY STEP WRAPPER
+// ============================================
+
+function SuggestedCategoryStepWrapper({
+  suggestedCategoryName,
+  categories,
+  onCreateCategory,
+}: {
+  suggestedCategoryName: string | null
+  categories: ProductCategory[]
+  onCreateCategory: (name: string) => Promise<string | null>
+}) {
+  const { setCategoryId } = useProductForm()
+  const { goToStep } = useMorphingModal()
+  return (
+    <SuggestedCategoryStep
+      suggestedName={suggestedCategoryName ?? ''}
+      categories={categories}
+      onCreate={async (newName) => {
+        const newId = await onCreateCategory(newName)
+        if (newId) {
+          setCategoryId(newId)
+          goToStep(5)
+        }
+        return newId
+      }}
+      onPickExisting={(id) => {
+        setCategoryId(id)
+        goToStep(5)
+      }}
+    />
+  )
 }
 
 // ============================================
@@ -52,6 +139,12 @@ export interface AddProductModalProps {
   onPipelineReset: () => void
   onAiPhotoCapture: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>
   onOpenSettings: () => void
+  /** AI suggested category name when no existing category fits (null otherwise) */
+  suggestedCategoryName: string | null
+  /** Create a new category. Returns the new id or null on failure. */
+  onCreateCategory: (name: string) => Promise<string | null>
+  /** Start the AI pipeline using the previously stashed image */
+  onStartAiPipeline: () => void
 }
 
 // ============================================
@@ -95,7 +188,7 @@ function SaveButton({ onSubmit }: { onSubmit: AddProductModalProps['onSubmit'] }
       }
 
       setProductSaved(true)
-      goToStep(4)
+      goToStep(6)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save product')
     } finally {
@@ -126,22 +219,20 @@ export function AddProductModal({
   categories,
   onSubmit,
   onAbortAiProcessing,
-  onPipelineReset,
   onAiPhotoCapture,
   onOpenSettings,
+  suggestedCategoryName,
+  onCreateCategory,
+  onStartAiPipeline,
 }: AddProductModalProps) {
   const {
-    setName,
-    setPrice,
     error,
-    isSaving,
     productSaved,
-    aiProcessing,
-    cameraInputRef,
   } = useProductForm()
 
+  const needsCategory = !!suggestedCategoryName
+
   return (
-    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -150,26 +241,19 @@ export function AddProductModal({
     >
       {/* Step 0: Mode Selection */}
       <Modal.Step title="Add product">
-        <AiPipelineNavigator />
+        <AiPipelineNavigator needsCategory={needsCategory} />
 
         <Modal.Item>
           <div className="caja-actions caja-actions--stacked">
-            <button
-              type="button"
-              onClick={() => cameraInputRef.current?.click()}
-              className="caja-action-btn caja-action-btn--large"
-            >
+            <Modal.GoToStepButton step={1} className="caja-action-btn caja-action-btn--large">
               <CameraIcon className="caja-action-btn__icon text-brand" />
               <div className="caja-action-btn__text">
                 <span className="caja-action-btn__title">Snap to Add</span>
                 <span className="caja-action-btn__desc">Take a photo and AI fills the data</span>
               </div>
-            </button>
+            </Modal.GoToStepButton>
 
-            <Modal.GoToStepButton
-              step={1}
-              className="caja-action-btn caja-action-btn--large"
-            >
+            <Modal.GoToStepButton step={5} className="caja-action-btn caja-action-btn--large">
               <JoinIcon className="caja-action-btn__icon text-text-secondary" />
               <div className="caja-action-btn__text">
                 <span className="caja-action-btn__title">Add manually</span>
@@ -179,51 +263,45 @@ export function AddProductModal({
           </div>
         </Modal.Item>
 
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-          capture="environment"
-          onChange={onAiPhotoCapture}
-          className="hidden"
-        />
-
         <Modal.Footer>
           <Modal.CancelBackButton />
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="btn btn-primary flex-1"
-          >
+          <button type="button" onClick={onOpenSettings} className="btn btn-primary flex-1">
             Settings
           </button>
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 1: Manual Form */}
-      <Modal.Step title="Add product">
-        {error && (
-          <Modal.Item>
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
-          </Modal.Item>
-        )}
-
+      {/* Step 1: AI - Product photo */}
+      <Modal.Step title="Take a product photo" backStep={0}>
         <Modal.Item>
-          <ProductForm
-            categories={categories}
-            idPrefix="add-manual"
-            isOpen={isOpen}
-          />
+          <p className="text-sm text-text-secondary mb-4">
+            Take a clear, well-lit photo of the product. Center it in the frame and avoid glare.
+          </p>
+          <AiPhotoStepInput onAiPhotoCapture={onAiPhotoCapture} />
         </Modal.Item>
-
         <Modal.Footer>
-          <SaveButton onSubmit={onSubmit} />
+          <Modal.BackButton>Back</Modal.BackButton>
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 2: AI Processing */}
+      {/* Step 2: AI - Barcode */}
+      <Modal.Step title="Add a barcode" backStep={1}>
+        <Modal.Item>
+          <AiBarcodeStepBody />
+        </Modal.Item>
+        <Modal.Footer>
+          <Modal.BackButton>Back</Modal.BackButton>
+          <button
+            type="button"
+            onClick={onStartAiPipeline}
+            className="btn btn-primary flex-1"
+          >
+            Continue
+          </button>
+        </Modal.Footer>
+      </Modal.Step>
+
+      {/* Step 3: Analyzing */}
       <Modal.Step title="Analyzing..." backStep={0} onBackStep={onAbortAiProcessing}>
         <Modal.Item>
           <div className="flex flex-col items-center justify-center py-12">
@@ -232,46 +310,41 @@ export function AddProductModal({
             <p className="text-xs text-text-tertiary mt-1">This may take a few seconds</p>
           </div>
         </Modal.Item>
-
         <Modal.Footer>
           <Modal.CancelBackButton>Cancel</Modal.CancelBackButton>
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 3: AI Review */}
-      <Modal.Step title="Review product" backStep={0}>
-        {error && (
-          <Modal.Item>
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
-          </Modal.Item>
-        )}
-
+      {/* Step 4: Suggested category (conditional) */}
+      <Modal.Step title="New category" backStep={3}>
         <Modal.Item>
-          <ProductForm
+          <SuggestedCategoryStepWrapper
+            suggestedCategoryName={suggestedCategoryName}
             categories={categories}
-            idPrefix="add-ai"
-            isOpen={isOpen}
+            onCreateCategory={onCreateCategory}
           />
         </Modal.Item>
-
         <Modal.Footer>
-          <Modal.BackButton
-            onClick={() => {
-              onPipelineReset()
-              setName('')
-              setPrice('')
-            }}
-            disabled={isSaving || aiProcessing}
-          >
-            Back
-          </Modal.BackButton>
+          <Modal.BackButton>Back</Modal.BackButton>
+        </Modal.Footer>
+      </Modal.Step>
+
+      {/* Step 5: Form (manual or AI-prefilled) */}
+      <Modal.Step title="Add product" backStep={0}>
+        {error && (
+          <Modal.Item>
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
+          </Modal.Item>
+        )}
+        <Modal.Item>
+          <ProductForm categories={categories} idPrefix="add" isOpen={isOpen} />
+        </Modal.Item>
+        <Modal.Footer>
           <SaveButton onSubmit={onSubmit} />
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 4: Save success */}
+      {/* Step 6: Save success */}
       <Modal.Step title="Product created" hideBackButton>
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
@@ -300,7 +373,6 @@ export function AddProductModal({
             </p>
           </div>
         </Modal.Item>
-
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-primary flex-1">
             Done
@@ -308,7 +380,5 @@ export function AddProductModal({
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-
-    </>
   )
 }

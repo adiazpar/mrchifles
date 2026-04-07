@@ -64,6 +64,7 @@ interface AddProductModalWrapperProps {
   onAiPhotoCapture: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>
   onOpenSettings: () => void
   defaultCategoryId?: string | null
+  // TODO(task-11): wire real handlers for suggestedCategoryName, onCreateCategory, onStartAiPipeline
 }
 
 function AddProductModalWrapper({
@@ -137,6 +138,9 @@ function AddProductModalWrapper({
       onPipelineReset={onPipelineReset}
       onAiPhotoCapture={onAiPhotoCapture}
       onOpenSettings={handleOpenSettings}
+      suggestedCategoryName={null}
+      onCreateCategory={async () => null}
+      onStartAiPipeline={() => {}}
     />
   )
 }
