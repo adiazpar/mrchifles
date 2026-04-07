@@ -71,6 +71,8 @@ interface AddProductModalWrapperProps {
   onStartAiPipeline: () => void
   onCreateCategory: (name: string) => Promise<string | null>
   onOpenSettings: () => void
+  onClearPendingPhoto: () => void
+  checkBarcodeExists: (barcode: string) => Promise<string | null>
   defaultCategoryId?: string | null
 }
 
@@ -87,10 +89,13 @@ function AddProductModalWrapper({
   onStartAiPipeline,
   onCreateCategory,
   onOpenSettings,
+  onClearPendingPhoto,
+  checkBarcodeExists,
   defaultCategoryId,
 }: AddProductModalWrapperProps) {
   const pendingActionRef = useRef<(() => void) | null>(null)
   const {
+    barcode,
     setPipelineStep,
     setIsCompressing,
     setName,
@@ -102,6 +107,19 @@ function AddProductModalWrapper({
     setError,
     resetForm,
   } = useProductForm()
+
+  const handleStartAiPipelineWithBarcodeCheck = useCallback(async () => {
+    setError('')
+    const trimmed = barcode.trim()
+    if (trimmed) {
+      const existingName = await checkBarcodeExists(trimmed)
+      if (existingName) {
+        setError(`Barcode already used by "${existingName}"`)
+        return
+      }
+    }
+    onStartAiPipeline()
+  }, [barcode, checkBarcodeExists, onStartAiPipeline, setError])
 
   useEffect(() => {
     setPipelineStep(pipelineState.step)
@@ -168,7 +186,8 @@ function AddProductModalWrapper({
       onOpenSettings={handleOpenSettings}
       suggestedCategoryName={suggestedCategoryName}
       onCreateCategory={onCreateCategory}
-      onStartAiPipeline={onStartAiPipeline}
+      onStartAiPipeline={handleStartAiPipelineWithBarcodeCheck}
+      onClearPendingPhoto={onClearPendingPhoto}
     />
   )
 }
@@ -710,6 +729,24 @@ export default function ProductosPage() {
     return created?.id ?? null
   }, [createCategory])
 
+  const handleClearPendingPhoto = useCallback(() => {
+    setPendingAiImage(null)
+  }, [])
+
+  const checkBarcodeExists = useCallback(async (value: string): Promise<string | null> => {
+    try {
+      const response = await fetch(
+        `/api/businesses/${businessId}/products?barcode=${encodeURIComponent(value)}`
+      )
+      const data = await response.json()
+      if (!response.ok || !data.success) return null
+      const matched: Product[] = data.products || []
+      return matched.length > 0 ? matched[0].name : null
+    } catch {
+      return null
+    }
+  }, [businessId])
+
   // Order handlers
   const resetOrderForm = useCallback(() => {
     setOrderItems([])
@@ -1072,6 +1109,8 @@ export default function ProductosPage() {
           onStartAiPipeline={handleStartAiPipeline}
           onCreateCategory={handleCreateCategory}
           onOpenSettings={() => setIsSettingsModalOpen(true)}
+          onClearPendingPhoto={handleClearPendingPhoto}
+          checkBarcodeExists={checkBarcodeExists}
           defaultCategoryId={settings?.defaultCategoryId}
         />
         <EditProductModalWrapper

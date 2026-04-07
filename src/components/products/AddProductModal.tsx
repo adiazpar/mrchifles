@@ -57,11 +57,26 @@ function AiPipelineNavigator({
 
 function AiPhotoStepInput({
   onAiPhotoCapture,
+  onClearPendingPhoto,
 }: {
   onAiPhotoCapture: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>
+  onClearPendingPhoto: () => void
 }) {
-  const { goToStep } = useMorphingModal()
+  const { goToStep, currentStep } = useMorphingModal()
   const cameraInputRef = useRef<HTMLInputElement>(null)
+
+  // Whenever the user lands on (or returns to) step 1, clear any previously
+  // captured photo so they can re-take. Also reset the file input value so
+  // selecting the same file fires onChange again.
+  useEffect(() => {
+    if (currentStep === 1) {
+      onClearPendingPhoto()
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = ''
+      }
+    }
+  }, [currentStep, onClearPendingPhoto])
+
   return (
     <>
       <button
@@ -82,6 +97,9 @@ function AiPhotoStepInput({
         capture="environment"
         onChange={async (e) => {
           await onAiPhotoCapture(e)
+          if (cameraInputRef.current) {
+            cameraInputRef.current.value = ''
+          }
           goToStep(2)
         }}
         className="hidden"
@@ -145,6 +163,8 @@ export interface AddProductModalProps {
   onCreateCategory: (name: string) => Promise<string | null>
   /** Start the AI pipeline using the previously stashed image */
   onStartAiPipeline: () => void
+  /** Clear the previously stashed AI photo (called when user re-enters step 1) */
+  onClearPendingPhoto: () => void
 }
 
 // ============================================
@@ -224,6 +244,7 @@ export function AddProductModal({
   suggestedCategoryName,
   onCreateCategory,
   onStartAiPipeline,
+  onClearPendingPhoto,
 }: AddProductModalProps) {
   const {
     error,
@@ -280,7 +301,10 @@ export function AddProductModal({
           <p className="text-sm text-text-secondary mb-4">
             Take a clear, well-lit photo of the product. Center it in the frame and avoid glare.
           </p>
-          <AiPhotoStepInput onAiPhotoCapture={onAiPhotoCapture} />
+          <AiPhotoStepInput
+            onAiPhotoCapture={onAiPhotoCapture}
+            onClearPendingPhoto={onClearPendingPhoto}
+          />
         </Modal.Item>
         <Modal.Footer>
           <Modal.BackButton>Back</Modal.BackButton>
