@@ -2,8 +2,8 @@
 
 import { memo } from 'react'
 import Image from 'next/image'
-import { X, Plus, ChevronUp, ChevronRight, Barcode, Loader2, Boxes, Eye, EyeOff } from 'lucide-react'
-import { TagsIcon, FilterIcon, BarcodeScanIcon, ImageAttachIcon } from '@/components/icons'
+import { X, Plus, ChevronUp, ChevronRight, Barcode, Loader2 } from 'lucide-react'
+import { TagsIcon, FilterIcon, BarcodeScanIcon, ImageAttachIcon, SlidersIcon, EyeIcon, EyeOffIcon } from '@/components/icons'
 import { Modal, SwipeableRow } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -370,13 +370,13 @@ const ProductListItem = memo(function ProductListItem({
   const swipeActions = canModify && onAdjustInventory && onToggleActive
     ? [
         {
-          icon: isActive ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />,
+          icon: isActive ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />,
           label: isActive ? 'Disable' : 'Enable',
           variant: 'neutral' as const,
           onClick: () => onToggleActive(product),
         },
         {
-          icon: <Boxes className="w-5 h-5" />,
+          icon: <SlidersIcon size={20} />,
           label: 'Inventory',
           variant: 'info' as const,
           onClick: () => onAdjustInventory(product),
