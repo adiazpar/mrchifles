@@ -211,7 +211,7 @@ export function EditProductModal({
           </button>
         </div>
 
-        <TabContainer activeTab={activeTab}>
+        <TabContainer activeTab={activeTab} onTabChange={(id) => setActiveTab(id as 'details' | 'barcode')} swipeable>
           <TabContainer.Tab id="details">
         {/* Icon Preview */}
         <Modal.Item>

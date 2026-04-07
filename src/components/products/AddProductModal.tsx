@@ -254,7 +254,7 @@ export function AddProductModal({
           </button>
         </div>
 
-        <TabContainer activeTab={activeTab}>
+        <TabContainer activeTab={activeTab} onTabChange={(id) => setActiveTab(id as 'details' | 'barcode')} swipeable>
           <TabContainer.Tab id="details">
         <Modal.Item>
           <label className="label">Icon</label>
@@ -471,7 +471,7 @@ export function AddProductModal({
           </button>
         </div>
 
-        <TabContainer activeTab={activeTab}>
+        <TabContainer activeTab={activeTab} onTabChange={(id) => setActiveTab(id as 'details' | 'barcode')} swipeable>
           <TabContainer.Tab id="details">
         <Modal.Item>
           <label className="label">Icon</label>

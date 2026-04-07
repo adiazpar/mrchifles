@@ -5,7 +5,7 @@ import { fetchDeduped } from '@/lib/fetch'
 import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
 import { useProductFilters, useProductSettings, createSessionCache, CACHE_KEYS } from '@/hooks'
-import { Spinner } from '@/components/ui'
+import { Spinner, TabContainer } from '@/components/ui'
 import {
   ProductsTab,
   OrdersTab,
@@ -900,53 +900,61 @@ export default function ProductosPage() {
           </button>
         </div>
 
-        {activeTab === 'products' ? (
-          <ProductsTab
-            products={products}
-            filteredProducts={filteredProducts}
-            categories={categories}
-            availableFilters={availableFilters}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            selectedFilter={selectedFilter}
-            onFilterChange={setSelectedFilter}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            isSortSheetOpen={isSortSheetOpen}
-            onSortSheetOpenChange={setIsSortSheetOpen}
-            onAddProduct={handleOpenAdd}
-            onEditProduct={handleOpenEdit}
-            onOpenSettings={() => setIsSettingsModalOpen(true)}
-            error={error}
-            isModalOpen={isModalOpen}
-            onScanClick={openBarcodeScan}
-            scanBusy={barcodeScanBusy}
-            scanHiddenInput={barcodeScanInput}
-          />
-        ) : (
-          <OrdersTab
-            products={products}
-            orders={orders}
-            filteredOrders={filteredOrders}
-            searchQuery={orderSearchQuery}
-            onSearchChange={setOrderSearchQuery}
-            statusFilter={orderStatusFilter}
-            onStatusFilterChange={setOrderStatusFilter}
-            onNewOrder={() => {
-              resetOrderForm()
-              setIsOrderModalOpen(true)
-            }}
-            onViewOrder={(order) => {
-              setViewingOrder(order)
-              setOrderReceived(false)
-              setOrderDeleted(false)
-              setEditOrderSaved(false)
-              setIsOrderDetailModalOpen(true)
-            }}
-            error={error}
-            isModalOpen={isOrderModalOpen}
-          />
-        )}
+        <TabContainer
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as PageTab)}
+          swipeable
+          fitActiveHeight
+        >
+          <TabContainer.Tab id="products">
+            <ProductsTab
+              products={products}
+              filteredProducts={filteredProducts}
+              categories={categories}
+              availableFilters={availableFilters}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              selectedFilter={selectedFilter}
+              onFilterChange={setSelectedFilter}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              isSortSheetOpen={isSortSheetOpen}
+              onSortSheetOpenChange={setIsSortSheetOpen}
+              onAddProduct={handleOpenAdd}
+              onEditProduct={handleOpenEdit}
+              onOpenSettings={() => setIsSettingsModalOpen(true)}
+              error={error}
+              isModalOpen={isModalOpen}
+              onScanClick={openBarcodeScan}
+              scanBusy={barcodeScanBusy}
+              scanHiddenInput={barcodeScanInput}
+            />
+          </TabContainer.Tab>
+          <TabContainer.Tab id="orders">
+            <OrdersTab
+              products={products}
+              orders={orders}
+              filteredOrders={filteredOrders}
+              searchQuery={orderSearchQuery}
+              onSearchChange={setOrderSearchQuery}
+              statusFilter={orderStatusFilter}
+              onStatusFilterChange={setOrderStatusFilter}
+              onNewOrder={() => {
+                resetOrderForm()
+                setIsOrderModalOpen(true)
+              }}
+              onViewOrder={(order) => {
+                setViewingOrder(order)
+                setOrderReceived(false)
+                setOrderDeleted(false)
+                setEditOrderSaved(false)
+                setIsOrderDetailModalOpen(true)
+              }}
+              error={error}
+              isModalOpen={isOrderModalOpen}
+            />
+          </TabContainer.Tab>
+        </TabContainer>
       </main>
 
       {/* Product Modals - shared form context, only one open at a time */}
