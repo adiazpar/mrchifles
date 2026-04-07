@@ -53,3 +53,5 @@ drizzle/
 
 # Local media uploads (dev only)
 public/media/
+# Git worktrees
+.worktrees/
