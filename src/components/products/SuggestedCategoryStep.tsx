@@ -105,25 +105,35 @@ export function SuggestedCategoryStep({
         </div>
       )}
 
-      <div className="flex gap-3 mt-4">
-        <button
-          type="button"
-          onClick={handleCreate}
-          disabled={isCreating || !name.trim()}
-          className="btn btn-primary flex-1"
-        >
-          {isCreating ? <Spinner /> : 'Create and continue'}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleCreate}
+        disabled={isCreating || !name.trim()}
+        className="btn btn-primary w-full mt-4"
+      >
+        {isCreating ? <Spinner /> : 'Create and continue'}
+      </button>
 
       {categories.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setShowPicker(true)}
-          className="text-sm text-brand hover:text-brand mt-3 px-1"
-        >
-          Pick existing category instead
-        </button>
+        <>
+          <div className="flex items-center gap-3 mt-4" aria-hidden="true">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs uppercase tracking-wide text-text-tertiary">
+              or
+            </span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          <div className="flex justify-center mt-4">
+            <button
+              type="button"
+              onClick={() => setShowPicker(true)}
+              className="text-sm text-brand hover:text-brand"
+            >
+              Pick existing category instead
+            </button>
+          </div>
+        </>
       )}
     </>
   )
