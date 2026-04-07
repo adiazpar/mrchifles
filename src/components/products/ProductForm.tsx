@@ -52,7 +52,7 @@ export function ProductForm({
   } = useProductForm()
 
   return (
-    <>
+    <div className="flex flex-col gap-4">
       <div className="section-tabs section-tabs--modal morph-item">
         <button
           type="button"
@@ -262,6 +262,6 @@ export function ProductForm({
           <BarcodeFields />
         </TabContainer.Tab>
       </TabContainer>
-    </>
+    </div>
   )
 }

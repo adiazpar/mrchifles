@@ -263,9 +263,8 @@ export function BarcodeFields() {
   }, [])
 
   return (
-    <>
-      <div className="space-y-3">
-        <div className="flex gap-3 items-start">
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-3 items-start">
           <div className="flex-[1.9] min-w-0">
             <label htmlFor="product-barcode" className="label">Barcode value</label>
             <div className="relative">
@@ -312,13 +311,11 @@ export function BarcodeFields() {
           </div>
         </div>
 
-      </div>
-
-      <div className="rounded-xl border border-border bg-bg-muted p-4 mt-4 min-h-36 flex items-center justify-center text-center">
+      <div className="rounded-xl border border-border bg-bg-muted p-4 min-h-36 flex items-center justify-center text-center">
         <BarcodeDisplay value={barcode} format={barcodeFormat} />
       </div>
 
-      <div className="flex items-start justify-between gap-4 mt-3">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           {barcode ? (
             <>
@@ -353,7 +350,7 @@ export function BarcodeFields() {
 
       {scanHiddenInput}
 
-      <div className="caja-actions mt-4">
+      <div className="caja-actions">
         <button
           type="button"
           onClick={handleScanClick}
@@ -384,6 +381,6 @@ export function BarcodeFields() {
           <span>Print</span>
         </button>
       </div>
-    </>
+    </div>
   )
 }
