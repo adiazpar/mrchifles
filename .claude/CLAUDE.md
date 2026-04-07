@@ -8,6 +8,7 @@ All project documentation and plans live in `.claude/docs/`:
   - `.claude/docs/backend-patterns.md` - API routes, auth, validation, rate limiting
   - `.claude/docs/performance-patterns.md` - Optimistic UI, access caching, session caches, icon uploads
   - `.claude/docs/modal-system.md` - Modal compound component API, rules, and patterns
+  - `.claude/docs/tab-system.md` - TabContainer component, swipe gestures, height strategies
   - `.claude/docs/ai-product-pipeline.md` - AI snap-to-add pipeline
 
 ## Project Overview

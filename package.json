@@ -25,6 +25,7 @@
     "bwip-js": "^4.9.0",
     "date-fns": "^3.6.0",
     "drizzle-orm": "^0.45.1",
+    "framer-motion": "^12.38.0",
     "heic-convert": "^2.1.0",
     "html5-qrcode": "^2.3.8",
     "jose": "^6.2.2",

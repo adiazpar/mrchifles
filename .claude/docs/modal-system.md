@@ -212,7 +212,7 @@ Steps are numbered by their order as direct children of `<Modal>`. If you condit
 
 ## TabContainer
 
-For modals that need tabs within a single step (e.g., Details / Barcode tabs), use `TabContainer` from `@/components/ui`:
+For modals that need tabs within a single step (e.g., Details / Barcode tabs), use `TabContainer` from `@/components/ui`. **Read `.claude/docs/tab-system.md` for the full API, behavior guarantees, and architectural rules.** This section covers only what's modal-specific.
 
 ```tsx
 import { TabContainer } from '@/components/ui'
@@ -228,7 +228,11 @@ import { TabContainer } from '@/components/ui'
     </button>
   </div>
 
-  <TabContainer activeTab={activeTab}>
+  <TabContainer
+    activeTab={activeTab}
+    onTabChange={(id) => setActiveTab(id as 'details' | 'barcode')}
+    swipeable
+  >
     <TabContainer.Tab id="details">
       <Modal.Item>...</Modal.Item>
       <Modal.Item>...</Modal.Item>
@@ -242,11 +246,10 @@ import { TabContainer } from '@/components/ui'
 </Modal.Step>
 ```
 
-**How it works:**
-- All tab content renders in a CSS grid stacked in the same cell
-- Inactive tabs are `visibility: hidden` with `pointer-events: none`
-- The container sizes to the tallest tab automatically (no resize on switch)
-- Modal.Items inside tabs still receive enter/exit animations (via descendant selectors)
+**Modal-specific rules:**
+- Always pass `swipeable` and `onTabChange` — modals are mobile-first and users expect to swipe between tabs.
+- **Do not** pass `fitActiveHeight` in modals. Modals need a stable container height to avoid the modal card growing/shrinking on swipe. The default (`fitActiveHeight={false}`) sizes to the tallest tab and is the correct choice. Only enable `fitActiveHeight` on full-page tabs where one tab is dramatically shorter than the other (see tab-system guide).
+- Form state must live in a context (e.g. `useProductForm`), not in component state inside a tab subtree. `TabContainer` keeps tabs mounted, but contexts also survive modal close/reopen, which the tab subtree does not.
 
 **Tabs styling:**
 - Use `section-tabs--modal` modifier for modal context (no sticky positioning, no top padding)
