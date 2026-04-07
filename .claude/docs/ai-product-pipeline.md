@@ -1,43 +1,89 @@
 # AI Product Creation Pipeline
 
-This document describes the AI-powered product creation flow that allows business owners to add products by simply taking a photo.
+This document describes the AI-powered product creation flow that allows business owners to add products by taking a product photo and optionally a barcode photo.
 
 ## Overview
 
-The pipeline extracts product information from a photo and generates an emoji-style icon with transparent background for visual recognition in Kasero.
+The pipeline collects two photos (product + barcode), identifies the product and matches it to an existing category, generates an emoji-style icon with a transparent background, and pre-fills the product form.
 
 ```
-┌─────────────────┐     ┌─────────────────────────────────┐     ┌─────────────────┐
-│  User takes     │────►│  PARALLEL EXECUTION             │────►│  Remove bg      │
-│  product photo  │     │  ┌─────────────────────────┐    │     │  (transparent)  │
-└─────────────────┘     │  │ AI identifies (GPT-4o)  │    │     └─────────────────┘
-        │               │  └─────────────────────────┘    │             │
-        ▼               │  ┌─────────────────────────┐    │             ▼
-   iPhone camera        │  │ AI generates (Nano Ban) │    │         BiRefNet
-   + HEIC conversion    │  └─────────────────────────┘    │         fal.ai (~FREE)
-                        └─────────────────────────────────┘
+┌──────────────────┐    ┌──────────────────┐    ┌────────────────────────────────┐
+│  Step 1          │───►│  Step 2          │───►│  Step 3: PARALLEL EXECUTION    │
+│  Product photo   │    │  Barcode photo   │    │  ┌──────────────────────────┐  │
+│  (camera input)  │    │  scan/generate/  │    │  │ AI identifies (GPT-4o)   │  │
+└──────────────────┘    │  skip            │    │  └──────────────────────────┘  │
+                        └──────────────────┘    │  ┌──────────────────────────┐  │
+                                                │  │ AI generates (Nano Ban)  │  │
+                                                │  └──────────────────────────┘  │
+                                                └────────────────────────────────┘
+                                                            │
+                                                            ▼
+                                               ┌────────────────────────┐
+                                               │  Step 4 (conditional)  │
+                                               │  Suggested category    │
+                                               │  (only if AI proposed  │
+                                               │  a new category name)  │
+                                               └────────────────────────┘
+                                                            │
+                                                            ▼
+                                               ┌────────────────────────┐
+                                               │  Step 5: Form          │
+                                               │  (pre-filled by AI)    │
+                                               └────────────────────────┘
 ```
 
 **Parallel execution saves ~2-3 seconds** by running identification and icon generation simultaneously.
 
+### AddProductModal Step Layout
+
+| Step | Purpose | When shown |
+|------|---------|------------|
+| 0 | Entry — Manual add or AI flow choice | Always |
+| 1 | AI: Take a product photo | AI flow |
+| 2 | AI: Add a barcode (scan / generate / skip) | AI flow |
+| 3 | AI: Analyzing (pipeline running) | AI flow |
+| 4 | AI: Suggested category | AI flow + only when `suggestedNewCategoryName` is non-null |
+| 5 | Product form (`<ProductForm />`) — empty (manual) or pre-filled (AI) | Always |
+| 6 | Save success | Always |
+
+**Manual flow:** 0 → 5 → 6
+
+**AI flow:** 0 → 1 → 2 → 3 → (4) → 5 → 6
+
+---
+
 ## Pipeline Steps
 
-### Step 1: Photo Capture & Compression (Client-side)
+### Step 1: Photo Capture — Product
 
-**Location:** `src/app/[businessId]/products/page.tsx`
+**Location:** `src/components/products/AddProductModal.tsx`
 
-When the user takes a photo or uploads an image:
+When the user taps "Open camera":
 1. Image is captured via `<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment">`
 2. If HEIC/HEIF format detected, converted server-side via `heic-convert` (with `sips` fallback on macOS)
 3. EXIF rotation is respected using `createImageBitmap({ imageOrientation: 'from-image' })`
 4. Image is resized to max 768px dimension (sufficient for AI processing)
 5. Compressed to JPEG at 70% quality (~60-150KB)
 
-**Why:** iPhone photos are typically 12+ megapixels (4-5MB). Compression reduces upload time and API costs.
+After capture the modal automatically advances to the barcode step.
 
-**HEIC Conversion:** Uses `heic-convert` library (works on all platforms including Vercel). Falls back to macOS `sips` command if needed.
+**Why compress:** iPhone photos are typically 12+ megapixels (4-5MB). Compression reduces upload time and API costs.
 
-### Step 2: Product Identification
+### Step 2: Barcode Capture
+
+**Location:** `src/components/products/AiBarcodeStep.tsx`
+
+The user can choose one of three options:
+
+| Option | Behavior |
+|--------|----------|
+| **Scan** | Opens `html5-qrcode` camera scanner; detected value is stored as the barcode |
+| **Generate** | Calls `generateInternalProductBarcode()` to create an internal EAN-13 barcode |
+| **Skip** | Proceeds with no barcode |
+
+After any choice the modal advances to the analyzing step and `startPipeline()` is called.
+
+### Step 3: Product Identification (AI — parallel)
 
 **Location:** `src/app/api/ai/identify-product/route.ts`
 
@@ -47,20 +93,42 @@ When the user takes a photo or uploads an image:
 | Cost | ~$0.001 per image |
 | Time | ~1-2 seconds |
 
-The compressed image is sent to GPT-4o Mini which:
-- Analyzes the product packaging/label
-- Extracts the product name in Spanish
-- Returns structured JSON: `{ name: "Chifles Sabor Pollo" }`
+Runs in parallel with icon generation. The compressed product photo and the user's existing category list are sent to GPT-4o Mini, which:
+- Reads the product packaging/label
+- Returns a specific product name in English (brand, flavor, variant if visible)
+- Either matches an existing category by id, or proposes a new category name
 
-**Prompt:**
+**System prompt behavior:**
+- Strongly prefers matching an existing category; only proposes a new one when no reasonable fit exists
+- Never returns placeholder names ("Unknown", "Product not identified", etc.); falls back to a best-guess description
+- Output is English regardless of product origin
+
+**Request:**
+```json
+{
+  "image": "data:image/jpeg;base64,...",
+  "categories": [
+    { "id": "cat_abc", "name": "Snacks" },
+    { "id": "cat_def", "name": "Beverages" }
+  ]
+}
 ```
-Analyze this product image and identify:
-1. Product name in Spanish (be specific about flavor/variant if visible on label)
 
-Return JSON: { "name": "..." }
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "name": "Chicken Flavor Chips",
+    "categoryId": "cat_abc",
+    "suggestedNewCategoryName": null
+  }
+}
 ```
 
-### Step 3: Emoji Icon Generation
+Exactly one of `categoryId` / `suggestedNewCategoryName` is non-null. If the model returns neither (or both), the server falls back to `suggestedNewCategoryName: "Miscellaneous"`.
+
+### Step 4: Emoji Icon Generation (AI — parallel)
 
 **Location:** `src/app/api/ai/generate-icon/route.ts`
 
@@ -70,11 +138,7 @@ Return JSON: { "name": "..." }
 | Cost | ~$0.039 per image |
 | Time | ~2-5 seconds |
 
-The compressed image is sent to Nano Banana on fal.ai which:
-- Transforms the product into an Apple iOS emoji style
-- Returns a square PNG with white background
-- Uses prompt guidance for consistent styling
-- Produces excellent cartoon-like emoji quality
+Runs in parallel with product identification. Sends the compressed photo to Nano Banana which transforms it into an Apple iOS emoji-style icon (square PNG with white background).
 
 **Prompt:**
 ```
@@ -83,58 +147,61 @@ object, vibrant saturated colors, cartoon-like, pure white background,
 stylized like an official Apple emoji. No shadows, no gradients on background.
 ```
 
-**API Configuration:**
-```typescript
-import { fal } from '@fal-ai/client'
-
-fal.config({ credentials: process.env.FAL_KEY })
-
-// Use run() instead of subscribe() for faster direct execution (no queue overhead)
-const result = await fal.run('fal-ai/nano-banana/edit', {
-  input: {
-    prompt: '...',
-    image_urls: [base64DataUrl], // Nano Banana accepts array of image URLs/data URIs
-  },
-})
-```
-
-### Step 4: Background Removal (Server-side via BiRefNet)
+### Step 5: Background Removal
 
 **Location:** `src/app/api/ai/remove-background/route.ts`
 
 | Property | Value |
 |----------|-------|
 | Model | BiRefNet (via fal.ai) |
-| Cost | **~FREE** ($0 per compute second) |
+| Cost | ~FREE ($0 per compute second) |
 | Time | ~1-3 seconds |
 
-Removes the white background from the generated icon to ensure transparency:
-- Nano Banana returns icons with white backgrounds
-- BiRefNet removes the background server-side (much faster than client-side)
-- Also trims transparent pixels to ensure the icon fills the frame
+Removes the white background from the generated icon to produce a transparent PNG. The icon is then compressed client-side to fit upload size limits.
 
-```typescript
-// Use run() instead of subscribe() for faster direct execution (no queue overhead)
-const result = await fal.run('fal-ai/birefnet', {
-  input: {
-    image_url: iconDataUrl,
-    model: 'General Use (Light)',
-    output_format: 'png',
-    refine_foreground: true,
-  },
-})
-```
-
-**Result:** Final icon has a fully transparent background.
-
-### Step 5: Icon Compression
+### Step 6: Icon Compression
 
 **Location:** `src/hooks/useAiProductPipeline.ts`
 
 The final icon is compressed to fit typical upload size limits:
-- Target: 400KB max (with safety margin)
+- Target: 70KB max blob size
 - Progressive resizing: 512 → 384 → 288 → ... until under limit
 - Output: PNG with transparency preserved
+
+---
+
+## Suggested Category Flow
+
+When `suggestedNewCategoryName` is non-null in the pipeline result, the modal inserts Step 4 (`SuggestedCategoryStep`) between analyzing and the form.
+
+**Location:** `src/components/products/SuggestedCategoryStep.tsx`
+
+The step offers two paths:
+
+| Path | Behavior |
+|------|---------|
+| **Create new category** | Shows a pre-filled text input with the AI's suggestion. User can edit the name and confirm. Calls `useProductSettings.createCategory()`. On success, the new category id is set and the modal advances to the form. |
+| **Pick existing category** | Shows a list of existing categories. Selecting one sets that category id and advances to the form. |
+
+If `categoryId` is already non-null (AI matched an existing category), Step 4 is skipped entirely.
+
+---
+
+## Form Consolidation
+
+**Location:** `src/components/products/ProductForm.tsx`
+
+A single shared `<ProductForm />` component is used for all three product creation/editing contexts:
+
+| Context | How form is populated |
+|---------|-----------------------|
+| Manual add | Form starts empty |
+| AI-assisted add | Form pre-filled with `name`, `categoryId`, and `iconPreview` from pipeline result |
+| Edit | Form pre-filled with existing product data |
+
+State is managed via `ProductFormContext` (read/written by `useProductForm()`). This eliminated the duplicate form JSX that previously existed separately in `AddProductModal` (steps 1 and 3) and `EditProductModal` (step 0).
+
+---
 
 ## Cost Analysis
 
@@ -146,7 +213,7 @@ The final icon is compressed to fit typical upload size limits:
 | HEIC conversion | Server-side (heic-convert) | FREE |
 | Product identification | GPT-4o Mini Vision | ~$0.001 |
 | Emoji generation | Nano Banana (fal.ai) | ~$0.039 |
-| Background removal | BiRefNet (fal.ai) | **~FREE** |
+| Background removal | BiRefNet (fal.ai) | ~FREE |
 | **Total** | | **~$0.04** |
 
 ### At Scale
@@ -158,30 +225,33 @@ The final icon is compressed to fit typical upload size limits:
 | 1,000 | ~$40.00 |
 | 10,000 | ~$400.00 |
 
-**Note:** fal.ai charges ~$0.039/image for Nano Banana (Gemini 2.5 Flash Image).
+---
 
 ## Caching Strategy
 
 When a user regenerates an icon (doesn't like the first result):
-- The background-removed photo is cached in React state (`cachedBgRemoved`)
-- Only the emoji generation + final bg removal runs again (~$0.039)
-- No additional photo processing needed
+- The original compressed photo is cached in React state (`cachedBgRemoved`)
+- Only icon generation + background removal runs again (~$0.039)
+- No additional photo processing or product identification needed
 
 Cache is cleared when:
 - User takes a new photo
 - Product is saved
 - User navigates away
 
+---
+
 ## API Routes
 
 ### POST /api/ai/identify-product
 
-Identifies a product from an image.
+Identifies a product from an image and matches it to user-provided categories.
 
 **Request:**
 ```json
 {
-  "image": "data:image/jpeg;base64,..."
+  "image": "data:image/jpeg;base64,...",
+  "categories": [{ "id": "cat_abc", "name": "Snacks" }]
 }
 ```
 
@@ -190,14 +260,16 @@ Identifies a product from an image.
 {
   "success": true,
   "data": {
-    "name": "Chifles Sabor Pollo"
+    "name": "Chicken Flavor Chips",
+    "categoryId": "cat_abc",
+    "suggestedNewCategoryName": null
   }
 }
 ```
 
 ### POST /api/ai/generate-icon
 
-Generates an emoji-style icon from a background-removed image.
+Generates an emoji-style icon from a product image.
 
 **Request:**
 ```json
@@ -232,9 +304,11 @@ Converts HEIC/HEIF images to JPEG (server-side).
 }
 ```
 
-**Platform Support:**
+**Platform support:**
 - **Vercel/Linux/Windows:** Uses `heic-convert` library
 - **macOS (fallback):** Uses native `sips` command
+
+---
 
 ## Environment Variables
 
@@ -242,20 +316,33 @@ Converts HEIC/HEIF images to JPEG (server-side).
 # Required for product identification
 OPENAI_API_KEY=sk-...
 
-# Required for emoji icon generation (Recraft V3 on fal.ai)
+# Required for emoji icon generation (Nano Banana on fal.ai)
 # Get from: https://fal.ai/dashboard/keys
-# Cost: ~$0.04/image
 FAL_KEY=your-fal-api-key
 ```
 
+---
+
 ## Error Handling
 
-| Error | Cause | User Message |
-|-------|-------|--------------|
-| 400 | Missing image | "Se requiere una imagen" |
-| 429 | Rate limit | "Limite de velocidad alcanzado" |
-| 500 | API error | "Error al generar el icono" |
-| 504 | Timeout | "Tiempo de espera agotado" |
+| Error | Cause | User-facing message |
+|-------|-------|---------------------|
+| 400 | Missing image | "Image is required" |
+| 500 | API/parse error | "Failed to analyze image" |
+
+---
+
+## Performance Optimizations
+
+| Optimization | Savings | Details |
+|--------------|---------|---------|
+| **Parallel execution** | ~2-3s | Identification + icon generation run simultaneously |
+| **Direct API calls** | ~100-300ms | Using `fal.run()` instead of `fal.subscribe()` (no queue overhead) |
+| **Lower resolution** | ~500ms-1s | 768px max dimension (sufficient for AI processing) |
+| **Lower JPEG quality** | ~50-100ms | 70% quality (AI generates entirely new images, compression artifacts don't matter) |
+| **Server-side bg removal** | ~7-12s | BiRefNet via fal.ai instead of client-side |
+
+---
 
 ## Model Alternatives Considered
 
@@ -265,19 +352,17 @@ FAL_KEY=your-fal-api-key
 |--------|------|-------|---------|-------|
 | **BiRefNet (fal.ai)** | ~FREE | 1-3s | Excellent | **CHOSEN** - Server-side, very fast |
 | @imgly/background-removal | FREE | 10-30s | Excellent | Client-side, slow on mobile |
-| rembg-webgpu | FREE | 3-10s | Excellent | WebGPU acceleration, newer |
 | Bria RMBG 2.0 | $0.018 | 1-2s | Excellent | Commercial license included |
 
 ### Emoji Generation
 
-| Option | Cost | Speed | Prompt Support | Notes |
-|--------|------|-------|----------------|-------|
-| **Nano Banana (fal.ai)** | $0.039 | 2-5s | **Yes** | **CHOSEN** - Best emoji quality, Gemini 2.5 Flash |
-| Google Nano Banana (direct) | $0.039 | 2-5s | Yes | No free tier, requires billing |
-| Recraft V3 | $0.04 | 3-4s | Yes | Good for icons, but too literal |
-| FLUX Dev img2img | $0.03 | 2-3s | Yes | Good quality, slightly cheaper |
-| GPT Image 1 Mini | $0.005 | 20-25s | Yes | Previous choice, slow |
-| FLUX Schnell Redux | $0.003 | 1s | **No** | Fast but no prompt guidance |
+| Option | Cost | Speed | Notes |
+|--------|------|-------|-------|
+| **Nano Banana (fal.ai)** | $0.039 | 2-5s | **CHOSEN** - Best emoji quality, Gemini 2.5 Flash |
+| FLUX Dev img2img | $0.03 | 2-3s | Good quality, slightly cheaper |
+| Recraft V3 | $0.04 | 3-4s | Too literal |
+| GPT Image 1 Mini | $0.005 | 20-25s | Previous choice, slow |
+| FLUX Schnell Redux | $0.003 | 1s | Fast but no prompt guidance |
 
 ### Product Identification
 
@@ -287,105 +372,26 @@ FAL_KEY=your-fal-api-key
 | GPT-4o Vision | $0.005 | 1-2s | Excellent | Overkill for this task |
 | Claude 3 Haiku | $0.001 | 1-2s | Good | Similar pricing |
 
-## Why Nano Banana?
-
-We evaluated several models:
-
-1. **FLUX Schnell Redux** ($0.003/image) - Fast but **does not support text prompts**, only creates image variations
-2. **FLUX Dev img2img** ($0.03/image) - Good quality with prompt support
-3. **Recraft V3** ($0.04/image) - Too literal interpretation of prompts
-4. **Nano Banana** ($0.039/image) - **Best emoji quality** with Gemini 2.5 Flash Image
-
-Nano Banana (Gemini 2.5 Flash Image) via fal.ai produces the best cartoon-like emoji icons. It understands the "Apple iOS emoji style" prompt and creates stylized, simplified representations of products rather than literal interpretations.
-
-## Architecture Benefits
-
-### Server-Side Background Removal (BiRefNet)
-
-Using BiRefNet on fal.ai provides:
-
-1. **~FREE** - $0 per compute second pricing
-2. **Very fast** - 1-3 seconds vs 10-15 seconds client-side
-3. **Consistent performance** - No dependency on user's device
-4. **High quality** - Professional-grade edge detection
-5. **Simple integration** - Same fal.ai client already used for icon generation
-
-### Nano Banana for Icon Generation
-
-Using Nano Banana (Gemini 2.5 Flash Image) on fal.ai provides:
-
-1. **~5-10x faster** - 2-5 seconds vs 20-25 seconds (vs GPT Image 1 Mini)
-2. **Emoji-optimized** - Understands "Apple iOS emoji style" prompt naturally
-3. **Prompt-guided** - Full control over transformation style
-4. **Reliable** - fal.ai provides consistent API availability and fast inference
-
-### Single Background Removal (Post-Generation)
-
-Background removal runs once, after icon generation:
-
-1. **Simpler pipeline** - One bg removal step instead of two
-2. **Guaranteed transparency** - Nano Banana returns white backgrounds, bg removal ensures transparency
-3. **Faster overall** - Saves ~10-15 seconds by not pre-processing the photo
-
-The original photo doesn't need background removal because Nano Banana generates a completely new image - it doesn't copy the background from the input.
-
-### Trade-offs
-
-- Requires internet for bg removal (no offline support)
-- Adds ~1-3 seconds for server round-trip
-- Depends on fal.ai availability
-
-## Performance Optimizations
-
-### Implemented Optimizations
-
-| Optimization | Savings | Details |
-|--------------|---------|---------|
-| **Parallel execution** | ~2-3s | Identification + icon generation run simultaneously |
-| **Direct API calls** | ~100-300ms | Using `fal.run()` instead of `fal.subscribe()` (no queue overhead) |
-| **Lower resolution** | ~500ms-1s | 768px instead of 1024px (sufficient for AI processing) |
-| **Lower JPEG quality** | ~50-100ms | 70% instead of 80% (sufficient for AI processing) |
-| **Server-side bg removal** | ~7-12s | BiRefNet via fal.ai instead of client-side |
-
-### Why These Optimizations Work
-
-**`fal.run()` vs `fal.subscribe()`:** The `subscribe()` method adds queue submission and polling overhead. `run()` makes direct HTTP requests with no queue involved, providing the fastest possible path.
-
-**Lower resolution (768px):** AI models don't benefit from extra resolution when generating stylized emoji icons. 768px provides the same quality output while reducing upload time and processing.
-
-**Lower JPEG quality (70%):** The AI generates entirely new stylized images, so input compression artifacts don't affect output quality.
-
-### Future Optimizations (Not Implemented)
-
-#### Enable SharedArrayBuffer
-
-Adding these headers enables SIMD + threading for 26x faster background removal:
-
-```javascript
-// next.config.js
-headers: [
-  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-  { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' }
-]
-```
-
-This can reduce bg removal from ~20s to ~2s per image (if using client-side).
-
-#### WebGPU Acceleration
-
-Consider `rembg-webgpu` library for 3-5x faster bg removal on supported devices.
+---
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `src/app/api/ai/identify-product/route.ts` | Product identification API |
+| `src/app/api/ai/identify-product/route.ts` | Product identification API (GPT-4o Mini, category matching) |
 | `src/app/api/ai/generate-icon/route.ts` | Icon generation API (Nano Banana) |
 | `src/app/api/ai/remove-background/route.ts` | Background removal API (BiRefNet) |
 | `src/app/api/convert-heic/route.ts` | HEIC to JPEG conversion API |
-| `src/hooks/useAiProductPipeline.ts` | Pipeline orchestration with cancellation |
-| `src/app/[businessId]/products/page.tsx` | Product creation UI with AI flow |
+| `src/hooks/useAiProductPipeline.ts` | Pipeline orchestration with cancellation support |
+| `src/components/products/AddProductModal.tsx` | Add product modal (manual + AI flows, 7-step layout) |
+| `src/components/products/EditProductModal.tsx` | Edit product modal (uses shared ProductForm) |
+| `src/components/products/ProductForm.tsx` | Shared product form (details + barcode tabs) |
+| `src/components/products/AiBarcodeStep.tsx` | Barcode capture step (scan / generate / skip) |
+| `src/components/products/SuggestedCategoryStep.tsx` | Suggested category step (create or pick existing) |
+| `src/app/[businessId]/products/page.tsx` | Products page (mounts AddProductModal, passes categories) |
 | `.claude/docs/ai-product-pipeline.md` | This documentation |
+
+---
 
 ## References
 
