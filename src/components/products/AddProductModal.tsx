@@ -353,7 +353,7 @@ export function AddProductModal({
       </Modal.Step>
 
       {/* Step 4: Suggested category (conditional) */}
-      <Modal.Step title="New category" backStep={3}>
+      <Modal.Step title="New category" hideBackButton>
         <Modal.Item>
           <SuggestedCategoryStepWrapper
             suggestedCategoryName={suggestedCategoryName}
@@ -362,7 +362,9 @@ export function AddProductModal({
           />
         </Modal.Item>
         <Modal.Footer>
-          <Modal.BackButton>Back</Modal.BackButton>
+          <Modal.GoToStepButton step={5} className="btn btn-secondary flex-1">
+            Skip for now
+          </Modal.GoToStepButton>
         </Modal.Footer>
       </Modal.Step>
 
