@@ -120,7 +120,7 @@ function AddProductModalWrapper({
       }
       setGeneratedIconBlob(result.iconBlob)
       setIconPreview(result.iconPreview)
-      setIconType('generated')
+      setIconType('custom')
       setPresetEmoji(null)
     }
   }, [
