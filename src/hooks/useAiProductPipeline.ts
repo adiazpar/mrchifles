@@ -15,7 +15,11 @@ import { apiPost, ApiError, type ApiResponse } from '@/lib/api-client'
 
 // API response types
 type IdentifyProductResponse = ApiResponse & {
-  data: { name: string }
+  data: {
+    name: string
+    categoryId: string | null
+    suggestedNewCategoryName: string | null
+  }
 }
 
 type GenerateIconResponse = ApiResponse & {
@@ -38,6 +42,8 @@ export type PipelineStep =
 
 export interface PipelineResult {
   name: string
+  categoryId: string | null
+  suggestedNewCategoryName: string | null
   iconPreview: string      // base64 data URL
   iconBlob: Blob
   cachedBgRemoved: string  // For regeneration
@@ -52,6 +58,8 @@ export interface PipelineState {
 interface PipelineOptions {
   /** Skip background removal steps (much faster on mobile, but icons have white bg) */
   skipBgRemoval?: boolean
+  /** User's existing categories — passed to identify-product so the model can match */
+  categories?: { id: string; name: string }[]
 }
 
 interface UseAiProductPipelineReturn {
@@ -325,7 +333,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         // Task 1: Identify product using GPT-4o Mini Vision
         apiPost<IdentifyProductResponse>(
           '/api/ai/identify-product',
-          { image: imageBase64 },
+          { image: imageBase64, categories: options?.categories ?? [] },
           { signal }
         ),
         // Task 2: Generate emoji icon using Nano Banana Edit
@@ -337,8 +345,6 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       ])
 
       if (!isRunActive(runId)) return
-
-      const productName = identifyResult.data.name
 
       // Step 3: Remove background from generated icon (optional, slow on mobile)
       const iconDataUrl = iconResult.data.icon
@@ -388,7 +394,9 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         step: 'complete',
         error: null,
         result: {
-          name: productName,
+          name: identifyResult.data.name,
+          categoryId: identifyResult.data.categoryId,
+          suggestedNewCategoryName: identifyResult.data.suggestedNewCategoryName,
           iconPreview: transparentIconBase64,
           iconBlob: transparentIconBlob,
           cachedBgRemoved: imageBase64, // Cache original for regeneration
@@ -496,6 +504,8 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
 
       const result: PipelineResult = {
         name: '', // Will use existing name
+        categoryId: null,
+        suggestedNewCategoryName: null,
         iconPreview: transparentIconBase64,
         iconBlob: transparentIconBlob,
         cachedBgRemoved: cachedBgRemoved, // Keep the same cache
@@ -508,10 +518,17 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         result: {
           ...result,
           name: prev.result?.name || '',
+          categoryId: prev.result?.categoryId ?? null,
+          suggestedNewCategoryName: prev.result?.suggestedNewCategoryName ?? null,
         },
       }))
 
-      return result
+      return {
+        ...result,
+        name: state.result?.name || '',
+        categoryId: state.result?.categoryId ?? null,
+        suggestedNewCategoryName: state.result?.suggestedNewCategoryName ?? null,
+      }
 
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
