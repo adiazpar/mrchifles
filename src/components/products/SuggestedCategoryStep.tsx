@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Spinner } from '@/components/ui'
+import { Spinner, TabContainer } from '@/components/ui'
 import type { ProductCategory } from '@/types'
 
 export interface SuggestedCategoryStepProps {
@@ -15,6 +15,8 @@ export interface SuggestedCategoryStepProps {
   onPickExisting: (categoryId: string) => void
 }
 
+type ActiveView = 'suggest' | 'picker'
+
 export function SuggestedCategoryStep({
   suggestedName,
   categories,
@@ -23,7 +25,7 @@ export function SuggestedCategoryStep({
 }: SuggestedCategoryStepProps) {
   const [name, setName] = useState(suggestedName)
   const [isCreating, setIsCreating] = useState(false)
-  const [showPicker, setShowPicker] = useState(false)
+  const [activeView, setActiveView] = useState<ActiveView>('suggest')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -48,12 +50,85 @@ export function SuggestedCategoryStep({
     }
   }
 
-  if (showPicker) {
-    return (
-      <>
-        <div className="text-sm text-text-secondary mb-3 px-1">
+  return (
+    <TabContainer
+      activeTab={activeView}
+      onTabChange={(id) => setActiveView(id as ActiveView)}
+      fitActiveHeight
+    >
+      {/* Tabs are wrapped by TabContainer in `flex flex-col gap-4`, so
+          top-level children here are spaced by gap-4 automatically. Avoid
+          adding margin utilities on direct children. */}
+
+      <TabContainer.Tab id="suggest">
+        <div>
+          <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-1 text-center">
+            Notice
+          </div>
+          <div className="text-sm text-text-secondary text-center">
+            We couldn&apos;t fit this product into one of your existing
+            categories. Create a new one to keep things organized:
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="suggested-category-name" className="label">
+            New category name
+          </label>
+          <input
+            id="suggested-category-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="input"
+            autoComplete="off"
+            autoFocus
+          />
+        </div>
+
+        {error && (
+          <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={isCreating || !name.trim()}
+          className="btn btn-primary w-full"
+        >
+          {isCreating ? <Spinner /> : 'Create and continue'}
+        </button>
+
+        {categories.length > 0 && (
+          <>
+            <div className="flex items-center gap-3" aria-hidden="true">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs uppercase tracking-wide text-text-tertiary">
+                or
+              </span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => setActiveView('picker')}
+                className="text-sm text-brand hover:text-brand"
+              >
+                Pick existing category instead
+              </button>
+            </div>
+          </>
+        )}
+      </TabContainer.Tab>
+
+      <TabContainer.Tab id="picker">
+        <div className="text-sm text-text-secondary text-center">
           Pick an existing category for this product:
         </div>
+
         <div className="space-y-2">
           {categories
             .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -68,73 +143,25 @@ export function SuggestedCategoryStep({
               </button>
             ))}
         </div>
-        <button
-          type="button"
-          onClick={() => setShowPicker(false)}
-          className="text-sm text-text-tertiary hover:text-text-secondary mt-3 px-1"
-        >
-          Back to suggestion
-        </button>
-      </>
-    )
-  }
 
-  return (
-    <>
-      <div className="text-sm text-text-secondary mb-3 px-1">
-        We couldn&apos;t fit this product into one of your existing categories.
-        Create a new one to keep things organized:
-      </div>
-
-      <label htmlFor="suggested-category-name" className="label">
-        New category name
-      </label>
-      <input
-        id="suggested-category-name"
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="input"
-        autoComplete="off"
-        autoFocus
-      />
-
-      {error && (
-        <div className="mt-3 p-3 bg-error-subtle text-error text-sm rounded-lg">
-          {error}
+        <div className="flex items-center gap-3" aria-hidden="true">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs uppercase tracking-wide text-text-tertiary">
+            or
+          </span>
+          <div className="flex-1 h-px bg-border" />
         </div>
-      )}
 
-      <button
-        type="button"
-        onClick={handleCreate}
-        disabled={isCreating || !name.trim()}
-        className="btn btn-primary w-full mt-4"
-      >
-        {isCreating ? <Spinner /> : 'Create and continue'}
-      </button>
-
-      {categories.length > 0 && (
-        <>
-          <div className="flex items-center gap-3 mt-4" aria-hidden="true">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs uppercase tracking-wide text-text-tertiary">
-              or
-            </span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          <div className="flex justify-center mt-4">
-            <button
-              type="button"
-              onClick={() => setShowPicker(true)}
-              className="text-sm text-brand hover:text-brand"
-            >
-              Pick existing category instead
-            </button>
-          </div>
-        </>
-      )}
-    </>
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => setActiveView('suggest')}
+            className="text-sm text-brand hover:text-brand"
+          >
+            Back to suggestion
+          </button>
+        </div>
+      </TabContainer.Tab>
+    </TabContainer>
   )
 }

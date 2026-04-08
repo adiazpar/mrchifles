@@ -52,6 +52,55 @@ function AiPipelineNavigator({
 }
 
 // ============================================
+// AI BARCODE CONTINUE BUTTON
+// ============================================
+
+function AiBarcodeContinueButton({
+  onStartAiPipeline,
+}: {
+  onStartAiPipeline: () => void
+}) {
+  const { barcode } = useProductForm()
+  const hasBarcode = Boolean(barcode.trim())
+
+  return (
+    <button
+      type="button"
+      onClick={onStartAiPipeline}
+      className={`${hasBarcode ? 'btn btn-primary' : 'btn btn-secondary'} flex-1`}
+    >
+      {hasBarcode ? 'Continue' : 'Skip for now'}
+    </button>
+  )
+}
+
+// ============================================
+// ANALYZING STEP BODY
+// ============================================
+
+function AnalyzingStepBody() {
+  const { pipelineStep, isCompressing } = useProductForm()
+
+  const label = isCompressing
+    ? 'Preparing photo...'
+    : pipelineStep === 'identifying'
+      ? 'Identifying product...'
+      : pipelineStep === 'generating'
+        ? 'Generating icon...'
+        : pipelineStep === 'removing-bg'
+          ? 'Removing background...'
+          : 'Analyzing product...'
+
+  return (
+    <div className="flex flex-col items-center justify-center py-12">
+      <Spinner className="spinner-lg mb-4" />
+      <p className="text-sm text-text-secondary">{label}</p>
+      <p className="text-xs text-text-tertiary mt-1">This may take a few seconds</p>
+    </div>
+  )
+}
+
+// ============================================
 // AI PHOTO STEP INPUT
 // ============================================
 
@@ -295,10 +344,10 @@ export function AddProductModal({
       {/* Step 1: AI - Product photo */}
       <Modal.Step title="Take a product photo" backStep={0}>
         <Modal.Item>
-          <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2">
+          <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
             Step 1 of 2
           </div>
-          <p className="text-sm text-text-secondary mb-4">
+          <p className="text-sm text-text-secondary mb-4 text-center">
             Take a clear, well-lit photo of the product. Center it in the frame and avoid glare.
           </p>
           <AiPhotoStepInput
@@ -321,31 +370,20 @@ export function AddProductModal({
           </Modal.Item>
         )}
         <Modal.Item>
-          <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-3">
+          <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-3 text-center">
             Step 2 of 2
           </div>
           <AiBarcodeStepBody />
         </Modal.Item>
         <Modal.Footer>
-          <Modal.BackButton>Back</Modal.BackButton>
-          <button
-            type="button"
-            onClick={onStartAiPipeline}
-            className="btn btn-primary flex-1"
-          >
-            Continue
-          </button>
+          <AiBarcodeContinueButton onStartAiPipeline={onStartAiPipeline} />
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 3: Analyzing */}
       <Modal.Step title="Analyzing..." backStep={0} onBackStep={onAbortAiProcessing}>
         <Modal.Item>
-          <div className="flex flex-col items-center justify-center py-12">
-            <Spinner className="spinner-lg mb-4" />
-            <p className="text-sm text-text-secondary">Analyzing product...</p>
-            <p className="text-xs text-text-tertiary mt-1">This may take a few seconds</p>
-          </div>
+          <AnalyzingStepBody />
         </Modal.Item>
         <Modal.Footer>
           <Modal.CancelBackButton>Cancel</Modal.CancelBackButton>

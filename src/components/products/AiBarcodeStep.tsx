@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Plus, ScanBarcode } from 'lucide-react'
+import { useMorphingModal } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
@@ -39,6 +40,25 @@ export function AiBarcodeStepBody() {
     setError,
   } = useProductForm()
 
+  const { currentStep } = useMorphingModal()
+
+  // Clear any existing barcode state when entering this step so the user
+  // starts with a clean slate every time.
+  useEffect(() => {
+    if (currentStep === 2) {
+      setBarcode('')
+      setBarcodeFormat(null)
+      setBarcodeSource(null)
+      setError('')
+    }
+  }, [currentStep, setBarcode, setBarcodeFormat, setBarcodeSource, setError])
+
+  const handleClear = useCallback(() => {
+    setBarcode('')
+    setBarcodeFormat(null)
+    setBarcodeSource(null)
+  }, [setBarcode, setBarcodeFormat, setBarcodeSource])
+
   const { open: openScanner, busy: scanBusy, hiddenInput: scanHiddenInput } = useBarcodeScan({
     onResult: ({ value, format }) => {
       setBarcode(value)
@@ -63,7 +83,7 @@ export function AiBarcodeStepBody() {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-text-secondary">
+      <p className="text-sm text-text-secondary text-center">
         Scan the product&apos;s existing barcode, generate a new one, or skip
         to complete this setup later.
       </p>
@@ -72,22 +92,33 @@ export function AiBarcodeStepBody() {
         <BarcodeDisplay value={barcode} format={barcodeFormat} />
       </div>
 
-      <div className="text-center">
-        {barcode ? (
-          <>
-            <div className="text-sm break-all text-text-secondary">
-              {`${barcode} · ${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : 'N/A'}`}
-            </div>
-            <div className="text-sm text-text-tertiary mt-1">
-              {getBarcodeSourceLabel(barcodeSource)}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="text-sm text-text-tertiary">No barcode attached</div>
-            <div className="text-sm text-text-tertiary mt-1">N/A</div>
-          </>
-        )}
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          {barcode ? (
+            <>
+              <div className="text-sm break-all text-text-secondary">
+                {`${barcode} · ${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : 'N/A'}`}
+              </div>
+              <div className="text-sm text-text-tertiary mt-1">
+                {getBarcodeSourceLabel(barcodeSource)}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm text-text-tertiary">No barcode attached</div>
+              <div className="text-sm text-text-tertiary mt-1">N/A</div>
+            </>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleClear}
+          disabled={!barcode}
+          className="text-sm text-error hover:text-error transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+        >
+          Reset
+        </button>
       </div>
 
       {scanHiddenInput}
