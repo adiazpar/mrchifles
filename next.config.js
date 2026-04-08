@@ -9,6 +9,7 @@ const nextConfig = {
   // Allow Tailscale IP for mobile testing in development
   allowedDevOrigins: ['100.113.9.34'],
 
+
   // Security headers
   async headers() {
     return [
