@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Copy, Plus, Printer, ScanBarcode } from 'lucide-react'
 import { useProductForm } from '@/contexts/product-form-context'
-import { BARCODE_FORMATS, generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
+import { detectBarcodeFormat, generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { renderBarcodeSvg } from '@/lib/barcode-render'
 import { BarcodeDisplay } from './BarcodeDisplay'
-import type { BarcodeSource, BarcodeFormat } from '@/types'
+import type { BarcodeSource } from '@/types'
 
 export function BarcodeFields() {
   const [copied, setCopied] = useState(false)
@@ -36,19 +36,14 @@ export function BarcodeFields() {
 
   const handleBarcodeChange = useCallback((value: string) => {
     setBarcode(value)
-    const normalized = value.trim()
 
-    if (!normalized) {
-      setBarcodeFormat(null)
-      setBarcodeSource(null)
-      return
-    }
-
-    if (!barcodeFormat) {
-      setBarcodeFormat('CODE_128')
-    }
-    setBarcodeSource('manual')
-  }, [barcodeFormat, setBarcode, setBarcodeFormat, setBarcodeSource])
+    // Format is always derived from the value — never a user input. The
+    // cascade handles normalization internally and returns null for empty or
+    // non-printable input.
+    const detected = detectBarcodeFormat(value)
+    setBarcodeFormat(detected)
+    setBarcodeSource(detected ? 'manual' : null)
+  }, [setBarcode, setBarcodeFormat, setBarcodeSource])
 
   const handleScanClick = useCallback(() => {
     setError('')
@@ -264,54 +259,35 @@ export function BarcodeFields() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-3 items-start">
-          <div className="flex-[1.9] min-w-0">
-            <label htmlFor="product-barcode" className="label">Barcode value</label>
-            <div className="relative">
-              <input
-                id="product-barcode"
-                type="text"
-                value={barcode}
-                onChange={(e) => handleBarcodeChange(e.target.value)}
-                className="input w-full"
-                style={{ paddingRight: 'var(--space-10)' }}
-                placeholder="Scan or enter code"
-                autoComplete="off"
-              />
-              <button
-                type="button"
-                onClick={handleCopy}
-                disabled={!barcode.trim()}
-                style={{ right: 'var(--space-3)' }}
-                className={`absolute top-1/2 -translate-y-1/2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                  copied ? 'text-success' : 'text-text-tertiary hover:text-text-secondary'
-                }`}
-                aria-label={copied ? 'Barcode copied' : 'Copy barcode value'}
-              >
-                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-[1.1] min-w-0">
-            <label htmlFor="product-barcode-format" className="label">Barcode type</label>
-            <select
-              id="product-barcode-format"
-              value={barcodeFormat || ''}
-              onChange={(e) => setBarcodeFormat(e.target.value ? e.target.value as BarcodeFormat : null)}
-              className={`input ${barcodeFormat ? '' : 'select-placeholder'}`}
-            >
-              <option value="">N/A</option>
-              {BARCODE_FORMATS.map((format) => (
-                <option key={format} value={format}>
-                  {getBarcodeFormatLabel(format)}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div>
+        <label htmlFor="product-barcode" className="label">Barcode value</label>
+        <div className="relative">
+          <input
+            id="product-barcode"
+            type="text"
+            value={barcode}
+            onChange={(e) => handleBarcodeChange(e.target.value)}
+            className="input w-full"
+            style={{ paddingRight: 'var(--space-10)' }}
+            placeholder="Scan or enter code"
+            autoComplete="off"
+          />
+          <button
+            type="button"
+            onClick={handleCopy}
+            disabled={!barcode.trim()}
+            style={{ right: 'var(--space-3)' }}
+            className={`absolute top-1/2 -translate-y-1/2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              copied ? 'text-success' : 'text-text-tertiary hover:text-text-secondary'
+            }`}
+            aria-label={copied ? 'Barcode copied' : 'Copy barcode value'}
+          >
+            {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+          </button>
         </div>
+      </div>
 
-      <div className="rounded-xl border border-border bg-bg-muted p-4 min-h-36 flex items-center justify-center text-center">
+      <div className="rounded-xl border border-border bg-bg-muted p-4 h-44 flex items-center justify-center text-center overflow-hidden">
         <BarcodeDisplay value={barcode} format={barcodeFormat} />
       </div>
 

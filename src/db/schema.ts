@@ -1,5 +1,5 @@
-import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core'
-import { relations } from 'drizzle-orm'
+import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { relations, sql } from 'drizzle-orm'
 
 // ===========================================
 // BUSINESSES (Multi-tenant support)
@@ -96,13 +96,17 @@ export const products = sqliteTable('products', {
   stock: integer('stock').default(0),
   lowStockThreshold: integer('low_stock_threshold').default(10),
   icon: text('icon'), // Base64-encoded image data
-  barcode: text('barcode'), // Physical barcode/QR code value
+  barcode: text('barcode'), // Physical barcode/QR code value (as shown on the label)
   barcodeFormat: text('barcode_format', {
     enum: ['CODABAR', 'CODE_39', 'CODE_93', 'CODE_128', 'ITF', 'EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'UPC_EAN_EXTENSION']
   }),
   barcodeSource: text('barcode_source', {
     enum: ['scanned', 'generated', 'manual']
   }),
+  // Canonical 14-digit GTIN for retail barcodes (EAN-13, UPC-A, EAN-8, UPC-E).
+  // Computed automatically on write. Null for non-retail formats. This is the
+  // stable external identity used by supplier / POS / e-commerce integrations.
+  barcodeGtin: text('barcode_gtin'),
   status: text('status', { enum: ['active', 'inactive', 'archived'] }).default('active').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
@@ -113,6 +117,14 @@ export const products = sqliteTable('products', {
   barcodeIdx: index('idx_products_barcode').on(table.barcode),
   barcodeFormatIdx: index('idx_products_barcode_format').on(table.barcodeFormat),
   barcodeSourceIdx: index('idx_products_barcode_source').on(table.barcodeSource),
+  barcodeGtinIdx: index('idx_products_barcode_gtin').on(table.barcodeGtin),
+  // Partial unique index on (businessId, barcode) for active/inactive rows.
+  // Archived rows are excluded so deleted-and-re-added products don't collide.
+  // SQLite treats NULLs as distinct in unique indexes, so the IS NOT NULL
+  // clause is technically redundant but documents intent.
+  uniqueBusinessBarcode: uniqueIndex('idx_unique_products_business_barcode')
+    .on(table.businessId, table.barcode)
+    .where(sql`${table.barcode} IS NOT NULL AND ${table.status} != 'archived'`),
 }))
 
 // ===========================================

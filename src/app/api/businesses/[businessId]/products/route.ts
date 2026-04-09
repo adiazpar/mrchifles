@@ -5,7 +5,12 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { uploadProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
-import { isBarcodeFormat, normalizeBarcodeValue } from '@/lib/barcodes'
+import {
+  computeCanonicalGtin,
+  detectBarcodeFormat,
+  normalizeBarcodeValue,
+  validateBarcodeSourcePrefix,
+} from '@/lib/barcodes'
 import { Schemas } from '@/lib/schemas'
 
 const createProductSchema = z.object({
@@ -14,7 +19,6 @@ const createProductSchema = z.object({
   categoryId: Schemas.id().optional(),
   active: Schemas.activeFlag(),
   barcode: z.string().optional(),
-  barcodeFormat: z.string().optional(),
   barcodeSource: z.enum(['scanned', 'generated', 'manual']).optional(),
 })
 
@@ -26,7 +30,10 @@ const createProductSchema = z.object({
  */
 export const GET = withBusinessAuth(async (request, access) => {
   const url = new URL(request.url)
-  const barcodeParam = url.searchParams.get('barcode')?.trim() || null
+  // Normalize the lookup query the same way we normalize on write so case
+  // and whitespace differences don't cause silent misses.
+  const rawBarcodeParam = url.searchParams.get('barcode')
+  const barcodeParam = rawBarcodeParam ? normalizeBarcodeValue(rawBarcodeParam) : null
 
   const conditions = [
     eq(products.businessId, access.businessId),
@@ -62,8 +69,9 @@ export const POST = withBusinessAuth(async (request, access) => {
   const iconFile = formData.get('icon') as File | null
   const presetIcon = formData.get('presetIcon') as string | null
   const barcodeValue = normalizeBarcodeValue(formData.get('barcode') as string | null)
-  const barcodeFormatValue = normalizeBarcodeValue(formData.get('barcodeFormat') as string | null)
-  const barcodeSourceValue = normalizeBarcodeValue(formData.get('barcodeSource') as string | null)
+  // Source is an enum (lowercase). Trim only — don't run through the
+  // barcode-value normalizer or it would uppercase and fail enum validation.
+  const barcodeSourceValue = (formData.get('barcodeSource') as string | null)?.trim() || ''
 
   const validation = createProductSchema.safeParse({
     name,
@@ -71,7 +79,8 @@ export const POST = withBusinessAuth(async (request, access) => {
     categoryId: categoryId || undefined,
     active,
     barcode: barcodeValue || undefined,
-    barcodeFormat: barcodeFormatValue || undefined,
+    // Format is derived server-side from the value, so we don't accept it from
+    // the client. The field is omitted from validation entirely.
     barcodeSource: barcodeSourceValue || undefined,
   })
 
@@ -87,18 +96,24 @@ export const POST = withBusinessAuth(async (request, access) => {
     barcodeSource: validBarcodeSource,
   } = validation.data
   const status = validActive ? 'active' : 'inactive'
-  const barcodeFormat = barcodeFormatValue
-    ? (isBarcodeFormat(barcodeFormatValue) ? barcodeFormatValue : null)
-    : null
+
+  // Derive format from value via the cascade. Format is never trusted from
+  // the client. If the value is non-empty but the cascade can't classify it,
+  // reject as a malformed barcode.
+  const barcodeFormat = barcodeValue ? detectBarcodeFormat(barcodeValue) : null
+  if (barcodeValue && !barcodeFormat) {
+    return HttpResponse.badRequest('Unrecognized barcode value')
+  }
+
   const barcodeSource = validBarcodeSource ?? null
 
-  if (barcodeFormatValue && !barcodeFormat) {
-    return HttpResponse.badRequest('Unsupported barcode format')
+  // The KSR- namespace and the source field must agree. See the helper for
+  // the full matrix of allowed combinations.
+  const sourcePrefixError = validateBarcodeSourcePrefix(barcodeValue, barcodeSource)
+  if (sourcePrefixError) {
+    return HttpResponse.badRequest(sourcePrefixError)
   }
-
-  if (!barcodeValue && barcodeFormat) {
-    return HttpResponse.badRequest('Barcode format requires a barcode value')
-  }
+  const barcodeGtin = computeCanonicalGtin(barcodeValue, barcodeFormat)
 
   if (!barcodeValue && barcodeSource) {
     return HttpResponse.badRequest('Barcode source requires a barcode value')
@@ -169,6 +184,7 @@ export const POST = withBusinessAuth(async (request, access) => {
         barcode: barcodeValue || null,
         barcodeFormat,
         barcodeSource,
+        barcodeGtin,
         status,
         updatedAt: now,
       })
@@ -196,6 +212,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     barcode: barcodeValue || null,
     barcodeFormat,
     barcodeSource,
+    barcodeGtin,
     status,
     stock: 0,
     createdAt: now,

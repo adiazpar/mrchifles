@@ -81,7 +81,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="h-full antialiased bg-bg-base text-text-primary">
+      <body className="h-full antialiased bg-bg-base text-text-primary" suppressHydrationWarning>
         <AuthProvider>
           <NavbarProvider>
             <AppShell>

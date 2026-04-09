@@ -1,9 +1,6 @@
 # Dependencies
 node_modules/
 
-# Superpowers brainstorm
-.superpowers/
-
 # Next.js
 .next/
 out/
@@ -55,3 +52,9 @@ drizzle/
 public/media/
 # Git worktrees
 .worktrees/
+
+# Claude
+.claude/
+.superpowers/
+
+certificates

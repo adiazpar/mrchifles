@@ -88,7 +88,7 @@ export function AiBarcodeStepBody() {
         to complete this setup later.
       </p>
 
-      <div className="rounded-xl border border-border bg-bg-muted p-4 min-h-36 flex items-center justify-center text-center">
+      <div className="rounded-xl border border-border bg-bg-muted p-4 h-44 flex items-center justify-center text-center overflow-hidden">
         <BarcodeDisplay value={barcode} format={barcodeFormat} />
       </div>
 

@@ -81,8 +81,16 @@ export async function setAuthCookie(token: string): Promise<void> {
   const cookieStore = await cookies()
   cookieStore.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    // Always set Secure. The dev server now runs HTTPS via
+    // `next dev --experimental-https`, and browsers (especially Chrome on
+    // Android with self-signed certs) refuse to persist cookies without
+    // the Secure flag on HTTPS origins. This also matches production
+    // behavior, which is always HTTPS.
+    secure: true,
+    // `lax` is sufficient here and avoids edge cases where `strict`
+    // causes cookies to not be sent on top-level navigations from
+    // external links or PWA launchers.
+    sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 7 days
     path: '/',
   })

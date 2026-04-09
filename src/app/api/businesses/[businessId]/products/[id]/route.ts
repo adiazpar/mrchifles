@@ -4,7 +4,12 @@ import { eq, and, ne } from 'drizzle-orm'
 import { uploadProductIcon, deleteProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
 import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
 import { canManageBusiness } from '@/lib/business-auth'
-import { isBarcodeFormat, normalizeBarcodeValue } from '@/lib/barcodes'
+import {
+  computeCanonicalGtin,
+  detectBarcodeFormat,
+  normalizeBarcodeValue,
+  validateBarcodeSourcePrefix,
+} from '@/lib/barcodes'
 import { Schemas } from '@/lib/schemas'
 
 /**
@@ -32,8 +37,9 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   const presetIcon = formData.get('presetIcon') as string | null
   const clearIconFlag = formData.get('clearIcon') as string | null
   const barcodeValue = normalizeBarcodeValue(formData.get('barcode') as string | null)
-  const barcodeFormatValue = normalizeBarcodeValue(formData.get('barcodeFormat') as string | null)
-  const barcodeSourceValue = normalizeBarcodeValue(formData.get('barcodeSource') as string | null)
+  // Source is an enum (lowercase). Trim only — don't run through the
+  // barcode-value normalizer or it would uppercase and fail enum validation.
+  const barcodeSourceValue = (formData.get('barcodeSource') as string | null)?.trim() || ''
 
   const updateData: Record<string, unknown> = {}
 
@@ -66,15 +72,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   }
 
   const hasBarcodeValue = formData.has('barcode')
-  const hasBarcodeFormat = formData.has('barcodeFormat')
   const hasBarcodeSource = formData.has('barcodeSource')
 
-  if (hasBarcodeFormat) {
-    if (barcodeFormatValue && !isBarcodeFormat(barcodeFormatValue)) {
-      return HttpResponse.badRequest('Unsupported barcode format')
-    }
-    updateData.barcodeFormat = barcodeFormatValue || null
-  }
+  // Format is no longer accepted from the client — it's derived from the
+  // value via the cascade. Any `barcodeFormat` field in the request is
+  // silently ignored.
 
   if (hasBarcodeSource) {
     if (barcodeSourceValue && !['scanned', 'generated', 'manual'].includes(barcodeSourceValue)) {
@@ -84,6 +86,30 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   }
 
   if (hasBarcodeValue) {
+    // Derive format from the new value via the cascade. If the value is
+    // non-empty but the cascade can't classify it, reject as malformed.
+    const derivedFormat = barcodeValue ? detectBarcodeFormat(barcodeValue) : null
+    if (barcodeValue && !derivedFormat) {
+      return HttpResponse.badRequest('Unrecognized barcode value')
+    }
+
+    // The KSR- namespace and the source field must agree. We only run the
+    // check when this request explicitly includes a barcodeSource — if the
+    // source isn't being updated, we don't read the existing row from the
+    // DB just to validate against it (defense in depth at this layer isn't
+    // worth the extra query).
+    if (hasBarcodeSource) {
+      const source = (barcodeSourceValue || null) as
+        | 'scanned'
+        | 'generated'
+        | 'manual'
+        | null
+      const sourcePrefixError = validateBarcodeSourcePrefix(barcodeValue, source)
+      if (sourcePrefixError) {
+        return HttpResponse.badRequest(sourcePrefixError)
+      }
+    }
+
     if (barcodeValue) {
       const duplicateBarcode = await db
         .select({ id: products.id })
@@ -104,18 +130,16 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     }
 
     updateData.barcode = barcodeValue || null
+    updateData.barcodeFormat = derivedFormat
+    updateData.barcodeGtin = computeCanonicalGtin(barcodeValue || null, derivedFormat)
 
-    if (!barcodeValue && !hasBarcodeFormat) {
-      updateData.barcodeFormat = null
-    }
+    // Clearing the barcode also clears source unless source was explicitly
+    // included in the same request.
     if (!barcodeValue && !hasBarcodeSource) {
       updateData.barcodeSource = null
     }
   }
 
-  if (hasBarcodeValue && !barcodeValue && barcodeFormatValue) {
-    return HttpResponse.badRequest('Barcode format requires a barcode value')
-  }
   if (hasBarcodeValue && !barcodeValue && barcodeSourceValue) {
     return HttpResponse.badRequest('Barcode source requires a barcode value')
   }
