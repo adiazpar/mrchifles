@@ -30,6 +30,15 @@ export interface LiveBarcodeScannerProps {
   onResult: (result: LiveBarcodeScanResult) => void | Promise<void>
   onCancel: () => void
   onError: (message: string) => void
+  /**
+   * Optional escape hatch: if provided, the overlay shows a "Choose file
+   * instead" link that dismisses the live camera and switches to the
+   * file picker path. Useful for:
+   *  - Scanning PDFs or pre-taken photos from the library on mobile.
+   *  - Desktop dev workflows where Chrome DevTools emulates a mobile
+   *    viewport and forces the scanner into live-camera mode.
+   */
+  onSwitchToFilePicker?: () => void
 }
 
 /**
@@ -45,7 +54,12 @@ export interface LiveBarcodeScannerProps {
  * scanner is active) — unmounting releases the camera stream via the
  * useEffect cleanup.
  */
-export function LiveBarcodeScanner({ onResult, onCancel, onError }: LiveBarcodeScannerProps) {
+export function LiveBarcodeScanner({
+  onResult,
+  onCancel,
+  onError,
+  onSwitchToFilePicker,
+}: LiveBarcodeScannerProps) {
   // Sanitize React's useId() into a valid HTML id.
   const reactId = useId().replace(/:/g, '')
   const hostIdRef = useRef(`live-barcode-scanner-${reactId}`)
@@ -121,18 +135,43 @@ export function LiveBarcodeScanner({ onResult, onCancel, onError }: LiveBarcodeS
           setStatus('scanning')
         }
       } catch (err) {
-        console.error('[LiveBarcodeScanner] Failed to start camera:', err)
+        // html5-qrcode wraps the underlying getUserMedia error into a
+        // string with the original error name embedded. The Error object
+        // itself may or may not have a usable `.name` property by the
+        // time we see it here, so we stringify and substring-match to
+        // reliably classify the failure.
         if (cancelled) return
 
-        const name = (err as Error)?.name || ''
+        const errString =
+          err instanceof Error
+            ? `${err.name}: ${err.message}`
+            : String(err ?? '')
+        const combined = errString.toLowerCase()
+
         let message = 'Could not start the camera. Please try again.'
-        if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-          message = 'Camera access is required to scan. Please allow camera access in your browser settings and try again.'
-        } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+        if (
+          combined.includes('notallowederror') ||
+          combined.includes('permissiondenied') ||
+          combined.includes('permission denied')
+        ) {
+          message =
+            'Camera permissions are disabled. Enable camera access in your browser settings, or choose a file instead.'
+        } else if (
+          combined.includes('notfounderror') ||
+          combined.includes('devicesnotfounderror')
+        ) {
           message = 'No camera was found on this device.'
-        } else if (name === 'NotReadableError' || name === 'TrackStartError') {
+        } else if (
+          combined.includes('notreadableerror') ||
+          combined.includes('trackstarterror')
+        ) {
           message = 'The camera is in use by another app. Close other apps and try again.'
         }
+
+        // Log as a warning, not an error, so the dev-mode error overlay
+        // doesn't surface it as a blocking error. The user-visible
+        // message is already shown inside the scanner overlay.
+        console.warn('[LiveBarcodeScanner] Camera could not start:', errString)
 
         setErrorMessage(message)
         setStatus('error')
@@ -180,6 +219,10 @@ export function LiveBarcodeScanner({ onResult, onCancel, onError }: LiveBarcodeS
 
   return (
     <div
+      // The backdrop is intentionally a hardcoded dark color (not a
+      // theme-aware token) because this is a camera viewfinder context —
+      // the scanner UI must be dark regardless of the user's theme so
+      // the camera feed is readable, matching platform camera UIs.
       className="fixed z-40 bg-black overflow-hidden"
       style={overlayStyle}
       role="dialog"
@@ -223,7 +266,7 @@ export function LiveBarcodeScanner({ onResult, onCancel, onError }: LiveBarcodeS
       <button
         type="button"
         onClick={onCancel}
-        className="absolute top-3 right-3 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+        className="absolute top-3 right-3 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-text-inverse backdrop-blur-sm transition-colors hover:bg-black/80"
         aria-label="Cancel scan"
       >
         <X className="w-5 h-5" />
@@ -232,44 +275,66 @@ export function LiveBarcodeScanner({ onResult, onCancel, onError }: LiveBarcodeS
       {/* Scanning frame — centered scan box with corner brackets and a
           horizontal laser line running through the middle. The box defines
           the visual scan target, while the underlying camera still scans
-          the full frame (we omit qrbox from html5-qrcode config). */}
+          the full frame (we omit qrbox from html5-qrcode config).
+          Bracket color uses text-inverse (white in light, off-white in
+          dark) so it stays visible against the camera feed. The laser
+          line uses the semantic error color token. */}
       {status === 'scanning' && (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
           <div className="relative w-[85%] aspect-[3/2] max-w-md">
-            {/* Four L-shaped corner brackets, aligned to the box corners */}
-            <div className="absolute top-0 left-0 w-8 h-8 border-t-[3px] border-l-[3px] border-white rounded-tl-lg" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-white rounded-tr-lg" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-[3px] border-l-[3px] border-white rounded-bl-lg" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[3px] border-r-[3px] border-white rounded-br-lg" />
-            {/* Laser line — spans the box width, centered vertically */}
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-[3px] border-l-[3px] border-text-inverse rounded-tl-lg" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-text-inverse rounded-tr-lg" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-[3px] border-l-[3px] border-text-inverse rounded-bl-lg" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[3px] border-r-[3px] border-text-inverse rounded-br-lg" />
             <div
-              className="absolute left-0 right-0 h-[2px] bg-[var(--color-error)]"
+              className="absolute left-0 right-0 h-[2px] bg-error"
               style={{ top: '50%', transform: 'translateY(-50%)' }}
             />
           </div>
         </div>
       )}
 
-      {/* Footer instruction */}
+      {/* Footer instruction + optional file-picker fallback */}
       {status === 'scanning' && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
-          <p className="text-white text-center text-sm">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+          <p className="text-text-inverse text-center text-sm pointer-events-none">
             Align the barcode with the line
           </p>
+          {onSwitchToFilePicker && (
+            <div className="mt-2 text-center">
+              <button
+                type="button"
+                onClick={onSwitchToFilePicker}
+                className="text-text-inverse/80 text-xs underline underline-offset-2 hover:text-text-inverse transition-colors"
+              >
+                Choose a file instead
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* Starting state */}
       {status === 'starting' && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <p className="text-white text-sm">Starting camera...</p>
+          <p className="text-text-inverse text-sm">Starting camera...</p>
         </div>
       )}
 
-      {/* Error state */}
+      {/* Error state — message plus the same "Choose a file instead"
+          escape hatch so the user isn't stranded when the camera fails. */}
       {status === 'error' && (
-        <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
-          <p className="text-white text-sm max-w-sm">{errorMessage}</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center gap-4">
+          <p className="text-text-inverse text-sm max-w-sm">{errorMessage}</p>
+          {onSwitchToFilePicker && (
+            <button
+              type="button"
+              onClick={onSwitchToFilePicker}
+              className="text-text-inverse/90 text-sm underline underline-offset-2 hover:text-text-inverse transition-colors"
+            >
+              Choose a file instead
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -5,27 +5,7 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { isBarcodeFormat } from '@/lib/barcodes'
 import type { BarcodeFormat } from '@/types'
 import { LiveBarcodeScanner, type LiveBarcodeScanResult } from '@/components/products/LiveBarcodeScanner'
-
-// ---------------------------------------------------------------------------
-// Device detection
-// ---------------------------------------------------------------------------
-
-const MOBILE_UA_REGEX = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i
-
-/**
- * SSR-safe mobile detection via user-agent sniffing. Starts `false` on the
- * server and during the first render, updates on mount. Known limitation:
- * UA detection is fragile and can misclassify edge devices, but the failure
- * mode is "user gets the file input path" which is still functional.
- */
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    if (typeof navigator === 'undefined') return
-    setIsMobile(MOBILE_UA_REGEX.test(navigator.userAgent))
-  }, [])
-  return isMobile
-}
+import { useIsMobile } from './useIsMobile'
 
 // ---------------------------------------------------------------------------
 // File preprocessing helpers
@@ -236,6 +216,19 @@ export function useBarcodeScan({ onResult, onError }: UseBarcodeScanOptions): Us
     setBusyState(false)
   }, [setBusyState])
 
+  // Escape hatch from the live scanner back to the file picker. Used when
+  // a mobile user wants to pick a PDF or a pre-taken photo instead of
+  // scanning live, and also when a dev testing mobile emulation in
+  // DevTools wants to bypass the webcam and pick a test image.
+  const handleSwitchToFilePicker = useCallback(() => {
+    setLiveOpen(false)
+    setBusyState(false)
+    // Trigger the file picker synchronously from the button's click
+    // handler chain so the browser still sees the user gesture and
+    // allows the file dialog to open.
+    inputRef.current?.click()
+  }, [setBusyState])
+
   const handleLiveError = useCallback((message: string) => {
     // The component shows its own inline error; we also surface it to the
     // caller so they can display a secondary banner if they want.
@@ -341,7 +334,6 @@ export function useBarcodeScan({ onResult, onError }: UseBarcodeScanOptions): Us
         ref={inputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
-        capture="environment"
         onChange={handleFile}
         className="hidden"
       />
@@ -351,6 +343,7 @@ export function useBarcodeScan({ onResult, onError }: UseBarcodeScanOptions): Us
           onResult={handleLiveResult}
           onCancel={handleLiveCancel}
           onError={handleLiveError}
+          onSwitchToFilePicker={handleSwitchToFilePicker}
         />
       )}
     </>
