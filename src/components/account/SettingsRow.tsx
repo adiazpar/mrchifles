@@ -38,7 +38,7 @@ export function SettingsRow({
   return (
     <button
       type="button"
-      className="list-item-clickable list-item-flat w-full disabled:opacity-50 disabled:cursor-not-allowed"
+      className="settings-row"
       onClick={onClick}
       disabled={disabled}
     >

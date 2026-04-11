@@ -27,6 +27,9 @@ export type { UseAccountSettingsReturn, PendingTransfer, IncomingTransfer } from
 export { useApiMessage } from './useApiMessage'
 export type { TranslateApiMessage } from './useApiMessage'
 
+export { useTheme } from './useTheme'
+export type { Theme, UseThemeReturn } from './useTheme'
+
 export { useFormModal } from './useFormModal'
 
 export { useSessionCache, createSessionCache, CACHE_KEYS } from './useSessionCache'

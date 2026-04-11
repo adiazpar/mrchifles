@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
@@ -15,16 +15,20 @@ import {
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { Spinner } from '@/components/ui'
+import { useTheme } from '@/hooks/useTheme'
 import { getUserInitials } from '@/lib/auth'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 import { LanguageRow } from '@/components/account/LanguageRow'
+import { ThemeModal } from '@/components/account/ThemeModal'
 
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth()
   const router = useRouter()
   const { hide, show } = useNavbar()
   const t = useTranslations('account')
+  const { theme } = useTheme()
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
 
   // Hide the mobile nav while viewing account settings
   useEffect(() => {
@@ -47,11 +51,12 @@ export default function AccountPage() {
 
   // Placeholder handlers — wired up in subsequent commits.
   const openProfileModal = () => {}
-  const openThemeModal = () => {}
   const openPasswordModal = () => {}
   const openAboutModal = () => {}
   const openSupportModal = () => {}
   const openDeleteAccountModal = () => {}
+
+  const themeLabel = t(`theme_${theme}`)
 
   const handleLogout = async () => {
     await logout()
@@ -94,11 +99,12 @@ export default function AccountPage() {
       {/* Preferences */}
       <div>
         <SettingsSectionHeader label={t('section_preferences')} />
-        <div className="card p-1">
+        <div className="card overflow-hidden">
           <SettingsRow
             icon={Palette}
             label={t('row_theme')}
-            onClick={openThemeModal}
+            value={themeLabel}
+            onClick={() => setIsThemeModalOpen(true)}
           />
           <div className="settings-divider" />
           <LanguageRow />
@@ -108,7 +114,7 @@ export default function AccountPage() {
       {/* Security */}
       <div>
         <SettingsSectionHeader label={t('section_security')} />
-        <div className="card p-1">
+        <div className="card overflow-hidden">
           <SettingsRow
             icon={KeyRound}
             label={t('row_change_password')}
@@ -120,7 +126,7 @@ export default function AccountPage() {
       {/* Support */}
       <div>
         <SettingsSectionHeader label={t('section_support')} />
-        <div className="card p-1">
+        <div className="card overflow-hidden">
           <SettingsRow
             icon={Info}
             label={t('row_about')}
@@ -138,7 +144,7 @@ export default function AccountPage() {
       {/* Danger zone */}
       <div>
         <SettingsSectionHeader label={t('section_danger_zone')} danger />
-        <div className="card p-1">
+        <div className="card overflow-hidden">
           <SettingsRow
             icon={LogOut}
             label={t('row_logout')}
@@ -154,6 +160,11 @@ export default function AccountPage() {
           />
         </div>
       </div>
+
+      <ThemeModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+      />
     </main>
   )
 }

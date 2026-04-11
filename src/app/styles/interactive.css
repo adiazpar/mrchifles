@@ -1740,10 +1740,38 @@
 }
 
 /* ===== Account Settings ===== */
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .settings-row:hover {
+    background: var(--color-bg-muted);
+  }
+}
+
+.settings-row:active {
+  background: var(--color-bg-muted);
+}
+
+.settings-row:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .settings-divider {
   height: 1px;
   background: var(--color-border);
-  margin: 0 var(--space-3);
+  margin: 0 var(--space-4);
 }
 
 .settings-row-native-select {

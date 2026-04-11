@@ -37,7 +37,7 @@ export function LanguageRow() {
   }
 
   return (
-    <label className="list-item-clickable list-item-flat w-full relative cursor-pointer">
+    <label className="settings-row relative">
       <Languages className="w-5 h-5 flex-shrink-0 text-text-secondary" />
       <span className="flex-1 text-left text-base font-medium text-text-primary">
         {t('row_language')}
