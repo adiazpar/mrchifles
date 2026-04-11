@@ -1,65 +1,40 @@
 /**
- * Storage utility for product icons
+ * Storage utility for product icons (server-only file paths).
  *
  * Local dev: Files stored in public/media/products/ directory
  * Production: Base64 strings stored directly in the database
+ *
+ * **Server-only.** This module imports `fs/promises`, which doesn't
+ * exist in the browser bundle. Client components must import the pure
+ * helpers (fileToBase64, validateIconSize, etc.) from `./storage-client`
+ * directly. They are re-exported here for server convenience.
  */
 
 import fs from 'fs/promises'
 import path from 'path'
 import { isBase64DataUrl } from './utils'
+// Pulled in for both local use (uploadProductIcon needs fileToBase64) and
+// for the re-export below.
+import {
+  fileToBase64,
+  blobToBase64,
+  getBase64Size,
+  validateIconSize,
+  MAX_ICON_SIZE,
+} from './storage-client'
+
+// Re-export the client-safe helpers so existing server consumers keep
+// working without changing their import paths.
+export {
+  fileToBase64,
+  blobToBase64,
+  getBase64Size,
+  validateIconSize,
+  MAX_ICON_SIZE,
+}
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 const MEDIA_DIR = path.join(process.cwd(), 'public', 'media', 'products')
-
-/**
- * Convert a File to a base64 data URL string
- * Returns format: data:image/png;base64,iVBORw0KGgo...
- */
-export async function fileToBase64(file: File): Promise<string> {
-  const buffer = Buffer.from(await file.arrayBuffer())
-  const base64 = buffer.toString('base64')
-  const mimeType = file.type || 'image/png'
-  return `data:${mimeType};base64,${base64}`
-}
-
-/**
- * Convert a Blob to a base64 data URL string
- */
-export async function blobToBase64(blob: Blob): Promise<string> {
-  const buffer = Buffer.from(await blob.arrayBuffer())
-  const base64 = buffer.toString('base64')
-  const mimeType = blob.type || 'image/png'
-  return `data:${mimeType};base64,${base64}`
-}
-
-/**
- * Get the approximate size in bytes of a base64 string
- * Useful for validation/limits
- */
-export function getBase64Size(base64: string): number {
-  // Remove data URL prefix if present
-  const base64Data = base64.includes(',') ? base64.split(',')[1] : base64
-  // Base64 encodes 3 bytes into 4 characters
-  return Math.ceil((base64Data.length * 3) / 4)
-}
-
-/**
- * Maximum icon size in bytes (100KB)
- * Base64 adds ~33% overhead, so this allows ~75KB original images
- */
-export const MAX_ICON_SIZE = 100 * 1024
-
-/**
- * Validate that an icon is within size limits
- */
-export function validateIconSize(base64: string): { valid: boolean; size: number } {
-  const size = getBase64Size(base64)
-  return {
-    valid: size <= MAX_ICON_SIZE,
-    size,
-  }
-}
 
 /**
  * Get file extension from MIME type

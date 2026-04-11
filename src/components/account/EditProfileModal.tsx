@@ -8,7 +8,7 @@ import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { hasMessageEnvelope } from '@/lib/api-messages'
-import { fileToBase64, validateIconSize } from '@/lib/storage'
+import { fileToBase64, validateIconSize } from '@/lib/storage-client'
 import { getUserInitials } from '@/lib/auth'
 
 export interface EditProfileModalProps {
