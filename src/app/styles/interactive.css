@@ -1739,6 +1739,27 @@
   margin: var(--space-1) 0;
 }
 
+/* ===== Account Settings ===== */
+.settings-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0 var(--space-3);
+}
+
+.settings-row-native-select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  font: inherit;
+}
+
 .user-menu-language {
   display: flex;
   align-items: center;

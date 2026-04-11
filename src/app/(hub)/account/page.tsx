@@ -1,20 +1,32 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import {
+  Palette,
+  Languages,
+  KeyRound,
+  Info,
+  LifeBuoy,
+  LogOut,
+  UserX,
+  ChevronRight,
+} from 'lucide-react'
+import { useAuth } from '@/contexts/auth-context'
+import { useNavbar } from '@/contexts/navbar-context'
 import { Spinner } from '@/components/ui'
 import { getUserInitials } from '@/lib/auth'
-import { useNavbar } from '@/contexts/navbar-context'
-import { useTranslations } from 'next-intl'
+import { SettingsRow } from '@/components/account/SettingsRow'
+import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 
 export default function AccountPage() {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, logout } = useAuth()
   const router = useRouter()
   const { hide, show } = useNavbar()
   const t = useTranslations('account')
 
-  // Hide navbar on mount, show on unmount
+  // Hide the mobile nav while viewing account settings
   useEffect(() => {
     hide()
     return () => show()
@@ -33,28 +45,118 @@ export default function AccountPage() {
     return null
   }
 
+  // Placeholder handlers — wired up in subsequent commits.
+  const openProfileModal = () => {}
+  const openThemeModal = () => {}
+  const openPasswordModal = () => {}
+  const openAboutModal = () => {}
+  const openSupportModal = () => {}
+  const openDeleteAccountModal = () => {}
+
+  const handleLogout = async () => {
+    await logout()
+    router.push('/login')
+  }
+
   return (
-    <main className="page-content page-content--no-navbar space-y-6">
-      {/* User Info Card */}
-      <div className="card p-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-brand-subtle flex items-center justify-center">
-            <span className="text-xl font-bold text-brand">
+    <main className="page-content page-content--no-navbar space-y-4">
+      {/* Profile header card — tappable, opens the edit profile modal */}
+      <button
+        type="button"
+        onClick={openProfileModal}
+        className="card card-interactive w-full p-4 flex items-center gap-4 text-left"
+      >
+        <div className="w-14 h-14 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0">
+          {user.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.avatar}
+              alt=""
+              className="w-14 h-14 rounded-full object-cover"
+            />
+          ) : (
+            <span className="text-lg font-bold text-brand">
               {getUserInitials(user.name)}
             </span>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-base font-semibold text-text-primary truncate">
+            {user.name}
           </div>
-          <div>
-            <h1 className="text-xl font-display font-bold">{user.name}</h1>
-            <p className="text-text-secondary">{user.email}</p>
+          <div className="text-sm text-text-tertiary truncate">
+            {user.email}
           </div>
+        </div>
+        <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
+      </button>
+
+      {/* Preferences */}
+      <div>
+        <SettingsSectionHeader label={t('section_preferences')} />
+        <div className="card p-1">
+          <SettingsRow
+            icon={Palette}
+            label={t('row_theme')}
+            onClick={openThemeModal}
+          />
+          <div className="settings-divider" />
+          <SettingsRow
+            icon={Languages}
+            label={t('row_language')}
+            onClick={() => {}}
+          />
         </div>
       </div>
 
-      {/* Coming Soon Notice */}
-      <div className="card p-6 text-center">
-        <p className="text-text-secondary">
-          {t('coming_soon')}
-        </p>
+      {/* Security */}
+      <div>
+        <SettingsSectionHeader label={t('section_security')} />
+        <div className="card p-1">
+          <SettingsRow
+            icon={KeyRound}
+            label={t('row_change_password')}
+            onClick={openPasswordModal}
+          />
+        </div>
+      </div>
+
+      {/* Support */}
+      <div>
+        <SettingsSectionHeader label={t('section_support')} />
+        <div className="card p-1">
+          <SettingsRow
+            icon={Info}
+            label={t('row_about')}
+            onClick={openAboutModal}
+          />
+          <div className="settings-divider" />
+          <SettingsRow
+            icon={LifeBuoy}
+            label={t('row_contact_support')}
+            onClick={openSupportModal}
+          />
+        </div>
+      </div>
+
+      {/* Danger zone */}
+      <div>
+        <SettingsSectionHeader label={t('section_danger_zone')} danger />
+        <div className="card p-1">
+          <SettingsRow
+            icon={LogOut}
+            label={t('row_logout')}
+            onClick={handleLogout}
+            danger
+          />
+          <div className="settings-divider" />
+          <SettingsRow
+            icon={UserX}
+            label={t('row_delete_account')}
+            onClick={openDeleteAccountModal}
+            danger
+          />
+        </div>
       </div>
     </main>
   )
