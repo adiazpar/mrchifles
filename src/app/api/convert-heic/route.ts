@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { errorResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 export async function POST(request: NextRequest) {
   try {
@@ -6,10 +8,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File | null
 
     if (!file) {
-      return NextResponse.json(
-        { success: false, error: 'No file provided' },
-        { status: 400 }
-      )
+      return errorResponse(ApiMessageCode.HEIC_NO_FILE, 400)
     }
 
     // Debug logging for HEIC conversion
@@ -80,9 +79,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('[convert-heic] Error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to convert image' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.HEIC_CONVERT_FAILED, 500)
   }
 }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
 import sharp from 'sharp'
+import { errorResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 const ICON_SIZE = 256
 const ICON_PADDING = 24 // pixels of transparent padding around the subject
@@ -27,19 +29,13 @@ export async function POST(request: NextRequest) {
     const { image } = await request.json()
 
     if (!image || typeof image !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'Image is required' },
-        { status: 400 }
-      )
+      return errorResponse(ApiMessageCode.AI_IMAGE_REQUIRED, 400)
     }
 
     const apiKey = process.env.FAL_KEY
 
     if (!apiKey) {
-      return NextResponse.json(
-        { success: false, error: 'fal.ai API not configured' },
-        { status: 500 }
-      )
+      return errorResponse(ApiMessageCode.AI_NOT_CONFIGURED, 500)
     }
 
     // Configure fal.ai client
@@ -63,10 +59,7 @@ export async function POST(request: NextRequest) {
     const imageData = result.data?.image
     if (!imageData?.url) {
       console.error('[remove-background] No image in response:', JSON.stringify(result.data, null, 2))
-      return NextResponse.json(
-        { success: false, error: 'Image was not processed' },
-        { status: 500 }
-      )
+      return errorResponse(ApiMessageCode.AI_BACKGROUND_FAILED, 500)
     }
 
     const imageUrl = imageData.url
@@ -75,10 +68,7 @@ export async function POST(request: NextRequest) {
     const imageResponse = await fetch(imageUrl)
     if (!imageResponse.ok) {
       console.error('[remove-background] Failed to fetch processed image')
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch processed image' },
-        { status: 500 }
-      )
+      return errorResponse(ApiMessageCode.AI_BACKGROUND_FAILED, 500)
     }
 
     const rawBuffer = Buffer.from(await imageResponse.arrayBuffer())
@@ -130,10 +120,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('[remove-background] Error:', error)
-
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.AI_BACKGROUND_FAILED, 500)
   }
 }

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
+import { useApiMessage } from '@/hooks/useApiMessage'
 import { getCurrencyForLocale, getLocaleByCountryCode } from '@/lib/locale-config'
 
 interface CreateBusinessResponse extends ApiResponse {
@@ -74,6 +75,7 @@ let cachedGeolocation: { country?: string } | null = null
 
 export function useCreateBusiness(): UseCreateBusinessReturn {
   const t = useTranslations('createBusiness')
+  const translateApiMessage = useApiMessage()
   // Modal state
   const [isOpen, setIsOpen] = useState(false)
 
@@ -227,20 +229,20 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
         setIsCreating(false)
         return true
       } else {
-        setError(data.error || t('error_failed_to_create'))
+        setError(t('error_failed_to_create'))
         setIsCreating(false)
         return false
       }
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        setError(t('error_failed_to_create'))
-      }
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_create')
+      )
       setIsCreating(false)
       return false
     }
-  }, [formData, isStep1Valid, isStep2Valid, t])
+  }, [formData, isStep1Valid, isStep2Valid, t, translateApiMessage])
 
   return {
     // Modal state

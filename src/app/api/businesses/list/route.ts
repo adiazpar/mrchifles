@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server'
 import { db, businesses, businessUsers } from '@/db'
 import { eq, and, sql } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/simple-auth'
+import { errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 /**
  * GET /api/businesses/list
@@ -13,7 +14,7 @@ export async function GET() {
   try {
     const session = await getCurrentUser()
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
     // Query business_users joined with businesses for this user
@@ -57,8 +58,7 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return successResponse({
       businesses: activeMemberships.map(m => ({
         id: m.businessId,
         name: m.businessName,
@@ -73,9 +73,6 @@ export async function GET() {
     })
   } catch (error) {
     console.error('List businesses error:', error)
-    return NextResponse.json(
-      { error: 'Failed to list businesses' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.BUSINESS_LIST_FAILED, 500)
   }
 }

@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, users } from '@/db'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { setLocaleCookieServer } from '@/lib/locale-cookie'
 import { SUPPORTED_LOCALES } from '@/i18n/config'
-import { validationError } from '@/lib/api-middleware'
+import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 const bodySchema = z.object({
   language: z.enum(SUPPORTED_LOCALES),
@@ -22,7 +23,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const session = await getCurrentUser()
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
     const body = await request.json()
@@ -40,12 +41,9 @@ export async function PATCH(request: NextRequest) {
 
     await setLocaleCookieServer(language)
 
-    return NextResponse.json({ language })
+    return successResponse({ language })
   } catch (error) {
     console.error('Update language error:', error)
-    return NextResponse.json(
-      { error: 'Failed to update language' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.USER_LANGUAGE_UPDATE_FAILED, 500)
   }
 }

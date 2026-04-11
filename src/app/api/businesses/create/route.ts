@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { db, businesses, businessUsers } from '@/db'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError } from '@/lib/api-middleware'
+import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { getCurrencyForLocale } from '@/lib/locale-config'
 
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     // Require authentication
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
     const body = await request.json()
@@ -64,8 +65,7 @@ export async function POST(request: NextRequest) {
       }),
     ])
 
-    return NextResponse.json({
-      success: true,
+    return successResponse({
       business: {
         id: businessId,
         name: name.trim(),
@@ -73,9 +73,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Create business error:', error)
-    return NextResponse.json(
-      { error: 'Failed to create business' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.BUSINESS_CREATE_FAILED, 500)
   }
 }

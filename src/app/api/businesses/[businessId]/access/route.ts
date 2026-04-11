@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import { withBusinessAuth } from '@/lib/api-middleware'
+import { withBusinessAuth, successResponse } from '@/lib/api-middleware'
 
 /**
  * GET /api/businesses/[businessId]/access
@@ -8,8 +7,7 @@ import { withBusinessAuth } from '@/lib/api-middleware'
  * Returns the user's role and business info.
  */
 export const GET = withBusinessAuth(async (_request, access) => {
-  return NextResponse.json({
-    success: true,
+  return successResponse({
     businessId: access.businessId,
     businessName: access.businessName,
     businessLocale: access.businessLocale,

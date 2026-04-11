@@ -220,7 +220,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         if (!response.ok) {
           const data = await response.json().catch(() => ({}))
-          return { success: false, error: data.error || 'Failed to update language' }
+          const error = hasMessageEnvelope(data)
+            ? translateApiMessage(data)
+            : translateApiMessage({ messageCode: 'USER_LANGUAGE_UPDATE_FAILED' })
+          return { success: false, error }
         }
         setUser((prev) => {
           if (!prev) return prev
@@ -235,7 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: tAuth('connection_error') }
       }
     },
-    [router, tAuth],
+    [router, tAuth, translateApiMessage],
   )
 
   // ============================================

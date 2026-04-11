@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { requireBusinessAccess, isOwner } from '@/lib/business-auth'
-import type { RouteParams } from '@/lib/api-middleware'
+import { errorResponse, successResponse, type RouteParams } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { db, businesses } from '@/db'
 import { eq } from 'drizzle-orm'
 
@@ -18,7 +19,7 @@ export async function DELETE(
   try {
     const session = await getCurrentUser()
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
     const { businessId } = await params
@@ -27,17 +28,11 @@ export async function DELETE(
     try {
       access = await requireBusinessAccess(businessId)
     } catch {
-      return NextResponse.json(
-        { error: 'You do not have access to this business' },
-        { status: 403 }
-      )
+      return errorResponse(ApiMessageCode.FORBIDDEN, 403)
     }
 
     if (!isOwner(access.role)) {
-      return NextResponse.json(
-        { error: 'Only the owner can delete a business' },
-        { status: 403 }
-      )
+      return errorResponse(ApiMessageCode.BUSINESS_ONLY_OWNER_CAN_DELETE, 403)
     }
 
     const existing = await db
@@ -47,20 +42,14 @@ export async function DELETE(
       .get()
 
     if (!existing) {
-      return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+      return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND_DELETE, 404)
     }
 
     await db.delete(businesses).where(eq(businesses.id, businessId))
 
-    return NextResponse.json({
-      success: true,
-      message: 'Business deleted successfully',
-    })
+    return successResponse({}, ApiMessageCode.BUSINESS_DELETE_SUCCESS)
   } catch (error) {
     console.error('Business deletion error:', error)
-    return NextResponse.json(
-      { error: 'Failed to delete business' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.BUSINESS_DELETE_FAILED, 500)
   }
 }

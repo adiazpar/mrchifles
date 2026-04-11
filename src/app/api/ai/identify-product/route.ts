@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { errorResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 interface CategoryInput {
   id: string
@@ -91,18 +93,12 @@ export async function POST(request: NextRequest) {
       : []
 
     if (!image) {
-      return NextResponse.json(
-        { success: false, error: 'Image is required' },
-        { status: 400 }
-      )
+      return errorResponse(ApiMessageCode.AI_IMAGE_REQUIRED, 400)
     }
 
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
-      return NextResponse.json(
-        { success: false, error: 'OpenAI API not configured' },
-        { status: 500 }
-      )
+      return errorResponse(ApiMessageCode.AI_NOT_CONFIGURED, 500)
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -138,20 +134,14 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       console.error('OpenAI API error:', errorData)
-      return NextResponse.json(
-        { success: false, error: 'Failed to analyze image' },
-        { status: 500 }
-      )
+      return errorResponse(ApiMessageCode.AI_IDENTIFY_FAILED, 500)
     }
 
     const data = await response.json()
     const content = data.choices?.[0]?.message?.content?.trim()
 
     if (!content) {
-      return NextResponse.json(
-        { success: false, error: 'Could not identify product' },
-        { status: 500 }
-      )
+      return errorResponse(ApiMessageCode.AI_IDENTIFY_FAILED, 500)
     }
 
     try {
@@ -164,16 +154,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, data: result })
     } catch (err) {
       console.error('Failed to parse GPT response:', content, err)
-      return NextResponse.json(
-        { success: false, error: 'Failed to process response' },
-        { status: 500 }
-      )
+      return errorResponse(ApiMessageCode.AI_IDENTIFY_FAILED, 500)
     }
   } catch (error) {
     console.error('Error in identify-product:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.INTERNAL_ERROR, 500)
   }
 }

@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
 import { isOwner } from '@/lib/business-auth'
 import { db, businessUsers } from '@/db'
 import { eq, and } from 'drizzle-orm'
-import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 /**
  * POST /api/businesses/[businessId]/leave
@@ -12,9 +12,7 @@ import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
  */
 export const POST = withBusinessAuth(async (_request, access) => {
   if (isOwner(access.role)) {
-    return HttpResponse.badRequest(
-      'Owners cannot leave a business. Transfer ownership or delete the business instead.'
-    )
+    return errorResponse(ApiMessageCode.BUSINESS_OWNER_CANNOT_LEAVE, 400)
   }
 
   // Remove membership
@@ -27,8 +25,5 @@ export const POST = withBusinessAuth(async (_request, access) => {
       )
     )
 
-  return NextResponse.json({
-    success: true,
-    message: 'You have left the business',
-  })
+  return successResponse({}, ApiMessageCode.BUSINESS_LEAVE_SUCCESS)
 })

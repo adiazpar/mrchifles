@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
+import { errorResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 /**
  * POST /api/ai/generate-icon
@@ -23,19 +25,13 @@ export async function POST(request: NextRequest) {
     const { image } = await request.json()
 
     if (!image || typeof image !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'Image is required' },
-        { status: 400 }
-      )
+      return errorResponse(ApiMessageCode.AI_IMAGE_REQUIRED, 400)
     }
 
     const apiKey = process.env.FAL_KEY
 
     if (!apiKey) {
-      return NextResponse.json(
-        { success: false, error: 'fal.ai API not configured' },
-        { status: 500 }
-      )
+      return errorResponse(ApiMessageCode.AI_NOT_CONFIGURED, 500)
     }
 
     // Configure fal.ai client
@@ -63,10 +59,7 @@ export async function POST(request: NextRequest) {
     const images = result.data?.images
     if (!images || images.length === 0 || !images[0].url) {
       console.error('[generate-icon] No image in response:', JSON.stringify(result.data, null, 2))
-      return NextResponse.json(
-        { success: false, error: 'No image was generated' },
-        { status: 500 }
-      )
+      return errorResponse(ApiMessageCode.AI_ICON_FAILED, 500)
     }
 
     const imageUrl = images[0].url
@@ -75,10 +68,7 @@ export async function POST(request: NextRequest) {
     const imageResponse = await fetch(imageUrl)
     if (!imageResponse.ok) {
       console.error('[generate-icon] Failed to fetch generated image')
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch generated image' },
-        { status: 500 }
-      )
+      return errorResponse(ApiMessageCode.AI_ICON_FAILED, 500)
     }
 
     const imageBuffer = await imageResponse.arrayBuffer()
@@ -97,15 +87,9 @@ export async function POST(request: NextRequest) {
 
     // Check for rate limit
     if (error instanceof Error && (error.message.includes('rate') || error.message.includes('quota'))) {
-      return NextResponse.json(
-        { success: false, error: 'Rate limit reached. Try again in a few seconds.' },
-        { status: 429 }
-      )
+      return errorResponse(ApiMessageCode.AI_RATE_LIMITED, 429)
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.AI_ICON_FAILED, 500)
   }
 }
