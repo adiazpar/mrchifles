@@ -24,6 +24,8 @@ import { ThemeModal } from '@/components/account/ThemeModal'
 import { EditProfileModal } from '@/components/account/EditProfileModal'
 import { IncomingTransferCard } from '@/components/account/IncomingTransferCard'
 import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
+import { AboutModal } from '@/components/account/AboutModal'
+import { ContactSupportModal } from '@/components/account/ContactSupportModal'
 
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth()
@@ -34,6 +36,8 @@ export default function AccountPage() {
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false)
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
 
   // Hide the mobile nav while viewing account settings
   useEffect(() => {
@@ -55,8 +59,6 @@ export default function AccountPage() {
   }
 
   // Placeholder handlers — wired up in subsequent commits.
-  const openAboutModal = () => {}
-  const openSupportModal = () => {}
   const openDeleteAccountModal = () => {}
 
   const themeLabel = t(`theme_${theme}`)
@@ -136,13 +138,13 @@ export default function AccountPage() {
           <SettingsRow
             icon={Info}
             label={t('row_about')}
-            onClick={openAboutModal}
+            onClick={() => setIsAboutModalOpen(true)}
           />
           <div className="settings-divider" />
           <SettingsRow
             icon={LifeBuoy}
             label={t('row_contact_support')}
-            onClick={openSupportModal}
+            onClick={() => setIsSupportModalOpen(true)}
           />
         </div>
       </div>
@@ -178,6 +180,14 @@ export default function AccountPage() {
       <ChangePasswordModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
+      />
+      <AboutModal
+        isOpen={isAboutModalOpen}
+        onClose={() => setIsAboutModalOpen(false)}
+      />
+      <ContactSupportModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
       />
     </main>
   )
