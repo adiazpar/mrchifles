@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Modal, Spinner, Input } from '@/components/ui'
 import type { PendingTransfer } from '@/hooks'
 
@@ -20,14 +21,14 @@ export function TransferInitiateContent({
   setTransferEmail,
   transferError,
 }: TransferInitiateContentProps) {
+  const t = useTranslations('team')
   return (
     <>
       <Modal.Item>
         <div className="p-3 bg-warning-subtle rounded-lg">
-          <p className="text-sm text-warning font-medium mb-1">Important</p>
+          <p className="text-sm text-warning font-medium mb-1">{t('transfer_initiate_warning_title')}</p>
           <p className="text-xs text-text-secondary">
-            By confirming the transfer, you will lose your owner role and become a partner.
-            This action is irreversible.
+            {t('transfer_initiate_warning')}
           </p>
         </div>
       </Modal.Item>
@@ -42,15 +43,15 @@ export function TransferInitiateContent({
 
       <Modal.Item>
         <Input
-          label="New owner's email"
+          label={t('transfer_new_owner_email_label')}
           type="email"
           value={transferEmail}
           onChange={(e) => setTransferEmail(e.target.value)}
-          placeholder="new@email.com"
+          placeholder={t('transfer_new_owner_email_placeholder')}
           autoFocus
         />
         <p className="text-xs text-text-tertiary mt-2">
-          A link will be generated that you must share with this person.
+          {t('transfer_link_hint')}
         </p>
       </Modal.Item>
     </>
@@ -66,6 +67,7 @@ export function TransferInitiateButton({
   transferLoading,
   onSubmit,
 }: TransferInitiateButtonProps) {
+  const t = useTranslations('team')
   return (
     <button
       type="button"
@@ -73,7 +75,7 @@ export function TransferInitiateButton({
       className="btn btn-primary flex-1"
       disabled={transferLoading}
     >
-      {transferLoading ? <Spinner /> : 'Generate link'}
+      {transferLoading ? <Spinner /> : t('transfer_generate_link_button')}
     </button>
   )
 }
@@ -93,11 +95,12 @@ export function TransferLinkContent({
   linkCopied,
   onCopy,
 }: TransferLinkContentProps) {
+  const t = useTranslations('team')
   return (
     <>
       <Modal.Item>
         <p className="text-sm text-text-secondary mb-4">
-          Share this link with the new owner so they can accept the transfer.
+          {t('transfer_link_share_description')}
         </p>
 
         <button
@@ -114,7 +117,7 @@ export function TransferLinkContent({
         </button>
 
         <p className="text-xs text-text-tertiary mt-3">
-          The link is valid for 24 hours.
+          {t('transfer_link_valid_hours')}
         </p>
       </Modal.Item>
     </>
@@ -126,13 +129,14 @@ export interface TransferLinkDoneButtonProps {
 }
 
 export function TransferLinkDoneButton({ onClose }: TransferLinkDoneButtonProps) {
+  const tCommon = useTranslations('common')
   return (
     <button
       type="button"
       onClick={onClose}
       className="btn btn-primary flex-1"
     >
-      Done
+      {tCommon('done')}
     </button>
   )
 }
@@ -154,6 +158,7 @@ export function TransferConfirmContent({
   transferLoading,
   onConfirm,
 }: TransferConfirmContentProps) {
+  const t = useTranslations('team')
   const [password, setPassword] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -167,10 +172,11 @@ export function TransferConfirmContent({
     <>
       <Modal.Item>
         <div className="p-3 bg-error-subtle rounded-lg">
-          <p className="text-sm text-error font-medium mb-1">Irreversible action</p>
+          <p className="text-sm text-error font-medium mb-1">{t('transfer_confirm_warning_title')}</p>
           <p className="text-xs text-text-secondary">
-            Upon confirmation, {pendingTransfer?.toUser?.name || 'the recipient'} will become the new owner
-            and your account will become a partner.
+            {t('transfer_confirm_warning', {
+              name: pendingTransfer?.toUser?.name || t('transfer_owner_fallback'),
+            })}
           </p>
         </div>
       </Modal.Item>
@@ -187,19 +193,19 @@ export function TransferConfirmContent({
         {transferLoading ? (
           <div className="flex flex-col items-center py-8">
             <Spinner className="spinner-lg" />
-            <p className="text-text-secondary mt-4">Processing...</p>
+            <p className="text-text-secondary mt-4">{t('transfer_processing')}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-center text-sm text-text-secondary">
-              Enter your password to confirm
+              {t('transfer_confirm_password_hint')}
             </p>
             <Input
-              label="Password"
+              label={t('transfer_password_label')}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Your current password"
+              placeholder={t('transfer_password_placeholder')}
               autoFocus
             />
             <button
@@ -207,7 +213,7 @@ export function TransferConfirmContent({
               className="btn btn-error w-full"
               disabled={!password.trim()}
             >
-              Confirm transfer
+              {t('transfer_confirm_button')}
             </button>
           </form>
         )}

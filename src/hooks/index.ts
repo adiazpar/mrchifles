@@ -27,7 +27,7 @@ export type { UseTeamManagementReturn } from './useTeamManagement'
 export { useProviderManagement } from './useProviderManagement'
 export type { UseProviderManagementReturn } from './useProviderManagement'
 
-export { useAccountSettings, formatTimeRemaining, THEME_CONFIG } from './useAccountSettings'
+export { useAccountSettings, THEME_CONFIG } from './useAccountSettings'
 export type { UseAccountSettingsReturn, PendingTransfer, IncomingTransfer } from './useAccountSettings'
 
 export { useFormModal } from './useFormModal'

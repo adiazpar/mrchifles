@@ -2,10 +2,11 @@
 
 import { memo } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Modal, useMorphingModal } from '@/components/ui'
-import { getRoleLabel, getUserInitials } from '@/lib/auth'
+import { getUserInitials } from '@/lib/auth'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import type { User } from '@/types'
+import type { User, UserRole } from '@/types'
 import type { TeamMember } from '@/hooks/useTeamManagement'
 
 export interface UserDetailsStepProps {
@@ -21,10 +22,17 @@ export const UserDetailsStep = memo(function UserDetailsStep({
   canManageTeam,
   onToggleStatus,
 }: UserDetailsStepProps) {
+  const t = useTranslations('team')
   const { goToStep } = useMorphingModal()
   const { formatDate } = useBusinessFormat()
   const isSelf = member.id === currentUser?.id
   const isManageable = canManageTeam && !isSelf && member.role !== 'owner'
+
+  const roleLabels: Record<UserRole, string> = {
+    owner: t('role_owner'),
+    partner: t('role_partner'),
+    employee: t('role_employee'),
+  }
 
   return (
     <>
@@ -37,10 +45,10 @@ export const UserDetailsStep = memo(function UserDetailsStep({
           <div>
             <h3 className="font-display font-bold text-lg">{member.name}</h3>
             <div className="text-xs text-text-tertiary mt-0.5">
-              {getRoleLabel(member.role)}
+              {roleLabels[member.role]}
               <span className="mx-1.5">·</span>
               <span className={member.status === 'active' ? 'text-success' : 'text-error'}>
-                {member.status === 'active' ? 'Active' : 'Disabled'}
+                {member.status === 'active' ? t('status_active') : t('status_disabled')}
               </span>
             </div>
           </div>
@@ -51,7 +59,7 @@ export const UserDetailsStep = memo(function UserDetailsStep({
         {/* Member details */}
         <div className="space-y-3 p-4 bg-bg-muted rounded-lg">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-text-secondary">Email</span>
+            <span className="text-sm text-text-secondary">{t('email_label')}</span>
             <span className="text-sm font-medium">
               {isSelf
                 ? member.email
@@ -59,7 +67,7 @@ export const UserDetailsStep = memo(function UserDetailsStep({
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-text-secondary">Member since</span>
+            <span className="text-sm text-text-secondary">{t('member_since_label')}</span>
             <span className="text-sm font-medium">
               {formatDate(member.createdAt)}
             </span>
@@ -79,7 +87,7 @@ export const UserDetailsStep = memo(function UserDetailsStep({
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <span>Change role</span>
+              <span>{t('change_role_button')}</span>
             </button>
 
             {/* Toggle status button */}
@@ -97,14 +105,14 @@ export const UserDetailsStep = memo(function UserDetailsStep({
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                   </svg>
-                  <span>Disable account</span>
+                  <span>{t('disable_account_button')}</span>
                 </>
               ) : (
                 <>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Enable account</span>
+                  <span>{t('enable_account_button')}</span>
                 </>
               )}
             </button>
@@ -112,7 +120,7 @@ export const UserDetailsStep = memo(function UserDetailsStep({
             {/* Status explanation */}
             {member.status === 'disabled' && (
               <p className="text-xs text-text-tertiary">
-                This user cannot sign in while their account is disabled.
+                {t('disabled_cannot_sign_in')}
               </p>
             )}
           </div>
@@ -123,9 +131,9 @@ export const UserDetailsStep = memo(function UserDetailsStep({
       {isSelf && (
         <Modal.Item>
           <p className="text-xs text-text-tertiary text-center">
-            To change your settings, go to{' '}
+            {t('account_settings_hint')}{' '}
             <Link href="/account" className="text-brand hover:underline">
-              Account Settings
+              {t('account_settings_link')}
             </Link>.
           </p>
         </Modal.Item>

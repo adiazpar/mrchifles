@@ -1,8 +1,8 @@
 'use client'
 
 import { RefreshCw } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Badge, Spinner, Modal } from '@/components/ui'
-import { getInviteRoleLabel } from '@/lib/auth'
 import type { InviteRole } from '@/types'
 
 export interface CodeGeneratedContentProps {
@@ -20,13 +20,20 @@ export function CodeGeneratedContent({
   isGenerating,
   onRegenerate,
 }: CodeGeneratedContentProps) {
+  const t = useTranslations('team')
+
+  const roleLabels: Record<InviteRole, string> = {
+    partner: t('role_partner'),
+    employee: t('role_employee'),
+  }
+
   return (
     <Modal.Item>
       <div className="invite-success-compact">
         {/* Role badge and expiry */}
         <div className="flex items-center justify-center gap-3 mb-3">
-          <Badge variant="brand">{getInviteRoleLabel(selectedRole)}</Badge>
-          <span className="text-xs text-text-tertiary">Valid for 7 days</span>
+          <Badge variant="brand">{roleLabels[selectedRole]}</Badge>
+          <span className="text-xs text-text-tertiary">{t('code_valid_days')}</span>
         </div>
 
         {/* QR Code */}
@@ -34,7 +41,7 @@ export function CodeGeneratedContent({
           <div className="flex justify-center mb-3">
             <div className="invite-qr-box">
               {/* eslint-disable-next-line @next/next/no-img-element -- Data URL for QR code, no optimization benefit */}
-              <img src={qrDataUrl} alt="QR code for registration" />
+              <img src={qrDataUrl} alt={t('qr_alt')} />
             </div>
           </div>
         )}
@@ -56,12 +63,12 @@ export function CodeGeneratedContent({
           {isGenerating ? (
             <>
               <Spinner />
-              <span>Regenerating...</span>
+              <span>{t('regenerating')}</span>
             </>
           ) : (
             <>
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>Regenerate code</span>
+              <span>{t('regenerate_code_button')}</span>
             </>
           )}
         </button>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Spinner, useMorphingModal } from '@/components/ui'
 
 // Generate code button component with modal navigation
@@ -12,6 +13,7 @@ export function GenerateCodeButton({
   isGenerating,
   onGenerate,
 }: GenerateCodeButtonProps) {
+  const t = useTranslations('team')
   const { goNext, lock, unlock } = useMorphingModal()
 
   const handleGenerate = async () => {
@@ -28,7 +30,7 @@ export function GenerateCodeButton({
       className="btn btn-primary flex-1"
       disabled={isGenerating}
     >
-      {isGenerating ? <Spinner /> : 'Generate code'}
+      {isGenerating ? <Spinner /> : t('generate_code_button')}
     </button>
   )
 }
@@ -45,6 +47,7 @@ export function ConfirmDeleteCodeButton({
   onDelete,
   successStep = 3,
 }: ConfirmDeleteCodeButtonProps) {
+  const tCommon = useTranslations('common')
   const { goToStep } = useMorphingModal()
 
   const handleClick = () => {
@@ -59,7 +62,7 @@ export function ConfirmDeleteCodeButton({
       className="btn btn-danger flex-1"
       disabled={isDeletingCode}
     >
-      {isDeletingCode ? <Spinner /> : 'Delete'}
+      {isDeletingCode ? <Spinner /> : tCommon('delete')}
     </button>
   )
 }

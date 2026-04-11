@@ -3,6 +3,7 @@
 import { Trash2, Plus, Check, Copy } from 'lucide-react'
 import { Spinner, Modal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
+import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
 import { useTeamManagement } from '@/hooks'
@@ -20,6 +21,8 @@ import {
 } from '@/components/team'
 
 export default function TeamPage() {
+  const t = useTranslations('team')
+  const tCommon = useTranslations('common')
   const { user } = useAuth()
   const { businessId } = useBusiness()
 
@@ -93,7 +96,7 @@ export default function TeamPage() {
           <div className="card p-4 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-text-secondary">
-                {teamMembers.length} {teamMembers.length === 1 ? 'member' : 'members'}
+                {t('member_count', { count: teamMembers.length })}
               </span>
               {canManageTeam && (
                 <button
@@ -102,7 +105,7 @@ export default function TeamPage() {
                   className="btn btn-primary btn-sm"
                 >
                   <Plus className="w-4 h-4" />
-                  Add
+                  {t('add_member_button')}
                 </button>
               )}
             </div>
@@ -126,7 +129,7 @@ export default function TeamPage() {
             <div className="card p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-text-secondary">
-                  {inviteCodes.length} {inviteCodes.length === 1 ? 'active code' : 'active codes'}
+                  {t('active_code_count', { count: inviteCodes.length })}
                 </span>
               </div>
 
@@ -152,7 +155,7 @@ export default function TeamPage() {
         onExitComplete={handleModalExitComplete}
         initialStep={newCode ? 1 : 0}
       >
-        <Modal.Step title="Add member">
+        <Modal.Step title={t('step_add_member')}>
           <RoleSelectionContent
             selectedRole={selectedRole}
             setSelectedRole={setSelectedRole}
@@ -166,7 +169,7 @@ export default function TeamPage() {
           </Modal.Footer>
         </Modal.Step>
 
-        <Modal.Step title="Code generated" hideBackButton>
+        <Modal.Step title={t('step_code_generated')} hideBackButton>
           {newCode && (
             <CodeGeneratedContent
               selectedRole={selectedRole}
@@ -184,7 +187,7 @@ export default function TeamPage() {
               type="button"
               onClick={() => newCode && handleCopyCode(newCode)}
               className="btn btn-secondary"
-              title="Copy code"
+              title={t('step_delete_code')}
             >
               {copyFeedback === newCode ? (
                 <Check className="w-5 h-5 text-success" />
@@ -197,25 +200,25 @@ export default function TeamPage() {
               onClick={handleCloseModal}
               className="btn btn-primary flex-1"
             >
-              Done
+              {tCommon('done')}
             </button>
           </Modal.Footer>
         </Modal.Step>
 
-        <Modal.Step title="Delete code" backStep={1}>
+        <Modal.Step title={t('step_delete_code')} backStep={1}>
           <Modal.Item>
             <div className="text-center py-4">
               <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Delete invite code
+                {t('delete_code_heading')}
               </h3>
               <p className="text-sm text-text-secondary">
-                The code <code className="font-bold">{newCode}</code> will be deleted and can no longer be used to register.
+                {t('delete_code_description', { code: newCode ?? '' })}
               </p>
             </div>
           </Modal.Item>
           <Modal.Footer>
             <Modal.GoToStepButton step={1} className="btn btn-secondary flex-1" disabled={isDeletingCode}>
-              Cancel
+              {tCommon('cancel')}
             </Modal.GoToStepButton>
             <ConfirmDeleteCodeButton
               isDeletingCode={isDeletingCode}
@@ -224,7 +227,7 @@ export default function TeamPage() {
           </Modal.Footer>
         </Modal.Step>
 
-        <Modal.Step title="Code deleted" hideBackButton>
+        <Modal.Step title={t('step_code_deleted')} hideBackButton>
           <Modal.Item>
             <div className="flex flex-col items-center text-center py-4">
               <div style={{ width: 160, height: 160 }}>
@@ -242,13 +245,13 @@ export default function TeamPage() {
                 className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
                 style={{ opacity: codeDeleted ? 1 : 0 }}
               >
-                Code deleted
+                {t('code_deleted_heading')}
               </p>
               <p
                 className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
                 style={{ opacity: codeDeleted ? 1 : 0 }}
               >
-                The invite code has been deleted
+                {t('code_deleted_description')}
               </p>
             </div>
           </Modal.Item>
@@ -258,7 +261,7 @@ export default function TeamPage() {
               onClick={handleCloseModal}
               className="btn btn-primary flex-1"
             >
-              Close
+              {tCommon('close')}
             </button>
           </Modal.Footer>
         </Modal.Step>
@@ -271,7 +274,7 @@ export default function TeamPage() {
         onExitComplete={handleUserModalExitComplete}
       >
         <Modal.Step
-          title={selectedMember?.id === user?.id ? 'Your profile' : 'Manage member'}
+          title={selectedMember?.id === user?.id ? t('step_your_profile') : t('step_manage_member')}
           hideBackButton
         >
           {selectedMember && (
@@ -284,7 +287,7 @@ export default function TeamPage() {
           )}
         </Modal.Step>
 
-        <Modal.Step title="Change role" backStep={0}>
+        <Modal.Step title={t('step_change_role')} backStep={0}>
           {selectedMember && (
             <RoleChangeContent
               memberName={selectedMember.name}

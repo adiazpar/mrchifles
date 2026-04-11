@@ -1,6 +1,7 @@
 'use client'
 
 import { User as UserIcon, UserCircle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Modal, useMorphingModal, Spinner } from '@/components/ui'
 import { RoleCard } from './RoleCard'
 
@@ -15,11 +16,12 @@ export function RoleChangeContent({
   newRole,
   setNewRole,
 }: RoleChangeContentProps) {
+  const t = useTranslations('team')
   return (
     <>
       <Modal.Item>
         <p className="text-sm text-text-secondary">
-          Select the new role for {memberName}.
+          {t('role_change_description', { name: memberName })}
         </p>
       </Modal.Item>
 
@@ -27,15 +29,15 @@ export function RoleChangeContent({
         <div className="space-y-3">
           <RoleCard
             icon={<UserIcon className="w-5 h-5" />}
-            title="Employee"
-            description="Can register sales and view daily summary"
+            title={t('role_employee')}
+            description={t('role_employee_description')}
             selected={newRole === 'employee'}
             onClick={() => setNewRole('employee')}
           />
           <RoleCard
             icon={<UserCircle className="w-5 h-5" />}
-            title="Partner"
-            description="Full access to management, inventory, and settings"
+            title={t('role_partner')}
+            description={t('role_partner_description')}
             selected={newRole === 'partner'}
             onClick={() => setNewRole('partner')}
           />
@@ -57,6 +59,7 @@ export function RoleChangeSaveButton({
   isDisabled,
   onSubmit,
 }: RoleChangeSaveButtonProps) {
+  const tCommon = useTranslations('common')
   const { goToStep } = useMorphingModal()
 
   const handleSubmit = () => {
@@ -71,7 +74,7 @@ export function RoleChangeSaveButton({
       className="btn btn-primary flex-1"
       disabled={roleChangeLoading || isDisabled}
     >
-      {roleChangeLoading ? <Spinner /> : 'Save'}
+      {roleChangeLoading ? <Spinner /> : tCommon('save')}
     </button>
   )
 }
@@ -82,6 +85,7 @@ export interface RoleChangeCancelButtonProps {
 }
 
 export function RoleChangeCancelButton({ disabled }: RoleChangeCancelButtonProps) {
+  const tCommon = useTranslations('common')
   const { goToStep } = useMorphingModal()
 
   return (
@@ -91,7 +95,7 @@ export function RoleChangeCancelButton({ disabled }: RoleChangeCancelButtonProps
       className="btn btn-secondary flex-1"
       disabled={disabled}
     >
-      Cancel
+      {tCommon('cancel')}
     </button>
   )
 }

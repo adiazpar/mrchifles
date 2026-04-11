@@ -1,9 +1,9 @@
 'use client'
 
 import { ChevronRight } from 'lucide-react'
-import { getInviteRoleLabel } from '@/lib/auth'
+import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import type { InviteCode } from '@/types'
+import type { InviteCode, InviteRole } from '@/types'
 
 export interface InviteCodeListItemProps {
   code: InviteCode
@@ -11,7 +11,14 @@ export interface InviteCodeListItemProps {
 }
 
 export function InviteCodeListItem({ code, onClick }: InviteCodeListItemProps) {
+  const t = useTranslations('team')
   const { formatDate } = useBusinessFormat()
+
+  const roleLabels: Record<InviteRole, string> = {
+    partner: t('role_partner'),
+    employee: t('role_employee'),
+  }
+
   return (
     <div
       className="list-item-clickable list-item-flat"
@@ -31,7 +38,7 @@ export function InviteCodeListItem({ code, onClick }: InviteCodeListItemProps) {
           {code.code}
         </code>
         <span className="text-xs text-text-tertiary mt-0.5 block">
-          {getInviteRoleLabel(code.role)} · Expires {formatDate(code.expiresAt)}
+          {roleLabels[code.role]} · {t('invite_expires', { date: formatDate(code.expiresAt) })}
         </span>
       </div>
 

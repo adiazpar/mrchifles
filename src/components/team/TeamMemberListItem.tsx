@@ -1,8 +1,10 @@
 'use client'
 
 import { ChevronRight } from 'lucide-react'
-import { getRoleLabel, getUserInitials } from '@/lib/auth'
+import { useTranslations } from 'next-intl'
+import { getUserInitials } from '@/lib/auth'
 import type { TeamMember } from '@/hooks/useTeamManagement'
+import type { UserRole } from '@/types'
 
 export interface TeamMemberListItemProps {
   member: TeamMember
@@ -11,6 +13,14 @@ export interface TeamMemberListItemProps {
 }
 
 export function TeamMemberListItem({ member, isSelf, onClick }: TeamMemberListItemProps) {
+  const t = useTranslations('team')
+
+  const roleLabels: Record<UserRole, string> = {
+    owner: t('role_owner'),
+    partner: t('role_partner'),
+    employee: t('role_employee'),
+  }
+
   return (
     <div
       className="list-item-clickable list-item-flat"
@@ -36,18 +46,18 @@ export function TeamMemberListItem({ member, isSelf, onClick }: TeamMemberListIt
         <div className="flex items-center gap-2">
           <span className="font-medium truncate">{member.name}</span>
           {isSelf && (
-            <span className="text-xs text-text-tertiary">(You)</span>
+            <span className="text-xs text-text-tertiary">{t('member_you_label')}</span>
           )}
         </div>
         <span className="text-xs text-text-tertiary mt-0.5 block">
-          {getRoleLabel(member.role)}
+          {roleLabels[member.role]}
         </span>
       </div>
 
       {/* Status */}
       <div className="text-right">
         <span className={`text-xs font-medium ${member.status === 'active' ? 'text-success' : 'text-error'}`}>
-          {member.status === 'active' ? 'Active' : 'Disabled'}
+          {member.status === 'active' ? t('status_active') : t('status_disabled')}
         </span>
       </div>
 

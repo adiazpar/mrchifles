@@ -56,22 +56,6 @@ function getInitialTheme(): Theme {
   return saved || 'system'
 }
 
-export function formatTimeRemaining(expiresAt: string): string {
-  const now = new Date()
-  const expiry = new Date(expiresAt)
-  const diff = expiry.getTime() - now.getTime()
-
-  if (diff <= 0) return 'Expired'
-
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m remaining`
-  }
-  return `${minutes}m remaining`
-}
-
 // ============================================
 // HOOK RETURN TYPE
 // ============================================
