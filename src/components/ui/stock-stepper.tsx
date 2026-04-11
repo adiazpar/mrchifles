@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface StockStepperProps {
   value: number
@@ -19,6 +20,7 @@ export function StockStepper({
   min = 0,
   max = 9999,
 }: StockStepperProps) {
+  const t = useTranslations('ui.stock_stepper')
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Local state for input field to allow empty/partial input while typing
@@ -109,7 +111,7 @@ export function StockStepper({
 
       {/* Label */}
       <div className="text-xs text-text-secondary">
-        units
+        {t('units')}
       </div>
     </div>
   )

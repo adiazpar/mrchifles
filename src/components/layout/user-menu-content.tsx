@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { getUserInitials } from '@/lib/auth'
@@ -19,6 +20,7 @@ interface UserMenuContentProps {
  * Business-specific settings (Team, Providers) belong in business settings page.
  */
 export function UserMenuContent({ onAction, showHeader = true }: UserMenuContentProps) {
+  const t = useTranslations('ui.user_menu')
   const router = useRouter()
   const { user, logout } = useAuth()
   const { setPendingHref } = useNavbar()
@@ -59,7 +61,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           onClick={() => handleLinkClick('/account')}
         >
           <SettingsIcon />
-          <span>Account Settings</span>
+          <span>{t('account_settings')}</span>
           <ChevronRight size={16} className="user-menu-item-arrow" />
         </Link>
 
@@ -69,7 +71,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           onClick={() => handleLinkClick('/support')}
         >
           <HelpIcon />
-          <span>Support</span>
+          <span>{t('support')}</span>
           <ChevronRight size={16} className="user-menu-item-arrow" />
         </Link>
 
@@ -79,7 +81,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           onClick={handleLogout}
         >
           <LogoutIcon />
-          <span>Log Out</span>
+          <span>{t('log_out')}</span>
         </button>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface BottomSheetProps {
   isOpen: boolean
@@ -14,6 +15,7 @@ interface BottomSheetProps {
 const ANIMATION_DURATION = 200 // matches --duration-normal
 
 export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetProps) {
+  const t = useTranslations('common')
   const sheetRef = useRef<HTMLDivElement>(null)
   const startY = useRef<number>(0)
   const currentY = useRef<number>(0)
@@ -125,7 +127,7 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
               type="button"
               onClick={onClose}
               className="bottom-sheet-close"
-              aria-label="Close"
+              aria-label={t('close')}
             >
               <X size={20} />
             </button>

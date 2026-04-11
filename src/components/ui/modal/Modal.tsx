@@ -37,6 +37,7 @@
 
 import React, { useState, useEffect, useRef, Children, isValidElement, ReactElement } from 'react'
 import { X, ArrowLeft } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { ModalProvider, useModalContext } from './ModalContext'
 import { ModalStep } from './ModalStep'
 import { ModalItem } from './ModalItem'
@@ -79,6 +80,7 @@ function AnimatedFooter({ children, hasFooter }: { children: React.ReactNode; ha
 
 // Internal header component (needs context)
 function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTitle?: string }) {
+  const t = useTranslations('ui.modal')
   const ctx = useModalContext()
   const { isFirstStep, isLocked, isTransitioning, goBack, goToStep, _onClose, _currentStepHideBackButton, _currentStepBackStep, _currentStepOnBackStep } = ctx
 
@@ -109,7 +111,7 @@ function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTit
           type="button"
           onClick={handleBack}
           className="modal-back"
-          aria-label="Volver"
+          aria-label={t('go_back')}
           disabled={isLocked || isTransitioning || !showBackIcon}
           tabIndex={showBackIcon ? 0 : -1}
         >
@@ -121,7 +123,7 @@ function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTit
         type="button"
         onClick={_onClose}
         className="modal-close"
-        aria-label="Cerrar"
+        aria-label={t('close')}
         disabled={isLocked || isTransitioning}
       >
         <X className="w-5 h-5" />

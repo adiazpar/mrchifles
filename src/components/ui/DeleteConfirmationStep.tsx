@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 
 interface DeleteConfirmationStepProps {
@@ -35,23 +36,26 @@ interface DeleteConfirmationStepProps {
 export function DeleteConfirmationStep({
   title,
   itemName,
-  warningText = 'This action cannot be undone.',
+  warningText,
   cancelStep,
   onConfirm,
   successStep,
   isDeleting,
 }: DeleteConfirmationStepProps) {
+  const t = useTranslations()
+  const defaultWarning = t('ui.modal.cannot_be_undone')
+
   return (
     <Modal.Step title={title} backStep={cancelStep}>
       <Modal.Item>
         <p className="text-text-secondary">
-          Are you sure you want to delete <strong>{itemName}</strong>? {warningText}
+          {t('ui.modal.delete_confirm_prefix')} <strong>{itemName}</strong>? {warningText ?? defaultWarning}
         </p>
       </Modal.Item>
 
       <Modal.Footer>
         <Modal.GoToStepButton step={cancelStep} className="btn btn-secondary flex-1" disabled={isDeleting}>
-          Cancel
+          {t('common.cancel')}
         </Modal.GoToStepButton>
         <ConfirmDeleteButton
           onConfirm={onConfirm}
@@ -70,6 +74,7 @@ interface ConfirmDeleteButtonProps {
 }
 
 function ConfirmDeleteButton({ onConfirm, successStep, isDeleting }: ConfirmDeleteButtonProps) {
+  const t = useTranslations('common')
   const { goToStep } = useMorphingModal()
 
   const handleClick = () => {
@@ -84,7 +89,7 @@ function ConfirmDeleteButton({ onConfirm, successStep, isDeleting }: ConfirmDele
       className="btn btn-danger flex-1"
       disabled={isDeleting}
     >
-      {isDeleting ? <Spinner /> : 'Delete'}
+      {isDeleting ? <Spinner /> : t('delete')}
     </button>
   )
 }

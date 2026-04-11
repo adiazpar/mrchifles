@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { PlusIcon, JoinIcon } from '@/components/icons'
 import { getNavItems, getPrefetchRoutes, getBusinessIdFromPath } from '@/lib/navigation'
 import { useNavbar } from '@/contexts/navbar-context'
@@ -11,6 +12,7 @@ import { useJoinBusinessModal } from '@/contexts/join-business-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
 
 export function MobileNav() {
+  const t = useTranslations('ui.nav')
   const pathname = usePathname()
   const router = useRouter()
   const { isVisible, pendingHref, setPendingHref } = useNavbar()
@@ -108,7 +110,7 @@ export function MobileNav() {
             {...pressHandlers('create')}
           >
             <PlusIcon className="mobile-nav-icon" />
-            <span>Create Business</span>
+            <span>{t('create_business')}</span>
           </button>
           <button
             type="button"
@@ -118,7 +120,7 @@ export function MobileNav() {
             {...pressHandlers('join')}
           >
             <JoinIcon className="mobile-nav-icon" />
-            <span>Join a Business</span>
+            <span>{t('join_a_business')}</span>
           </button>
         </div>
       </nav>

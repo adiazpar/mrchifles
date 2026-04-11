@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { getUserInitials } from '@/lib/auth'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { UserMenuContent } from './user-menu-content'
 
 export function UserMenu() {
+  const t = useTranslations('ui.user_menu')
   const { user } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -25,7 +27,7 @@ export function UserMenu() {
         type="button"
         onClick={() => setMenuOpen(true)}
         className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
-        aria-label="User menu"
+        aria-label={t('open')}
         style={avatarStyles}
       >
         {getUserInitials(user.name)}
@@ -33,7 +35,7 @@ export function UserMenu() {
       <BottomSheet
         isOpen={menuOpen}
         onClose={handleClose}
-        title="Account and Settings"
+        title={t('title')}
       >
         <UserMenuContent onAction={handleClose} />
       </BottomSheet>

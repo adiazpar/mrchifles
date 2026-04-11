@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { getRouteConfig, buildBusinessUrl, getBusinessIdFromPath } from '@/lib/navigation'
 import { UserMenu } from './user-menu'
 import { useNavbar } from '@/contexts/navbar-context'
@@ -23,6 +24,7 @@ import { useOptionalBusiness } from '@/contexts/business-context'
  * - Right: User avatar menu
  */
 export function PageHeader() {
+  const t = useTranslations()
   const pathname = usePathname()
   const router = useRouter()
   const { pendingHref, setPendingHref } = useNavbar()
@@ -106,7 +108,7 @@ export function PageHeader() {
             type="button"
             onClick={handleBack}
             className="page-header__back"
-            aria-label={isHubPageWithBackButton ? 'Go back' : backTo ? 'Go back' : 'Go to hub'}
+            aria-label={isHubPageWithBackButton || backTo ? t('ui.page_header.go_back') : t('ui.nav.go_to_hub')}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -144,7 +146,7 @@ export function PageHeader() {
           </div>
         ) : (
           <>
-            <h1 className="page-title">{business?.name || 'Loading...'}</h1>
+            <h1 className="page-title">{business?.name || t('common.loading')}</h1>
             {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
           </>
         )}

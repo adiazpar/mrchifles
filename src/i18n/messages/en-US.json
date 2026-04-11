@@ -5,6 +5,7 @@
     "delete": "Delete",
     "close": "Close",
     "back": "Back",
+    "next": "Next",
     "continue": "Continue",
     "done": "Done",
     "loading": "Loading...",
@@ -21,5 +22,34 @@
     "success": "Success",
     "optional": "Optional",
     "required": "Required"
+  },
+  "ui": {
+    "modal": {
+      "go_back": "Go back",
+      "close": "Close",
+      "delete_confirm_prefix": "Are you sure you want to delete",
+      "cannot_be_undone": "This action cannot be undone."
+    },
+    "spinner": {
+      "loading": "Loading"
+    },
+    "user_menu": {
+      "open": "User menu",
+      "title": "Account and Settings",
+      "account_settings": "Account Settings",
+      "support": "Support",
+      "log_out": "Log Out"
+    },
+    "nav": {
+      "create_business": "Create Business",
+      "join_a_business": "Join a Business",
+      "go_to_hub": "Go to hub"
+    },
+    "stock_stepper": {
+      "units": "units"
+    },
+    "page_header": {
+      "go_back": "Go back"
+    }
   }
 }

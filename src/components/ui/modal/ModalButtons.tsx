@@ -1,10 +1,12 @@
 // src/components/ui/modal/ModalButtons.tsx
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useModalContext, useMorphingModal } from './ModalContext'
 import type { ModalButtonProps } from './types'
 
 export function ModalBackButton({ children, className = '', disabled, onClick }: ModalButtonProps) {
+  const t = useTranslations('common')
   const ctx = useModalContext()
   const { goBack, goToStep, isLocked, isTransitioning, isFirstStep, _currentStepBackStep } = ctx
 
@@ -25,12 +27,13 @@ export function ModalBackButton({ children, className = '', disabled, onClick }:
       onClick={handleClick}
       disabled={disabled || isLocked || isTransitioning || isFirstStep}
     >
-      {children || 'Back'}
+      {children || t('back')}
     </button>
   )
 }
 
 export function ModalNextButton({ children, className = '', disabled, onClick }: ModalButtonProps) {
+  const t = useTranslations('common')
   const { goNext, isLocked, isTransitioning, isLastStep } = useMorphingModal()
 
   const handleClick = () => {
@@ -45,7 +48,7 @@ export function ModalNextButton({ children, className = '', disabled, onClick }:
       onClick={handleClick}
       disabled={disabled || isLocked || isTransitioning || isLastStep}
     >
-      {children || 'Next'}
+      {children || t('next')}
     </button>
   )
 }
@@ -87,6 +90,7 @@ export function ModalCancelBackButton({
   onCancel,
   onClick,
 }: CancelBackButtonProps) {
+  const t = useTranslations('common')
   const ctx = useModalContext()
   const { goBack, goToStep, isLocked, isTransitioning, isFirstStep, _currentStepBackStep, _currentStepOnBackStep } = ctx
 
@@ -119,7 +123,7 @@ export function ModalCancelBackButton({
       onClick={handleClick}
       disabled={disabled || isLocked || isTransitioning}
     >
-      {children || (isFirstStep ? 'Cancel' : 'Back')}
+      {children || (isFirstStep ? t('cancel') : t('back'))}
     </button>
   )
 }
