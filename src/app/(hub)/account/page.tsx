@@ -21,6 +21,7 @@ import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 import { LanguageRow } from '@/components/account/LanguageRow'
 import { ThemeModal } from '@/components/account/ThemeModal'
+import { EditProfileModal } from '@/components/account/EditProfileModal'
 
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth()
@@ -29,6 +30,7 @@ export default function AccountPage() {
   const t = useTranslations('account')
   const { theme } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
 
   // Hide the mobile nav while viewing account settings
   useEffect(() => {
@@ -50,7 +52,6 @@ export default function AccountPage() {
   }
 
   // Placeholder handlers — wired up in subsequent commits.
-  const openProfileModal = () => {}
   const openPasswordModal = () => {}
   const openAboutModal = () => {}
   const openSupportModal = () => {}
@@ -68,7 +69,7 @@ export default function AccountPage() {
       {/* Profile header card — tappable, opens the edit profile modal */}
       <button
         type="button"
-        onClick={openProfileModal}
+        onClick={() => setIsProfileModalOpen(true)}
         className="card card-interactive w-full p-4 flex items-center gap-4 text-left"
       >
         <div className="w-14 h-14 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0">
@@ -164,6 +165,10 @@ export default function AccountPage() {
       <ThemeModal
         isOpen={isThemeModalOpen}
         onClose={() => setIsThemeModalOpen(false)}
+      />
+      <EditProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
       />
     </main>
   )
