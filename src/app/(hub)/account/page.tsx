@@ -22,6 +22,7 @@ import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeade
 import { LanguageRow } from '@/components/account/LanguageRow'
 import { ThemeModal } from '@/components/account/ThemeModal'
 import { EditProfileModal } from '@/components/account/EditProfileModal'
+import { IncomingTransferCard } from '@/components/account/IncomingTransferCard'
 
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth()
@@ -96,6 +97,9 @@ export default function AccountPage() {
         </div>
         <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
       </button>
+
+      {/* Notifications: pending incoming ownership transfers (hides when none) */}
+      <IncomingTransferCard />
 
       {/* Preferences */}
       <div>
