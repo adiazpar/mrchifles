@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { PageTransition } from '@/components/layout'
 
 export default function AuthLayout({
@@ -8,6 +9,7 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode
 }) {
+  const t = useTranslations('auth')
   return (
     <PageTransition>
       <div className="auth-container">
@@ -16,7 +18,7 @@ export default function AuthLayout({
           <div className="auth-logo">
             <Image
               src="/kasero-logo-light.png"
-              alt="Kasero - Business Made Easy"
+              alt={t('logo_alt')}
               width={320}
               height={107}
               className="logo-light"
@@ -24,7 +26,7 @@ export default function AuthLayout({
             />
             <Image
               src="/kasero-logo-dark.png"
-              alt="Kasero - Business Made Easy"
+              alt={t('logo_alt')}
               width={320}
               height={107}
               className="logo-dark"

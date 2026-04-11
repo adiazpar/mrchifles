@@ -15,12 +15,6 @@ export type { UseProductFiltersOptions, UseProductFiltersReturn } from './usePro
 export { useProductSettings } from './useProductSettings'
 export type { UseProductSettingsReturn } from './useProductSettings'
 
-export { useProductCrud } from './useProductCrud'
-export type { ProductFormState, UseProductCrudOptions, UseProductCrudReturn } from './useProductCrud'
-
-export { useOrderManagement } from './useOrderManagement'
-export type { OrderStatusFilter, UseOrderManagementOptions, UseOrderManagementReturn } from './useOrderManagement'
-
 export { useTeamManagement } from './useTeamManagement'
 export type { UseTeamManagementReturn } from './useTeamManagement'
 
