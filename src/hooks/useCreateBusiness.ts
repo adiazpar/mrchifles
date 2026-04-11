@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
-import { getDefaultsForLocale, getLocaleByCountryCode } from '@/lib/locale-config'
+import { getCurrencyForLocale, getLocaleByCountryCode } from '@/lib/locale-config'
 
 interface CreateBusinessResponse extends ApiResponse {
   business?: {
@@ -18,7 +18,6 @@ export interface BusinessFormData {
   type: BusinessType | null
   locale: string
   currency: string
-  timezone: string
   icon: string | null
   logoFile: File | null
   logoPreview: string | null
@@ -36,8 +35,6 @@ export interface UseCreateBusinessReturn {
   setName: (name: string) => void
   setType: (type: BusinessType) => void
   setLocale: (locale: string) => void
-  setCurrency: (currency: string) => void
-  setTimezone: (timezone: string) => void
   setIcon: (icon: string | null) => void
   setLogoFile: (file: File | null) => void
   clearLogo: () => void
@@ -64,12 +61,15 @@ function getInitialFormData(): BusinessFormData {
     type: null,
     locale: 'en-US',
     currency: 'USD',
-    timezone: 'America/New_York',
     icon: null,
     logoFile: null,
     logoPreview: null,
   }
 }
+
+// Session-scoped geolocation cache. The user's physical location doesn't
+// change mid-session, so we only hit /api/geolocation once per page load.
+let cachedGeolocation: { country?: string } | null = null
 
 export function useCreateBusiness(): UseCreateBusinessReturn {
   // Modal state
@@ -84,13 +84,11 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
   const [error, setError] = useState<string | null>(null)
   const [createdBusiness, setCreatedBusiness] = useState<{ id: string; name: string } | null>(null)
 
-  // Auto-update currency and timezone when locale changes
+  // Auto-update currency when locale changes
   useEffect(() => {
-    const defaults = getDefaultsForLocale(formData.locale)
     setFormData(prev => ({
       ...prev,
-      currency: defaults.currency,
-      timezone: defaults.timezone,
+      currency: getCurrencyForLocale(formData.locale),
     }))
   }, [formData.locale])
 
@@ -98,7 +96,7 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
   const isNameValid = formData.name.trim().length > 0
   const isTypeValid = formData.type !== null
   const isStep1Valid = isNameValid && isTypeValid
-  const isStep2Valid = formData.locale.length > 0 && formData.currency.length > 0 && formData.timezone.length > 0
+  const isStep2Valid = formData.locale.length > 0 && formData.currency.length > 0
 
   const resetState = useCallback(() => {
     setFormData(getInitialFormData())
@@ -112,26 +110,27 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
     resetState()
     setIsOpen(true)
 
-    // Fetch geolocation to set locale defaults
-    try {
-      const res = await fetch('/api/geolocation')
-      if (res.ok) {
-        const geo = await res.json()
-        if (geo.country) {
-          const locale = getLocaleByCountryCode(geo.country)
-          if (locale) {
-            setFormData(prev => ({
-              ...prev,
-              locale: locale.code,
-              currency: locale.currency,
-              // Use Vercel's detected timezone if available, otherwise use locale default
-              timezone: geo.timezone || locale.timezone,
-            }))
-          }
+    // Fetch geolocation to set locale defaults (cached for the session)
+    if (!cachedGeolocation) {
+      try {
+        const res = await fetch('/api/geolocation')
+        if (res.ok) {
+          cachedGeolocation = await res.json()
         }
+      } catch {
+        // Silently fail - defaults will be used, retry on next open
       }
-    } catch {
-      // Silently fail - defaults will be used
+    }
+
+    if (cachedGeolocation?.country) {
+      const locale = getLocaleByCountryCode(cachedGeolocation.country)
+      if (locale) {
+        setFormData(prev => ({
+          ...prev,
+          locale: locale.code,
+          currency: locale.currency,
+        }))
+      }
     }
   }, [resetState])
 
@@ -157,15 +156,7 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
 
   const setLocale = useCallback((locale: string) => {
     setFormData(prev => ({ ...prev, locale }))
-    // Currency and timezone will auto-update via useEffect
-  }, [])
-
-  const setCurrency = useCallback((currency: string) => {
-    setFormData(prev => ({ ...prev, currency }))
-  }, [])
-
-  const setTimezone = useCallback((timezone: string) => {
-    setFormData(prev => ({ ...prev, timezone }))
+    // Currency will auto-update via useEffect
   }, [])
 
   const setIcon = useCallback((icon: string | null) => {
@@ -225,7 +216,6 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
         type: formData.type,
         locale: formData.locale,
         currency: formData.currency,
-        timezone: formData.timezone,
         icon: formData.icon,
       })
 
@@ -262,8 +252,6 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
     setName,
     setType,
     setLocale,
-    setCurrency,
-    setTimezone,
     setIcon,
     setLogoFile,
     clearLogo,

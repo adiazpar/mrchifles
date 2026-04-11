@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { X, Plus, ChevronUp, ChevronRight, Barcode, Loader2 } from 'lucide-react'
 import { TagsIcon, FilterIcon, BarcodeScanIcon, ImageAttachIcon, SlidersIcon, EyeIcon, EyeOffIcon } from '@/components/icons'
 import { Modal, SwipeableRow } from '@/components/ui'
+import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { scrollToTop } from '@/lib/scroll'
@@ -357,6 +358,7 @@ const ProductListItem = memo(function ProductListItem({
   onToggleActive,
   canModify = false,
 }: ProductListItemProps) {
+  const { formatCurrency } = useBusinessFormat()
   const iconUrl = getProductIconUrl(product)
   const stockValue = product.stock ?? 0
   const threshold = product.lowStockThreshold ?? 10
@@ -431,7 +433,7 @@ const ProductListItem = memo(function ProductListItem({
           {/* Price and Stock */}
           <div className="text-right flex-shrink-0">
             <span className={`font-medium block ${!product.active ? 'text-text-tertiary' : 'text-text-primary'}`}>
-              ${product.price.toFixed(2)}
+              {formatCurrency(product.price)}
             </span>
             <span className={`text-xs mt-0.5 block ${isLowStock && product.active ? 'text-error' : 'text-text-tertiary'}`}>
               {stockValue} units

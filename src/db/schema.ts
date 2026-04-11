@@ -15,7 +15,6 @@ export const businesses = sqliteTable('businesses', {
   // Localization
   locale: text('locale').default('en-US'), // e.g., 'en-US', 'es-MX', 'fr-FR'
   currency: text('currency').default('USD'), // ISO 4217 code
-  timezone: text('timezone').default('America/New_York'), // IANA timezone
   // Product settings (inline - no separate table needed)
   defaultCategoryId: text('default_category_id'),
   sortPreference: text('sort_preference').default('name_asc'),

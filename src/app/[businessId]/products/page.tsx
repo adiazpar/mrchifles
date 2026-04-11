@@ -26,8 +26,8 @@ import {
   type OrderStatusFilter,
   type SortOption,
 } from '@/lib/products'
-import { getProductIconUrl, formatDate } from '@/lib/utils'
-import { useAiProductPipeline, useImageCompression } from '@/hooks'
+import { getProductIconUrl } from '@/lib/utils'
+import { useAiProductPipeline, useImageCompression, useBusinessFormat } from '@/hooks'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import type { Product, Provider, SortPreference, ProductCategory } from '@/types'
 
@@ -255,6 +255,7 @@ function EditProductModalWrapper({
 export default function ProductosPage() {
   const { user } = useAuth()
   const { canManage, businessId } = useBusiness()
+  const { formatDate } = useBusinessFormat()
 
   // Tab state
   const [activeTab, setActiveTab] = useState<PageTab>('products')
@@ -494,7 +495,7 @@ export default function ProductosPage() {
     }
 
     return result
-  }, [orders, orderStatusFilter, orderSearchQuery])
+  }, [orders, orderStatusFilter, orderSearchQuery, formatDate])
 
   // Product handlers - now receive data from modal context
   const handleSubmitProduct = useCallback(async (

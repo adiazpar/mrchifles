@@ -1,15 +1,15 @@
 'use client'
 
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Upload, X } from 'lucide-react'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import {
   BUSINESS_TYPES,
-  LOCALES,
-  CURRENCIES,
-  COMMON_TIMEZONES,
+  REGIONS,
+  getLocalesByRegion,
+  getCurrencyConfig,
 } from '@/lib/locale-config'
 import { FoodBeverageIcon, ServicesIcon, RetailIcon, WholesaleIcon, ManufacturingIcon, OtherBusinessIcon } from '@/components/icons'
 import type { UseCreateBusinessReturn, BusinessType } from '@/hooks'
@@ -27,8 +27,6 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
     setName,
     setType,
     setLocale,
-    setCurrency,
-    setTimezone,
     setLogoFile,
     clearLogo,
     isCreating,
@@ -70,15 +68,12 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 2: Locale & Settings */}
-      <Modal.Step title="Location & Currency">
+      {/* Step 2: Location (also sets currency) */}
+      <Modal.Step title="Location">
         <LocaleContent
           locale={formData.locale}
           setLocale={setLocale}
           currency={formData.currency}
-          setCurrency={setCurrency}
-          timezone={formData.timezone}
-          setTimezone={setTimezone}
         />
         <Modal.Footer>
           <Modal.BackButton className="btn btn-secondary flex-1" />
@@ -248,27 +243,22 @@ function TypeContent({ type, setType }: TypeContentProps) {
 }
 
 // ============================================
-// STEP 1: LOCALE CONTENT
+// STEP 2: LOCALE CONTENT
 // ============================================
 
 interface LocaleContentProps {
   locale: string
   setLocale: (locale: string) => void
   currency: string
-  setCurrency: (currency: string) => void
-  timezone: string
-  setTimezone: (timezone: string) => void
 }
 
 function LocaleContent({
   locale,
   setLocale,
   currency,
-  setCurrency,
-  timezone,
-  setTimezone,
 }: LocaleContentProps) {
-  const uniqueCurrencies = Object.values(CURRENCIES)
+  const localesByRegion = getLocalesByRegion()
+  const currencyConfig = getCurrencyConfig(currency)
 
   return (
     <>
@@ -277,7 +267,7 @@ function LocaleContent({
           Step 3 of 4
         </div>
         <p className="text-sm text-text-secondary text-center mb-2">
-          Select your location to set currency and timezone
+          Select your location. Currency is set automatically.
         </p>
       </Modal.Item>
       <Modal.Item>
@@ -289,45 +279,27 @@ function LocaleContent({
           onChange={(e) => setLocale(e.target.value)}
           className="input"
         >
-          {LOCALES.map((loc) => (
-            <option key={loc.code} value={loc.code}>
-              {loc.flag} {loc.country} ({loc.name})
-            </option>
+          {REGIONS.map((region) => (
+            <optgroup key={region} label={region}>
+              {localesByRegion[region].map((loc) => (
+                <option key={loc.code} value={loc.code}>
+                  {loc.flag} {loc.country} ({loc.name})
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </Modal.Item>
-      <Modal.Item>
-        <label className="block text-sm font-medium text-text-primary mb-2">
-          Currency
-        </label>
-        <select
-          value={currency}
-          onChange={(e) => setCurrency(e.target.value)}
-          className="input"
-        >
-          {uniqueCurrencies.map((cur) => (
-            <option key={cur.code} value={cur.code}>
-              {cur.symbol} {cur.name} ({cur.code})
-            </option>
-          ))}
-        </select>
-      </Modal.Item>
-      <Modal.Item>
-        <label className="block text-sm font-medium text-text-primary mb-2">
-          Timezone
-        </label>
-        <select
-          value={timezone}
-          onChange={(e) => setTimezone(e.target.value)}
-          className="input"
-        >
-          {COMMON_TIMEZONES.map((tz) => (
-            <option key={tz.value} value={tz.value}>
-              {tz.label}
-            </option>
-          ))}
-        </select>
-      </Modal.Item>
+      {currencyConfig && (
+        <Modal.Item>
+          <div className="flex items-center justify-between rounded-lg bg-bg-muted px-3 py-2">
+            <span className="text-sm text-text-secondary">Currency</span>
+            <span className="text-sm font-medium text-text-primary">
+              {currencyConfig.symbol} {currencyConfig.name} ({currencyConfig.code})
+            </span>
+          </div>
+        </Modal.Item>
+      )}
     </>
   )
 }
@@ -354,6 +326,8 @@ function getDefaultIconForType(businessType: BusinessType | null) {
   return <span className="text-5xl">{FALLBACK_EMOJIS[businessType] || '💼'}</span>
 }
 
+const MAX_LOGO_BYTES = 2 * 1024 * 1024
+
 function LogoUploadContent({
   businessType,
   logoPreview,
@@ -361,20 +335,24 @@ function LogoUploadContent({
   clearLogo,
 }: LogoUploadContentProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError(null)
     const file = e.target.files?.[0]
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        return
-      }
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        return
-      }
-      setLogoFile(file)
+    // Reset the input so picking the same file again re-triggers onChange
+    e.target.value = ''
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file (PNG, JPG, WebP, or GIF)')
+      return
     }
+    if (file.size > MAX_LOGO_BYTES) {
+      setUploadError('Image must be under 2MB')
+      return
+    }
+    setLogoFile(file)
   }
 
   return (
@@ -436,9 +414,13 @@ function LogoUploadContent({
             {logoPreview ? 'Change Logo' : 'Upload Logo'}
           </span>
         </button>
-        <p className="text-xs text-text-tertiary text-center mt-2">
-          PNG, JPG up to 2MB
-        </p>
+        {uploadError ? (
+          <p className="text-xs text-error text-center mt-2">{uploadError}</p>
+        ) : (
+          <p className="text-xs text-text-tertiary text-center mt-2">
+            PNG, JPG up to 2MB
+          </p>
+        )}
       </Modal.Item>
     </>
   )

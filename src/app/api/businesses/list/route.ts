@@ -25,6 +25,8 @@ export async function GET() {
         businessName: businesses.name,
         businessType: businesses.type,
         businessIcon: businesses.icon,
+        businessLocale: businesses.locale,
+        businessCurrency: businesses.currency,
       })
       .from(businessUsers)
       .innerJoin(businesses, eq(businessUsers.businessId, businesses.id))
@@ -65,6 +67,8 @@ export async function GET() {
         memberCount: memberCounts[m.businessId] || 1,
         type: m.businessType,
         icon: m.businessIcon,
+        locale: m.businessLocale ?? 'en-US',
+        currency: m.businessCurrency ?? 'USD',
       })),
     })
   } catch (error) {

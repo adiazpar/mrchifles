@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronRight, X } from 'lucide-react'
@@ -15,10 +15,13 @@ type BusinessType = 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturin
 interface Business {
   id: string
   name: string
+  role: string
   isOwner: boolean
   memberCount: number
   type: BusinessType | null
   icon: string | null
+  locale: string
+  currency: string
 }
 
 // Default emojis for each business type (fallback for types without custom icons)
@@ -50,7 +53,7 @@ export default function HubPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const { setPendingHref, setCachedBusinesses } = useNavbar()
-  const { isCreateModalOpen } = useCreateBusinessModal()
+  const { createdBusiness } = useCreateBusinessModal()
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -81,15 +84,13 @@ export default function HubPage() {
     fetchBusinesses()
   }, [user, authLoading, router, fetchBusinesses])
 
-  // Refresh the business list when the create modal closes after being open,
-  // so a newly created business appears without a manual reload.
-  const prevCreateModalOpenRef = useRef(isCreateModalOpen)
+  // Refresh the business list as soon as a new business is created, so it
+  // appears in the hub without waiting for the modal to close or a manual reload.
   useEffect(() => {
-    if (prevCreateModalOpenRef.current && !isCreateModalOpen) {
+    if (createdBusiness) {
       fetchBusinesses()
     }
-    prevCreateModalOpenRef.current = isCreateModalOpen
-  }, [isCreateModalOpen, fetchBusinesses])
+  }, [createdBusiness, fetchBusinesses])
 
   const handleEnterBusiness = (businessId: string) => {
     const href = `/${businessId}/home`

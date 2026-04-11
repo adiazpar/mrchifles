@@ -1,7 +1,18 @@
 /**
- * Locale configuration for business settings
- * Maps locales to their default currency and timezone
+ * Locale configuration for business settings.
+ *
+ * Each locale carries its country, ISO code, currency, and flag. Timezone
+ * is intentionally NOT stored: the browser's local timezone handles display
+ * 95% of the time, and the 5% of edge cases (remote staff, traveling owner)
+ * aren't worth the extra column + picker complexity.
  */
+
+export type Region =
+  | 'North America'
+  | 'Central America'
+  | 'South America'
+  | 'Caribbean'
+  | 'Europe'
 
 export interface LocaleConfig {
   code: string // Locale code (e.g., 'en-US')
@@ -9,8 +20,8 @@ export interface LocaleConfig {
   country: string // Country name for grouping
   isoCountry: string // ISO 3166-1 alpha-2 country code (e.g., 'US', 'PE')
   currency: string // ISO 4217 currency code
-  timezone: string // Primary IANA timezone
   flag: string // Flag emoji for visual identification
+  region: Region
 }
 
 export interface CurrencyConfig {
@@ -39,44 +50,53 @@ export const BUSINESS_TYPES: BusinessTypeConfig[] = [
 // Supported locales with their defaults
 export const LOCALES: LocaleConfig[] = [
   // North America
-  { code: 'en-US', name: 'English (US)', country: 'United States', isoCountry: 'US', currency: 'USD', timezone: 'America/New_York', flag: '🇺🇸' },
-  { code: 'en-CA', name: 'English (Canada)', country: 'Canada', isoCountry: 'CA', currency: 'CAD', timezone: 'America/Toronto', flag: '🇨🇦' },
-  { code: 'fr-CA', name: 'French (Canada)', country: 'Canada', isoCountry: 'CA', currency: 'CAD', timezone: 'America/Toronto', flag: '🇨🇦' },
-  { code: 'es-MX', name: 'Spanish (Mexico)', country: 'Mexico', isoCountry: 'MX', currency: 'MXN', timezone: 'America/Mexico_City', flag: '🇲🇽' },
+  { code: 'en-US', name: 'English (US)', country: 'United States', isoCountry: 'US', currency: 'USD', flag: '🇺🇸', region: 'North America' },
+  { code: 'en-CA', name: 'English (Canada)', country: 'Canada', isoCountry: 'CA', currency: 'CAD', flag: '🇨🇦', region: 'North America' },
+  { code: 'fr-CA', name: 'French (Canada)', country: 'Canada', isoCountry: 'CA', currency: 'CAD', flag: '🇨🇦', region: 'North America' },
+  { code: 'es-MX', name: 'Spanish (Mexico)', country: 'Mexico', isoCountry: 'MX', currency: 'MXN', flag: '🇲🇽', region: 'North America' },
 
   // Central America
-  { code: 'es-GT', name: 'Spanish (Guatemala)', country: 'Guatemala', isoCountry: 'GT', currency: 'GTQ', timezone: 'America/Guatemala', flag: '🇬🇹' },
-  { code: 'es-SV', name: 'Spanish (El Salvador)', country: 'El Salvador', isoCountry: 'SV', currency: 'USD', timezone: 'America/El_Salvador', flag: '🇸🇻' },
-  { code: 'es-HN', name: 'Spanish (Honduras)', country: 'Honduras', isoCountry: 'HN', currency: 'HNL', timezone: 'America/Tegucigalpa', flag: '🇭🇳' },
-  { code: 'es-NI', name: 'Spanish (Nicaragua)', country: 'Nicaragua', isoCountry: 'NI', currency: 'NIO', timezone: 'America/Managua', flag: '🇳🇮' },
-  { code: 'es-CR', name: 'Spanish (Costa Rica)', country: 'Costa Rica', isoCountry: 'CR', currency: 'CRC', timezone: 'America/Costa_Rica', flag: '🇨🇷' },
-  { code: 'es-PA', name: 'Spanish (Panama)', country: 'Panama', isoCountry: 'PA', currency: 'USD', timezone: 'America/Panama', flag: '🇵🇦' },
+  { code: 'es-GT', name: 'Spanish (Guatemala)', country: 'Guatemala', isoCountry: 'GT', currency: 'GTQ', flag: '🇬🇹', region: 'Central America' },
+  { code: 'es-SV', name: 'Spanish (El Salvador)', country: 'El Salvador', isoCountry: 'SV', currency: 'USD', flag: '🇸🇻', region: 'Central America' },
+  { code: 'es-HN', name: 'Spanish (Honduras)', country: 'Honduras', isoCountry: 'HN', currency: 'HNL', flag: '🇭🇳', region: 'Central America' },
+  { code: 'es-NI', name: 'Spanish (Nicaragua)', country: 'Nicaragua', isoCountry: 'NI', currency: 'NIO', flag: '🇳🇮', region: 'Central America' },
+  { code: 'es-CR', name: 'Spanish (Costa Rica)', country: 'Costa Rica', isoCountry: 'CR', currency: 'CRC', flag: '🇨🇷', region: 'Central America' },
+  { code: 'es-PA', name: 'Spanish (Panama)', country: 'Panama', isoCountry: 'PA', currency: 'USD', flag: '🇵🇦', region: 'Central America' },
 
   // South America
-  { code: 'es-CO', name: 'Spanish (Colombia)', country: 'Colombia', isoCountry: 'CO', currency: 'COP', timezone: 'America/Bogota', flag: '🇨🇴' },
-  { code: 'es-VE', name: 'Spanish (Venezuela)', country: 'Venezuela', isoCountry: 'VE', currency: 'VES', timezone: 'America/Caracas', flag: '🇻🇪' },
-  { code: 'es-EC', name: 'Spanish (Ecuador)', country: 'Ecuador', isoCountry: 'EC', currency: 'USD', timezone: 'America/Guayaquil', flag: '🇪🇨' },
-  { code: 'es-PE', name: 'Spanish (Peru)', country: 'Peru', isoCountry: 'PE', currency: 'PEN', timezone: 'America/Lima', flag: '🇵🇪' },
-  { code: 'es-BO', name: 'Spanish (Bolivia)', country: 'Bolivia', isoCountry: 'BO', currency: 'BOB', timezone: 'America/La_Paz', flag: '🇧🇴' },
-  { code: 'es-CL', name: 'Spanish (Chile)', country: 'Chile', isoCountry: 'CL', currency: 'CLP', timezone: 'America/Santiago', flag: '🇨🇱' },
-  { code: 'es-AR', name: 'Spanish (Argentina)', country: 'Argentina', isoCountry: 'AR', currency: 'ARS', timezone: 'America/Argentina/Buenos_Aires', flag: '🇦🇷' },
-  { code: 'es-UY', name: 'Spanish (Uruguay)', country: 'Uruguay', isoCountry: 'UY', currency: 'UYU', timezone: 'America/Montevideo', flag: '🇺🇾' },
-  { code: 'es-PY', name: 'Spanish (Paraguay)', country: 'Paraguay', isoCountry: 'PY', currency: 'PYG', timezone: 'America/Asuncion', flag: '🇵🇾' },
-  { code: 'pt-BR', name: 'Portuguese (Brazil)', country: 'Brazil', isoCountry: 'BR', currency: 'BRL', timezone: 'America/Sao_Paulo', flag: '🇧🇷' },
+  { code: 'es-CO', name: 'Spanish (Colombia)', country: 'Colombia', isoCountry: 'CO', currency: 'COP', flag: '🇨🇴', region: 'South America' },
+  { code: 'es-VE', name: 'Spanish (Venezuela)', country: 'Venezuela', isoCountry: 'VE', currency: 'VES', flag: '🇻🇪', region: 'South America' },
+  { code: 'es-EC', name: 'Spanish (Ecuador)', country: 'Ecuador', isoCountry: 'EC', currency: 'USD', flag: '🇪🇨', region: 'South America' },
+  { code: 'es-PE', name: 'Spanish (Peru)', country: 'Peru', isoCountry: 'PE', currency: 'PEN', flag: '🇵🇪', region: 'South America' },
+  { code: 'es-BO', name: 'Spanish (Bolivia)', country: 'Bolivia', isoCountry: 'BO', currency: 'BOB', flag: '🇧🇴', region: 'South America' },
+  { code: 'es-CL', name: 'Spanish (Chile)', country: 'Chile', isoCountry: 'CL', currency: 'CLP', flag: '🇨🇱', region: 'South America' },
+  { code: 'es-AR', name: 'Spanish (Argentina)', country: 'Argentina', isoCountry: 'AR', currency: 'ARS', flag: '🇦🇷', region: 'South America' },
+  { code: 'es-UY', name: 'Spanish (Uruguay)', country: 'Uruguay', isoCountry: 'UY', currency: 'UYU', flag: '🇺🇾', region: 'South America' },
+  { code: 'es-PY', name: 'Spanish (Paraguay)', country: 'Paraguay', isoCountry: 'PY', currency: 'PYG', flag: '🇵🇾', region: 'South America' },
+  { code: 'pt-BR', name: 'Portuguese (Brazil)', country: 'Brazil', isoCountry: 'BR', currency: 'BRL', flag: '🇧🇷', region: 'South America' },
 
   // Caribbean
-  { code: 'es-DO', name: 'Spanish (Dominican Republic)', country: 'Dominican Republic', isoCountry: 'DO', currency: 'DOP', timezone: 'America/Santo_Domingo', flag: '🇩🇴' },
-  { code: 'es-PR', name: 'Spanish (Puerto Rico)', country: 'Puerto Rico', isoCountry: 'PR', currency: 'USD', timezone: 'America/Puerto_Rico', flag: '🇵🇷' },
-  { code: 'es-CU', name: 'Spanish (Cuba)', country: 'Cuba', isoCountry: 'CU', currency: 'CUP', timezone: 'America/Havana', flag: '🇨🇺' },
+  { code: 'es-DO', name: 'Spanish (Dominican Republic)', country: 'Dominican Republic', isoCountry: 'DO', currency: 'DOP', flag: '🇩🇴', region: 'Caribbean' },
+  { code: 'es-PR', name: 'Spanish (Puerto Rico)', country: 'Puerto Rico', isoCountry: 'PR', currency: 'USD', flag: '🇵🇷', region: 'Caribbean' },
+  { code: 'es-CU', name: 'Spanish (Cuba)', country: 'Cuba', isoCountry: 'CU', currency: 'CUP', flag: '🇨🇺', region: 'Caribbean' },
 
   // Europe
-  { code: 'en-GB', name: 'English (UK)', country: 'United Kingdom', isoCountry: 'GB', currency: 'GBP', timezone: 'Europe/London', flag: '🇬🇧' },
-  { code: 'es-ES', name: 'Spanish (Spain)', country: 'Spain', isoCountry: 'ES', currency: 'EUR', timezone: 'Europe/Madrid', flag: '🇪🇸' },
-  { code: 'fr-FR', name: 'French (France)', country: 'France', isoCountry: 'FR', currency: 'EUR', timezone: 'Europe/Paris', flag: '🇫🇷' },
-  { code: 'de-DE', name: 'German (Germany)', country: 'Germany', isoCountry: 'DE', currency: 'EUR', timezone: 'Europe/Berlin', flag: '🇩🇪' },
-  { code: 'it-IT', name: 'Italian (Italy)', country: 'Italy', isoCountry: 'IT', currency: 'EUR', timezone: 'Europe/Rome', flag: '🇮🇹' },
-  { code: 'pt-PT', name: 'Portuguese (Portugal)', country: 'Portugal', isoCountry: 'PT', currency: 'EUR', timezone: 'Europe/Lisbon', flag: '🇵🇹' },
-  { code: 'nl-NL', name: 'Dutch (Netherlands)', country: 'Netherlands', isoCountry: 'NL', currency: 'EUR', timezone: 'Europe/Amsterdam', flag: '🇳🇱' },
+  { code: 'en-GB', name: 'English (UK)', country: 'United Kingdom', isoCountry: 'GB', currency: 'GBP', flag: '🇬🇧', region: 'Europe' },
+  { code: 'es-ES', name: 'Spanish (Spain)', country: 'Spain', isoCountry: 'ES', currency: 'EUR', flag: '🇪🇸', region: 'Europe' },
+  { code: 'fr-FR', name: 'French (France)', country: 'France', isoCountry: 'FR', currency: 'EUR', flag: '🇫🇷', region: 'Europe' },
+  { code: 'de-DE', name: 'German (Germany)', country: 'Germany', isoCountry: 'DE', currency: 'EUR', flag: '🇩🇪', region: 'Europe' },
+  { code: 'it-IT', name: 'Italian (Italy)', country: 'Italy', isoCountry: 'IT', currency: 'EUR', flag: '🇮🇹', region: 'Europe' },
+  { code: 'pt-PT', name: 'Portuguese (Portugal)', country: 'Portugal', isoCountry: 'PT', currency: 'EUR', flag: '🇵🇹', region: 'Europe' },
+  { code: 'nl-NL', name: 'Dutch (Netherlands)', country: 'Netherlands', isoCountry: 'NL', currency: 'EUR', flag: '🇳🇱', region: 'Europe' },
+]
+
+// Region display order for grouped pickers
+export const REGIONS: Region[] = [
+  'North America',
+  'Central America',
+  'South America',
+  'Caribbean',
+  'Europe',
 ]
 
 // Currency configurations
@@ -112,70 +132,33 @@ export function getCurrencyConfig(currencyCode: string): CurrencyConfig | undefi
   return CURRENCIES[currencyCode]
 }
 
-export function getDefaultsForLocale(localeCode: string): { currency: string; timezone: string } {
-  const locale = getLocaleConfig(localeCode)
-  if (locale) {
-    return { currency: locale.currency, timezone: locale.timezone }
-  }
-  // Fallback to US defaults
-  return { currency: 'USD', timezone: 'America/New_York' }
+/**
+ * Return the default currency for a locale. Falls back to USD.
+ */
+export function getCurrencyForLocale(localeCode: string): string {
+  return getLocaleConfig(localeCode)?.currency ?? 'USD'
 }
 
 export function getBusinessTypeConfig(typeValue: string): BusinessTypeConfig | undefined {
   return BUSINESS_TYPES.find(t => t.value === typeValue)
 }
 
-// Get unique currencies for dropdown
-export function getAvailableCurrencies(): CurrencyConfig[] {
-  const uniqueCodes = [...new Set(LOCALES.map(l => l.currency))]
-  return uniqueCodes.map(code => CURRENCIES[code]).filter(Boolean)
+// Group locales by region for a grouped <select>.
+export function getLocalesByRegion(): Record<Region, LocaleConfig[]> {
+  const groups: Record<Region, LocaleConfig[]> = {
+    'North America': [],
+    'Central America': [],
+    'South America': [],
+    'Caribbean': [],
+    'Europe': [],
+  }
+  for (const locale of LOCALES) {
+    groups[locale.region].push(locale)
+  }
+  return groups
 }
 
 // Find locale by ISO country code (returns first match for countries with multiple locales)
 export function getLocaleByCountryCode(isoCountry: string): LocaleConfig | undefined {
   return LOCALES.find(l => l.isoCountry === isoCountry.toUpperCase())
 }
-
-// Common timezones grouped by region (for override selection)
-export const COMMON_TIMEZONES = [
-  // US
-  { value: 'America/New_York', label: 'Eastern Time (ET)' },
-  { value: 'America/Chicago', label: 'Central Time (CT)' },
-  { value: 'America/Denver', label: 'Mountain Time (MT)' },
-  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
-  { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
-  { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
-  // Mexico
-  { value: 'America/Mexico_City', label: 'Mexico City' },
-  { value: 'America/Tijuana', label: 'Tijuana (Pacific)' },
-  // Central America
-  { value: 'America/Guatemala', label: 'Guatemala' },
-  { value: 'America/El_Salvador', label: 'El Salvador' },
-  { value: 'America/Tegucigalpa', label: 'Honduras' },
-  { value: 'America/Managua', label: 'Nicaragua' },
-  { value: 'America/Costa_Rica', label: 'Costa Rica' },
-  { value: 'America/Panama', label: 'Panama' },
-  // South America
-  { value: 'America/Bogota', label: 'Colombia' },
-  { value: 'America/Lima', label: 'Peru' },
-  { value: 'America/Guayaquil', label: 'Ecuador' },
-  { value: 'America/Caracas', label: 'Venezuela' },
-  { value: 'America/La_Paz', label: 'Bolivia' },
-  { value: 'America/Santiago', label: 'Chile' },
-  { value: 'America/Argentina/Buenos_Aires', label: 'Argentina' },
-  { value: 'America/Sao_Paulo', label: 'Brazil (Sao Paulo)' },
-  { value: 'America/Montevideo', label: 'Uruguay' },
-  { value: 'America/Asuncion', label: 'Paraguay' },
-  // Caribbean
-  { value: 'America/Santo_Domingo', label: 'Dominican Republic' },
-  { value: 'America/Puerto_Rico', label: 'Puerto Rico' },
-  { value: 'America/Havana', label: 'Cuba' },
-  // Europe
-  { value: 'Europe/London', label: 'London (GMT/BST)' },
-  { value: 'Europe/Madrid', label: 'Madrid (CET)' },
-  { value: 'Europe/Paris', label: 'Paris (CET)' },
-  { value: 'Europe/Berlin', label: 'Berlin (CET)' },
-  { value: 'Europe/Rome', label: 'Rome (CET)' },
-  { value: 'Europe/Lisbon', label: 'Lisbon (WET)' },
-  { value: 'Europe/Amsterdam', label: 'Amsterdam (CET)' },
-]

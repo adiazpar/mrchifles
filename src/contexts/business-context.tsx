@@ -23,6 +23,8 @@ export type { BusinessRole }
 export interface Business {
   id: string
   name: string
+  locale: string
+  currency: string
 }
 
 interface BusinessContextType {
@@ -73,7 +75,12 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
     // Check cache for instant display
     const cached = getCachedBusiness(businessId)
     if (cached) {
-      setBusiness({ id: businessId, name: cached.name })
+      setBusiness({
+        id: businessId,
+        name: cached.name,
+        locale: cached.locale,
+        currency: cached.currency,
+      })
       setRole(cached.role as BusinessRole)
       setIsLoading(false)
       // Cache hit - skip API call, server validates on actual data operations
@@ -115,11 +122,15 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
         setBusiness({
           id: data.businessId,
           name: data.businessName,
+          locale: data.businessLocale ?? 'en-US',
+          currency: data.businessCurrency ?? 'USD',
         })
         setRole(data.role as BusinessRole)
         // Cache for future navigation
         setCachedBusiness(data.businessId, {
           name: data.businessName,
+          locale: data.businessLocale ?? 'en-US',
+          currency: data.businessCurrency ?? 'USD',
           role: data.role,
           isOwner: data.role === 'owner',
         })

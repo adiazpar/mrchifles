@@ -2,7 +2,7 @@
 
 import { ChevronRight } from 'lucide-react'
 import { getInviteRoleLabel } from '@/lib/auth'
-import { formatDate } from '@/lib/utils'
+import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { InviteCode } from '@/types'
 
 export interface InviteCodeListItemProps {
@@ -11,6 +11,7 @@ export interface InviteCodeListItemProps {
 }
 
 export function InviteCodeListItem({ code, onClick }: InviteCodeListItemProps) {
+  const { formatDate } = useBusinessFormat()
   return (
     <div
       className="list-item-clickable list-item-flat"

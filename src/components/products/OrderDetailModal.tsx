@@ -2,9 +2,10 @@
 
 import Image from 'next/image'
 import { Trash2, Pencil, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarClock, MinusCircle, PlusCircle, AlertTriangle } from 'lucide-react'
-import { Spinner, Modal, useMorphingModal, DeleteConfirmationStep } from '@/components/ui'
+import { Spinner, Modal, useMorphingModal, DeleteConfirmationStep, PriceInput } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
-import { formatCurrency, formatDate, getProductIconUrl } from '@/lib/utils'
+import { getProductIconUrl } from '@/lib/utils'
+import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { Provider } from '@/types'
 import type { ExpandedOrder, OrderFormItem } from '@/lib/products'
 
@@ -188,6 +189,7 @@ export function OrderDetailModal({
   getReceiptUrl,
   canDelete,
 }: OrderDetailModalProps) {
+  const { formatCurrency, formatDate } = useBusinessFormat()
   if (!order) return null
 
   return (
@@ -400,18 +402,13 @@ export function OrderDetailModal({
         <Modal.Item>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="editOrderTotal" className="label">Total paid ($) <span className="text-error">*</span></label>
+              <label htmlFor="editOrderTotal" className="label">Total paid <span className="text-error">*</span></label>
               <div className="input-number-wrapper">
-                <input
+                <PriceInput
                   id="editOrderTotal"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
                   value={orderTotal}
-                  onChange={e => onOrderTotalChange(e.target.value)}
-                  className="input"
-                  placeholder="0.00"
+                  onValueChange={onOrderTotalChange}
+                  placeholder="0"
                 />
                 <div className="input-number-spinners">
                   <button

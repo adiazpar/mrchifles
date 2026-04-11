@@ -96,12 +96,33 @@ export const Schemas = {
   currency: () => z.string().length(3, 'Currency must be 3 characters').toUpperCase(),
 
   /**
-   * Timezone (IANA format, e.g., 'America/New_York').
+   * Business icon (emoji or base64 image data URL).
+   *
+   * Accepts either a short string (emoji / ZWJ sequence) or a data URL whose
+   * MIME type is a supported image format and whose decoded payload is <= 2 MB.
+   * Rejects anything else so a tampered client can't bloat the row.
    */
-  timezone: () => z.string().min(1, 'Timezone is required'),
-
-  /**
-   * Business icon (emoji or base64 image).
-   */
-  businessIcon: () => z.string().nullable().optional(),
+  businessIcon: () =>
+    z
+      .string()
+      .nullable()
+      .optional()
+      .refine(
+        (val) => {
+          if (val == null || val === '') return true
+          if (!val.startsWith('data:')) {
+            // Emoji / short identifier — cap length as a safety net.
+            return val.length <= 64
+          }
+          if (!DATA_URL_IMAGE_REGEX.test(val)) return false
+          const base64 = val.slice(val.indexOf(',') + 1)
+          const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0
+          const decodedBytes = Math.floor((base64.length * 3) / 4) - padding
+          return decodedBytes <= MAX_BUSINESS_ICON_BYTES
+        },
+        { message: 'Icon must be a PNG, JPEG, WebP, or GIF image under 2MB' }
+      ),
 }
+
+const MAX_BUSINESS_ICON_BYTES = 2 * 1024 * 1024
+const DATA_URL_IMAGE_REGEX = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/

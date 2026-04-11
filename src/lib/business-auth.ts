@@ -10,6 +10,8 @@ export type { BusinessRole }
 export interface BusinessAccess {
   businessId: string
   businessName: string
+  businessLocale: string
+  businessCurrency: string
   role: BusinessRole
   userId: string
 }
@@ -65,6 +67,8 @@ export async function requireBusinessAccess(
       businessId: businessUsers.businessId,
       role: businessUsers.role,
       businessName: businesses.name,
+      businessLocale: businesses.locale,
+      businessCurrency: businesses.currency,
     })
     .from(businessUsers)
     .innerJoin(businesses, eq(businessUsers.businessId, businesses.id))
@@ -86,6 +90,8 @@ export async function requireBusinessAccess(
   const access: BusinessAccess = {
     businessId: membership.businessId,
     businessName: membership.businessName,
+    businessLocale: membership.businessLocale ?? 'en-US',
+    businessCurrency: membership.businessCurrency ?? 'USD',
     role: membership.role as BusinessRole,
     userId: session.userId,
   }

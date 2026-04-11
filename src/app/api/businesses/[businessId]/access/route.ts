@@ -12,6 +12,8 @@ export const GET = withBusinessAuth(async (_request, access) => {
     success: true,
     businessId: access.businessId,
     businessName: access.businessName,
+    businessLocale: access.businessLocale,
+    businessCurrency: access.businessCurrency,
     role: access.role,
   })
 })

@@ -3,9 +3,10 @@
 import { useRef } from 'react'
 import Image from 'next/image'
 import { Search, X, Check, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarClock, MinusCircle, PlusCircle } from 'lucide-react'
-import { Spinner, Modal, useMorphingModal } from '@/components/ui'
+import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
-import { getProductIconUrl, formatDate } from '@/lib/utils'
+import { getProductIconUrl } from '@/lib/utils'
+import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { Product, Provider } from '@/types'
 import type { OrderFormItem } from '@/lib/products'
 
@@ -119,6 +120,7 @@ export function NewOrderModal({
   onSaveOrder,
   onResetForm,
 }: NewOrderModalProps) {
+  const { formatCurrency, formatDate } = useBusinessFormat()
   const receiptInputRef = useRef<HTMLInputElement>(null)
 
   return (
@@ -345,18 +347,13 @@ export function NewOrderModal({
         <Modal.Item>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="orderTotal" className="label">Total paid ($) <span className="text-error">*</span></label>
+              <label htmlFor="orderTotal" className="label">Total paid <span className="text-error">*</span></label>
               <div className="input-number-wrapper">
-                <input
+                <PriceInput
                   id="orderTotal"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
                   value={orderTotal}
-                  onChange={e => onOrderTotalChange(e.target.value)}
-                  className="input"
-                  placeholder="0.00"
+                  onValueChange={onOrderTotalChange}
+                  placeholder="0"
                 />
                 <div className="input-number-spinners">
                   <button
@@ -550,7 +547,7 @@ export function NewOrderModal({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-text-tertiary">Total</span>
-              <span className="font-semibold">{orderTotal ? `$${parseFloat(orderTotal).toFixed(2)}` : '-'}</span>
+              <span className="font-semibold">{orderTotal ? formatCurrency(parseFloat(orderTotal)) : '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-text-tertiary">Provider</span>

@@ -3,7 +3,7 @@
 import { memo } from 'react'
 import { Search, X, Plus, ArrowUp, Warehouse, ChevronRight } from 'lucide-react'
 import { TagsIcon, SettingsIcon } from '@/components/icons'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { scrollToTop } from '@/lib/scroll'
 import type { Product } from '@/types'
 import type { ExpandedOrder, OrderStatusFilter } from '@/lib/products'
@@ -214,6 +214,7 @@ const OrderListItem = memo(function OrderListItem({
   order,
   onView,
 }: OrderListItemProps) {
+  const { formatCurrency, formatDate } = useBusinessFormat()
   const items = order.expand?.['order_items(order)'] || []
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const isPending = order.status === 'pending'

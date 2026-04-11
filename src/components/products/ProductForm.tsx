@@ -6,7 +6,7 @@ import { Plus, Minus } from 'lucide-react'
 import { BarcodeFields } from './BarcodeFields'
 import { ImageAttachIcon } from '@/components/icons'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { TabContainer } from '@/components/ui'
+import { TabContainer, PriceInput } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import type { ProductCategory } from '@/types'
 
@@ -168,23 +168,14 @@ export function ProductForm({
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label htmlFor={`${idPrefix}-price`} className="label">
-                    Price ($) <span className="text-error">*</span>
+                    Price <span className="text-error">*</span>
                   </label>
                   <div className="input-number-wrapper">
-                    <input
+                    <PriceInput
                       id={`${idPrefix}-price`}
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      min="0"
                       value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      onBlur={() => {
-                        const num = parseFloat(price)
-                        if (!isNaN(num)) setPrice(num.toFixed(2))
-                      }}
-                      className="input"
-                      placeholder="0.00"
+                      onValueChange={setPrice}
+                      placeholder="0"
                     />
                     <div className="input-number-spinners">
                       <button

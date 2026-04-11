@@ -6,7 +6,7 @@ import { useState, useCallback, useMemo, useRef } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import type { Product, Provider } from '@/types'
 import type { ExpandedOrder, OrderFormItem } from '@/lib/products'
-import { formatDate } from '@/lib/utils'
+import { useBusinessFormat } from './useBusinessFormat'
 import { apiRequest, apiPostForm, apiPatchForm, apiPost, apiDelete, ApiError } from '@/lib/api-client'
 
 // ============================================
@@ -130,6 +130,7 @@ export function useOrderManagement({
   onProductsUpdated,
 }: UseOrderManagementOptions): UseOrderManagementReturn {
   const { user } = useAuth()
+  const { formatDate } = useBusinessFormat()
 
   // Order form state
   const [orderItems, setOrderItems] = useState<OrderFormItem[]>([])
@@ -207,7 +208,7 @@ export function useOrderManagement({
     }
 
     return result
-  }, [orders, orderStatusFilter, orderSearchQuery])
+  }, [orders, orderStatusFilter, orderSearchQuery, formatDate])
 
   // Reset order form
   const resetOrderForm = useCallback(() => {

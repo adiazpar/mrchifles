@@ -9,6 +9,8 @@ interface CachedBusiness {
   name: string
   role: string
   isOwner: boolean
+  locale: string
+  currency: string
 }
 
 interface NavbarContextValue {
@@ -24,7 +26,7 @@ interface NavbarContextValue {
   // Business cache for instant display and access validation
   getCachedBusiness: (businessId: string) => CachedBusiness | null
   setCachedBusiness: (businessId: string, data: CachedBusiness) => void
-  setCachedBusinesses: (businesses: Array<{ id: string; name: string; role: string; isOwner: boolean }>) => void
+  setCachedBusinesses: (businesses: Array<{ id: string; name: string; role: string; isOwner: boolean; locale: string; currency: string }>) => void
 }
 
 const NavbarContext = createContext<NavbarContextValue | null>(null)
@@ -81,9 +83,15 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
     }
   }, [])
 
-  const setCachedBusinesses = useCallback((businesses: Array<{ id: string; name: string; role: string; isOwner: boolean }>) => {
+  const setCachedBusinesses = useCallback((businesses: Array<{ id: string; name: string; role: string; isOwner: boolean; locale: string; currency: string }>) => {
     businesses.forEach(b => {
-      businessCacheRef.current[b.id] = { name: b.name, role: b.role, isOwner: b.isOwner }
+      businessCacheRef.current[b.id] = {
+        name: b.name,
+        role: b.role,
+        isOwner: b.isOwner,
+        locale: b.locale,
+        currency: b.currency,
+      }
     })
     try {
       sessionStorage.setItem(BUSINESS_CACHE_STORAGE_KEY, JSON.stringify(businessCacheRef.current))

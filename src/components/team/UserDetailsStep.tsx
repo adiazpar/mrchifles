@@ -4,7 +4,7 @@ import { memo } from 'react'
 import Link from 'next/link'
 import { Modal, useMorphingModal } from '@/components/ui'
 import { getRoleLabel, getUserInitials } from '@/lib/auth'
-import { formatDate } from '@/lib/utils'
+import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { User } from '@/types'
 import type { TeamMember } from '@/hooks/useTeamManagement'
 
@@ -22,6 +22,7 @@ export const UserDetailsStep = memo(function UserDetailsStep({
   onToggleStatus,
 }: UserDetailsStepProps) {
   const { goToStep } = useMorphingModal()
+  const { formatDate } = useBusinessFormat()
   const isSelf = member.id === currentUser?.id
   const isManageable = canManageTeam && !isSelf && member.role !== 'owner'
 

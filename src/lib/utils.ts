@@ -1,37 +1,54 @@
 /**
- * Format currency in US Dollars
+ * Format a monetary amount using the given locale and currency.
+ *
+ * Uses `Intl.NumberFormat`, which already knows per-currency decimal
+ * conventions (e.g., CLP / COP / PYG are integer-only, USD / EUR use 2
+ * decimals). Locale drives the decimal separator, thousand separator,
+ * and symbol position.
+ *
+ * Callers should generally go through `useBusinessFormat()` instead,
+ * which binds the current business's locale and currency automatically.
+ * This lower-level helper is exposed for non-React code paths.
  */
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
+export function formatCurrency(
+  amount: number,
+  locale: string = 'en-US',
+  currency: string = 'USD',
+): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
+    currency,
   }).format(amount)
 }
 
 /**
- * Format date in US format (MM/DD/YYYY)
+ * Format a date in the given locale. Uses the browser's local timezone,
+ * which is correct for the vast majority of cases (user's phone time =
+ * business physical location time).
  */
-export function formatDate(date: Date | string): string {
+export function formatDate(
+  date: Date | string,
+  locale: string = 'en-US',
+): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     month: '2-digit',
     day: '2-digit',
     year: 'numeric',
-    timeZone: 'America/New_York',
   }).format(d)
 }
 
 /**
- * Format time in 12-hour format
+ * Format a time in the given locale. Uses browser local timezone.
  */
-export function formatTime(date: Date | string): string {
+export function formatTime(
+  date: Date | string,
+  locale: string = 'en-US',
+): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true,
-    timeZone: 'America/New_York',
   }).format(d)
 }
 
