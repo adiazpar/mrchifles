@@ -86,19 +86,19 @@ export const products = sqliteTable('products', {
   // Computed automatically on write. Null for non-retail formats. This is the
   // stable external identity used by supplier / POS / e-commerce integrations.
   barcodeGtin: text('barcode_gtin'),
-  status: text('status', { enum: ['active', 'inactive', 'archived'] }).default('active').notNull(),
+  active: integer('active', { mode: 'boolean' }).default(true).notNull(),
 }, (table) => ({
   businessIdIdx: index('idx_products_business_id').on(table.businessId),
   categoryIdIdx: index('idx_products_category_id').on(table.categoryId),
-  businessStatusIdx: index('idx_products_business_status').on(table.businessId, table.status),
+  businessActiveIdx: index('idx_products_business_active').on(table.businessId, table.active),
   barcodeGtinIdx: index('idx_products_barcode_gtin').on(table.barcodeGtin),
-  // Partial unique index on (businessId, barcode) for active/inactive rows.
-  // Archived rows are excluded so deleted-and-re-added products don't collide.
-  // SQLite treats NULLs as distinct in unique indexes, so the IS NOT NULL
-  // clause is technically redundant but documents intent.
+  // Partial unique index on (businessId, barcode). Archived products no longer
+  // exist (hard-delete), so we only need to exclude NULL barcodes. SQLite
+  // treats NULLs as distinct in unique indexes, so the IS NOT NULL clause is
+  // technically redundant but documents intent.
   uniqueBusinessBarcode: uniqueIndex('idx_unique_products_business_barcode')
     .on(table.businessId, table.barcode)
-    .where(sql`${table.barcode} IS NOT NULL AND ${table.status} != 'archived'`),
+    .where(sql`${table.barcode} IS NOT NULL`),
 }))
 
 // ===========================================

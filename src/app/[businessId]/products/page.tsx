@@ -436,7 +436,7 @@ export default function ProductosPage() {
 
     loadInitialData()
     return () => { cancelled = true }
-  }, [businessId, setProducts, setProviders])
+  }, [businessId, setProducts, setProviders, productsCache, providersCache])
 
   // Lazy load orders when switching to orders tab
   useEffect(() => {
@@ -471,9 +471,9 @@ export default function ProductosPage() {
 
   // Filtered products for order selection
   const orderFilteredProducts = useMemo(() => {
-    if (!orderProductSearchQuery.trim()) return products.filter(p => p.status === 'active')
+    if (!orderProductSearchQuery.trim()) return products.filter(p => p.active)
     const query = orderProductSearchQuery.toLowerCase()
-    return products.filter(p => p.status === 'active' && p.name.toLowerCase().includes(query))
+    return products.filter(p => p.active && p.name.toLowerCase().includes(query))
   }, [products, orderProductSearchQuery])
 
   // Filtered orders
@@ -643,11 +643,11 @@ export default function ProductosPage() {
   }, [pipeline, compression])
 
   const handleToggleActive = useCallback(async (product: Product) => {
-    const nextActive = product.status !== 'active'
+    const nextActive = !product.active
     // Optimistic update
     setProducts((prev) =>
       prev.map((p) =>
-        p.id === product.id ? { ...p, status: nextActive ? 'active' : 'inactive' } : p
+        p.id === product.id ? { ...p, active: nextActive } : p
       )
     )
     try {
@@ -662,7 +662,7 @@ export default function ProductosPage() {
       console.error('Error toggling product status:', err)
       // Revert
       setProducts((prev) =>
-        prev.map((p) => (p.id === product.id ? { ...p, status: product.status } : p))
+        prev.map((p) => (p.id === product.id ? { ...p, active: product.active } : p))
       )
     }
   }, [businessId, setProducts])

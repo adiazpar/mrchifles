@@ -362,7 +362,7 @@ const ProductListItem = memo(function ProductListItem({
   const threshold = product.lowStockThreshold ?? 10
   const isLowStock = stockValue <= threshold
   const hasBarcode = !!product.barcode
-  const isActive = product.status === 'active'
+  const isActive = product.active
 
   // Swipe actions render left-to-right; the rightmost is exposed first as the row slides.
   // Inventory is the most-frequently-used action, so it sits on the right (revealed first);
@@ -420,7 +420,7 @@ const ProductListItem = memo(function ProductListItem({
 
           {/* Product Info */}
           <div className="flex-1 min-w-0">
-            <span className={`font-medium truncate block ${product.status !== 'active' ? 'text-text-tertiary' : ''}`}>
+            <span className={`font-medium truncate block ${!product.active ? 'text-text-tertiary' : ''}`}>
               {product.name}
             </span>
             <span className="text-xs text-text-tertiary mt-0.5 block">
@@ -430,10 +430,10 @@ const ProductListItem = memo(function ProductListItem({
 
           {/* Price and Stock */}
           <div className="text-right flex-shrink-0">
-            <span className={`font-medium block ${product.status !== 'active' ? 'text-text-tertiary' : 'text-text-primary'}`}>
+            <span className={`font-medium block ${!product.active ? 'text-text-tertiary' : 'text-text-primary'}`}>
               ${product.price.toFixed(2)}
             </span>
-            <span className={`text-xs mt-0.5 block ${isLowStock && product.status === 'active' ? 'text-error' : 'text-text-tertiary'}`}>
+            <span className={`text-xs mt-0.5 block ${isLowStock && product.active ? 'text-error' : 'text-text-tertiary'}`}>
               {stockValue} units
             </span>
           </div>

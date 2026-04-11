@@ -203,7 +203,6 @@ export function LiveBarcodeScanner({
         scannerRef.current = null
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // The overlay sits between the PageHeader and the MobileNav, respecting

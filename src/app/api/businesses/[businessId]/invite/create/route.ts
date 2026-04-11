@@ -31,7 +31,6 @@ export const POST = withBusinessAuth(async (request, access) => {
   const { code, role, expiresAt } = validation.data
 
   const inviteId = nanoid()
-  const now = new Date()
 
   await db.insert(inviteCodes).values({
     id: inviteId,

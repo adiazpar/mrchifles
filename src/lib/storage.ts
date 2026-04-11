@@ -112,7 +112,9 @@ export async function uploadProductIcon(file: File, productId: string, precomput
     await deleteProductIconFiles(productId)
 
     await fs.writeFile(filepath, buffer)
-    return `/media/products/${filename}`
+    // Cache-buster query param — same filename on re-upload would otherwise
+    // serve a stale image from the browser cache.
+    return `/media/products/${filename}?v=${Date.now()}`
   }
 }
 
@@ -156,8 +158,9 @@ export async function deleteProductIcon(iconUrl: string | null, productId?: stri
   if (!IS_PRODUCTION && productId) {
     await deleteProductIconFiles(productId)
   } else if (!IS_PRODUCTION && iconUrl.startsWith('/media/products/')) {
-    // Extract filename and delete
-    const filename = iconUrl.replace('/media/products/', '')
+    // Strip any cache-buster query string before resolving the filename.
+    const [pathOnly] = iconUrl.split('?')
+    const filename = pathOnly.replace('/media/products/', '')
     try {
       await fs.unlink(path.join(MEDIA_DIR, filename))
     } catch (err) {

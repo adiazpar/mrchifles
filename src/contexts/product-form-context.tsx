@@ -181,7 +181,7 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     setName(product.name)
     setPrice(product.price.toFixed(2))
     setCategoryId(product.categoryId || '')
-    setActive(product.status === 'active')
+    setActive(product.active)
     const iconUrl = getIconUrl(product)
     setIconPreview(iconUrl)
     setGeneratedIconBlob(null)
@@ -303,7 +303,7 @@ export function useProductFormValidation() {
     name.trim() !== editingProduct.name ||
     parseFloat(price) !== editingProduct.price ||
     (categoryId || null) !== (editingProduct.categoryId || null) ||
-    active !== (editingProduct.status === 'active') ||
+    active !== editingProduct.active ||
     iconChanged ||
     (barcode || '') !== (editingProduct.barcode || '') ||
     (barcodeFormat || null) !== (editingProduct.barcodeFormat || null) ||

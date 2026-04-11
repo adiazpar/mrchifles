@@ -551,7 +551,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       }))
       return null
     }
-  }, [cancel, isRunActive, safeSetState])
+  }, [cancel, isRunActive, safeSetState, state.result?.categoryId, state.result?.name, state.result?.suggestedNewCategoryName])
 
   return {
     state,

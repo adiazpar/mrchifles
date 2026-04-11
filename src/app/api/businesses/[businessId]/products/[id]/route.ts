@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { db, products } from '@/db'
+import { db, products, orderItems, orders } from '@/db'
 import { eq, and, ne } from 'drizzle-orm'
 import { uploadProductIcon, deleteProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
 import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
@@ -68,7 +68,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   }
 
   if (active !== null) {
-    updateData.status = active === 'true' ? 'active' : 'inactive'
+    updateData.active = active === 'true'
   }
 
   const hasBarcodeValue = formData.has('barcode')
@@ -118,8 +118,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
           and(
             eq(products.businessId, access.businessId),
             eq(products.barcode, barcodeValue),
-            ne(products.id, id),
-            ne(products.status, 'archived')
+            ne(products.id, id)
           )
         )
         .get()
@@ -153,10 +152,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
       if (!valid) {
         return HttpResponse.badRequest('Icon is too large. Maximum size is 100KB.')
       }
-      await deleteProductIcon(null, id)
-      updateData.icon = await uploadProductIcon(iconFile, id)
+      // uploadProductIcon deletes any existing file at this id before writing.
+      updateData.icon = await uploadProductIcon(iconFile, id, base64ForValidation)
     } catch (err) {
       console.error('Error uploading icon:', err)
+      return HttpResponse.serverError('Failed to upload icon')
     }
   } else if (presetIcon) {
     // Preset emoji icon - store the emoji string directly
@@ -198,7 +198,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
 /**
  * DELETE /api/businesses/[businessId]/products/[id]
  *
- * Delete a product.
+ * Hard-delete a product. Blocked if the product is referenced in any
+ * pending order — the user must receive or cancel that order first.
+ * Received orders don't block deletion: stock was already adjusted, and
+ * order_items.productName snapshots preserve historical display after
+ * the FK is set to NULL via cascade.
  */
 export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
   // Only partners and owners can delete products
@@ -227,13 +231,36 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
     return HttpResponse.notFound('Product not found')
   }
 
-  // Archive instead of hard delete — preserves icon for reuse if product is re-added
-  await db
-    .update(products)
-    .set({
-      status: 'archived',
-    })
-    .where(eq(products.id, id))
+  // Block delete if the product is referenced in any pending order
+  const [blockingOrder] = await db
+    .select({ id: orders.id })
+    .from(orderItems)
+    .innerJoin(orders, eq(orderItems.orderId, orders.id))
+    .where(
+      and(
+        eq(orderItems.productId, id),
+        eq(orders.status, 'pending'),
+        eq(orders.businessId, access.businessId)
+      )
+    )
+    .limit(1)
+
+  if (blockingOrder) {
+    return NextResponse.json(
+      {
+        error: 'This product is part of a pending order. Receive or cancel that order first.',
+        blockingOrderId: blockingOrder.id,
+      },
+      { status: 409 }
+    )
+  }
+
+  // Delete the icon file (if any) before removing the row
+  await deleteProductIcon(existingProduct.icon, id)
+
+  // Hard delete. order_items.productId has ON DELETE SET NULL and
+  // preserves its productName snapshot for historical display.
+  await db.delete(products).where(eq(products.id, id))
 
   return NextResponse.json({
     success: true,

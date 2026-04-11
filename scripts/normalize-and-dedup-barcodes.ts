@@ -8,9 +8,9 @@
  *   4. Update the row if any of those values changed.
  *
  * For every group of products in the same business with the same normalized
- * barcode and a non-archived status:
- *   - Keep the oldest (by createdAt) row's barcode.
- *   - Null out the barcode/format/source/gtin on the newer rows so they no
+ * barcode:
+ *   - Keep the row with the lexicographically smallest id.
+ *   - Null out the barcode/format/source/gtin on the other rows so they no
  *     longer collide. The product rows themselves are NOT deleted — they
  *     stay active, just without a barcode. Owners can re-attach a unique
  *     barcode at their leisure.
@@ -42,8 +42,6 @@ interface ProductRow {
   barcodeFormat: string | null
   barcodeSource: string | null
   barcodeGtin: string | null
-  status: string
-  createdAt: Date
 }
 
 async function main() {
@@ -55,7 +53,6 @@ async function main() {
       barcodeFormat: products.barcodeFormat,
       barcodeSource: products.barcodeSource,
       barcodeGtin: products.barcodeGtin,
-      status: products.status,
     })
     .from(products)) as ProductRow[]
 
@@ -101,13 +98,10 @@ async function main() {
   // ---------------------------------------------------------------
   // Pass 2 — detect and resolve duplicates within each business
   // ---------------------------------------------------------------
-  // Group active/inactive rows by (businessId, barcode). Archived rows are
-  // excluded because the unique index excludes them too.
   const groups = new Map<string, ProductRow[]>()
 
   for (const row of normalized) {
     if (!row.barcode) continue
-    if (row.status === 'archived') continue
 
     const key = `${row.businessId}::${row.barcode}`
     const list = groups.get(key) ?? []
@@ -122,21 +116,16 @@ async function main() {
     if (list.length < 2) continue
     duplicateGroups++
 
-    // Sort by createdAt ascending — oldest wins.
-    list.sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    )
+    // Sort by id ascending — lexicographically smallest wins.
+    list.sort((a, b) => a.id.localeCompare(b.id))
     const winner = list[0]
     const losers = list.slice(1)
 
     console.log(`Duplicate group: ${key}`)
-    console.log(`  Winner (kept): ${winner.id} (createdAt=${winner.createdAt})`)
+    console.log(`  Winner (kept): ${winner.id}`)
 
     for (const loser of losers) {
-      console.log(
-        `  Loser (cleared): ${loser.id} (createdAt=${loser.createdAt})`,
-      )
+      console.log(`  Loser (cleared): ${loser.id}`)
       await db
         .update(products)
         .set({

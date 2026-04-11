@@ -45,7 +45,6 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   // Create new code
   const newCodeId = nanoid()
-  const now = new Date()
 
   await db.insert(inviteCodes).values({
     id: newCodeId,

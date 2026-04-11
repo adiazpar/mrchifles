@@ -78,7 +78,7 @@ export interface Product {
   name: string
   price: number
   costPrice?: number | null
-  status: 'active' | 'inactive' | 'archived'
+  active: boolean
   categoryId?: string | null
   productCategory?: ProductCategory | null
   icon?: string | null

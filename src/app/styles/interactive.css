@@ -979,24 +979,24 @@
 }
 
 .empty-state-icon {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   color: var(--color-text-tertiary);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
 }
 
 .empty-state-title {
   font-family: var(--font-display);
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
 .empty-state-description {
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   color: var(--color-text-tertiary);
-  max-width: 280px;
+  max-width: 240px;
 }
 
 /* DEPRECATED: Use .empty-state-fill instead - this uses fragile calc() */

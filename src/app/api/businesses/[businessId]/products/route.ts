@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db, products } from '@/db'
-import { eq, ne, and, sql } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { uploadProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
@@ -37,7 +37,6 @@ export const GET = withBusinessAuth(async (request, access) => {
 
   const conditions = [
     eq(products.businessId, access.businessId),
-    ne(products.status, 'archived'),
   ]
 
   if (barcodeParam) {
@@ -95,7 +94,6 @@ export const POST = withBusinessAuth(async (request, access) => {
     active: validActive,
     barcodeSource: validBarcodeSource,
   } = validation.data
-  const status = validActive ? 'active' : 'inactive'
 
   // Derive format from value via the cascade. Format is never trusted from
   // the client. If the value is non-empty but the cascade can't classify it,
@@ -126,8 +124,7 @@ export const POST = withBusinessAuth(async (request, access) => {
       .where(
         and(
           eq(products.businessId, access.businessId),
-          eq(products.barcode, barcodeValue),
-          ne(products.status, 'archived')
+          eq(products.barcode, barcodeValue)
         )
       )
       .get()
@@ -150,52 +147,11 @@ export const POST = withBusinessAuth(async (request, access) => {
       }
       iconData = await uploadProductIcon(iconFile, productId, base64)
     } catch (err) {
-      console.error('Error processing icon:', err)
+      console.error('Error uploading icon:', err)
+      return HttpResponse.serverError('Failed to upload icon')
     }
   } else if (presetIcon) {
     iconData = presetIcon
-  }
-
-  // Check for an archived product with the same name (case-insensitive)
-  const [archivedMatch] = await db
-    .select()
-    .from(products)
-    .where(
-      and(
-        eq(products.businessId, access.businessId),
-        eq(products.status, 'archived'),
-        sql`LOWER(TRIM(${products.name})) = LOWER(TRIM(${validName}))`
-      )
-    )
-    .limit(1)
-
-  if (archivedMatch) {
-    // Reuse the archived product row
-    await db
-      .update(products)
-      .set({
-        name: validName,
-        price: validPrice,
-        categoryId: validCategoryId || null,
-        icon: iconData ?? archivedMatch.icon,
-        barcode: barcodeValue || null,
-        barcodeFormat,
-        barcodeSource,
-        barcodeGtin,
-        status,
-      })
-      .where(eq(products.id, archivedMatch.id))
-
-    const [reusedProduct] = await db
-      .select()
-      .from(products)
-      .where(eq(products.id, archivedMatch.id))
-      .limit(1)
-
-    return NextResponse.json({
-      success: true,
-      product: reusedProduct,
-    })
   }
 
   const [newProduct] = await db.insert(products).values({
@@ -209,7 +165,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     barcodeFormat,
     barcodeSource,
     barcodeGtin,
-    status,
+    active: validActive,
     stock: 0,
   }).returning()
 

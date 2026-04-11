@@ -39,10 +39,17 @@ function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<bool
   const { setProductDeleted } = useProductForm()
   const { goToStep } = useMorphingModal()
 
-  const handleClick = () => {
-    setProductDeleted(true)
-    goToStep(3)
-    onConfirm()
+  // Delete can fail with a 409 when the product is in a pending order, so we
+  // wait for the response before navigating to the success step. If it fails,
+  // go back to the edit step where the error message is visible.
+  const handleClick = async () => {
+    const ok = await onConfirm()
+    if (ok) {
+      setProductDeleted(true)
+      goToStep(3)
+    } else {
+      goToStep(0)
+    }
   }
 
   return (
