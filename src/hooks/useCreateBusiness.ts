@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
 import { getCurrencyForLocale, getLocaleByCountryCode } from '@/lib/locale-config'
 
@@ -72,6 +73,7 @@ function getInitialFormData(): BusinessFormData {
 let cachedGeolocation: { country?: string } | null = null
 
 export function useCreateBusiness(): UseCreateBusinessReturn {
+  const t = useTranslations('createBusiness')
   // Modal state
   const [isOpen, setIsOpen] = useState(false)
 
@@ -203,7 +205,7 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
 
   const handleCreateBusiness = useCallback(async (): Promise<boolean> => {
     if (!isStep1Valid || !isStep2Valid) {
-      setError('Please fill in all required fields')
+      setError(t('error_all_fields_required'))
       return false
     }
 
@@ -225,7 +227,7 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
         setIsCreating(false)
         return true
       } else {
-        setError(data.error || 'Failed to create business')
+        setError(data.error || t('error_failed_to_create'))
         setIsCreating(false)
         return false
       }
@@ -233,12 +235,12 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError('Failed to create business')
+        setError(t('error_failed_to_create'))
       }
       setIsCreating(false)
       return false
     }
-  }, [formData, isStep1Valid, isStep2Valid])
+  }, [formData, isStep1Valid, isStep2Valid, t])
 
   return {
     // Modal state

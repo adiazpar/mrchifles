@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useAuth } from './auth-context'
 import { useNavbar } from './navbar-context'
 import type { BusinessRole } from '@/lib/business-role'
@@ -55,6 +56,7 @@ interface BusinessProviderProps {
 
 export function BusinessProvider({ children, businessId }: BusinessProviderProps) {
   const router = useRouter()
+  const t = useTranslations('business')
   const { user, isLoading: authLoading } = useAuth()
   const { getCachedBusiness, setCachedBusiness } = useNavbar()
   const [business, setBusiness] = useState<Business | null>(null)
@@ -106,12 +108,12 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
 
         if (!response.ok) {
           if (response.status === 404) {
-            setError('Business not found')
+            setError(t('error_not_found'))
             router.replace('/')
             return
           }
           if (response.status === 403) {
-            setError('You do not have access to this business')
+            setError(t('error_no_access'))
             router.replace('/')
             return
           }
@@ -136,14 +138,14 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
         })
       } catch (err) {
         console.error('Business access validation error:', err)
-        setError('Failed to validate business access')
+        setError(t('error_failed_to_validate'))
       } finally {
         setIsLoading(false)
       }
     }
 
     validateAccess()
-  }, [businessId, user, authLoading, router, getCachedBusiness, setCachedBusiness])
+  }, [businessId, user, authLoading, router, getCachedBusiness, setCachedBusiness, t])
 
   // ============================================
   // CONTEXT VALUE

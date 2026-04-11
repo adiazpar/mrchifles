@@ -2,7 +2,10 @@
  * Hook for managing product settings and categories
  */
 
+'use client'
+
 import { useState, useCallback, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { apiRequest, apiPost, apiPatch, apiDelete, ApiError, type ApiResponse } from '@/lib/api-client'
 import type { ProductCategory, ProductSettings, SortPreference } from '@/types'
 
@@ -118,6 +121,7 @@ export interface UseProductSettingsReturn {
 // ============================================
 
 export function useProductSettings({ businessId }: UseProductSettingsOptions): UseProductSettingsReturn {
+  const t = useTranslations('productSettings')
   // State
   const [categories, setCategoriesState] = useState<ProductCategory[]>(() => getCachedCategories(businessId) || [])
   const [settings, setSettingsState] = useState<ProductSettings | null>(() => getCachedSettings(businessId))
@@ -161,12 +165,12 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
         setError(err.message)
       } else {
         console.error('Error loading categories:', err)
-        setError('Failed to load categories')
+        setError(t('error_failed_to_load_categories'))
       }
     } finally {
       setIsLoadingCategories(false)
     }
-  }, [businessId, setCategories])
+  }, [businessId, setCategories, t])
 
   // Load settings on mount if not cached
   const refreshSettings = useCallback(async () => {
@@ -179,12 +183,12 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
         setError(err.message)
       } else {
         console.error('Error loading settings:', err)
-        setError('Failed to load settings')
+        setError(t('error_failed_to_load_settings'))
       }
     } finally {
       setIsLoadingSettings(false)
     }
-  }, [businessId, setSettings])
+  }, [businessId, setSettings, t])
 
   // Initial load
   useEffect(() => {
@@ -213,13 +217,13 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
         setError(err.message)
       } else {
         console.error('Error creating category:', err)
-        setError('Failed to create category')
+        setError(t('error_failed_to_create_category'))
       }
       return null
     } finally {
       setIsCreating(false)
     }
-  }, [businessId, setCategories])
+  }, [businessId, setCategories, t])
 
   // Update category
   const updateCategory = useCallback(async (id: string, name: string): Promise<ProductCategory | null> => {
@@ -235,13 +239,13 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
         setError(err.message)
       } else {
         console.error('Error updating category:', err)
-        setError('Failed to update category')
+        setError(t('error_failed_to_update_category'))
       }
       return null
     } finally {
       setIsUpdating(false)
     }
-  }, [businessId, setCategories])
+  }, [businessId, setCategories, t])
 
   // Delete category
   const deleteCategory = useCallback(async (id: string): Promise<boolean> => {
@@ -263,13 +267,13 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
         setError(err.message)
       } else {
         console.error('Error deleting category:', err)
-        setError('Failed to delete category')
+        setError(t('error_failed_to_delete_category'))
       }
       return false
     } finally {
       setIsDeleting(false)
     }
-  }, [businessId, setCategories, setSettings, settings?.defaultCategoryId])
+  }, [businessId, setCategories, setSettings, settings?.defaultCategoryId, t])
 
   // Reorder categories
   const reorderCategories = useCallback(async (categoryIds: string[]): Promise<boolean> => {
@@ -296,13 +300,13 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
         setError(err.message)
       } else {
         console.error('Error reordering categories:', err)
-        setError('Failed to reorder categories')
+        setError(t('error_failed_to_reorder_categories'))
       }
       return false
     } finally {
       setIsUpdating(false)
     }
-  }, [businessId, categories, setCategories])
+  }, [businessId, categories, setCategories, t])
 
   // Update settings
   const updateSettings = useCallback(async (updates: { defaultCategoryId?: string | null; sortPreference?: SortPreference }): Promise<ProductSettings | null> => {
@@ -319,13 +323,13 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
         setError(err.message)
       } else {
         console.error('Error updating settings:', err)
-        setError('Failed to update settings')
+        setError(t('error_failed_to_update_settings'))
       }
       return null
     } finally {
       setIsSavingSettings(false)
     }
-  }, [businessId, settings, setSettings])
+  }, [businessId, settings, setSettings, t])
 
   // Clear error
   const clearError = useCallback(() => setError(''), [])

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
 import { apiRequest, apiPost, ApiError } from '@/lib/api-client'
@@ -97,6 +98,7 @@ interface ApiSuccessResponse {
 export function useTeamManagement({ businessId }: UseTeamManagementOptions): UseTeamManagementReturn {
   const { user } = useAuth()
   const { role } = useBusiness()
+  const t = useTranslations('team')
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([])
@@ -138,7 +140,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
         if (err instanceof ApiError) {
           setError(err.message)
         } else {
-          setError('Failed to load team')
+          setError(t('error_failed_to_load'))
         }
       } finally {
         setIsLoading(false)
@@ -146,7 +148,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     }
 
     loadTeamData()
-  }, [businessId])
+  }, [businessId, t])
 
   // Sort team members: owner first, then partners, then employees
   const sortedTeamMembers = useMemo(() => {
@@ -203,12 +205,12 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError('Failed to generate code')
+        setError(t('error_failed_to_generate_code'))
       }
     } finally {
       setIsGenerating(false)
     }
-  }, [user, selectedRole, businessId])
+  }, [user, selectedRole, businessId, t])
 
   const handleCopyCode = useCallback(async (code: string) => {
     try {
@@ -237,9 +239,9 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     } catch (err) {
       console.error('Failed to copy:', err)
       // Show the code in an alert as last resort
-      alert(`Codigo: ${code}`)
+      alert(t('copy_fallback_alert', { code }))
     }
-  }, [])
+  }, [t])
 
   const handleRegenerateCode = useCallback(async () => {
     if (!user || !generatedCodeId) return
@@ -283,12 +285,12 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError('Failed to regenerate code')
+        setError(t('error_failed_to_regenerate_code'))
       }
     } finally {
       setIsGenerating(false)
     }
-  }, [user, generatedCodeId, selectedRole, businessId])
+  }, [user, generatedCodeId, selectedRole, businessId, t])
 
   const handleDeleteCode = useCallback(async (): Promise<boolean> => {
     if (!generatedCodeId) return false

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
 
 interface ValidateCodeResponse extends ApiResponse {
@@ -58,6 +59,7 @@ export interface UseJoinBusinessReturn {
 
 export function useJoinBusiness(): UseJoinBusinessReturn {
   const router = useRouter()
+  const t = useTranslations('joinBusiness')
 
   // Modal state
   const [isOpen, setIsOpen] = useState(false)
@@ -126,7 +128,7 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
         setIsValidating(false)
         return true
       } else {
-        setError(data.error || 'Invalid code')
+        setError(data.error || t('error_invalid_code'))
         setIsValidating(false)
         return false
       }
@@ -134,12 +136,12 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError('Failed to validate code')
+        setError(t('error_failed_to_validate'))
       }
       setIsValidating(false)
       return false
     }
-  }, [code])
+  }, [code, t])
 
   const handleJoinOrAccept = useCallback(async (): Promise<boolean> => {
     setIsJoining(true)
@@ -165,12 +167,12 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError('Failed to complete action')
+        setError(t('error_failed_to_complete'))
       }
       setIsJoining(false)
       return false
     }
-  }, [code, codeType, router])
+  }, [code, codeType, router, t])
 
   const handleTryAgain = useCallback(() => {
     setCode('')

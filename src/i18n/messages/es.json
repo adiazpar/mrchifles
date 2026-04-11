@@ -130,7 +130,9 @@
     "button_create": "Let's Go!",
     "step_success_title": "Business Created",
     "step_success_heading": "Business Created",
-    "step_success_description": "{name} is ready to use"
+    "step_success_description": "{name} is ready to use",
+    "error_all_fields_required": "Please fill in all required fields",
+    "error_failed_to_create": "Failed to create business"
   },
   "products": {
     "tab_products": "Products",
@@ -242,7 +244,14 @@
     "default_category_hint": "Pre-selected when adding new products",
     "sort_preference_label": "Default Sort",
     "sort_preference_hint": "Default sorting for the product list",
-    "preferences_title": "Preferences"
+    "preferences_title": "Preferences",
+    "error_failed_to_load_categories": "Failed to load categories",
+    "error_failed_to_load_settings": "Failed to load settings",
+    "error_failed_to_create_category": "Failed to create category",
+    "error_failed_to_update_category": "Failed to update category",
+    "error_failed_to_delete_category": "Failed to delete category",
+    "error_failed_to_reorder_categories": "Failed to reorder categories",
+    "error_failed_to_update_settings": "Failed to update settings"
   },
   "barcode": {
     "label": "Barcode value",
@@ -315,7 +324,10 @@
     "redirecting": "Redirecting...",
     "copy_code_title": "Copy code",
     "copied": "Copied",
-    "copy_invitation": "Copy invitation"
+    "copy_invitation": "Copy invitation",
+    "error_invalid_code": "Invalid code",
+    "error_failed_to_validate": "Failed to validate code",
+    "error_failed_to_complete": "Failed to complete action"
   },
   "orders": {
     "empty_no_products_title": "No products yet",
@@ -525,6 +537,21 @@
     "transfer_confirm_password_hint": "Enter your password to confirm",
     "transfer_password_label": "Password",
     "transfer_password_placeholder": "Your current password",
-    "transfer_owner_fallback": "the owner"
+    "transfer_owner_fallback": "the owner",
+    "error_failed_to_load": "Failed to load team",
+    "error_failed_to_generate_code": "Failed to generate code",
+    "error_failed_to_regenerate_code": "Failed to regenerate code",
+    "copy_fallback_alert": "Code: {code}"
+  },
+  "home": {
+    "coming_soon": "Coming soon"
+  },
+  "sales": {
+    "coming_soon": "Coming soon"
+  },
+  "business": {
+    "error_not_found": "Business not found",
+    "error_no_access": "You do not have access to this business",
+    "error_failed_to_validate": "Failed to validate business access"
   }
 }
