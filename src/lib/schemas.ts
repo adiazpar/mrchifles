@@ -1,7 +1,11 @@
 /**
  * Shared Zod schema builders for common validation patterns.
  *
- * Use these to ensure consistent validation messages across API routes.
+ * Custom error messages intentionally omitted: the route-level
+ * `validationError()` helper in api-middleware.ts maps Zod issue codes
+ * to ApiMessageCode values, and the client translates them via the
+ * `apiMessages` i18n namespace. Adding `.min(n, 'English string')` here
+ * would be dead code that no one reads.
  */
 
 import { z } from 'zod'
@@ -10,23 +14,22 @@ export const Schemas = {
   /**
    * Email field with lowercase normalization.
    */
-  email: () => z.email('Invalid email').toLowerCase(),
+  email: () => z.email().toLowerCase(),
 
   /**
    * Required name field with minimum length.
    */
-  name: (minLength = 1) =>
-    z.string().min(minLength, `Name must be at least ${minLength} character(s)`),
+  name: (minLength = 1) => z.string().min(minLength),
 
   /**
    * Required ID field.
    */
-  id: () => z.string().min(1, 'ID is required'),
+  id: () => z.string().min(1),
 
   /**
    * Nanoid format ID (21 characters).
    */
-  nanoid: () => z.string().length(21, 'Invalid ID format'),
+  nanoid: () => z.string().length(21),
 
   /**
    * Boolean from string or boolean input (for FormData).
@@ -56,24 +59,24 @@ export const Schemas = {
   password: (minLength = 8) =>
     z
       .string()
-      .min(minLength, `Password must be at least ${minLength} characters`)
-      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-      .regex(/[0-9]/, 'Password must contain at least one number'),
+      .min(minLength)
+      .regex(/[A-Z]/)
+      .regex(/[0-9]/),
 
   /**
    * Non-negative numeric amount (for prices, costs, etc).
    */
-  amount: () => z.coerce.number().min(0, 'Amount must be 0 or greater'),
+  amount: () => z.coerce.number().min(0),
 
   /**
    * Positive numeric amount (must be > 0).
    */
-  positiveAmount: () => z.coerce.number().positive('Amount must be greater than 0'),
+  positiveAmount: () => z.coerce.number().positive(),
 
   /**
    * Required code field (invite codes, transfer codes).
    */
-  code: () => z.string().min(1, 'Code is required').toUpperCase(),
+  code: () => z.string().min(1).toUpperCase(),
 
   /**
    * Role field with allowed values.
@@ -88,12 +91,12 @@ export const Schemas = {
   /**
    * Locale code (e.g., 'en-US', 'es-MX').
    */
-  locale: () => z.string().regex(/^[a-z]{2}-[A-Z]{2}$/, 'Invalid locale format'),
+  locale: () => z.string().regex(/^[a-z]{2}-[A-Z]{2}$/),
 
   /**
    * Currency code (ISO 4217, e.g., 'USD', 'MXN').
    */
-  currency: () => z.string().length(3, 'Currency must be 3 characters').toUpperCase(),
+  currency: () => z.string().length(3).toUpperCase(),
 
   /**
    * Business icon (emoji or base64 image data URL).

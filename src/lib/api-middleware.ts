@@ -215,33 +215,6 @@ export function validationError(
 }
 
 // ============================================
-// LEGACY RESPONSE HELPERS (deprecated)
-// ============================================
-
-/**
- * Standard HTTP error responses.
- *
- * @deprecated Use errorResponse() with an ApiMessageCode instead. Kept
- * temporarily so not-yet-migrated routes keep compiling.
- */
-export const HttpResponse = {
-  badRequest: (message: string) =>
-    NextResponse.json({ error: message }, { status: 400 }),
-
-  unauthorized: (message = 'Authentication required') =>
-    NextResponse.json({ error: message }, { status: 401 }),
-
-  forbidden: (message = 'Permission denied') =>
-    NextResponse.json({ error: message }, { status: 403 }),
-
-  notFound: (message = 'Resource not found') =>
-    NextResponse.json({ error: message }, { status: 404 }),
-
-  serverError: (message = 'Internal server error') =>
-    NextResponse.json({ error: message }, { status: 500 }),
-}
-
-// ============================================
 // PAGINATION HELPERS
 // ============================================
 
