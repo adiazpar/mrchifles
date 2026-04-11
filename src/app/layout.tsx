@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { DM_Sans, IBM_Plex_Sans } from 'next/font/google'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 import { AuthProvider } from '@/contexts/auth-context'
 import { NavbarProvider } from '@/contexts/navbar-context'
 import { AppShell } from '@/components/layout'
@@ -46,14 +48,20 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // next-intl resolves the locale and messages from src/i18n/request.ts,
+  // which reads the locale cookie set by BusinessProvider. Missing keys
+  // fall back to en-US automatically.
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${dmSans.variable} ${ibmPlexSans.variable}`}
       suppressHydrationWarning
       data-scroll-behavior="smooth"
@@ -82,13 +90,15 @@ export default function RootLayout({
         />
       </head>
       <body className="h-full antialiased bg-bg-base text-text-primary" suppressHydrationWarning>
-        <AuthProvider>
-          <NavbarProvider>
-            <AppShell>
-              {children}
-            </AppShell>
-          </NavbarProvider>
-        </AuthProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <AuthProvider>
+            <NavbarProvider>
+              <AppShell>
+                {children}
+              </AppShell>
+            </NavbarProvider>
+          </AuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

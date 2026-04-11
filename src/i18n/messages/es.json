@@ -1,0 +1,25 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "close": "Close",
+    "back": "Back",
+    "continue": "Continue",
+    "done": "Done",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "confirm": "Confirm",
+    "edit": "Edit",
+    "add": "Add",
+    "remove": "Remove",
+    "search": "Search",
+    "or": "or",
+    "yes": "Yes",
+    "no": "No",
+    "error": "Error",
+    "success": "Success",
+    "optional": "Optional",
+    "required": "Required"
+  }
+}

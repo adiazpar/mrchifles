@@ -11,7 +11,21 @@ import {
 import { useRouter } from 'next/navigation'
 import { useAuth } from './auth-context'
 import { useNavbar } from './navbar-context'
+import { LOCALE_COOKIE, resolveTranslationLocale } from '@/i18n/config'
 import type { BusinessRole } from '@/lib/business-role'
+
+/**
+ * Writes the next-intl locale cookie whenever the active business
+ * changes. The cookie drives both the server-side message loader
+ * (`src/i18n/request.ts`) and the `<html lang>` attribute in the root
+ * layout. `max-age=1 year` keeps the preference across sessions; the
+ * next business switch overwrites it.
+ */
+function setLocaleCookie(businessLocale: string | null | undefined): void {
+  if (typeof document === 'undefined') return
+  const locale = resolveTranslationLocale(businessLocale)
+  document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
+}
 
 // Re-export for backwards compatibility
 export type { BusinessRole }
@@ -82,6 +96,7 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
         currency: cached.currency,
       })
       setRole(cached.role as BusinessRole)
+      setLocaleCookie(cached.locale)
       setIsLoading(false)
       // Cache hit - skip API call, server validates on actual data operations
       return
@@ -126,6 +141,7 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
           currency: data.businessCurrency ?? 'USD',
         })
         setRole(data.role as BusinessRole)
+        setLocaleCookie(data.businessLocale)
         // Cache for future navigation
         setCachedBusiness(data.businessId, {
           name: data.businessName,

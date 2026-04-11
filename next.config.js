@@ -1,3 +1,10 @@
+const createNextIntlPlugin = require('next-intl/plugin')
+
+// Wrap next.config with next-intl's plugin so it knows where to find the
+// server-side request config. We keep our request config alongside the
+// rest of the i18n machinery in `src/i18n/request.ts`.
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Strict mode for better development
@@ -77,4 +84,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withNextIntl(nextConfig)
