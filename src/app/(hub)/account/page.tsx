@@ -23,6 +23,7 @@ import { LanguageRow } from '@/components/account/LanguageRow'
 import { ThemeModal } from '@/components/account/ThemeModal'
 import { EditProfileModal } from '@/components/account/EditProfileModal'
 import { IncomingTransferCard } from '@/components/account/IncomingTransferCard'
+import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
 
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth()
@@ -32,6 +33,7 @@ export default function AccountPage() {
   const { theme } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
 
   // Hide the mobile nav while viewing account settings
   useEffect(() => {
@@ -53,7 +55,6 @@ export default function AccountPage() {
   }
 
   // Placeholder handlers — wired up in subsequent commits.
-  const openPasswordModal = () => {}
   const openAboutModal = () => {}
   const openSupportModal = () => {}
   const openDeleteAccountModal = () => {}
@@ -123,7 +124,7 @@ export default function AccountPage() {
           <SettingsRow
             icon={KeyRound}
             label={t('row_change_password')}
-            onClick={openPasswordModal}
+            onClick={() => setIsPasswordModalOpen(true)}
           />
         </div>
       </div>
@@ -173,6 +174,10 @@ export default function AccountPage() {
       <EditProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
+      />
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
       />
     </main>
   )
