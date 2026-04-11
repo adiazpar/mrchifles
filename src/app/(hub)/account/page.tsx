@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
   Palette,
-  Languages,
   KeyRound,
   Info,
   LifeBuoy,
@@ -19,6 +18,7 @@ import { Spinner } from '@/components/ui'
 import { getUserInitials } from '@/lib/auth'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
+import { LanguageRow } from '@/components/account/LanguageRow'
 
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth()
@@ -101,11 +101,7 @@ export default function AccountPage() {
             onClick={openThemeModal}
           />
           <div className="settings-divider" />
-          <SettingsRow
-            icon={Languages}
-            label={t('row_language')}
-            onClick={() => {}}
-          />
+          <LanguageRow />
         </div>
       </div>
 

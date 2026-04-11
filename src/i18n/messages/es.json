@@ -38,10 +38,7 @@
       "title": "Cuenta y Configuración",
       "account_settings": "Configuración de Cuenta",
       "support": "Soporte",
-      "log_out": "Cerrar Sesión",
-      "language_label": "Idioma",
-      "language_english": "English",
-      "language_spanish": "Español"
+      "log_out": "Cerrar Sesión"
     },
     "nav": {
       "create_business": "Crear Negocio",

@@ -1760,53 +1760,6 @@
   font: inherit;
 }
 
-.user-menu-language {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-}
-
-.user-menu-language-label {
-  flex: 1;
-  font-size: var(--text-base);
-  color: var(--color-text-primary);
-}
-
-.user-menu-language-segments {
-  display: flex;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  background: var(--color-bg-muted);
-  border-radius: var(--radius-md);
-}
-
-.user-menu-language-option {
-  padding: var(--space-1) var(--space-3);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  background: transparent;
-  border-radius: var(--radius-sm);
-  transition: background var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
-}
-
-.user-menu-language-option[data-active="true"] {
-  background: var(--color-bg-elevated);
-  color: var(--color-brand);
-  box-shadow: var(--shadow-sm);
-}
-
-@media (hover: hover) {
-  .user-menu-language-option:not([data-active="true"]):hover {
-    color: var(--color-text-primary);
-  }
-}
-
-.user-menu-language-option:disabled {
-  cursor: default;
-}
-
 .user-menu-footer {
   padding: var(--space-2) var(--space-4);
   text-align: center;
