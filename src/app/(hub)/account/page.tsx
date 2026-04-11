@@ -26,6 +26,7 @@ import { IncomingTransferCard } from '@/components/account/IncomingTransferCard'
 import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
 import { AboutModal } from '@/components/account/AboutModal'
 import { ContactSupportModal } from '@/components/account/ContactSupportModal'
+import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
 
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth()
@@ -38,6 +39,7 @@ export default function AccountPage() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false)
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
   // Hide the mobile nav while viewing account settings
   useEffect(() => {
@@ -57,9 +59,6 @@ export default function AccountPage() {
     router.push('/login')
     return null
   }
-
-  // Placeholder handlers — wired up in subsequent commits.
-  const openDeleteAccountModal = () => {}
 
   const themeLabel = t(`theme_${theme}`)
 
@@ -163,7 +162,7 @@ export default function AccountPage() {
           <SettingsRow
             icon={UserX}
             label={t('row_delete_account')}
-            onClick={openDeleteAccountModal}
+            onClick={() => setIsDeleteModalOpen(true)}
             danger
           />
         </div>
@@ -188,6 +187,10 @@ export default function AccountPage() {
       <ContactSupportModal
         isOpen={isSupportModalOpen}
         onClose={() => setIsSupportModalOpen(false)}
+      />
+      <DeleteAccountModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
       />
     </main>
   )
