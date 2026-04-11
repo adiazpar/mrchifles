@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
 import { apiRequest, apiPost, ApiError } from '@/lib/api-client'
+import { useApiMessage } from '@/hooks/useApiMessage'
 import {
   generateInviteCode,
   getInviteCodeExpiration,
@@ -99,6 +100,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
   const { user } = useAuth()
   const { role } = useBusiness()
   const t = useTranslations('team')
+  const translateApiMessage = useApiMessage()
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([])
@@ -137,18 +139,18 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
         setInviteCodes(data.inviteCodes || [])
       } catch (err) {
         console.error('Error loading team data:', err)
-        if (err instanceof ApiError) {
-          setError(err.message)
-        } else {
-          setError(t('error_failed_to_load'))
-        }
+        setError(
+          err instanceof ApiError && err.envelope
+            ? translateApiMessage(err.envelope)
+            : t('error_failed_to_load')
+        )
       } finally {
         setIsLoading(false)
       }
     }
 
     loadTeamData()
-  }, [businessId, t])
+  }, [businessId, t, translateApiMessage])
 
   // Sort team members: owner first, then partners, then employees
   const sortedTeamMembers = useMemo(() => {
@@ -202,15 +204,15 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       setInviteCodes(prev => [...prev, newInviteCode])
     } catch (err) {
       console.error('Error generating invite code:', err)
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        setError(t('error_failed_to_generate_code'))
-      }
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_generate_code')
+      )
     } finally {
       setIsGenerating(false)
     }
-  }, [user, selectedRole, businessId, t])
+  }, [user, selectedRole, businessId, t, translateApiMessage])
 
   const handleCopyCode = useCallback(async (code: string) => {
     try {
@@ -282,15 +284,15 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       setInviteCodes(prev => [...prev.filter(c => c.id !== oldCodeId), newInviteCode])
     } catch (err) {
       console.error('Error regenerating code:', err)
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        setError(t('error_failed_to_regenerate_code'))
-      }
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_regenerate_code')
+      )
     } finally {
       setIsGenerating(false)
     }
-  }, [user, generatedCodeId, selectedRole, businessId, t])
+  }, [user, generatedCodeId, selectedRole, businessId, t, translateApiMessage])
 
   const handleDeleteCode = useCallback(async (): Promise<boolean> => {
     if (!generatedCodeId) return false

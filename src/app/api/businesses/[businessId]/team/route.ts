@@ -1,8 +1,7 @@
-import { NextResponse } from 'next/server'
 import { db, businessUsers, users, inviteCodes } from '@/db'
 import { eq, and, gt, sql } from 'drizzle-orm'
 import { isOwner } from '@/lib/business-auth'
-import { withBusinessAuth } from '@/lib/api-middleware'
+import { withBusinessAuth, successResponse } from '@/lib/api-middleware'
 
 /**
  * GET /api/businesses/[businessId]/team
@@ -51,7 +50,7 @@ export const GET = withBusinessAuth(async (_request, access) => {
       )
   }
 
-  return NextResponse.json({
+  return successResponse({
     teamMembers,
     inviteCodes: activeInviteCodes,
   })

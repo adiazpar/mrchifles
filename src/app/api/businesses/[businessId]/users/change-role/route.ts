@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { db, businessUsers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { isOwner, invalidateAccessCache } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const changeRoleSchema = z.object({
@@ -19,7 +19,7 @@ const changeRoleSchema = z.object({
  */
 export const POST = withBusinessAuth(async (request, access) => {
   if (!isOwner(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.TEAM_FORBIDDEN_NOT_OWNER, 403)
   }
 
   const body = await request.json()
@@ -33,7 +33,7 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   // Can't change own role
   if (userId === access.userId) {
-    return HttpResponse.badRequest('Cannot change your own role')
+    return errorResponse(ApiMessageCode.TEAM_CANNOT_CHANGE_OWN_ROLE, 400)
   }
 
   // Get target user's business membership
@@ -49,11 +49,11 @@ export const POST = withBusinessAuth(async (request, access) => {
     .limit(1)
 
   if (!targetMembership) {
-    return HttpResponse.notFound('User not found in this business')
+    return errorResponse(ApiMessageCode.TEAM_USER_NOT_FOUND, 404)
   }
 
   if (targetMembership.role === 'owner') {
-    return HttpResponse.badRequest("Cannot change the owner's role")
+    return errorResponse(ApiMessageCode.TEAM_CANNOT_CHANGE_OWNER_ROLE, 400)
   }
 
   // Update user role in business_users
@@ -71,7 +71,5 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   invalidateAccessCache(userId, access.businessId)
 
-  return NextResponse.json({
-    success: true,
-  })
+  return successResponse({})
 })

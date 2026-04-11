@@ -4,7 +4,8 @@ import { eq, and, gt, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError } from '@/lib/api-middleware'
+import { validationError, errorResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const joinSchema = z.object({
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     // Require authentication
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
     const body = await request.json()
@@ -57,9 +58,10 @@ export async function POST(request: NextRequest) {
       .get()
 
     if (!invite) {
+      // 200 with success:false so the client renders the error inline
       return NextResponse.json({
         success: false,
-        error: 'Invalid or expired invite code',
+        messageCode: ApiMessageCode.INVITE_INVALID_OR_EXPIRED,
       })
     }
 
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
     if (existingMembership) {
       return NextResponse.json({
         success: false,
-        error: 'You are already a member of this business',
+        messageCode: ApiMessageCode.INVITE_ALREADY_MEMBER,
       })
     }
 
@@ -111,8 +113,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Join business error:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to join business' },
-      { status: 500 }
+      {
+        success: false,
+        messageCode: ApiMessageCode.INVITE_JOIN_FAILED,
+      },
+      { status: 500 },
     )
   }
 }

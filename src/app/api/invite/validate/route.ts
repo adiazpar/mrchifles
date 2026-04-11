@@ -3,7 +3,8 @@ import { db, inviteCodes, businesses, ownershipTransfers, users } from '@/db'
 import { eq, and, gt, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError } from '@/lib/api-middleware'
+import { validationError, errorResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
 
@@ -28,21 +29,22 @@ export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request)
     const rateLimitResult = checkRateLimit(`validate:${clientIp}`, RateLimits.codeValidation)
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { valid: false, error: 'Too many validation attempts. Please try again later.' },
+      const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
+      const response = NextResponse.json(
         {
-          status: 429,
-          headers: {
-            'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
-          },
-        }
+          valid: false,
+          messageCode: ApiMessageCode.INVITE_RATE_LIMITED,
+        },
+        { status: 429 },
       )
+      response.headers.set('Retry-After', retryAfter)
+      return response
     }
 
     // Require authentication
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
     const body = await request.json()
@@ -120,7 +122,6 @@ export async function POST(request: NextRequest) {
         .get()
 
       // Check if the current user's email matches the transfer recipient
-      // We need to get the user's email from the database
       const currentUserData = await db
         .select({ email: users.email })
         .from(users)
@@ -132,7 +133,7 @@ export async function POST(request: NextRequest) {
       if (!isRecipient) {
         return NextResponse.json({
           valid: false,
-          error: 'This transfer is for a different email address',
+          messageCode: ApiMessageCode.INVITE_WRONG_RECIPIENT,
         })
       }
 
@@ -150,16 +151,19 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // No valid code found
+    // No valid code found. 200 with valid:false so client renders inline.
     return NextResponse.json({
       valid: false,
-      error: 'Invalid or expired code',
+      messageCode: ApiMessageCode.INVITE_INVALID_OR_EXPIRED,
     })
   } catch (error) {
     console.error('Validate code error:', error)
     return NextResponse.json(
-      { valid: false, error: 'Failed to validate code' },
-      { status: 500 }
+      {
+        valid: false,
+        messageCode: ApiMessageCode.INVITE_VALIDATE_FAILED,
+      },
+      { status: 500 },
     )
   }
 }

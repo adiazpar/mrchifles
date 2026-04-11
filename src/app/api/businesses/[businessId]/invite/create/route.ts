@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { db, inviteCodes } from '@/db'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 const createInviteSchema = z.object({
   code: z.string().length(6).toUpperCase(),
@@ -18,7 +18,7 @@ const createInviteSchema = z.object({
  */
 export const POST = withBusinessAuth(async (request, access) => {
   if (!isOwner(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.TEAM_FORBIDDEN_NOT_OWNER, 403)
   }
 
   const body = await request.json()
@@ -40,9 +40,5 @@ export const POST = withBusinessAuth(async (request, access) => {
     expiresAt: new Date(expiresAt),
   })
 
-  return NextResponse.json({
-    success: true,
-    id: inviteId,
-    code,
-  })
+  return successResponse({ id: inviteId, code })
 })

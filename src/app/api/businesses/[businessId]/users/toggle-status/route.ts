@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { db, businessUsers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { isOwner, invalidateAccessCache } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const toggleStatusSchema = z.object({
@@ -19,7 +19,7 @@ const toggleStatusSchema = z.object({
  */
 export const POST = withBusinessAuth(async (request, access) => {
   if (!isOwner(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.TEAM_FORBIDDEN_NOT_OWNER, 403)
   }
 
   const body = await request.json()
@@ -33,7 +33,7 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   // Can't toggle own status
   if (userId === access.userId) {
-    return HttpResponse.badRequest('Cannot change your own status')
+    return errorResponse(ApiMessageCode.TEAM_CANNOT_CHANGE_OWN_STATUS, 400)
   }
 
   // Update user status in business_users
@@ -51,7 +51,5 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   invalidateAccessCache(userId, access.businessId)
 
-  return NextResponse.json({
-    success: true,
-  })
+  return successResponse({})
 })

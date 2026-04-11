@@ -4,6 +4,8 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
+import { useApiMessage } from '@/hooks/useApiMessage'
+import { hasMessageEnvelope } from '@/lib/api-messages'
 
 interface ValidateCodeResponse extends ApiResponse {
   valid?: boolean
@@ -60,6 +62,7 @@ export interface UseJoinBusinessReturn {
 export function useJoinBusiness(): UseJoinBusinessReturn {
   const router = useRouter()
   const t = useTranslations('joinBusiness')
+  const translateApiMessage = useApiMessage()
 
   // Modal state
   const [isOpen, setIsOpen] = useState(false)
@@ -128,20 +131,24 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
         setIsValidating(false)
         return true
       } else {
-        setError(data.error || t('error_invalid_code'))
+        setError(
+          hasMessageEnvelope(data)
+            ? translateApiMessage(data)
+            : t('error_invalid_code')
+        )
         setIsValidating(false)
         return false
       }
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        setError(t('error_failed_to_validate'))
-      }
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_validate')
+      )
       setIsValidating(false)
       return false
     }
-  }, [code, t])
+  }, [code, t, translateApiMessage])
 
   const handleJoinOrAccept = useCallback(async (): Promise<boolean> => {
     setIsJoining(true)
@@ -164,15 +171,15 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
       }, 1500)
       return true
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        setError(t('error_failed_to_complete'))
-      }
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_complete')
+      )
       setIsJoining(false)
       return false
     }
-  }, [code, codeType, router, t])
+  }, [code, codeType, router, t, translateApiMessage])
 
   const handleTryAgain = useCallback(() => {
     setCode('')

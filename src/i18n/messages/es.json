@@ -600,6 +600,17 @@
     "order_already_received": "Order has already been received",
     "order_cannot_edit_received": "Cannot edit a received order",
     "provider_not_found": "Provider not found",
-    "provider_forbidden_not_manager": "Only partners and owners can manage providers"
+    "provider_forbidden_not_manager": "Only partners and owners can manage providers",
+    "team_forbidden_not_owner": "Only the owner can manage team members and invites",
+    "team_user_not_found": "User not found in this business",
+    "team_cannot_change_own_role": "You cannot change your own role",
+    "team_cannot_change_owner_role": "You cannot change the owner's role",
+    "team_cannot_change_own_status": "You cannot change your own status",
+    "invite_rate_limited": "Too many attempts. Please try again later.",
+    "invite_invalid_or_expired": "Invalid or expired code",
+    "invite_wrong_recipient": "This transfer is for a different email address",
+    "invite_validate_failed": "Failed to validate code",
+    "invite_join_failed": "Failed to join business",
+    "invite_already_member": "You are already a member of this business"
   }
 }

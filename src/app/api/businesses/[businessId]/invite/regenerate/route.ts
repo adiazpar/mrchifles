@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server'
 import { db, inviteCodes } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const regenerateInviteSchema = z.object({
@@ -21,7 +21,7 @@ const regenerateInviteSchema = z.object({
  */
 export const POST = withBusinessAuth(async (request, access) => {
   if (!isOwner(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.TEAM_FORBIDDEN_NOT_OWNER, 403)
   }
 
   const body = await request.json()
@@ -54,9 +54,5 @@ export const POST = withBusinessAuth(async (request, access) => {
     expiresAt: new Date(expiresAt),
   })
 
-  return NextResponse.json({
-    success: true,
-    id: newCodeId,
-    code: newCode,
-  })
+  return successResponse({ id: newCodeId, code: newCode })
 })
