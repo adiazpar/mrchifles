@@ -8,7 +8,7 @@ import { validationError } from '@/lib/api-middleware'
 import { Schemas } from '@/lib/schemas'
 import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
 import { setLocaleCookieServer } from '@/lib/locale-cookie'
-import { DEFAULT_LOCALE } from '@/i18n/config'
+import { pickLocaleFromAcceptLanguage } from '@/lib/accept-language'
 
 const registerSchema = z.object({
   email: Schemas.email(),
@@ -48,6 +48,14 @@ export async function POST(request: NextRequest) {
 
     const { email, password, name } = validation.data
 
+    // Detect the user's preferred language from the Accept-Language header
+    // so their first post-signup experience is in their browser language.
+    // Falls back to DEFAULT_LOCALE when the header is missing or only names
+    // unsupported languages. Users can still switch via the user menu.
+    const detectedLanguage = pickLocaleFromAcceptLanguage(
+      request.headers.get('accept-language')
+    )
+
     // Check if email already exists (email is already normalized to lowercase by schema)
     const existingUser = await db
       .select({ id: users.id })
@@ -75,6 +83,7 @@ export async function POST(request: NextRequest) {
         email,
         password: passwordHash,
         name,
+        language: detectedLanguage,
       })
       .returning()
 
@@ -87,8 +96,9 @@ export async function POST(request: NextRequest) {
     // Set auth cookie
     await setAuthCookie(token)
 
-    // Default UI language on signup; user can change via the user menu
-    await setLocaleCookieServer(DEFAULT_LOCALE)
+    // Persist the detected UI language in the cookie so next-intl loads the
+    // matching bundle on the next RSC render.
+    await setLocaleCookieServer(detectedLanguage)
 
     // Return user (without password)
     const { password: _, ...userWithoutPassword } = newUser
