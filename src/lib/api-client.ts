@@ -4,25 +4,54 @@
  * Provides consistent error handling and response parsing across hooks.
  */
 
+import {
+  hasMessageEnvelope,
+  type ApiMessageCode,
+  type ApiMessageEnvelope,
+} from './api-messages'
+
 export interface ApiResponse<T = unknown> {
   success?: boolean
   data?: T
+  /** Legacy error string field. Deprecated in favor of messageCode. */
   error?: string
+  /** Server-emitted message code for i18n translation. */
+  messageCode?: ApiMessageCode
+  /** Variables for ICU interpolation on the client. */
+  messageVars?: Record<string, string | number>
   [key: string]: unknown
 }
 
 /**
  * Custom error class for API errors.
- * Contains the status code and full response data for inspection.
+ *
+ * Prefers the structured messageCode/messageVars envelope when present;
+ * falls back to the legacy `error` string for routes that haven't been
+ * migrated yet. Consumers should branch on `err.messageCode` first and
+ * only read `err.message` for non-migrated paths.
  */
 export class ApiError extends Error {
-  constructor(
-    public statusCode: number,
-    public data: ApiResponse,
-    message?: string
-  ) {
+  public readonly statusCode: number
+  public readonly data: ApiResponse
+  public readonly messageCode: ApiMessageCode | null
+  public readonly messageVars: Record<string, string | number> | undefined
+
+  constructor(statusCode: number, data: ApiResponse, message?: string) {
     super(message || data.error || 'API request failed')
     this.name = 'ApiError'
+    this.statusCode = statusCode
+    this.data = data
+    this.messageCode = hasMessageEnvelope(data) ? data.messageCode : null
+    this.messageVars = hasMessageEnvelope(data) ? data.messageVars : undefined
+  }
+
+  /**
+   * Returns the structured envelope for consumers that use useApiMessage().
+   * Returns null for legacy responses that only carry an `error` string.
+   */
+  get envelope(): ApiMessageEnvelope | null {
+    if (!this.messageCode) return null
+    return { messageCode: this.messageCode, messageVars: this.messageVars }
   }
 }
 
@@ -38,7 +67,13 @@ export class ApiError extends Error {
  *   setProducts(data.products)
  * } catch (error) {
  *   if (error instanceof ApiError) {
- *     setError(error.message)
+ *     // Preferred: structured envelope
+ *     if (error.envelope) {
+ *       setError(translateApiMessage(error.envelope))
+ *     } else {
+ *       // Legacy fallback
+ *       setError(error.message)
+ *     }
  *   }
  * }
  * ```

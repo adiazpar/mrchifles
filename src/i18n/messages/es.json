@@ -554,5 +554,28 @@
     "error_not_found": "Negocio no encontrado",
     "error_no_access": "No tiene acceso a este negocio",
     "error_failed_to_validate": "Error al validar acceso al negocio"
+  },
+  "apiMessages": {
+    "internal_error": "Something went wrong. Please try again.",
+    "not_found": "Not found",
+    "forbidden": "Permission denied",
+    "unauthorized": "Authentication required",
+    "validation_generic": "Invalid input",
+    "validation_required": "This field is required",
+    "validation_invalid_type": "Invalid type",
+    "validation_invalid_format": "Invalid format",
+    "validation_invalid_email": "Invalid email address",
+    "validation_string_too_short": "Must be at least {min, plural, one {# character} other {# characters}}",
+    "validation_string_too_long": "Must be at most {max, plural, one {# character} other {# characters}}",
+    "validation_number_too_small": "Must be {min} or greater",
+    "validation_number_too_large": "Must be {max} or less",
+    "auth_invalid_credentials": "Invalid email or password",
+    "auth_email_taken": "An account with this email already exists",
+    "auth_login_success": "Logged in successfully",
+    "auth_register_success": "Account created successfully",
+    "auth_login_failed": "Login failed. Please try again.",
+    "auth_register_failed": "Failed to create account. Please try again.",
+    "auth_login_rate_limited": "Too many login attempts. Please try again later.",
+    "auth_register_rate_limited": "Too many registration attempts. Please try again later."
   }
 }

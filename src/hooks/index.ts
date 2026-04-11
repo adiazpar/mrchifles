@@ -24,6 +24,9 @@ export type { UseProviderManagementReturn } from './useProviderManagement'
 export { useAccountSettings } from './useAccountSettings'
 export type { UseAccountSettingsReturn, PendingTransfer, IncomingTransfer } from './useAccountSettings'
 
+export { useApiMessage } from './useApiMessage'
+export type { TranslateApiMessage } from './useApiMessage'
+
 export { useFormModal } from './useFormModal'
 
 export { useSessionCache, createSessionCache, CACHE_KEYS } from './useSessionCache'

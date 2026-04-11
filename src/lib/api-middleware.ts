@@ -1,12 +1,15 @@
 /**
  * API route middleware utilities.
  *
- * Provides wrappers and helpers to reduce boilerplate in API routes.
+ * Provides wrappers and helpers to reduce boilerplate in API routes,
+ * plus the canonical response helpers that emit ApiMessageEnvelope
+ * bodies for i18n-aware error and success messages.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireBusinessAccess, type BusinessAccess } from './business-auth'
+import { ApiMessageCode, type ApiMessageEnvelope } from './api-messages'
 
 // ============================================
 // ROUTE PARAMETER TYPES
@@ -48,27 +51,6 @@ type BusinessRouteHandler = (
  * - Extracting and validating businessId from route params
  * - Calling requireBusinessAccess for authorization
  * - Standard error responses for Unauthorized/Not found/Server errors
- *
- * @example
- * ```typescript
- * // Before: 20+ lines
- * export async function GET(request: NextRequest, { params }: RouteParams) {
- *   try {
- *     const { businessId } = await params
- *     const access = await requireBusinessAccess(businessId)
- *     const products = await db.select()...
- *     return NextResponse.json({ products })
- *   } catch (error) { ... }
- * }
- *
- * // After: 5 lines
- * export const GET = withBusinessAuth(async (request, access) => {
- *   const products = await db.select()
- *     .from(productsTable)
- *     .where(eq(productsTable.businessId, access.businessId))
- *   return NextResponse.json({ success: true, products })
- * })
- * ```
  */
 export function withBusinessAuth(handler: BusinessRouteHandler) {
   return async (
@@ -82,23 +64,129 @@ export function withBusinessAuth(handler: BusinessRouteHandler) {
       return await handler(request, access, restParams)
     } catch (error) {
       if (error instanceof Error && error.message.includes('Unauthorized')) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+        return errorResponse(ApiMessageCode.FORBIDDEN, 403)
       }
       if (error instanceof Error && error.message.includes('Not found')) {
-        return NextResponse.json({ error: 'Not found' }, { status: 404 })
+        return errorResponse(ApiMessageCode.NOT_FOUND, 404)
       }
       console.error('API Error:', error)
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+      return errorResponse(ApiMessageCode.INTERNAL_ERROR, 500)
     }
   }
 }
 
 // ============================================
-// VALIDATION HELPERS
+// ENVELOPE RESPONSE HELPERS
 // ============================================
 
 /**
+ * Build a structured error response body with a message code.
+ *
+ * @example
+ *   return errorResponse(ApiMessageCode.PRODUCT_NOT_FOUND, 404)
+ *   return errorResponse(ApiMessageCode.VALIDATION_STRING_TOO_SHORT, 400, { min: 2 })
+ */
+export function errorResponse(
+  code: ApiMessageCode,
+  status: number,
+  vars?: Record<string, string | number>,
+): NextResponse {
+  const body: ApiMessageEnvelope = { messageCode: code }
+  if (vars) body.messageVars = vars
+  return NextResponse.json(body, { status })
+}
+
+/**
+ * Build a structured success response that merges route data with an
+ * optional message code for toast / feedback rendering on the client.
+ *
+ * @example
+ *   return successResponse({ user }, ApiMessageCode.AUTH_LOGIN_SUCCESS)
+ *   return successResponse({ products })  // no toast — just data
+ */
+export function successResponse(
+  data: Record<string, unknown>,
+  code?: ApiMessageCode,
+  vars?: Record<string, string | number>,
+): NextResponse {
+  const body: Record<string, unknown> = { ...data }
+  if (code) body.messageCode = code
+  if (vars) body.messageVars = vars
+  return NextResponse.json(body)
+}
+
+// ============================================
+// ZOD ISSUE -> MESSAGE CODE MAPPING
+// ============================================
+
+/**
+ * Map a Zod issue to an ApiMessageEnvelope. Called by validationError().
+ * Returns null when the issue doesn't match a known pattern; the caller
+ * falls back to VALIDATION_GENERIC.
+ *
+ * Handles the common Zod v4 issue codes: too_small / too_big (for strings
+ * and numbers), invalid_format (email), invalid_type. Extend this function
+ * as new Zod constraints are introduced.
+ */
+function mapZodIssueToEnvelope(issue: z.core.$ZodIssue): ApiMessageEnvelope | null {
+  switch (issue.code) {
+    case 'too_small': {
+      const min = Number(issue.minimum ?? 0)
+      if (issue.origin === 'string') {
+        return {
+          messageCode: ApiMessageCode.VALIDATION_STRING_TOO_SHORT,
+          messageVars: { min },
+        }
+      }
+      if (issue.origin === 'number') {
+        return {
+          messageCode: ApiMessageCode.VALIDATION_NUMBER_TOO_SMALL,
+          messageVars: { min },
+        }
+      }
+      return null
+    }
+    case 'too_big': {
+      const max = Number(issue.maximum ?? 0)
+      if (issue.origin === 'string') {
+        return {
+          messageCode: ApiMessageCode.VALIDATION_STRING_TOO_LONG,
+          messageVars: { max },
+        }
+      }
+      if (issue.origin === 'number') {
+        return {
+          messageCode: ApiMessageCode.VALIDATION_NUMBER_TOO_LARGE,
+          messageVars: { max },
+        }
+      }
+      return null
+    }
+    case 'invalid_format': {
+      const format = issue.format
+      if (format === 'email') {
+        return { messageCode: ApiMessageCode.VALIDATION_INVALID_EMAIL }
+      }
+      return { messageCode: ApiMessageCode.VALIDATION_INVALID_FORMAT }
+    }
+    case 'invalid_type': {
+      // Zod v4 reports missing required fields as invalid_type with received === 'undefined'
+      if (issue.input === undefined) {
+        return { messageCode: ApiMessageCode.VALIDATION_REQUIRED }
+      }
+      return { messageCode: ApiMessageCode.VALIDATION_INVALID_TYPE }
+    }
+    default:
+      return null
+  }
+}
+
+/**
  * Creates a validation error response from a Zod parse result.
+ *
+ * Emits the new ApiMessageEnvelope shape. The first issue is mapped to
+ * a concrete code where possible; otherwise falls back to
+ * VALIDATION_GENERIC.
  *
  * @example
  * ```typescript
@@ -111,18 +199,26 @@ export function withBusinessAuth(handler: BusinessRouteHandler) {
 export function validationError(
   result: z.ZodSafeParseResult<unknown>
 ): NextResponse {
-  const message = !result.success
-    ? result.error.issues[0]?.message ?? 'Validation failed'
-    : 'Validation failed'
-  return NextResponse.json({ error: message }, { status: 400 })
+  if (result.success) {
+    return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
+  }
+  const firstIssue = result.error.issues[0]
+  const envelope = firstIssue ? mapZodIssueToEnvelope(firstIssue) : null
+  if (envelope) {
+    return NextResponse.json(envelope, { status: 400 })
+  }
+  return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
 }
 
 // ============================================
-// RESPONSE HELPERS
+// LEGACY RESPONSE HELPERS (deprecated)
 // ============================================
 
 /**
  * Standard HTTP error responses.
+ *
+ * @deprecated Use errorResponse() with an ApiMessageCode instead. Kept
+ * temporarily so not-yet-migrated routes keep compiling.
  */
 export const HttpResponse = {
   badRequest: (message: string) =>
@@ -152,16 +248,6 @@ export interface PaginationParams {
 
 /**
  * Extract pagination parameters from URL search params.
- *
- * @param searchParams - URL search params
- * @param defaultLimit - Default limit if not specified (default: 50)
- * @param maxLimit - Maximum allowed limit (default: 500)
- *
- * @example
- * ```typescript
- * const { limit, offset } = getPaginationParams(request.nextUrl.searchParams)
- * const items = await db.select().from(table).limit(limit).offset(offset)
- * ```
  */
 export function getPaginationParams(
   searchParams: URLSearchParams,
