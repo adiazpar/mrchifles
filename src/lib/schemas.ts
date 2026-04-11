@@ -123,7 +123,9 @@ export const Schemas = {
           const decodedBytes = Math.floor((base64.length * 3) / 4) - padding
           return decodedBytes <= MAX_BUSINESS_ICON_BYTES
         },
-        { error: 'Icon must be a PNG, JPEG, WebP, or GIF image under 2MB' }
+        // params.apiMessageCode is read by mapZodIssueToEnvelope() in
+        // api-middleware.ts and mapped to a translated string on the client.
+        { params: { apiMessageCode: 'BUSINESS_ICON_INVALID' } }
       ),
 }
 

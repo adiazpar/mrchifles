@@ -129,10 +129,31 @@ export function successResponse(
  * falls back to VALIDATION_GENERIC.
  *
  * Handles the common Zod v4 issue codes: too_small / too_big (for strings
- * and numbers), invalid_format (email), invalid_type. Extend this function
- * as new Zod constraints are introduced.
+ * and numbers), invalid_format (email), invalid_type. Also handles custom
+ * refine() issues that attach a `params.apiMessageCode` -- any refine can
+ * emit any ApiMessageCode by adding `params: { apiMessageCode: '...' }`
+ * as the second argument. Extend this function as new Zod constraints
+ * are introduced.
  */
 function mapZodIssueToEnvelope(issue: z.core.$ZodIssue): ApiMessageEnvelope | null {
+  // Custom refine() calls can pass through an explicit code via the
+  // `params` field. This is how refine errors map to the i18n layer.
+  if (issue.code === 'custom') {
+    const params = (issue as z.core.$ZodIssue & { params?: unknown }).params
+    if (
+      params &&
+      typeof params === 'object' &&
+      'apiMessageCode' in params &&
+      typeof (params as { apiMessageCode: unknown }).apiMessageCode === 'string'
+    ) {
+      const code = (params as { apiMessageCode: string }).apiMessageCode
+      // We trust the refine author to use a real ApiMessageCode value.
+      // The i18n typecheck will catch unknown keys at render time.
+      return { messageCode: code as ApiMessageCode }
+    }
+    return null
+  }
+
   switch (issue.code) {
     case 'too_small': {
       const min = Number(issue.minimum ?? 0)

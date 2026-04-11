@@ -642,6 +642,7 @@
     "ai_background_failed": "Error al eliminar fondo",
     "ai_rate_limited": "Límite de solicitudes alcanzado. Intente nuevamente en unos segundos.",
     "heic_no_file": "No se proporcionó archivo",
-    "heic_convert_failed": "Error al convertir imagen"
+    "heic_convert_failed": "Error al convertir imagen",
+    "business_icon_invalid": "El ícono debe ser una imagen PNG, JPEG, WebP o GIF de menos de 2MB"
   }
 }

@@ -642,6 +642,7 @@
     "ai_background_failed": "Failed to remove background",
     "ai_rate_limited": "Rate limit reached. Try again in a few seconds.",
     "heic_no_file": "No file provided",
-    "heic_convert_failed": "Failed to convert image"
+    "heic_convert_failed": "Failed to convert image",
+    "business_icon_invalid": "Icon must be a PNG, JPEG, WebP, or GIF image under 2MB"
   }
 }
