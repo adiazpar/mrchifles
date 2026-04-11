@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react'
 import { Building2, Crown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import type { UseJoinBusinessReturn, CodeType } from '@/hooks'
@@ -11,6 +12,9 @@ interface JoinBusinessModalProps {
 }
 
 export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
+  const t = useTranslations('joinBusiness')
+  const tCommon = useTranslations('common')
+
   const {
     isOpen,
     handleClose,
@@ -37,7 +41,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
       onExitComplete={handleExitComplete}
     >
       {/* Step 0: Code Input */}
-      <Modal.Step title="Join a Business" hideBackButton>
+      <Modal.Step title={t('modal_title')} hideBackButton>
         <CodeInputContent
           code={code}
           setCode={setCode}
@@ -53,7 +57,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
             className="btn btn-secondary flex-1"
             disabled={isValidating}
           >
-            Cancel
+            {tCommon('cancel')}
           </button>
           <ValidateButton
             code={code}
@@ -64,7 +68,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
       </Modal.Step>
 
       {/* Step 1: Preview */}
-      <Modal.Step title={codeType === 'transfer' ? 'Accept Ownership' : 'Join Business'}>
+      <Modal.Step title={codeType === 'transfer' ? t('accept_ownership_title') : t('join_business_title')}>
         <PreviewContent
           codeType={codeType}
           business={business}
@@ -79,7 +83,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
             className="btn btn-secondary flex-1"
             disabled={isJoining}
           >
-            {codeType === 'transfer' ? 'Decline' : 'Cancel'}
+            {codeType === 'transfer' ? t('button_decline') : tCommon('cancel')}
           </button>
           <JoinButton
             codeType={codeType}
@@ -90,7 +94,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
       </Modal.Step>
 
       {/* Step 2: Success */}
-      <Modal.Step title={codeType === 'transfer' ? 'Transfer Accepted' : 'Welcome!'} hideBackButton>
+      <Modal.Step title={codeType === 'transfer' ? t('success_transfer_title') : t('success_join_title')} hideBackButton>
         <Modal.Item>
           <SuccessContent
             codeType={codeType}
@@ -123,11 +127,13 @@ function CodeInputContent({
   error,
   onTryAgain,
 }: CodeInputContentProps) {
+  const t = useTranslations('joinBusiness')
+
   return (
     <>
       <Modal.Item>
         <p className="text-sm text-text-secondary text-center">
-          Enter the 6-character code to join a business or accept ownership
+          {t('code_input_subtitle')}
         </p>
       </Modal.Item>
       <Modal.Item>
@@ -135,7 +141,7 @@ function CodeInputContent({
           type="text"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="ABC123"
+          placeholder={t('code_placeholder')}
           maxLength={6}
           className="input text-center text-2xl tracking-widest font-mono"
           autoFocus
@@ -153,7 +159,7 @@ function CodeInputContent({
               onClick={onTryAgain}
               className="block w-full mt-2 text-error font-medium underline"
             >
-              Try again
+              {t('try_again')}
             </button>
           </div>
         </Modal.Item>
@@ -162,7 +168,7 @@ function CodeInputContent({
         <Modal.Item>
           <div className="flex items-center justify-center gap-2 text-text-secondary">
             <Spinner size="sm" />
-            <span className="text-sm">Validating code...</span>
+            <span className="text-sm">{t('validating_code')}</span>
           </div>
         </Modal.Item>
       )}
@@ -182,6 +188,7 @@ interface ValidateButtonProps {
 
 function ValidateButton({ code, isValidating, onValidate }: ValidateButtonProps) {
   const { goToStep } = useMorphingModal()
+  const tCommon = useTranslations('common')
 
   const handleClick = useCallback(async () => {
     const success = await onValidate()
@@ -197,7 +204,7 @@ function ValidateButton({ code, isValidating, onValidate }: ValidateButtonProps)
       disabled={code.length < 6 || isValidating}
       className="btn btn-primary flex-1"
     >
-      {isValidating ? <Spinner size="sm" /> : 'Continue'}
+      {isValidating ? <Spinner size="sm" /> : tCommon('continue')}
     </button>
   )
 }
@@ -215,9 +222,11 @@ interface PreviewContentProps {
 }
 
 function PreviewContent({ codeType, business, role, fromUser, isJoining }: PreviewContentProps) {
+  const t = useTranslations('joinBusiness')
+
   const formatRole = (r: string) => {
-    if (r === 'partner') return 'Partner'
-    if (r === 'employee') return 'Employee'
+    if (r === 'partner') return t('role_partner')
+    if (r === 'employee') return t('role_employee')
     return r
   }
 
@@ -227,7 +236,7 @@ function PreviewContent({ codeType, business, role, fromUser, isJoining }: Previ
         <div className="flex flex-col items-center justify-center py-8 gap-3">
           <Spinner size="lg" />
           <p className="text-text-secondary">
-            {codeType === 'transfer' ? 'Accepting transfer...' : 'Joining business...'}
+            {codeType === 'transfer' ? t('accepting_transfer') : t('joining_business')}
           </p>
         </div>
       </Modal.Item>
@@ -244,10 +253,11 @@ function PreviewContent({ codeType, business, role, fromUser, isJoining }: Previ
             </div>
             <h3 className="text-lg font-semibold text-text-primary">{business.name}</h3>
             <p className="text-sm text-text-secondary mt-2">
-              <strong>{fromUser?.name || 'The current owner'}</strong> wants to transfer ownership of this business to you.
+              <strong>{fromUser?.name || t('transfer_owner_fallback')}</strong>{' '}
+              {t('transfer_wants_to_transfer')}
             </p>
             <p className="text-xs text-text-tertiary mt-2">
-              You will become the new owner.
+              {t('transfer_you_will_become_owner')}
             </p>
           </div>
         </Modal.Item>
@@ -265,7 +275,7 @@ function PreviewContent({ codeType, business, role, fromUser, isJoining }: Previ
             </div>
             <h3 className="text-lg font-semibold text-text-primary">{business.name}</h3>
             <p className="text-sm text-text-secondary mt-2">
-              You will join as: <strong>{formatRole(role || '')}</strong>
+              {t('invite_you_will_join_as')} <strong>{formatRole(role || '')}</strong>
             </p>
           </div>
         </Modal.Item>
@@ -288,6 +298,7 @@ interface JoinButtonProps {
 
 function JoinButton({ codeType, isJoining, onJoin }: JoinButtonProps) {
   const { goToStep } = useMorphingModal()
+  const t = useTranslations('joinBusiness')
 
   const handleClick = useCallback(async () => {
     const success = await onJoin()
@@ -306,9 +317,9 @@ function JoinButton({ codeType, isJoining, onJoin }: JoinButtonProps) {
       {isJoining ? (
         <Spinner size="sm" />
       ) : codeType === 'transfer' ? (
-        'Accept Transfer'
+        t('button_accept_transfer')
       ) : (
-        'Join Business'
+        t('button_join_business')
       )}
     </button>
   )
@@ -325,6 +336,9 @@ interface SuccessContentProps {
 }
 
 function SuccessContent({ codeType, business, joinSuccess }: SuccessContentProps) {
+  const t = useTranslations('joinBusiness')
+  const businessName = business?.name || 'the business'
+
   return (
     <div className="flex flex-col items-center text-center py-4">
       <div style={{ width: 160, height: 160 }}>
@@ -342,22 +356,22 @@ function SuccessContent({ codeType, business, joinSuccess }: SuccessContentProps
         className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
         style={{ opacity: joinSuccess ? 1 : 0 }}
       >
-        {codeType === 'transfer' ? 'Transfer Accepted!' : 'Welcome!'}
+        {codeType === 'transfer' ? t('success_transfer_heading') : t('success_join_heading')}
       </p>
       <p
         className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
         style={{ opacity: joinSuccess ? 1 : 0 }}
       >
         {codeType === 'transfer'
-          ? `You are now the owner of ${business?.name || 'the business'}`
-          : `You have joined ${business?.name || 'the business'}`
+          ? t('success_transfer_description', { name: businessName })
+          : t('success_join_description', { name: businessName })
         }
       </p>
       <p
         className="text-xs text-text-tertiary mt-3 transition-opacity duration-500 delay-300"
         style={{ opacity: joinSuccess ? 1 : 0 }}
       >
-        Redirecting...
+        {t('redirecting')}
       </p>
     </div>
   )

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Copy, Check } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import type { InviteRole } from '@/types'
 
 interface CopyInviteButtonProps {
@@ -23,6 +24,7 @@ export function CopyInviteButton({
 }: CopyInviteButtonProps) {
   const [copied, setCopied] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const t = useTranslations('joinBusiness')
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -75,7 +77,7 @@ export function CopyInviteButton({
         type="button"
         onClick={handleCopy}
         className="p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-brand-subtle transition-colors"
-        title="Copy code"
+        title={t('copy_code_title')}
       >
         {copied ? (
           <Check className="w-5 h-5 text-success" />
@@ -96,12 +98,12 @@ export function CopyInviteButton({
       {copied ? (
         <>
           <Check className="w-4 h-4 text-success" />
-          <span>Copied</span>
+          <span>{t('copied')}</span>
         </>
       ) : (
         <>
           <Copy className="w-4 h-4" />
-          <span>Copy invitation</span>
+          <span>{t('copy_invitation')}</span>
         </>
       )}
     </button>

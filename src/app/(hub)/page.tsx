@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronRight, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { BusinessIcon, FilterIcon, FoodBeverageIcon, ServicesIcon, RetailIcon, WholesaleIcon, ManufacturingIcon, OtherBusinessIcon } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
@@ -57,6 +58,7 @@ export default function HubPage() {
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const t = useTranslations('hub')
 
   const fetchBusinesses = useCallback(async () => {
     try {
@@ -123,9 +125,9 @@ export default function HubPage() {
       <main className="page-loading">
         <div className="empty-state-fill">
           <BusinessIcon className="empty-state-icon" />
-          <h3 className="empty-state-title">No businesses yet</h3>
+          <h3 className="empty-state-title">{t('empty_state_title')}</h3>
           <p className="empty-state-description">
-            Create your own business or join an existing one with an invite code
+            {t('empty_state_description')}
           </p>
         </div>
       </main>
@@ -194,7 +196,7 @@ export default function HubPage() {
           <div className="flex-1 min-w-0">
             <span className="font-medium truncate block">{business.name}</span>
             <span className="text-xs text-text-tertiary mt-0.5 block">
-              {business.memberCount} {business.memberCount === 1 ? 'member' : 'members'}
+              {t('member_count', { count: business.memberCount })}
             </span>
           </div>
 
@@ -214,7 +216,7 @@ export default function HubPage() {
         <div className="relative flex-1">
           <input
             type="text"
-            placeholder="Search businesses..."
+            placeholder={t('search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="input w-full h-full"
@@ -225,7 +227,7 @@ export default function HubPage() {
               type="button"
               onClick={() => setSearchQuery('')}
               className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-              aria-label="Clear search"
+              aria-label={t('search_clear')}
             >
               <X size={18} />
             </button>
@@ -235,7 +237,7 @@ export default function HubPage() {
           type="button"
           onClick={() => {}}
           className="btn btn-secondary btn-icon flex-shrink-0"
-          aria-label="Sort and filter"
+          aria-label={t('sort_and_filter')}
         >
           <FilterIcon style={{ width: 18, height: 18 }} />
         </button>
@@ -244,7 +246,7 @@ export default function HubPage() {
       {/* No search results */}
       {searchQuery && !hasFilteredResults && (
         <div className="text-center py-8 text-text-secondary">
-          <p>No businesses found matching "{searchQuery}"</p>
+          <p>{t('no_results', { query: searchQuery })}</p>
         </div>
       )}
 
@@ -252,7 +254,7 @@ export default function HubPage() {
         <div className="card p-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-text-secondary">
-              {ownedBusinesses.length === 1 ? 'Your Business' : 'Your Businesses'}
+              {ownedBusinesses.length === 1 ? t('section_owned_singular') : t('section_owned_plural')}
             </span>
           </div>
           <hr className="border-border" />
@@ -266,7 +268,7 @@ export default function HubPage() {
         <div className="card p-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-text-secondary">
-              {joinedBusinesses.length === 1 ? 'Joined Business' : 'Joined Businesses'}
+              {joinedBusinesses.length === 1 ? t('section_joined_singular') : t('section_joined_plural')}
             </span>
           </div>
           <hr className="border-border" />

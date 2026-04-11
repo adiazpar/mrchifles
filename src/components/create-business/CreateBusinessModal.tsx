@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Upload, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import {
@@ -11,6 +12,7 @@ import {
   getLocalesByRegion,
   getCurrencyConfig,
 } from '@/lib/locale-config'
+import type { Region } from '@/lib/locale-config'
 import { FoodBeverageIcon, ServicesIcon, RetailIcon, WholesaleIcon, ManufacturingIcon, OtherBusinessIcon } from '@/components/icons'
 import type { UseCreateBusinessReturn, BusinessType } from '@/hooks'
 
@@ -19,6 +21,9 @@ interface CreateBusinessModalProps {
 }
 
 export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps) {
+  const t = useTranslations('createBusiness')
+  const tCommon = useTranslations('common')
+
   const {
     isOpen,
     handleClose,
@@ -45,7 +50,7 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
       onExitComplete={handleExitComplete}
     >
       {/* Step 0: Business Name */}
-      <Modal.Step title="Create Business" hideBackButton>
+      <Modal.Step title={t('modal_title')} hideBackButton>
         <NameContent name={formData.name} setName={setName} />
         <Modal.Footer>
           <button
@@ -53,14 +58,14 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
             onClick={handleClose}
             className="btn btn-secondary flex-1"
           >
-            Cancel
+            {tCommon('cancel')}
           </button>
           <NextStepButton disabled={!isNameValid} />
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 1: Business Type */}
-      <Modal.Step title="Business Type">
+      <Modal.Step title={t('step_type_title')}>
         <TypeContent type={formData.type} setType={setType} />
         <Modal.Footer>
           <Modal.BackButton className="btn btn-secondary flex-1" />
@@ -69,7 +74,7 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
       </Modal.Step>
 
       {/* Step 2: Location (also sets currency) */}
-      <Modal.Step title="Location">
+      <Modal.Step title={t('step_location_title')}>
         <LocaleContent
           locale={formData.locale}
           setLocale={setLocale}
@@ -82,7 +87,7 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
       </Modal.Step>
 
       {/* Step 3: Logo Upload */}
-      <Modal.Step title="Business Logo">
+      <Modal.Step title={t('step_logo_title')}>
         <LogoUploadContent
           businessType={formData.type}
           logoPreview={formData.logoPreview}
@@ -99,7 +104,7 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
       </Modal.Step>
 
       {/* Step 4: Success */}
-      <Modal.Step title="Business Created" hideBackButton>
+      <Modal.Step title={t('step_success_title')} hideBackButton>
         <Modal.Item>
           <SuccessContent
             createdBusiness={createdBusiness}
@@ -120,7 +125,7 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
             onClick={handleClose}
             className="btn btn-primary flex-1"
           >
-            Done
+            {tCommon('done')}
           </button>
         </Modal.Footer>
       </Modal.Step>
@@ -138,25 +143,27 @@ interface NameContentProps {
 }
 
 function NameContent({ name, setName }: NameContentProps) {
+  const t = useTranslations('createBusiness')
+
   return (
     <>
       <Modal.Item>
         <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          Step 1 of 4
+          {t('step_indicator', { current: 1, total: 4 })}
         </div>
         <p className="text-sm text-text-secondary text-center">
-          What&apos;s the name of your business?
+          {t('step_name_subtitle')}
         </p>
       </Modal.Item>
       <Modal.Item>
         <label className="block text-sm font-medium text-text-primary mb-2">
-          Business Name
+          {t('name_label')}
         </label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="My Business"
+          placeholder={t('name_placeholder')}
           maxLength={100}
           className="input"
           autoFocus
@@ -209,14 +216,25 @@ function getBusinessTypeIcon(typeValue: string, isSelected: boolean) {
 }
 
 function TypeContent({ type, setType }: TypeContentProps) {
+  const t = useTranslations('createBusiness')
+
+  const businessTypeLabels: Record<string, string> = {
+    food: t('business_type_food'),
+    retail: t('business_type_retail'),
+    services: t('business_type_services'),
+    wholesale: t('business_type_wholesale'),
+    manufacturing: t('business_type_manufacturing'),
+    other: t('business_type_other'),
+  }
+
   return (
     <>
       <Modal.Item>
         <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          Step 2 of 4
+          {t('step_indicator', { current: 2, total: 4 })}
         </div>
         <p className="text-sm text-text-secondary text-center">
-          Select the type that best fits your business
+          {t('step_type_subtitle')}
         </p>
       </Modal.Item>
       <Modal.Item>
@@ -233,7 +251,9 @@ function TypeContent({ type, setType }: TypeContentProps) {
               }`}
             >
               {getBusinessTypeIcon(bt.value, type === bt.value)}
-              <span className="text-sm font-medium text-text-primary">{bt.label}</span>
+              <span className="text-sm font-medium text-text-primary">
+                {businessTypeLabels[bt.value] ?? bt.label}
+              </span>
             </button>
           ))}
         </div>
@@ -257,22 +277,31 @@ function LocaleContent({
   setLocale,
   currency,
 }: LocaleContentProps) {
+  const t = useTranslations('createBusiness')
   const localesByRegion = getLocalesByRegion()
   const currencyConfig = getCurrencyConfig(currency)
+
+  const regionLabels: Record<Region, string> = {
+    'North America': t('region_north_america'),
+    'Central America': t('region_central_america'),
+    'South America': t('region_south_america'),
+    'Caribbean': t('region_caribbean'),
+    'Europe': t('region_europe'),
+  }
 
   return (
     <>
       <Modal.Item>
         <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          Step 3 of 4
+          {t('step_indicator', { current: 3, total: 4 })}
         </div>
         <p className="text-sm text-text-secondary text-center mb-2">
-          Select your location. Currency is set automatically.
+          {t('step_location_subtitle')}
         </p>
       </Modal.Item>
       <Modal.Item>
         <label className="block text-sm font-medium text-text-primary mb-2">
-          Location
+          {t('location_label')}
         </label>
         <select
           value={locale}
@@ -280,7 +309,7 @@ function LocaleContent({
           className="input"
         >
           {REGIONS.map((region) => (
-            <optgroup key={region} label={region}>
+            <optgroup key={region} label={regionLabels[region]}>
               {localesByRegion[region].map((loc) => (
                 <option key={loc.code} value={loc.code}>
                   {loc.flag} {loc.country} ({loc.name})
@@ -293,7 +322,7 @@ function LocaleContent({
       {currencyConfig && (
         <Modal.Item>
           <div className="flex items-center justify-between rounded-lg bg-bg-muted px-3 py-2">
-            <span className="text-sm text-text-secondary">Currency</span>
+            <span className="text-sm text-text-secondary">{t('currency_label')}</span>
             <span className="text-sm font-medium text-text-primary">
               {currencyConfig.symbol} {currencyConfig.name} ({currencyConfig.code})
             </span>
@@ -305,7 +334,7 @@ function LocaleContent({
 }
 
 // ============================================
-// STEP 2: LOGO UPLOAD
+// STEP 3: LOGO UPLOAD
 // ============================================
 
 interface LogoUploadContentProps {
@@ -334,6 +363,7 @@ function LogoUploadContent({
   setLogoFile,
   clearLogo,
 }: LogoUploadContentProps) {
+  const t = useTranslations('createBusiness')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
@@ -345,11 +375,11 @@ function LogoUploadContent({
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      setUploadError('Please select an image file (PNG, JPG, WebP, or GIF)')
+      setUploadError(t('logo_invalid_type'))
       return
     }
     if (file.size > MAX_LOGO_BYTES) {
-      setUploadError('Image must be under 2MB')
+      setUploadError(t('logo_too_large'))
       return
     }
     setLogoFile(file)
@@ -359,10 +389,10 @@ function LogoUploadContent({
     <>
       <Modal.Item>
         <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          Step 4 of 4
+          {t('step_indicator', { current: 4, total: 4 })}
         </div>
         <p className="text-sm text-text-secondary text-center">
-          Upload your business logo (optional)
+          {t('step_logo_subtitle')}
         </p>
       </Modal.Item>
       <Modal.Item>
@@ -387,7 +417,7 @@ function LogoUploadContent({
                 type="button"
                 onClick={clearLogo}
                 className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center shadow-md hover:bg-error-hover transition-colors"
-                aria-label="Remove logo"
+                aria-label={t('logo_remove')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -411,14 +441,14 @@ function LogoUploadContent({
         >
           <Upload className="w-5 h-5" />
           <span className="text-sm font-medium">
-            {logoPreview ? 'Change Logo' : 'Upload Logo'}
+            {logoPreview ? t('logo_change_button') : t('logo_upload_button')}
           </span>
         </button>
         {uploadError ? (
           <p className="text-xs text-error text-center mt-2">{uploadError}</p>
         ) : (
           <p className="text-xs text-text-tertiary text-center mt-2">
-            PNG, JPG up to 2MB
+            {t('logo_size_hint')}
           </p>
         )}
       </Modal.Item>
@@ -432,6 +462,7 @@ function LogoUploadContent({
 
 function NextStepButton({ disabled = false }: { disabled?: boolean }) {
   const { goNext } = useMorphingModal()
+  const tCommon = useTranslations('common')
 
   return (
     <button
@@ -440,7 +471,7 @@ function NextStepButton({ disabled = false }: { disabled?: boolean }) {
       disabled={disabled}
       className="btn btn-primary flex-1"
     >
-      Continue
+      {tCommon('continue')}
     </button>
   )
 }
@@ -452,6 +483,7 @@ interface CreateButtonProps {
 
 function CreateButton({ isCreating, onCreate }: CreateButtonProps) {
   const { goToStep } = useMorphingModal()
+  const t = useTranslations('createBusiness')
 
   const handleClick = useCallback(async () => {
     const success = await onCreate()
@@ -467,7 +499,7 @@ function CreateButton({ isCreating, onCreate }: CreateButtonProps) {
       disabled={isCreating}
       className="btn btn-primary flex-1"
     >
-      {isCreating ? <Spinner size="sm" /> : "Let's Go!"}
+      {isCreating ? <Spinner size="sm" /> : t('button_create')}
     </button>
   )
 }
@@ -483,6 +515,8 @@ interface SuccessContentProps {
 }
 
 function SuccessContent({ createdBusiness, createSuccess, icon }: SuccessContentProps) {
+  const t = useTranslations('createBusiness')
+
   return (
     <div className="flex flex-col items-center text-center py-4">
       <div style={{ width: 160, height: 160 }}>
@@ -500,14 +534,14 @@ function SuccessContent({ createdBusiness, createSuccess, icon }: SuccessContent
         className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
         style={{ opacity: createSuccess ? 1 : 0 }}
       >
-        Business Created
+        {t('step_success_heading')}
       </p>
       <p
         className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
         style={{ opacity: createSuccess ? 1 : 0 }}
       >
         {icon && <span className="mr-1">{icon}</span>}
-        {createdBusiness?.name || 'Your business'} is ready to use
+        {t('step_success_description', { name: createdBusiness?.name || 'Your business' })}
       </p>
     </div>
   )
