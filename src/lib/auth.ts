@@ -1,5 +1,3 @@
-import type { UserRole, InviteRole } from '@/types'
-
 // ============================================
 // SECURE CODE GENERATION
 // ============================================
@@ -68,29 +66,6 @@ export function getUserInitials(name: string): string {
     return (parts[0][0] + parts[1][0]).toUpperCase()
   }
   return name.substring(0, 2).toUpperCase()
-}
-
-/**
- * Get display label for user role
- */
-export function getRoleLabel(role: UserRole): string {
-  const labels: Record<UserRole, string> = {
-    owner: 'Owner',
-    partner: 'Partner',
-    employee: 'Employee',
-  }
-  return labels[role]
-}
-
-/**
- * Get display label for invite role
- */
-export function getInviteRoleLabel(role: InviteRole): string {
-  const labels: Record<InviteRole, string> = {
-    partner: 'Partner',
-    employee: 'Employee',
-  }
-  return labels[role]
 }
 
 // NOTE: Role-based permission checks (isOwner, isPartnerOrOwner) have been moved

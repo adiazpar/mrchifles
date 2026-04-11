@@ -13,6 +13,7 @@ import { useCreateBusinessModal } from '@/contexts/create-business-context'
 
 export function MobileNav() {
   const t = useTranslations('ui.nav')
+  const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
   const { isVisible, pendingHref, setPendingHref } = useNavbar()
@@ -31,6 +32,16 @@ export function MobileNav() {
 
   // Local state to control the hidden class
   const [isHidden, setIsHidden] = useState(false)
+
+  // Map nav path segments to translation keys
+  const NAV_LABEL_MAP: Record<string, string> = {
+    home: tNav('home'),
+    sales: tNav('sales'),
+    products: tNav('products'),
+    manage: tNav('manage'),
+    team: tNav('team'),
+    providers: tNav('providers'),
+  }
 
   // Get nav items for current business
   const navItems = useMemo(() => {
@@ -143,6 +154,9 @@ export function MobileNav() {
           const isActive = isPending || (isCurrentPath && !pendingHref)
           const Icon = item.icon
 
+          const pathSegment = item.href.split('/').pop() ?? ''
+          const label = NAV_LABEL_MAP[pathSegment] ?? item.label
+
           return (
             <Link
               key={item.href}
@@ -151,7 +165,7 @@ export function MobileNav() {
               className={`mobile-nav-item ${isActive ? 'active' : ''}`}
             >
               <Icon className="mobile-nav-icon" />
-              <span>{item.label}</span>
+              <span>{label}</span>
             </Link>
           )
         })}

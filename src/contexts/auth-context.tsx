@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import type { User } from '@/types'
 import { fetchDeduped } from '@/lib/fetch'
 import type { SupportedLocale } from '@/i18n/config'
@@ -100,6 +101,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
+  const tAuth = useTranslations('auth')
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -172,9 +174,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setValidatedNow()
       return { success: true }
     } catch {
-      return { success: false, error: 'Connection error' }
+      return { success: false, error: tAuth('connection_error') }
     }
-  }, [])
+  }, [tAuth])
 
   const logout = useCallback(async () => {
     try {
@@ -224,10 +226,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.refresh()
         return { success: true }
       } catch {
-        return { success: false, error: 'Connection error' }
+        return { success: false, error: tAuth('connection_error') }
       }
     },
-    [router],
+    [router, tAuth],
   )
 
   // ============================================

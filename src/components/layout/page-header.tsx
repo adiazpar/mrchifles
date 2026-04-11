@@ -25,6 +25,7 @@ import { useOptionalBusiness } from '@/contexts/business-context'
  */
 export function PageHeader() {
   const t = useTranslations()
+  const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
   const { pendingHref, setPendingHref } = useNavbar()
@@ -65,10 +66,24 @@ export function PageHeader() {
     return () => scrollContainer.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Map English page titles/titles from route configs to i18n keys
+  const PAGE_TITLE_MAP: Record<string, string> = {
+    'Home': tNav('home'),
+    'Sales': tNav('sales'),
+    'Products': tNav('products'),
+    'Manage': tNav('manage'),
+    'Team': tNav('team'),
+    'Providers': tNav('providers'),
+    'Settings': tNav('settings'),
+    'Account': tNav('account'),
+  }
+
   // Use pending route config if navigating, otherwise current pathname
   const config = getRouteConfig(pendingHref || pathname)
 
-  const { title, pageTitle, backTo } = config
+  const { title: rawTitle, pageTitle: rawPageTitle, backTo } = config
+  const title = rawTitle ? (PAGE_TITLE_MAP[rawTitle] ?? rawTitle) : rawTitle
+  const pageTitle = rawPageTitle ? (PAGE_TITLE_MAP[rawPageTitle] ?? rawPageTitle) : rawPageTitle
 
   // Determine back button behavior:
   // - Hub pages with back button: use browser back

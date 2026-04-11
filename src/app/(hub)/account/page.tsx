@@ -6,11 +6,13 @@ import { useRouter } from 'next/navigation'
 import { Spinner } from '@/components/ui'
 import { getUserInitials } from '@/lib/auth'
 import { useNavbar } from '@/contexts/navbar-context'
+import { useTranslations } from 'next-intl'
 
 export default function AccountPage() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
   const { hide, show } = useNavbar()
+  const t = useTranslations('account')
 
   // Hide navbar on mount, show on unmount
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function AccountPage() {
       {/* Coming Soon Notice */}
       <div className="card p-6 text-center">
         <p className="text-text-secondary">
-          Account settings coming soon.
+          {t('coming_soon')}
         </p>
       </div>
     </main>

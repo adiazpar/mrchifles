@@ -1,6 +1,7 @@
 'use client'
 
 import { Trash2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Spinner, Modal, useMorphingModal, ConfirmationAnimation, DeleteConfirmationStep } from '@/components/ui'
 import type { Provider } from '@/types'
 
@@ -16,6 +17,7 @@ interface SaveProviderButtonProps {
 
 function SaveProviderButton({ onSubmit, isSaving, disabled }: SaveProviderButtonProps) {
   const { goToStep } = useMorphingModal()
+  const t = useTranslations('providers')
 
   const handleClick = () => {
     goToStep(2)
@@ -29,7 +31,7 @@ function SaveProviderButton({ onSubmit, isSaving, disabled }: SaveProviderButton
       className="btn btn-primary flex-1"
       disabled={disabled}
     >
-      {isSaving ? <Spinner /> : 'Save'}
+      {isSaving ? <Spinner /> : t('save_button')}
     </button>
   )
 }
@@ -105,6 +107,8 @@ export function ProviderModal({
   onDelete,
   canDelete,
 }: ProviderModalProps) {
+  const t = useTranslations('providers')
+  const tCommon = useTranslations('common')
   const isFormValid = name.trim().length > 0
 
   return (
@@ -112,10 +116,10 @@ export function ProviderModal({
       isOpen={isOpen}
       onClose={onClose}
       onExitComplete={onExitComplete}
-      title={editingProvider ? 'Edit provider' : 'Add provider'}
+      title={editingProvider ? t('modal_title_edit') : t('modal_title_add')}
     >
       {/* Step 0: Form */}
-      <Modal.Step title={editingProvider ? 'Edit provider' : 'Add provider'}>
+      <Modal.Step title={editingProvider ? t('modal_title_edit') : t('modal_title_add')}>
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
@@ -126,21 +130,21 @@ export function ProviderModal({
 
         {/* Name */}
         <Modal.Item>
-          <label htmlFor="provider-name" className="label">Name <span className="text-error">*</span></label>
+          <label htmlFor="provider-name" className="label">{t('name_label')} <span className="text-error">*</span></label>
           <input
             id="provider-name"
             type="text"
             value={name}
             onChange={e => onNameChange(e.target.value)}
             className="input"
-            placeholder="Provider name"
+            placeholder={t('name_placeholder')}
             autoComplete="off"
           />
         </Modal.Item>
 
         {/* Phone */}
         <Modal.Item>
-          <label htmlFor="provider-phone" className="label">Phone (optional)</label>
+          <label htmlFor="provider-phone" className="label">{t('phone_label')}</label>
           <input
             id="provider-phone"
             type="tel"
@@ -153,7 +157,7 @@ export function ProviderModal({
 
         {/* Email */}
         <Modal.Item>
-          <label htmlFor="provider-email" className="label">Email (optional)</label>
+          <label htmlFor="provider-email" className="label">{t('email_label')}</label>
           <input
             id="provider-email"
             type="email"
@@ -166,14 +170,14 @@ export function ProviderModal({
 
         {/* Notes */}
         <Modal.Item>
-          <label htmlFor="provider-notes" className="label">Notes (optional)</label>
+          <label htmlFor="provider-notes" className="label">{t('notes_label')}</label>
           <textarea
             id="provider-notes"
             value={notes}
             onChange={e => onNotesChange(e.target.value)}
             className="input"
             rows={3}
-            placeholder="Notes about the provider..."
+            placeholder={t('notes_placeholder')}
           />
         </Modal.Item>
 
@@ -181,9 +185,9 @@ export function ProviderModal({
         <Modal.Item>
           <div className="flex items-center justify-between py-2">
             <div>
-              <span className="label mb-0">Active</span>
+              <span className="label mb-0">{t('active_label')}</span>
               <p className="text-xs text-text-tertiary mt-0.5">
-                Show in the provider list
+                {t('active_description')}
               </p>
             </div>
             <input
@@ -207,8 +211,9 @@ export function ProviderModal({
 
       {/* Step 1: Delete confirmation */}
       <DeleteConfirmationStep
-        title="Delete provider"
+        title={t('delete_title')}
         itemName={editingProvider?.name || ''}
+        warningText={t('delete_warning')}
         cancelStep={0}
         onConfirm={onDelete}
         successStep={3}
@@ -216,13 +221,13 @@ export function ProviderModal({
       />
 
       {/* Step 2: Save success */}
-      <Modal.Step title={editingProvider ? 'Provider updated' : 'Provider added'} hideBackButton>
+      <Modal.Step title={editingProvider ? t('success_updated_title') : t('success_added_title')} hideBackButton>
         <Modal.Item>
           <ConfirmationAnimation
             type="success"
             triggered={providerSaved}
-            title={editingProvider ? 'Changes saved!' : 'Provider added!'}
-            subtitle={editingProvider ? 'The provider has been updated' : 'The provider has been created successfully'}
+            title={editingProvider ? t('success_updated_heading') : t('success_added_heading')}
+            subtitle={editingProvider ? t('success_updated_subtitle') : t('success_added_subtitle')}
           />
         </Modal.Item>
 
@@ -232,19 +237,19 @@ export function ProviderModal({
             onClick={onClose}
             className="btn btn-primary flex-1"
           >
-            Done
+            {tCommon('done')}
           </button>
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 3: Delete success */}
-      <Modal.Step title="Provider deleted" hideBackButton>
+      <Modal.Step title={t('success_deleted_title')} hideBackButton>
         <Modal.Item>
           <ConfirmationAnimation
             type="error"
             triggered={providerDeleted}
-            title="Provider deleted"
-            subtitle="The provider has been deleted successfully"
+            title={t('success_deleted_heading')}
+            subtitle={t('success_deleted_subtitle')}
           />
         </Modal.Item>
 
@@ -254,7 +259,7 @@ export function ProviderModal({
             onClick={onClose}
             className="btn btn-primary flex-1"
           >
-            Done
+            {tCommon('done')}
           </button>
         </Modal.Footer>
       </Modal.Step>

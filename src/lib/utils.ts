@@ -53,19 +53,6 @@ export function formatTime(
 }
 
 /**
- * Get time-of-day greeting
- * 6am-12pm: Good morning
- * 12pm-6pm: Good afternoon
- * 6pm-6am: Good evening
- */
-export function getGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour >= 6 && hour < 12) return 'Good morning'
-  if (hour >= 12 && hour < 18) return 'Good afternoon'
-  return 'Good evening'
-}
-
-/**
  * Combine CSS class names
  */
 export function cn(...classes: (string | undefined | false)[]): string {

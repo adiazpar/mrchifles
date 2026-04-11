@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { useBusiness } from '@/contexts/business-context'
 import { canManageBusiness } from '@/lib/business-role'
 import { apiRequest, apiPost, apiPatch, apiDelete, ApiError, ApiResponse } from '@/lib/api-client'
@@ -59,6 +60,7 @@ export interface UseProviderManagementReturn {
 
 export function useProviderManagement({ businessId }: UseProviderManagementOptions): UseProviderManagementReturn {
   const { role } = useBusiness()
+  const t = useTranslations('providers')
 
   // Data state
   const [providers, setProviders] = useState<Provider[]>([])
@@ -100,7 +102,7 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
         if (err instanceof ApiError) {
           setError(err.message)
         } else {
-          setError('Failed to load providers')
+          setError(t('error_failed_to_load'))
         }
       } finally {
         if (!cancelled) {
@@ -114,7 +116,7 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     return () => {
       cancelled = true
     }
-  }, [businessId])
+  }, [businessId, t])
 
   // Sort providers: active first, then by name
   const sortedProviders = useMemo(() => {
@@ -163,7 +165,7 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
 
   const handleSubmit = useCallback(async (): Promise<boolean> => {
     if (!name.trim()) {
-      setError('Name is required')
+      setError(t('error_name_required'))
       return false
     }
 
@@ -202,13 +204,13 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError('Failed to save provider')
+        setError(t('error_failed_to_save'))
       }
       return false
     } finally {
       setIsSaving(false)
     }
-  }, [businessId, name, phone, email, notes, active, editingProvider])
+  }, [businessId, name, phone, email, notes, active, editingProvider, t])
 
   const handleDelete = useCallback(async (): Promise<boolean> => {
     if (!editingProvider) return false
@@ -230,13 +232,13 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError('Failed to delete provider')
+        setError(t('error_failed_to_delete'))
       }
       return false
     } finally {
       setIsDeleting(false)
     }
-  }, [businessId, editingProvider])
+  }, [businessId, editingProvider, t])
 
   return {
     // Data

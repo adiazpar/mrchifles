@@ -5,9 +5,11 @@ import { Spinner } from '@/components/ui'
 import { useProviderManagement } from '@/hooks'
 import { useBusiness } from '@/contexts/business-context'
 import { ProviderListItem, ProviderModal } from '@/components/providers'
+import { useTranslations } from 'next-intl'
 
 export default function ProveedoresPage() {
   const { businessId } = useBusiness()
+  const t = useTranslations('providers')
 
   const {
     // Data
@@ -69,7 +71,7 @@ export default function ProveedoresPage() {
             <div className="card p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-text-secondary">
-                  {providers.length} {providers.length === 1 ? 'provider' : 'providers'}
+                  {t('count', { count: providers.length })}
                 </span>
                 {canManage && (
                   <button
@@ -78,7 +80,7 @@ export default function ProveedoresPage() {
                     className="btn btn-primary btn-sm"
                   >
                     <Plus className="w-4 h-4" />
-                    Add
+                    {t('add_button')}
                   </button>
                 )}
               </div>
@@ -101,9 +103,9 @@ export default function ProveedoresPage() {
           {providers.length === 0 && (
             <div className="empty-state-fill">
               <Van className="empty-state-icon" />
-              <h3 className="empty-state-title">No providers</h3>
+              <h3 className="empty-state-title">{t('empty_title')}</h3>
               <p className="empty-state-description">
-                Add your first provider to get started
+                {t('empty_description')}
               </p>
               {canManage && (
                 <button
@@ -112,7 +114,7 @@ export default function ProveedoresPage() {
                   className="btn btn-primary mt-4"
                 >
                   <Plus className="w-4 h-4" />
-                  Add provider
+                  {t('add_provider_button')}
                 </button>
               )}
             </div>

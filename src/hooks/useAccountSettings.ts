@@ -6,6 +6,7 @@ import { useBusiness } from '@/contexts/business-context'
 import { useTransfer } from '@/contexts/transfer-context'
 import { isOwner as checkIsOwner } from '@/lib/business-role'
 import { apiPost, ApiError } from '@/lib/api-client'
+import { useTranslations } from 'next-intl'
 
 // ============================================
 // TYPES
@@ -30,21 +31,6 @@ export interface IncomingTransfer {
   status: 'pending' | 'accepted'
   expiresAt: string
 }
-
-export const THEME_CONFIG = {
-  light: {
-    label: 'Light',
-    description: 'Light mode enabled',
-  },
-  dark: {
-    label: 'Dark',
-    description: 'Dark mode enabled',
-  },
-  system: {
-    label: 'System',
-    description: 'Automatically adjusts based on your device',
-  },
-} as const
 
 // ============================================
 // HELPERS
@@ -110,6 +96,8 @@ export function useAccountSettings(): UseAccountSettingsReturn {
   const { user } = useAuth()
   const { role, businessId } = useBusiness()
   const isOwner = checkIsOwner(role)
+  const t = useTranslations('account')
+  const tAuth = useTranslations('auth')
 
   // Get transfer data from shared context (fetched once in layout)
   const {
@@ -198,12 +186,12 @@ export function useAccountSettings(): UseAccountSettingsReturn {
 
     // Validate email
     if (!transferEmail || !transferEmail.includes('@')) {
-      setTransferError('Enter a valid email')
+      setTransferError(t('transfer_email_invalid'))
       return
     }
 
     if (!businessId) {
-      setTransferError('No business context')
+      setTransferError(t('transfer_no_business'))
       return
     }
 
@@ -234,12 +222,12 @@ export function useAccountSettings(): UseAccountSettingsReturn {
         setTransferError(err.message)
       } else {
         console.error('Transfer initiate error:', err)
-        setTransferError('Connection error')
+        setTransferError(tAuth('connection_error'))
       }
     } finally {
       setTransferLoading(false)
     }
-  }, [transferEmail, businessId, setPendingTransfer])
+  }, [t, tAuth, transferEmail, businessId, setPendingTransfer])
 
   const handleCopyTransferLink = useCallback(async () => {
     try {
@@ -298,12 +286,12 @@ export function useAccountSettings(): UseAccountSettingsReturn {
         setTransferError(err.message)
       } else {
         console.error('Confirm transfer error:', err)
-        setTransferError('Connection error')
+        setTransferError(tAuth('connection_error'))
       }
     } finally {
       setTransferLoading(false)
     }
-  }, [pendingTransfer, businessId])
+  }, [tAuth, pendingTransfer, businessId])
 
   const handleShowTransferLink = useCallback(() => {
     if (pendingTransfer) {
@@ -343,7 +331,7 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     // Theme
     theme,
     setTheme,
-    themeDescription: THEME_CONFIG[theme].description,
+    themeDescription: t(`theme_description_${theme}`),
 
     // Transfer state (owner)
     pendingTransfer,

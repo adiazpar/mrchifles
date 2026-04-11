@@ -1,6 +1,7 @@
 'use client'
 
 import { ChevronRight } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import type { Provider } from '@/types'
 
 function getProviderInitials(name: string): string {
@@ -17,6 +18,7 @@ export interface ProviderListItemProps {
 }
 
 export function ProviderListItem({ provider, onClick }: ProviderListItemProps) {
+  const t = useTranslations('providers')
   return (
     <div
       className="list-item-clickable list-item-flat"
@@ -36,10 +38,10 @@ export function ProviderListItem({ provider, onClick }: ProviderListItemProps) {
       <div className="flex-1 min-w-0">
         <span className="font-medium truncate block">{provider.name}</span>
         <span className="text-xs text-text-tertiary mt-0.5 block">
-          {provider.phone || 'No phone'}
+          {provider.phone || t('no_phone')}
           <span className="mx-1.5">·</span>
           <span className={provider.active ? 'text-success' : 'text-error'}>
-            {provider.active ? 'Active' : 'Inactive'}
+            {provider.active ? t('status_active') : t('status_inactive')}
           </span>
         </span>
       </div>
