@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
 import { db, orders, orderItems, products } from '@/db'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 const receiveOrderSchema = z.object({
   receivedQuantities: z.record(z.string(), z.number().int().min(0)),
@@ -16,7 +16,7 @@ const receiveOrderSchema = z.object({
 export const POST = withBusinessAuth(async (request, access, routeParams) => {
   const id = routeParams?.id
   if (!id) {
-    return HttpResponse.badRequest('Order ID is required')
+    return errorResponse(ApiMessageCode.ORDER_ID_REQUIRED, 400)
   }
 
   // Verify order exists and belongs to business
@@ -32,11 +32,11 @@ export const POST = withBusinessAuth(async (request, access, routeParams) => {
     .limit(1)
 
   if (!existingOrder) {
-    return HttpResponse.notFound('Order not found')
+    return errorResponse(ApiMessageCode.ORDER_NOT_FOUND, 404)
   }
 
   if (existingOrder.status === 'received') {
-    return HttpResponse.badRequest('Order has already been received')
+    return errorResponse(ApiMessageCode.ORDER_ALREADY_RECEIVED, 400)
   }
 
   const body = await request.json()
@@ -80,7 +80,5 @@ export const POST = withBusinessAuth(async (request, access, routeParams) => {
     })
     .where(eq(orders.id, id))
 
-  return NextResponse.json({
-    success: true,
-  })
+  return successResponse({})
 })

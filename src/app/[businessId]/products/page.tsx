@@ -29,6 +29,8 @@ import {
 import { getProductIconUrl } from '@/lib/utils'
 import { useAiProductPipeline, useImageCompression, useBusinessFormat } from '@/hooks'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
+import { useApiMessage } from '@/hooks/useApiMessage'
+import { hasMessageEnvelope } from '@/lib/api-messages'
 import { useTranslations } from 'next-intl'
 import type { Product, Provider, SortPreference, ProductCategory } from '@/types'
 
@@ -257,6 +259,7 @@ function EditProductModalWrapper({
 export default function ProductosPage() {
   const t = useTranslations('products')
   const tOrders = useTranslations('orders')
+  const translateApiMessage = useApiMessage()
   const { user } = useAuth()
   const { canManage, businessId } = useBusiness()
   const { formatDate } = useBusinessFormat()
@@ -870,7 +873,11 @@ export default function ProductosPage() {
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        setError(data.error || tOrders('error_failed_to_save_order'))
+        setError(
+          hasMessageEnvelope(data)
+            ? translateApiMessage(data)
+            : tOrders('error_failed_to_save_order')
+        )
         return false
       }
 
@@ -891,7 +898,7 @@ export default function ProductosPage() {
     } finally {
       setIsSavingOrder(false)
     }
-  }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, viewingOrder, setOrders, tOrders])
+  }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, viewingOrder, setOrders, tOrders, translateApiMessage])
 
   const handleReceiveOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder || !user) return false
@@ -908,7 +915,11 @@ export default function ProductosPage() {
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        setError(data.error || tOrders('error_failed_to_receive_order'))
+        setError(
+          hasMessageEnvelope(data)
+            ? translateApiMessage(data)
+            : tOrders('error_failed_to_receive_order')
+        )
         return false
       }
 
@@ -939,7 +950,7 @@ export default function ProductosPage() {
     } finally {
       setIsReceiving(false)
     }
-  }, [businessId, viewingOrder, user, receivedQuantities, setProducts, setOrders, tOrders])
+  }, [businessId, viewingOrder, user, receivedQuantities, setProducts, setOrders, tOrders, translateApiMessage])
 
   const handleDeleteOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder) return false
@@ -954,7 +965,11 @@ export default function ProductosPage() {
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        setError(data.error || tOrders('error_failed_to_delete_order'))
+        setError(
+          hasMessageEnvelope(data)
+            ? translateApiMessage(data)
+            : tOrders('error_failed_to_delete_order')
+        )
         return false
       }
 
@@ -968,7 +983,7 @@ export default function ProductosPage() {
     } finally {
       setIsDeletingOrder(false)
     }
-  }, [businessId, viewingOrder, setOrders, tOrders])
+  }, [businessId, viewingOrder, setOrders, tOrders, translateApiMessage])
 
   const initializeReceiveQuantities = useCallback((order: ExpandedOrder) => {
     const items = order.expand?.['order_items(order)'] || []

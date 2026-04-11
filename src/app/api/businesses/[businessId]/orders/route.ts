@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { db, orders, orderItems, providers, products } from '@/db'
 import { eq, desc, inArray } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const orderItemSchema = z.object({
@@ -29,10 +29,7 @@ export const GET = withBusinessAuth(async (request, access) => {
 
   // Early return if no orders
   if (orderIds.length === 0) {
-    return NextResponse.json({
-      success: true,
-      orders: [],
-    })
+    return successResponse({ orders: [] })
   }
 
   // Get order items only for these orders (not all items in DB)
@@ -103,10 +100,7 @@ export const GET = withBusinessAuth(async (request, access) => {
     }
   })
 
-  return NextResponse.json({
-    success: true,
-    orders: expandedOrders,
-  })
+  return successResponse({ orders: expandedOrders })
 })
 
 /**
@@ -130,15 +124,15 @@ export const POST = withBusinessAuth(async (request, access) => {
     items = JSON.parse(itemsJson)
     const validation = z.array(orderItemSchema).safeParse(items)
     if (!validation.success) {
-      return HttpResponse.badRequest('Invalid items')
+      return errorResponse(ApiMessageCode.ORDER_INVALID_ITEMS, 400)
     }
   } catch {
-    return HttpResponse.badRequest('Invalid items')
+    return errorResponse(ApiMessageCode.ORDER_INVALID_ITEMS, 400)
   }
 
   const totalValidation = Schemas.positiveAmount().safeParse(totalStr)
   if (!totalValidation.success) {
-    return HttpResponse.badRequest(totalValidation.error.issues[0]?.message || 'Invalid total')
+    return validationError(totalValidation)
   }
   const total = totalValidation.data
 
@@ -184,8 +178,7 @@ export const POST = withBusinessAuth(async (request, access) => {
   }
 
   // Return full expanded order so client can append without refetching
-  return NextResponse.json({
-    success: true,
+  return successResponse({
     order: {
       id: orderId,
       businessId: access.businessId,

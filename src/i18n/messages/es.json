@@ -592,6 +592,12 @@
     "category_not_found": "Category not found",
     "category_id_required": "Category ID is required",
     "categories_not_found_in_business": "Some categories do not belong to this business",
-    "stock_invalid": "Stock must be 0 or greater"
+    "stock_invalid": "Stock must be 0 or greater",
+    "order_not_found": "Order not found",
+    "order_id_required": "Order ID is required",
+    "order_forbidden_not_manager": "Only partners and owners can manage orders",
+    "order_invalid_items": "Invalid items",
+    "order_already_received": "Order has already been received",
+    "order_cannot_edit_received": "Cannot edit a received order"
   }
 }

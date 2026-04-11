@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { db, orders, orderItems } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { canManageBusiness } from '@/lib/business-auth'
 import { Schemas } from '@/lib/schemas'
 
@@ -21,12 +21,12 @@ const orderItemSchema = z.object({
 export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   // Only partners and owners can modify orders
   if (!canManageBusiness(access.role)) {
-    return HttpResponse.forbidden('Only partners and owners can modify orders')
+    return errorResponse(ApiMessageCode.ORDER_FORBIDDEN_NOT_MANAGER, 403)
   }
 
   const id = routeParams?.id
   if (!id) {
-    return HttpResponse.badRequest('Order ID is required')
+    return errorResponse(ApiMessageCode.ORDER_ID_REQUIRED, 400)
   }
 
   // Verify order exists and belongs to business
@@ -42,11 +42,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     .limit(1)
 
   if (!existingOrder) {
-    return HttpResponse.notFound('Order not found')
+    return errorResponse(ApiMessageCode.ORDER_NOT_FOUND, 404)
   }
 
   if (existingOrder.status === 'received') {
-    return HttpResponse.badRequest('Cannot edit a received order')
+    return errorResponse(ApiMessageCode.ORDER_CANNOT_EDIT_RECEIVED, 400)
   }
 
   const formData = await request.formData()
@@ -61,7 +61,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   if (totalStr !== null) {
     const totalValidation = Schemas.positiveAmount().safeParse(totalStr)
     if (!totalValidation.success) {
-      return HttpResponse.badRequest(totalValidation.error.issues[0]?.message || 'Invalid total')
+      return validationError(totalValidation)
     }
     updateData.total = totalValidation.data
   }
@@ -90,10 +90,10 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
       items = JSON.parse(itemsJson)
       const validation = z.array(orderItemSchema).safeParse(items)
       if (!validation.success) {
-        return HttpResponse.badRequest('Invalid items')
+        return errorResponse(ApiMessageCode.ORDER_INVALID_ITEMS, 400)
       }
     } catch {
-      return HttpResponse.badRequest('Invalid items')
+      return errorResponse(ApiMessageCode.ORDER_INVALID_ITEMS, 400)
     }
 
     // Delete existing items and insert new ones
@@ -112,9 +112,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     }
   }
 
-  return NextResponse.json({
-    success: true,
-  })
+  return successResponse({})
 })
 
 /**
@@ -125,12 +123,12 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
 export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
   // Only partners and owners can delete orders
   if (!canManageBusiness(access.role)) {
-    return HttpResponse.forbidden('Only partners and owners can delete orders')
+    return errorResponse(ApiMessageCode.ORDER_FORBIDDEN_NOT_MANAGER, 403)
   }
 
   const id = routeParams?.id
   if (!id) {
-    return HttpResponse.badRequest('Order ID is required')
+    return errorResponse(ApiMessageCode.ORDER_ID_REQUIRED, 400)
   }
 
   // Verify order exists and belongs to business
@@ -146,13 +144,11 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
     .limit(1)
 
   if (!existingOrder) {
-    return HttpResponse.notFound('Order not found')
+    return errorResponse(ApiMessageCode.ORDER_NOT_FOUND, 404)
   }
 
   // Delete order (cascade will delete items)
   await db.delete(orders).where(eq(orders.id, id))
 
-  return NextResponse.json({
-    success: true,
-  })
+  return successResponse({})
 })

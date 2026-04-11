@@ -100,6 +100,10 @@ export function errorResponse(
  * Build a structured success response that merges route data with an
  * optional message code for toast / feedback rendering on the client.
  *
+ * Includes `success: true` so legacy consumers that check `data.success`
+ * continue to work during the migration. Remove when all consumers have
+ * switched to `response.ok` checks.
+ *
  * @example
  *   return successResponse({ user }, ApiMessageCode.AUTH_LOGIN_SUCCESS)
  *   return successResponse({ products })  // no toast — just data
@@ -109,7 +113,7 @@ export function successResponse(
   code?: ApiMessageCode,
   vars?: Record<string, string | number>,
 ): NextResponse {
-  const body: Record<string, unknown> = { ...data }
+  const body: Record<string, unknown> = { success: true, ...data }
   if (code) body.messageCode = code
   if (vars) body.messageVars = vars
   return NextResponse.json(body)
