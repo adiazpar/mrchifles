@@ -86,10 +86,6 @@
   --color-border-focus: var(--brand-500);
 
   /* Payment Methods */
-  --color-cash: #2E7D4A;
-  --color-cash-hover: #256A3D;
-  --color-cash-subtle: #E8F5EB;
-
   --color-yape: #6B21A8;
   --color-yape-hover: #581C87;
   --color-yape-subtle: #F3E8FF;

@@ -86,11 +86,6 @@
   color: var(--color-error);
 }
 
-.badge-cash {
-  background: var(--color-cash-subtle);
-  color: var(--color-cash);
-}
-
 .badge-yape {
   background: var(--color-yape-subtle);
   color: var(--color-yape);

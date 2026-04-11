@@ -96,11 +96,6 @@
 }
 
 /* Payment buttons */
-.btn-cash {
-  background: var(--color-cash);
-  color: white;
-}
-
 .btn-yape {
   background: var(--color-yape);
   color: white;

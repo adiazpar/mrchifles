@@ -1,7 +1,6 @@
 // Navigation icons
 export { HomeIcon } from './HomeIcon'
 export { SalesIcon } from './SalesIcon'
-export { CashIcon } from './CashIcon'
 export { ProductsIcon } from './ProductsIcon'
 export { ReportsIcon } from './ReportsIcon'
 
@@ -50,9 +49,7 @@ export { SettingsIcon } from './SettingsIcon'
 export { LogoutIcon } from './LogoutIcon'
 export { HelpIcon } from './HelpIcon'
 
-// Money/Cash icons
-export { DepositIcon } from './DepositIcon'
-export { WithdrawIcon } from './WithdrawIcon'
+// Money icons
 export { ReceiptIcon } from './ReceiptIcon'
 
 // Product icons

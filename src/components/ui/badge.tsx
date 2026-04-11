@@ -7,7 +7,6 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
     | 'success'
     | 'warning'
     | 'error'
-    | 'cash'
     | 'yape'
     | 'pos'
 }
@@ -24,7 +23,6 @@ export function Badge({
     success: 'badge-success',
     warning: 'badge-warning',
     error: 'badge-error',
-    cash: 'badge-cash',
     yape: 'badge-yape',
     pos: 'badge-pos',
   }

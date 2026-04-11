@@ -1,4 +1,4 @@
-import { HomeIcon, SalesIcon, CashIcon, TagsIcon, SettingsIcon } from '@/components/icons'
+import { HomeIcon, SalesIcon, TagsIcon, SettingsIcon } from '@/components/icons'
 import type { ComponentType } from 'react'
 
 export interface NavItem {
@@ -28,7 +28,6 @@ export function getBusinessIdFromPath(pathname: string): string | null {
 const NAV_ITEM_TEMPLATES = [
   { path: '/home', label: 'Home', icon: HomeIcon },
   { path: '/sales', label: 'Sales', icon: SalesIcon },
-  { path: '/cash', label: 'Cash', icon: CashIcon },
   { path: '/products', label: 'Products', icon: TagsIcon },
   { path: '/manage', label: 'Manage', icon: SettingsIcon },
 ]
@@ -67,14 +66,13 @@ export function getPrefetchRoutes(businessId: string): string[] {
 export interface RouteConfig {
   title?: string    // Main title (used for hub pages like Account)
   pageTitle: string // Displays as subtitle under business name or title
-  backTo?: string   // Relative path (e.g., '/cash'), businessId prefix added dynamically
+  backTo?: string   // Relative path (e.g., '/products'), businessId prefix added dynamically
 }
 
 // Route configs keyed by the path segment after businessId
 const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   'home': { pageTitle: 'Home' },
   'sales': { pageTitle: 'Sales' },
-  'cash': { pageTitle: 'Cash Drawer' },
   'products': { pageTitle: 'Products' },
   'manage': { pageTitle: 'Manage' },
   'team': { pageTitle: 'Team' },
