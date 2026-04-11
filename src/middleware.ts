@@ -24,7 +24,6 @@ const publicPaths = [
   '/api/auth/register',
   '/api/auth/logout',
   '/api/auth/me', // Auth check endpoint - returns { user: null } if not authenticated
-  '/api/setup-status',
 ]
 
 // Check if path is public

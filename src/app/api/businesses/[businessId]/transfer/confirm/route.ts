@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { db, ownershipTransfers, users, businesses, businessUsers } from '@/db'
+import { db, ownershipTransfers, users, businessUsers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { isOwner, invalidateAccessCache } from '@/lib/business-auth'
@@ -89,7 +89,6 @@ export const POST = withBusinessAuth(async (request, access) => {
     .update(businessUsers)
     .set({
       role: 'partner',
-      updatedAt: now,
     })
     .where(
       and(
@@ -116,7 +115,6 @@ export const POST = withBusinessAuth(async (request, access) => {
       .update(businessUsers)
       .set({
         role: 'owner',
-        updatedAt: now,
       })
       .where(eq(businessUsers.id, existingMembership.id))
   } else {
@@ -127,28 +125,16 @@ export const POST = withBusinessAuth(async (request, access) => {
       businessId: access.businessId,
       role: 'owner',
       status: 'active',
-      joinedAt: now,
       createdAt: now,
-      updatedAt: now,
     })
   }
 
-  // 3. Update business owner
-  await db
-    .update(businesses)
-    .set({
-      ownerId: transfer.toUser,
-      updatedAt: now,
-    })
-    .where(eq(businesses.id, access.businessId))
-
-  // 4. Mark transfer as completed
+  // 3. Mark transfer as completed
   await db
     .update(ownershipTransfers)
     .set({
       status: 'completed',
       completedAt: now,
-      updatedAt: now,
     })
     .where(eq(ownershipTransfers.id, transfer.id))
 

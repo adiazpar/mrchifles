@@ -66,7 +66,6 @@ export const POST = withBusinessAuth(async (request, access, routeParams) => {
         .update(products)
         .set({
           stock: sql`${products.stock} + ${receivedQty}`,
-          updatedAt: now,
         })
         .where(eq(products.id, item.productId))
     }
@@ -78,7 +77,6 @@ export const POST = withBusinessAuth(async (request, access, routeParams) => {
     .set({
       status: 'received',
       receivedDate: now,
-      updatedAt: now,
     })
     .where(eq(orders.id, id))
 

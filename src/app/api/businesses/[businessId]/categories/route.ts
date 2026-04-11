@@ -65,15 +65,12 @@ export const POST = withBusinessAuth(async (request, access) => {
     : 0
 
   const categoryId = nanoid()
-  const now = new Date()
 
   const [newCategory] = await db.insert(productCategories).values({
     id: categoryId,
     businessId: access.businessId,
     name: name.trim(),
     sortOrder: maxSortOrder + 1,
-    createdAt: now,
-    updatedAt: now,
   }).returning()
 
   return NextResponse.json({

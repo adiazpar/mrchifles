@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { db, productCategories, products, productSettings } from '@/db'
+import { db, productCategories, products, businesses } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
@@ -48,13 +48,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   }
 
   const { name } = validation.data
-  const now = new Date()
 
   await db
     .update(productCategories)
     .set({
       name: name.trim(),
-      updatedAt: now,
     })
     .where(eq(productCategories.id, id))
 
@@ -110,14 +108,14 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
   // Clear categoryId from products
   await db
     .update(products)
-    .set({ categoryId: null, updatedAt: new Date() })
+    .set({ categoryId: null })
     .where(eq(products.categoryId, id))
 
-  // Clear defaultCategoryId from product_settings if this was the default
+  // Clear defaultCategoryId from business if this was the default
   await db
-    .update(productSettings)
-    .set({ defaultCategoryId: null, updatedAt: new Date() })
-    .where(eq(productSettings.defaultCategoryId, id))
+    .update(businesses)
+    .set({ defaultCategoryId: null })
+    .where(eq(businesses.defaultCategoryId, id))
 
   // Delete the category
   await db

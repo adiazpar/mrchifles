@@ -78,8 +78,6 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     updateData.providerId = providerId || null
   }
 
-  updateData.updatedAt = new Date()
-
   await db
     .update(orders)
     .set(updateData)
@@ -101,7 +99,6 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     // Delete existing items and insert new ones
     await db.delete(orderItems).where(eq(orderItems.orderId, id))
 
-    const now = new Date()
     if (items.length > 0) {
       await db.insert(orderItems).values(
         items.map(item => ({
@@ -110,7 +107,6 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
           productId: item.productId,
           productName: item.productName,
           quantity: item.quantity,
-          createdAt: now,
         }))
       )
     }

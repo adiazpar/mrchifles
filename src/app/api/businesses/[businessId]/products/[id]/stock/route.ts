@@ -48,7 +48,6 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     .update(products)
     .set({
       stock,
-      updatedAt: new Date(),
     })
     .where(eq(products.id, id))
 

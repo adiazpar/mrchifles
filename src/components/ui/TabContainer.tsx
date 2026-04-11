@@ -100,10 +100,22 @@ function TabContainerRoot({ activeTab, children, onTabChange, swipeable = false,
     }
 
     const stackClass = fitActiveHeight ? 'relative' : 'grid'
+    // When fitActiveHeight is on (full-page tabs), make the flex chain grow
+    // so inner content (e.g. .page-body → .empty-state-fill) can fill empty
+    // vertical space. Use `grow` without `min-h-0` — this lets the wrapper
+    // fill available space when content is short (empty state) AND still
+    // expand beyond it when content is tall (ancestor scroll handles it).
+    // Modals use fitActiveHeight=false and want natural content height.
+    const wrapperClass = fitActiveHeight
+      ? 'overflow-hidden min-w-0 grow flex flex-col'
+      : 'overflow-hidden min-w-0'
+    const innerClass = fitActiveHeight
+      ? `${stackClass} min-w-0 touch-pan-y grow flex flex-col`
+      : `${stackClass} min-w-0 touch-pan-y`
     return (
-      <div ref={wrapperRef} className="overflow-hidden min-w-0">
+      <div ref={wrapperRef} className={wrapperClass}>
         <motion.div
-          className={`${stackClass} min-w-0 touch-pan-y`}
+          className={innerClass}
           drag="x"
           dragDirectionLock
           dragConstraints={{ left: 0, right: 0 }}
@@ -115,8 +127,8 @@ function TabContainerRoot({ activeTab, children, onTabChange, swipeable = false,
             const isActive = relative === 0
             const positionClass = fitActiveHeight
               ? isActive
-                ? 'relative'
-                : 'absolute inset-x-0 top-0'
+                ? 'relative grow'
+                : 'absolute inset-0'
               : 'col-start-1 row-start-1'
             return (
               <motion.div

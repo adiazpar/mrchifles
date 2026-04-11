@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db, inviteCodes, businesses, businessUsers } from '@/db'
-import { eq, and, gt } from 'drizzle-orm'
+import { eq, and, gt, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import { getCurrentUser } from '@/lib/simple-auth'
@@ -41,18 +41,16 @@ export async function POST(request: NextRequest) {
         id: inviteCodes.id,
         code: inviteCodes.code,
         role: inviteCodes.role,
-        used: inviteCodes.used,
         expiresAt: inviteCodes.expiresAt,
         businessId: inviteCodes.businessId,
         businessName: businesses.name,
-        createdBy: inviteCodes.createdBy,
       })
       .from(inviteCodes)
       .innerJoin(businesses, eq(inviteCodes.businessId, businesses.id))
       .where(
         and(
           eq(inviteCodes.code, code),
-          eq(inviteCodes.used, false),
+          sql`${inviteCodes.usedBy} IS NULL`,
           gt(inviteCodes.expiresAt, now)
         )
       )
@@ -92,17 +90,13 @@ export async function POST(request: NextRequest) {
       businessId: invite.businessId,
       role: invite.role,
       status: 'active',
-      joinedAt: now,
-      invitedBy: invite.createdBy,
       createdAt: now,
-      updatedAt: now,
     })
 
     // Mark invite code as used
     await db
       .update(inviteCodes)
       .set({
-        used: true,
         usedBy: user.userId,
         usedAt: now,
       })

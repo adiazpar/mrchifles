@@ -57,14 +57,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user is disabled
-    if (user.status === 'disabled') {
-      return NextResponse.json(
-        { error: 'Your account has been disabled' },
-        { status: 403 }
-      )
-    }
-
     // Verify password
     const isValidPassword = await verifyPassword(password, user.password)
 

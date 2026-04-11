@@ -52,10 +52,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     businessId: access.businessId,
     code: newCode,
     role,
-    createdBy: access.userId,
     expiresAt: new Date(expiresAt),
-    used: false,
-    createdAt: now,
   })
 
   return NextResponse.json({

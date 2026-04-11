@@ -156,8 +156,6 @@ export const POST = withBusinessAuth(async (request, access) => {
     iconData = presetIcon
   }
 
-  const now = new Date()
-
   // Check for an archived product with the same name (case-insensitive)
   const [archivedMatch] = await db
     .select()
@@ -169,7 +167,6 @@ export const POST = withBusinessAuth(async (request, access) => {
         sql`LOWER(TRIM(${products.name})) = LOWER(TRIM(${validName}))`
       )
     )
-    .orderBy(sql`${products.updatedAt} DESC`)
     .limit(1)
 
   if (archivedMatch) {
@@ -186,7 +183,6 @@ export const POST = withBusinessAuth(async (request, access) => {
         barcodeSource,
         barcodeGtin,
         status,
-        updatedAt: now,
       })
       .where(eq(products.id, archivedMatch.id))
 
@@ -215,8 +211,6 @@ export const POST = withBusinessAuth(async (request, access) => {
     barcodeGtin,
     status,
     stock: 0,
-    createdAt: now,
-    updatedAt: now,
   }).returning()
 
   return NextResponse.json({

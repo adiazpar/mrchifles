@@ -57,12 +57,10 @@ export const POST = withBusinessAuth(async (request, access) => {
   }
 
   // Update user role in business_users
-  const now = new Date()
   await db
     .update(businessUsers)
     .set({
       role,
-      updatedAt: now,
     })
     .where(
       and(

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db, inviteCodes, businesses, ownershipTransfers, users } from '@/db'
-import { eq, and, gt, inArray } from 'drizzle-orm'
+import { eq, and, gt, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { validationError } from '@/lib/api-middleware'
@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
         id: inviteCodes.id,
         code: inviteCodes.code,
         role: inviteCodes.role,
-        used: inviteCodes.used,
         expiresAt: inviteCodes.expiresAt,
         businessId: inviteCodes.businessId,
         businessName: businesses.name,
@@ -71,7 +70,7 @@ export async function POST(request: NextRequest) {
       .where(
         and(
           eq(inviteCodes.code, code),
-          eq(inviteCodes.used, false),
+          sql`${inviteCodes.usedBy} IS NULL`,
           gt(inviteCodes.expiresAt, now)
         )
       )

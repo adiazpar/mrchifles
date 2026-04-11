@@ -56,7 +56,6 @@ async function main() {
       barcodeSource: products.barcodeSource,
       barcodeGtin: products.barcodeGtin,
       status: products.status,
-      createdAt: products.createdAt,
     })
     .from(products)) as ProductRow[]
 

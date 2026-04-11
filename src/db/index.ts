@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import { drizzle } from 'drizzle-orm/libsql'
 import { createClient, type Client } from '@libsql/client'
 import * as schema from './schema'
@@ -5,10 +6,14 @@ import * as schema from './schema'
 let _client: Client | undefined
 let _db: ReturnType<typeof drizzle<typeof schema>> | undefined
 
+const isDev = process.env.NODE_ENV !== 'production'
+
 function getDb() {
   if (_db) return _db
-  const url = process.env.TURSO_DATABASE_URL
-  const authToken = process.env.TURSO_AUTH_TOKEN
+  const url = isDev
+    ? `file:${resolve(process.cwd(), 'data/local.db')}`
+    : process.env.TURSO_DATABASE_URL
+  const authToken = isDev ? undefined : process.env.TURSO_AUTH_TOKEN
   if (!url) {
     throw new Error('TURSO_DATABASE_URL is not set')
   }

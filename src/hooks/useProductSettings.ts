@@ -254,7 +254,7 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
 
       // Clear default category if this was the default
       if (settings?.defaultCategoryId === id) {
-        setSettings(prev => prev ? { ...prev, defaultCategoryId: null, defaultCategory: null } : null)
+        setSettings(prev => prev ? { ...prev, defaultCategoryId: null } : null)
       }
 
       return true

@@ -59,7 +59,6 @@ export const POST = withBusinessAuth(async (request, access) => {
   const { name, phone, email, notes, active } = validation.data
 
   const providerId = nanoid()
-  const now = new Date()
 
   const [newProvider] = await db.insert(providers).values({
     id: providerId,
@@ -69,8 +68,6 @@ export const POST = withBusinessAuth(async (request, access) => {
     email: email || null,
     notes: notes || null,
     active,
-    createdAt: now,
-    updatedAt: now,
   }).returning()
 
   return NextResponse.json({

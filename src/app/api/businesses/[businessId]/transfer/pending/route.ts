@@ -48,7 +48,6 @@ export const GET = withBusinessAuth(async (request, access) => {
       .update(ownershipTransfers)
       .set({
         status: 'expired',
-        updatedAt: new Date(),
       })
       .where(eq(ownershipTransfers.id, transfer.id))
 

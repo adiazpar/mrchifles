@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db, businessUsers, users, inviteCodes } from '@/db'
-import { eq, and, gt } from 'drizzle-orm'
+import { eq, and, gt, sql } from 'drizzle-orm'
 import { isOwner } from '@/lib/business-auth'
 import { withBusinessAuth } from '@/lib/api-middleware'
 
@@ -18,8 +18,7 @@ export const GET = withBusinessAuth(async (_request, access) => {
       name: users.name,
       role: businessUsers.role,
       status: businessUsers.status,
-      createdAt: users.createdAt,
-      joinedAt: businessUsers.joinedAt,
+      createdAt: businessUsers.createdAt,
     })
     .from(businessUsers)
     .innerJoin(users, eq(businessUsers.userId, users.id))
@@ -31,7 +30,6 @@ export const GET = withBusinessAuth(async (_request, access) => {
     code: string
     role: 'partner' | 'employee'
     expiresAt: Date
-    createdAt: Date
   }> = []
 
   if (isOwner(access.role)) {
@@ -42,13 +40,12 @@ export const GET = withBusinessAuth(async (_request, access) => {
         code: inviteCodes.code,
         role: inviteCodes.role,
         expiresAt: inviteCodes.expiresAt,
-        createdAt: inviteCodes.createdAt,
       })
       .from(inviteCodes)
       .where(
         and(
           eq(inviteCodes.businessId, access.businessId),
-          eq(inviteCodes.used, false),
+          sql`${inviteCodes.usedBy} IS NULL`,
           gt(inviteCodes.expiresAt, now)
         )
       )

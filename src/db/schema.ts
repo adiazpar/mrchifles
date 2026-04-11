@@ -7,7 +7,6 @@ import { relations, sql } from 'drizzle-orm'
 export const businesses = sqliteTable('businesses', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
-  ownerId: text('owner_id').notNull(),
   // Business profile
   type: text('type', {
     enum: ['food', 'retail', 'services', 'wholesale', 'manufacturing', 'other']
@@ -17,9 +16,9 @@ export const businesses = sqliteTable('businesses', {
   locale: text('locale').default('en-US'), // e.g., 'en-US', 'es-MX', 'fr-FR'
   currency: text('currency').default('USD'), // ISO 4217 code
   timezone: text('timezone').default('America/New_York'), // IANA timezone
-  // Timestamps
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  // Product settings (inline - no separate table needed)
+  defaultCategoryId: text('default_category_id'),
+  sortPreference: text('sort_preference').default('name_asc'),
 })
 
 // ===========================================
@@ -31,10 +30,7 @@ export const users = sqliteTable('users', {
   email: text('email').unique().notNull(),
   password: text('password').notNull(), // bcrypt hash
   name: text('name').notNull(),
-  status: text('status', { enum: ['active', 'disabled'] }).default('active').notNull(),
   avatar: text('avatar'), // Base64 or URL
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
 
 // ===========================================
@@ -47,10 +43,7 @@ export const businessUsers = sqliteTable('business_users', {
   businessId: text('business_id').references(() => businesses.id, { onDelete: 'cascade' }).notNull(),
   role: text('role', { enum: ['owner', 'partner', 'employee'] }).notNull(),
   status: text('status', { enum: ['active', 'pending', 'disabled'] }).default('active').notNull(),
-  joinedAt: integer('joined_at', { mode: 'timestamp' }).notNull(),
-  invitedBy: text('invited_by').references(() => users.id),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   userIdIdx: index('idx_business_users_user_id').on(table.userId),
   businessIdIdx: index('idx_business_users_business_id').on(table.businessId),
@@ -65,23 +58,9 @@ export const productCategories = sqliteTable('product_categories', {
   businessId: text('business_id').references(() => businesses.id).notNull(),
   name: text('name').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   businessIdIdx: index('idx_product_categories_business_id').on(table.businessId),
 }))
-
-// ===========================================
-// PRODUCT SETTINGS
-// ===========================================
-export const productSettings = sqliteTable('product_settings', {
-  id: text('id').primaryKey(),
-  businessId: text('business_id').references(() => businesses.id).notNull().unique(),
-  defaultCategoryId: text('default_category_id').references(() => productCategories.id, { onDelete: 'set null' }),
-  sortPreference: text('sort_preference').default('name_asc'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
 
 // ===========================================
 // PRODUCTS
@@ -108,15 +87,10 @@ export const products = sqliteTable('products', {
   // stable external identity used by supplier / POS / e-commerce integrations.
   barcodeGtin: text('barcode_gtin'),
   status: text('status', { enum: ['active', 'inactive', 'archived'] }).default('active').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   businessIdIdx: index('idx_products_business_id').on(table.businessId),
   categoryIdIdx: index('idx_products_category_id').on(table.categoryId),
   businessStatusIdx: index('idx_products_business_status').on(table.businessId, table.status),
-  barcodeIdx: index('idx_products_barcode').on(table.barcode),
-  barcodeFormatIdx: index('idx_products_barcode_format').on(table.barcodeFormat),
-  barcodeSourceIdx: index('idx_products_barcode_source').on(table.barcodeSource),
   barcodeGtinIdx: index('idx_products_barcode_gtin').on(table.barcodeGtin),
   // Partial unique index on (businessId, barcode) for active/inactive rows.
   // Archived rows are excluded so deleted-and-re-added products don't collide.
@@ -125,40 +99,6 @@ export const products = sqliteTable('products', {
   uniqueBusinessBarcode: uniqueIndex('idx_unique_products_business_barcode')
     .on(table.businessId, table.barcode)
     .where(sql`${table.barcode} IS NOT NULL AND ${table.status} != 'archived'`),
-}))
-
-// ===========================================
-// SALES
-// ===========================================
-export const sales = sqliteTable('sales', {
-  id: text('id').primaryKey(),
-  businessId: text('business_id').references(() => businesses.id).notNull(),
-  date: integer('date', { mode: 'timestamp' }).notNull(),
-  total: real('total').notNull(),
-  paymentMethod: text('payment_method', { enum: ['cash', 'card', 'other'] }).notNull(),
-  channel: text('channel', { enum: ['in_store', 'online'] }),
-  employeeId: text('employee_id').references(() => users.id),
-  notes: text('notes'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  businessIdIdx: index('idx_sales_business_id').on(table.businessId),
-  dateIdx: index('idx_sales_date').on(table.date),
-}))
-
-// ===========================================
-// SALE ITEMS
-// ===========================================
-export const saleItems = sqliteTable('sale_items', {
-  id: text('id').primaryKey(),
-  saleId: text('sale_id').references(() => sales.id, { onDelete: 'cascade' }).notNull(),
-  productId: text('product_id').references(() => products.id, { onDelete: 'set null' }),
-  productName: text('product_name').notNull(), // Snapshot at time of sale
-  quantity: integer('quantity').notNull(),
-  unitPrice: real('unit_price').notNull(),
-  subtotal: real('subtotal').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  saleIdIdx: index('idx_sale_items_sale_id').on(table.saleId),
 }))
 
 // ===========================================
@@ -172,8 +112,6 @@ export const providers = sqliteTable('providers', {
   email: text('email'),
   notes: text('notes'),
   active: integer('active', { mode: 'boolean' }).default(true),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   businessIdIdx: index('idx_providers_business_id').on(table.businessId),
 }))
@@ -192,8 +130,6 @@ export const orders = sqliteTable('orders', {
   estimatedArrival: integer('estimated_arrival', { mode: 'timestamp' }),
   receipt: text('receipt'), // R2 URL for receipt image
   notes: text('notes'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   businessIdIdx: index('idx_orders_business_id').on(table.businessId),
   providerIdIdx: index('idx_orders_provider_id').on(table.providerId),
@@ -211,52 +147,8 @@ export const orderItems = sqliteTable('order_items', {
   quantity: integer('quantity').notNull(),
   unitCost: real('unit_cost'),
   subtotal: real('subtotal'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   orderIdIdx: index('idx_order_items_order_id').on(table.orderId),
-}))
-
-// ===========================================
-// CASH SESSIONS
-// ===========================================
-export const cashSessions = sqliteTable('cash_sessions', {
-  id: text('id').primaryKey(),
-  businessId: text('business_id').references(() => businesses.id).notNull(),
-  openedBy: text('opened_by').references(() => users.id).notNull(),
-  closedBy: text('closed_by').references(() => users.id),
-  openedAt: integer('opened_at', { mode: 'timestamp' }).notNull(),
-  closedAt: integer('closed_at', { mode: 'timestamp' }),
-  openingBalance: real('opening_balance').notNull(),
-  closingBalance: real('closing_balance'),
-  expectedBalance: real('expected_balance'),
-  discrepancy: real('discrepancy'),
-  discrepancyNote: text('discrepancy_note'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  businessIdIdx: index('idx_cash_sessions_business_id').on(table.businessId),
-  closedAtIdx: index('idx_cash_sessions_closed_at').on(table.closedAt),
-}))
-
-// ===========================================
-// CASH MOVEMENTS
-// ===========================================
-export const cashMovements = sqliteTable('cash_movements', {
-  id: text('id').primaryKey(),
-  sessionId: text('session_id').references(() => cashSessions.id, { onDelete: 'cascade' }).notNull(),
-  type: text('type', { enum: ['deposit', 'withdrawal'] }).notNull(),
-  category: text('category', {
-    enum: ['sale', 'bank_withdrawal', 'bank_deposit', 'other']
-  }).notNull(),
-  amount: real('amount').notNull(),
-  note: text('note'),
-  saleId: text('sale_id').references(() => sales.id, { onDelete: 'set null' }),
-  createdBy: text('created_by').references(() => users.id).notNull(),
-  editedBy: text('edited_by').references(() => users.id),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  sessionIdIdx: index('idx_cash_movements_session_id').on(table.sessionId),
 }))
 
 // ===========================================
@@ -267,15 +159,12 @@ export const inviteCodes = sqliteTable('invite_codes', {
   businessId: text('business_id').references(() => businesses.id).notNull(),
   code: text('code').unique().notNull(), // 6 uppercase alphanumeric
   role: text('role', { enum: ['partner', 'employee'] }).notNull(),
-  createdBy: text('created_by').references(() => users.id).notNull(),
   usedBy: text('used_by').references(() => users.id),
   usedAt: integer('used_at', { mode: 'timestamp' }),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-  used: integer('used', { mode: 'boolean' }).default(false),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   businessIdIdx: index('idx_invite_codes_business_id').on(table.businessId),
-  usedExpiresIdx: index('idx_invite_codes_used_expires').on(table.used, table.expiresAt),
+  usedExpiresIdx: index('idx_invite_codes_used_expires').on(table.usedBy, table.expiresAt),
 }))
 
 // ===========================================
@@ -294,60 +183,27 @@ export const ownershipTransfers = sqliteTable('ownership_transfers', {
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   acceptedAt: integer('accepted_at', { mode: 'timestamp' }),
   completedAt: integer('completed_at', { mode: 'timestamp' }),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   businessIdIdx: index('idx_ownership_transfers_business_id').on(table.businessId),
   statusIdx: index('idx_ownership_transfers_status').on(table.status),
 }))
 
 // ===========================================
-// BUSINESS ARCHIVES (Deleted business recovery)
-// ===========================================
-export const businessArchives = sqliteTable('business_archives', {
-  id: text('id').primaryKey(),
-  businessId: text('business_id').notNull(), // Original business ID (not FK since business is deleted)
-  businessName: text('business_name').notNull(),
-  deletedBy: text('deleted_by').references(() => users.id).notNull(),
-  archiveData: text('archive_data').notNull(), // JSON blob of all business data
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-})
-
-// ===========================================
-// APP CONFIG (Single row for setup state)
-// ===========================================
-export const appConfig = sqliteTable('app_config', {
-  id: text('id').primaryKey(),
-  setupComplete: integer('setup_complete', { mode: 'boolean' }).default(false),
-  ownerEmail: text('owner_email'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-})
-
-// ===========================================
 // RELATIONS
 // ===========================================
 
-export const businessesRelations = relations(businesses, ({ one, many }) => ({
-  users: many(users),
+export const businessesRelations = relations(businesses, ({ many }) => ({
   businessUsers: many(businessUsers),
   products: many(products),
   productCategories: many(productCategories),
-  productSettings: one(productSettings),
-  sales: many(sales),
   providers: many(providers),
   orders: many(orders),
-  cashSessions: many(cashSessions),
   inviteCodes: many(inviteCodes),
   ownershipTransfers: many(ownershipTransfers),
 }))
 
 export const usersRelations = relations(users, ({ many }) => ({
   businessMemberships: many(businessUsers),
-  sales: many(sales),
-  cashSessionsOpened: many(cashSessions),
-  cashMovementsCreated: many(cashMovements),
-  inviteCodesCreated: many(inviteCodes),
 }))
 
 export const businessUsersRelations = relations(businessUsers, ({ one }) => ({
@@ -358,10 +214,6 @@ export const businessUsersRelations = relations(businessUsers, ({ one }) => ({
   business: one(businesses, {
     fields: [businessUsers.businessId],
     references: [businesses.id],
-  }),
-  inviter: one(users, {
-    fields: [businessUsers.invitedBy],
-    references: [users.id],
   }),
 }))
 
@@ -374,7 +226,6 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     fields: [products.categoryId],
     references: [productCategories.id],
   }),
-  saleItems: many(saleItems),
   orderItems: many(orderItems),
 }))
 
@@ -384,42 +235,6 @@ export const productCategoriesRelations = relations(productCategories, ({ one, m
     references: [businesses.id],
   }),
   products: many(products),
-  productSettingsDefault: many(productSettings),
-}))
-
-export const productSettingsRelations = relations(productSettings, ({ one }) => ({
-  business: one(businesses, {
-    fields: [productSettings.businessId],
-    references: [businesses.id],
-  }),
-  defaultCategory: one(productCategories, {
-    fields: [productSettings.defaultCategoryId],
-    references: [productCategories.id],
-  }),
-}))
-
-export const salesRelations = relations(sales, ({ one, many }) => ({
-  business: one(businesses, {
-    fields: [sales.businessId],
-    references: [businesses.id],
-  }),
-  employee: one(users, {
-    fields: [sales.employeeId],
-    references: [users.id],
-  }),
-  items: many(saleItems),
-  cashMovements: many(cashMovements),
-}))
-
-export const saleItemsRelations = relations(saleItems, ({ one }) => ({
-  sale: one(sales, {
-    fields: [saleItems.saleId],
-    references: [sales.id],
-  }),
-  product: one(products, {
-    fields: [saleItems.productId],
-    references: [products.id],
-  }),
 }))
 
 export const providersRelations = relations(providers, ({ one, many }) => ({
@@ -453,49 +268,10 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   }),
 }))
 
-export const cashSessionsRelations = relations(cashSessions, ({ one, many }) => ({
-  business: one(businesses, {
-    fields: [cashSessions.businessId],
-    references: [businesses.id],
-  }),
-  opener: one(users, {
-    fields: [cashSessions.openedBy],
-    references: [users.id],
-  }),
-  closer: one(users, {
-    fields: [cashSessions.closedBy],
-    references: [users.id],
-  }),
-  movements: many(cashMovements),
-}))
-
-export const cashMovementsRelations = relations(cashMovements, ({ one }) => ({
-  session: one(cashSessions, {
-    fields: [cashMovements.sessionId],
-    references: [cashSessions.id],
-  }),
-  sale: one(sales, {
-    fields: [cashMovements.saleId],
-    references: [sales.id],
-  }),
-  creator: one(users, {
-    fields: [cashMovements.createdBy],
-    references: [users.id],
-  }),
-  editor: one(users, {
-    fields: [cashMovements.editedBy],
-    references: [users.id],
-  }),
-}))
-
 export const inviteCodesRelations = relations(inviteCodes, ({ one }) => ({
   business: one(businesses, {
     fields: [inviteCodes.businessId],
     references: [businesses.id],
-  }),
-  creator: one(users, {
-    fields: [inviteCodes.createdBy],
-    references: [users.id],
   }),
   usedByUser: one(users, {
     fields: [inviteCodes.usedBy],
@@ -518,9 +294,3 @@ export const ownershipTransfersRelations = relations(ownershipTransfers, ({ one 
   }),
 }))
 
-export const businessArchivesRelations = relations(businessArchives, ({ one }) => ({
-  deletedByUser: one(users, {
-    fields: [businessArchives.deletedBy],
-    references: [users.id],
-  }),
-}))

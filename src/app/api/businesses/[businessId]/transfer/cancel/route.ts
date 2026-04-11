@@ -57,7 +57,6 @@ export const POST = withBusinessAuth(async (request, access) => {
     .update(ownershipTransfers)
     .set({
       status: 'cancelled',
-      updatedAt: new Date(),
     })
     .where(eq(ownershipTransfers.id, transfer.id))
 

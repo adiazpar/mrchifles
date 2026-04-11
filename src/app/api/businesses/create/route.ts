@@ -45,33 +45,28 @@ export async function POST(request: NextRequest) {
     const finalCurrency = currency || localeDefaults.currency
     const finalTimezone = timezone || localeDefaults.timezone
 
-    // Create the business
+    // Create business + owner membership atomically
     const businessId = nanoid()
-    await db.insert(businesses).values({
-      id: businessId,
-      name: name.trim(),
-      ownerId: user.userId,
-      type,
-      locale,
-      currency: finalCurrency,
-      timezone: finalTimezone,
-      icon: icon || null,
-      createdAt: now,
-      updatedAt: now,
-    })
-
-    // Create owner membership
     const membershipId = nanoid()
-    await db.insert(businessUsers).values({
-      id: membershipId,
-      userId: user.userId,
-      businessId,
-      role: 'owner',
-      status: 'active',
-      joinedAt: now,
-      createdAt: now,
-      updatedAt: now,
-    })
+    await db.batch([
+      db.insert(businesses).values({
+        id: businessId,
+        name: name.trim(),
+        type,
+        locale,
+        currency: finalCurrency,
+        timezone: finalTimezone,
+        icon: icon || null,
+      }),
+      db.insert(businessUsers).values({
+        id: membershipId,
+        userId: user.userId,
+        businessId,
+        role: 'owner',
+        status: 'active',
+        createdAt: now,
+      }),
+    ])
 
     return NextResponse.json({
       success: true,

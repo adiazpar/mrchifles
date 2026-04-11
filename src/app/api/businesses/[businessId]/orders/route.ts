@@ -143,7 +143,6 @@ export const POST = withBusinessAuth(async (request, access) => {
   const total = totalValidation.data
 
   const orderId = nanoid()
-  const now = new Date()
   const orderDate = new Date(dateStr)
   const orderStatus = status === 'received' ? 'received' : 'pending'
   const estimatedArrival = estimatedArrivalStr ? new Date(estimatedArrivalStr) : null
@@ -155,7 +154,6 @@ export const POST = withBusinessAuth(async (request, access) => {
     productId: item.productId,
     productName: item.productName,
     quantity: item.quantity,
-    createdAt: now,
   }))
 
   await db.batch([
@@ -169,8 +167,6 @@ export const POST = withBusinessAuth(async (request, access) => {
       estimatedArrival,
       receipt: null,
       notes: notes || null,
-      createdAt: now,
-      updatedAt: now,
     }),
     ...(itemValues.length > 0
       ? [db.insert(orderItems).values(itemValues)]
@@ -200,8 +196,6 @@ export const POST = withBusinessAuth(async (request, access) => {
       estimatedArrival,
       receipt: null,
       notes: notes || null,
-      createdAt: now,
-      updatedAt: now,
       expand: {
         provider,
         'order_items(order)': itemValues.map(item => ({

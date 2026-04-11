@@ -114,7 +114,6 @@ export async function POST(request: NextRequest) {
         status: 'accepted',
         toUser: user.userId,
         acceptedAt: now,
-        updatedAt: now,
       })
       .where(eq(ownershipTransfers.id, transfer.id))
 

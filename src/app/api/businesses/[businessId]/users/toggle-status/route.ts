@@ -37,12 +37,10 @@ export const POST = withBusinessAuth(async (request, access) => {
   }
 
   // Update user status in business_users
-  const now = new Date()
   await db
     .update(businessUsers)
     .set({
       status,
-      updatedAt: now,
     })
     .where(
       and(

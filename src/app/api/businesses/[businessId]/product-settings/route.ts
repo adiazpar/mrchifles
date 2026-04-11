@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { db, productSettings } from '@/db'
+import { db, businesses } from '@/db'
 import { eq } from 'drizzle-orm'
-import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
@@ -16,49 +15,31 @@ const updateSettingsSchema = z.object({
 /**
  * GET /api/businesses/[businessId]/product-settings
  *
- * Get product settings for the business.
- * Creates default settings if none exist.
+ * Get product settings for the business (stored on businesses table).
  */
 export const GET = withBusinessAuth(async (request, access) => {
-  let [settings] = await db
-    .select()
-    .from(productSettings)
-    .where(eq(productSettings.businessId, access.businessId))
-    .limit(1)
-
-  if (!settings) {
-    const now = new Date()
-    const settingsId = nanoid()
-
-    await db.insert(productSettings).values({
-      id: settingsId,
-      businessId: access.businessId,
-      defaultCategoryId: null,
-      sortPreference: 'name_asc',
-      createdAt: now,
-      updatedAt: now,
+  const [business] = await db
+    .select({
+      defaultCategoryId: businesses.defaultCategoryId,
+      sortPreference: businesses.sortPreference,
     })
-
-    settings = {
-      id: settingsId,
-      businessId: access.businessId,
-      defaultCategoryId: null,
-      sortPreference: 'name_asc',
-      createdAt: now,
-      updatedAt: now,
-    }
-  }
+    .from(businesses)
+    .where(eq(businesses.id, access.businessId))
+    .limit(1)
 
   return NextResponse.json({
     success: true,
-    settings,
+    settings: {
+      defaultCategoryId: business?.defaultCategoryId ?? null,
+      sortPreference: business?.sortPreference ?? 'name_asc',
+    },
   })
 })
 
 /**
  * PATCH /api/businesses/[businessId]/product-settings
  *
- * Update product settings. Single query - no re-fetch needed.
+ * Update product settings.
  */
 export const PATCH = withBusinessAuth(async (request, access) => {
   if (!canManageBusiness(access.role)) {
@@ -74,7 +55,7 @@ export const PATCH = withBusinessAuth(async (request, access) => {
 
   const { defaultCategoryId, sortPreference } = validation.data
 
-  const updateData: Record<string, unknown> = { updatedAt: new Date() }
+  const updateData: Record<string, unknown> = {}
   if (defaultCategoryId !== undefined) {
     updateData.defaultCategoryId = defaultCategoryId
   }
@@ -82,11 +63,10 @@ export const PATCH = withBusinessAuth(async (request, access) => {
     updateData.sortPreference = sortPreference
   }
 
-  // Single update query - settings always exist (created on first GET)
   await db
-    .update(productSettings)
+    .update(businesses)
     .set(updateData)
-    .where(eq(productSettings.businessId, access.businessId))
+    .where(eq(businesses.id, access.businessId))
 
   return NextResponse.json({
     success: true,

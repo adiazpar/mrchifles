@@ -63,7 +63,6 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await hashPassword(password)
 
-    const now = new Date()
     const userId = nanoid()
 
     // Create user account (email is already normalized to lowercase by schema)
@@ -74,9 +73,6 @@ export async function POST(request: NextRequest) {
         email,
         password: passwordHash,
         name,
-        status: 'active',
-        createdAt: now,
-        updatedAt: now,
       })
       .returning()
 

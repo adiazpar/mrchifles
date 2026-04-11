@@ -52,7 +52,6 @@ export function getPrefetchRoutes(businessId: string): string[] {
     '/account',
     `/${businessId}/team`,
     `/${businessId}/providers`,
-    `/${businessId}/cash/history`,
   ]
 }
 
@@ -76,7 +75,6 @@ const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   'home': { pageTitle: 'Home' },
   'sales': { pageTitle: 'Sales' },
   'cash': { pageTitle: 'Cash Drawer' },
-  'cash/history': { pageTitle: 'History', backTo: '/cash' },
   'products': { pageTitle: 'Products' },
   'manage': { pageTitle: 'Manage' },
   'team': { pageTitle: 'Team' },

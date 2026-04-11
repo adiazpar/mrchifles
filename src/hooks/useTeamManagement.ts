@@ -12,9 +12,11 @@ import { generateInviteQRCode } from '@/lib/qr'
 import { isOwner } from '@/lib/business-role'
 import type { User, InviteCode, InviteRole, UserRole } from '@/types'
 
-// Team member includes role from business_users table
+// Team member includes role and status from business_users table
 export interface TeamMember extends User {
   role: UserRole
+  status: 'active' | 'pending' | 'disabled'
+  createdAt: Date | string
 }
 
 export interface UseTeamManagementOptions {
@@ -194,8 +196,6 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
         role: selectedRole,
         createdBy: user.id,
         expiresAt: expiresAt.toISOString(),
-        used: false,
-        createdAt: new Date().toISOString(),
       }
       setInviteCodes(prev => [...prev, newInviteCode])
     } catch (err) {
@@ -276,8 +276,6 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
         role: selectedRole,
         createdBy: user.id,
         expiresAt: expiresAt.toISOString(),
-        used: false,
-        createdAt: new Date().toISOString(),
       }
       setInviteCodes(prev => [...prev.filter(c => c.id !== oldCodeId), newInviteCode])
     } catch (err) {

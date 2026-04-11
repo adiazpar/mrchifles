@@ -97,8 +97,6 @@ export const POST = withBusinessAuth(async (request, access) => {
     toEmail,
     status: 'pending',
     expiresAt,
-    createdAt: now,
-    updatedAt: now,
   })
 
   return NextResponse.json({

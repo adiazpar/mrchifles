@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Local dev database
+data/
+
 # Next.js
 .next/
 out/

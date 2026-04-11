@@ -27,14 +27,6 @@ export async function GET() {
       return NextResponse.json({ user: null }, { status: 401 })
     }
 
-    // Check if user is disabled
-    if (user.status === 'disabled') {
-      return NextResponse.json(
-        { user: null, error: 'Your account has been disabled' },
-        { status: 403 }
-      )
-    }
-
     // Return user (without password)
     const { password: _, ...userWithoutPassword } = user
 

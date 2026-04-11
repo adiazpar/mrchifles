@@ -44,14 +44,12 @@ export const POST = withBusinessAuth(async (request, access) => {
   }
 
   // Update sort order for each category
-  const now = new Date()
   await Promise.all(
     categoryIds.map((id, index) =>
       db
         .update(productCategories)
         .set({
           sortOrder: index + 1,
-          updatedAt: now,
         })
         .where(eq(productCategories.id, id))
     )

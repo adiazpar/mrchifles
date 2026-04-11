@@ -172,8 +172,6 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     return HttpResponse.badRequest('No data to update')
   }
 
-  updateData.updatedAt = new Date()
-
   // Update with ownership check in WHERE (no separate verify query needed)
   await db
     .update(products)
@@ -234,7 +232,6 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
     .update(products)
     .set({
       status: 'archived',
-      updatedAt: new Date(),
     })
     .where(eq(products.id, id))
 

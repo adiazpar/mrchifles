@@ -24,12 +24,6 @@ export type { OrderStatusFilter, UseOrderManagementOptions, UseOrderManagementRe
 export { useTeamManagement } from './useTeamManagement'
 export type { UseTeamManagementReturn } from './useTeamManagement'
 
-export { useCashSession } from './useCashSession'
-export type { UseCashSessionReturn, UseCashSessionOptions } from './useCashSession'
-
-export { useCashMovements } from './useCashMovements'
-export type { UseCashMovementsReturn } from './useCashMovements'
-
 export { useProviderManagement } from './useProviderManagement'
 export type { UseProviderManagementReturn } from './useProviderManagement'
 
