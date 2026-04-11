@@ -1,16 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { db, users } from '@/db'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { verifyPassword, createToken, setAuthCookie } from '@/lib/simple-auth'
-import { validationError } from '@/lib/api-middleware'
+import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
 import { setLocaleCookieServer } from '@/lib/locale-cookie'
 
 const loginSchema = z.object({
   email: Schemas.email(),
-  password: z.string().min(1, 'Password is required'),
+  password: z.string().min(1),
 })
 
 /**
@@ -24,15 +25,10 @@ export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request)
     const rateLimitResult = checkRateLimit(`login:${clientIp}`, RateLimits.login)
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { error: 'Too many login attempts. Please try again later.' },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
-          },
-        }
-      )
+      const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
+      const response = errorResponse(ApiMessageCode.AUTH_LOGIN_RATE_LIMITED, 429)
+      response.headers.set('Retry-After', retryAfter)
+      return response
     }
 
     const body = await request.json()
@@ -52,20 +48,14 @@ export async function POST(request: NextRequest) {
       .limit(1)
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      )
+      return errorResponse(ApiMessageCode.AUTH_INVALID_CREDENTIALS, 401)
     }
 
     // Verify password
     const isValidPassword = await verifyPassword(password, user.password)
 
     if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      )
+      return errorResponse(ApiMessageCode.AUTH_INVALID_CREDENTIALS, 401)
     }
 
     // Create JWT token
@@ -83,15 +73,12 @@ export async function POST(request: NextRequest) {
     // Return user (without password)
     const { password: _, ...userWithoutPassword } = user
 
-    return NextResponse.json({
-      user: userWithoutPassword,
-      message: 'Login successful',
-    })
+    return successResponse(
+      { user: userWithoutPassword },
+      ApiMessageCode.AUTH_LOGIN_SUCCESS
+    )
   } catch (error) {
     console.error('Login error:', error)
-    return NextResponse.json(
-      { error: 'Login failed' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.AUTH_LOGIN_FAILED, 500)
   }
 }

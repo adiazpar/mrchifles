@@ -14,6 +14,8 @@ import { useTranslations } from 'next-intl'
 import type { User } from '@/types'
 import { fetchDeduped } from '@/lib/fetch'
 import type { SupportedLocale } from '@/i18n/config'
+import { useApiMessage } from '@/hooks/useApiMessage'
+import { hasMessageEnvelope } from '@/lib/api-messages'
 
 // ============================================
 // TYPES
@@ -102,6 +104,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const tAuth = useTranslations('auth')
+  const translateApiMessage = useApiMessage()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -166,7 +169,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json()
 
       if (!response.ok) {
-        return { success: false, error: data.error || 'Login failed' }
+        const error = hasMessageEnvelope(data)
+          ? translateApiMessage(data)
+          : translateApiMessage({ messageCode: 'AUTH_LOGIN_FAILED' })
+        return { success: false, error }
       }
 
       setUser(data.user)
@@ -176,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       return { success: false, error: tAuth('connection_error') }
     }
-  }, [tAuth])
+  }, [tAuth, translateApiMessage])
 
   const logout = useCallback(async () => {
     try {

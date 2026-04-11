@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Input, Card, Spinner } from '@/components/ui'
+import { useApiMessage } from '@/hooks/useApiMessage'
+import { hasMessageEnvelope } from '@/lib/api-messages'
 
 export default function RegisterPage() {
   const router = useRouter()
   const t = useTranslations('auth')
+  const translateApiMessage = useApiMessage()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -50,7 +53,10 @@ export default function RegisterPage() {
         const data = await response.json()
 
         if (!response.ok) {
-          setError(data.error || 'Failed to create account')
+          const translated = hasMessageEnvelope(data)
+            ? translateApiMessage(data)
+            : translateApiMessage({ messageCode: 'AUTH_REGISTER_FAILED' })
+          setError(translated)
           return
         }
 
@@ -63,7 +69,7 @@ export default function RegisterPage() {
         setIsLoading(false)
       }
     },
-    [email, password, passwordConfirm, name, router, t]
+    [email, password, passwordConfirm, name, router, t, translateApiMessage]
   )
 
   return (

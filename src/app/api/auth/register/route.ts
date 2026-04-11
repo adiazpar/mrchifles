@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { db, users } from '@/db'
 import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { hashPassword, createToken, setAuthCookie } from '@/lib/simple-auth'
-import { validationError } from '@/lib/api-middleware'
+import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
 import { setLocaleCookieServer } from '@/lib/locale-cookie'
@@ -28,15 +29,10 @@ export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request)
     const rateLimitResult = checkRateLimit(`register:${clientIp}`, RateLimits.register)
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { error: 'Too many registration attempts. Please try again later.' },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
-          },
-        }
-      )
+      const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
+      const response = errorResponse(ApiMessageCode.AUTH_REGISTER_RATE_LIMITED, 429)
+      response.headers.set('Retry-After', retryAfter)
+      return response
     }
 
     const body = await request.json()
@@ -64,10 +60,7 @@ export async function POST(request: NextRequest) {
       .get()
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'An account with this email already exists' },
-        { status: 400 }
-      )
+      return errorResponse(ApiMessageCode.AUTH_EMAIL_TAKEN, 400)
     }
 
     // Hash password
@@ -103,15 +96,12 @@ export async function POST(request: NextRequest) {
     // Return user (without password)
     const { password: _, ...userWithoutPassword } = newUser
 
-    return NextResponse.json({
-      user: userWithoutPassword,
-      message: 'Account created successfully',
-    })
+    return successResponse(
+      { user: userWithoutPassword },
+      ApiMessageCode.AUTH_REGISTER_SUCCESS
+    )
   } catch (error) {
     console.error('Registration error:', error)
-    return NextResponse.json(
-      { error: 'Failed to create account' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.AUTH_REGISTER_FAILED, 500)
   }
 }

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { db, users } from '@/db'
 import { eq } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/simple-auth'
+import { errorResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 /**
  * GET /api/auth/me
@@ -33,9 +35,6 @@ export async function GET() {
     return NextResponse.json({ user: userWithoutPassword })
   } catch (error) {
     console.error('Get current user error:', error)
-    return NextResponse.json(
-      { user: null, error: 'Failed to get user' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.INTERNAL_ERROR, 500)
   }
 }

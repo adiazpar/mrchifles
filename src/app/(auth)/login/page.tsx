@@ -29,7 +29,7 @@ function LoginPageContent() {
         const result = await login(email, password)
 
         if (!result.success) {
-          setError(result.error || 'Failed to log in')
+          setError(result.error ?? '')
           return
         }
 
