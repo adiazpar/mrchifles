@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronRight, X } from 'lucide-react'
 import { BusinessIcon, FilterIcon, FoodBeverageIcon, ServicesIcon, RetailIcon, WholesaleIcon, ManufacturingIcon, OtherBusinessIcon } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
+import { useCreateBusinessModal } from '@/contexts/create-business-context'
 import { Spinner } from '@/components/ui'
 
 type BusinessType = 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other'
@@ -49,9 +50,27 @@ export default function HubPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const { setPendingHref, setCachedBusinesses } = useNavbar()
+  const { isCreateModalOpen } = useCreateBusinessModal()
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+
+  const fetchBusinesses = useCallback(async () => {
+    try {
+      const res = await fetch('/api/businesses/list')
+      if (res.ok) {
+        const data = await res.json()
+        const fetchedBusinesses = data.businesses || []
+        setBusinesses(fetchedBusinesses)
+        // Cache business data for instant display when entering a business
+        setCachedBusinesses(fetchedBusinesses)
+      }
+    } catch (error) {
+      console.error('Failed to fetch businesses:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [setCachedBusinesses])
 
   useEffect(() => {
     if (authLoading) return
@@ -59,26 +78,18 @@ export default function HubPage() {
       router.push('/login')
       return
     }
-
-    async function fetchBusinesses() {
-      try {
-        const res = await fetch('/api/businesses/list')
-        if (res.ok) {
-          const data = await res.json()
-          const fetchedBusinesses = data.businesses || []
-          setBusinesses(fetchedBusinesses)
-          // Cache business data for instant display when entering a business
-          setCachedBusinesses(fetchedBusinesses)
-        }
-      } catch (error) {
-        console.error('Failed to fetch businesses:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     fetchBusinesses()
-  }, [user, authLoading, router, setCachedBusinesses])
+  }, [user, authLoading, router, fetchBusinesses])
+
+  // Refresh the business list when the create modal closes after being open,
+  // so a newly created business appears without a manual reload.
+  const prevCreateModalOpenRef = useRef(isCreateModalOpen)
+  useEffect(() => {
+    if (prevCreateModalOpenRef.current && !isCreateModalOpen) {
+      fetchBusinesses()
+    }
+    prevCreateModalOpenRef.current = isCreateModalOpen
+  }, [isCreateModalOpen, fetchBusinesses])
 
   const handleEnterBusiness = (businessId: string) => {
     const href = `/${businessId}/home`

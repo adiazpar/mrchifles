@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
 import { getDefaultsForLocale, getLocaleByCountryCode } from '@/lib/locale-config'
 
@@ -50,6 +49,8 @@ export interface UseCreateBusinessReturn {
   createdBusiness: { id: string; name: string } | null
 
   // Validation
+  isNameValid: boolean
+  isTypeValid: boolean
   isStep1Valid: boolean
   isStep2Valid: boolean
 
@@ -71,8 +72,6 @@ function getInitialFormData(): BusinessFormData {
 }
 
 export function useCreateBusiness(): UseCreateBusinessReturn {
-  const router = useRouter()
-
   // Modal state
   const [isOpen, setIsOpen] = useState(false)
 
@@ -96,7 +95,9 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
   }, [formData.locale])
 
   // Validation
-  const isStep1Valid = formData.name.trim().length > 0 && formData.type !== null
+  const isNameValid = formData.name.trim().length > 0
+  const isTypeValid = formData.type !== null
+  const isStep1Valid = isNameValid && isTypeValid
   const isStep2Valid = formData.locale.length > 0 && formData.currency.length > 0 && formData.timezone.length > 0
 
   const resetState = useCallback(() => {
@@ -231,11 +232,7 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
       if (data.success && data.business) {
         setCreatedBusiness(data.business)
         setCreateSuccess(true)
-        // Redirect to the new business after a brief delay
-        setTimeout(() => {
-          setIsOpen(false)
-          router.push(`/${data.business!.id}/home`)
-        }, 1500)
+        setIsCreating(false)
         return true
       } else {
         setError(data.error || 'Failed to create business')
@@ -251,7 +248,7 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
       setIsCreating(false)
       return false
     }
-  }, [formData, isStep1Valid, isStep2Valid, router])
+  }, [formData, isStep1Valid, isStep2Valid])
 
   return {
     // Modal state
@@ -278,6 +275,8 @@ export function useCreateBusiness(): UseCreateBusinessReturn {
     createdBusiness,
 
     // Validation
+    isNameValid,
+    isTypeValid,
     isStep1Valid,
     isStep2Valid,
 

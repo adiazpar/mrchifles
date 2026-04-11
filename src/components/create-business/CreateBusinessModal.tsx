@@ -35,7 +35,8 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
     createSuccess,
     error,
     createdBusiness,
-    isStep1Valid,
+    isNameValid,
+    isTypeValid,
     handleCreateBusiness,
   } = createBusiness
 
@@ -45,14 +46,9 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
       onClose={handleClose}
       onExitComplete={handleExitComplete}
     >
-      {/* Step 0: Business Name & Type */}
+      {/* Step 0: Business Name */}
       <Modal.Step title="Create Business" hideBackButton>
-        <NameAndTypeContent
-          name={formData.name}
-          setName={setName}
-          type={formData.type}
-          setType={setType}
-        />
+        <NameContent name={formData.name} setName={setName} />
         <Modal.Footer>
           <button
             type="button"
@@ -61,11 +57,20 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
           >
             Cancel
           </button>
-          <NextStepButton disabled={!isStep1Valid} />
+          <NextStepButton disabled={!isNameValid} />
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 1: Locale & Settings */}
+      {/* Step 1: Business Type */}
+      <Modal.Step title="Business Type">
+        <TypeContent type={formData.type} setType={setType} />
+        <Modal.Footer>
+          <Modal.BackButton className="btn btn-secondary flex-1" />
+          <NextStepButton disabled={!isTypeValid} />
+        </Modal.Footer>
+      </Modal.Step>
+
+      {/* Step 2: Locale & Settings */}
       <Modal.Step title="Location & Currency">
         <LocaleContent
           locale={formData.locale}
@@ -81,7 +86,7 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 2: Logo Upload */}
+      {/* Step 3: Logo Upload */}
       <Modal.Step title="Business Logo">
         <LogoUploadContent
           businessType={formData.type}
@@ -98,7 +103,7 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 3: Success */}
+      {/* Step 4: Success */}
       <Modal.Step title="Business Created" hideBackButton>
         <Modal.Item>
           <SuccessContent
@@ -114,18 +119,64 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
             </div>
           </Modal.Item>
         )}
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="btn btn-primary flex-1"
+          >
+            Done
+          </button>
+        </Modal.Footer>
       </Modal.Step>
     </Modal>
   )
 }
 
 // ============================================
-// STEP 0: NAME AND TYPE
+// STEP 0: NAME
 // ============================================
 
-interface NameAndTypeContentProps {
+interface NameContentProps {
   name: string
   setName: (name: string) => void
+}
+
+function NameContent({ name, setName }: NameContentProps) {
+  return (
+    <>
+      <Modal.Item>
+        <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
+          Step 1 of 4
+        </div>
+        <p className="text-sm text-text-secondary text-center">
+          What&apos;s the name of your business?
+        </p>
+      </Modal.Item>
+      <Modal.Item>
+        <label className="block text-sm font-medium text-text-primary mb-2">
+          Business Name
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="My Business"
+          maxLength={100}
+          className="input"
+          autoFocus
+          autoComplete="off"
+        />
+      </Modal.Item>
+    </>
+  )
+}
+
+// ============================================
+// STEP 1: BUSINESS TYPE
+// ============================================
+
+interface TypeContentProps {
   type: BusinessType | null
   setType: (type: BusinessType) => void
 }
@@ -162,33 +213,18 @@ function getBusinessTypeIcon(typeValue: string, isSelected: boolean) {
   return <span className="text-2xl">{FALLBACK_EMOJIS[typeValue] || '💼'}</span>
 }
 
-function NameAndTypeContent({ name, setName, type, setType }: NameAndTypeContentProps) {
+function TypeContent({ type, setType }: TypeContentProps) {
   return (
     <>
       <Modal.Item>
+        <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
+          Step 2 of 4
+        </div>
         <p className="text-sm text-text-secondary text-center">
-          Enter your business name and select a type
+          Select the type that best fits your business
         </p>
       </Modal.Item>
       <Modal.Item>
-        <label className="block text-sm font-medium text-text-primary mb-2">
-          Business Name
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="My Business"
-          maxLength={100}
-          className="input"
-          autoFocus
-          autoComplete="off"
-        />
-      </Modal.Item>
-      <Modal.Item>
-        <label className="block text-sm font-medium text-text-primary mb-2">
-          Business Type
-        </label>
         <div className="grid grid-cols-2 gap-2">
           {BUSINESS_TYPES.map((bt) => (
             <button
@@ -237,6 +273,9 @@ function LocaleContent({
   return (
     <>
       <Modal.Item>
+        <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
+          Step 3 of 4
+        </div>
         <p className="text-sm text-text-secondary text-center mb-2">
           Select your location to set currency and timezone
         </p>
@@ -341,6 +380,9 @@ function LogoUploadContent({
   return (
     <>
       <Modal.Item>
+        <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
+          Step 4 of 4
+        </div>
         <p className="text-sm text-text-secondary text-center">
           Upload your business logo (optional)
         </p>
@@ -432,7 +474,7 @@ function CreateButton({ isCreating, onCreate }: CreateButtonProps) {
   const handleClick = useCallback(async () => {
     const success = await onCreate()
     if (success) {
-      goToStep(3)
+      goToStep(4)
     }
   }, [onCreate, goToStep])
 
@@ -484,12 +526,6 @@ function SuccessContent({ createdBusiness, createSuccess, icon }: SuccessContent
       >
         {icon && <span className="mr-1">{icon}</span>}
         {createdBusiness?.name || 'Your business'} is ready to use
-      </p>
-      <p
-        className="text-xs text-text-tertiary mt-3 transition-opacity duration-500 delay-300"
-        style={{ opacity: createSuccess ? 1 : 0 }}
-      >
-        Redirecting...
       </p>
     </div>
   )
