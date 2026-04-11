@@ -611,6 +611,20 @@
     "invite_wrong_recipient": "This transfer is for a different email address",
     "invite_validate_failed": "Failed to validate code",
     "invite_join_failed": "Failed to join business",
-    "invite_already_member": "You are already a member of this business"
+    "invite_already_member": "You are already a member of this business",
+    "transfer_forbidden_not_owner": "Only the owner can perform this action",
+    "transfer_cannot_self": "You cannot transfer the business to yourself",
+    "transfer_pending_exists": "You already have a pending transfer. Cancel it first.",
+    "transfer_not_found": "Transfer not found",
+    "transfer_incorrect_password": "Incorrect password",
+    "transfer_user_not_found": "User not found",
+    "transfer_not_accepted_yet": "The recipient has not yet accepted the transfer",
+    "transfer_no_recipient": "No recipient for this transfer",
+    "transfer_cannot_cancel": "This transfer cannot be cancelled",
+    "transfer_invalid_or_expired": "Invalid, expired, or already accepted transfer code",
+    "transfer_wrong_recipient": "This transfer is for a different email address",
+    "transfer_rate_limited": "Too many attempts. Please try again later.",
+    "transfer_fetch_incoming_failed": "Failed to fetch incoming transfer",
+    "transfer_accept_failed": "Failed to accept transfer"
   }
 }

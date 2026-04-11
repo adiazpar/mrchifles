@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { db, ownershipTransfers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const cancelSchema = z.object({
@@ -19,7 +19,7 @@ const cancelSchema = z.object({
 export const POST = withBusinessAuth(async (request, access) => {
   // Only owners can cancel transfers
   if (!isOwner(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.TRANSFER_FORBIDDEN_NOT_OWNER, 403)
   }
 
   const body = await request.json()
@@ -44,12 +44,12 @@ export const POST = withBusinessAuth(async (request, access) => {
     .limit(1)
 
   if (!transfer) {
-    return HttpResponse.notFound('Transfer not found')
+    return errorResponse(ApiMessageCode.TRANSFER_NOT_FOUND, 404)
   }
 
   // Can only cancel pending or accepted transfers
   if (transfer.status !== 'pending' && transfer.status !== 'accepted') {
-    return HttpResponse.badRequest('This transfer cannot be cancelled')
+    return errorResponse(ApiMessageCode.TRANSFER_CANNOT_CANCEL, 400)
   }
 
   // Update to cancelled
@@ -60,5 +60,5 @@ export const POST = withBusinessAuth(async (request, access) => {
     })
     .where(eq(ownershipTransfers.id, transfer.id))
 
-  return NextResponse.json({ success: true })
+  return successResponse({})
 })

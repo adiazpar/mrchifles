@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
 import { db, ownershipTransfers, users, businessUsers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { isOwner, invalidateAccessCache } from '@/lib/business-auth'
 import { verifyPassword } from '@/lib/simple-auth'
 import { nanoid } from 'nanoid'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const confirmSchema = z.object({
@@ -23,7 +23,7 @@ const confirmSchema = z.object({
 export const POST = withBusinessAuth(async (request, access) => {
   // Only owners can confirm transfers
   if (!isOwner(access.role)) {
-    return HttpResponse.forbidden('Only the owner can confirm the transfer')
+    return errorResponse(ApiMessageCode.TRANSFER_FORBIDDEN_NOT_OWNER, 403)
   }
 
   const body = await request.json()
@@ -43,16 +43,13 @@ export const POST = withBusinessAuth(async (request, access) => {
     .limit(1)
 
   if (!currentUser) {
-    return HttpResponse.notFound('User not found')
+    return errorResponse(ApiMessageCode.TRANSFER_USER_NOT_FOUND, 404)
   }
 
   // Verify password
   const isValidPassword = await verifyPassword(password, currentUser.password)
   if (!isValidPassword) {
-    return NextResponse.json(
-      { error: 'Incorrect password' },
-      { status: 401 }
-    )
+    return errorResponse(ApiMessageCode.TRANSFER_INCORRECT_PASSWORD, 401)
   }
 
   // Find the transfer
@@ -68,17 +65,17 @@ export const POST = withBusinessAuth(async (request, access) => {
     .limit(1)
 
   if (!transfer) {
-    return HttpResponse.notFound('Transfer not found')
+    return errorResponse(ApiMessageCode.TRANSFER_NOT_FOUND, 404)
   }
 
   // Must be in accepted status
   if (transfer.status !== 'accepted') {
-    return HttpResponse.badRequest('The recipient has not yet accepted the transfer')
+    return errorResponse(ApiMessageCode.TRANSFER_NOT_ACCEPTED_YET, 400)
   }
 
   // Must have a toUser (recipient)
   if (!transfer.toUser) {
-    return HttpResponse.badRequest('No recipient for this transfer')
+    return errorResponse(ApiMessageCode.TRANSFER_NO_RECIPIENT, 400)
   }
 
   const now = new Date()
@@ -142,5 +139,5 @@ export const POST = withBusinessAuth(async (request, access) => {
   invalidateAccessCache(access.userId, access.businessId)
   invalidateAccessCache(transfer.toUser, access.businessId)
 
-  return NextResponse.json({ success: true })
+  return successResponse({})
 })

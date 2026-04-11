@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { db, ownershipTransfers, users, businesses } from '@/db'
 import { eq, and, gt, inArray } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/simple-auth'
+import { errorResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 /**
  * GET /api/transfer/incoming
@@ -16,7 +18,7 @@ export async function GET() {
     // Require authentication
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
     // Get current user's email
@@ -88,9 +90,6 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Fetch incoming transfer error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch incoming transfer' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.TRANSFER_FETCH_INCOMING_FAILED, 500)
   }
 }

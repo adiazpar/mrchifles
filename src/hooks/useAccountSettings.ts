@@ -7,6 +7,7 @@ import { useTransfer } from '@/contexts/transfer-context'
 import { isOwner as checkIsOwner } from '@/lib/business-role'
 import { apiPost, ApiError } from '@/lib/api-client'
 import { useTranslations } from 'next-intl'
+import { useApiMessage } from '@/hooks/useApiMessage'
 
 // ============================================
 // TYPES
@@ -98,6 +99,7 @@ export function useAccountSettings(): UseAccountSettingsReturn {
   const isOwner = checkIsOwner(role)
   const t = useTranslations('account')
   const tAuth = useTranslations('auth')
+  const translateApiMessage = useApiMessage()
 
   // Get transfer data from shared context (fetched once in layout)
   const {
@@ -218,8 +220,8 @@ export function useAccountSettings(): UseAccountSettingsReturn {
       setTransferEmail('')
       setTransferStep(1) // Go to link step
     } catch (err) {
-      if (err instanceof ApiError) {
-        setTransferError(err.message)
+      if (err instanceof ApiError && err.envelope) {
+        setTransferError(translateApiMessage(err.envelope))
       } else {
         console.error('Transfer initiate error:', err)
         setTransferError(tAuth('connection_error'))
@@ -227,7 +229,7 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     } finally {
       setTransferLoading(false)
     }
-  }, [t, tAuth, transferEmail, businessId, setPendingTransfer])
+  }, [t, tAuth, transferEmail, businessId, setPendingTransfer, translateApiMessage])
 
   const handleCopyTransferLink = useCallback(async () => {
     try {
@@ -282,8 +284,8 @@ export function useAccountSettings(): UseAccountSettingsReturn {
       // Transfer complete - reload page to reflect new role
       window.location.reload()
     } catch (err) {
-      if (err instanceof ApiError) {
-        setTransferError(err.message)
+      if (err instanceof ApiError && err.envelope) {
+        setTransferError(translateApiMessage(err.envelope))
       } else {
         console.error('Confirm transfer error:', err)
         setTransferError(tAuth('connection_error'))
@@ -291,7 +293,7 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     } finally {
       setTransferLoading(false)
     }
-  }, [tAuth, pendingTransfer, businessId])
+  }, [tAuth, pendingTransfer, businessId, translateApiMessage])
 
   const handleShowTransferLink = useCallback(() => {
     if (pendingTransfer) {

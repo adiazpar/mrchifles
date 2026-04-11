@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server'
 import { db, ownershipTransfers, users } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const initiateSchema = z.object({
@@ -30,7 +30,7 @@ function generateTransferCode(): string {
 export const POST = withBusinessAuth(async (request, access) => {
   // Only owners can initiate transfers
   if (!isOwner(access.role)) {
-    return HttpResponse.forbidden('Only the owner can transfer the business')
+    return errorResponse(ApiMessageCode.TRANSFER_FORBIDDEN_NOT_OWNER, 403)
   }
 
   const body = await request.json()
@@ -50,7 +50,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     .limit(1)
 
   if (currentUser?.email === toEmail) {
-    return HttpResponse.badRequest('Cannot transfer the business to yourself')
+    return errorResponse(ApiMessageCode.TRANSFER_CANNOT_SELF, 400)
   }
 
   // Check for existing pending transfer
@@ -67,7 +67,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     .limit(1)
 
   if (existingTransfer) {
-    return HttpResponse.badRequest('You already have a pending transfer. Cancel it first.')
+    return errorResponse(ApiMessageCode.TRANSFER_PENDING_EXISTS, 400)
   }
 
   // Generate unique code
@@ -99,8 +99,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     expiresAt,
   })
 
-  return NextResponse.json({
-    success: true,
+  return successResponse({
     code,
     expiresAt: expiresAt.toISOString(),
   })

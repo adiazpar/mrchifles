@@ -1,8 +1,7 @@
-import { NextResponse } from 'next/server'
 import { db, ownershipTransfers, users } from '@/db'
 import { eq, and, or } from 'drizzle-orm'
 import { isOwner } from '@/lib/business-auth'
-import { withBusinessAuth } from '@/lib/api-middleware'
+import { withBusinessAuth, successResponse } from '@/lib/api-middleware'
 
 /**
  * GET /api/businesses/[businessId]/transfer/pending
@@ -13,10 +12,7 @@ import { withBusinessAuth } from '@/lib/api-middleware'
 export const GET = withBusinessAuth(async (request, access) => {
   // Only owners have outgoing transfers
   if (!isOwner(access.role)) {
-    return NextResponse.json({
-      success: true,
-      transfer: null,
-    })
+    return successResponse({ transfer: null })
   }
 
   // Find pending or accepted transfer from this user
@@ -35,10 +31,7 @@ export const GET = withBusinessAuth(async (request, access) => {
     .limit(1)
 
   if (!transfer) {
-    return NextResponse.json({
-      success: true,
-      transfer: null,
-    })
+    return successResponse({ transfer: null })
   }
 
   // Check if expired
@@ -51,10 +44,7 @@ export const GET = withBusinessAuth(async (request, access) => {
       })
       .where(eq(ownershipTransfers.id, transfer.id))
 
-    return NextResponse.json({
-      success: true,
-      transfer: null,
-    })
+    return successResponse({ transfer: null })
   }
 
   // Get recipient user info if they've accepted
@@ -72,8 +62,7 @@ export const GET = withBusinessAuth(async (request, access) => {
     toUser = recipient || null
   }
 
-  return NextResponse.json({
-    success: true,
+  return successResponse({
     transfer: {
       code: transfer.code,
       toEmail: transfer.toEmail,

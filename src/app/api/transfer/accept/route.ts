@@ -3,7 +3,8 @@ import { db, ownershipTransfers, users } from '@/db'
 import { eq, and, gt, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError } from '@/lib/api-middleware'
+import { validationError, errorResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
 
@@ -17,11 +18,6 @@ const acceptSchema = z.object({
  * Accepts an ownership transfer by code.
  * User-level endpoint (not business-scoped) because the recipient
  * may not yet have access to the business.
- *
- * - Validates the transfer code
- * - Verifies recipient email matches current user
- * - Updates transfer status to 'accepted'
- * - Links the transfer to the current user
  */
 export async function POST(request: NextRequest) {
   try {
@@ -29,21 +25,16 @@ export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request)
     const rateLimitResult = checkRateLimit(`transfer:${clientIp}`, RateLimits.codeValidation)
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { success: false, error: 'Too many attempts. Please try again later.' },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)),
-          },
-        }
-      )
+      const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
+      const response = errorResponse(ApiMessageCode.TRANSFER_RATE_LIMITED, 429)
+      response.headers.set('Retry-After', retryAfter)
+      return response
     }
 
     // Require authentication
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
     const body = await request.json()
@@ -77,9 +68,11 @@ export async function POST(request: NextRequest) {
       .get()
 
     if (!transfer) {
+      // Preserve 200-with-success-false so the client renders the error
+      // inline (consistent with /api/invite/join's pattern).
       return NextResponse.json({
         success: false,
-        error: 'Invalid, expired, or already accepted transfer code',
+        messageCode: ApiMessageCode.TRANSFER_INVALID_OR_EXPIRED,
       })
     }
 
@@ -93,7 +86,7 @@ export async function POST(request: NextRequest) {
     if (!currentUserData) {
       return NextResponse.json({
         success: false,
-        error: 'User not found',
+        messageCode: ApiMessageCode.TRANSFER_USER_NOT_FOUND,
       })
     }
 
@@ -103,7 +96,7 @@ export async function POST(request: NextRequest) {
     if (!isRecipient) {
       return NextResponse.json({
         success: false,
-        error: 'This transfer is for a different email address',
+        messageCode: ApiMessageCode.TRANSFER_WRONG_RECIPIENT,
       })
     }
 
@@ -123,9 +116,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Accept transfer error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to accept transfer' },
-      { status: 500 }
-    )
+    return errorResponse(ApiMessageCode.TRANSFER_ACCEPT_FAILED, 500)
   }
 }
