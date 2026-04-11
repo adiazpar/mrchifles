@@ -7,6 +7,8 @@ import { hashPassword, createToken, setAuthCookie } from '@/lib/simple-auth'
 import { validationError } from '@/lib/api-middleware'
 import { Schemas } from '@/lib/schemas'
 import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
+import { setLocaleCookieServer } from '@/lib/locale-cookie'
+import { DEFAULT_LOCALE } from '@/i18n/config'
 
 const registerSchema = z.object({
   email: Schemas.email(),
@@ -84,6 +86,9 @@ export async function POST(request: NextRequest) {
 
     // Set auth cookie
     await setAuthCookie(token)
+
+    // Default UI language on signup; user can change via the user menu
+    await setLocaleCookieServer(DEFAULT_LOCALE)
 
     // Return user (without password)
     const { password: _, ...userWithoutPassword } = newUser

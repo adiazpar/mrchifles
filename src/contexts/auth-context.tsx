@@ -9,8 +9,10 @@ import {
   useMemo,
   type ReactNode,
 } from 'react'
+import { useRouter } from 'next/navigation'
 import type { User } from '@/types'
 import { fetchDeduped } from '@/lib/fetch'
+import type { SupportedLocale } from '@/i18n/config'
 
 // ============================================
 // TYPES
@@ -25,13 +27,16 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
+  changeLanguage: (language: SupportedLocale) => Promise<{ success: boolean; error?: string }>
 }
 
 // ============================================
 // LOCAL STORAGE CACHE
 // ============================================
 
-const AUTH_CACHE_KEY = 'auth_user_cache'
+// Bumped to v2 when users.language was added — invalidates cached user
+// objects from before the schema change.
+const AUTH_CACHE_KEY = 'auth_user_cache_v2'
 const AUTH_VALIDATED_KEY = 'auth_last_validated'
 const VALIDATION_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
 
@@ -94,6 +99,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 // ============================================
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -196,6 +202,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const changeLanguage = useCallback(
+    async (language: SupportedLocale): Promise<{ success: boolean; error?: string }> => {
+      try {
+        const response = await fetch('/api/user/language', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ language }),
+        })
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          return { success: false, error: data.error || 'Failed to update language' }
+        }
+        setUser((prev) => {
+          if (!prev) return prev
+          const next = { ...prev, language }
+          setCachedUser(next)
+          return next
+        })
+        // Force RSC re-render so next-intl picks up the new cookie-bound bundle.
+        router.refresh()
+        return { success: true }
+      } catch {
+        return { success: false, error: 'Connection error' }
+      }
+    },
+    [router],
+  )
+
   // ============================================
   // CONTEXT VALUE
   // ============================================
@@ -207,7 +241,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     refreshUser,
-  }), [user, isLoading, login, logout, refreshUser])
+    changeLanguage,
+  }), [user, isLoading, login, logout, refreshUser, changeLanguage])
 
   return (
     <AuthContext.Provider value={value}>

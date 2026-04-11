@@ -38,7 +38,10 @@
       "title": "Account and Settings",
       "account_settings": "Account Settings",
       "support": "Support",
-      "log_out": "Log Out"
+      "log_out": "Log Out",
+      "language_label": "Language",
+      "language_english": "English",
+      "language_spanish": "Español"
     },
     "nav": {
       "create_business": "Create Business",

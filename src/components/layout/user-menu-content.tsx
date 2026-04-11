@@ -9,6 +9,7 @@ import { useNavbar } from '@/contexts/navbar-context'
 import { getUserInitials } from '@/lib/auth'
 import { ChevronRight } from 'lucide-react'
 import { SettingsIcon, HelpIcon, LogoutIcon } from '@/components/icons'
+import { resolveTranslationLocale, type SupportedLocale } from '@/i18n/config'
 
 interface UserMenuContentProps {
   onAction?: () => void
@@ -22,7 +23,7 @@ interface UserMenuContentProps {
 export function UserMenuContent({ onAction, showHeader = true }: UserMenuContentProps) {
   const t = useTranslations('ui.user_menu')
   const router = useRouter()
-  const { user, logout } = useAuth()
+  const { user, logout, changeLanguage } = useAuth()
   const { setPendingHref } = useNavbar()
 
   const handleLogout = useCallback(() => {
@@ -36,7 +37,17 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
     onAction?.()
   }, [setPendingHref, onAction])
 
+  const handleLanguageChange = useCallback(
+    (language: SupportedLocale) => {
+      if (user?.language === language) return
+      changeLanguage(language)
+    },
+    [user?.language, changeLanguage],
+  )
+
   if (!user) return null
+
+  const activeLanguage = resolveTranslationLocale(user.language)
 
   return (
     <div className="user-menu-content">
@@ -52,6 +63,33 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           </div>
         </div>
       )}
+
+      {/* Language picker */}
+      <div className="user-menu-language">
+        <span className="user-menu-language-label">{t('language_label')}</span>
+        <div className="user-menu-language-segments" role="group" aria-label={t('language_label')}>
+          <button
+            type="button"
+            className="user-menu-language-option"
+            data-active={activeLanguage === 'en-US'}
+            disabled={activeLanguage === 'en-US'}
+            onClick={() => handleLanguageChange('en-US')}
+          >
+            {t('language_english')}
+          </button>
+          <button
+            type="button"
+            className="user-menu-language-option"
+            data-active={activeLanguage === 'es'}
+            disabled={activeLanguage === 'es'}
+            onClick={() => handleLanguageChange('es')}
+          >
+            {t('language_spanish')}
+          </button>
+        </div>
+      </div>
+
+      <div className="user-menu-divider" />
 
       {/* Menu Items */}
       <div className="user-menu-items">

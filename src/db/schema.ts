@@ -30,6 +30,7 @@ export const users = sqliteTable('users', {
   password: text('password').notNull(), // bcrypt hash
   name: text('name').notNull(),
   avatar: text('avatar'), // Base64 or URL
+  language: text('language').default('en-US').notNull(), // UI language (next-intl bundle); distinct from per-business locale/currency
 })
 
 // ===========================================
