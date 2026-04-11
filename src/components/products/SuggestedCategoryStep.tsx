@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { Spinner, TabContainer } from '@/components/ui'
 import type { ProductCategory } from '@/types'
 
@@ -23,6 +24,7 @@ export function SuggestedCategoryStep({
   onCreate,
   onPickExisting,
 }: SuggestedCategoryStepProps) {
+  const t = useTranslations('aiPipeline')
   const [name, setName] = useState(suggestedName)
   const [isCreating, setIsCreating] = useState(false)
   const [activeView, setActiveView] = useState<ActiveView>('suggest')
@@ -35,16 +37,16 @@ export function SuggestedCategoryStep({
   const handleCreate = async () => {
     const trimmed = name.trim()
     if (!trimmed) {
-      setError('Category name is required')
+      setError(t('category_name_required'))
       return
     }
     setError('')
     setIsCreating(true)
     try {
       const newId = await onCreate(trimmed)
-      if (!newId) setError('Failed to create category')
+      if (!newId) setError(t('failed_to_create_category'))
     } catch {
-      setError('Failed to create category')
+      setError(t('failed_to_create_category'))
     } finally {
       setIsCreating(false)
     }
@@ -63,17 +65,16 @@ export function SuggestedCategoryStep({
       <TabContainer.Tab id="suggest">
         <div>
           <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-1 text-center">
-            Notice
+            {t('notice_label')}
           </div>
           <div className="text-sm text-text-secondary text-center">
-            We couldn&apos;t fit this product into one of your existing
-            categories. Create a new one to keep things organized:
+            {t('no_category_fit')}
           </div>
         </div>
 
         <div>
           <label htmlFor="suggested-category-name" className="label">
-            New category name
+            {t('new_category_name_label')}
           </label>
           <input
             id="suggested-category-name"
@@ -98,7 +99,7 @@ export function SuggestedCategoryStep({
           disabled={isCreating || !name.trim()}
           className="btn btn-primary w-full"
         >
-          {isCreating ? <Spinner /> : 'Create and continue'}
+          {isCreating ? <Spinner /> : t('create_and_continue')}
         </button>
 
         {categories.length > 0 && (
@@ -117,7 +118,7 @@ export function SuggestedCategoryStep({
                 onClick={() => setActiveView('picker')}
                 className="text-sm text-brand hover:text-brand"
               >
-                Pick existing category instead
+                {t('pick_existing_instead')}
               </button>
             </div>
           </>
@@ -126,7 +127,7 @@ export function SuggestedCategoryStep({
 
       <TabContainer.Tab id="picker">
         <div className="text-sm text-text-secondary text-center">
-          Pick an existing category for this product:
+          {t('pick_existing_intro')}
         </div>
 
         <div className="space-y-2">
@@ -158,7 +159,7 @@ export function SuggestedCategoryStep({
             onClick={() => setActiveView('suggest')}
             className="text-sm text-brand hover:text-brand"
           >
-            Back to suggestion
+            {t('back_to_suggestion')}
           </button>
         </div>
       </TabContainer.Tab>

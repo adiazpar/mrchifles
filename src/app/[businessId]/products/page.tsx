@@ -29,6 +29,7 @@ import {
 import { getProductIconUrl } from '@/lib/utils'
 import { useAiProductPipeline, useImageCompression, useBusinessFormat } from '@/hooks'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
+import { useTranslations } from 'next-intl'
 import type { Product, Provider, SortPreference, ProductCategory } from '@/types'
 
 // ============================================
@@ -93,6 +94,7 @@ function AddProductModalWrapper({
   checkBarcodeExists,
   defaultCategoryId,
 }: AddProductModalWrapperProps) {
+  const tProductForm = useTranslations('productForm')
   const pendingActionRef = useRef<(() => void) | null>(null)
   const {
     barcode,
@@ -114,12 +116,12 @@ function AddProductModalWrapper({
     if (trimmed) {
       const existingName = await checkBarcodeExists(trimmed)
       if (existingName) {
-        setError(`Barcode already used by "${existingName}"`)
+        setError(tProductForm('barcode_already_used', { name: existingName }))
         return
       }
     }
     onStartAiPipeline()
-  }, [barcode, checkBarcodeExists, onStartAiPipeline, setError])
+  }, [barcode, checkBarcodeExists, onStartAiPipeline, setError, tProductForm])
 
   useEffect(() => {
     setPipelineStep(pipelineState.step)
@@ -253,6 +255,7 @@ function EditProductModalWrapper({
 }
 
 export default function ProductosPage() {
+  const t = useTranslations('products')
   const { user } = useAuth()
   const { canManage, businessId } = useBusiness()
   const { formatDate } = useBusinessFormat()
@@ -1018,14 +1021,14 @@ export default function ProductosPage() {
             onClick={() => setActiveTab('products')}
             className={`section-tab ${activeTab === 'products' ? 'section-tab-active' : ''}`}
           >
-            Products
+            {t('tab_products')}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('orders')}
             className={`section-tab ${activeTab === 'orders' ? 'section-tab-active' : ''}`}
           >
-            Orders
+            {t('tab_orders')}
           </button>
         </div>
 

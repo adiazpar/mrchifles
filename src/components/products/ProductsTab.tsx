@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { X, Plus, ChevronUp, ChevronRight, Barcode, Loader2 } from 'lucide-react'
 import { TagsIcon, FilterIcon, BarcodeScanIcon, ImageAttachIcon, SlidersIcon, EyeIcon, EyeOffIcon } from '@/components/icons'
 import { Modal, SwipeableRow } from '@/components/ui'
+import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -15,7 +16,7 @@ import {
   type FilterCategory,
   type SortOption,
 } from '@/lib/products'
-import type { Product, ProductCategory } from '@/types'
+import type { Product, ProductCategory, SortPreference } from '@/types'
 
 // ============================================
 // PROPS INTERFACE
@@ -93,6 +94,19 @@ export function ProductsTab({
   scanBusy,
   scanHiddenInput,
 }: ProductsTabProps) {
+  const t = useTranslations('products')
+  const tCommon = useTranslations('common')
+
+  const sortLabels: Record<SortPreference, string> = {
+    name_asc: t('sort_name_asc'),
+    name_desc: t('sort_name_desc'),
+    price_asc: t('sort_price_asc'),
+    price_desc: t('sort_price_desc'),
+    category: t('sort_category'),
+    stock_asc: t('sort_stock_asc'),
+    stock_desc: t('sort_stock_desc'),
+  }
+
   // Helper to get category name by ID
   const getCategoryName = (categoryId: string | null | undefined) => {
     if (!categoryId) return '-'
@@ -116,7 +130,7 @@ export function ProductsTab({
               <div className="relative flex-1">
                 <input
                   type="text"
-                  placeholder="Search products..."
+                  placeholder={t('search_placeholder')}
                   value={searchQuery}
                   onChange={e => onSearchChange(e.target.value)}
                   className="input w-full h-full"
@@ -127,7 +141,7 @@ export function ProductsTab({
                     type="button"
                     onClick={() => onSearchChange('')}
                     className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-                    aria-label="Clear search"
+                    aria-label={t('search_clear')}
                   >
                     <X size={18} />
                   </button>
@@ -139,7 +153,7 @@ export function ProductsTab({
                   onClick={onScanClick}
                   disabled={scanBusy}
                   className="btn btn-secondary btn-icon flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Scan barcode to find product"
+                  aria-label={t('scan_aria')}
                 >
                   {scanBusy ? (
                     <Loader2 className="w-[18px] h-[18px] animate-spin" />
@@ -152,7 +166,7 @@ export function ProductsTab({
                 type="button"
                 onClick={() => onSortSheetOpenChange(true)}
                 className="btn btn-secondary btn-icon flex-shrink-0"
-                aria-label="Sort and filter"
+                aria-label={t('sort_filter_aria')}
               >
                 <FilterIcon style={{ width: 18, height: 18 }} />
               </button>
@@ -165,7 +179,7 @@ export function ProductsTab({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-text-secondary">
-                    {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+                    {t('product_count', { count: filteredProducts.length })}
                   </span>
                   <span className="text-text-tertiary">&#183;</span>
                   <button
@@ -173,7 +187,7 @@ export function ProductsTab({
                     onClick={onOpenSettings}
                     className="text-sm text-brand hover:text-brand transition-colors"
                   >
-                    Settings
+                    {t('settings_link')}
                   </button>
                 </div>
                 <button
@@ -183,7 +197,7 @@ export function ProductsTab({
                   style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
                 >
                   <Plus style={{ width: 14, height: 14 }} />
-                  Add
+                  {t('add_button')}
                 </button>
               </div>
 
@@ -192,7 +206,7 @@ export function ProductsTab({
               {/* Product List */}
               {filteredProducts.length === 0 ? (
                 <div className="text-center py-8 text-text-secondary">
-                  <p>No products found matching that criteria</p>
+                  <p>{t('no_results')}</p>
                 </div>
               ) : (
                 <div>
@@ -219,7 +233,7 @@ export function ProductsTab({
                 className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
               >
                 <ChevronUp className="w-4 h-4" />
-                Back to top
+                {t('back_to_top')}
               </button>
             )}
           </>
@@ -229,9 +243,9 @@ export function ProductsTab({
         {products.length === 0 && (
           <div className="empty-state-fill">
             <TagsIcon className="empty-state-icon" />
-            <h3 className="empty-state-title">No products yet</h3>
+            <h3 className="empty-state-title">{t('empty_state_title')}</h3>
             <p className="empty-state-description">
-              Add your first product to start building your catalog
+              {t('empty_state_description')}
             </p>
             <button
               type="button"
@@ -239,7 +253,7 @@ export function ProductsTab({
               className="btn btn-primary mt-4"
             >
               <Plus className="w-4 h-4" />
-              Add product
+              {t('empty_state_button')}
             </button>
           </div>
         )}
@@ -248,11 +262,11 @@ export function ProductsTab({
       <Modal
         isOpen={isSortSheetOpen}
         onClose={() => onSortSheetOpenChange(false)}
-        title="Sort & Filter"
+        title={t('sort_filter_title')}
       >
         <Modal.Item>
             <div className="space-y-2">
-              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">Sort by</span>
+              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('sort_by_label')}</span>
               <div className="space-y-1">
                 {SORT_OPTIONS.map(option => (
                   <button
@@ -262,7 +276,7 @@ export function ProductsTab({
                     className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
                   >
                     <span className={sortBy === option.value ? 'font-medium text-brand' : 'text-text-primary'}>
-                      {option.label}
+                      {sortLabels[option.value]}
                     </span>
                     {sortBy === option.value && (
                       <span className="w-5 h-5 text-brand">
@@ -281,7 +295,7 @@ export function ProductsTab({
         {availableFilters.length > 0 && (
           <Modal.Item>
               <div className="space-y-2">
-                <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">Filter by category</span>
+                <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('filter_by_category_label')}</span>
                 <div className="space-y-1">
                   <button
                     type="button"
@@ -289,7 +303,7 @@ export function ProductsTab({
                     className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
                   >
                     <span className={selectedFilter === 'all' ? 'font-medium text-brand' : 'text-text-primary'}>
-                      All
+                      {t('filter_all')}
                     </span>
                     {selectedFilter === 'all' && (
                       <span className="w-5 h-5 text-brand">
@@ -329,7 +343,7 @@ export function ProductsTab({
             onClick={() => onSortSheetOpenChange(false)}
             className="btn btn-primary flex-1"
           >
-            Done
+            {tCommon('done')}
           </button>
         </Modal.Footer>
       </Modal>
@@ -358,6 +372,7 @@ const ProductListItem = memo(function ProductListItem({
   onToggleActive,
   canModify = false,
 }: ProductListItemProps) {
+  const t = useTranslations('products')
   const { formatCurrency } = useBusinessFormat()
   const iconUrl = getProductIconUrl(product)
   const stockValue = product.stock ?? 0
@@ -373,13 +388,13 @@ const ProductListItem = memo(function ProductListItem({
     ? [
         {
           icon: isActive ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />,
-          label: isActive ? 'Disable' : 'Enable',
+          label: isActive ? t('action_disable') : t('action_enable'),
           variant: 'neutral' as const,
           onClick: () => onToggleActive(product),
         },
         {
           icon: <SlidersIcon size={20} />,
-          label: 'Inventory',
+          label: t('action_inventory'),
           variant: 'info' as const,
           onClick: () => onAdjustInventory(product),
         },
@@ -436,7 +451,7 @@ const ProductListItem = memo(function ProductListItem({
               {formatCurrency(product.price)}
             </span>
             <span className={`text-xs mt-0.5 block ${isLowStock && product.active ? 'text-error' : 'text-text-tertiary'}`}>
-              {stockValue} units
+              {t('units_count', { count: stockValue })}
             </span>
           </div>
 

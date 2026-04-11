@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Plus, Minus } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { BarcodeFields } from './BarcodeFields'
 import { ImageAttachIcon } from '@/components/icons'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -27,6 +28,7 @@ export function ProductForm({
   isOpen,
   showActiveToggle = true,
 }: ProductFormProps) {
+  const t = useTranslations('productForm')
   const [activeTab, setActiveTab] = useState<'details' | 'barcode'>('details')
 
   useEffect(() => {
@@ -59,14 +61,14 @@ export function ProductForm({
           onClick={() => setActiveTab('details')}
           className={`section-tab ${activeTab === 'details' ? 'section-tab-active' : ''}`}
         >
-          Details
+          {t('tab_details')}
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('barcode')}
           className={`section-tab ${activeTab === 'barcode' ? 'section-tab-active' : ''}`}
         >
-          Barcode
+          {t('tab_barcode')}
         </button>
       </div>
 
@@ -79,7 +81,7 @@ export function ProductForm({
           <div className="flex flex-col gap-4">
             {/* Icon picker */}
             <div>
-              <label className="label">Icon</label>
+              <label className="label">{t('icon_label')}</label>
               <div className="flex items-center gap-3">
                 <div className="input-height aspect-square rounded-lg overflow-hidden bg-bg-muted flex items-center justify-center flex-shrink-0">
                   {iconPreview && isPresetIcon(iconPreview) ? (
@@ -131,10 +133,10 @@ export function ProductForm({
               <div className="flex items-center justify-between mt-2">
                 <span className="text-sm text-text-tertiary">
                   {!iconPreview
-                    ? 'No icon'
+                    ? t('icon_no_icon')
                     : presetEmoji
-                    ? `Preset ${PRESET_ICONS.findIndex((p) => p.id === presetEmoji) + 1}`
-                    : 'Custom'}
+                    ? t('icon_preset', { number: PRESET_ICONS.findIndex((p) => p.id === presetEmoji) + 1 })
+                    : t('icon_custom')}
                 </span>
                 <button
                   type="button"
@@ -142,7 +144,7 @@ export function ProductForm({
                   disabled={!iconPreview}
                   className="text-sm text-error hover:text-error transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  Reset
+                  {t('icon_reset')}
                 </button>
               </div>
             </div>
@@ -150,7 +152,7 @@ export function ProductForm({
             {/* Name */}
             <div>
               <label htmlFor={`${idPrefix}-name`} className="label">
-                Name <span className="text-error">*</span>
+                {t('name_label')} <span className="text-error">*</span>
               </label>
               <input
                 id={`${idPrefix}-name`}
@@ -158,7 +160,7 @@ export function ProductForm({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="input"
-                placeholder="E.g.: Large Chips"
+                placeholder={t('name_placeholder')}
                 autoComplete="off"
               />
             </div>
@@ -168,7 +170,7 @@ export function ProductForm({
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label htmlFor={`${idPrefix}-price`} className="label">
-                    Price <span className="text-error">*</span>
+                    {t('price_label')} <span className="text-error">*</span>
                   </label>
                   <div className="input-number-wrapper">
                     <PriceInput
@@ -186,7 +188,7 @@ export function ProductForm({
                           setPrice((current + 1).toFixed(2))
                         }}
                         tabIndex={-1}
-                        aria-label="Increase price"
+                        aria-label={t('price_increase_aria')}
                       >
                         <Plus />
                       </button>
@@ -198,7 +200,7 @@ export function ProductForm({
                           setPrice(Math.max(0, current - 1).toFixed(2))
                         }}
                         tabIndex={-1}
-                        aria-label="Decrease price"
+                        aria-label={t('price_decrease_aria')}
                       >
                         <Minus />
                       </button>
@@ -207,7 +209,7 @@ export function ProductForm({
                 </div>
                 <div className="flex-1">
                   <label htmlFor={`${idPrefix}-category`} className="label">
-                    Category
+                    {t('category_label')}
                   </label>
                   <select
                     id={`${idPrefix}-category`}
@@ -215,7 +217,7 @@ export function ProductForm({
                     onChange={(e) => setCategoryId(e.target.value)}
                     className={`input ${categoryId === '' ? 'select-placeholder' : ''}`}
                   >
-                    <option value="">N/A</option>
+                    <option value="">{t('category_none')}</option>
                     {categories
                       .sort((a, b) => a.sortOrder - b.sortOrder)
                       .map((cat) => (
@@ -232,9 +234,9 @@ export function ProductForm({
               <div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="label mb-0">Active</span>
+                    <span className="label mb-0">{t('active_label')}</span>
                     <span className="text-sm text-text-tertiary leading-tight">
-                      Toggles visibility in sales page
+                      {t('active_description')}
                     </span>
                   </div>
                   <input

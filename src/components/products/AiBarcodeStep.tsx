@@ -2,25 +2,13 @@
 
 import { useCallback, useEffect } from 'react'
 import { Plus, ScanBarcode } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useMorphingModal } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
 import { BarcodeDisplay } from './BarcodeDisplay'
 import type { BarcodeSource } from '@/types'
-
-function getBarcodeSourceLabel(source: BarcodeSource | null): string {
-  switch (source) {
-    case 'scanned':
-      return 'Scanned'
-    case 'generated':
-      return 'Generated'
-    case 'manual':
-      return 'Manual'
-    default:
-      return 'N/A'
-  }
-}
 
 /**
  * Minimal barcode capture for the AI flow. Renders the barcode preview,
@@ -30,6 +18,7 @@ function getBarcodeSourceLabel(source: BarcodeSource | null): string {
  * Footer (Skip / Continue) is provided by the parent Modal.Step.
  */
 export function AiBarcodeStepBody() {
+  const t = useTranslations('barcode')
   const {
     barcode,
     barcodeFormat,
@@ -39,6 +28,19 @@ export function AiBarcodeStepBody() {
     setBarcodeSource,
     setError,
   } = useProductForm()
+
+  const getBarcodeSourceLabel = (source: BarcodeSource | null): string => {
+    switch (source) {
+      case 'scanned':
+        return t('source_scanned')
+      case 'generated':
+        return t('source_generated')
+      case 'manual':
+        return t('source_manual')
+      default:
+        return t('source_na')
+    }
+  }
 
   const { currentStep } = useMorphingModal()
 
@@ -84,8 +86,7 @@ export function AiBarcodeStepBody() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-text-secondary text-center">
-        Scan the product&apos;s existing barcode, generate a new one, or skip
-        to complete this setup later.
+        {t('ai_barcode_intro')}
       </p>
 
       <div className="rounded-xl border border-border bg-bg-muted p-4 h-44 flex items-center justify-center text-center overflow-hidden">
@@ -97,7 +98,7 @@ export function AiBarcodeStepBody() {
           {barcode ? (
             <>
               <div className="text-sm break-all text-text-secondary">
-                {`${barcode} · ${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : 'N/A'}`}
+                {`${barcode} · ${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : t('source_na')}`}
               </div>
               <div className="text-sm text-text-tertiary mt-1">
                 {getBarcodeSourceLabel(barcodeSource)}
@@ -105,8 +106,8 @@ export function AiBarcodeStepBody() {
             </>
           ) : (
             <>
-              <div className="text-sm text-text-tertiary">No barcode attached</div>
-              <div className="text-sm text-text-tertiary mt-1">N/A</div>
+              <div className="text-sm text-text-tertiary">{t('no_barcode')}</div>
+              <div className="text-sm text-text-tertiary mt-1">{t('source_na')}</div>
             </>
           )}
         </div>
@@ -117,7 +118,7 @@ export function AiBarcodeStepBody() {
           disabled={!barcode}
           className="text-sm text-error hover:text-error transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
         >
-          Reset
+          {t('reset_button')}
         </button>
       </div>
 
@@ -132,7 +133,7 @@ export function AiBarcodeStepBody() {
           style={{ border: 'none', background: 'var(--color-bg-muted)' }}
         >
           <ScanBarcode className="caja-action-btn__icon text-brand" />
-          <span>{scanBusy ? 'Reading...' : 'Scan'}</span>
+          <span>{scanBusy ? t('scan_reading') : t('scan_button')}</span>
         </button>
         <button
           type="button"
@@ -141,7 +142,7 @@ export function AiBarcodeStepBody() {
           style={{ border: 'none', background: 'var(--color-bg-muted)' }}
         >
           <Plus className="caja-action-btn__icon text-success" />
-          <span>Generate</span>
+          <span>{t('generate_button')}</span>
         </button>
       </div>
     </div>

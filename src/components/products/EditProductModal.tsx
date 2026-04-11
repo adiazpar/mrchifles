@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { TrashIcon, SlidersIcon, ImageAttachIcon } from '@/components/icons'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
@@ -36,6 +37,7 @@ export interface EditProductModalProps {
 // ============================================
 
 function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<boolean>; isDeleting: boolean }) {
+  const tCommon = useTranslations('common')
   const { setProductDeleted } = useProductForm()
   const { goToStep } = useMorphingModal()
 
@@ -59,7 +61,7 @@ function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<bool
       className="btn btn-danger flex-1"
       disabled={isDeleting}
     >
-      {isDeleting ? <Spinner /> : 'Delete'}
+      {isDeleting ? <Spinner /> : tCommon('delete')}
     </button>
   )
 }
@@ -69,6 +71,8 @@ function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<bool
 // ============================================
 
 function SaveButton({ onSubmit }: { onSubmit: EditProductModalProps['onSubmit'] }) {
+  const t = useTranslations('productForm')
+  const tCommon = useTranslations('common')
   const {
     name,
     price,
@@ -101,14 +105,14 @@ function SaveButton({ onSubmit }: { onSubmit: EditProductModalProps['onSubmit'] 
       )
 
       if (!success) {
-        setError('Failed to save product')
+        setError(t('failed_to_save'))
         return
       }
 
       setProductSaved(true)
       goToStep(4)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save product')
+      setError(err instanceof Error ? err.message : t('failed_to_save'))
     } finally {
       setIsSaving(false)
     }
@@ -121,7 +125,7 @@ function SaveButton({ onSubmit }: { onSubmit: EditProductModalProps['onSubmit'] 
       className="btn btn-primary flex-1"
       disabled={isSaving || !isFormValid || !hasChanges}
     >
-      {isSaving ? <Spinner /> : 'Save'}
+      {isSaving ? <Spinner /> : tCommon('save')}
     </button>
   )
 }
@@ -141,6 +145,8 @@ export function EditProductModal({
   canDelete,
   initialStep = 0,
 }: EditProductModalProps) {
+  const t = useTranslations('productForm')
+  const tCommon = useTranslations('common')
   const {
     iconPreview,
     editingProduct,
@@ -169,11 +175,11 @@ export function EditProductModal({
       isOpen={isOpen}
       onClose={onClose}
       onExitComplete={onExitComplete}
-      title="Edit product"
+      title={t('title_edit')}
       initialStep={initialStep}
     >
       {/* Step 0: Edit Form */}
-      <Modal.Step title="Edit product">
+      <Modal.Step title={t('title_edit')}>
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
@@ -204,7 +210,7 @@ export function EditProductModal({
       </Modal.Step>
 
       {/* Step 1: Adjust inventory */}
-      <Modal.Step title="Adjust inventory" backStep={0}>
+      <Modal.Step title={t('title_adjust_inventory')} backStep={0}>
         {editingProduct && (
           <Modal.Item>
             <div className="flex flex-col items-center py-6">
@@ -246,7 +252,7 @@ export function EditProductModal({
 
         <Modal.Footer>
           <Modal.CancelBackButton className="btn btn-secondary flex-1" disabled={isAdjusting}>
-            Cancel
+            {tCommon('cancel')}
           </Modal.CancelBackButton>
           <button
             type="button"
@@ -254,29 +260,29 @@ export function EditProductModal({
             className="btn btn-primary flex-1"
             disabled={isAdjusting || newStockValue === (editingProduct?.stock ?? 0)}
           >
-            {isAdjusting ? <Spinner /> : 'Save'}
+            {isAdjusting ? <Spinner /> : tCommon('save')}
           </button>
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 2: Delete confirmation */}
-      <Modal.Step title="Delete product" backStep={0}>
+      <Modal.Step title={t('title_delete_product')} backStep={0}>
         <Modal.Item>
           <p className="text-text-secondary">
-            Are you sure you want to delete <strong>{editingProduct?.name}</strong>? This action cannot be undone.
+            {t('delete_confirm_text', { name: editingProduct?.name ?? '' })}
           </p>
         </Modal.Item>
 
         <Modal.Footer>
           <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
-            Cancel
+            {tCommon('cancel')}
           </Modal.GoToStepButton>
           <DeleteButton onConfirm={handleDelete} isDeleting={isDeleting} />
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 3: Delete success */}
-      <Modal.Step title="Product deleted" hideBackButton>
+      <Modal.Step title={t('title_deleted')} hideBackButton>
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -294,26 +300,26 @@ export function EditProductModal({
               className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: productDeleted ? 1 : 0 }}
             >
-              Product deleted
+              {t('success_deleted_heading')}
             </p>
             <p
               className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: productDeleted ? 1 : 0 }}
             >
-              The product has been deleted successfully
+              {t('success_deleted_description')}
             </p>
           </div>
         </Modal.Item>
 
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            Done
+            {tCommon('done')}
           </button>
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 4: Save success */}
-      <Modal.Step title="Product updated" hideBackButton>
+      <Modal.Step title={t('title_updated')} hideBackButton>
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -331,20 +337,20 @@ export function EditProductModal({
               className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: productSaved ? 1 : 0 }}
             >
-              Changes saved!
+              {t('success_updated_heading')}
             </p>
             <p
               className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: productSaved ? 1 : 0 }}
             >
-              The product has been updated
+              {t('success_updated_description')}
             </p>
           </div>
         </Modal.Item>
 
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            Done
+            {tCommon('done')}
           </button>
         </Modal.Footer>
       </Modal.Step>

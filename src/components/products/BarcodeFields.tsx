@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Copy, Plus, Printer, ScanBarcode } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { useProductForm } from '@/contexts/product-form-context'
 import { detectBarcodeFormat, generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
@@ -10,6 +11,7 @@ import { BarcodeDisplay } from './BarcodeDisplay'
 import type { BarcodeSource } from '@/types'
 
 export function BarcodeFields() {
+  const t = useTranslations('barcode')
   const [copied, setCopied] = useState(false)
   const copyTimeoutRef = useRef<number | null>(null)
   const {
@@ -65,13 +67,13 @@ export function BarcodeFields() {
   const getBarcodeSourceLabel = (source: BarcodeSource | null): string => {
     switch (source) {
       case 'scanned':
-        return 'Scanned'
+        return t('source_scanned')
       case 'generated':
-        return 'Generated'
+        return t('source_generated')
       case 'manual':
-        return 'Manual'
+        return t('source_manual')
       default:
-        return 'N/A'
+        return t('source_na')
     }
   }
 
@@ -260,7 +262,7 @@ export function BarcodeFields() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <label htmlFor="product-barcode" className="label">Barcode value</label>
+        <label htmlFor="product-barcode" className="label">{t('label')}</label>
         <div className="relative">
           <input
             id="product-barcode"
@@ -269,7 +271,7 @@ export function BarcodeFields() {
             onChange={(e) => handleBarcodeChange(e.target.value)}
             className="input w-full"
             style={{ paddingRight: 'var(--space-10)' }}
-            placeholder="Scan or enter code"
+            placeholder={t('scan_input_placeholder')}
             autoComplete="off"
           />
           <button
@@ -280,7 +282,7 @@ export function BarcodeFields() {
             className={`absolute top-1/2 -translate-y-1/2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
               copied ? 'text-success' : 'text-text-tertiary hover:text-text-secondary'
             }`}
-            aria-label={copied ? 'Barcode copied' : 'Copy barcode value'}
+            aria-label={copied ? t('copy_aria_copied') : t('copy_aria_default')}
           >
             {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
           </button>
@@ -296,7 +298,7 @@ export function BarcodeFields() {
           {barcode ? (
             <>
               <div className="text-sm break-all text-text-secondary">
-                {`${barcode} · ${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : 'N/A'}`}
+                {`${barcode} · ${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : t('source_na')}`}
               </div>
               <div className="text-sm text-text-tertiary mt-1">
                 {getBarcodeSourceLabel(barcodeSource)}
@@ -305,10 +307,10 @@ export function BarcodeFields() {
           ) : (
             <>
               <div className="text-sm text-text-tertiary">
-                No barcode attached
+                {t('no_barcode')}
               </div>
               <div className="text-sm text-text-tertiary mt-1">
-                N/A
+                {t('source_na')}
               </div>
             </>
           )}
@@ -320,7 +322,7 @@ export function BarcodeFields() {
           disabled={!barcode}
           className="text-sm text-error hover:text-error transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
         >
-          Reset
+          {t('reset_button')}
         </button>
       </div>
 
@@ -335,7 +337,7 @@ export function BarcodeFields() {
           style={{ border: 'none', background: 'var(--color-bg-muted)' }}
         >
           <ScanBarcode className="caja-action-btn__icon text-brand" />
-          <span>{scanBusy ? 'Reading...' : 'Scan'}</span>
+          <span>{scanBusy ? t('scan_reading') : t('scan_button')}</span>
         </button>
         <button
           type="button"
@@ -344,7 +346,7 @@ export function BarcodeFields() {
           style={{ border: 'none', background: 'var(--color-bg-muted)' }}
         >
           <Plus className="caja-action-btn__icon text-success" />
-          <span>Generate</span>
+          <span>{t('generate_button')}</span>
         </button>
         <button
           type="button"
@@ -354,7 +356,7 @@ export function BarcodeFields() {
           onClick={handlePrint}
         >
           <Printer className="caja-action-btn__icon text-pos" />
-          <span>Print</span>
+          <span>{t('print_button')}</span>
         </button>
       </div>
     </div>

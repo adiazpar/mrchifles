@@ -1,6 +1,7 @@
 'use client'
 
 import { useLayoutEffect, useRef, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { CameraIcon, MagicWandIcon, JoinIcon } from '@/components/icons'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
@@ -61,6 +62,7 @@ function AiBarcodeContinueButton({
 }: {
   onStartAiPipeline: () => void
 }) {
+  const t = useTranslations('productForm')
   const { barcode } = useProductForm()
   const hasBarcode = Boolean(barcode.trim())
 
@@ -70,7 +72,7 @@ function AiBarcodeContinueButton({
       onClick={onStartAiPipeline}
       className={`${hasBarcode ? 'btn btn-primary' : 'btn btn-secondary'} flex-1`}
     >
-      {hasBarcode ? 'Continue' : 'Skip for now'}
+      {hasBarcode ? t('continue_button') : t('skip_for_now')}
     </button>
   )
 }
@@ -80,23 +82,24 @@ function AiBarcodeContinueButton({
 // ============================================
 
 function AnalyzingStepBody() {
+  const t = useTranslations('aiPipeline')
   const { pipelineStep, isCompressing } = useProductForm()
 
   const label = isCompressing
-    ? 'Preparing photo...'
+    ? t('preparing_photo')
     : pipelineStep === 'identifying'
-      ? 'Identifying product...'
+      ? t('identifying')
       : pipelineStep === 'generating'
-        ? 'Generating icon...'
+        ? t('generating_icon')
         : pipelineStep === 'removing-bg'
-          ? 'Removing background...'
-          : 'Analyzing product...'
+          ? t('removing_bg')
+          : t('analyzing')
 
   return (
     <div className="flex flex-col items-center justify-center py-12">
       <Spinner className="spinner-lg mb-4" />
       <p className="text-sm text-text-secondary">{label}</p>
-      <p className="text-xs text-text-tertiary mt-1">This may take a few seconds</p>
+      <p className="text-xs text-text-tertiary mt-1">{t('may_take_seconds')}</p>
     </div>
   )
 }
@@ -128,15 +131,16 @@ function AiPhotoStepInput({
     }
   }, [currentStep, onClearPendingPhoto])
 
+  const t = useTranslations('productForm')
   // On mobile the button should open the camera for a fresh snapshot
   // (fastest path for a user holding the physical product). On desktop
   // the same button opens the native file picker so the user can choose
   // a pre-taken photo — desktops rarely have a well-framed rear camera
   // and forcing webcam capture produces bad source images for AI.
-  const buttonLabel = isMobile ? 'Open camera' : 'Choose a photo'
+  const buttonLabel = isMobile ? t('open_camera_button') : t('choose_photo_button')
   const buttonDescription = isMobile
-    ? "We'll move on once you snap the photo"
-    : "We'll move on once you pick a photo"
+    ? t('open_camera_desc')
+    : t('choose_photo_desc')
 
   return (
     <>
@@ -237,6 +241,8 @@ export interface AddProductModalProps {
 // ============================================
 
 function SaveButton({ onSubmit }: { onSubmit: AddProductModalProps['onSubmit'] }) {
+  const t = useTranslations('productForm')
+  const tCommon = useTranslations('common')
   const {
     name,
     price,
@@ -268,14 +274,14 @@ function SaveButton({ onSubmit }: { onSubmit: AddProductModalProps['onSubmit'] }
       )
 
       if (!success) {
-        setError('Failed to save product')
+        setError(t('failed_to_save'))
         return
       }
 
       setProductSaved(true)
       goToStep(6)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save product')
+      setError(err instanceof Error ? err.message : t('failed_to_save'))
     } finally {
       setIsSaving(false)
     }
@@ -288,7 +294,7 @@ function SaveButton({ onSubmit }: { onSubmit: AddProductModalProps['onSubmit'] }
       className="btn btn-primary flex-1"
       disabled={isSaving || !isFormValid || !hasChanges}
     >
-      {isSaving ? <Spinner /> : 'Save'}
+      {isSaving ? <Spinner /> : tCommon('save')}
     </button>
   )
 }
@@ -311,6 +317,8 @@ export function AddProductModal({
   onStartAiPipeline,
   onClearPendingPhoto,
 }: AddProductModalProps) {
+  const t = useTranslations('productForm')
+  const tCommon = useTranslations('common')
   const {
     error,
     productSaved,
@@ -323,10 +331,10 @@ export function AddProductModal({
       isOpen={isOpen}
       onClose={onClose}
       onExitComplete={onExitComplete}
-      title="Add product"
+      title={t('title_add')}
     >
       {/* Step 0: Mode Selection */}
-      <Modal.Step title="Add product">
+      <Modal.Step title={t('title_add')}>
         <AiPipelineNavigator needsCategory={needsCategory} />
 
         <Modal.Item>
@@ -334,16 +342,16 @@ export function AddProductModal({
             <Modal.GoToStepButton step={1} className="caja-action-btn caja-action-btn--large">
               <MagicWandIcon className="caja-action-btn__icon text-brand" />
               <div className="caja-action-btn__text">
-                <span className="caja-action-btn__title">Snap to Add</span>
-                <span className="caja-action-btn__desc">Take a photo and AI fills the data</span>
+                <span className="caja-action-btn__title">{t('snap_to_add_title')}</span>
+                <span className="caja-action-btn__desc">{t('snap_to_add_desc')}</span>
               </div>
             </Modal.GoToStepButton>
 
             <Modal.GoToStepButton step={5} className="caja-action-btn caja-action-btn--large">
               <JoinIcon className="caja-action-btn__icon text-text-secondary" />
               <div className="caja-action-btn__text">
-                <span className="caja-action-btn__title">Add manually</span>
-                <span className="caja-action-btn__desc">Enter the product data yourself</span>
+                <span className="caja-action-btn__title">{t('add_manually_title')}</span>
+                <span className="caja-action-btn__desc">{t('add_manually_desc')}</span>
               </div>
             </Modal.GoToStepButton>
           </div>
@@ -352,19 +360,19 @@ export function AddProductModal({
         <Modal.Footer>
           <Modal.CancelBackButton />
           <button type="button" onClick={onOpenSettings} className="btn btn-primary flex-1">
-            Settings
+            {t('settings_button')}
           </button>
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 1: AI - Product photo */}
-      <Modal.Step title="Take a product photo" backStep={0}>
+      <Modal.Step title={t('ai_step_photo_title')} backStep={0}>
         <Modal.Item>
           <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-            Step 1 of 2
+            {t('ai_step_photo_indicator')}
           </div>
           <p className="text-sm text-text-secondary mb-4 text-center">
-            Take a clear, well-lit photo of the product. Center it in the frame and avoid glare.
+            {t('ai_step_photo_instructions')}
           </p>
           <AiPhotoStepInput
             onAiPhotoCapture={onAiPhotoCapture}
@@ -372,12 +380,12 @@ export function AddProductModal({
           />
         </Modal.Item>
         <Modal.Footer>
-          <Modal.BackButton>Back</Modal.BackButton>
+          <Modal.BackButton>{tCommon('back')}</Modal.BackButton>
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 2: AI - Barcode */}
-      <Modal.Step title="Add a barcode" backStep={1}>
+      <Modal.Step title={t('ai_step_barcode_title')} backStep={1}>
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
@@ -387,7 +395,7 @@ export function AddProductModal({
         )}
         <Modal.Item>
           <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-3 text-center">
-            Step 2 of 2
+            {t('ai_step_barcode_indicator')}
           </div>
           <AiBarcodeStepBody />
         </Modal.Item>
@@ -397,17 +405,17 @@ export function AddProductModal({
       </Modal.Step>
 
       {/* Step 3: Analyzing */}
-      <Modal.Step title="Analyzing..." backStep={0} onBackStep={onAbortAiProcessing}>
+      <Modal.Step title={t('ai_step_analyzing_title')} backStep={0} onBackStep={onAbortAiProcessing}>
         <Modal.Item>
           <AnalyzingStepBody />
         </Modal.Item>
         <Modal.Footer>
-          <Modal.CancelBackButton>Cancel</Modal.CancelBackButton>
+          <Modal.CancelBackButton>{tCommon('cancel')}</Modal.CancelBackButton>
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 4: Suggested category (conditional) */}
-      <Modal.Step title="New category" hideBackButton>
+      <Modal.Step title={t('ai_step_new_category_title')} hideBackButton>
         <Modal.Item>
           <SuggestedCategoryStepWrapper
             suggestedCategoryName={suggestedCategoryName}
@@ -417,13 +425,13 @@ export function AddProductModal({
         </Modal.Item>
         <Modal.Footer>
           <Modal.GoToStepButton step={5} className="btn btn-secondary flex-1">
-            Skip for now
+            {t('skip_for_now')}
           </Modal.GoToStepButton>
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 5: Form (manual or AI-prefilled) */}
-      <Modal.Step title="Add product" backStep={0}>
+      <Modal.Step title={t('title_add')} backStep={0}>
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
@@ -438,7 +446,7 @@ export function AddProductModal({
       </Modal.Step>
 
       {/* Step 6: Save success */}
-      <Modal.Step title="Product created" hideBackButton>
+      <Modal.Step title={t('title_created')} hideBackButton>
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -456,19 +464,19 @@ export function AddProductModal({
               className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: productSaved ? 1 : 0 }}
             >
-              Product added!
+              {t('success_created_heading')}
             </p>
             <p
               className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: productSaved ? 1 : 0 }}
             >
-              The product has been created successfully
+              {t('success_created_description')}
             </p>
           </div>
         </Modal.Item>
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            Done
+            {tCommon('done')}
           </button>
         </Modal.Footer>
       </Modal.Step>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Plus, ChevronRight, GripVertical } from 'lucide-react'
 import { Reorder, useDragControls } from 'framer-motion'
+import { useTranslations } from 'next-intl'
 import { TrashIcon, EditIcon } from '@/components/icons'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
@@ -53,13 +54,15 @@ interface SaveCategoryButtonProps {
 }
 
 function SaveCategoryButton({ name, editingCategory, onSave, isSaving, onSetCompleted, onSetMessage }: SaveCategoryButtonProps) {
+  const t = useTranslations('productSettings')
+  const tCommon = useTranslations('common')
   const { goToStep } = useMorphingModal()
   const isValid = name.trim().length > 0
   const hasChanges = editingCategory ? name.trim() !== editingCategory.name : true
 
   const handleSave = () => {
     onSetCompleted(true)
-    onSetMessage(editingCategory ? 'Category updated' : 'Category created')
+    onSetMessage(editingCategory ? t('category_updated') : t('category_created'))
     goToStep(4)
     onSave()
   }
@@ -71,7 +74,7 @@ function SaveCategoryButton({ name, editingCategory, onSave, isSaving, onSetComp
       className="btn btn-primary flex-1"
       disabled={isSaving || !isValid || !hasChanges}
     >
-      {isSaving ? <Spinner /> : 'Save'}
+      {isSaving ? <Spinner /> : tCommon('save')}
     </button>
   )
 }
@@ -95,6 +98,7 @@ interface SortableCategoryItemProps {
 }
 
 function SortableCategoryItem({ category, onEditClick, onDeleteClick, onDragEnd }: SortableCategoryItemProps) {
+  const t = useTranslations('productSettings')
   // dragListener=false + manual controls means only the grip button starts a
   // drag — tapping anywhere else on the row (edit/delete icons) behaves as
   // a normal click.
@@ -113,7 +117,7 @@ function SortableCategoryItem({ category, onEditClick, onDeleteClick, onDragEnd 
         type="button"
         onPointerDown={(e) => controls.start(e)}
         className="p-1 text-text-tertiary cursor-grab active:cursor-grabbing touch-none"
-        aria-label="Drag to reorder"
+        aria-label={t('drag_to_reorder_aria')}
       >
         <GripVertical style={{ width: 16, height: 16 }} />
       </button>
@@ -124,7 +128,7 @@ function SortableCategoryItem({ category, onEditClick, onDeleteClick, onDragEnd 
         type="button"
         onClick={onEditClick}
         className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
-        aria-label="Edit category"
+        aria-label={t('edit_category_aria')}
       >
         <EditIcon style={{ width: 16, height: 16 }} />
       </button>
@@ -132,7 +136,7 @@ function SortableCategoryItem({ category, onEditClick, onDeleteClick, onDragEnd 
         type="button"
         onClick={onDeleteClick}
         className="p-1 text-error hover:text-error transition-colors"
-        aria-label="Delete category"
+        aria-label={t('delete_category_aria')}
       >
         <TrashIcon style={{ width: 16, height: 16 }} />
       </button>
@@ -204,11 +208,13 @@ function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteC
 // ============================================
 
 function DeleteCategoryButton({ onDelete, isDeleting, onSetCompleted, onSetMessage }: DeleteCategoryButtonProps) {
+  const t = useTranslations('productSettings')
+  const tCommon = useTranslations('common')
   const { goToStep } = useMorphingModal()
 
   const handleDelete = () => {
     onSetCompleted(true)
-    onSetMessage('Category deleted')
+    onSetMessage(t('category_deleted'))
     goToStep(4)
     onDelete()
   }
@@ -220,7 +226,7 @@ function DeleteCategoryButton({ onDelete, isDeleting, onSetCompleted, onSetMessa
       className="btn btn-danger flex-1"
       disabled={isDeleting}
     >
-      {isDeleting ? <Spinner /> : 'Delete'}
+      {isDeleting ? <Spinner /> : tCommon('delete')}
     </button>
   )
 }
@@ -248,6 +254,20 @@ export function ProductSettingsModal({
   error,
   onClearError,
 }: ProductSettingsModalProps) {
+  const t = useTranslations('productSettings')
+  const tCommon = useTranslations('common')
+  const tProducts = useTranslations('products')
+
+  const sortLabels: Record<SortPreference, string> = {
+    name_asc: tProducts('sort_name_asc'),
+    name_desc: tProducts('sort_name_desc'),
+    price_asc: tProducts('sort_price_asc'),
+    price_desc: tProducts('sort_price_desc'),
+    category: tProducts('sort_category'),
+    stock_asc: tProducts('sort_stock_asc'),
+    stock_desc: tProducts('sort_stock_desc'),
+  }
+
   // Local state for form
   const [categoryName, setCategoryName] = useState('')
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null)
@@ -310,19 +330,19 @@ export function ProductSettingsModal({
       isOpen={isOpen}
       onClose={onClose}
       onExitComplete={onExitComplete}
-      title="Product Settings"
+      title={t('title')}
     >
       {/* Step 0: Main menu */}
-      <Modal.Step title="Product Settings" hideBackButton>
+      <Modal.Step title={t('title')} hideBackButton>
         <Modal.Item>
           <Modal.GoToStepButton
             step={1}
             className="list-item-clickable list-item-flat w-full text-left"
           >
             <div className="flex-1 min-w-0">
-              <span className="font-medium block">Categories</span>
+              <span className="font-medium block">{t('categories_menu_label')}</span>
               <span className="text-xs text-text-tertiary">
-                {categories.length} {categories.length === 1 ? 'category' : 'categories'}
+                {t('categories_count', { count: categories.length })}
               </span>
             </div>
             <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
@@ -332,9 +352,9 @@ export function ProductSettingsModal({
             className="list-item-clickable list-item-flat w-full text-left"
           >
             <div className="flex-1 min-w-0">
-              <span className="font-medium block">Preferences</span>
+              <span className="font-medium block">{t('preferences_menu_label')}</span>
               <span className="text-xs text-text-tertiary">
-                Default category and sort order
+                {t('preferences_menu_description')}
               </span>
             </div>
             <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
@@ -347,7 +367,7 @@ export function ProductSettingsModal({
       </Modal.Step>
 
       {/* Step 1: Categories list */}
-      <Modal.Step title="Categories" backStep={0}>
+      <Modal.Step title={t('categories_title')} backStep={0}>
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
@@ -359,7 +379,7 @@ export function ProductSettingsModal({
         <Modal.Item>
           {categories.length === 0 ? (
             <div className="text-center py-8 text-text-secondary">
-              <p>No categories yet</p>
+              <p>{t('no_categories')}</p>
             </div>
           ) : (
           <SortableCategoryList
@@ -380,7 +400,7 @@ export function ProductSettingsModal({
 
         <Modal.Footer>
           <Modal.CancelBackButton className="btn btn-secondary flex-1">
-            Back
+            {tCommon('back')}
           </Modal.CancelBackButton>
           <Modal.GoToStepButton
             step={2}
@@ -392,13 +412,13 @@ export function ProductSettingsModal({
             className="btn btn-primary flex-1"
           >
             <Plus style={{ width: 16, height: 16 }} />
-            Add
+            {t('add_category_button')}
           </Modal.GoToStepButton>
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 2: Add/Edit category */}
-      <Modal.Step title={editingCategory ? 'Edit Category' : 'Add Category'} backStep={1}>
+      <Modal.Step title={editingCategory ? t('edit_category_title') : t('add_category_title')} backStep={1}>
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
@@ -409,7 +429,7 @@ export function ProductSettingsModal({
 
         <Modal.Item>
           <label htmlFor="category-name" className="label">
-            Name <span className="text-error">*</span>
+            {t('category_name_label')} <span className="text-error">*</span>
           </label>
           <input
             id="category-name"
@@ -417,7 +437,7 @@ export function ProductSettingsModal({
             value={categoryName}
             onChange={e => setCategoryName(e.target.value)}
             className="input"
-            placeholder="E.g.: Snacks"
+            placeholder={t('category_name_placeholder')}
             autoComplete="off"
             autoFocus
           />
@@ -425,7 +445,7 @@ export function ProductSettingsModal({
 
         <Modal.Footer>
           <Modal.CancelBackButton className="btn btn-secondary flex-1">
-            Back
+            {tCommon('back')}
           </Modal.CancelBackButton>
           <SaveCategoryButton
             name={categoryName}
@@ -439,13 +459,13 @@ export function ProductSettingsModal({
       </Modal.Step>
 
       {/* Step 3: Delete category confirmation */}
-      <Modal.Step title="Delete Category" backStep={1}>
+      <Modal.Step title={t('delete_category_title')} backStep={1}>
         <Modal.Item>
           <p className="text-text-secondary">
-            Are you sure you want to delete <strong>{deletingCategory?.name}</strong>?
+            {t('delete_category_confirm', { name: deletingCategory?.name ?? '' })}
             {getCategoryProductCount(deletingCategory?.id || '') > 0 && (
               <span className="block mt-2 text-sm text-warning">
-                Products in this category will become uncategorized.
+                {t('delete_category_warning')}
               </span>
             )}
           </p>
@@ -453,7 +473,7 @@ export function ProductSettingsModal({
 
         <Modal.Footer>
           <Modal.GoToStepButton step={1} className="btn btn-secondary flex-1">
-            Cancel
+            {tCommon('cancel')}
           </Modal.GoToStepButton>
           <DeleteCategoryButton
             onDelete={handleDeleteCategory}
@@ -465,7 +485,7 @@ export function ProductSettingsModal({
       </Modal.Step>
 
       {/* Step 4: Success */}
-      <Modal.Step title="Done" hideBackButton>
+      <Modal.Step title={tCommon('done')} hideBackButton>
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -499,22 +519,22 @@ export function ProductSettingsModal({
             }}
             className="btn btn-primary flex-1"
           >
-            Done
+            {tCommon('done')}
           </Modal.GoToStepButton>
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 5: Preferences */}
-      <Modal.Step title="Preferences" backStep={0}>
+      <Modal.Step title={t('preferences_title')} backStep={0}>
         <Modal.Item>
-          <label htmlFor="default-category" className="label">Default Category</label>
+          <label htmlFor="default-category" className="label">{t('default_category_label')}</label>
           <select
             id="default-category"
             value={localDefaultCategoryId || ''}
             onChange={(e) => setLocalDefaultCategoryId(e.target.value || null)}
             className={`input ${!localDefaultCategoryId ? 'select-placeholder' : ''}`}
           >
-            <option value="">None</option>
+            <option value="">{t('default_category_none')}</option>
             {categories.map(cat => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
@@ -522,12 +542,12 @@ export function ProductSettingsModal({
             ))}
           </select>
           <p className="text-xs text-text-tertiary mt-1">
-            Pre-selected when adding new products
+            {t('default_category_hint')}
           </p>
         </Modal.Item>
 
         <Modal.Item>
-          <label htmlFor="sort-preference" className="label">Default Sort</label>
+          <label htmlFor="sort-preference" className="label">{t('sort_preference_label')}</label>
           <select
             id="sort-preference"
             value={localSortPreference}
@@ -536,18 +556,18 @@ export function ProductSettingsModal({
           >
             {SORT_OPTIONS.map(option => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {sortLabels[option.value]}
               </option>
             ))}
           </select>
           <p className="text-xs text-text-tertiary mt-1">
-            Default sorting for the product list
+            {t('sort_preference_hint')}
           </p>
         </Modal.Item>
 
         <Modal.Footer>
           <Modal.CancelBackButton className="btn btn-secondary flex-1">
-            Back
+            {tCommon('back')}
           </Modal.CancelBackButton>
           <button
             type="button"
@@ -560,7 +580,7 @@ export function ProductSettingsModal({
               })
             }}
           >
-            Save
+            {tCommon('save')}
           </button>
         </Modal.Footer>
       </Modal.Step>
