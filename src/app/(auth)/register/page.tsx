@@ -3,10 +3,12 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Input, Card, Spinner } from '@/components/ui'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const t = useTranslations('auth')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -22,13 +24,13 @@ export default function RegisterPage() {
 
       // Validate passwords match
       if (password !== passwordConfirm) {
-        setError('Passwords do not match')
+        setError(t('passwords_dont_match'))
         return
       }
 
       // Validate password length
       if (password.length < 8) {
-        setError('Password must be at least 8 characters')
+        setError(t('password_too_short'))
         return
       }
 
@@ -56,20 +58,20 @@ export default function RegisterPage() {
         router.push('/')
         router.refresh()
       } catch {
-        setError('Connection error')
+        setError(t('connection_error'))
       } finally {
         setIsLoading(false)
       }
     },
-    [email, password, passwordConfirm, name, router]
+    [email, password, passwordConfirm, name, router, t]
   )
 
   return (
     <>
       <Card padding="lg">
-        <h2 className="text-xl font-display font-bold mb-1">Create account</h2>
+        <h2 className="text-xl font-display font-bold mb-1">{t('register_title')}</h2>
         <p className="text-sm text-text-tertiary mb-6">
-          Set up your account to get started
+          {t('register_subtitle')}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -80,47 +82,47 @@ export default function RegisterPage() {
           )}
 
           <Input
-            label="Full name"
+            label={t('name_label')}
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="John Doe"
+            placeholder={t('name_placeholder')}
             autoComplete="name"
             autoFocus
             required
           />
 
           <Input
-            label="Email"
+            label={t('email_label')}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="tu@email.com"
+            placeholder={t('email_placeholder')}
             autoComplete="email"
             required
           />
 
           <div>
             <Input
-              label="Password"
+              label={t('password_label')}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Minimum 8 characters"
+              placeholder={t('password_new_placeholder')}
               autoComplete="new-password"
               required
             />
             <p className="text-xs text-text-tertiary mt-1">
-              This password protects your account
+              {t('password_hint')}
             </p>
           </div>
 
           <Input
-            label="Confirm password"
+            label={t('password_confirm_label')}
             type="password"
             value={passwordConfirm}
             onChange={(e) => setPasswordConfirm(e.target.value)}
-            placeholder="Repeat your password"
+            placeholder={t('password_confirm_placeholder')}
             autoComplete="new-password"
             required
           />
@@ -133,10 +135,10 @@ export default function RegisterPage() {
             {isLoading ? (
               <>
                 <Spinner />
-                <span className="sr-only">Creating account...</span>
+                <span className="sr-only">{t('creating_account')}</span>
               </>
             ) : (
-              'Create account'
+              t('register_button')
             )}
           </button>
         </form>
@@ -144,9 +146,9 @@ export default function RegisterPage() {
 
       <div className="auth-footer">
         <p className="auth-footer-link">
-          <span className="text-text-tertiary">Already have an account? </span>
+          <span className="text-text-tertiary">{t('have_account_prefix')} </span>
           <Link href="/login" className="text-brand hover:underline">
-            Log in
+            {t('login_link')}
           </Link>
         </p>
       </div>

@@ -3,6 +3,7 @@
 import { Suspense, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Input, Card, Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 
@@ -11,6 +12,7 @@ function LoginPageContent() {
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/home'
   const { login } = useAuth()
+  const t = useTranslations('auth')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -35,12 +37,12 @@ function LoginPageContent() {
         router.push(redirect)
         router.refresh()
       } catch {
-        setError('Connection error')
+        setError(t('connection_error'))
       } finally {
         setIsLoading(false)
       }
     },
-    [email, password, redirect, router, login]
+    [email, password, redirect, router, login, t]
   )
 
   return (
@@ -54,22 +56,22 @@ function LoginPageContent() {
           )}
 
           <Input
-            label="Email"
+            label={t('email_label')}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="tu@email.com"
+            placeholder={t('email_placeholder')}
             autoComplete="email"
             autoFocus
             required
           />
 
           <Input
-            label="Password"
+            label={t('password_label')}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Your password"
+            placeholder={t('password_placeholder')}
             autoComplete="current-password"
             required
           />
@@ -82,10 +84,10 @@ function LoginPageContent() {
             {isLoading ? (
               <>
                 <Spinner />
-                <span className="sr-only">Logging in...</span>
+                <span className="sr-only">{t('logging_in')}</span>
               </>
             ) : (
-              'Log in'
+              t('login_button')
             )}
           </button>
         </form>
@@ -93,9 +95,9 @@ function LoginPageContent() {
 
       <div className="auth-footer">
         <p className="auth-footer-link">
-          <span className="text-text-tertiary">Don't have an account? </span>
+          <span className="text-text-tertiary">{t('no_account_prefix')} </span>
           <Link href="/register" className="text-brand hover:underline">
-            Sign up
+            {t('sign_up_link')}
           </Link>
         </p>
       </div>
@@ -104,11 +106,13 @@ function LoginPageContent() {
 }
 
 function LoginPageFallback() {
+  const tCommon = useTranslations('common')
+
   return (
     <Card padding="lg">
       <div className="flex flex-col items-center py-8">
         <Spinner className="spinner-lg" />
-        <p className="text-text-secondary mt-4">Loading...</p>
+        <p className="text-text-secondary mt-4">{tCommon('loading')}</p>
       </div>
     </Card>
   )
