@@ -256,6 +256,7 @@ function EditProductModalWrapper({
 
 export default function ProductosPage() {
   const t = useTranslations('products')
+  const tOrders = useTranslations('orders')
   const { user } = useAuth()
   const { canManage, businessId } = useBusiness()
   const { formatDate } = useBusinessFormat()
@@ -430,7 +431,7 @@ export default function ProductosPage() {
       } catch (err) {
         if (cancelled) return
         console.error('Error loading data:', err)
-        setError('Failed to load data')
+        setError(tOrders('error_failed_to_load'))
       } finally {
         if (!cancelled) {
           setIsLoading(false)
@@ -440,7 +441,7 @@ export default function ProductosPage() {
 
     loadInitialData()
     return () => { cancelled = true }
-  }, [businessId, setProducts, setProviders, productsCache, providersCache])
+  }, [businessId, setProducts, setProviders, productsCache, providersCache, tOrders])
 
   // Lazy load orders when switching to orders tab
   useEffect(() => {
@@ -680,7 +681,7 @@ export default function ProductosPage() {
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        setError('Unable to look up barcode. Please try again.')
+        setError(tOrders('error_unable_to_lookup_barcode'))
         return
       }
 
@@ -691,9 +692,9 @@ export default function ProductosPage() {
         setSearchQuery(value)
       }
     } catch {
-      setError('Unable to look up barcode. Please try again.')
+      setError(tOrders('error_unable_to_lookup_barcode'))
     }
-  }, [businessId, handleOpenEdit, setError, setSearchQuery])
+  }, [businessId, handleOpenEdit, setError, setSearchQuery, tOrders])
 
   const {
     open: openBarcodeScan,
@@ -785,13 +786,13 @@ export default function ProductosPage() {
 
   const handleSaveOrder = useCallback(async (): Promise<boolean> => {
     if (orderItems.length === 0) {
-      setError('Add at least one product')
+      setError(tOrders('error_add_at_least_one_product'))
       return false
     }
 
     const totalNum = parseFloat(orderTotal)
     if (isNaN(totalNum) || totalNum <= 0) {
-      setError('Enter the total paid')
+      setError(tOrders('error_enter_total_paid'))
       return false
     }
 
@@ -829,18 +830,18 @@ export default function ProductosPage() {
     })
 
     return true
-  }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, setOrders])
+  }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, setOrders, tOrders])
 
   const handleSaveEditOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder) return false
     if (orderItems.length === 0) {
-      setError('Add at least one product')
+      setError(tOrders('error_add_at_least_one_product'))
       return false
     }
 
     const totalNum = parseFloat(orderTotal)
     if (isNaN(totalNum) || totalNum <= 0) {
-      setError('Enter the total paid')
+      setError(tOrders('error_enter_total_paid'))
       return false
     }
 
@@ -869,7 +870,7 @@ export default function ProductosPage() {
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to save order')
+        setError(data.error || tOrders('error_failed_to_save_order'))
         return false
       }
 
@@ -885,12 +886,12 @@ export default function ProductosPage() {
       return true
     } catch (err) {
       console.error('Error saving order:', err)
-      setError('Failed to save order')
+      setError(tOrders('error_failed_to_save_order'))
       return false
     } finally {
       setIsSavingOrder(false)
     }
-  }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, viewingOrder, setOrders])
+  }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, viewingOrder, setOrders, tOrders])
 
   const handleReceiveOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder || !user) return false
@@ -907,7 +908,7 @@ export default function ProductosPage() {
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to receive order')
+        setError(data.error || tOrders('error_failed_to_receive_order'))
         return false
       }
 
@@ -933,12 +934,12 @@ export default function ProductosPage() {
       return true
     } catch (err) {
       console.error('Error receiving order:', err)
-      setError('Failed to receive order')
+      setError(tOrders('error_failed_to_receive_order'))
       return false
     } finally {
       setIsReceiving(false)
     }
-  }, [businessId, viewingOrder, user, receivedQuantities, setProducts, setOrders])
+  }, [businessId, viewingOrder, user, receivedQuantities, setProducts, setOrders, tOrders])
 
   const handleDeleteOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder) return false
@@ -953,7 +954,7 @@ export default function ProductosPage() {
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to delete order')
+        setError(data.error || tOrders('error_failed_to_delete_order'))
         return false
       }
 
@@ -962,12 +963,12 @@ export default function ProductosPage() {
       return true
     } catch (err) {
       console.error('Error deleting order:', err)
-      setError('Failed to delete order')
+      setError(tOrders('error_failed_to_delete_order'))
       return false
     } finally {
       setIsDeletingOrder(false)
     }
-  }, [businessId, viewingOrder, setOrders])
+  }, [businessId, viewingOrder, setOrders, tOrders])
 
   const initializeReceiveQuantities = useCallback((order: ExpandedOrder) => {
     const items = order.expand?.['order_items(order)'] || []

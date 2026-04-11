@@ -6,6 +6,7 @@ import { Search, X, Check, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarC
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { getProductIconUrl } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { Product, Provider } from '@/types'
 import type { OrderFormItem } from '@/lib/products'
@@ -68,6 +69,7 @@ interface ConfirmOrderButtonProps {
 }
 
 function ConfirmOrderButton({ onSave, isSaving, disabled }: ConfirmOrderButtonProps) {
+  const t = useTranslations('common')
   const { goNext } = useMorphingModal()
 
   const handleClick = () => {
@@ -82,7 +84,7 @@ function ConfirmOrderButton({ onSave, isSaving, disabled }: ConfirmOrderButtonPr
       className="btn btn-primary flex-1"
       disabled={disabled}
     >
-      {isSaving ? <Spinner /> : 'Confirm'}
+      {isSaving ? <Spinner /> : t('confirm')}
     </button>
   )
 }
@@ -120,6 +122,8 @@ export function NewOrderModal({
   onSaveOrder,
   onResetForm,
 }: NewOrderModalProps) {
+  const t = useTranslations('orders')
+  const tCommon = useTranslations('common')
   const { formatCurrency, formatDate } = useBusinessFormat()
   const receiptInputRef = useRef<HTMLInputElement>(null)
 
@@ -128,18 +132,18 @@ export function NewOrderModal({
       isOpen={isOpen}
       onClose={onClose}
       onExitComplete={onResetForm}
-      title="New Order"
+      title={t('new_order_title')}
       size="large"
     >
       {/* Step 1: Select Products */}
-      <Modal.Step title="Select products">
+      <Modal.Step title={t('step_select_products')}>
         {/* Search bar */}
         <Modal.Item>
           <div className="search-bar">
             <Search className="search-bar-icon" />
             <input
               type="text"
-              placeholder="Search product..."
+              placeholder={t('product_search_placeholder')}
               value={productSearchQuery}
               onChange={e => onProductSearchQueryChange(e.target.value)}
               className="search-bar-input"
@@ -186,7 +190,7 @@ export function NewOrderModal({
                       {product.name}
                     </span>
                     <span className={`text-xs ${isOutOfStock ? 'text-error' : 'text-text-tertiary'}`}>
-                      {stockValue} units
+                      {t('item_unit_count', { count: stockValue })}
                     </span>
                   </div>
                   {/* Selection indicator */}
@@ -210,7 +214,7 @@ export function NewOrderModal({
               <span className={`text-sm font-medium ${
                 orderItems.length > 0 ? 'text-brand' : 'text-text-tertiary'
               }`}>
-                {orderItems.length} {orderItems.length === 1 ? 'product selected' : 'products selected'}
+                {t('products_selected', { count: orderItems.length })}
               </span>
             </div>
             {/* Buttons */}
@@ -220,13 +224,13 @@ export function NewOrderModal({
                 onClick={onClose}
                 className="btn btn-secondary flex-1"
               >
-                Cancel
+                {tCommon('cancel')}
               </button>
               <Modal.NextButton
                 className="btn btn-primary flex-1"
                 disabled={orderItems.length === 0}
               >
-                Continue
+                {tCommon('continue')}
               </Modal.NextButton>
             </div>
           </div>
@@ -234,7 +238,7 @@ export function NewOrderModal({
       </Modal.Step>
 
       {/* Step 2: Review Quantities */}
-      <Modal.Step title="Review quantities">
+      <Modal.Step title={t('step_review_quantities')}>
         <Modal.Item>
           <div className="space-y-3">
             {orderItems.map(item => (
@@ -317,16 +321,16 @@ export function NewOrderModal({
             {/* Summary */}
             <div className="flex items-center justify-center p-2 bg-bg-muted rounded-lg">
               <span className="text-sm font-medium text-text-secondary">
-                {orderItems.reduce((sum, i) => sum + i.quantity, 0)} units total
+                {t('units_total', { count: orderItems.reduce((sum, i) => sum + i.quantity, 0) })}
               </span>
             </div>
             {/* Buttons */}
             <div className="flex gap-3">
               <Modal.BackButton className="btn btn-secondary flex-1">
-                Back
+                {tCommon('back')}
               </Modal.BackButton>
               <Modal.NextButton className="btn btn-primary flex-1">
-                Continue
+                {tCommon('continue')}
               </Modal.NextButton>
             </div>
           </div>
@@ -334,7 +338,7 @@ export function NewOrderModal({
       </Modal.Step>
 
       {/* Step 3: Order Details */}
-      <Modal.Step title="Order details">
+      <Modal.Step title={t('step_order_details')}>
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
@@ -347,7 +351,7 @@ export function NewOrderModal({
         <Modal.Item>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="orderTotal" className="label">Total paid <span className="text-error">*</span></label>
+              <label htmlFor="orderTotal" className="label">{t('total_paid_label')} <span className="text-error">*</span></label>
               <div className="input-number-wrapper">
                 <PriceInput
                   id="orderTotal"
@@ -364,7 +368,7 @@ export function NewOrderModal({
                       onOrderTotalChange((current + 1).toFixed(2))
                     }}
                     tabIndex={-1}
-                    aria-label="Increase total"
+                    aria-label={t('increase_total_aria')}
                   >
                     <ArrowUp />
                   </button>
@@ -376,7 +380,7 @@ export function NewOrderModal({
                       onOrderTotalChange(Math.max(0, current - 1).toFixed(2))
                     }}
                     tabIndex={-1}
-                    aria-label="Decrease total"
+                    aria-label={t('decrease_total_aria')}
                   >
                     <ArrowDown />
                   </button>
@@ -384,7 +388,7 @@ export function NewOrderModal({
               </div>
             </div>
             <div>
-              <label htmlFor="orderProvider" className="label">Provider</label>
+              <label htmlFor="orderProvider" className="label">{t('provider_label')}</label>
               <div className="relative">
                 <select
                   id="orderProvider"
@@ -393,7 +397,7 @@ export function NewOrderModal({
                   className={`input w-full pr-10 ${!orderProvider ? 'text-text-tertiary' : ''}`}
                   style={{ backgroundImage: 'none', WebkitAppearance: 'none', appearance: 'none' }}
                 >
-                  <option value="">N/A</option>
+                  <option value="">{t('provider_none')}</option>
                   {providers.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -406,10 +410,10 @@ export function NewOrderModal({
 
         {/* Estimated Arrival */}
         <Modal.Item>
-          <label className="label">Estimated arrival date (optional)</label>
+          <label className="label">{t('estimated_arrival_label')}</label>
           <div className="relative">
             <div className={`input w-full flex items-center justify-between pointer-events-none ${orderEstimatedArrival ? 'text-text-primary' : 'text-text-tertiary'}`}>
-              <span>{orderEstimatedArrival ? formatDate(orderEstimatedArrival) : 'Select date...'}</span>
+              <span>{orderEstimatedArrival ? formatDate(orderEstimatedArrival) : t('select_date_placeholder')}</span>
               <CalendarClock className="w-5 h-5 text-text-tertiary" />
             </div>
             <input
@@ -423,7 +427,7 @@ export function NewOrderModal({
 
         {/* Receipt/Proof of Purchase */}
         <Modal.Item>
-          <label className="label">Receipt (optional)</label>
+          <label className="label">{t('receipt_label')}</label>
           <input
             ref={receiptInputRef}
             type="file"
@@ -483,7 +487,7 @@ export function NewOrderModal({
               onClick={() => receiptInputRef.current?.click()}
               className="input w-full text-left text-text-tertiary flex items-center justify-between"
             >
-              <span>Attach image or PDF...</span>
+              <span>{t('receipt_attach_placeholder')}</span>
               <ImageIcon className="w-5 h-5" />
             </button>
           )}
@@ -491,32 +495,32 @@ export function NewOrderModal({
 
         {/* Notes */}
         <Modal.Item>
-          <label htmlFor="orderNotes" className="label">Notes (optional)</label>
+          <label htmlFor="orderNotes" className="label">{t('notes_label')}</label>
           <textarea
             id="orderNotes"
             value={orderNotes}
             onChange={e => onOrderNotesChange(e.target.value)}
             className="input"
             rows={2}
-            placeholder="Order notes..."
+            placeholder={t('notes_placeholder')}
           />
         </Modal.Item>
 
         <Modal.Footer>
           <Modal.BackButton className="btn btn-secondary flex-1">
-            Back
+            {tCommon('back')}
           </Modal.BackButton>
           <Modal.NextButton
             className="btn btn-primary flex-1"
             disabled={!orderTotal || parseFloat(orderTotal) <= 0}
           >
-            Review
+            {t('review_button')}
           </Modal.NextButton>
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 4: Confirmation */}
-      <Modal.Step title="Confirm order">
+      <Modal.Step title={t('step_confirm_order')}>
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
@@ -546,28 +550,28 @@ export function NewOrderModal({
         <Modal.Item>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-text-tertiary">Total</span>
+              <span className="text-text-tertiary">{t('total_label')}</span>
               <span className="font-semibold">{orderTotal ? formatCurrency(parseFloat(orderTotal)) : '-'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-text-tertiary">Provider</span>
+              <span className="text-text-tertiary">{t('provider_label')}</span>
               <span>{providers.find(p => p.id === orderProvider)?.name || '-'}</span>
             </div>
             {orderEstimatedArrival && (
               <div className="flex justify-between">
-                <span className="text-text-tertiary">Est. arrival</span>
+                <span className="text-text-tertiary">{t('est_arrival_label')}</span>
                 <span>{formatDate(orderEstimatedArrival)}</span>
               </div>
             )}
             {orderReceiptFile && (
               <div className="flex justify-between">
-                <span className="text-text-tertiary">Receipt</span>
-                <span className="text-success">Attached</span>
+                <span className="text-text-tertiary">{t('receipt_attached_label')}</span>
+                <span className="text-success">{t('receipt_attached_value')}</span>
               </div>
             )}
             {orderNotes && (
               <div className="flex justify-between">
-                <span className="text-text-tertiary">Notes</span>
+                <span className="text-text-tertiary">{t('notes_review_label')}</span>
                 <span className="text-right max-w-[60%] truncate">{orderNotes}</span>
               </div>
             )}
@@ -576,14 +580,14 @@ export function NewOrderModal({
 
         <Modal.Footer>
           <Modal.BackButton className="btn btn-secondary flex-1" disabled={isSaving}>
-            Back
+            {tCommon('back')}
           </Modal.BackButton>
           <ConfirmOrderButton onSave={onSaveOrder} isSaving={isSaving} disabled={isSaving} />
         </Modal.Footer>
       </Modal.Step>
 
       {/* Step 5: Success */}
-      <Modal.Step title="Order created" hideBackButton>
+      <Modal.Step title={t('new_order_success_title')} hideBackButton>
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -601,13 +605,13 @@ export function NewOrderModal({
               className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: orderSaved ? 1 : 0 }}
             >
-              Order registered!
+              {t('new_order_success_heading')}
             </p>
             <p
               className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: orderSaved ? 1 : 0 }}
             >
-              The order has been saved successfully
+              {t('new_order_success_description')}
             </p>
           </div>
         </Modal.Item>
@@ -618,7 +622,7 @@ export function NewOrderModal({
             onClick={onClose}
             className="btn btn-primary flex-1"
           >
-            Close
+            {tCommon('close')}
           </button>
         </Modal.Footer>
       </Modal.Step>

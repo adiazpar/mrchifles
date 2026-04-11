@@ -4,6 +4,7 @@ import { memo } from 'react'
 import { Search, X, Plus, ArrowUp, Warehouse, ChevronRight } from 'lucide-react'
 import { TagsIcon, SettingsIcon } from '@/components/icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
+import { useTranslations } from 'next-intl'
 import { scrollToTop } from '@/lib/scroll'
 import type { Product } from '@/types'
 import type { ExpandedOrder, OrderStatusFilter } from '@/lib/products'
@@ -55,6 +56,9 @@ export function OrdersTab({
   error,
   isModalOpen,
 }: OrdersTabProps) {
+  const t = useTranslations('orders')
+  const tProducts = useTranslations('products')
+
   return (
     <div className="page-body space-y-4">
       {error && !isModalOpen && (
@@ -67,9 +71,9 @@ export function OrdersTab({
         {products.length === 0 && orders.length === 0 ? (
           <div className="empty-state-fill">
             <TagsIcon className="empty-state-icon" />
-            <h3 className="empty-state-title">No products yet</h3>
+            <h3 className="empty-state-title">{t('empty_no_products_title')}</h3>
             <p className="empty-state-description">
-              Add products to your catalog first, then you can start creating orders here
+              {t('empty_no_products_description')}
             </p>
             <button
               type="button"
@@ -77,16 +81,16 @@ export function OrdersTab({
               onClick={() => {/* TODO: implement order settings */}}
             >
               <SettingsIcon className="w-4 h-4" />
-              Order settings
+              {t('order_settings_button')}
             </button>
           </div>
         ) : orders.length === 0 ? (
           /* Products exist but no orders yet */
           <div className="empty-state-fill">
             <Warehouse className="empty-state-icon" />
-            <h3 className="empty-state-title">No orders</h3>
+            <h3 className="empty-state-title">{t('empty_no_orders_title')}</h3>
             <p className="empty-state-description">
-              Record your first order
+              {t('empty_no_orders_description')}
             </p>
             <button
               type="button"
@@ -94,7 +98,7 @@ export function OrdersTab({
               className="btn btn-primary mt-4"
             >
               <Plus className="w-4 h-4" />
-              Create order
+              {t('create_order_button')}
             </button>
           </div>
         ) : (
@@ -105,7 +109,7 @@ export function OrdersTab({
               <Search className="search-bar-icon" />
               <input
                 type="text"
-                placeholder="Search by provider or date..."
+                placeholder={t('search_placeholder')}
                 value={searchQuery}
                 onChange={e => onSearchChange(e.target.value)}
                 className="search-bar-input"
@@ -115,7 +119,7 @@ export function OrdersTab({
                   type="button"
                   onClick={() => onSearchChange('')}
                   className="search-bar-clear"
-                  aria-label="Clear search"
+                  aria-label={tProducts('search_clear')}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -129,21 +133,21 @@ export function OrdersTab({
                 onClick={() => onStatusFilterChange('all')}
                 className={`filter-tab ${statusFilter === 'all' ? 'filter-tab-active' : ''}`}
               >
-                All
+                {t('filter_all')}
               </button>
               <button
                 type="button"
                 onClick={() => onStatusFilterChange('pending')}
                 className={`filter-tab ${statusFilter === 'pending' ? 'filter-tab-active' : ''}`}
               >
-                Pending ({orders.filter(o => o.status === 'pending').length})
+                {t('filter_pending', { count: orders.filter(o => o.status === 'pending').length })}
               </button>
               <button
                 type="button"
                 onClick={() => onStatusFilterChange('received')}
                 className={`filter-tab ${statusFilter === 'received' ? 'filter-tab-active' : ''}`}
               >
-                Received ({orders.filter(o => o.status === 'received').length})
+                {t('filter_received', { count: orders.filter(o => o.status === 'received').length })}
               </button>
             </div>
 
@@ -152,7 +156,7 @@ export function OrdersTab({
               {/* Count and New Order button */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-text-secondary">
-                  {orders.length} {orders.length === 1 ? 'order' : 'orders'}
+                  {t('order_count', { count: orders.length })}
                 </span>
                 <button
                   type="button"
@@ -160,7 +164,7 @@ export function OrdersTab({
                   className="btn btn-primary btn-sm"
                 >
                   <Plus className="w-4 h-4" />
-                  New Order
+                  {t('new_order_button')}
                 </button>
               </div>
 
@@ -169,7 +173,7 @@ export function OrdersTab({
               {/* Orders List */}
               {filteredOrders.length === 0 ? (
                 <div className="text-center py-8 text-text-secondary">
-                  No orders found
+                  {t('no_results')}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -192,7 +196,7 @@ export function OrdersTab({
                 className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
               >
                 <ArrowUp className="w-4 h-4" />
-                Back to top
+                {tProducts('back_to_top')}
               </button>
             )}
           </>
@@ -214,6 +218,7 @@ const OrderListItem = memo(function OrderListItem({
   order,
   onView,
 }: OrderListItemProps) {
+  const t = useTranslations('orders')
   const { formatCurrency, formatDate } = useBusinessFormat()
   const items = order.expand?.['order_items(order)'] || []
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
@@ -248,7 +253,7 @@ const OrderListItem = memo(function OrderListItem({
         </span>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-xs text-text-tertiary">
-            {itemCount} {itemCount === 1 ? 'unit' : 'units'}
+            {t('item_unit_count', { count: itemCount })}
           </span>
           {order.expand?.provider && (
             <>
@@ -267,7 +272,7 @@ const OrderListItem = memo(function OrderListItem({
           -{formatCurrency(order.total)}
         </span>
         <span className={`text-xs mt-0.5 block ${isPending ? 'text-warning' : 'text-success'}`}>
-          {isPending ? 'Pending' : 'Received'}
+          {isPending ? t('status_pending') : t('status_received')}
         </span>
       </div>
 
