@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
 import { db, products } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 const stockSchema = z.object({
-  stock: z.number().int().min(0, 'Stock must be 0 or greater'),
+  stock: z.number().int().min(0),
 })
 
 /**
@@ -16,7 +16,7 @@ const stockSchema = z.object({
 export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   const id = routeParams?.id
   if (!id) {
-    return HttpResponse.badRequest('Product ID is required')
+    return errorResponse(ApiMessageCode.PRODUCT_ID_REQUIRED, 400)
   }
 
   // Verify product exists and belongs to business
@@ -32,7 +32,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     .limit(1)
 
   if (!existingProduct) {
-    return HttpResponse.notFound('Product not found')
+    return errorResponse(ApiMessageCode.PRODUCT_NOT_FOUND, 404)
   }
 
   const body = await request.json()
@@ -51,8 +51,5 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     })
     .where(eq(products.id, id))
 
-  return NextResponse.json({
-    success: true,
-    stock,
-  })
+  return successResponse({ stock })
 })

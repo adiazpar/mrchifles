@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server'
 import { db, productCategories } from '@/db'
 import { eq, and, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 const reorderSchema = z.object({
-  categoryIds: z.array(z.string()).min(1, 'At least one category is required'),
+  categoryIds: z.array(z.string()).min(1),
 })
 
 /**
@@ -18,7 +18,7 @@ const reorderSchema = z.object({
 export const POST = withBusinessAuth(async (request, access) => {
   // Only partners and owners can reorder categories
   if (!canManageBusiness(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.FORBIDDEN, 403)
   }
 
   const body = await request.json()
@@ -40,7 +40,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     ))
 
   if (existingCategories.length !== categoryIds.length) {
-    return HttpResponse.badRequest('Some categories not found or do not belong to this business')
+    return errorResponse(ApiMessageCode.CATEGORIES_NOT_FOUND_IN_BUSINESS, 400)
   }
 
   // Update sort order for each category
@@ -55,7 +55,5 @@ export const POST = withBusinessAuth(async (request, access) => {
     )
   )
 
-  return NextResponse.json({
-    success: true,
-  })
+  return successResponse({})
 })

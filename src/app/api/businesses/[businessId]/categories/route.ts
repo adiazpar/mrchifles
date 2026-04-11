@@ -1,37 +1,29 @@
-import { NextResponse } from 'next/server'
 import { db, productCategories } from '@/db'
 import { eq, asc } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const createCategorySchema = z.object({
-  name: Schemas.name().max(50, 'Name too long'),
+  name: Schemas.name().max(50),
 })
 
 /**
  * GET /api/businesses/[businessId]/categories
  *
  * List all product categories for the business.
- * Creates default categories if none exist.
  */
 export const GET = withBusinessAuth(async (_request, access) => {
-  // Check for existing categories
   const categories = await db
     .select()
     .from(productCategories)
     .where(eq(productCategories.businessId, access.businessId))
     .orderBy(asc(productCategories.sortOrder), asc(productCategories.name))
 
-  // TODO: Add auto-seeding of default categories based on business type
-  // For now, users create their own categories via Product Settings
-
-  return NextResponse.json({
-    success: true,
-    categories,
-  })
+  return successResponse({ categories })
 })
 
 /**
@@ -41,7 +33,7 @@ export const GET = withBusinessAuth(async (_request, access) => {
  */
 export const POST = withBusinessAuth(async (request, access) => {
   if (!canManageBusiness(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.FORBIDDEN, 403)
   }
 
   const body = await request.json()
@@ -73,8 +65,5 @@ export const POST = withBusinessAuth(async (request, access) => {
     sortOrder: maxSortOrder + 1,
   }).returning()
 
-  return NextResponse.json({
-    success: true,
-    category: newCategory,
-  })
+  return successResponse({ category: newCategory })
 })

@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { db, businesses } from '@/db'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 
 const sortPreferenceValues = ['name_asc', 'name_desc', 'price_asc', 'price_desc', 'category', 'stock_asc', 'stock_desc'] as const
 
@@ -27,8 +27,7 @@ export const GET = withBusinessAuth(async (request, access) => {
     .where(eq(businesses.id, access.businessId))
     .limit(1)
 
-  return NextResponse.json({
-    success: true,
+  return successResponse({
     settings: {
       defaultCategoryId: business?.defaultCategoryId ?? null,
       sortPreference: business?.sortPreference ?? 'name_asc',
@@ -43,7 +42,7 @@ export const GET = withBusinessAuth(async (request, access) => {
  */
 export const PATCH = withBusinessAuth(async (request, access) => {
   if (!canManageBusiness(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.FORBIDDEN, 403)
   }
 
   const body = await request.json()
@@ -68,8 +67,7 @@ export const PATCH = withBusinessAuth(async (request, access) => {
     .set(updateData)
     .where(eq(businesses.id, access.businessId))
 
-  return NextResponse.json({
-    success: true,
+  return successResponse({
     settings: {
       defaultCategoryId: defaultCategoryId ?? null,
       sortPreference: sortPreference ?? null,

@@ -7,6 +7,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { apiRequest, apiPost, apiPatch, apiDelete, ApiError, type ApiResponse } from '@/lib/api-client'
+import { useApiMessage } from '@/hooks/useApiMessage'
 import type { ProductCategory, ProductSettings, SortPreference } from '@/types'
 
 // ============================================
@@ -122,6 +123,7 @@ export interface UseProductSettingsReturn {
 
 export function useProductSettings({ businessId }: UseProductSettingsOptions): UseProductSettingsReturn {
   const t = useTranslations('productSettings')
+  const translateApiMessage = useApiMessage()
   // State
   const [categories, setCategoriesState] = useState<ProductCategory[]>(() => getCachedCategories(businessId) || [])
   const [settings, setSettingsState] = useState<ProductSettings | null>(() => getCachedSettings(businessId))
@@ -161,16 +163,16 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
       const data = await apiRequest<CategoriesResponse>(`/api/businesses/${businessId}/categories`)
       setCategories(data.categories)
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        console.error('Error loading categories:', err)
-        setError(t('error_failed_to_load_categories'))
-      }
+      console.error('Error loading categories:', err)
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_load_categories')
+      )
     } finally {
       setIsLoadingCategories(false)
     }
-  }, [businessId, setCategories, t])
+  }, [businessId, setCategories, t, translateApiMessage])
 
   // Load settings on mount if not cached
   const refreshSettings = useCallback(async () => {
@@ -179,16 +181,16 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
       const data = await apiRequest<SettingsResponse>(`/api/businesses/${businessId}/product-settings`)
       setSettings(data.settings)
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        console.error('Error loading settings:', err)
-        setError(t('error_failed_to_load_settings'))
-      }
+      console.error('Error loading settings:', err)
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_load_settings')
+      )
     } finally {
       setIsLoadingSettings(false)
     }
-  }, [businessId, setSettings, t])
+  }, [businessId, setSettings, t, translateApiMessage])
 
   // Initial load
   useEffect(() => {
@@ -213,17 +215,17 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
       setCategories(prev => [...prev, data.category])
       return data.category
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        console.error('Error creating category:', err)
-        setError(t('error_failed_to_create_category'))
-      }
+      console.error('Error creating category:', err)
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_create_category')
+      )
       return null
     } finally {
       setIsCreating(false)
     }
-  }, [businessId, setCategories, t])
+  }, [businessId, setCategories, t, translateApiMessage])
 
   // Update category
   const updateCategory = useCallback(async (id: string, name: string): Promise<ProductCategory | null> => {
@@ -235,17 +237,17 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
       setCategories(prev => prev.map(c => c.id === id ? data.category : c))
       return data.category
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        console.error('Error updating category:', err)
-        setError(t('error_failed_to_update_category'))
-      }
+      console.error('Error updating category:', err)
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_update_category')
+      )
       return null
     } finally {
       setIsUpdating(false)
     }
-  }, [businessId, setCategories, t])
+  }, [businessId, setCategories, t, translateApiMessage])
 
   // Delete category
   const deleteCategory = useCallback(async (id: string): Promise<boolean> => {
@@ -263,17 +265,17 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
 
       return true
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        console.error('Error deleting category:', err)
-        setError(t('error_failed_to_delete_category'))
-      }
+      console.error('Error deleting category:', err)
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_delete_category')
+      )
       return false
     } finally {
       setIsDeleting(false)
     }
-  }, [businessId, setCategories, setSettings, settings?.defaultCategoryId, t])
+  }, [businessId, setCategories, setSettings, settings?.defaultCategoryId, t, translateApiMessage])
 
   // Reorder categories
   const reorderCategories = useCallback(async (categoryIds: string[]): Promise<boolean> => {
@@ -296,17 +298,17 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
     } catch (err) {
       // Rollback on error
       setCategories(previousCategories)
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        console.error('Error reordering categories:', err)
-        setError(t('error_failed_to_reorder_categories'))
-      }
+      console.error('Error reordering categories:', err)
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_reorder_categories')
+      )
       return false
     } finally {
       setIsUpdating(false)
     }
-  }, [businessId, categories, setCategories, t])
+  }, [businessId, categories, setCategories, t, translateApiMessage])
 
   // Update settings
   const updateSettings = useCallback(async (updates: { defaultCategoryId?: string | null; sortPreference?: SortPreference }): Promise<ProductSettings | null> => {
@@ -319,17 +321,17 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
       await apiPatch<SettingsResponse>(`/api/businesses/${businessId}/product-settings`, updates)
       return settings ? { ...settings, ...updates } : null
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        console.error('Error updating settings:', err)
-        setError(t('error_failed_to_update_settings'))
-      }
+      console.error('Error updating settings:', err)
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_update_settings')
+      )
       return null
     } finally {
       setIsSavingSettings(false)
     }
-  }, [businessId, settings, setSettings, t])
+  }, [businessId, settings, setSettings, t, translateApiMessage])
 
   // Clear error
   const clearError = useCallback(() => setError(''), [])

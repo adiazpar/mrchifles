@@ -576,6 +576,22 @@
     "auth_login_failed": "Login failed. Please try again.",
     "auth_register_failed": "Failed to create account. Please try again.",
     "auth_login_rate_limited": "Too many login attempts. Please try again later.",
-    "auth_register_rate_limited": "Too many registration attempts. Please try again later."
+    "auth_register_rate_limited": "Too many registration attempts. Please try again later.",
+    "product_not_found": "Product not found",
+    "product_id_required": "Product ID is required",
+    "product_no_data_to_update": "No data to update",
+    "product_icon_too_large": "Icon is too large. Maximum size is 100KB.",
+    "product_icon_upload_failed": "Failed to upload icon",
+    "product_pending_order_block": "This product is part of a pending order. Receive or cancel that order first.",
+    "product_forbidden_not_manager": "Only partners and owners can manage products",
+    "barcode_unrecognized": "Unrecognized barcode value",
+    "barcode_duplicate": "Another product already uses this barcode",
+    "barcode_source_requires_value": "Barcode source requires a barcode value",
+    "barcode_unsupported_source": "Unsupported barcode source",
+    "barcode_source_invalid": "Invalid barcode source for this value",
+    "category_not_found": "Category not found",
+    "category_id_required": "Category ID is required",
+    "categories_not_found_in_business": "Some categories do not belong to this business",
+    "stock_invalid": "Stock must be 0 or greater"
   }
 }

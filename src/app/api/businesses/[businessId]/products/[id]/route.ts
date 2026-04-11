@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { db, products, orderItems, orders } from '@/db'
 import { eq, and, ne } from 'drizzle-orm'
 import { uploadProductIcon, deleteProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
-import { withBusinessAuth, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, errorResponse, successResponse, validationError } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { canManageBusiness } from '@/lib/business-auth'
 import {
   computeCanonicalGtin,
@@ -20,12 +21,12 @@ import { Schemas } from '@/lib/schemas'
 export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   // Only partners and owners can modify products
   if (!canManageBusiness(access.role)) {
-    return HttpResponse.forbidden('Only partners and owners can modify products')
+    return errorResponse(ApiMessageCode.PRODUCT_FORBIDDEN_NOT_MANAGER, 403)
   }
 
   const id = routeParams?.id
   if (!id) {
-    return HttpResponse.badRequest('Product ID is required')
+    return errorResponse(ApiMessageCode.PRODUCT_ID_REQUIRED, 400)
   }
 
   const formData = await request.formData()
@@ -46,7 +47,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   if (name !== null) {
     const nameValidation = Schemas.name().safeParse(name)
     if (!nameValidation.success) {
-      return HttpResponse.badRequest(nameValidation.error.issues[0]?.message || 'Invalid name')
+      return validationError(nameValidation)
     }
     updateData.name = nameValidation.data
   }
@@ -54,7 +55,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   if (price !== null) {
     const priceValidation = Schemas.amount().safeParse(price)
     if (!priceValidation.success) {
-      return HttpResponse.badRequest(priceValidation.error.issues[0]?.message || 'Invalid price')
+      return validationError(priceValidation)
     }
     updateData.price = priceValidation.data
   }
@@ -80,7 +81,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
 
   if (hasBarcodeSource) {
     if (barcodeSourceValue && !['scanned', 'generated', 'manual'].includes(barcodeSourceValue)) {
-      return HttpResponse.badRequest('Unsupported barcode source')
+      return errorResponse(ApiMessageCode.BARCODE_UNSUPPORTED_SOURCE, 400)
     }
     updateData.barcodeSource = barcodeSourceValue || null
   }
@@ -90,7 +91,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     // non-empty but the cascade can't classify it, reject as malformed.
     const derivedFormat = barcodeValue ? detectBarcodeFormat(barcodeValue) : null
     if (barcodeValue && !derivedFormat) {
-      return HttpResponse.badRequest('Unrecognized barcode value')
+      return errorResponse(ApiMessageCode.BARCODE_UNRECOGNIZED, 400)
     }
 
     // The KSR- namespace and the source field must agree. We only run the
@@ -106,7 +107,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
         | null
       const sourcePrefixError = validateBarcodeSourcePrefix(barcodeValue, source)
       if (sourcePrefixError) {
-        return HttpResponse.badRequest(sourcePrefixError)
+        return errorResponse(ApiMessageCode.BARCODE_SOURCE_INVALID, 400)
       }
     }
 
@@ -124,7 +125,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
         .get()
 
       if (duplicateBarcode) {
-        return HttpResponse.badRequest('Another product already uses this barcode')
+        return errorResponse(ApiMessageCode.BARCODE_DUPLICATE, 400)
       }
     }
 
@@ -140,7 +141,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   }
 
   if (hasBarcodeValue && !barcodeValue && barcodeSourceValue) {
-    return HttpResponse.badRequest('Barcode source requires a barcode value')
+    return errorResponse(ApiMessageCode.BARCODE_SOURCE_REQUIRES_VALUE, 400)
   }
 
   // Handle icon changes
@@ -150,13 +151,13 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
       const base64ForValidation = await fileToBase64(iconFile)
       const { valid } = validateIconSize(base64ForValidation)
       if (!valid) {
-        return HttpResponse.badRequest('Icon is too large. Maximum size is 100KB.')
+        return errorResponse(ApiMessageCode.PRODUCT_ICON_TOO_LARGE, 400)
       }
       // uploadProductIcon deletes any existing file at this id before writing.
       updateData.icon = await uploadProductIcon(iconFile, id, base64ForValidation)
     } catch (err) {
       console.error('Error uploading icon:', err)
-      return HttpResponse.serverError('Failed to upload icon')
+      return errorResponse(ApiMessageCode.PRODUCT_ICON_UPLOAD_FAILED, 500)
     }
   } else if (presetIcon) {
     // Preset emoji icon - store the emoji string directly
@@ -169,7 +170,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   }
 
   if (Object.keys(updateData).length === 0) {
-    return HttpResponse.badRequest('No data to update')
+    return errorResponse(ApiMessageCode.PRODUCT_NO_DATA_TO_UPDATE, 400)
   }
 
   // Update with ownership check in WHERE (no separate verify query needed)
@@ -186,13 +187,10 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     .limit(1)
 
   if (!updatedProduct) {
-    return HttpResponse.notFound('Product not found')
+    return errorResponse(ApiMessageCode.PRODUCT_NOT_FOUND, 404)
   }
 
-  return NextResponse.json({
-    success: true,
-    product: updatedProduct,
-  })
+  return successResponse({ product: updatedProduct })
 })
 
 /**
@@ -207,12 +205,12 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
 export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
   // Only partners and owners can delete products
   if (!canManageBusiness(access.role)) {
-    return HttpResponse.forbidden('Only partners and owners can delete products')
+    return errorResponse(ApiMessageCode.PRODUCT_FORBIDDEN_NOT_MANAGER, 403)
   }
 
   const id = routeParams?.id
   if (!id) {
-    return HttpResponse.badRequest('Product ID is required')
+    return errorResponse(ApiMessageCode.PRODUCT_ID_REQUIRED, 400)
   }
 
   // Verify product exists and belongs to business
@@ -228,7 +226,7 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
     .limit(1)
 
   if (!existingProduct) {
-    return HttpResponse.notFound('Product not found')
+    return errorResponse(ApiMessageCode.PRODUCT_NOT_FOUND, 404)
   }
 
   // Block delete if the product is referenced in any pending order
@@ -246,9 +244,11 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
     .limit(1)
 
   if (blockingOrder) {
+    // 409 with the envelope plus the blocking order id so the client can
+    // navigate to it.
     return NextResponse.json(
       {
-        error: 'This product is part of a pending order. Receive or cancel that order first.',
+        messageCode: ApiMessageCode.PRODUCT_PENDING_ORDER_BLOCK,
         blockingOrderId: blockingOrder.id,
       },
       { status: 409 }
@@ -262,7 +262,5 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
   // preserves its productName snapshot for historical display.
   await db.delete(products).where(eq(products.id, id))
 
-  return NextResponse.json({
-    success: true,
-  })
+  return successResponse({})
 })

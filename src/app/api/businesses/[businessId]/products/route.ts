@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server'
 import { db, products } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { uploadProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import {
   computeCanonicalGtin,
   detectBarcodeFormat,
@@ -48,10 +48,7 @@ export const GET = withBusinessAuth(async (request, access) => {
     .from(products)
     .where(and(...conditions))
 
-  return NextResponse.json({
-    success: true,
-    products: productsList,
-  })
+  return successResponse({ products: productsList })
 })
 
 /**
@@ -100,7 +97,7 @@ export const POST = withBusinessAuth(async (request, access) => {
   // reject as a malformed barcode.
   const barcodeFormat = barcodeValue ? detectBarcodeFormat(barcodeValue) : null
   if (barcodeValue && !barcodeFormat) {
-    return HttpResponse.badRequest('Unrecognized barcode value')
+    return errorResponse(ApiMessageCode.BARCODE_UNRECOGNIZED, 400)
   }
 
   const barcodeSource = validBarcodeSource ?? null
@@ -109,12 +106,12 @@ export const POST = withBusinessAuth(async (request, access) => {
   // the full matrix of allowed combinations.
   const sourcePrefixError = validateBarcodeSourcePrefix(barcodeValue, barcodeSource)
   if (sourcePrefixError) {
-    return HttpResponse.badRequest(sourcePrefixError)
+    return errorResponse(ApiMessageCode.BARCODE_SOURCE_INVALID, 400)
   }
   const barcodeGtin = computeCanonicalGtin(barcodeValue, barcodeFormat)
 
   if (!barcodeValue && barcodeSource) {
-    return HttpResponse.badRequest('Barcode source requires a barcode value')
+    return errorResponse(ApiMessageCode.BARCODE_SOURCE_REQUIRES_VALUE, 400)
   }
 
   if (barcodeValue) {
@@ -130,7 +127,7 @@ export const POST = withBusinessAuth(async (request, access) => {
       .get()
 
     if (duplicateBarcode) {
-      return HttpResponse.badRequest('Another product already uses this barcode')
+      return errorResponse(ApiMessageCode.BARCODE_DUPLICATE, 400)
     }
   }
 
@@ -143,12 +140,12 @@ export const POST = withBusinessAuth(async (request, access) => {
       const base64 = await fileToBase64(iconFile)
       const { valid } = validateIconSize(base64)
       if (!valid) {
-        return HttpResponse.badRequest('Icon is too large. Maximum size is 100KB.')
+        return errorResponse(ApiMessageCode.PRODUCT_ICON_TOO_LARGE, 400)
       }
       iconData = await uploadProductIcon(iconFile, productId, base64)
     } catch (err) {
       console.error('Error uploading icon:', err)
-      return HttpResponse.serverError('Failed to upload icon')
+      return errorResponse(ApiMessageCode.PRODUCT_ICON_UPLOAD_FAILED, 500)
     }
   } else if (presetIcon) {
     iconData = presetIcon
@@ -169,8 +166,5 @@ export const POST = withBusinessAuth(async (request, access) => {
     stock: 0,
   }).returning()
 
-  return NextResponse.json({
-    success: true,
-    product: newProduct,
-  })
+  return successResponse({ product: newProduct })
 })

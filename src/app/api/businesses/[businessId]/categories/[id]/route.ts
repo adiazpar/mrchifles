@@ -1,13 +1,13 @@
-import { NextResponse } from 'next/server'
 import { db, productCategories, products, businesses } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const updateCategorySchema = z.object({
-  name: Schemas.name().max(50, 'Name too long'),
+  name: Schemas.name().max(50),
 })
 
 /**
@@ -18,12 +18,12 @@ const updateCategorySchema = z.object({
 export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   const id = routeParams?.id
   if (!id) {
-    return HttpResponse.badRequest('Category ID is required')
+    return errorResponse(ApiMessageCode.CATEGORY_ID_REQUIRED, 400)
   }
 
   // Only partners and owners can update categories
   if (!canManageBusiness(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.FORBIDDEN, 403)
   }
 
   // Verify the category belongs to this business
@@ -37,7 +37,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     .limit(1)
 
   if (!existingCategory) {
-    return HttpResponse.notFound('Category not found')
+    return errorResponse(ApiMessageCode.CATEGORY_NOT_FOUND, 404)
   }
 
   const body = await request.json()
@@ -62,10 +62,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     .where(eq(productCategories.id, id))
     .limit(1)
 
-  return NextResponse.json({
-    success: true,
-    category: updatedCategory,
-  })
+  return successResponse({ category: updatedCategory })
 })
 
 /**
@@ -77,12 +74,12 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
 export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
   const id = routeParams?.id
   if (!id) {
-    return HttpResponse.badRequest('Category ID is required')
+    return errorResponse(ApiMessageCode.CATEGORY_ID_REQUIRED, 400)
   }
 
   // Only partners and owners can delete categories
   if (!canManageBusiness(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.FORBIDDEN, 403)
   }
 
   // Verify the category belongs to this business
@@ -96,7 +93,7 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
     .limit(1)
 
   if (!existingCategory) {
-    return HttpResponse.notFound('Category not found')
+    return errorResponse(ApiMessageCode.CATEGORY_NOT_FOUND, 404)
   }
 
   // Get count of products using this category for the response
@@ -122,8 +119,5 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
     .delete(productCategories)
     .where(eq(productCategories.id, id))
 
-  return NextResponse.json({
-    success: true,
-    affectedProducts: productsWithCategory.length,
-  })
+  return successResponse({ affectedProducts: productsWithCategory.length })
 })
