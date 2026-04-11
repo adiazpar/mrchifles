@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useBusiness } from '@/contexts/business-context'
 import { canManageBusiness } from '@/lib/business-role'
 import { apiRequest, apiPost, apiPatch, apiDelete, ApiError, ApiResponse } from '@/lib/api-client'
+import { useApiMessage } from '@/hooks/useApiMessage'
 import type { Provider } from '@/types'
 
 export interface UseProviderManagementOptions {
@@ -61,6 +62,7 @@ export interface UseProviderManagementReturn {
 export function useProviderManagement({ businessId }: UseProviderManagementOptions): UseProviderManagementReturn {
   const { role } = useBusiness()
   const t = useTranslations('providers')
+  const translateApiMessage = useApiMessage()
 
   // Data state
   const [providers, setProviders] = useState<Provider[]>([])
@@ -99,11 +101,11 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
       } catch (err) {
         if (cancelled) return
         console.error('Error loading providers:', err)
-        if (err instanceof ApiError) {
-          setError(err.message)
-        } else {
-          setError(t('error_failed_to_load'))
-        }
+        setError(
+          err instanceof ApiError && err.envelope
+            ? translateApiMessage(err.envelope)
+            : t('error_failed_to_load')
+        )
       } finally {
         if (!cancelled) {
           setIsLoading(false)
@@ -116,7 +118,7 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     return () => {
       cancelled = true
     }
-  }, [businessId, t])
+  }, [businessId, t, translateApiMessage])
 
   // Sort providers: active first, then by name
   const sortedProviders = useMemo(() => {
@@ -201,16 +203,16 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
       return true
     } catch (err) {
       console.error('Error saving provider:', err)
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        setError(t('error_failed_to_save'))
-      }
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_save')
+      )
       return false
     } finally {
       setIsSaving(false)
     }
-  }, [businessId, name, phone, email, notes, active, editingProvider, t])
+  }, [businessId, name, phone, email, notes, active, editingProvider, t, translateApiMessage])
 
   const handleDelete = useCallback(async (): Promise<boolean> => {
     if (!editingProvider) return false
@@ -229,16 +231,16 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
       return true
     } catch (err) {
       console.error('Error deleting provider:', err)
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        setError(t('error_failed_to_delete'))
-      }
+      setError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_delete')
+      )
       return false
     } finally {
       setIsDeleting(false)
     }
-  }, [businessId, editingProvider, t])
+  }, [businessId, editingProvider, t, translateApiMessage])
 
   return {
     // Data

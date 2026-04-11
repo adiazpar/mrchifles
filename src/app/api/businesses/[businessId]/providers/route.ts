@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server'
 import { db, providers } from '@/db'
 import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
 const createProviderSchema = z.object({
@@ -33,10 +33,7 @@ export const GET = withBusinessAuth(async (request, access) => {
     ? providersList.filter(p => p.active)
     : providersList
 
-  return NextResponse.json({
-    success: true,
-    providers: filtered,
-  })
+  return successResponse({ providers: filtered })
 })
 
 /**
@@ -46,7 +43,7 @@ export const GET = withBusinessAuth(async (request, access) => {
  */
 export const POST = withBusinessAuth(async (request, access) => {
   if (!canManageBusiness(access.role)) {
-    return HttpResponse.forbidden()
+    return errorResponse(ApiMessageCode.PROVIDER_FORBIDDEN_NOT_MANAGER, 403)
   }
 
   const body = await request.json()
@@ -70,8 +67,5 @@ export const POST = withBusinessAuth(async (request, access) => {
     active,
   }).returning()
 
-  return NextResponse.json({
-    success: true,
-    provider: newProvider,
-  })
+  return successResponse({ provider: newProvider })
 })

@@ -598,6 +598,8 @@
     "order_forbidden_not_manager": "Only partners and owners can manage orders",
     "order_invalid_items": "Invalid items",
     "order_already_received": "Order has already been received",
-    "order_cannot_edit_received": "Cannot edit a received order"
+    "order_cannot_edit_received": "Cannot edit a received order",
+    "provider_not_found": "Provider not found",
+    "provider_forbidden_not_manager": "Only partners and owners can manage providers"
   }
 }
