@@ -2,12 +2,16 @@
  * QR code generation utilities.
  */
 
-import QRCode from 'qrcode'
+'use client'
 
-const QR_CONFIG = {
-  width: 160,
-  margin: 2,
-  color: { dark: '#0F172A', light: '#FFFFFF' },
+import bwipjs from 'bwip-js/browser'
+
+const QR_OPTIONS = {
+  bcid: 'qrcode',
+  scale: 5,
+  padding: 10,
+  backgroundcolor: 'FFFFFF',
+  barcolor: '0F172A',
 }
 
 /**
@@ -17,5 +21,7 @@ const QR_CONFIG = {
  */
 export async function generateInviteQRCode(inviteCode: string): Promise<string> {
   const registrationUrl = `${window.location.origin}/invite?code=${inviteCode}`
-  return QRCode.toDataURL(registrationUrl, QR_CONFIG)
+  const canvas = document.createElement('canvas')
+  bwipjs.toCanvas(canvas, { ...QR_OPTIONS, text: registrationUrl })
+  return canvas.toDataURL('image/png')
 }

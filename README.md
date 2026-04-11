@@ -102,8 +102,6 @@ src/
 - **Currency**: Defaults to USD ($) for en-US locale. The app adapts to each business's locale and currency via `useBusinessFormat()` — use that hook for all money/date/time formatting in components, and `<PriceInput>` for currency inputs.
 - **Date**: Defaults to MM/DD/YYYY for en-US locale. Formatted via `useBusinessFormat()` in components.
 
-See [.claude/CLAUDE.md](.claude/CLAUDE.md) for full documentation.
-
 ## License
 
 Private - All rights reserved.

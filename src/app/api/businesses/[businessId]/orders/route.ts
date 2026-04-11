@@ -138,7 +138,7 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   const totalValidation = Schemas.positiveAmount().safeParse(totalStr)
   if (!totalValidation.success) {
-    return HttpResponse.badRequest(totalValidation.error.errors[0]?.message || 'Invalid total')
+    return HttpResponse.badRequest(totalValidation.error.issues[0]?.message || 'Invalid total')
   }
   const total = totalValidation.data
 

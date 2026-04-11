@@ -1,11 +1,42 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
+import type { Html5Qrcode } from 'html5-qrcode'
 import { isBarcodeFormat } from '@/lib/barcodes'
 import type { BarcodeFormat } from '@/types'
-import { LiveBarcodeScanner, type LiveBarcodeScanResult } from '@/components/products/LiveBarcodeScanner'
+import type { LiveBarcodeScanResult } from '@/components/products/LiveBarcodeScanner'
 import { useIsMobile } from './useIsMobile'
+
+// html5-qrcode (~100KB gzipped) + LiveBarcodeScanner are only needed once
+// the user actually opens the scanner. Loading the component dynamically
+// keeps them out of the initial products-page chunk.
+const LiveBarcodeScanner = dynamic(
+  () => import('@/components/products/LiveBarcodeScanner').then(m => m.LiveBarcodeScanner),
+  { ssr: false },
+)
+
+// Lazy-import the html5-qrcode module for the file-picker scan path. The
+// dynamic import shares a chunk with LiveBarcodeScanner so the payload is
+// downloaded exactly once, on first scanner open.
+async function loadHtml5Qrcode() {
+  const mod = await import('html5-qrcode')
+  return {
+    Html5Qrcode: mod.Html5Qrcode,
+    SUPPORTED_FORMATS: [
+      mod.Html5QrcodeSupportedFormats.CODABAR,
+      mod.Html5QrcodeSupportedFormats.CODE_39,
+      mod.Html5QrcodeSupportedFormats.CODE_93,
+      mod.Html5QrcodeSupportedFormats.CODE_128,
+      mod.Html5QrcodeSupportedFormats.ITF,
+      mod.Html5QrcodeSupportedFormats.EAN_13,
+      mod.Html5QrcodeSupportedFormats.EAN_8,
+      mod.Html5QrcodeSupportedFormats.UPC_A,
+      mod.Html5QrcodeSupportedFormats.UPC_E,
+      mod.Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
+    ],
+  }
+}
 
 // ---------------------------------------------------------------------------
 // File preprocessing helpers
@@ -60,19 +91,6 @@ function isPdfFile(file: File): boolean {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const SUPPORTED_BARCODE_FORMATS = [
-  Html5QrcodeSupportedFormats.CODABAR,
-  Html5QrcodeSupportedFormats.CODE_39,
-  Html5QrcodeSupportedFormats.CODE_93,
-  Html5QrcodeSupportedFormats.CODE_128,
-  Html5QrcodeSupportedFormats.ITF,
-  Html5QrcodeSupportedFormats.EAN_13,
-  Html5QrcodeSupportedFormats.EAN_8,
-  Html5QrcodeSupportedFormats.UPC_A,
-  Html5QrcodeSupportedFormats.UPC_E,
-  Html5QrcodeSupportedFormats.UPC_EAN_EXTENSION,
-]
 
 // Match the limit used by useImageCompression for consistency.
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024
@@ -278,9 +296,10 @@ export function useBarcodeScan({ onResult, onError }: UseBarcodeScanOptions): Us
         return
       }
 
-      const scanner = new Html5Qrcode(hostIdRef.current, {
+      const { Html5Qrcode: Html5QrcodeCtor, SUPPORTED_FORMATS } = await loadHtml5Qrcode()
+      const scanner = new Html5QrcodeCtor(hostIdRef.current, {
         verbose: false,
-        formatsToSupport: SUPPORTED_BARCODE_FORMATS,
+        formatsToSupport: SUPPORTED_FORMATS,
       })
       activeScannerRef.current = scanner
 

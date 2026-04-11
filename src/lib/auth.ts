@@ -103,8 +103,7 @@ export function getInviteRoleLabel(role: InviteRole): string {
 
 import { z } from 'zod'
 
-export const emailSchema = z.string()
-  .email('Invalid email')
+export const emailSchema = z.email('Invalid email')
 
 export const nameSchema = z.string()
   .min(2, 'Name must be at least 2 characters')

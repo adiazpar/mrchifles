@@ -46,7 +46,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   if (name !== null) {
     const nameValidation = Schemas.name().safeParse(name)
     if (!nameValidation.success) {
-      return HttpResponse.badRequest(nameValidation.error.errors[0]?.message || 'Invalid name')
+      return HttpResponse.badRequest(nameValidation.error.issues[0]?.message || 'Invalid name')
     }
     updateData.name = nameValidation.data
   }
@@ -54,7 +54,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   if (price !== null) {
     const priceValidation = Schemas.amount().safeParse(price)
     if (!priceValidation.success) {
-      return HttpResponse.badRequest(priceValidation.error.errors[0]?.message || 'Invalid price')
+      return HttpResponse.badRequest(priceValidation.error.issues[0]?.message || 'Invalid price')
     }
     updateData.price = priceValidation.data
   }

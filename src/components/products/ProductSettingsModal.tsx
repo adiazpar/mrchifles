@@ -1,26 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Plus, ChevronRight, GripVertical } from 'lucide-react'
+import { Reorder, useDragControls } from 'framer-motion'
 import { TrashIcon, EditIcon } from '@/components/icons'
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { SORT_OPTIONS } from '@/lib/products'
@@ -108,35 +91,29 @@ interface SortableCategoryItemProps {
   category: ProductCategory
   onEditClick: () => void
   onDeleteClick: () => void
+  onDragEnd: () => void
 }
 
-function SortableCategoryItem({ category, onEditClick, onDeleteClick }: SortableCategoryItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: category.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
+function SortableCategoryItem({ category, onEditClick, onDeleteClick, onDragEnd }: SortableCategoryItemProps) {
+  // dragListener=false + manual controls means only the grip button starts a
+  // drag — tapping anywhere else on the row (edit/delete icons) behaves as
+  // a normal click.
+  const controls = useDragControls()
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
+    <Reorder.Item
+      as="div"
+      value={category}
+      dragListener={false}
+      dragControls={controls}
+      onDragEnd={onDragEnd}
       className="list-item-clickable list-item-flat"
     >
       <button
         type="button"
+        onPointerDown={(e) => controls.start(e)}
         className="p-1 text-text-tertiary cursor-grab active:cursor-grabbing touch-none"
-        {...attributes}
-        {...listeners}
+        aria-label="Drag to reorder"
       >
         <GripVertical style={{ width: 16, height: 16 }} />
       </button>
@@ -159,7 +136,7 @@ function SortableCategoryItem({ category, onEditClick, onDeleteClick }: Sortable
       >
         <TrashIcon style={{ width: 16, height: 16 }} />
       </button>
-    </div>
+    </Reorder.Item>
   )
 }
 
@@ -176,42 +153,49 @@ interface SortableCategoryListProps {
 
 function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteCategory }: SortableCategoryListProps) {
   const { goToStep } = useMorphingModal()
+  // Local mirror of the ordered list. framer-motion's Reorder.Group calls
+  // onReorder repeatedly during the drag gesture with the intermediate
+  // ordering, so we track it locally and only persist the final order once
+  // the drag ends.
+  const [items, setItems] = useState(categories)
+  const itemsRef = useRef(items)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  )
+  // Keep local state in sync with the authoritative prop whenever it
+  // changes externally (after a successful persist, or category add/delete).
+  useEffect(() => {
+    setItems(categories)
+    itemsRef.current = categories
+  }, [categories])
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
+  const handleReorder = (newItems: ProductCategory[]) => {
+    setItems(newItems)
+    itemsRef.current = newItems
+  }
 
-    const oldIndex = categories.findIndex(c => c.id === active.id)
-    const newIndex = categories.findIndex(c => c.id === over.id)
-    const reordered = arrayMove(categories, oldIndex, newIndex)
-    onReorder(reordered.map(c => c.id))
+  const handleDragEnd = () => {
+    // Use the ref so we see the final ordering from the last onReorder call,
+    // not a closed-over stale `items` reference.
+    onReorder(itemsRef.current.map(c => c.id))
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
-        {categories.map(category => (
-          <SortableCategoryItem
-            key={category.id}
-            category={category}
-            onEditClick={() => {
-              onEditCategory(category)
-              goToStep(2)
-            }}
-            onDeleteClick={() => {
-              onDeleteCategory(category)
-              goToStep(3)
-            }}
-          />
-        ))}
-      </SortableContext>
-    </DndContext>
+    <Reorder.Group as="div" axis="y" values={items} onReorder={handleReorder}>
+      {items.map(category => (
+        <SortableCategoryItem
+          key={category.id}
+          category={category}
+          onEditClick={() => {
+            onEditCategory(category)
+            goToStep(2)
+          }}
+          onDeleteClick={() => {
+            onDeleteCategory(category)
+            goToStep(3)
+          }}
+          onDragEnd={handleDragEnd}
+        />
+      ))}
+    </Reorder.Group>
   )
 }
 

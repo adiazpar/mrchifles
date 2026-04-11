@@ -11,7 +11,7 @@ const regenerateInviteSchema = z.object({
   oldCodeId: Schemas.id(),
   newCode: z.string().length(6).toUpperCase(),
   role: z.enum(['partner', 'employee']),
-  expiresAt: z.string().datetime(),
+  expiresAt: z.iso.datetime(),
 })
 
 /**

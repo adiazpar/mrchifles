@@ -239,7 +239,14 @@ function injectItemIndices(children: React.ReactNode): React.ReactNode {
     if (isValidElement(child) && hasComponentMarker(child.type)) {
       // Check if it's a ModalItem - use React.cloneElement for proper cloning
       if (child.type._isModalItem) {
-        const cloned = React.cloneElement(child, { _index: itemIndex })
+        // React 19 types cloneElement's prop argument against the child's own
+        // prop type. The Children.map narrowing gives us ReactElement<unknown>,
+        // which rejects our internal `_index` injection. Cast to a minimal
+        // shape that accepts it.
+        const cloned = React.cloneElement(
+          child as ReactElement<{ _index?: number }>,
+          { _index: itemIndex },
+        )
         itemIndex++
         return cloned
       }

@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { withBusinessAuth, validationError, HttpResponse } from '@/lib/api-middleware'
 
 const receiveOrderSchema = z.object({
-  receivedQuantities: z.record(z.number().int().min(0)),
+  receivedQuantities: z.record(z.string(), z.number().int().min(0)),
 })
 
 /**

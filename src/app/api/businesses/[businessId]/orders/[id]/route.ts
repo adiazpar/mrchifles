@@ -61,7 +61,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   if (totalStr !== null) {
     const totalValidation = Schemas.positiveAmount().safeParse(totalStr)
     if (!totalValidation.success) {
-      return HttpResponse.badRequest(totalValidation.error.errors[0]?.message || 'Invalid total')
+      return HttpResponse.badRequest(totalValidation.error.issues[0]?.message || 'Invalid total')
     }
     updateData.total = totalValidation.data
   }

@@ -109,10 +109,11 @@ export function withBusinessAuth(handler: BusinessRouteHandler) {
  * ```
  */
 export function validationError(
-  result: z.SafeParseReturnType<unknown, unknown>
+  result: z.ZodSafeParseResult<unknown>
 ): NextResponse {
-  const errors = (result as z.SafeParseError<unknown>).error?.errors || []
-  const message = errors[0]?.message || 'Validation failed'
+  const message = !result.success
+    ? result.error.issues[0]?.message ?? 'Validation failed'
+    : 'Validation failed'
   return NextResponse.json({ error: message }, { status: 400 })
 }
 

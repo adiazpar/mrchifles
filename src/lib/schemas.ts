@@ -10,7 +10,7 @@ export const Schemas = {
   /**
    * Email field with lowercase normalization.
    */
-  email: () => z.string().email('Invalid email').toLowerCase(),
+  email: () => z.email('Invalid email').toLowerCase(),
 
   /**
    * Required name field with minimum length.
@@ -120,7 +120,7 @@ export const Schemas = {
           const decodedBytes = Math.floor((base64.length * 3) / 4) - padding
           return decodedBytes <= MAX_BUSINESS_ICON_BYTES
         },
-        { message: 'Icon must be a PNG, JPEG, WebP, or GIF image under 2MB' }
+        { error: 'Icon must be a PNG, JPEG, WebP, or GIF image under 2MB' }
       ),
 }
 
