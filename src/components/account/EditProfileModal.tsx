@@ -134,12 +134,15 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
 
           {/* Avatar preview + actions */}
           <div className="flex flex-col items-center gap-4 mb-6">
-            <div className="w-24 h-24 rounded-full bg-brand-subtle flex items-center justify-center overflow-hidden">
+            <div
+              className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden"
+              style={{ backgroundColor: 'var(--brand-100)', color: 'var(--brand-700)' }}
+            >
               {avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatar} alt="" className="w-24 h-24 object-cover" />
               ) : (
-                <span className="text-2xl font-bold text-brand">
+                <span className="text-3xl font-semibold">
                   {getUserInitials(name || user?.name || '')}
                 </span>
               )}
@@ -186,15 +189,12 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
 
           {/* Email (read-only) */}
           <div className="mt-4">
-            <label className="block text-sm font-medium text-text-secondary mb-1">
-              {t('profile_email_label')}
-            </label>
-            <div className="px-3 py-2 bg-bg-muted rounded-lg text-text-primary text-base">
-              {user?.email}
-            </div>
-            <p className="text-xs text-text-tertiary mt-1">
-              {t('profile_email_hint')}
-            </p>
+            <Input
+              label={t('profile_email_label')}
+              value={user?.email ?? ''}
+              disabled
+              readOnly
+            />
           </div>
         </Modal.Item>
         <Modal.Footer>
