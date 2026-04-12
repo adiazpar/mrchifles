@@ -34,7 +34,7 @@ export function BarcodeDisplay({ value, format }: BarcodeDisplayProps) {
 
   return (
     <div
-      className="w-full overflow-x-auto flex justify-center"
+      className="w-full flex justify-center items-center overflow-hidden [&_svg]:max-h-full [&_svg]:w-auto"
       dangerouslySetInnerHTML={{ __html: result.svg || '' }}
     />
   )

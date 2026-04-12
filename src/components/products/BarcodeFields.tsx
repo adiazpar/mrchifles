@@ -289,7 +289,7 @@ export function BarcodeFields() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-bg-muted p-4 h-44 flex items-center justify-center text-center overflow-hidden">
+      <div className="rounded-xl border border-border bg-bg-muted p-4 h-28 flex items-center justify-center text-center overflow-hidden">
         <BarcodeDisplay value={barcode} format={barcodeFormat} />
       </div>
 
