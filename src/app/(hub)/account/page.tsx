@@ -106,7 +106,7 @@ export default function AccountPage() {
       {/* Preferences */}
       <div>
         <SettingsSectionHeader label={t('section_preferences')} />
-        <div className="card overflow-hidden">
+        <div className="bg-bg-surface rounded-xl overflow-hidden">
           <SettingsRow
             icon={Palette}
             label={t('row_theme')}
@@ -121,7 +121,7 @@ export default function AccountPage() {
       {/* Security */}
       <div>
         <SettingsSectionHeader label={t('section_security')} />
-        <div className="card overflow-hidden">
+        <div className="bg-bg-surface rounded-xl overflow-hidden">
           <SettingsRow
             icon={KeyRound}
             label={t('row_change_password')}
@@ -133,7 +133,7 @@ export default function AccountPage() {
       {/* Support */}
       <div>
         <SettingsSectionHeader label={t('section_support')} />
-        <div className="card overflow-hidden">
+        <div className="bg-bg-surface rounded-xl overflow-hidden">
           <SettingsRow
             icon={Info}
             label={t('row_about')}
@@ -151,7 +151,7 @@ export default function AccountPage() {
       {/* Danger zone */}
       <div>
         <SettingsSectionHeader label={t('section_danger_zone')} danger />
-        <div className="card overflow-hidden">
+        <div className="bg-bg-surface rounded-xl overflow-hidden">
           <SettingsRow
             icon={LogOut}
             label={t('row_logout')}
