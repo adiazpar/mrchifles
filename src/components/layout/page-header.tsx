@@ -78,9 +78,9 @@ export function PageHeader() {
     'Account': tNav('account'),
   }
 
-  // During slide transitions, use current pathname to prevent header content
-  // from changing while still visible. Otherwise use pending for instant switch.
-  const config = getRouteConfig(slideDirection ? pathname : (pendingHref || pathname))
+  // During transitions (slide or cross-context), use current pathname to
+  // prevent header content from changing while still visible.
+  const config = getRouteConfig(slideDirection || isCrossContextNav ? pathname : (pendingHref || pathname))
 
   const { title: rawTitle, pageTitle: rawPageTitle, backTo } = config
   const title = rawTitle ? (PAGE_TITLE_MAP[rawTitle] ?? rawTitle) : rawTitle
@@ -120,7 +120,7 @@ export function PageHeader() {
   const shouldHide = isCrossContextNav || isAccountNav
   const contentFadeStyle = {
     opacity: shouldHide ? 0 : 1,
-    transition: shouldHide && isAccountNav ? 'none' : 'opacity 100ms ease-out',
+    transition: shouldHide ? 'none' : 'opacity 100ms ease-out',
   }
 
   return (
