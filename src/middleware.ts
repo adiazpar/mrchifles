@@ -16,14 +16,12 @@ import { getTokenFromRequest, verifyToken } from '@/lib/auth-edge'
  * - /login, /register - Public auth routes
  */
 
-// Routes that don't require authentication
+// Page routes that don't require authentication.
+// API routes are excluded from middleware entirely (shouldSkip handles
+// them), so they don't need to be listed here.
 const publicPaths = [
   '/login',
   '/register',
-  '/api/auth/login',
-  '/api/auth/register',
-  '/api/auth/logout',
-  '/api/auth/me', // Auth check endpoint - returns { user: null } if not authenticated
 ]
 
 // Check if path is public
@@ -49,8 +47,10 @@ function isValidBusinessId(id: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip static assets
-  if (shouldSkip(pathname) && !pathname.startsWith('/api/auth/')) {
+  // Skip static assets and ALL API routes. Each API route handles its
+  // own auth via getCurrentUser() and returns proper JSON errors -- the
+  // middleware's HTML redirect would break them.
+  if (shouldSkip(pathname)) {
     return NextResponse.next()
   }
 
