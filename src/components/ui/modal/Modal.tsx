@@ -36,6 +36,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, Children, isValidElement, ReactElement } from 'react'
+import { createPortal } from 'react-dom'
 import { X, ArrowLeft } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { ModalProvider, useModalContext } from './ModalContext'
@@ -303,7 +304,12 @@ function ModalRoot({
 
   if (!render) return null
 
-  return (
+  // Portal to document.body so the backdrop + modal are outside any
+  // scroll container or stacking context created by page layouts
+  // (e.g. main-scroll-container's overflow, PageTransition's opacity).
+  // Without this, position: fixed + z-index on the backdrop can't
+  // reliably cover the fixed PageHeader.
+  return createPortal(
     <ModalProvider initialStep={initialStep} onClose={onClose} isOpen={isOpen}>
       <div
         className={`modal-backdrop ${closing ? 'modal-backdrop-exit' : 'modal-backdrop-animated'}`}
@@ -323,7 +329,8 @@ function ModalRoot({
           {children}
         </ModalInner>
       </div>
-    </ModalProvider>
+    </ModalProvider>,
+    document.body,
   )
 }
 
