@@ -73,7 +73,7 @@ export default function AccountPage() {
       <button
         type="button"
         onClick={() => setIsProfileModalOpen(true)}
-        className="card card-interactive w-full p-4 flex items-center gap-4 text-left"
+        className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left"
       >
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
