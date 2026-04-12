@@ -44,7 +44,15 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
       {showHeader && (
         <div className="user-menu-header">
           <div className="user-menu-avatar">
-            {getUserInitials(user.name)}
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="user-menu-avatar-img"
+              />
+            ) : (
+              getUserInitials(user.name)
+            )}
           </div>
           <div className="user-menu-info">
             <div className="user-menu-name">{user.name}</div>

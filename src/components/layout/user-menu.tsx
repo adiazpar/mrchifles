@@ -26,11 +26,19 @@ export function UserMenu() {
       <button
         type="button"
         onClick={() => setMenuOpen(true)}
-        className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
+        className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm overflow-hidden"
         aria-label={t('open')}
-        style={avatarStyles}
+        style={user.avatar ? undefined : avatarStyles}
       >
-        {getUserInitials(user.name)}
+        {user.avatar ? (
+          <img
+            src={user.avatar}
+            alt={user.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          getUserInitials(user.name)
+        )}
       </button>
       <BottomSheet
         isOpen={menuOpen}
