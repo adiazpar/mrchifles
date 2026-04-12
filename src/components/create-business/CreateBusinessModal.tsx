@@ -156,9 +156,6 @@ function NameContent({ name, setName }: NameContentProps) {
         </p>
       </Modal.Item>
       <Modal.Item>
-        <label className="block text-sm font-medium text-text-primary mb-2">
-          {t('name_label')}
-        </label>
         <input
           type="text"
           value={name}
