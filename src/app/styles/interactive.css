@@ -1774,31 +1774,6 @@
   margin: 0 var(--space-4);
 }
 
-/* Inline visible native <select> used in the language row. Stripped of
- * its default browser chrome so it blends in with the row's subtitle
- * styling, but still triggers the OS native picker on tap (iOS wheel,
- * Android sheet, desktop combobox) because it's a real <select>. The
- * chevron next to it is decorative -- the <label> wrapping the row
- * forwards any click to the select. */
-.settings-row-select {
-  background: transparent;
-  border: 0;
-  appearance: none;
-  -webkit-appearance: none;
-  color: var(--color-text-tertiary);
-  font-size: var(--text-sm);
-  font-family: inherit;
-  cursor: pointer;
-  padding: 0;
-  margin: 0;
-  text-align: right;
-  max-width: 10rem;
-  text-overflow: ellipsis;
-}
-
-.settings-row-select:focus {
-  outline: none;
-}
 
 .user-menu-footer {
   padding: var(--space-2) var(--space-4);
