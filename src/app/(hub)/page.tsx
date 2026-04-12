@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
 import { Spinner } from '@/components/ui'
+import { fetchDeduped } from '@/lib/fetch'
 
 type BusinessType = 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other'
 
@@ -50,25 +51,37 @@ const BUSINESS_TYPE_ICONS: Partial<Record<BusinessType, React.ComponentType<{ cl
  * Shows user's businesses or empty state
  * Action buttons are rendered by MobileNav in hub mode
  */
+const HUB_BUSINESSES_CACHE_KEY = 'kasero_hub_businesses'
+
+function getCachedBusinessList(): Business[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const cached = sessionStorage.getItem(HUB_BUSINESSES_CACHE_KEY)
+    return cached ? JSON.parse(cached) : []
+  } catch { return [] }
+}
+
 export default function HubPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const { setPendingHref, setCachedBusinesses } = useNavbar()
   const { createdBusiness } = useCreateBusinessModal()
-  const [businesses, setBusinesses] = useState<Business[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
+  const [isLoading, setIsLoading] = useState(() => getCachedBusinessList().length === 0)
   const [searchQuery, setSearchQuery] = useState('')
   const t = useTranslations('hub')
 
   const fetchBusinesses = useCallback(async () => {
     try {
-      const res = await fetch('/api/businesses/list')
+      const res = await fetchDeduped('/api/businesses/list')
       if (res.ok) {
         const data = await res.json()
         const fetchedBusinesses = data.businesses || []
         setBusinesses(fetchedBusinesses)
-        // Cache business data for instant display when entering a business
         setCachedBusinesses(fetchedBusinesses)
+        try {
+          sessionStorage.setItem(HUB_BUSINESSES_CACHE_KEY, JSON.stringify(fetchedBusinesses))
+        } catch { /* ignore storage errors */ }
       }
     } catch (error) {
       console.error('Failed to fetch businesses:', error)
@@ -77,14 +90,17 @@ export default function HubPage() {
     }
   }, [setCachedBusinesses])
 
+  // Use user?.id to avoid re-fetching when the user object reference changes
+  // (e.g. auth revalidation returns a new object with the same identity)
+  const userId = user?.id
   useEffect(() => {
     if (authLoading) return
-    if (!user) {
+    if (!userId) {
       router.push('/login')
       return
     }
     fetchBusinesses()
-  }, [user, authLoading, router, fetchBusinesses])
+  }, [userId, authLoading, router, fetchBusinesses])
 
   // Refresh the business list as soon as a new business is created, so it
   // appears in the hub without waiting for the modal to close or a manual reload.

@@ -52,8 +52,9 @@ export function useIncomingTransfer(): UseIncomingTransferReturn {
   const [isAccepting, setIsAccepting] = useState(false)
   const [isDeclining, setIsDeclining] = useState(false)
 
+  const userId = user?.id
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setTransfer(null)
       setIsLoading(false)
       return
@@ -88,7 +89,7 @@ export function useIncomingTransfer(): UseIncomingTransferReturn {
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [userId])
 
   const handleAccept = useCallback(async () => {
     if (!transfer) return

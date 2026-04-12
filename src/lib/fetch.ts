@@ -42,7 +42,7 @@ export async function fetchDeduped(
   })
 
   inFlightRequests.set(url, request)
-  return request
+  return request.then(res => res.clone())
 }
 
 /**

@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <BusinessProvider businessId={businessId}>
           <div className="h-full">
             <PageHeader />
-            <div className="main-scroll-container flex flex-col h-full overflow-y-auto">
+            <div className="main-scroll-container flex flex-col h-full overflow-y-auto overflow-x-hidden">
               {children}
             </div>
             <MobileNav />

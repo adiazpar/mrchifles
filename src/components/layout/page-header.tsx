@@ -28,7 +28,7 @@ export function PageHeader() {
   const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
-  const { pendingHref, setPendingHref } = useNavbar()
+  const { pendingHref, setPendingHref, slideDirection, setSlideDirection } = useNavbar()
   const businessContext = useOptionalBusiness()
   const [isScrolled, setIsScrolled] = useState(false)
 
@@ -78,8 +78,9 @@ export function PageHeader() {
     'Account': tNav('account'),
   }
 
-  // Use pending route config if navigating, otherwise current pathname
-  const config = getRouteConfig(pendingHref || pathname)
+  // During slide transitions, use current pathname to prevent header content
+  // from changing while still visible. Otherwise use pending for instant switch.
+  const config = getRouteConfig(slideDirection ? pathname : (pendingHref || pathname))
 
   const { title: rawTitle, pageTitle: rawPageTitle, backTo } = config
   const title = rawTitle ? (PAGE_TITLE_MAP[rawTitle] ?? rawTitle) : rawTitle
@@ -91,8 +92,12 @@ export function PageHeader() {
   // - Otherwise (top-level business page), go to hub
   const handleBack = () => {
     if (isHubPageWithBackButton) {
-      // Hub pages like account: go back to previous page
-      router.back()
+      setSlideDirection('back')
+      setPendingHref('/')
+      setTimeout(() => {
+        setPendingHref(null)
+        router.back()
+      }, 280)
     } else if (backTo && businessId) {
       // Build business-scoped URL for parent page
       const href = buildBusinessUrl(businessId, backTo)
@@ -106,10 +111,16 @@ export function PageHeader() {
   }
 
 
-  // Style for fading inner content during cross-context navigation
+  // Fade header content during account slide transitions
+  const isAccountNav = slideDirection !== null
+
+  // Style for fading inner content during context or account navigation.
+  // Slide transitions hide instantly (no transition) to prevent content
+  // flashing mid-fade. The fade-in transition only applies when revealing.
+  const shouldHide = isCrossContextNav || isAccountNav
   const contentFadeStyle = {
-    opacity: isCrossContextNav ? 0 : 1,
-    transition: 'opacity 150ms ease-out',
+    opacity: shouldHide ? 0 : 1,
+    transition: shouldHide && isAccountNav ? 'none' : 'opacity 100ms ease-out',
   }
 
   return (

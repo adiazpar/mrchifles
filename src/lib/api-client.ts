@@ -83,7 +83,18 @@ export async function apiRequest<T extends ApiResponse>(
   options?: RequestInit
 ): Promise<T> {
   const response = await fetch(url, options)
-  const data = (await response.json()) as T
+
+  const text = await response.text()
+  if (!text) {
+    throw new ApiError(response.status, { success: false, error: 'EMPTY_RESPONSE' } as T, 'EMPTY_RESPONSE')
+  }
+
+  let data: T
+  try {
+    data = JSON.parse(text) as T
+  } catch {
+    throw new ApiError(response.status, { success: false, error: 'INVALID_JSON' } as T, 'INVALID_JSON')
+  }
 
   if (!response.ok || data.success === false) {
     throw new ApiError(response.status, data, data.error)

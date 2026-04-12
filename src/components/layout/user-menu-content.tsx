@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
@@ -23,7 +23,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
   const t = useTranslations('ui.user_menu')
   const router = useRouter()
   const { user, logout } = useAuth()
-  const { setPendingHref } = useNavbar()
+  const { setPendingHref, setSlideDirection } = useNavbar()
 
   const handleLogout = useCallback(() => {
     onAction?.()
@@ -31,10 +31,18 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
     router.push('/login')
   }, [logout, router, onAction])
 
-  const handleLinkClick = useCallback((href: string) => {
+  const pathname = usePathname()
+
+  const handleLinkClick = useCallback((e: React.MouseEvent, href: string) => {
+    if (href === pathname) {
+      e.preventDefault()
+      onAction?.()
+      return
+    }
     setPendingHref(href)
+    if (href === '/account') setSlideDirection('forward')
     onAction?.()
-  }, [setPendingHref, onAction])
+  }, [setPendingHref, setSlideDirection, onAction, pathname])
 
   if (!user) return null
 
@@ -66,7 +74,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
         <Link
           href="/account"
           className="user-menu-item"
-          onClick={() => handleLinkClick('/account')}
+          onClick={(e) => handleLinkClick(e, '/account')}
         >
           <SettingsIcon />
           <span>{t('account_settings')}</span>
@@ -76,7 +84,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
         <Link
           href="/support"
           className="user-menu-item"
-          onClick={() => handleLinkClick('/support')}
+          onClick={(e) => handleLinkClick(e, '/support')}
         >
           <HelpIcon />
           <span>{t('support')}</span>
