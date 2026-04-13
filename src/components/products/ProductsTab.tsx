@@ -251,6 +251,7 @@ export function ProductsTab({
               type="button"
               onClick={onAddProduct}
               className="btn btn-primary mt-4"
+              style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
             >
               <Plus className="w-4 h-4" />
               {t('empty_state_button')}

@@ -158,6 +158,7 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
 
   // Load categories on mount if not cached
   const refreshCategories = useCallback(async () => {
+    if (!businessId) return
     setIsLoadingCategories(true)
     try {
       const data = await apiRequest<CategoriesResponse>(`/api/businesses/${businessId}/categories`)
@@ -176,6 +177,7 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
 
   // Load settings on mount if not cached
   const refreshSettings = useCallback(async () => {
+    if (!businessId) return
     setIsLoadingSettings(true)
     try {
       const data = await apiRequest<SettingsResponse>(`/api/businesses/${businessId}/product-settings`)
@@ -194,13 +196,13 @@ export function useProductSettings({ businessId }: UseProductSettingsOptions): U
 
   // Initial load
   useEffect(() => {
-    if (!getCachedCategories(businessId)) {
+    if (businessId && !getCachedCategories(businessId)) {
       refreshCategories()
     }
   }, [businessId, refreshCategories])
 
   useEffect(() => {
-    if (!getCachedSettings(businessId)) {
+    if (businessId && !getCachedSettings(businessId)) {
       refreshSettings()
     }
   }, [businessId, refreshSettings])

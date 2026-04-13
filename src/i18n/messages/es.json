@@ -328,11 +328,12 @@
     "error_failed_to_complete": "Error al completar acción"
   },
   "orders": {
+    "search_clear": "Limpiar busqueda",
     "empty_no_products_title": "Sin productos",
     "empty_no_products_description": "Agregue productos a su catálogo primero, luego podrá crear órdenes aquí",
     "order_settings_button": "Configuración de órdenes",
     "empty_no_orders_title": "Sin órdenes",
-    "empty_no_orders_description": "Registre su primera orden",
+    "empty_no_orders_description": "Registre ordenes de compra de sus proveedores y mantenga su inventario al dia",
     "create_order_button": "Crear orden",
     "search_placeholder": "Buscar por proveedor o fecha...",
     "filter_all": "Todas",
@@ -341,6 +342,7 @@
     "order_count": "{count, plural, one {# orden} other {# órdenes}}",
     "new_order_button": "Nueva Orden",
     "no_results": "No se encontraron órdenes",
+    "no_products_found": "No se encontraron productos",
     "item_unit_count": "{count, plural, one {# unidad} other {# unidades}}",
     "status_pending": "Pendiente",
     "status_received": "Recibida",

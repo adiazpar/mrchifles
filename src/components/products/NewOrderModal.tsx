@@ -2,10 +2,12 @@
 
 import { useRef } from 'react'
 import Image from 'next/image'
-import { Search, X, Check, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarClock, MinusCircle, PlusCircle } from 'lucide-react'
+import { X, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarClock, Minus, Plus } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
+import { ImageAttachIcon } from '@/components/icons'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { getProductIconUrl } from '@/lib/utils'
+import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { Product, Provider } from '@/types'
@@ -139,201 +141,174 @@ export function NewOrderModal({
       <Modal.Step title={t('step_select_products')}>
         {/* Search bar */}
         <Modal.Item>
-          <div className="search-bar">
-            <Search className="search-bar-icon" />
+          <div className="relative">
             <input
               type="text"
               placeholder={t('product_search_placeholder')}
               value={productSearchQuery}
               onChange={e => onProductSearchQueryChange(e.target.value)}
-              className="search-bar-input"
+              className="input w-full"
+              style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
             />
+            {productSearchQuery && (
+              <button
+                type="button"
+                onClick={() => onProductSearchQueryChange('')}
+                className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+                aria-label={t('search_clear')}
+              >
+                <X size={18} />
+              </button>
+            )}
           </div>
+        </Modal.Item>
+
+        <Modal.Item>
+          <p className="text-xs text-text-tertiary">
+            {t('products_selected', { count: orderItems.length })}
+          </p>
         </Modal.Item>
 
         {/* Products list - compact horizontal cards */}
         <Modal.Item>
+          {filteredProducts.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-sm text-text-tertiary">{t('no_products_found')}</p>
+            </div>
+          ) : (
           <div className="space-y-2">
             {filteredProducts.map(product => {
-              const isSelected = orderItems.some(i => i.product.id === product.id)
+              const orderItem = orderItems.find(i => i.product.id === product.id)
+              const isSelected = !!orderItem
               const stockValue = product.stock ?? 0
               const isOutOfStock = stockValue === 0
               return (
-                <button
+                <div
                   key={product.id}
-                  type="button"
-                  onClick={() => onToggleProduct(product)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200"
+                  className="flex items-center gap-3 p-3 rounded-lg transition-all duration-200"
                   style={{
                     border: `1px solid ${isSelected ? 'var(--color-brand)' : 'var(--color-border)'}`,
                     backgroundColor: isSelected ? 'var(--color-brand-subtle)' : 'var(--color-bg-surface)',
                   }}
                 >
-                  {/* Product image */}
-                  <div className="w-10 h-10 rounded-lg bg-bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {getProductIconUrl(product) ? (
-                      <Image
-                        src={getProductIconUrl(product)!}
-                        alt={product.name}
-                        width={40}
-                        height={40}
-                        className="w-full h-full object-cover"
-                        unoptimized
+                  {/* Tap target for selecting/deselecting */}
+                  <button
+                    type="button"
+                    onClick={() => onToggleProduct(product)}
+                    className="flex items-center gap-3 flex-1 min-w-0"
+                  >
+                    {/* Product image */}
+                    <div className="product-list-image">
+                      {(() => {
+                        const iconUrl = getProductIconUrl(product)
+                        if (iconUrl && isPresetIcon(iconUrl)) {
+                          const p = getPresetIcon(iconUrl)
+                          return p ? <p.icon size={24} className="text-text-primary" /> : null
+                        }
+                        if (iconUrl) {
+                          return (
+                            <Image
+                              src={iconUrl}
+                              alt={product.name}
+                              width={48}
+                              height={48}
+                              className="product-list-image-img"
+                              unoptimized
+                            />
+                          )
+                        }
+                        return <ImageAttachIcon className="w-5 h-5 text-text-tertiary" />
+                      })()}
+                    </div>
+                    {/* Product name and stock */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <span className="text-sm font-medium truncate block">
+                        {product.name}
+                      </span>
+                      <span className={`text-xs ${isOutOfStock ? 'text-error' : 'text-text-tertiary'}`}>
+                        {t('item_unit_count', { count: stockValue })}
+                      </span>
+                    </div>
+                  </button>
+                  {/* Quantity control - single rectangle matching icon height */}
+                  {isSelected && orderItem && (
+                    <div
+                      className="flex-shrink-0 flex rounded-lg overflow-hidden bg-bg-muted"
+                      style={{ height: 48 }}
+                    >
+                      {/* Quantity input - left half */}
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={orderItem.quantity}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          if (val === '') {
+                            setOrderItems(prev => prev.map(i =>
+                              i.product.id === product.id
+                                ? { ...i, quantity: '' as unknown as number }
+                                : i
+                            ))
+                          } else {
+                            const num = parseInt(val, 10)
+                            if (!isNaN(num)) {
+                              onUpdateQuantity(product.id, Math.max(1, num))
+                            }
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value, 10)
+                          if (isNaN(val) || val < 1) {
+                            onUpdateQuantity(product.id, 1)
+                          }
+                        }}
+                        onFocus={(e) => e.target.select()}
+                        className="w-10 text-center text-sm font-semibold bg-bg-muted text-text-primary focus:outline-none"
                       />
-                    ) : (
-                      <ImageIcon className="w-5 h-5 text-text-tertiary" />
-                    )}
-                  </div>
-                  {/* Product name and stock */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <span className="text-sm font-medium truncate block">
-                      {product.name}
-                    </span>
-                    <span className={`text-xs ${isOutOfStock ? 'text-error' : 'text-text-tertiary'}`}>
-                      {t('item_unit_count', { count: stockValue })}
-                    </span>
-                  </div>
-                  {/* Selection indicator */}
-                  {isSelected && (
-                    <div className="w-5 h-5 rounded-full bg-brand flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-white" />
+                      {/* +/- buttons - right half, stacked */}
+                      <div className="flex flex-col" style={{ borderLeft: '1px solid var(--color-border)' }}>
+                        <button
+                          type="button"
+                          onClick={() => onUpdateQuantity(product.id, orderItem.quantity + 1)}
+                          className="flex-1 flex items-center justify-center px-2 bg-bg-muted transition-colors active:bg-bg-surface"
+                          style={{ borderBottom: '1px solid var(--color-border)' }}
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onUpdateQuantity(product.id, orderItem.quantity - 1)}
+                          disabled={orderItem.quantity <= 1}
+                          className="flex-1 flex items-center justify-center px-2 bg-bg-muted transition-colors active:bg-bg-surface disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   )}
-                </button>
+                </div>
               )
             })}
           </div>
+          )}
         </Modal.Item>
 
         <Modal.Footer>
-          <div className="w-full flex flex-col gap-3">
-            {/* Summary */}
-            <div className={`flex items-center justify-center p-2 rounded-lg ${
-              orderItems.length > 0 ? 'bg-brand-subtle' : 'bg-bg-muted'
-            }`}>
-              <span className={`text-sm font-medium ${
-                orderItems.length > 0 ? 'text-brand' : 'text-text-tertiary'
-              }`}>
-                {t('products_selected', { count: orderItems.length })}
-              </span>
-            </div>
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn btn-secondary flex-1"
-              >
-                {tCommon('cancel')}
-              </button>
-              <Modal.NextButton
-                className="btn btn-primary flex-1"
-                disabled={orderItems.length === 0}
-              >
-                {tCommon('continue')}
-              </Modal.NextButton>
-            </div>
-          </div>
-        </Modal.Footer>
-      </Modal.Step>
-
-      {/* Step 2: Review Quantities */}
-      <Modal.Step title={t('step_review_quantities')}>
-        <Modal.Item>
-          <div className="space-y-3">
-            {orderItems.map(item => (
-              <div key={item.product.id} className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
-                {/* Product image */}
-                <div className="w-12 h-12 rounded-lg bg-bg-elevated flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {getProductIconUrl(item.product) ? (
-                    <Image
-                      src={getProductIconUrl(item.product)!}
-                      alt={item.product.name}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <ImageIcon className="w-5 h-5 text-text-tertiary" />
-                  )}
-                </div>
-                {/* Product name */}
-                <span className="flex-1 text-sm font-medium truncate min-w-0">
-                  {item.product.name}
-                </span>
-                {/* Quantity controls */}
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
-                    disabled={item.quantity <= 1}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-100 ${
-                      item.quantity <= 1 ? 'opacity-40 cursor-not-allowed' : 'active:scale-90'
-                    }`}
-                  >
-                    <MinusCircle className="w-5 h-5" />
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={item.quantity}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      if (val === '') {
-                        setOrderItems(prev => prev.map(i =>
-                          i.product.id === item.product.id
-                            ? { ...i, quantity: '' as unknown as number }
-                            : i
-                        ))
-                      } else {
-                        const num = parseInt(val, 10)
-                        if (!isNaN(num)) {
-                          onUpdateQuantity(item.product.id, Math.max(1, num))
-                        }
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const val = parseInt(e.target.value, 10)
-                      if (isNaN(val) || val < 1) {
-                        onUpdateQuantity(item.product.id, 1)
-                      }
-                    }}
-                    onFocus={(e) => e.target.select()}
-                    className="w-10 text-center font-semibold bg-primary text-text-primary rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-brand"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-100 active:scale-90"
-                  >
-                    <PlusCircle className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Modal.Item>
-
-        <Modal.Footer>
-          <div className="w-full flex flex-col gap-3">
-            {/* Summary */}
-            <div className="flex items-center justify-center p-2 bg-bg-muted rounded-lg">
-              <span className="text-sm font-medium text-text-secondary">
-                {t('units_total', { count: orderItems.reduce((sum, i) => sum + i.quantity, 0) })}
-              </span>
-            </div>
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <Modal.BackButton className="btn btn-secondary flex-1">
-                {tCommon('back')}
-              </Modal.BackButton>
-              <Modal.NextButton className="btn btn-primary flex-1">
-                {tCommon('continue')}
-              </Modal.NextButton>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-secondary flex-1"
+          >
+            {tCommon('cancel')}
+          </button>
+          <Modal.NextButton
+            className="btn btn-primary flex-1"
+            disabled={orderItems.length === 0}
+          >
+            {tCommon('continue')}
+          </Modal.NextButton>
         </Modal.Footer>
       </Modal.Step>
 

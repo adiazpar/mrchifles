@@ -328,11 +328,12 @@
     "error_failed_to_complete": "Failed to complete action"
   },
   "orders": {
+    "search_clear": "Clear search",
     "empty_no_products_title": "No products yet",
     "empty_no_products_description": "Add products to your catalog first, then you can start creating orders here",
     "order_settings_button": "Order settings",
     "empty_no_orders_title": "No orders",
-    "empty_no_orders_description": "Record your first order",
+    "empty_no_orders_description": "Track purchase orders from your providers and keep your inventory up to date",
     "create_order_button": "Create order",
     "search_placeholder": "Search by provider or date...",
     "filter_all": "All",
@@ -341,6 +342,7 @@
     "order_count": "{count, plural, one {# order} other {# orders}}",
     "new_order_button": "New Order",
     "no_results": "No orders found",
+    "no_products_found": "No products found",
     "item_unit_count": "{count, plural, one {# unit} other {# units}}",
     "status_pending": "Pending",
     "status_received": "Received",

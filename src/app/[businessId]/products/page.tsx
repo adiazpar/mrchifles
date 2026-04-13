@@ -396,6 +396,8 @@ export default function ProductosPage() {
 
   // Load products and providers on mount if not cached
   useEffect(() => {
+    if (!businessId) return
+
     // If we have cached data, skip the API calls
     const cachedProducts = productsCache.get()
     const cachedProviders = providersCache.get()
@@ -448,7 +450,7 @@ export default function ProductosPage() {
 
   // Lazy load orders when switching to orders tab
   useEffect(() => {
-    if (activeTab !== 'orders' || ordersLoaded) return
+    if (!businessId || activeTab !== 'orders' || ordersLoaded) return
 
     let cancelled = false
 

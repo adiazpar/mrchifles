@@ -17,7 +17,7 @@ import { Spinner } from '@/components/ui'
 export function ContentGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
-  const { isLoading: businessLoading, error: businessError } = useBusiness()
+  const { business, isLoading: businessLoading, error: businessError } = useBusiness()
 
   useEffect(() => {
     if (authLoading) return
@@ -53,6 +53,11 @@ export function ContentGuard({ children }: { children: React.ReactNode }) {
         <Spinner size="lg" />
       </div>
     )
+  }
+
+  // No business context (e.g. during route transition through hub)
+  if (!business) {
+    return null
   }
 
   // Render children - transitions handled by PageTransition in layout

@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { Search, X, Plus, ArrowUp, Warehouse, ChevronRight } from 'lucide-react'
-import { TagsIcon, SettingsIcon } from '@/components/icons'
+import { ClipboardIcon } from '@/components/icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useTranslations } from 'next-intl'
 import { scrollToTop } from '@/lib/scroll'
@@ -70,24 +70,16 @@ export function OrdersTab({
         {/* No products and no orders - show empty state */}
         {products.length === 0 && orders.length === 0 ? (
           <div className="empty-state-fill">
-            <TagsIcon className="empty-state-icon" />
+            <ClipboardIcon className="empty-state-icon" />
             <h3 className="empty-state-title">{t('empty_no_products_title')}</h3>
             <p className="empty-state-description">
               {t('empty_no_products_description')}
             </p>
-            <button
-              type="button"
-              className="btn btn-secondary mt-4"
-              onClick={() => {/* TODO: implement order settings */}}
-            >
-              <SettingsIcon className="w-4 h-4" />
-              {t('order_settings_button')}
-            </button>
           </div>
         ) : orders.length === 0 ? (
           /* Products exist but no orders yet */
           <div className="empty-state-fill">
-            <Warehouse className="empty-state-icon" />
+            <ClipboardIcon className="empty-state-icon" />
             <h3 className="empty-state-title">{t('empty_no_orders_title')}</h3>
             <p className="empty-state-description">
               {t('empty_no_orders_description')}
@@ -96,6 +88,7 @@ export function OrdersTab({
               type="button"
               onClick={onNewOrder}
               className="btn btn-primary mt-4"
+              style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
             >
               <Plus className="w-4 h-4" />
               {t('create_order_button')}
