@@ -74,11 +74,13 @@ interface ConfirmOrderButtonProps {
 
 function ConfirmOrderButton({ onSave, isSaving, disabled }: ConfirmOrderButtonProps) {
   const t = useTranslations('common')
-  const { goNext } = useMorphingModal()
+  const { goToStep } = useMorphingModal()
 
-  const handleClick = () => {
-    goNext()
-    onSave()
+  const handleClick = async () => {
+    const success = await onSave()
+    if (success) {
+      goToStep(3)
+    }
   }
 
   return (

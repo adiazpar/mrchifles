@@ -92,10 +92,22 @@ input[type="date"].input::-webkit-calendar-picker-indicator {
   position: relative;
   display: flex;
   align-items: stretch;
+  border-radius: var(--radius-lg);
+}
+
+.input-number-wrapper:focus-within {
+  outline: 2px solid var(--color-brand);
+  outline-offset: -1px;
 }
 
 .input-number-wrapper .input {
   padding-right: 40px;
+}
+
+.input-number-wrapper .input:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--color-border);
 }
 
 .input-number-spinners {

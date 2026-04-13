@@ -801,7 +801,6 @@ export default function ProductosPage() {
 
     setIsSavingOrder(true)
     setError('')
-    setOrderSaved(true)
 
     const formData = new FormData()
     formData.append('date', new Date().toISOString())
@@ -816,22 +815,28 @@ export default function ProductosPage() {
       quantity: item.quantity,
     }))))
 
-    // Fire and forget — append new order when API responds
-    fetch(`/api/businesses/${businessId}/orders`, {
-      method: 'POST',
-      body: formData,
-    }).then(async (response) => {
+    try {
+      const response = await fetch(`/api/businesses/${businessId}/orders`, {
+        method: 'POST',
+        body: formData,
+      })
       const data = await response.json()
+
       if (response.ok && data.success && data.order) {
         setOrders(prev => [data.order, ...prev])
+        setOrderSaved(true)
+        return true
       }
-    }).catch(err => {
-      console.error('Error saving order:', err)
-    }).finally(() => {
-      setIsSavingOrder(false)
-    })
 
-    return true
+      setError(tOrders('error_failed_to_save_order'))
+      return false
+    } catch (err) {
+      console.error('Error saving order:', err)
+      setError(tOrders('error_failed_to_save_order'))
+      return false
+    } finally {
+      setIsSavingOrder(false)
+    }
   }, [businessId, orderItems, orderTotal, orderEstimatedArrival, orderReceiptFile, orderProvider, setOrders, tOrders])
 
   const handleSaveEditOrder = useCallback(async (): Promise<boolean> => {
