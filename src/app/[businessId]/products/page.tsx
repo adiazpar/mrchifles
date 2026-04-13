@@ -24,6 +24,7 @@ import {
   type ExpandedOrder,
   type OrderFormItem,
   type OrderStatusFilter,
+  type OrderSortOption,
   type SortOption,
 } from '@/lib/products'
 import { getProductIconUrl } from '@/lib/utils'
@@ -375,6 +376,7 @@ export default function ProductosPage() {
   // Order search/filter state
   const [orderSearchQuery, setOrderSearchQuery] = useState('')
   const [orderStatusFilter, setOrderStatusFilter] = useState<OrderStatusFilter>('all')
+  const [orderSortBy, setOrderSortBy] = useState<OrderSortOption>('date_desc')
 
   // Order operation states
   const [isSavingOrder, setIsSavingOrder] = useState(false)
@@ -502,8 +504,19 @@ export default function ProductosPage() {
       })
     }
 
+    // Sort
+    result = [...result].sort((a, b) => {
+      switch (orderSortBy) {
+        case 'date_desc': return new Date(b.date).getTime() - new Date(a.date).getTime()
+        case 'date_asc': return new Date(a.date).getTime() - new Date(b.date).getTime()
+        case 'total_desc': return b.total - a.total
+        case 'total_asc': return a.total - b.total
+        default: return 0
+      }
+    })
+
     return result
-  }, [orders, orderStatusFilter, orderSearchQuery, formatDate])
+  }, [orders, orderStatusFilter, orderSearchQuery, orderSortBy, formatDate])
 
   // Product handlers - now receive data from modal context
   const handleSubmitProduct = useCallback(async (
@@ -1090,6 +1103,8 @@ export default function ProductosPage() {
               filteredOrders={filteredOrders}
               searchQuery={orderSearchQuery}
               onSearchChange={setOrderSearchQuery}
+              sortBy={orderSortBy}
+              onSortChange={setOrderSortBy}
               statusFilter={orderStatusFilter}
               onStatusFilterChange={setOrderStatusFilter}
               onNewOrder={() => {

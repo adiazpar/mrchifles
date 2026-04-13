@@ -88,3 +88,16 @@ export interface OrderFormItem {
 // ============================================
 
 export type OrderStatusFilter = 'all' | 'pending' | 'received'
+
+// ============================================
+// ORDER SORT OPTIONS
+// ============================================
+
+export type OrderSortOption = 'date_desc' | 'date_asc' | 'total_desc' | 'total_asc'
+
+export const ORDER_SORT_OPTIONS: { value: OrderSortOption }[] = [
+  { value: 'date_desc' },
+  { value: 'date_asc' },
+  { value: 'total_desc' },
+  { value: 'total_asc' },
+]
