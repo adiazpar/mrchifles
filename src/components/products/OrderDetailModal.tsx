@@ -460,15 +460,17 @@ export function OrderDetailModal({
         <Modal.Item>
           <label className="label">{t('estimated_arrival_label')}</label>
           <div className="relative">
-            <div className={`input w-full flex items-center justify-between pointer-events-none ${orderEstimatedArrival ? 'text-text-primary' : 'text-text-tertiary'}`}>
-              <span>{orderEstimatedArrival ? formatDate(orderEstimatedArrival) : t('select_date_placeholder')}</span>
-              <CalendarClock className="w-5 h-5 text-text-tertiary" />
+            <div className="input w-full flex items-center pointer-events-none" style={{ paddingRight: 'var(--space-10)' }}>
+              <span className={orderEstimatedArrival ? 'text-text-primary' : 'text-text-tertiary'}>
+                {orderEstimatedArrival ? formatDate(orderEstimatedArrival) : t('select_date_placeholder')}
+              </span>
             </div>
+            <CalendarClock className="w-5 h-5 text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="date"
               value={orderEstimatedArrival}
               onChange={e => onOrderEstimatedArrivalChange(e.target.value)}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              className="input absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
           </div>
         </Modal.Item>
