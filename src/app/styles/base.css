@@ -177,7 +177,7 @@
   --mobile-nav-height: 80px;
   --header-height: 80px;
   --page-padding: 16px;
-  --touch-target-min: 40px;
+  --touch-target-min: 48px;
 
   /* Mobile-only viewport constraint (iPhone Pro Max: 430-440px) */
   --max-viewport-width: 440px;

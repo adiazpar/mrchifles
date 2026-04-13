@@ -26,6 +26,7 @@ import {
   type OrderStatusFilter,
   type OrderSortOption,
   type SortOption,
+  getOrderDisplayStatus,
 } from '@/lib/products'
 import { getProductIconUrl } from '@/lib/utils'
 import { useAiProductPipeline, useImageCompression, useBusinessFormat } from '@/hooks'
@@ -263,7 +264,7 @@ export default function ProductosPage() {
   const translateApiMessage = useApiMessage()
   const { user } = useAuth()
   const { canManage, businessId } = useBusiness()
-  const { formatDate } = useBusinessFormat()
+  const { formatDate, locale } = useBusinessFormat()
 
   // Tab state
   const [activeTab, setActiveTab] = useState<PageTab>('products')
@@ -383,6 +384,7 @@ export default function ProductosPage() {
   const [isReceiving, setIsReceiving] = useState(false)
   const [isDeletingOrder, setIsDeletingOrder] = useState(false)
   const [orderSaved, setOrderSaved] = useState(false)
+  const [initialEditSnapshot, setInitialEditSnapshot] = useState('')
   const [orderReceived, setOrderReceived] = useState(false)
   const [orderDeleted, setOrderDeleted] = useState(false)
   const [editOrderSaved, setEditOrderSaved] = useState(false)
@@ -492,15 +494,34 @@ export default function ProductosPage() {
     let result = orders
 
     if (orderStatusFilter !== 'all') {
-      result = result.filter(o => o.status === orderStatusFilter)
+      result = result.filter(o => getOrderDisplayStatus(o) === orderStatusFilter)
     }
 
     if (orderSearchQuery.trim()) {
       const query = orderSearchQuery.toLowerCase()
       result = result.filter(o => {
         const providerName = o.expand?.provider?.name?.toLowerCase() || ''
-        const dateStr = formatDate(new Date(o.date)).toLowerCase()
-        return providerName.includes(query) || dateStr.includes(query)
+        const d = new Date(o.date)
+        const dateStr = formatDate(d).toLowerCase()
+        const dayNum = d.getDate().toString()
+        const year = d.getFullYear().toString()
+        // Generate month/day names in both business locale and user language
+        const userLang = user?.language || 'en-US'
+        const seen = new Set<string>()
+        const langs = [locale, userLang].filter(l => {
+          const base = l.split('-')[0]
+          if (seen.has(base)) return false
+          seen.add(base)
+          return true
+        })
+        const names = langs.flatMap(l => [
+          d.toLocaleDateString(l, { month: 'long' }),
+          d.toLocaleDateString(l, { month: 'short' }),
+          d.toLocaleDateString(l, { weekday: 'long' }),
+          d.toLocaleDateString(l, { weekday: 'short' }),
+        ]).join(' ').toLowerCase()
+        const searchable = `${dateStr} ${names} ${dayNum} ${year} ${providerName}`
+        return searchable.includes(query)
       })
     }
 
@@ -516,7 +537,7 @@ export default function ProductosPage() {
     })
 
     return result
-  }, [orders, orderStatusFilter, orderSearchQuery, orderSortBy, formatDate])
+  }, [orders, orderStatusFilter, orderSearchQuery, orderSortBy, formatDate, locale])
 
   // Product handlers - now receive data from modal context
   const handleSubmitProduct = useCallback(async (
@@ -1012,20 +1033,31 @@ export default function ProductosPage() {
 
   const initializeEditForm = useCallback((order: ExpandedOrder) => {
     const items = order.expand?.['order_items(order)'] || []
-    const formItems = items.map(item => ({
-      product: item.expand?.product as Product,
-      quantity: item.quantity,
-    })).filter(item => item.product)
-    setOrderItems(formItems as OrderFormItem[])
-    setOrderTotal(order.total.toString())
-    setOrderEstimatedArrival(order.estimatedArrival ? new Date(order.estimatedArrival).toISOString().split('T')[0] : '')
-    setOrderProvider(order.providerId || '')
+    const formItems = items.map(item => {
+      // Look up the full product from the loaded products array
+      const fullProduct = products.find(p => p.id === item.productId)
+      return fullProduct ? { product: fullProduct, quantity: item.quantity } : null
+    }).filter((item): item is OrderFormItem => item !== null)
+    setOrderItems(formItems)
+    const total = order.total.toString()
+    const provider = order.providerId || ''
+    const arrival = order.estimatedArrival ? new Date(order.estimatedArrival).toISOString().split('T')[0] : ''
+    setOrderTotal(total)
+    setOrderEstimatedArrival(arrival)
+    setOrderProvider(provider)
     setOrderReceiptFile(null)
     setOrderReceiptPreview(null)
     setOrderProductSearchQuery('')
     setError('')
     setEditOrderSaved(false)
-  }, [])
+    setInitialEditSnapshot(JSON.stringify({
+      items: formItems.map(i => ({ id: i.product.id, qty: i.quantity })),
+      total,
+      provider,
+      arrival,
+      hasReceipt: false,
+    }))
+  }, [products])
 
   const getOrderReceiptUrl = useCallback((order: ExpandedOrder): string | null => {
     if (!order.receipt) return null
@@ -1232,9 +1264,12 @@ export default function ProductosPage() {
             setReceivedQuantities({})
           }}
           order={viewingOrder}
+          products={products}
+          filteredProducts={orderFilteredProducts}
           providers={providers}
           orderItems={orderItems}
           setOrderItems={setOrderItems}
+          onToggleProduct={handleToggleProductInOrder}
           onUpdateQuantity={handleUpdateOrderItemQuantity}
           orderTotal={orderTotal}
           onOrderTotalChange={setOrderTotal}
@@ -1242,6 +1277,12 @@ export default function ProductosPage() {
           onOrderEstimatedArrivalChange={setOrderEstimatedArrival}
           orderProvider={orderProvider}
           onOrderProviderChange={setOrderProvider}
+          productSearchQuery={orderProductSearchQuery}
+          onProductSearchQueryChange={setOrderProductSearchQuery}
+          orderReceiptFile={orderReceiptFile}
+          onOrderReceiptFileChange={setOrderReceiptFile}
+          orderReceiptPreview={orderReceiptPreview}
+          onOrderReceiptPreviewChange={setOrderReceiptPreview}
           receivedQuantities={receivedQuantities}
           setReceivedQuantities={setReceivedQuantities}
           isSaving={isSavingOrder}
@@ -1257,6 +1298,7 @@ export default function ProductosPage() {
           onReceiveOrder={handleReceiveOrder}
           onDeleteOrder={handleDeleteOrder}
           getReceiptUrl={getOrderReceiptUrl}
+          initialEditSnapshot={initialEditSnapshot}
           canDelete={canDelete}
         />
       )}

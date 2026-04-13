@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useState } from 'react'
-import { X, Plus, ChevronUp, ChevronRight, Warehouse } from 'lucide-react'
+import { X, Plus, ChevronUp, ChevronRight } from 'lucide-react'
 import { ClipboardIcon, FilterIcon } from '@/components/icons'
 import { Modal } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl'
 import { scrollToTop } from '@/lib/scroll'
 import {
   ORDER_SORT_OPTIONS,
+  getOrderDisplayStatus,
   type OrderSortOption,
   type OrderStatusFilter,
 } from '@/lib/products'
@@ -84,6 +85,7 @@ export function OrdersTab({
     all: t('filter_all'),
     pending: t('filter_status_pending'),
     received: t('filter_status_received'),
+    overdue: t('filter_status_overdue'),
   }
 
   return (
@@ -160,9 +162,18 @@ export function OrdersTab({
           <div className="card p-4 space-y-4">
             {/* List Header */}
             <div className="flex items-center justify-between">
-              <span className="text-sm text-text-secondary">
-                {t('order_count', { count: filteredOrders.length })}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-text-secondary">
+                  {t('order_count', { count: filteredOrders.length })}
+                </span>
+                <span className="text-text-tertiary">&#183;</span>
+                <button
+                  type="button"
+                  className="text-sm text-brand hover:text-brand transition-colors"
+                >
+                  {t('providers_link')}
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={onNewOrder}
@@ -170,7 +181,7 @@ export function OrdersTab({
                 style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
               >
                 <Plus style={{ width: 14, height: 14 }} />
-                {t('new_order_button')}
+                {tCommon('add')}
               </button>
             </div>
 
@@ -246,7 +257,7 @@ export function OrdersTab({
           <div className="space-y-2">
             <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('filter_by_status_label')}</span>
             <div className="space-y-1">
-              {(['all', 'pending', 'received'] as OrderStatusFilter[]).map(status => (
+              {(['all', 'pending', 'received', 'overdue'] as OrderStatusFilter[]).map(status => (
                 <button
                   key={status}
                   type="button"
@@ -300,7 +311,19 @@ const OrderListItem = memo(function OrderListItem({
   const { formatCurrency, formatDate } = useBusinessFormat()
   const items = order.expand?.['order_items(order)'] || []
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-  const isPending = order.status === 'pending'
+  const displayStatus = getOrderDisplayStatus(order)
+
+  const statusColors = {
+    pending: { bg: '!bg-warning-subtle', text: 'text-warning' },
+    received: { bg: '!bg-success-subtle', text: 'text-success' },
+    overdue: { bg: '!bg-error-subtle', text: 'text-error' },
+  }
+  const statusLabel = {
+    pending: t('status_pending'),
+    received: t('status_received'),
+    overdue: t('status_overdue'),
+  }
+  const colors = statusColors[displayStatus]
 
   return (
     <div
@@ -318,12 +341,8 @@ const OrderListItem = memo(function OrderListItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3">
           {/* Status indicator */}
-          <div className={`product-list-image flex items-center justify-center ${
-            isPending
-              ? '!bg-warning-subtle'
-              : '!bg-success-subtle'
-          }`}>
-            <Warehouse className={`w-5 h-5 ${isPending ? 'text-warning' : 'text-success'}`} />
+          <div className={`product-list-image flex items-center justify-center ${colors.bg}`}>
+            <ClipboardIcon className={`w-5 h-5 ${colors.text}`} />
           </div>
 
           {/* Order info */}
@@ -351,8 +370,8 @@ const OrderListItem = memo(function OrderListItem({
             <span className="font-medium block text-error">
               -{formatCurrency(order.total)}
             </span>
-            <span className={`text-xs mt-0.5 block ${isPending ? 'text-warning' : 'text-success'}`}>
-              {isPending ? t('status_pending') : t('status_received')}
+            <span className={`text-xs mt-0.5 block ${colors.text}`}>
+              {statusLabel[displayStatus]}
             </span>
           </div>
 

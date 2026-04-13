@@ -1,14 +1,21 @@
 'use client'
 
+import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Trash2, Pencil, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarClock, MinusCircle, PlusCircle, AlertTriangle } from 'lucide-react'
-import { Spinner, Modal, useMorphingModal, DeleteConfirmationStep, PriceInput } from '@/components/ui'
+import { ImageIcon, ChevronDown, CalendarClock, MinusCircle, PlusCircle, AlertTriangle, Minus, Plus } from 'lucide-react'
+import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
+import { TrashIcon, EditIcon, ImageAttachIcon } from '@/components/icons'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { getProductIconUrl } from '@/lib/utils'
+import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import type { Provider } from '@/types'
+import type { Product, Provider } from '@/types'
+import { getOrderDisplayStatus } from '@/lib/products'
 import type { ExpandedOrder, OrderFormItem } from '@/lib/products'
+
+const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
+const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
 
 // ============================================
 // PROPS INTERFACE
@@ -24,11 +31,14 @@ export interface OrderDetailModalProps {
   order: ExpandedOrder | null
 
   // Products and providers
+  products: Product[]
+  filteredProducts: Product[]
   providers: Provider[]
 
   // Form state for editing
   orderItems: OrderFormItem[]
   setOrderItems: React.Dispatch<React.SetStateAction<OrderFormItem[]>>
+  onToggleProduct: (product: Product) => void
   onUpdateQuantity: (productId: string, quantity: number) => void
   orderTotal: string
   onOrderTotalChange: (total: string) => void
@@ -36,6 +46,12 @@ export interface OrderDetailModalProps {
   onOrderEstimatedArrivalChange: (date: string) => void
   orderProvider: string
   onOrderProviderChange: (providerId: string) => void
+  productSearchQuery: string
+  onProductSearchQueryChange: (query: string) => void
+  orderReceiptFile: File | null
+  onOrderReceiptFileChange: (file: File | null) => void
+  orderReceiptPreview: string | null
+  onOrderReceiptPreviewChange: (preview: string | null) => void
 
   // Receive order state
   receivedQuantities: Record<string, number>
@@ -59,6 +75,9 @@ export interface OrderDetailModalProps {
   onReceiveOrder: () => Promise<boolean>
   onDeleteOrder: () => Promise<boolean>
   getReceiptUrl: (order: ExpandedOrder) => string | null
+
+  // Edit change detection
+  initialEditSnapshot: string
 
   // Permissions
   canDelete: boolean
@@ -101,10 +120,10 @@ function GoToEditStepButton({ order, onInitialize }: { order: ExpandedOrder; onI
     <button
       type="button"
       onClick={handleClick}
-      className="btn btn-secondary"
+      className="btn btn-secondary btn-icon"
       title={t('edit_order_aria')}
     >
-      <Pencil className="w-5 h-5" />
+      <EditIcon className="text-brand" style={{ width: 16, height: 16 }} />
     </button>
   )
 }
@@ -116,7 +135,7 @@ function ConfirmReceiveButton({ onReceive, isReceiving }: { onReceive: () => Pro
   const handleClick = async () => {
     const success = await onReceive()
     if (success) {
-      goToStep(5)
+      goToStep(4)
     }
   }
 
@@ -133,13 +152,15 @@ function ConfirmReceiveButton({ onReceive, isReceiving }: { onReceive: () => Pro
 }
 
 
-function ConfirmEditOrderButton({ onSave, isSaving, disabled }: { onSave: () => Promise<boolean>; isSaving: boolean; disabled: boolean }) {
+function SaveEditOrderButton({ onSave, isSaving, disabled }: { onSave: () => Promise<boolean>; isSaving: boolean; disabled: boolean }) {
   const tCommon = useTranslations('common')
   const { goToStep } = useMorphingModal()
 
-  const handleClick = () => {
-    goToStep(2)
-    onSave()
+  const handleClick = async () => {
+    const success = await onSave()
+    if (success) {
+      goToStep(2)
+    }
   }
 
   return (
@@ -154,6 +175,30 @@ function ConfirmEditOrderButton({ onSave, isSaving, disabled }: { onSave: () => 
   )
 }
 
+function DeleteOrderButton({ onDelete, isDeleting }: { onDelete: () => Promise<boolean>; isDeleting: boolean }) {
+  const tCommon = useTranslations('common')
+  const { goToStep } = useMorphingModal()
+
+  const handleClick = async () => {
+    const success = await onDelete()
+    if (success) {
+      goToStep(6)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="btn btn-danger flex-1"
+      disabled={isDeleting}
+    >
+      {isDeleting ? <Spinner /> : tCommon('delete')}
+    </button>
+  )
+}
+
+
 // ============================================
 // COMPONENT
 // ============================================
@@ -163,9 +208,12 @@ export function OrderDetailModal({
   onClose,
   onExitComplete,
   order,
+  products,
+  filteredProducts,
   providers,
   orderItems,
   setOrderItems,
+  onToggleProduct,
   onUpdateQuantity,
   orderTotal,
   onOrderTotalChange,
@@ -173,6 +221,12 @@ export function OrderDetailModal({
   onOrderEstimatedArrivalChange,
   orderProvider,
   onOrderProviderChange,
+  productSearchQuery,
+  onProductSearchQueryChange,
+  orderReceiptFile,
+  onOrderReceiptFileChange,
+  orderReceiptPreview,
+  onOrderReceiptPreviewChange,
   receivedQuantities,
   setReceivedQuantities,
   isSaving,
@@ -188,11 +242,16 @@ export function OrderDetailModal({
   onReceiveOrder,
   onDeleteOrder,
   getReceiptUrl,
+  initialEditSnapshot,
   canDelete,
 }: OrderDetailModalProps) {
   const t = useTranslations('orders')
   const tCommon = useTranslations('common')
   const { formatCurrency, formatDate } = useBusinessFormat()
+  const editReceiptInputRef = useRef<HTMLInputElement>(null)
+  const [editReceiptError, setEditReceiptError] = useState('')
+  const productsById = useMemo(() => new Map(products.map(p => [p.id, p])), [products])
+
   if (!order) return null
 
   return (
@@ -235,15 +294,14 @@ export function OrderDetailModal({
             </div>
             <div className="flex justify-between">
               <span className="text-text-tertiary">{t('status_label')}</span>
-              <span className={order.status === 'pending' ? 'text-warning' : 'text-success'}>
-                {order.status === 'pending' ? t('status_pending') : t('status_received')}
-              </span>
+              {(() => {
+                const ds = getOrderDisplayStatus(order)
+                const colorMap = { pending: 'text-warning', received: 'text-success', overdue: 'text-error' }
+                const labelMap = { pending: t('status_pending'), received: t('status_received'), overdue: t('status_overdue') }
+                return <span className={colorMap[ds]}>{labelMap[ds]}</span>
+              })()}
             </div>
-            <div className="flex justify-between">
-              <span className="text-text-tertiary">{t('date_label')}</span>
-              <span>{formatDate(new Date(order.date))}</span>
-            </div>
-            {order.estimatedArrival && order.status === 'pending' && (
+            {order.estimatedArrival && order.status !== 'received' && (
               <div className="flex justify-between">
                 <span className="text-text-tertiary">{t('est_arrival_label')}</span>
                 <span>{formatDate(new Date(order.estimatedArrival))}</span>
@@ -275,22 +333,11 @@ export function OrderDetailModal({
         {order.status === 'pending' ? (
           <Modal.Footer>
             {canDelete && (
-              <Modal.GoToStepButton
-                step={4}
-                className="btn-icon !bg-transparent text-error hover:!bg-error-subtle rounded-lg"
-                title={t('delete_order_aria')}
-              >
-                <Trash2 className="w-5 h-5" />
+              <Modal.GoToStepButton step={5} className="btn btn-secondary btn-icon">
+                <TrashIcon className="text-error" style={{ width: 16, height: 16 }} />
               </Modal.GoToStepButton>
             )}
             <GoToEditStepButton order={order} onInitialize={onInitializeEditForm} />
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn-secondary flex-1"
-            >
-              {tCommon('cancel')}
-            </button>
             <GoToReceiveStepButton order={order} onInitialize={onInitializeReceiveQuantities} />
           </Modal.Footer>
         ) : (
@@ -298,7 +345,7 @@ export function OrderDetailModal({
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-secondary flex-1"
+              className="btn btn-primary flex-1"
             >
               {tCommon('close')}
             </button>
@@ -310,89 +357,106 @@ export function OrderDetailModal({
       <Modal.Step title={t('edit_order_title')} backStep={0}>
         {error && (
           <Modal.Item>
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
           </Modal.Item>
         )}
 
-        {/* Products with quantities */}
+        {/* Product selection with quantities */}
         <Modal.Item>
-          <label className="label">{t('products_label')}</label>
-          <div className="space-y-3">
-            {orderItems.map(item => (
-              <div key={item.product.id} className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
-                {/* Product image */}
-                <div className="w-12 h-12 rounded-lg bg-bg-elevated flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {getProductIconUrl(item.product) ? (
-                    <Image
-                      src={getProductIconUrl(item.product)!}
-                      alt={item.product.name}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <ImageIcon className="w-5 h-5 text-text-tertiary" />
+          <p className="text-xs text-text-tertiary">
+            {t('products_selected', { count: orderItems.length })}
+          </p>
+        </Modal.Item>
+
+        <Modal.Item>
+          <div className="space-y-2">
+            {(order.expand?.['order_items(order)'] || []).map(origItem => {
+              const product = productsById.get(origItem.productId ?? '')
+              if (!product) return null
+              const orderItem = orderItems.find(i => i.product.id === product.id)
+              const isSelected = !!orderItem
+              const stockValue = product.stock ?? 0
+              const isOutOfStock = stockValue === 0
+              return (
+                <div
+                  key={product.id}
+                  className="flex items-center gap-3 p-3 rounded-lg transition-all duration-200"
+                  style={{
+                    border: `1px solid ${isSelected ? 'var(--color-brand)' : 'var(--color-border)'}`,
+                    backgroundColor: isSelected ? 'var(--color-brand-subtle)' : 'var(--color-bg-surface)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onToggleProduct(product)}
+                    className="flex items-center gap-3 flex-1 min-w-0"
+                  >
+                    <div className="product-list-image">
+                      {(() => {
+                        const iconUrl = getProductIconUrl(product)
+                        if (iconUrl && isPresetIcon(iconUrl)) {
+                          const p = getPresetIcon(iconUrl)
+                          return p ? <p.icon size={24} className="text-text-primary" /> : null
+                        }
+                        if (iconUrl) {
+                          return (
+                            <Image src={iconUrl} alt={product.name} width={48} height={48} className="product-list-image-img" unoptimized />
+                          )
+                        }
+                        return <ImageAttachIcon className="w-5 h-5 text-text-tertiary" />
+                      })()}
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <span className="text-sm font-medium truncate block">{product.name}</span>
+                      <span className={`text-xs ${isOutOfStock ? 'text-error' : 'text-text-tertiary'}`}>
+                        {t('item_unit_count', { count: stockValue })}
+                      </span>
+                    </div>
+                  </button>
+                  {isSelected && orderItem && (
+                    <div className="flex-shrink-0 flex rounded-lg overflow-hidden bg-bg-muted" style={{ height: 48 }}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={orderItem.quantity}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          if (val === '') {
+                            setOrderItems(prev => prev.map(i =>
+                              i.product.id === product.id ? { ...i, quantity: '' as unknown as number } : i
+                            ))
+                          } else {
+                            const num = parseInt(val, 10)
+                            if (!isNaN(num)) onUpdateQuantity(product.id, Math.max(1, num))
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value, 10)
+                          if (isNaN(val) || val < 1) onUpdateQuantity(product.id, 1)
+                        }}
+                        onFocus={(e) => e.target.select()}
+                        className="w-10 text-center text-sm font-semibold bg-bg-muted text-text-primary focus:outline-none"
+                      />
+                      <div className="flex flex-col" style={{ borderLeft: '1px solid var(--color-border)' }}>
+                        <button type="button" onClick={() => onUpdateQuantity(product.id, orderItem.quantity + 1)} className="flex-1 flex items-center justify-center px-2 bg-bg-muted transition-colors active:bg-bg-surface" style={{ borderBottom: '1px solid var(--color-border)' }}>
+                          <Plus className="w-3 h-3" />
+                        </button>
+                        <button type="button" onClick={() => onUpdateQuantity(product.id, orderItem.quantity - 1)} disabled={orderItem.quantity <= 1} className="flex-1 flex items-center justify-center px-2 bg-bg-muted transition-colors active:bg-bg-surface disabled:opacity-40 disabled:cursor-not-allowed">
+                          <Minus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
-                {/* Product name */}
-                <span className="flex-1 text-sm font-medium truncate min-w-0">
-                  {item.product.name}
-                </span>
-                {/* Quantity controls */}
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
-                    disabled={item.quantity <= 1}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-100 ${
-                      item.quantity <= 1 ? 'opacity-40 cursor-not-allowed' : 'active:scale-90'
-                    }`}
-                  >
-                    <MinusCircle className="w-5 h-5" />
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={item.quantity}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      if (val === '') {
-                        setOrderItems(prev => prev.map(i =>
-                          i.product.id === item.product.id
-                            ? { ...i, quantity: '' as unknown as number }
-                            : i
-                        ))
-                      } else {
-                        const num = parseInt(val, 10)
-                        if (!isNaN(num)) {
-                          onUpdateQuantity(item.product.id, Math.max(1, num))
-                        }
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const val = parseInt(e.target.value, 10)
-                      if (isNaN(val) || val < 1) {
-                        onUpdateQuantity(item.product.id, 1)
-                      }
-                    }}
-                    onFocus={(e) => e.target.select()}
-                    className="w-10 text-center font-semibold bg-primary text-text-primary rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-brand"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-100 active:scale-90"
-                  >
-                    <PlusCircle className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
+        </Modal.Item>
+
+        <Modal.Item>
+          <hr className="border-border" />
         </Modal.Item>
 
         {/* Total & Provider */}
@@ -401,54 +465,19 @@ export function OrderDetailModal({
             <div>
               <label htmlFor="editOrderTotal" className="label">{t('total_paid_label')} <span className="text-error">*</span></label>
               <div className="input-number-wrapper">
-                <PriceInput
-                  id="editOrderTotal"
-                  value={orderTotal}
-                  onValueChange={onOrderTotalChange}
-                  placeholder="0"
-                />
+                <PriceInput id="editOrderTotal" value={orderTotal} onValueChange={onOrderTotalChange} placeholder="0" />
                 <div className="input-number-spinners">
-                  <button
-                    type="button"
-                    className="input-number-spinner"
-                    onClick={() => {
-                      const current = parseFloat(orderTotal) || 0
-                      onOrderTotalChange((current + 1).toFixed(2))
-                    }}
-                    tabIndex={-1}
-                    aria-label={t('increase_total_aria')}
-                  >
-                    <ArrowUp />
-                  </button>
-                  <button
-                    type="button"
-                    className="input-number-spinner"
-                    onClick={() => {
-                      const current = parseFloat(orderTotal) || 0
-                      onOrderTotalChange(Math.max(0, current - 1).toFixed(2))
-                    }}
-                    tabIndex={-1}
-                    aria-label={t('decrease_total_aria')}
-                  >
-                    <ArrowDown />
-                  </button>
+                  <button type="button" className="input-number-spinner" onClick={() => { const c = parseFloat(orderTotal) || 0; onOrderTotalChange((c + 1).toFixed(2)) }} tabIndex={-1} aria-label={t('increase_total_aria')}><Plus /></button>
+                  <button type="button" className="input-number-spinner" onClick={() => { const c = parseFloat(orderTotal) || 0; onOrderTotalChange(Math.max(0, c - 1).toFixed(2)) }} tabIndex={-1} aria-label={t('decrease_total_aria')}><Minus /></button>
                 </div>
               </div>
             </div>
             <div>
               <label htmlFor="editOrderProvider" className="label">{t('provider_label')}</label>
               <div className="relative">
-                <select
-                  id="editOrderProvider"
-                  value={orderProvider}
-                  onChange={e => onOrderProviderChange(e.target.value)}
-                  className={`input w-full pr-10 ${!orderProvider ? 'text-text-tertiary' : ''}`}
-                  style={{ backgroundImage: 'none', WebkitAppearance: 'none', appearance: 'none' }}
-                >
+                <select id="editOrderProvider" value={orderProvider} onChange={e => onOrderProviderChange(e.target.value)} className={`input w-full pr-10 ${!orderProvider ? 'text-text-tertiary' : ''}`} style={{ backgroundImage: 'none', WebkitAppearance: 'none', appearance: 'none' }}>
                   <option value="">{t('provider_none')}</option>
-                  {providers.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
+                  {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
                 <ChevronDown className="w-5 h-5 text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -466,20 +495,66 @@ export function OrderDetailModal({
               </span>
             </div>
             <CalendarClock className="w-5 h-5 text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="date"
-              value={orderEstimatedArrival}
-              onChange={e => onOrderEstimatedArrivalChange(e.target.value)}
-              className="input absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
+            <input type="date" value={orderEstimatedArrival} onChange={e => onOrderEstimatedArrivalChange(e.target.value)} className="input absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
           </div>
+        </Modal.Item>
+
+        {/* Receipt */}
+        <Modal.Item>
+          <label className="label">{t('receipt_label')}</label>
+          <input ref={editReceiptInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf" onChange={async e => {
+            setEditReceiptError('')
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (!file) return
+            const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
+            if (!isHeic && !ACCEPTED_RECEIPT_TYPES.includes(file.type)) { setEditReceiptError(t('receipt_invalid_type')); return }
+            if (file.size > MAX_RECEIPT_BYTES) { setEditReceiptError(t('receipt_too_large')); return }
+            onOrderReceiptFileChange(file)
+            if (isHeic) {
+              try { const fd = new FormData(); fd.append('file', file); const res = await fetch('/api/convert-heic', { method: 'POST', body: fd }); const data = await res.json(); if (data.success && data.data?.image) { onOrderReceiptPreviewChange(data.data.image) } else { onOrderReceiptPreviewChange(null) } } catch { onOrderReceiptPreviewChange(null) }
+            } else if (file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = () => onOrderReceiptPreviewChange(reader.result as string); reader.readAsDataURL(file) } else { onOrderReceiptPreviewChange(null) }
+          }} className="hidden" />
+          {orderReceiptFile ? (
+            <div className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
+              {orderReceiptPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={orderReceiptPreview} alt="" className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-10 h-10 rounded-md bg-bg-surface flex items-center justify-center flex-shrink-0"><ImageIcon className="w-5 h-5 text-text-tertiary" /></div>
+              )}
+              <span className="text-sm text-text-secondary truncate flex-1 min-w-0">{orderReceiptFile.name}</span>
+              <button type="button" onClick={() => { onOrderReceiptFileChange(null); onOrderReceiptPreviewChange(null); if (editReceiptInputRef.current) editReceiptInputRef.current.value = '' }} className="p-1 text-error hover:text-error transition-colors flex-shrink-0" aria-label={tCommon('remove')}>
+                <TrashIcon style={{ width: 16, height: 16 }} />
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => editReceiptInputRef.current?.click()} className="image-upload-zone">
+              <ImageAttachIcon className="w-6 h-6 text-text-tertiary" />
+              <span className="text-sm text-text-tertiary mt-2">{t('receipt_attach_placeholder')}</span>
+            </button>
+          )}
+          <p className="text-xs text-text-tertiary mt-2">{t('receipt_hint')}</p>
+          {editReceiptError && (
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mt-2">{editReceiptError}</div>
+          )}
         </Modal.Item>
 
         <Modal.Footer>
           <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1">
             {tCommon('cancel')}
           </Modal.GoToStepButton>
-          <ConfirmEditOrderButton onSave={onSaveEditOrder} isSaving={isSaving} disabled={isSaving || !orderTotal || parseFloat(orderTotal) <= 0} />
+          <SaveEditOrderButton
+            onSave={onSaveEditOrder}
+            isSaving={isSaving}
+            disabled={
+              isSaving
+              || orderItems.length === 0
+              || !orderTotal
+              || parseFloat(orderTotal) <= 0
+              || JSON.stringify({ items: orderItems.map(i => ({ id: i.product.id, qty: i.quantity })), total: orderTotal, provider: orderProvider, arrival: orderEstimatedArrival, hasReceipt: !!orderReceiptFile }) === initialEditSnapshot
+            }
+          />
         </Modal.Footer>
       </Modal.Step>
 
@@ -622,17 +697,7 @@ export function OrderDetailModal({
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 4: Delete Confirmation */}
-      <DeleteConfirmationStep
-        title={t('delete_order_title')}
-        itemName={t('delete_item_name', { date: formatDate(new Date(order.date)) })}
-        cancelStep={0}
-        onConfirm={onDeleteOrder}
-        successStep={6}
-        isDeleting={isDeleting}
-      />
-
-      {/* Step 5: Receive Success */}
+      {/* Step 4: Receive Success */}
       <Modal.Step title={t('receive_success_title')} hideBackButton>
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
@@ -670,6 +735,21 @@ export function OrderDetailModal({
           >
             {tCommon('done')}
           </button>
+        </Modal.Footer>
+      </Modal.Step>
+
+      {/* Step 5: Delete Confirmation */}
+      <Modal.Step title={t('delete_order_title')} backStep={0}>
+        <Modal.Item>
+          <p className="text-text-secondary">
+            {tCommon('delete')} <strong>{t('delete_item_name', { date: formatDate(new Date(order.date)) })}</strong>? {t('delete_cannot_be_undone')}
+          </p>
+        </Modal.Item>
+        <Modal.Footer>
+          <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
+            {tCommon('cancel')}
+          </Modal.GoToStepButton>
+          <DeleteOrderButton onDelete={onDeleteOrder} isDeleting={isDeleting} />
         </Modal.Footer>
       </Modal.Step>
 

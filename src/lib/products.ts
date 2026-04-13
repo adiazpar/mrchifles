@@ -87,7 +87,23 @@ export interface OrderFormItem {
 // ORDER STATUS FILTER
 // ============================================
 
-export type OrderStatusFilter = 'all' | 'pending' | 'received'
+export type OrderStatusFilter = 'all' | 'pending' | 'received' | 'overdue'
+
+/**
+ * Determine the display status of an order.
+ * An order is "overdue" when it is still pending and its estimated arrival
+ * date has passed.
+ */
+export function getOrderDisplayStatus(order: { status: string; estimatedArrival?: Date | string | null }): 'pending' | 'received' | 'overdue' {
+  if (order.status === 'received') return 'received'
+  if (order.estimatedArrival) {
+    const arrival = new Date(order.estimatedArrival)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    if (arrival < today) return 'overdue'
+  }
+  return 'pending'
+}
 
 // ============================================
 // ORDER SORT OPTIONS

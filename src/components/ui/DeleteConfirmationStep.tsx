@@ -77,9 +77,11 @@ function ConfirmDeleteButton({ onConfirm, successStep, isDeleting }: ConfirmDele
   const t = useTranslations('common')
   const { goToStep } = useMorphingModal()
 
-  const handleClick = () => {
-    goToStep(successStep)
-    onConfirm()
+  const handleClick = async () => {
+    const success = await onConfirm()
+    if (success) {
+      goToStep(successStep)
+    }
   }
 
   return (

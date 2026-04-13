@@ -92,7 +92,11 @@
 
 /* Icon-only button (square) */
 .btn-icon {
-  padding: var(--space-3);
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  min-height: unset;
+  padding: 0;
+  justify-content: center;
 }
 
 /* Payment buttons */
