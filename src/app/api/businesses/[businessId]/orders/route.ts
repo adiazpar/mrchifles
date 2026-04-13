@@ -109,14 +109,27 @@ export const GET = withBusinessAuth(async (request, access) => {
  * Create a new order with items.
  */
 export const POST = withBusinessAuth(async (request, access) => {
+  const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
+  const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
+
   const formData = await request.formData()
   const dateStr = formData.get('date') as string
   const totalStr = formData.get('total') as string
   const status = formData.get('status') as string
-  const notes = formData.get('notes') as string | null
   const estimatedArrivalStr = formData.get('estimatedArrival') as string | null
   const providerId = formData.get('providerId') as string | null
   const itemsJson = formData.get('items') as string
+  const receiptFile = formData.get('receipt') as File | null
+
+  // Validate receipt file if provided
+  if (receiptFile) {
+    if (!ACCEPTED_RECEIPT_TYPES.includes(receiptFile.type)) {
+      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
+    }
+    if (receiptFile.size > MAX_RECEIPT_BYTES) {
+      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
+    }
+  }
 
   // Parse and validate items
   let items: Array<{ productId: string; productName: string; quantity: number }>
@@ -160,7 +173,7 @@ export const POST = withBusinessAuth(async (request, access) => {
       status: orderStatus,
       estimatedArrival,
       receipt: null,
-      notes: notes || null,
+      notes: null,
     }),
     ...(itemValues.length > 0
       ? [db.insert(orderItems).values(itemValues)]
@@ -188,7 +201,7 @@ export const POST = withBusinessAuth(async (request, access) => {
       status: orderStatus,
       estimatedArrival,
       receipt: null,
-      notes: notes || null,
+      notes: null,
       expand: {
         provider,
         'order_items(order)': itemValues.map(item => ({

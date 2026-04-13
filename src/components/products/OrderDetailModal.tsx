@@ -32,8 +32,6 @@ export interface OrderDetailModalProps {
   onUpdateQuantity: (productId: string, quantity: number) => void
   orderTotal: string
   onOrderTotalChange: (total: string) => void
-  orderNotes: string
-  onOrderNotesChange: (notes: string) => void
   orderEstimatedArrival: string
   onOrderEstimatedArrivalChange: (date: string) => void
   orderProvider: string
@@ -171,8 +169,6 @@ export function OrderDetailModal({
   onUpdateQuantity,
   orderTotal,
   onOrderTotalChange,
-  orderNotes,
-  onOrderNotesChange,
   orderEstimatedArrival,
   onOrderEstimatedArrivalChange,
   orderProvider,
@@ -270,12 +266,6 @@ export function OrderDetailModal({
                 >
                   {t('view_attachment')}
                 </a>
-              </div>
-            )}
-            {order.notes && (
-              <div className="flex justify-between">
-                <span className="text-text-tertiary">{t('notes_review_label')}</span>
-                <span className="text-right max-w-[60%] truncate">{order.notes}</span>
               </div>
             )}
           </div>
@@ -481,19 +471,6 @@ export function OrderDetailModal({
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
           </div>
-        </Modal.Item>
-
-        {/* Notes */}
-        <Modal.Item>
-          <label htmlFor="editOrderNotes" className="label">{t('notes_label')}</label>
-          <textarea
-            id="editOrderNotes"
-            value={orderNotes}
-            onChange={e => onOrderNotesChange(e.target.value)}
-            className="input"
-            rows={2}
-            placeholder={t('notes_placeholder')}
-          />
         </Modal.Item>
 
         <Modal.Footer>

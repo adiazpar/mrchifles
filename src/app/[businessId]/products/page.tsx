@@ -366,7 +366,6 @@ export default function ProductosPage() {
   // Order form state
   const [orderItems, setOrderItems] = useState<OrderFormItem[]>([])
   const [orderTotal, setOrderTotal] = useState('')
-  const [orderNotes, setOrderNotes] = useState('')
   const [orderEstimatedArrival, setOrderEstimatedArrival] = useState('')
   const [orderReceiptFile, setOrderReceiptFile] = useState<File | null>(null)
   const [orderReceiptPreview, setOrderReceiptPreview] = useState<string | null>(null)
@@ -761,7 +760,6 @@ export default function ProductosPage() {
   const resetOrderForm = useCallback(() => {
     setOrderItems([])
     setOrderTotal('')
-    setOrderNotes('')
     setOrderEstimatedArrival('')
     setOrderReceiptFile(null)
     setOrderReceiptPreview(null)
@@ -809,7 +807,6 @@ export default function ProductosPage() {
     formData.append('date', new Date().toISOString())
     formData.append('total', totalNum.toString())
     formData.append('status', 'pending')
-    if (orderNotes.trim()) formData.append('notes', orderNotes.trim())
     if (orderEstimatedArrival) formData.append('estimatedArrival', new Date(orderEstimatedArrival).toISOString())
     if (orderReceiptFile) formData.append('receipt', orderReceiptFile)
     if (orderProvider) formData.append('providerId', orderProvider)
@@ -835,7 +832,7 @@ export default function ProductosPage() {
     })
 
     return true
-  }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, setOrders, tOrders])
+  }, [businessId, orderItems, orderTotal, orderEstimatedArrival, orderReceiptFile, orderProvider, setOrders, tOrders])
 
   const handleSaveEditOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder) return false
@@ -856,7 +853,6 @@ export default function ProductosPage() {
     try {
       const formData = new FormData()
       formData.append('total', totalNum.toString())
-      formData.append('notes', orderNotes.trim() || '')
       if (orderEstimatedArrival) {
         formData.append('estimatedArrival', new Date(orderEstimatedArrival).toISOString())
       }
@@ -900,7 +896,7 @@ export default function ProductosPage() {
     } finally {
       setIsSavingOrder(false)
     }
-  }, [businessId, orderItems, orderTotal, orderNotes, orderEstimatedArrival, orderReceiptFile, orderProvider, viewingOrder, setOrders, tOrders, translateApiMessage])
+  }, [businessId, orderItems, orderTotal, orderEstimatedArrival, orderReceiptFile, orderProvider, viewingOrder, setOrders, tOrders, translateApiMessage])
 
   const handleReceiveOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder || !user) return false
@@ -1004,7 +1000,6 @@ export default function ProductosPage() {
     })).filter(item => item.product)
     setOrderItems(formItems as OrderFormItem[])
     setOrderTotal(order.total.toString())
-    setOrderNotes(order.notes || '')
     setOrderEstimatedArrival(order.estimatedArrival ? new Date(order.estimatedArrival).toISOString().split('T')[0] : '')
     setOrderProvider(order.providerId || '')
     setOrderReceiptFile(null)
@@ -1189,8 +1184,7 @@ export default function ProductosPage() {
         setOrderItems={setOrderItems}
         orderTotal={orderTotal}
         onOrderTotalChange={setOrderTotal}
-        orderNotes={orderNotes}
-        onOrderNotesChange={setOrderNotes}
+
         orderEstimatedArrival={orderEstimatedArrival}
         onOrderEstimatedArrivalChange={setOrderEstimatedArrival}
         orderReceiptFile={orderReceiptFile}
@@ -1224,8 +1218,6 @@ export default function ProductosPage() {
           onUpdateQuantity={handleUpdateOrderItemQuantity}
           orderTotal={orderTotal}
           onOrderTotalChange={setOrderTotal}
-          orderNotes={orderNotes}
-          onOrderNotesChange={setOrderNotes}
           orderEstimatedArrival={orderEstimatedArrival}
           onOrderEstimatedArrivalChange={setOrderEstimatedArrival}
           orderProvider={orderProvider}

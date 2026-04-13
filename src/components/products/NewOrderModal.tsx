@@ -2,9 +2,9 @@
 
 import { useCallback, useRef, useState } from 'react'
 import Image from 'next/image'
-import { X, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarClock, Minus, Plus, Loader2 } from 'lucide-react'
+import { X, ImageIcon, ChevronDown, CalendarClock, Minus, Plus, Loader2 } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
-import { ImageAttachIcon, BarcodeScanIcon } from '@/components/icons'
+import { ImageAttachIcon, BarcodeScanIcon, TrashIcon } from '@/components/icons'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -13,6 +13,9 @@ import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { Product, Provider } from '@/types'
 import type { OrderFormItem } from '@/lib/products'
+
+const MAX_RECEIPT_BYTES = 5 * 1024 * 1024 // 5 MB
+const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
 
 // ============================================
 // PROPS INTERFACE
@@ -36,8 +39,6 @@ export interface NewOrderModalProps {
 
   orderTotal: string
   onOrderTotalChange: (total: string) => void
-  orderNotes: string
-  onOrderNotesChange: (notes: string) => void
   orderEstimatedArrival: string
   onOrderEstimatedArrivalChange: (date: string) => void
   orderReceiptFile: File | null
@@ -108,8 +109,6 @@ export function NewOrderModal({
   setOrderItems,
   orderTotal,
   onOrderTotalChange,
-  orderNotes,
-  onOrderNotesChange,
   orderEstimatedArrival,
   onOrderEstimatedArrivalChange,
   orderReceiptFile,
@@ -131,6 +130,7 @@ export function NewOrderModal({
   const { formatCurrency, formatDate } = useBusinessFormat()
   const receiptInputRef = useRef<HTMLInputElement>(null)
   const [scanError, setScanError] = useState('')
+  const [receiptError, setReceiptError] = useState('')
 
   const handleScanResult = useCallback(({ value }: { value: string }) => {
     setScanError('')
@@ -385,7 +385,7 @@ export function NewOrderModal({
                     tabIndex={-1}
                     aria-label={t('increase_total_aria')}
                   >
-                    <ArrowUp />
+                    <Plus />
                   </button>
                   <button
                     type="button"
@@ -397,7 +397,7 @@ export function NewOrderModal({
                     tabIndex={-1}
                     aria-label={t('decrease_total_aria')}
                   >
-                    <ArrowDown />
+                    <Minus />
                   </button>
                 </div>
               </div>
@@ -446,30 +446,72 @@ export function NewOrderModal({
           <input
             ref={receiptInputRef}
             type="file"
-            accept="image/*,.pdf"
-            onChange={e => {
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
+            onChange={async e => {
+              setReceiptError('')
               const file = e.target.files?.[0]
-              if (file) {
-                onOrderReceiptFileChange(file)
-                if (file.type.startsWith('image/')) {
-                  const reader = new FileReader()
-                  reader.onload = () => onOrderReceiptPreviewChange(reader.result as string)
-                  reader.readAsDataURL(file)
-                } else {
+              e.target.value = ''
+              if (!file) return
+
+              const isHeic = file.type === 'image/heic' || file.type === 'image/heif'
+                || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
+
+              if (!isHeic && !ACCEPTED_RECEIPT_TYPES.includes(file.type)) {
+                setReceiptError(t('receipt_invalid_type'))
+                return
+              }
+              if (file.size > MAX_RECEIPT_BYTES) {
+                setReceiptError(t('receipt_too_large'))
+                return
+              }
+
+              onOrderReceiptFileChange(file)
+
+              if (isHeic) {
+                // Convert HEIC to displayable format via server
+                try {
+                  const fd = new FormData()
+                  fd.append('file', file)
+                  const res = await fetch('/api/convert-heic', { method: 'POST', body: fd })
+                  const data = await res.json()
+                  if (data.success && data.data?.image) {
+                    onOrderReceiptPreviewChange(data.data.image)
+                  } else {
+                    onOrderReceiptPreviewChange(null)
+                  }
+                } catch {
                   onOrderReceiptPreviewChange(null)
                 }
+              } else if (file.type.startsWith('image/')) {
+                const reader = new FileReader()
+                reader.onload = () => onOrderReceiptPreviewChange(reader.result as string)
+                reader.readAsDataURL(file)
+              } else {
+                onOrderReceiptPreviewChange(null)
               }
             }}
             className="hidden"
           />
-          {orderReceiptPreview ? (
-            <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={orderReceiptPreview}
-                alt="Receipt"
-                className="w-full h-40 object-cover rounded-lg border border-border"
-              />
+          {orderReceiptFile ? (
+            <div className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
+              {/* Thumbnail */}
+              {orderReceiptPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={orderReceiptPreview}
+                  alt=""
+                  className="w-10 h-10 rounded-md object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-md bg-bg-surface flex items-center justify-center flex-shrink-0">
+                  <ImageIcon className="w-5 h-5 text-text-tertiary" />
+                </div>
+              )}
+              {/* Filename */}
+              <span className="text-sm text-text-secondary truncate flex-1 min-w-0">
+                {orderReceiptFile.name}
+              </span>
+              {/* Remove */}
               <button
                 type="button"
                 onClick={() => {
@@ -477,48 +519,26 @@ export function NewOrderModal({
                   onOrderReceiptPreviewChange(null)
                   if (receiptInputRef.current) receiptInputRef.current.value = ''
                 }}
-                className="absolute top-2 right-2 p-1 bg-bg-surface rounded-full border border-border"
+                className="p-1 text-error hover:text-error transition-colors flex-shrink-0"
+                aria-label={tCommon('remove')}
               >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ) : orderReceiptFile ? (
-            <div className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
-              <span className="text-sm text-text-secondary truncate flex-1 min-w-0">{orderReceiptFile.name}</span>
-              <button
-                type="button"
-                onClick={() => {
-                  onOrderReceiptFileChange(null)
-                  if (receiptInputRef.current) receiptInputRef.current.value = ''
-                }}
-                className="p-1"
-              >
-                <X className="w-4 h-4" />
+                <TrashIcon style={{ width: 16, height: 16 }} />
               </button>
             </div>
           ) : (
             <button
               type="button"
               onClick={() => receiptInputRef.current?.click()}
-              className="input w-full text-left text-text-tertiary flex items-center justify-between"
+              className="image-upload-zone"
             >
-              <span>{t('receipt_attach_placeholder')}</span>
-              <ImageIcon className="w-5 h-5" />
+              <ImageAttachIcon className="w-6 h-6 text-text-tertiary" />
+              <span className="text-sm text-text-tertiary mt-2">{t('receipt_attach_placeholder')}</span>
             </button>
           )}
-        </Modal.Item>
-
-        {/* Notes */}
-        <Modal.Item>
-          <label htmlFor="orderNotes" className="label">{t('notes_label')}</label>
-          <textarea
-            id="orderNotes"
-            value={orderNotes}
-            onChange={e => onOrderNotesChange(e.target.value)}
-            className="input"
-            rows={2}
-            placeholder={t('notes_placeholder')}
-          />
+          <p className="text-xs text-text-tertiary mt-2">{t('receipt_hint')}</p>
+          {receiptError && (
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mt-2">{receiptError}</div>
+          )}
         </Modal.Item>
 
         <Modal.Footer>
@@ -582,12 +602,6 @@ export function NewOrderModal({
               <div className="flex justify-between">
                 <span className="text-text-tertiary">{t('receipt_attached_label')}</span>
                 <span className="text-success">{t('receipt_attached_value')}</span>
-              </div>
-            )}
-            {orderNotes && (
-              <div className="flex justify-between">
-                <span className="text-text-tertiary">{t('notes_review_label')}</span>
-                <span className="text-right max-w-[60%] truncate">{orderNotes}</span>
               </div>
             )}
           </div>

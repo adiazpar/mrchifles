@@ -49,12 +49,25 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     return errorResponse(ApiMessageCode.ORDER_CANNOT_EDIT_RECEIVED, 400)
   }
 
+  const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
+  const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
+
   const formData = await request.formData()
   const totalStr = formData.get('total') as string | null
-  const notes = formData.get('notes') as string | null
   const estimatedArrivalStr = formData.get('estimatedArrival') as string | null
   const providerId = formData.get('providerId') as string | null
   const itemsJson = formData.get('items') as string | null
+  const receiptFile = formData.get('receipt') as File | null
+
+  // Validate receipt file if provided
+  if (receiptFile) {
+    if (!ACCEPTED_RECEIPT_TYPES.includes(receiptFile.type)) {
+      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
+    }
+    if (receiptFile.size > MAX_RECEIPT_BYTES) {
+      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
+    }
+  }
 
   const updateData: Record<string, unknown> = {}
 
@@ -64,10 +77,6 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
       return validationError(totalValidation)
     }
     updateData.total = totalValidation.data
-  }
-
-  if (notes !== null) {
-    updateData.notes = notes || null
   }
 
   if (estimatedArrivalStr !== null) {
