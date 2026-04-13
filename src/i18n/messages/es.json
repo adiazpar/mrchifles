@@ -343,6 +343,8 @@
     "new_order_button": "Nueva Orden",
     "no_results": "No se encontraron órdenes",
     "no_products_found": "No se encontraron productos",
+    "scan_button_aria": "Escanear codigo de barras",
+    "scan_no_match": "No se encontro un producto con ese codigo de barras",
     "item_unit_count": "{count, plural, one {# unidad} other {# unidades}}",
     "status_pending": "Pendiente",
     "status_received": "Recibida",

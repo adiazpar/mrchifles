@@ -343,6 +343,8 @@
     "new_order_button": "New Order",
     "no_results": "No orders found",
     "no_products_found": "No products found",
+    "scan_button_aria": "Scan barcode",
+    "scan_no_match": "No product found with that barcode",
     "item_unit_count": "{count, plural, one {# unit} other {# units}}",
     "status_pending": "Pending",
     "status_received": "Received",

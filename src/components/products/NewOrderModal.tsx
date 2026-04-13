@@ -1,13 +1,14 @@
 'use client'
 
-import { useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import Image from 'next/image'
-import { X, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarClock, Minus, Plus } from 'lucide-react'
+import { X, ImageIcon, ArrowUp, ArrowDown, ChevronDown, CalendarClock, Minus, Plus, Loader2 } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
-import { ImageAttachIcon } from '@/components/icons'
+import { ImageAttachIcon, BarcodeScanIcon } from '@/components/icons'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
+import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { Product, Provider } from '@/types'
@@ -23,7 +24,7 @@ export interface NewOrderModalProps {
   onClose: () => void
 
   // Products and providers
-  _products?: Product[] // Kept for potential future use
+  products: Product[]
   providers: Provider[]
   filteredProducts: Product[]
 
@@ -98,6 +99,7 @@ function ConfirmOrderButton({ onSave, isSaving, disabled }: ConfirmOrderButtonPr
 export function NewOrderModal({
   isOpen,
   onClose,
+  products,
   providers,
   filteredProducts,
   orderItems,
@@ -128,6 +130,25 @@ export function NewOrderModal({
   const tCommon = useTranslations('common')
   const { formatCurrency, formatDate } = useBusinessFormat()
   const receiptInputRef = useRef<HTMLInputElement>(null)
+  const [scanError, setScanError] = useState('')
+
+  const handleScanResult = useCallback(({ value }: { value: string }) => {
+    setScanError('')
+    const match = products.find(p => p.barcode === value)
+    if (match) {
+      // Only add if not already selected
+      if (!orderItems.some(i => i.product.id === match.id)) {
+        onToggleProduct(match)
+      }
+    } else {
+      setScanError(t('scan_no_match'))
+    }
+  }, [products, orderItems, onToggleProduct, t])
+
+  const { open: openScanner, busy: scanBusy, hiddenInput: scanHiddenInput } = useBarcodeScan({
+    onResult: handleScanResult,
+    onError: (message) => setScanError(message),
+  })
 
   return (
     <Modal
@@ -139,28 +160,47 @@ export function NewOrderModal({
     >
       {/* Step 1: Select Products */}
       <Modal.Step title={t('step_select_products')}>
-        {/* Search bar */}
+        {/* Search bar + scan button */}
         <Modal.Item>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder={t('product_search_placeholder')}
-              value={productSearchQuery}
-              onChange={e => onProductSearchQueryChange(e.target.value)}
-              className="input w-full"
-              style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
-            />
-            {productSearchQuery && (
-              <button
-                type="button"
-                onClick={() => onProductSearchQueryChange('')}
-                className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-                aria-label={t('search_clear')}
-              >
-                <X size={18} />
-              </button>
-            )}
+          <div className="flex gap-2 items-stretch">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder={t('product_search_placeholder')}
+                value={productSearchQuery}
+                onChange={e => onProductSearchQueryChange(e.target.value)}
+                className="input w-full h-full"
+                style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
+              />
+              {productSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onProductSearchQueryChange('')}
+                  className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+                  aria-label={t('search_clear')}
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => { setScanError(''); openScanner() }}
+              disabled={scanBusy}
+              className="btn btn-secondary btn-icon flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={t('scan_button_aria')}
+            >
+              {scanBusy ? (
+                <Loader2 className="w-[18px] h-[18px] animate-spin" />
+              ) : (
+                <BarcodeScanIcon size={18} />
+              )}
+            </button>
           </div>
+          {scanHiddenInput}
+          {scanError && (
+            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mt-2">{scanError}</div>
+          )}
         </Modal.Item>
 
         <Modal.Item>

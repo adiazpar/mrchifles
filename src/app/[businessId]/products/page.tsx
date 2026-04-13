@@ -1180,6 +1180,7 @@ export default function ProductosPage() {
       <NewOrderModal
         isOpen={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
+        products={products}
         providers={providers}
         filteredProducts={orderFilteredProducts}
         orderItems={orderItems}
