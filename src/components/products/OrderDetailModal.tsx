@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { ImageIcon, ChevronDown, CalendarClock, MinusCircle, PlusCircle, AlertTriangle, Minus, Plus } from 'lucide-react'
+import { ImageIcon, ChevronDown, CalendarClock, Minus, Plus } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
 import { TrashIcon, EditIcon, ImageAttachIcon } from '@/components/icons'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
@@ -598,100 +598,51 @@ export function OrderDetailModal({
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 3: Receive Order */}
+      {/* Step 3: Receive Order - Confirmation */}
       <Modal.Step title={t('receive_order_title')} backStep={0}>
+        {/* Products list */}
         <Modal.Item>
-          <div className="p-4 rounded-lg bg-bg-muted">
-            <div className="flex justify-between mb-2">
-              <span className="text-text-secondary">{t('date_label')}:</span>
-              <span className="font-medium">{formatDate(new Date(order.date))}</span>
+          <div className="space-y-1">
+            {order.expand?.['order_items(order)']?.map(item => (
+              <div key={item.id} className="flex justify-between text-sm">
+                <span className="text-text-secondary">{item.productName}</span>
+                <span className="text-text-secondary">{item.quantity}x</span>
+              </div>
+            ))}
+          </div>
+        </Modal.Item>
+
+        {/* Divider */}
+        <Modal.Item>
+          <div className="border-t border-dashed border-border" />
+        </Modal.Item>
+
+        {/* Order details */}
+        <Modal.Item>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-text-tertiary">{t('total_label')}</span>
+              <span className="font-semibold">{formatCurrency(order.total)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-text-secondary">{t('total_paid_label')}:</span>
-              <span className="font-bold text-error">-{formatCurrency(order.total)}</span>
+              <span className="text-text-tertiary">{t('provider_label')}</span>
+              <span>{order.expand?.provider?.name || '-'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-tertiary">{t('arrival_date_label')}</span>
+              <span>{formatDate(new Date())}</span>
             </div>
           </div>
         </Modal.Item>
 
+        {/* Confirmation hint */}
         <Modal.Item>
-          <p className="label">{t('products_to_receive_label')}</p>
-          <p className="text-xs text-text-tertiary mb-2">{t('receive_adjust_hint')}</p>
-          <div className="space-y-3">
-            {order.expand?.['order_items(order)']?.map(item => {
-              const product = item.expand?.product
-              const orderedQty = item.quantity
-              const receivedQty = receivedQuantities[item.id] ?? orderedQty
-              const isDifferent = receivedQty !== orderedQty
-
-              return (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
-                  {/* Product image */}
-                  <div className="w-12 h-12 rounded-lg bg-bg-elevated flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {product && getProductIconUrl(product) ? (
-                      <Image
-                        src={getProductIconUrl(product)!}
-                        alt={product.name}
-                        width={48}
-                        height={48}
-                        className="w-full h-full object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <ImageIcon className="w-5 h-5 text-text-tertiary" />
-                    )}
-                  </div>
-                  {/* Product name and ordered qty */}
-                  <div className="flex-1 min-w-0">
-                    <span className="block text-sm font-medium truncate">{item.productName}</span>
-                    <span className="text-xs text-text-tertiary">{t('ordered_qty_label', { qty: orderedQty })}</span>
-                  </div>
-                  {/* Quantity controls */}
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setReceivedQuantities(prev => ({
-                        ...prev,
-                        [item.id]: Math.max(0, (prev[item.id] ?? orderedQty) - 1)
-                      }))}
-                      disabled={receivedQty <= 0}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-100 ${
-                        receivedQty <= 0 ? 'opacity-40 cursor-not-allowed' : 'active:scale-90'
-                      }`}
-                    >
-                      <MinusCircle className="w-5 h-5" />
-                    </button>
-                    <span className={`w-10 text-center font-semibold ${
-                      receivedQty === 0 ? 'text-error' : isDifferent ? 'text-warning' : 'text-text-primary'
-                    }`}>
-                      {receivedQty}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setReceivedQuantities(prev => ({
-                        ...prev,
-                        [item.id]: (prev[item.id] ?? orderedQty) + 1
-                      }))}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-100 active:scale-90"
-                    >
-                      <PlusCircle className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </Modal.Item>
-
-        <Modal.Item>
-          <div className="p-3 rounded-lg bg-warning-subtle text-warning text-sm">
-            <AlertTriangle className="w-4 h-4 inline mr-2" />
-            {t('receive_warning')}
-          </div>
+          <p className="text-sm text-text-tertiary">{t('receive_confirm_description')}</p>
         </Modal.Item>
 
         <Modal.Footer>
           <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1">
-            {tCommon('back')}
+            {tCommon('cancel')}
           </Modal.GoToStepButton>
           <ConfirmReceiveButton onReceive={onReceiveOrder} isReceiving={isReceiving} />
         </Modal.Footer>

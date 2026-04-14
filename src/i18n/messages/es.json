@@ -410,6 +410,8 @@
     "receive_adjust_hint": "Ajuste las cantidades si recibió menos de lo pedido",
     "ordered_qty_label": "Pedido: {qty}",
     "receive_warning": "Al confirmar, el inventario aumentará según las cantidades indicadas.",
+    "receive_confirm_description": "Al confirmar, esta orden se marcara como recibida y los productos se agregaran al inventario.",
+    "arrival_date_label": "Fecha de llegada",
     "delete_order_title": "Eliminar pedido",
     "delete_item_name": "pedido del {date}",
     "delete_cannot_be_undone": "Esta accion no se puede deshacer.",

@@ -410,6 +410,8 @@
     "receive_adjust_hint": "Adjust quantities if you received less than ordered",
     "ordered_qty_label": "Ordered: {qty}",
     "receive_warning": "Upon confirmation, stock will increase according to the indicated quantities.",
+    "receive_confirm_description": "Confirming will mark this order as received and add the products to your inventory.",
+    "arrival_date_label": "Arrival date",
     "delete_order_title": "Delete order",
     "delete_item_name": "order from {date}",
     "delete_cannot_be_undone": "This action cannot be undone.",

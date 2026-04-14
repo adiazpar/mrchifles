@@ -1081,14 +1081,14 @@ export default function ProductosPage() {
         <div className="section-tabs">
           <button
             type="button"
-            onClick={() => setActiveTab('products')}
+            onClick={() => { setActiveTab('products'); setError('') }}
             className={`section-tab ${activeTab === 'products' ? 'section-tab-active' : ''}`}
           >
             {t('tab_products')}
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('orders')}
+            onClick={() => { setActiveTab('orders'); setError('') }}
             className={`section-tab ${activeTab === 'orders' ? 'section-tab-active' : ''}`}
           >
             {t('tab_orders')}
@@ -1097,7 +1097,7 @@ export default function ProductosPage() {
 
         <TabContainer
           activeTab={activeTab}
-          onTabChange={(id) => setActiveTab(id as PageTab)}
+          onTabChange={(id) => { setActiveTab(id as PageTab); setError('') }}
           swipeable
           fitActiveHeight
         >
