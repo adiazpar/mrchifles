@@ -63,10 +63,10 @@
   /* ===== Semantic Mappings - Light Mode ===== */
 
   /* Backgrounds */
-  --color-bg-base: #F8FAFC;
-  --color-bg-surface: #FFFFFF;
+  --color-bg-base: #F1F5F9;
+  --color-bg-surface: #F8FAFC;
   --color-bg-elevated: #FFFFFF;
-  --color-bg-muted: var(--neutral-100);
+  --color-bg-muted: #FFFFFF;
 
   /* Brand */
   --color-brand: var(--brand-500);

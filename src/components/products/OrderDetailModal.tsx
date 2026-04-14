@@ -2,9 +2,31 @@
 
 import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { ImageIcon, ChevronDown, CalendarClock, Minus, Plus } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
 import { TrashIcon, EditIcon, ImageAttachIcon } from '@/components/icons'
+
+// Inline SVG icons — keeps this modal free of lucide-react
+function PlusGlyph({ className, size = 24 }: { className?: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M5 12h14M12 5v14" />
+    </svg>
+  )
+}
+function MinusGlyph({ className, size = 24 }: { className?: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M5 12h14" />
+    </svg>
+  )
+}
+function ChevronDownGlyph({ className }: { className?: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -441,10 +463,10 @@ export function OrderDetailModal({
                       />
                       <div className="flex flex-col" style={{ borderLeft: '1px solid var(--color-border)' }}>
                         <button type="button" onClick={() => onUpdateQuantity(product.id, orderItem.quantity + 1)} className="flex-1 flex items-center justify-center px-2 bg-bg-muted transition-colors active:bg-bg-surface" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                          <Plus className="w-3 h-3" />
+                          <PlusGlyph className="w-3 h-3" />
                         </button>
                         <button type="button" onClick={() => onUpdateQuantity(product.id, orderItem.quantity - 1)} disabled={orderItem.quantity <= 1} className="flex-1 flex items-center justify-center px-2 bg-bg-muted transition-colors active:bg-bg-surface disabled:opacity-40 disabled:cursor-not-allowed">
-                          <Minus className="w-3 h-3" />
+                          <MinusGlyph className="w-3 h-3" />
                         </button>
                       </div>
                     </div>
@@ -467,8 +489,8 @@ export function OrderDetailModal({
               <div className="input-number-wrapper">
                 <PriceInput id="editOrderTotal" value={orderTotal} onValueChange={onOrderTotalChange} placeholder="0" />
                 <div className="input-number-spinners">
-                  <button type="button" className="input-number-spinner" onClick={() => { const c = parseFloat(orderTotal) || 0; onOrderTotalChange((c + 1).toFixed(2)) }} tabIndex={-1} aria-label={t('increase_total_aria')}><Plus /></button>
-                  <button type="button" className="input-number-spinner" onClick={() => { const c = parseFloat(orderTotal) || 0; onOrderTotalChange(Math.max(0, c - 1).toFixed(2)) }} tabIndex={-1} aria-label={t('decrease_total_aria')}><Minus /></button>
+                  <button type="button" className="input-number-spinner" onClick={() => { const c = parseFloat(orderTotal) || 0; onOrderTotalChange((c + 1).toFixed(2)) }} tabIndex={-1} aria-label={t('increase_total_aria')}><PlusGlyph /></button>
+                  <button type="button" className="input-number-spinner" onClick={() => { const c = parseFloat(orderTotal) || 0; onOrderTotalChange(Math.max(0, c - 1).toFixed(2)) }} tabIndex={-1} aria-label={t('decrease_total_aria')}><MinusGlyph /></button>
                 </div>
               </div>
             </div>
@@ -479,7 +501,7 @@ export function OrderDetailModal({
                   <option value="">{t('provider_none')}</option>
                   {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
-                <ChevronDown className="w-5 h-5 text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDownGlyph className="text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
           </div>
@@ -489,12 +511,11 @@ export function OrderDetailModal({
         <Modal.Item>
           <label className="label">{t('estimated_arrival_label')}</label>
           <div className="relative">
-            <div className="input w-full flex items-center pointer-events-none" style={{ paddingRight: 'var(--space-10)' }}>
+            <div className="input w-full flex items-center pointer-events-none">
               <span className={orderEstimatedArrival ? 'text-text-primary' : 'text-text-tertiary'}>
                 {orderEstimatedArrival ? formatDate(orderEstimatedArrival) : t('select_date_placeholder')}
               </span>
             </div>
-            <CalendarClock className="w-5 h-5 text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input type="date" value={orderEstimatedArrival} onChange={e => onOrderEstimatedArrivalChange(e.target.value)} className="input absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
           </div>
         </Modal.Item>
@@ -521,7 +542,7 @@ export function OrderDetailModal({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={orderReceiptPreview} alt="" className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
               ) : (
-                <div className="w-10 h-10 rounded-md bg-bg-surface flex items-center justify-center flex-shrink-0"><ImageIcon className="w-5 h-5 text-text-tertiary" /></div>
+                <div className="w-10 h-10 rounded-md bg-bg-surface flex items-center justify-center flex-shrink-0"><ImageAttachIcon className="w-5 h-5 text-text-tertiary" /></div>
               )}
               <span className="text-sm text-text-secondary truncate flex-1 min-w-0">{orderReceiptFile.name}</span>
               <button type="button" onClick={() => { onOrderReceiptFileChange(null); onOrderReceiptPreviewChange(null); if (editReceiptInputRef.current) editReceiptInputRef.current.value = '' }} className="p-1 text-error hover:text-error transition-colors flex-shrink-0" aria-label={tCommon('remove')}>
