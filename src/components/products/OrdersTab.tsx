@@ -4,6 +4,7 @@ import { memo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { X, Plus, ChevronUp, ChevronRight } from 'lucide-react'
 import { ClipboardIcon, FilterIcon } from '@/components/icons'
+import { getProviderInitials } from '@/components/providers'
 import { Modal } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useNavbar } from '@/contexts/navbar-context'
@@ -368,12 +369,14 @@ const OrderListItem = memo(function OrderListItem({
                 {t('item_unit_count', { count: itemCount })}
               </span>
               {order.expand?.provider && (
-                <>
-                  <span className="text-text-muted">·</span>
-                  <span className="text-xs text-text-tertiary truncate">
-                    {order.expand.provider.name}
-                  </span>
-                </>
+                <span
+                  className="inline-flex items-center justify-center rounded-full bg-brand-subtle text-brand font-semibold flex-shrink-0"
+                  style={{ width: 18, height: 18, fontSize: 9, lineHeight: 1 }}
+                  title={order.expand.provider.name}
+                  aria-label={order.expand.provider.name}
+                >
+                  {getProviderInitials(order.expand.provider.name)}
+                </span>
               )}
             </div>
           </div>

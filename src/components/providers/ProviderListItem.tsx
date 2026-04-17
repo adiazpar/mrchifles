@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import type { Provider } from '@/types'
 
-function getProviderInitials(name: string): string {
+export function getProviderInitials(name: string): string {
   const parts = name.trim().split(/\s+/)
   if (parts.length === 1) {
     return parts[0].substring(0, 2).toUpperCase()

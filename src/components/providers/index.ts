@@ -1,4 +1,4 @@
-export { ProviderListItem } from './ProviderListItem'
+export { ProviderListItem, getProviderInitials } from './ProviderListItem'
 export type { ProviderListItemProps } from './ProviderListItem'
 
 export { ProviderModal } from './ProviderModal'
