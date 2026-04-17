@@ -339,9 +339,11 @@ const OrderListItem = memo(function OrderListItem({
   }
   const colors = statusColors[displayStatus]
 
+  const hasProvider = !!order.expand?.provider
+
   return (
     <div
-      className="list-item-clickable"
+      className={`list-item-clickable ${hasProvider ? 'items-start' : ''}`}
       onClick={() => onView(order)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -364,21 +366,9 @@ const OrderListItem = memo(function OrderListItem({
             <span className="font-medium block">
               {formatDate(new Date(order.date))}
             </span>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs text-text-tertiary">
-                {t('item_unit_count', { count: itemCount })}
-              </span>
-              {order.expand?.provider && (
-                <span
-                  className="inline-flex items-center justify-center rounded-full bg-brand-subtle text-brand font-semibold flex-shrink-0"
-                  style={{ width: 18, height: 18, fontSize: 9, lineHeight: 1 }}
-                  title={order.expand.provider.name}
-                  aria-label={order.expand.provider.name}
-                >
-                  {getProviderInitials(order.expand.provider.name)}
-                </span>
-              )}
-            </div>
+            <span className="text-xs text-text-tertiary mt-0.5 block">
+              {t('item_unit_count', { count: itemCount })}
+            </span>
           </div>
 
           {/* Total and Status */}
@@ -396,6 +386,22 @@ const OrderListItem = memo(function OrderListItem({
             <ChevronRight className="w-5 h-5" />
           </div>
         </div>
+
+        {hasProvider && order.expand?.provider && (
+          <div className="mt-3 flex items-center gap-3 text-left">
+            <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
+              <span
+                className="inline-flex items-center justify-center rounded-full bg-brand-subtle text-brand font-semibold"
+                style={{ width: 24, height: 24, fontSize: 11, lineHeight: 1 }}
+              >
+                {getProviderInitials(order.expand.provider.name)}
+              </span>
+            </div>
+            <span className="text-xs text-text-tertiary truncate min-w-0">
+              {order.expand.provider.name}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )
