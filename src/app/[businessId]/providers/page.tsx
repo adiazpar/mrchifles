@@ -7,10 +7,12 @@ import { useProviderManagement } from '@/hooks'
 import { useBusiness } from '@/contexts/business-context'
 import { ProviderListItem, ProviderModal } from '@/components/providers'
 import { useTranslations } from 'next-intl'
+import { useNavbar } from '@/contexts/navbar-context'
 
 export default function ProveedoresPage() {
   const { businessId } = useBusiness()
   const router = useRouter()
+  const { setPendingHref, setSlideDirection, setSlideTargetPath } = useNavbar()
   const t = useTranslations('providers')
 
   const {
@@ -91,7 +93,13 @@ export default function ProveedoresPage() {
                   <ProviderListItem
                     key={provider.id}
                     provider={provider}
-                    onClick={() => router.push(`/${businessId}/providers/${provider.id}`)}
+                    onClick={() => {
+                      const href = `/${businessId}/providers/${provider.id}`
+                      setSlideTargetPath(href)
+                      setSlideDirection('forward')
+                      setPendingHref(href)
+                      router.push(href)
+                    }}
                   />
                 ))}
               </div>

@@ -22,6 +22,12 @@ interface NavbarContextValue {
   // Slide transition direction for account page navigation
   slideDirection: SlideDirection
   setSlideDirection: (dir: SlideDirection) => void
+  // Path of the page that is "deeper" in a slide transition. Read by
+  // PageTransition to decide which mounted page plays the enter-from-right
+  // animation. Set together with slideDirection. Cleared automatically on
+  // pathname change.
+  slideTargetPath: string | null
+  setSlideTargetPath: (path: string | null) => void
   // Optimistic navigation state - shared across nav components and header
   pendingHref: string | null
   setPendingHref: (href: string | null) => void
@@ -49,6 +55,7 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
   const pathname = usePathname()
   const [isVisible, setIsVisible] = useState(true)
   const [slideDirection, setSlideDirectionState] = useState<SlideDirection>(null)
+  const [slideTargetPath, setSlideTargetPathState] = useState<string | null>(null)
   const [pendingHref, setPendingHrefState] = useState<string | null>(null)
 
   // Business cache - use ref to avoid re-renders, initialize from sessionStorage
@@ -69,6 +76,7 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
   const hide = useCallback(() => setIsVisible(false), [])
   const show = useCallback(() => setIsVisible(true), [])
   const setSlideDirection = useCallback((dir: SlideDirection) => setSlideDirectionState(dir), [])
+  const setSlideTargetPath = useCallback((path: string | null) => setSlideTargetPathState(path), [])
   const setPendingHref = useCallback((href: string | null) => setPendingHrefState(href), [])
 
   // Business cache functions
@@ -108,7 +116,10 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
   useEffect(() => {
     setPendingHrefState(null)
     if (slideDirection) {
-      const timer = setTimeout(() => setSlideDirectionState(null), 180)
+      const timer = setTimeout(() => {
+        setSlideDirectionState(null)
+        setSlideTargetPathState(null)
+      }, 180)
       return () => clearTimeout(timer)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,6 +129,7 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
     <NavbarContext.Provider value={{
       isVisible, hide, show,
       slideDirection, setSlideDirection,
+      slideTargetPath, setSlideTargetPath,
       pendingHref, setPendingHref,
       getCachedBusiness, setCachedBusiness, setCachedBusinesses,
     }}>

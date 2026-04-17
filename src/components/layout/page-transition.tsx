@@ -8,7 +8,7 @@ const TRANSITION = { type: 'tween' as const, duration: 0.28, ease: [0.32, 0.72, 
 
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { pendingHref, slideDirection } = useNavbar()
+  const { pendingHref, slideDirection, slideTargetPath } = useNavbar()
 
   if (!slideDirection) {
     return (
@@ -21,20 +21,20 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
     )
   }
 
-  const isAccountPage = pathname === '/account'
+  // Back-compat: if no target path was set, fall back to the legacy /account rule.
+  // This keeps the existing Account flow working unchanged when callers don't
+  // explicitly opt in to the new slideTargetPath contract.
+  const effectiveTargetPath = slideTargetPath ?? '/account'
+  const isTargetPage = pathname === effectiveTargetPath
 
-  // Use pathname to determine this page's role in the slide transition.
-  // Forward to account: non-account pages exit left, account enters from right.
-  // Back from account: account exits right, non-account pages enter from left.
   const isEntering =
-    (slideDirection === 'forward' && isAccountPage) ||
-    (slideDirection === 'back' && !isAccountPage)
+    (slideDirection === 'forward' && isTargetPage) ||
+    (slideDirection === 'back' && !isTargetPage)
 
   const isExiting =
-    (slideDirection === 'forward' && !isAccountPage) ||
-    (slideDirection === 'back' && isAccountPage)
+    (slideDirection === 'forward' && !isTargetPage) ||
+    (slideDirection === 'back' && isTargetPage)
 
-  // Entry: starting position when mounting
   let initial: { x: string | number; opacity: number } | false = false
   if (isEntering) {
     initial = slideDirection === 'forward'
@@ -44,7 +44,6 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
     initial = { x: 0, opacity: 1 }
   }
 
-  // Animate: exit slides out, entry slides to center
   const animate = isExiting
     ? {
         x: slideDirection === 'back' ? '100%' : '-30%',

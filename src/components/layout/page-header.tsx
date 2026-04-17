@@ -28,7 +28,7 @@ export function PageHeader() {
   const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
-  const { pendingHref, setPendingHref, slideDirection, setSlideDirection } = useNavbar()
+  const { pendingHref, setPendingHref, slideDirection, setSlideDirection, setSlideTargetPath } = useNavbar()
   const businessContext = useOptionalBusiness()
   const [isScrolled, setIsScrolled] = useState(false)
 
@@ -101,6 +101,8 @@ export function PageHeader() {
     } else if (backTo && businessId) {
       // Build business-scoped URL for parent page
       const href = buildBusinessUrl(businessId, backTo)
+      setSlideDirection('back')
+      setSlideTargetPath(pathname)
       setPendingHref(href)
       router.push(href)
     } else {
