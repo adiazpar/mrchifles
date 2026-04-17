@@ -1,6 +1,7 @@
 'use client'
 
 import { Plus, Van } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { Spinner } from '@/components/ui'
 import { useProviderManagement } from '@/hooks'
 import { useBusiness } from '@/contexts/business-context'
@@ -9,6 +10,7 @@ import { useTranslations } from 'next-intl'
 
 export default function ProveedoresPage() {
   const { businessId } = useBusiness()
+  const router = useRouter()
   const t = useTranslations('providers')
 
   const {
@@ -89,7 +91,7 @@ export default function ProveedoresPage() {
                   <ProviderListItem
                     key={provider.id}
                     provider={provider}
-                    onClick={() => handleOpenModal(provider)}
+                    onClick={() => router.push(`/${businessId}/providers/${provider.id}`)}
                   />
                 ))}
               </div>
