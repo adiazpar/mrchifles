@@ -6,6 +6,7 @@ import { X, Plus, ChevronUp, ChevronRight } from 'lucide-react'
 import { ClipboardIcon, FilterIcon } from '@/components/icons'
 import { Modal } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
+import { useNavbar } from '@/contexts/navbar-context'
 import { useTranslations } from 'next-intl'
 import { scrollToTop } from '@/lib/scroll'
 import {
@@ -75,6 +76,7 @@ export function OrdersTab({
   const tCommon = useTranslations('common')
   const router = useRouter()
   const params = useParams<{ businessId: string }>()
+  const { setSlideDirection, setSlideTargetPath, setPendingHref } = useNavbar()
   const [isSortSheetOpen, setSortSheetOpen] = useState(false)
 
   const sortLabels: Record<OrderSortOption, string> = {
@@ -173,9 +175,12 @@ export function OrdersTab({
                 <button
                   type="button"
                   onClick={() => {
-                    if (params?.businessId) {
-                      router.push(`/${params.businessId}/providers`)
-                    }
+                    if (!params?.businessId) return
+                    const href = `/${params.businessId}/providers`
+                    setSlideTargetPath(href)
+                    setSlideDirection('forward')
+                    setPendingHref(href)
+                    router.push(href)
                   }}
                   className="text-sm text-brand hover:text-brand transition-colors"
                 >

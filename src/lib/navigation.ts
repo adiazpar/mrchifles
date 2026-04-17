@@ -75,8 +75,8 @@ const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   'sales': { pageTitle: 'Sales' },
   'products': { pageTitle: 'Products' },
   'manage': { pageTitle: 'Manage' },
-  'team': { pageTitle: 'Team' },
-  'providers': { pageTitle: 'Providers' },
+  'team': { pageTitle: 'Team', backTo: '/manage' },
+  'providers': { pageTitle: 'Providers', backTo: '/manage' },
 }
 
 // User-level routes (no businessId prefix)

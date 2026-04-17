@@ -1,11 +1,13 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Trash2, Plus, Check, Copy } from 'lucide-react'
 import { Spinner, Modal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
+import { useNavbar } from '@/contexts/navbar-context'
 import { useTeamManagement } from '@/hooks'
 import {
   RoleSelectionContent,
@@ -25,6 +27,14 @@ export default function TeamPage() {
   const tCommon = useTranslations('common')
   const { user } = useAuth()
   const { businessId } = useBusiness()
+  const { hide, show } = useNavbar()
+
+  // Team is a drill-down page (not in bottom nav). Hide the bottom nav while
+  // viewing so it feels like a focused detail flow, matching Account settings.
+  useEffect(() => {
+    hide()
+    return () => show()
+  }, [hide, show])
 
   const {
     // Data

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Plus, Van } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Spinner } from '@/components/ui'
@@ -12,8 +13,16 @@ import { useNavbar } from '@/contexts/navbar-context'
 export default function ProveedoresPage() {
   const { businessId } = useBusiness()
   const router = useRouter()
-  const { setPendingHref, setSlideDirection, setSlideTargetPath } = useNavbar()
+  const { setPendingHref, setSlideDirection, setSlideTargetPath, hide, show } = useNavbar()
   const t = useTranslations('providers')
+
+  // Providers is a drill-down page (not in bottom nav). Hide the bottom nav
+  // while viewing so it feels like a focused detail flow, matching Account
+  // settings and the provider detail page.
+  useEffect(() => {
+    hide()
+    return () => show()
+  }, [hide, show])
 
   const {
     // Data

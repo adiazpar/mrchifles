@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { getRouteConfig, buildBusinessUrl, getBusinessIdFromPath } from '@/lib/navigation'
+import { getRouteConfig, getBusinessIdFromPath } from '@/lib/navigation'
 import { UserMenu } from './user-menu'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useOptionalBusiness } from '@/contexts/business-context'
@@ -99,12 +99,13 @@ export function PageHeader() {
         router.back()
       }, 280)
     } else if (backTo && businessId) {
-      // Build business-scoped URL for parent page
-      const href = buildBusinessUrl(businessId, backTo)
+      // Drill-down page — return to wherever the user came from via browser
+      // history. backTo is a logical fallback but we prefer history so the
+      // user lands back where they actually were (e.g. /products orders tab,
+      // /manage, or a future entry point). Matches the Account flow.
       setSlideDirection('back')
       setSlideTargetPath(pathname)
-      setPendingHref(href)
-      router.push(href)
+      setTimeout(() => router.back(), 280)
     } else {
       // Go to hub (business selector)
       setPendingHref('/')
