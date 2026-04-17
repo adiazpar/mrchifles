@@ -133,7 +133,7 @@ export const DELETE = withBusinessAuth(async (_request, access, routeParams) => 
   await db
     .update(orders)
     .set({ providerId: null })
-    .where(eq(orders.providerId, id))
+    .where(and(eq(orders.providerId, id), eq(orders.businessId, access.businessId)))
 
   await db.delete(providers).where(eq(providers.id, id))
 
