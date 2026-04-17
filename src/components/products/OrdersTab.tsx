@@ -1,6 +1,7 @@
 'use client'
 
 import { memo, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import { X, Plus, ChevronUp, ChevronRight } from 'lucide-react'
 import { ClipboardIcon, FilterIcon } from '@/components/icons'
 import { Modal } from '@/components/ui'
@@ -72,6 +73,8 @@ export function OrdersTab({
   const t = useTranslations('orders')
   const tProducts = useTranslations('products')
   const tCommon = useTranslations('common')
+  const router = useRouter()
+  const params = useParams<{ businessId: string }>()
   const [isSortSheetOpen, setSortSheetOpen] = useState(false)
 
   const sortLabels: Record<OrderSortOption, string> = {
@@ -169,6 +172,11 @@ export function OrdersTab({
                 <span className="text-text-tertiary">&#183;</span>
                 <button
                   type="button"
+                  onClick={() => {
+                    if (params?.businessId) {
+                      router.push(`/${params.businessId}/providers`)
+                    }
+                  }}
                   className="text-sm text-brand hover:text-brand transition-colors"
                 >
                   {t('providers_link')}
