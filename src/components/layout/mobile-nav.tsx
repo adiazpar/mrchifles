@@ -16,7 +16,7 @@ export function MobileNav() {
   const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
-  const { isVisible, pendingHref, setPendingHref } = useNavbar()
+  const { isVisible, pendingHref, setPendingHref, slideDirection } = useNavbar()
   const businessContext = useOptionalBusiness()
   const { openJoinModal, isJoinModalOpen } = useJoinBusinessModal()
   const { openCreateModal, isCreateModalOpen } = useCreateBusinessModal()
@@ -60,8 +60,15 @@ export function MobileNav() {
     })
   }, [router, businessId, navItems])
 
+  // Hide the nav when:
+  //   • isVisible is false (explicit hide() from drill-down pages like
+  //     account / providers / team / provider detail)
+  //   • slideDirection is set — any active slide transition (hub<->business,
+  //     etc.). The nav slides down during the transition and back up once
+  //     the new page mounts with its correct items and slideDirection clears.
+  const shouldHide = !isVisible || slideDirection !== null
   useEffect(() => {
-    if (!isVisible) {
+    if (shouldHide) {
       const timeout = setTimeout(() => {
         setIsHidden(true)
       }, 0)
@@ -69,7 +76,7 @@ export function MobileNav() {
     } else {
       setIsHidden(false)
     }
-  }, [isVisible])
+  }, [shouldHide])
 
   const handleClick = (href: string) => {
     if (href !== pathname) {

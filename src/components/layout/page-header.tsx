@@ -107,7 +107,11 @@ export function PageHeader() {
       setSlideTargetPath(pathname)
       setTimeout(() => router.back(), 280)
     } else {
-      // Go to hub (business selector)
+      // Top-level business page → hub. Slide back so the business page
+      // animates out to the right and the hub slides in from the left
+      // (parallax peek), matching the Account / drill-down pattern.
+      setSlideDirection('back')
+      setSlideTargetPath(pathname)
       setPendingHref('/')
       router.push('/')
     }

@@ -64,7 +64,7 @@ function getCachedBusinessList(): Business[] {
 export default function HubPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
-  const { setPendingHref, setCachedBusinesses } = useNavbar()
+  const { setPendingHref, setSlideDirection, setSlideTargetPath, setCachedBusinesses } = useNavbar()
   const { createdBusiness } = useCreateBusinessModal()
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
   const [isLoading, setIsLoading] = useState(() => getCachedBusinessList().length === 0)
@@ -112,6 +112,8 @@ export default function HubPage() {
 
   const handleEnterBusiness = (businessId: string) => {
     const href = `/${businessId}/home`
+    setSlideTargetPath(href)
+    setSlideDirection('forward')
     setPendingHref(href)
     router.push(href)
   }
