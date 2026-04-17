@@ -14,6 +14,7 @@ import { useBusiness } from '@/contexts/business-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { canManageBusiness } from '@/lib/business-role'
 import { formatRelative } from '@/lib/formatRelative'
+import { getOrderDisplayStatus } from '@/lib/products'
 import type { Provider } from '@/types'
 import type { ExpandedOrder } from '@/lib/products'
 
@@ -298,6 +299,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   formatDate={formatDate}
                   tStatusPending={tOrders('status_pending')}
                   tStatusReceived={tOrders('status_received')}
+                  tStatusOverdue={tOrders('status_overdue')}
                   tUnitCount={(count: number) => tOrders('item_unit_count', { count })}
                   onView={() => {
                     router.push(`/${businessId}/products?orderId=${order.id}`)
@@ -373,16 +375,25 @@ interface OrderHistoryRowProps {
   formatDate: (d: Date | string) => string
   tStatusPending: string
   tStatusReceived: string
+  tStatusOverdue: string
   tUnitCount: (count: number) => string
   onView: () => void
 }
 
-function OrderHistoryRow({ order, formatCurrency, formatDate, tStatusPending, tStatusReceived, tUnitCount, onView }: OrderHistoryRowProps) {
+function OrderHistoryRow({ order, formatCurrency, formatDate, tStatusPending, tStatusReceived, tStatusOverdue, tUnitCount, onView }: OrderHistoryRowProps) {
   const items = order.expand?.['order_items(order)'] || []
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0)
-  const status = order.status
-  const statusClass = status === 'received' ? 'text-success' : 'text-warning'
-  const statusLabel = status === 'received' ? tStatusReceived : tStatusPending
+  const displayStatus = getOrderDisplayStatus(order)
+  const statusClass = displayStatus === 'received'
+    ? 'text-success'
+    : displayStatus === 'overdue'
+      ? 'text-error'
+      : 'text-warning'
+  const statusLabel = displayStatus === 'received'
+    ? tStatusReceived
+    : displayStatus === 'overdue'
+      ? tStatusOverdue
+      : tStatusPending
 
   return (
     <div
