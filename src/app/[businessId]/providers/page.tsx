@@ -87,9 +87,10 @@ export default function ProveedoresPage() {
                   <button
                     type="button"
                     onClick={() => handleOpenModal()}
-                    className="btn btn-primary btn-sm"
+                    className="btn btn-primary"
+                    style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus style={{ width: 14, height: 14 }} />
                     {t('add_button')}
                   </button>
                 )}
@@ -97,7 +98,7 @@ export default function ProveedoresPage() {
 
               <hr className="border-border" />
 
-              <div className="space-y-2">
+              <div>
                 {sortedProviders.map((provider) => (
                   <ProviderListItem
                     key={provider.id}

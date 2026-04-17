@@ -21,7 +21,7 @@ export function ProviderListItem({ provider, onClick }: ProviderListItemProps) {
   const t = useTranslations('providers')
   return (
     <div
-      className="list-item-clickable list-item-flat"
+      className="list-item-clickable"
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
