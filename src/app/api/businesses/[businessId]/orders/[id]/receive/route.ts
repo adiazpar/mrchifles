@@ -56,12 +56,16 @@ export const POST = withBusinessAuth(async (request, access, routeParams) => {
 
   const now = new Date()
 
-  // Update product stock for each item
+  // Update product stock AND persist receivedQuantity for each item
   for (const item of items) {
     const receivedQty = receivedQuantities[item.id] ?? item.quantity
 
+    await db
+      .update(orderItems)
+      .set({ receivedQuantity: receivedQty })
+      .where(eq(orderItems.id, item.id))
+
     if (receivedQty > 0 && item.productId) {
-      // Update product stock
       await db
         .update(products)
         .set({
