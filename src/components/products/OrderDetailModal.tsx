@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
+import { useNavbar } from '@/contexts/navbar-context'
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
 import { TrashIcon, EditIcon, ImageAttachIcon } from '@/components/icons'
 
@@ -261,6 +262,7 @@ export function OrderDetailModal({
   const { formatCurrency, formatDate } = useBusinessFormat()
   const router = useRouter()
   const params = useParams<{ businessId: string }>()
+  const { setSlideDirection, setSlideTargetPath, setPendingHref } = useNavbar()
   const editReceiptInputRef = useRef<HTMLInputElement>(null)
   const [editReceiptError, setEditReceiptError] = useState('')
   const productsById = useMemo(() => new Map(products.map(p => [p.id, p])), [products])
@@ -342,10 +344,20 @@ export function OrderDetailModal({
                 <button
                   type="button"
                   onClick={() => {
+                    if (!params?.businessId || !order.providerId) return
+                    const href = `/${params.businessId}/providers/${order.providerId}`
+                    // Start the modal close animation first, then (after it
+                    // finishes ~200ms later) set the slide state and push.
+                    // Setting slide state before the modal is gone would start
+                    // the underlying page sliding while the modal is still
+                    // visible on top — jarring.
                     onClose()
-                    if (params?.businessId) {
-                      router.push(`/${params.businessId}/providers/${order.providerId}`)
-                    }
+                    setTimeout(() => {
+                      setSlideTargetPath(href)
+                      setSlideDirection('forward')
+                      setPendingHref(href)
+                      router.push(href)
+                    }, 200)
                   }}
                   className="text-brand hover:underline text-right"
                 >
