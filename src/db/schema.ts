@@ -147,6 +147,7 @@ export const orderItems = sqliteTable('order_items', {
   quantity: integer('quantity').notNull(),
   unitCost: real('unit_cost'),
   subtotal: real('subtotal'),
+  receivedQuantity: integer('received_quantity'),
 }, (table) => ({
   orderIdIdx: index('idx_order_items_order_id').on(table.orderId),
 }))

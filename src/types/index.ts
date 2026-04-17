@@ -131,6 +131,7 @@ export interface OrderItem {
   quantity: number
   unitCost?: number | null
   subtotal?: number | null
+  receivedQuantity?: number | null
 }
 
 // ============================================
