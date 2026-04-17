@@ -206,6 +206,20 @@ export function NewOrderModal({
         </Modal.Item>
 
         <Modal.Item>
+          <button
+            type="button"
+            disabled
+            className="image-upload-zone w-full"
+            title={t('import_coming_soon')}
+            aria-label={t('import_invoice_button')}
+          >
+            <ImageAttachIcon className="w-6 h-6 text-text-tertiary" />
+            <span className="text-sm text-text-tertiary mt-2">{t('import_invoice_button')}</span>
+            <span className="text-xs text-text-tertiary mt-1">{t('import_coming_soon')}</span>
+          </button>
+        </Modal.Item>
+
+        <Modal.Item>
           <p className="text-xs text-text-tertiary">
             {t('products_selected', { count: orderItems.length })}
           </p>
