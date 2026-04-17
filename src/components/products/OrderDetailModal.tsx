@@ -290,9 +290,19 @@ export function OrderDetailModal({
         <Modal.Item>
           <div className="space-y-1">
             {order.expand?.['order_items(order)']?.map(item => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-text-secondary">{item.productName}</span>
-                <span className="text-text-secondary">{item.quantity}x</span>
+              <div key={item.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="text-text-secondary truncate flex-1 min-w-0">{item.productName}</span>
+                <span className="text-text-secondary flex-shrink-0 tabular-nums">{item.quantity}x</span>
+                {item.unitCost != null && (
+                  <>
+                    <span className="text-text-tertiary flex-shrink-0 tabular-nums w-16 text-right">
+                      {formatCurrency(item.unitCost)}
+                    </span>
+                    <span className="text-text-primary flex-shrink-0 tabular-nums w-20 text-right font-medium">
+                      {formatCurrency(item.subtotal ?? item.unitCost * item.quantity)}
+                    </span>
+                  </>
+                )}
               </div>
             ))}
           </div>
