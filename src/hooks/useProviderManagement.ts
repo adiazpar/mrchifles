@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { useBusiness } from '@/contexts/business-context'
 import { canManageBusiness } from '@/lib/business-role'
-import { apiRequest, apiPost, apiPatch, apiDelete, ApiError, ApiResponse } from '@/lib/api-client'
+import { apiRequest, apiPost, apiPatch, ApiError, ApiResponse } from '@/lib/api-client'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import type { Provider } from '@/types'
 
@@ -34,9 +34,7 @@ export interface UseProviderManagementReturn {
   isModalOpen: boolean
   editingProvider: Provider | null
   isSaving: boolean
-  isDeleting: boolean
   providerSaved: boolean
-  providerDeleted: boolean
 
   // Form state
   name: string
@@ -55,7 +53,6 @@ export interface UseProviderManagementReturn {
   handleCloseModal: () => void
   handleModalExitComplete: () => void
   handleSubmit: () => Promise<boolean>
-  handleDelete: () => Promise<boolean>
   setError: (error: string) => void
 }
 
@@ -73,9 +70,7 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
   const [providerSaved, setProviderSaved] = useState(false)
-  const [providerDeleted, setProviderDeleted] = useState(false)
 
   // Form state
   const [name, setName] = useState('')
@@ -140,7 +135,6 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     setEditingProvider(null)
     setError('')
     setProviderSaved(false)
-    setProviderDeleted(false)
   }, [])
 
   const handleOpenModal = useCallback((provider?: Provider) => {
@@ -214,34 +208,6 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     }
   }, [businessId, name, phone, email, notes, active, editingProvider, t, translateApiMessage])
 
-  const handleDelete = useCallback(async (): Promise<boolean> => {
-    if (!editingProvider) return false
-
-    setIsDeleting(true)
-    setError('')
-
-    try {
-      await apiDelete<ProviderResponse>(`/api/businesses/${businessId}/providers/${editingProvider.id}`)
-
-      // Reload providers
-      const listData = await apiRequest<ProvidersResponse>(`/api/businesses/${businessId}/providers`)
-      setProviders(listData.providers)
-
-      setProviderDeleted(true)
-      return true
-    } catch (err) {
-      console.error('Error deleting provider:', err)
-      setError(
-        err instanceof ApiError && err.envelope
-          ? translateApiMessage(err.envelope)
-          : t('error_failed_to_delete')
-      )
-      return false
-    } finally {
-      setIsDeleting(false)
-    }
-  }, [businessId, editingProvider, t, translateApiMessage])
-
   return {
     // Data
     providers,
@@ -256,9 +222,7 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     isModalOpen,
     editingProvider,
     isSaving,
-    isDeleting,
     providerSaved,
-    providerDeleted,
 
     // Form state
     name,
@@ -277,7 +241,6 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     handleCloseModal,
     handleModalExitComplete,
     handleSubmit,
-    handleDelete,
     setError,
   }
 }

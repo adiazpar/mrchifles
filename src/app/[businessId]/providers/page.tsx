@@ -25,9 +25,7 @@ export default function ProveedoresPage() {
     isModalOpen,
     editingProvider,
     isSaving,
-    isDeleting,
     providerSaved,
-    providerDeleted,
 
     // Form state
     name,
@@ -46,7 +44,6 @@ export default function ProveedoresPage() {
     handleCloseModal,
     handleModalExitComplete,
     handleSubmit,
-    handleDelete,
   } = useProviderManagement({ businessId: businessId || '' })
 
   if (isLoading) {
@@ -139,13 +136,9 @@ export default function ProveedoresPage() {
         onActiveChange={setActive}
         editingProvider={editingProvider}
         isSaving={isSaving}
-        isDeleting={isDeleting}
         error={error}
         providerSaved={providerSaved}
-        providerDeleted={providerDeleted}
         onSubmit={handleSubmit}
-        onDelete={handleDelete}
-        canDelete={canManage}
       />
     </>
   )
