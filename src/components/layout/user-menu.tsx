@@ -31,6 +31,8 @@ export function UserMenu() {
         style={user.avatar ? undefined : avatarStyles}
       >
         {user.avatar ? (
+          // Avatar is a small base64 data URL — Next/Image adds no benefit here.
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={user.avatar}
             alt={user.name}

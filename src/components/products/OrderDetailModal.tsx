@@ -55,7 +55,6 @@ export interface OrderDetailModalProps {
 
   // Products and providers
   products: Product[]
-  filteredProducts: Product[]
   providers: Provider[]
 
   // Form state for editing
@@ -69,16 +68,10 @@ export interface OrderDetailModalProps {
   onOrderEstimatedArrivalChange: (date: string) => void
   orderProvider: string
   onOrderProviderChange: (providerId: string) => void
-  productSearchQuery: string
-  onProductSearchQueryChange: (query: string) => void
   orderReceiptFile: File | null
   onOrderReceiptFileChange: (file: File | null) => void
   orderReceiptPreview: string | null
   onOrderReceiptPreviewChange: (preview: string | null) => void
-
-  // Receive order state
-  receivedQuantities: Record<string, number>
-  setReceivedQuantities: React.Dispatch<React.SetStateAction<Record<string, number>>>
 
   // Operation states
   isSaving: boolean
@@ -232,7 +225,6 @@ export function OrderDetailModal({
   onExitComplete,
   order,
   products,
-  filteredProducts,
   providers,
   orderItems,
   setOrderItems,
@@ -244,14 +236,10 @@ export function OrderDetailModal({
   onOrderEstimatedArrivalChange,
   orderProvider,
   onOrderProviderChange,
-  productSearchQuery,
-  onProductSearchQueryChange,
   orderReceiptFile,
   onOrderReceiptFileChange,
   orderReceiptPreview,
   onOrderReceiptPreviewChange,
-  receivedQuantities,
-  setReceivedQuantities,
   isSaving,
   isReceiving,
   isDeleting,

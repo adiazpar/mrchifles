@@ -571,7 +571,7 @@ export default function ProductosPage() {
     })
 
     return result
-  }, [orders, orderStatusFilter, orderSearchQuery, orderSortBy, formatDate, locale])
+  }, [orders, orderStatusFilter, orderSearchQuery, orderSortBy, formatDate, locale, user?.language])
 
   // Product handlers - now receive data from modal context
   const handleSubmitProduct = useCallback(async (
@@ -1299,7 +1299,6 @@ export default function ProductosPage() {
           }}
           order={viewingOrder}
           products={products}
-          filteredProducts={orderFilteredProducts}
           providers={providers}
           orderItems={orderItems}
           setOrderItems={setOrderItems}
@@ -1311,14 +1310,10 @@ export default function ProductosPage() {
           onOrderEstimatedArrivalChange={setOrderEstimatedArrival}
           orderProvider={orderProvider}
           onOrderProviderChange={setOrderProvider}
-          productSearchQuery={orderProductSearchQuery}
-          onProductSearchQueryChange={setOrderProductSearchQuery}
           orderReceiptFile={orderReceiptFile}
           onOrderReceiptFileChange={setOrderReceiptFile}
           orderReceiptPreview={orderReceiptPreview}
           onOrderReceiptPreviewChange={setOrderReceiptPreview}
-          receivedQuantities={receivedQuantities}
-          setReceivedQuantities={setReceivedQuantities}
           isSaving={isSavingOrder}
           isReceiving={isReceiving}
           isDeleting={isDeletingOrder}

@@ -53,6 +53,9 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
         <div className="user-menu-header">
           <div className="user-menu-avatar">
             {user.avatar ? (
+              // Avatar is a small base64 data URL — Next/Image with its width/
+              // height requirements adds no benefit over a plain <img> here.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={user.avatar}
                 alt={user.name}
