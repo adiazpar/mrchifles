@@ -308,6 +308,31 @@ export function OrderDetailModal({
           </div>
         </Modal.Item>
 
+        {/* Variance — only renders when received AND at least one item differs */}
+        {order.status === 'received' && (() => {
+          const varianceItems = (order.expand?.['order_items(order)'] || []).filter(
+            item => item.receivedQuantity != null && item.receivedQuantity !== item.quantity
+          )
+          if (varianceItems.length === 0) return null
+          return (
+            <Modal.Item>
+              <div className="space-y-1">
+                <span className="text-xs font-medium uppercase tracking-wide text-warning">
+                  {t('variance_section_title')}
+                </span>
+                {varianceItems.map(item => (
+                  <div key={`variance-${item.id}`} className="flex justify-between text-sm text-warning">
+                    <span className="truncate flex-1 min-w-0">{item.productName}</span>
+                    <span className="flex-shrink-0">
+                      {t('variance_item_line', { ordered: item.quantity, received: item.receivedQuantity ?? 0 })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Modal.Item>
+          )
+        })()}
+
         {/* Divider */}
         <Modal.Item>
           <div className="border-t border-dashed border-border" />
