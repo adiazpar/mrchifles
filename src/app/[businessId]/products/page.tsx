@@ -269,8 +269,19 @@ export default function ProductosPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState<PageTab>('products')
+  // Tab state — initialized from the URL so browser back/forward and
+  // router.back() restore the tab the user was on.
+  const [activeTab, setActiveTab] = useState<PageTab>(() =>
+    searchParams?.get('tab') === 'orders' ? 'orders' : 'products'
+  )
+
+  // Build the canonical URL for a given tab so we can keep the URL in sync
+  // with tab state. Products is the default and carries no query param.
+  const urlForTab = useCallback(
+    (tab: PageTab) =>
+      tab === 'products' ? `/${businessId}/products` : `/${businessId}/products?tab=orders`,
+    [businessId]
+  )
 
   // Business-scoped caches
   const bid = businessId || ''
@@ -493,7 +504,9 @@ export default function ProductosPage() {
         setOrderProvider(preselectedProviderId)
       }
       setIsOrderModalOpen(true)
-      router.replace(`/${businessId}/products`)
+      // Drop the deep-link params but keep ?tab=orders so tab state
+      // persists across back/forward navigation.
+      router.replace(urlForTab('orders'))
       return
     }
 
@@ -503,7 +516,7 @@ export default function ProductosPage() {
         setActiveTab('orders')
         setViewingOrder(target)
         setIsOrderDetailModalOpen(true)
-        router.replace(`/${businessId}/products`)
+        router.replace(urlForTab('orders'))
       }
     }
     // Intentional: we only want this effect to react when orders load or
@@ -1115,14 +1128,22 @@ export default function ProductosPage() {
         <div className="section-tabs">
           <button
             type="button"
-            onClick={() => { setActiveTab('products'); setError('') }}
+            onClick={() => {
+              setActiveTab('products')
+              setError('')
+              router.replace(urlForTab('products'), { scroll: false })
+            }}
             className={`section-tab ${activeTab === 'products' ? 'section-tab-active' : ''}`}
           >
             {t('tab_products')}
           </button>
           <button
             type="button"
-            onClick={() => { setActiveTab('orders'); setError('') }}
+            onClick={() => {
+              setActiveTab('orders')
+              setError('')
+              router.replace(urlForTab('orders'), { scroll: false })
+            }}
             className={`section-tab ${activeTab === 'orders' ? 'section-tab-active' : ''}`}
           >
             {t('tab_orders')}
@@ -1131,7 +1152,12 @@ export default function ProductosPage() {
 
         <TabContainer
           activeTab={activeTab}
-          onTabChange={(id) => { setActiveTab(id as PageTab); setError('') }}
+          onTabChange={(id) => {
+            const tab = id as PageTab
+            setActiveTab(tab)
+            setError('')
+            router.replace(urlForTab(tab), { scroll: false })
+          }}
           swipeable
           fitActiveHeight
         >
