@@ -10,6 +10,7 @@ const orderItemSchema = z.object({
   productId: Schemas.id(),
   productName: Schemas.name(),
   quantity: z.number().int().positive(),
+  unitCost: z.number().nonnegative().optional().nullable(),
 })
 
 /**
@@ -132,7 +133,7 @@ export const POST = withBusinessAuth(async (request, access) => {
   }
 
   // Parse and validate items
-  let items: Array<{ productId: string; productName: string; quantity: number }>
+  let items: Array<{ productId: string; productName: string; quantity: number; unitCost?: number | null }>
   try {
     items = JSON.parse(itemsJson)
     const validation = z.array(orderItemSchema).safeParse(items)
@@ -161,6 +162,8 @@ export const POST = withBusinessAuth(async (request, access) => {
     productId: item.productId,
     productName: item.productName,
     quantity: item.quantity,
+    unitCost: item.unitCost ?? null,
+    subtotal: item.unitCost != null ? Number((item.unitCost * item.quantity).toFixed(2)) : null,
   }))
 
   await db.batch([
@@ -206,8 +209,7 @@ export const POST = withBusinessAuth(async (request, access) => {
         provider,
         'order_items(order)': itemValues.map(item => ({
           ...item,
-          unitCost: null,
-          subtotal: null,
+          receivedQuantity: null,
           expand: { product: null },
         })),
       },

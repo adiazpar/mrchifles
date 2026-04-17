@@ -11,6 +11,7 @@ const orderItemSchema = z.object({
   productId: Schemas.id(),
   productName: Schemas.name(),
   quantity: z.number().int().positive(),
+  unitCost: z.number().nonnegative().optional().nullable(),
 })
 
 /**
@@ -94,7 +95,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
 
   // Update items if provided
   if (itemsJson) {
-    let items: Array<{ productId: string; productName: string; quantity: number }>
+    let items: Array<{ productId: string; productName: string; quantity: number; unitCost?: number | null }>
     try {
       items = JSON.parse(itemsJson)
       const validation = z.array(orderItemSchema).safeParse(items)
@@ -116,6 +117,8 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
           productId: item.productId,
           productName: item.productName,
           quantity: item.quantity,
+          unitCost: item.unitCost ?? null,
+          subtotal: item.unitCost != null ? Number((item.unitCost * item.quantity).toFixed(2)) : null,
         }))
       )
     }
