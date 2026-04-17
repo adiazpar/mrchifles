@@ -1,5 +1,5 @@
 import { db, orders, orderItems, providers, products } from '@/db'
-import { eq, desc, inArray } from 'drizzle-orm'
+import { eq, desc, inArray, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
@@ -19,11 +19,18 @@ const orderItemSchema = z.object({
  * List all orders for the business with their items.
  */
 export const GET = withBusinessAuth(async (request, access) => {
+  const { searchParams } = new URL(request.url)
+  const providerIdFilter = searchParams.get('providerId')
+
+  const whereClause = providerIdFilter
+    ? and(eq(orders.businessId, access.businessId), eq(orders.providerId, providerIdFilter))
+    : eq(orders.businessId, access.businessId)
+
   // Get all orders for this business
   const ordersList = await db
     .select()
     .from(orders)
-    .where(eq(orders.businessId, access.businessId))
+    .where(whereClause)
     .orderBy(desc(orders.date))
 
   const orderIds = ordersList.map(o => o.id)
@@ -43,6 +50,7 @@ export const GET = withBusinessAuth(async (request, access) => {
       quantity: orderItems.quantity,
       unitCost: orderItems.unitCost,
       subtotal: orderItems.subtotal,
+      receivedQuantity: orderItems.receivedQuantity,
     })
     .from(orderItems)
     .where(inArray(orderItems.orderId, orderIds))
