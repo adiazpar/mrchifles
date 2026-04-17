@@ -213,7 +213,9 @@
     "open_camera_desc": "We'll move on once you snap the photo",
     "choose_photo_desc": "We'll move on once you pick a photo",
     "continue_button": "Continue",
-    "barcode_already_used": "Barcode already used by \"{name}\""
+    "barcode_already_used": "Barcode already used by \"{name}\"",
+    "add_from_document_title": "AI from document or list",
+    "add_from_document_desc": "Coming soon"
   },
   "productSettings": {
     "title": "Product Settings",
@@ -427,7 +429,13 @@
     "error_enter_total_paid": "Enter the total paid",
     "error_failed_to_save_order": "Failed to save order",
     "error_failed_to_receive_order": "Failed to receive order",
-    "error_failed_to_delete_order": "Failed to delete order"
+    "error_failed_to_delete_order": "Failed to delete order",
+    "unit_cost_column_label": "Unit cost",
+    "subtotal_column_label": "Subtotal",
+    "variance_section_title": "Variance",
+    "variance_item_line": "Ordered {ordered}, received {received}",
+    "import_invoice_button": "Import from invoice or quote",
+    "import_coming_soon": "Coming soon"
   },
   "navigation": {
     "home": "Home",
@@ -552,7 +560,20 @@
     "error_failed_to_load": "Failed to load providers",
     "error_name_required": "Name is required",
     "error_failed_to_save": "Failed to save provider",
-    "error_failed_to_delete": "Failed to delete provider"
+    "error_failed_to_delete": "Failed to delete provider",
+    "detail_page_title": "Provider",
+    "stat_total_orders": "Total orders",
+    "stat_total_spent": "Total spent",
+    "stat_last_order": "Last order",
+    "stat_never_ordered": "No orders yet",
+    "new_order_button": "New order from this provider",
+    "order_history_title": "Order history",
+    "order_history_empty": "No orders from this provider yet.",
+    "typical_items_title": "Typical items",
+    "typical_items_avg_cost": "avg {cost}",
+    "delete_provider_button": "Delete provider",
+    "delete_provider_confirm_title": "Delete provider?",
+    "delete_provider_confirm_body": "Delete {name}? Orders from this provider will remain but unlinked."
   },
   "team": {
     "member_count": "{count, plural, one {# member} other {# members}}",
