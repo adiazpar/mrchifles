@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
+import { useRouter, useParams } from 'next/navigation'
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
 import { TrashIcon, EditIcon, ImageAttachIcon } from '@/components/icons'
 
@@ -270,6 +271,8 @@ export function OrderDetailModal({
   const t = useTranslations('orders')
   const tCommon = useTranslations('common')
   const { formatCurrency, formatDate } = useBusinessFormat()
+  const router = useRouter()
+  const params = useParams<{ businessId: string }>()
   const editReceiptInputRef = useRef<HTMLInputElement>(null)
   const [editReceiptError, setEditReceiptError] = useState('')
   const productsById = useMemo(() => new Map(products.map(p => [p.id, p])), [products])
@@ -347,7 +350,22 @@ export function OrderDetailModal({
             </div>
             <div className="flex justify-between">
               <span className="text-text-tertiary">{t('provider_label')}</span>
-              <span>{order.expand?.provider?.name || '-'}</span>
+              {order.providerId && order.expand?.provider?.name ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose()
+                    if (params?.businessId) {
+                      router.push(`/${params.businessId}/providers/${order.providerId}`)
+                    }
+                  }}
+                  className="text-brand hover:underline text-right"
+                >
+                  {order.expand.provider.name}
+                </button>
+              ) : (
+                <span>{order.expand?.provider?.name || '-'}</span>
+              )}
             </div>
             <div className="flex justify-between">
               <span className="text-text-tertiary">{t('status_label')}</span>
