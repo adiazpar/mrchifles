@@ -111,6 +111,11 @@ export function getRouteConfig(pathname: string): RouteConfig & { businessId?: s
     return { ...config, businessId }
   }
 
+  // Dynamic-segment match: `providers/<id>` -> Provider detail subpage
+  if (routePath.startsWith('providers/') && routePath !== 'providers') {
+    return { pageTitle: 'Providers', backTo: '/providers', businessId }
+  }
+
   // Try parent paths for nested routes
   const routeSegments = routePath.split('/')
   while (routeSegments.length > 0) {
