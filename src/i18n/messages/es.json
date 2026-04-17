@@ -213,7 +213,9 @@
     "open_camera_desc": "Continuaremos una vez que tome la foto",
     "choose_photo_desc": "Continuaremos una vez que elija una foto",
     "continue_button": "Continuar",
-    "barcode_already_used": "Código de barras ya usado por \"{name}\""
+    "barcode_already_used": "Código de barras ya usado por \"{name}\"",
+    "add_from_document_title": "IA desde documento o lista",
+    "add_from_document_desc": "Próximamente"
   },
   "productSettings": {
     "title": "Configuración de Productos",
@@ -427,7 +429,13 @@
     "error_enter_total_paid": "Ingrese el total pagado",
     "error_failed_to_save_order": "Error al guardar el pedido",
     "error_failed_to_receive_order": "Error al recibir el pedido",
-    "error_failed_to_delete_order": "Error al eliminar el pedido"
+    "error_failed_to_delete_order": "Error al eliminar el pedido",
+    "unit_cost_column_label": "Costo unitario",
+    "subtotal_column_label": "Subtotal",
+    "variance_section_title": "Diferencia",
+    "variance_item_line": "Pedido {ordered}, recibido {received}",
+    "import_invoice_button": "Importar desde factura o cotización",
+    "import_coming_soon": "Próximamente"
   },
   "navigation": {
     "home": "Inicio",
@@ -552,7 +560,20 @@
     "error_failed_to_load": "Error al cargar proveedores",
     "error_name_required": "El nombre es requerido",
     "error_failed_to_save": "Error al guardar proveedor",
-    "error_failed_to_delete": "Error al eliminar proveedor"
+    "error_failed_to_delete": "Error al eliminar proveedor",
+    "detail_page_title": "Proveedor",
+    "stat_total_orders": "Total de órdenes",
+    "stat_total_spent": "Total gastado",
+    "stat_last_order": "Última orden",
+    "stat_never_ordered": "Sin órdenes",
+    "new_order_button": "Nueva orden de este proveedor",
+    "order_history_title": "Historial de órdenes",
+    "order_history_empty": "Aún no hay órdenes de este proveedor.",
+    "typical_items_title": "Artículos frecuentes",
+    "typical_items_avg_cost": "prom {cost}",
+    "delete_provider_button": "Eliminar proveedor",
+    "delete_provider_confirm_title": "¿Eliminar proveedor?",
+    "delete_provider_confirm_body": "¿Eliminar {name}? Las órdenes de este proveedor permanecerán pero sin vincular."
   },
   "team": {
     "member_count": "{count, plural, one {# miembro} other {# miembros}}",
