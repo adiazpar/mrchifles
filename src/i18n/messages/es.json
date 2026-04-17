@@ -436,7 +436,7 @@
     "variance_item_line": "Pedido {ordered}, recibido {received}",
     "import_invoice_button": "Importar desde factura o cotización",
     "import_coming_soon": "Próximamente",
-    "ordered_to_provider": "Pedido a: {name}"
+    "ordered_to_label": "Pedido a:"
   },
   "navigation": {
     "home": "Inicio",

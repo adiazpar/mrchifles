@@ -391,9 +391,14 @@ const OrderListItem = memo(function OrderListItem({
             <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
               <Van className="w-4 h-4 text-text-tertiary" />
             </div>
-            <span className="text-xs text-text-tertiary truncate min-w-0">
-              {t('ordered_to_provider', { name: order.expand.provider.name })}
-            </span>
+            <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+              <span className="text-xs text-text-tertiary flex-shrink-0">
+                {t('ordered_to_label')}
+              </span>
+              <span className="text-xs text-text-tertiary truncate min-w-0 text-right">
+                {order.expand.provider.name}
+              </span>
+            </div>
           </div>
         )}
       </div>
