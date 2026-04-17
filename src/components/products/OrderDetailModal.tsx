@@ -333,14 +333,11 @@ export function OrderDetailModal({
 
         {/* Details */}
         <Modal.Item>
-          <div className="text-sm">
-            {/* Total — primary financial summary, separated from metadata below */}
+          <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-text-tertiary">{t('total_label')}</span>
               <span className="font-semibold">{formatCurrency(order.total)}</span>
             </div>
-            {/* Metadata (provider, status, dates, receipt) */}
-            <div className="space-y-2 mt-4">
             <div className="flex justify-between">
               <span className="text-text-tertiary">{t('provider_label')}</span>
               {order.providerId && order.expand?.provider?.name ? (
@@ -404,7 +401,6 @@ export function OrderDetailModal({
                 </a>
               </div>
             )}
-            </div>
           </div>
         </Modal.Item>
 
