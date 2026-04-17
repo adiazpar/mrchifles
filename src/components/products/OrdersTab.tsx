@@ -387,18 +387,22 @@ const OrderListItem = memo(function OrderListItem({
         </div>
 
         {hasProvider && order.expand?.provider && (
-          <div className="mt-3 flex items-center gap-3 text-left">
+          <div className="mt-3 flex items-center gap-3">
+            {/* Column 1: Van icon — aligns under status icon above */}
             <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
               <Van className="w-4 h-4 text-text-tertiary" />
             </div>
-            <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
-              <span className="text-xs text-text-tertiary flex-shrink-0">
-                {t('ordered_to_label')}
-              </span>
-              <span className="text-xs text-text-tertiary truncate min-w-0 text-right">
-                {order.expand.provider.name}
-              </span>
-            </div>
+            {/* Column 2: static label — aligns under date/units */}
+            <span className="flex-1 min-w-0 text-xs text-text-tertiary">
+              {t('ordered_to_label')}
+            </span>
+            {/* Column 3: provider name — aligns under price/status column */}
+            <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
+              {order.expand.provider.name}
+            </span>
+            {/* Chevron-width spacer so the name's right edge lines up with the
+                price/status column above, not the very edge of the card */}
+            <div className="ml-2 flex-shrink-0" style={{ width: 20 }} aria-hidden="true" />
           </div>
         )}
       </div>
