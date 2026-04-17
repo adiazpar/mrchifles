@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { fetchDeduped } from '@/lib/fetch'
 import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
@@ -265,6 +266,8 @@ export default function ProductosPage() {
   const { user } = useAuth()
   const { canManage, businessId } = useBusiness()
   const { formatDate, locale } = useBusinessFormat()
+  const searchParams = useSearchParams()
+  const router = useRouter()
 
   // Tab state
   const [activeTab, setActiveTab] = useState<PageTab>('products')
@@ -477,6 +480,37 @@ export default function ProductosPage() {
     loadOrders()
     return () => { cancelled = true }
   }, [activeTab, businessId, ordersLoaded, setOrders])
+
+  // Open modals from query string (deep-links from provider detail page)
+  useEffect(() => {
+    const newOrderFlag = searchParams?.get('newOrder')
+    const preselectedProviderId = searchParams?.get('providerId')
+    const deepLinkedOrderId = searchParams?.get('orderId')
+
+    if (newOrderFlag === '1') {
+      setActiveTab('orders')
+      if (preselectedProviderId) {
+        setOrderProvider(preselectedProviderId)
+      }
+      setIsOrderModalOpen(true)
+      router.replace(`/${businessId}/products`)
+      return
+    }
+
+    if (deepLinkedOrderId && orders.length > 0) {
+      const target = orders.find(o => o.id === deepLinkedOrderId)
+      if (target) {
+        setActiveTab('orders')
+        setViewingOrder(target)
+        setIsOrderDetailModalOpen(true)
+        router.replace(`/${businessId}/products`)
+      }
+    }
+    // Intentional: we only want this effect to react when orders load or
+    // when the user navigates here with a different query. No exhaustive-deps
+    // on the setters; they are stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, orders, businessId])
 
   // Track which product is being edited (for passing to modal wrapper)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
