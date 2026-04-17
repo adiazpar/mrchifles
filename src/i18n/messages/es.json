@@ -435,7 +435,8 @@
     "variance_section_title": "Diferencia",
     "variance_item_line": "Pedido {ordered}, recibido {received}",
     "import_invoice_button": "Importar desde factura o cotización",
-    "import_coming_soon": "Próximamente"
+    "import_coming_soon": "Próximamente",
+    "ordered_to_provider": "Pedido a: {name}"
   },
   "navigation": {
     "home": "Inicio",

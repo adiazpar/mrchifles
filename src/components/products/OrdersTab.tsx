@@ -2,9 +2,8 @@
 
 import { memo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { X, Plus, ChevronUp, ChevronRight } from 'lucide-react'
+import { X, Plus, ChevronUp, ChevronRight, Van } from 'lucide-react'
 import { ClipboardIcon, FilterIcon } from '@/components/icons'
-import { getProviderInitials } from '@/components/providers'
 import { Modal } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useNavbar } from '@/contexts/navbar-context'
@@ -390,15 +389,10 @@ const OrderListItem = memo(function OrderListItem({
         {hasProvider && order.expand?.provider && (
           <div className="mt-3 flex items-center gap-3 text-left">
             <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <span
-                className="inline-flex items-center justify-center rounded-full bg-brand-subtle text-brand font-semibold"
-                style={{ width: 24, height: 24, fontSize: 11, lineHeight: 1 }}
-              >
-                {getProviderInitials(order.expand.provider.name)}
-              </span>
+              <Van className="w-4 h-4 text-text-tertiary" />
             </div>
             <span className="text-xs text-text-tertiary truncate min-w-0">
-              {order.expand.provider.name}
+              {t('ordered_to_provider', { name: order.expand.provider.name })}
             </span>
           </div>
         )}

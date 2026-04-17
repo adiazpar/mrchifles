@@ -435,7 +435,8 @@
     "variance_section_title": "Variance",
     "variance_item_line": "Ordered {ordered}, received {received}",
     "import_invoice_button": "Import from invoice or quote",
-    "import_coming_soon": "Coming soon"
+    "import_coming_soon": "Coming soon",
+    "ordered_to_provider": "Ordered to: {name}"
   },
   "navigation": {
     "home": "Home",
