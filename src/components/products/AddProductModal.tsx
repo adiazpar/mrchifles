@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { CameraIcon, MagicWandIcon, JoinIcon } from '@/components/icons'
+import { CameraIcon, MagicWandIcon, JoinIcon, ImageAttachIcon } from '@/components/icons'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm } from '@/contexts/product-form-context'
@@ -354,6 +354,19 @@ export function AddProductModal({
                 <span className="caja-action-btn__desc">{t('add_manually_desc')}</span>
               </div>
             </Modal.GoToStepButton>
+
+            <button
+              type="button"
+              disabled
+              className="caja-action-btn caja-action-btn--large w-full"
+              title={t('add_from_document_desc')}
+            >
+              <ImageAttachIcon className="caja-action-btn__icon text-text-tertiary" />
+              <div className="caja-action-btn__text">
+                <span className="caja-action-btn__title">{t('add_from_document_title')}</span>
+                <span className="caja-action-btn__desc">{t('add_from_document_desc')}</span>
+              </div>
+            </button>
           </div>
         </Modal.Item>
 
