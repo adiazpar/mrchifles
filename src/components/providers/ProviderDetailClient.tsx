@@ -51,9 +51,9 @@ export interface ProviderDetailClientProps {
   providerId: string
 }
 
-type DetailTab = 'summary' | 'stats' | 'history' | 'notes'
+type DetailTab = 'summary' | 'history' | 'notes'
 
-const DETAIL_TAB_IDS: readonly DetailTab[] = ['summary', 'stats', 'history', 'notes'] as const
+const DETAIL_TAB_IDS: readonly DetailTab[] = ['summary', 'history', 'notes'] as const
 
 function isDetailTab(value: string | null): value is DetailTab {
   return (DETAIL_TAB_IDS as readonly string[]).includes(value ?? '')
@@ -428,32 +428,68 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         >
           {/* ---- Summary ---- */}
           <TabContainer.Tab id="summary">
-            <div className="space-y-4">
-              {typicalItems.length > 0 && (
-                <div className="card p-4 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Repeat className="w-4 h-4 text-text-tertiary" />
-                    <h3 className="text-sm font-semibold text-text-primary">
-                      {t('typical_items_title')}
-                    </h3>
+            {!hasOrders ? (
+              <div className="card p-4">
+                <p className="text-sm text-text-tertiary text-center py-6">
+                  {t('order_history_empty')}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* 3-column stats row as the overview header */}
+                <div className="flex pt-1">
+                  <div className="flex-1 flex flex-col items-center text-center px-2">
+                    <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
+                      {t('stat_total_orders')}
+                    </div>
+                    <div className="text-lg font-semibold text-text-primary tabular-nums mt-1">
+                      {stats.totalOrders}
+                    </div>
                   </div>
-                  <hr className="border-border" />
-                  <div className="space-y-2">
-                    {typicalItems.map(item => (
-                      <div key={item.name} className="flex items-baseline justify-between gap-3 text-sm">
-                        <span className="text-text-primary truncate flex-1 min-w-0">{item.name}</span>
-                        {item.avgCost != null && (
-                          <span className="text-xs text-text-tertiary flex-shrink-0 tabular-nums">
-                            {t('typical_items_avg_cost', { cost: formatCurrency(item.avgCost) })}
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                  <div className="flex-1 flex flex-col items-center text-center px-2 border-l border-border">
+                    <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
+                      {t('stat_total_spent')}
+                    </div>
+                    <div className="text-lg font-semibold text-text-primary tabular-nums mt-1">
+                      {formatCurrency(stats.totalSpent)}
+                    </div>
+                  </div>
+                  <div className="flex-1 flex flex-col items-center text-center px-2 border-l border-border">
+                    <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
+                      {t('stat_last_order')}
+                    </div>
+                    <div className="text-base font-semibold text-text-primary mt-1">
+                      {stats.lastOrderDate
+                        ? formatRelative(stats.lastOrderDate, userLocale)
+                        : t('stat_never_ordered')}
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {hasOrders && (
+                {typicalItems.length > 0 && (
+                  <div className="card p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Repeat className="w-4 h-4 text-text-tertiary" />
+                      <h3 className="text-sm font-semibold text-text-primary">
+                        {t('typical_items_title')}
+                      </h3>
+                    </div>
+                    <hr className="border-border" />
+                    <div className="space-y-2">
+                      {typicalItems.map(item => (
+                        <div key={item.name} className="flex items-baseline justify-between gap-3 text-sm">
+                          <span className="text-text-primary truncate flex-1 min-w-0">{item.name}</span>
+                          {item.avgCost != null && (
+                            <span className="text-xs text-text-tertiary flex-shrink-0 tabular-nums">
+                              {t('typical_items_avg_cost', { cost: formatCurrency(item.avgCost) })}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="card p-4 space-y-4">
                   <div className="flex items-center gap-2">
                     <ClipboardList className="w-4 h-4 text-text-tertiary" />
@@ -478,57 +514,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     ))}
                   </div>
                 </div>
-              )}
-
-              {!hasOrders && (
-                <div className="card p-4">
-                  <p className="text-sm text-text-tertiary text-center py-6">
-                    {t('order_history_empty')}
-                  </p>
-                </div>
-              )}
-            </div>
-          </TabContainer.Tab>
-
-          {/* ---- Stats ---- */}
-          <TabContainer.Tab id="stats">
-            {hasOrders ? (
-              <div className="flex pt-1">
-                <div className="flex-1 flex flex-col items-center text-center px-2">
-                  <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
-                    {t('stat_total_orders')}
-                  </div>
-                  <div className="text-lg font-semibold text-text-primary tabular-nums mt-1">
-                    {stats.totalOrders}
-                  </div>
-                </div>
-                <div className="flex-1 flex flex-col items-center text-center px-2 border-l border-border">
-                  <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
-                    {t('stat_total_spent')}
-                  </div>
-                  <div className="text-lg font-semibold text-text-primary tabular-nums mt-1">
-                    {formatCurrency(stats.totalSpent)}
-                  </div>
-                </div>
-                <div className="flex-1 flex flex-col items-center text-center px-2 border-l border-border">
-                  <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
-                    {t('stat_last_order')}
-                  </div>
-                  <div className="text-base font-semibold text-text-primary mt-1">
-                    {stats.lastOrderDate
-                      ? formatRelative(stats.lastOrderDate, userLocale)
-                      : t('stat_never_ordered')}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="card p-4 space-y-1 text-center">
-                <h3 className="text-sm font-semibold text-text-primary">
-                  {t('stats_empty_title')}
-                </h3>
-                <p className="text-sm text-text-tertiary">
-                  {t('stats_empty_description')}
-                </p>
               </div>
             )}
           </TabContainer.Tab>

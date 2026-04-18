@@ -2101,7 +2101,11 @@
 
 .section-tab {
   flex: 1;
-  padding: var(--space-3) var(--space-4);
+  /* min-width: 0 lets flex actually honor the equal share — without it,
+     long labels (e.g. "Estadísticas") expand past their slot because the
+     default min-width is auto, pushing the whole row out of its container. */
+  min-width: 0;
+  padding: var(--space-3) var(--space-2);
   font-size: var(--text-sm);
   line-height: 1.5;
   font-weight: 600;
@@ -2112,6 +2116,9 @@
   cursor: pointer;
   transition: all var(--duration-fast) ease-out, transform var(--duration-instant) ease-out;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 
