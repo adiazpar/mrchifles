@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { useOptionalBusiness } from '@/contexts/business-context'
-import { formatCurrency, formatDate, formatTime } from '@/lib/utils'
+import { formatCurrency, formatCurrencyCompact, formatDate, formatTime } from '@/lib/utils'
 
 /**
  * Returns formatters pre-bound to the current business's locale and
@@ -23,6 +23,7 @@ export function useBusinessFormat() {
       locale,
       currency,
       formatCurrency: (amount: number) => formatCurrency(amount, locale, currency),
+      formatCurrencyCompact: (amount: number) => formatCurrencyCompact(amount, locale, currency),
       formatDate: (date: Date | string) => formatDate(date, locale),
       formatTime: (date: Date | string) => formatTime(date, locale),
     }),

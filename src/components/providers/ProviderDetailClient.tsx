@@ -1,14 +1,20 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { Plus, Phone, Mail, MessageCircle, Repeat, Pencil, ChevronRight } from 'lucide-react'
+import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
-import { BellIcon, EditIcon } from '@/components/icons'
+import { BellIcon, EditIcon, ImageAttachIcon } from '@/components/icons'
 import { Spinner, TabContainer } from '@/components/ui'
-import { ProviderModal, ProviderNotesModal, getProviderInitials } from './'
+import { ProviderModal, ProviderNotesModal, ReliabilityBar, getProviderInitials } from './'
 import { OrderListItem } from '@/components/products'
+import {
+  computeProviderMetrics,
+  computeTypicalItems,
+  computeMonthlySpend,
+} from '@/lib/provider-metrics'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
 import { useProviders } from '@/contexts/providers-context'
@@ -20,18 +26,13 @@ import { useNavbar } from '@/contexts/navbar-context'
 import { canManageBusiness } from '@/lib/business-role'
 import { formatRelative } from '@/lib/formatRelative'
 import { getOrderDisplayStatus } from '@/lib/products'
+import { getProductIconUrl } from '@/lib/utils'
+import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import type { Provider, Product } from '@/types'
-
-interface ProviderStats {
-  totalOrders: number
-  totalSpent: number
-  lastOrderDate: string | null
-}
 
 interface ProviderDetailResponse {
   success?: boolean
   provider: Provider
-  stats: ProviderStats
   [key: string]: unknown
 }
 
@@ -59,7 +60,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const searchParams = useSearchParams()
   const t = useTranslations('providers')
   const tOrders = useTranslations('orders')
-  const { formatCurrency } = useBusinessFormat()
+  const { formatCurrencyCompact } = useBusinessFormat()
   // Relative time ("3 days ago") is LANGUAGE, not formatting — use user UI
   // locale, not business locale, so an English UI doesn't show "hace 3 días".
   const userLocale = useLocale()
@@ -145,18 +146,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     () => allOrders.filter(o => o.providerId === providerId),
     [allOrders, providerId],
   )
-  const stats = useMemo<ProviderStats>(() => {
-    const totalOrders = providerOrders.length
-    const totalSpent = providerOrders.reduce((sum, o) => sum + o.total, 0)
-    const lastOrderTs = providerOrders
-      .map(o => new Date(o.date).getTime())
-      .reduce<number | null>((max, t) => (max === null || t > max ? t : max), null)
-    return {
-      totalOrders,
-      totalSpent,
-      lastOrderDate: lastOrderTs ? new Date(lastOrderTs).toISOString() : null,
-    }
-  }, [providerOrders])
+  const metrics = useMemo(() => computeProviderMetrics(providerOrders), [providerOrders])
 
   // Count of orders currently in "overdue" display status — powers the
   // red banner at the top of the Summary tab.
@@ -356,27 +346,29 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   }, [businessId, providerId, setOrders, setProviders, t, translateApiMessage])
 
   // ===== Typical items =====
-  const typicalItems = useMemo(() => {
-    if (providerOrders.length < 3) return []
-    const agg = new Map<string, { name: string; count: number; totalCost: number; sampleCount: number }>()
-    for (const order of providerOrders) {
-      const items = order.expand?.['order_items(order)'] || []
-      for (const item of items) {
-        const key = item.productId || item.productName
-        const entry = agg.get(key) || { name: item.productName, count: 0, totalCost: 0, sampleCount: 0 }
-        entry.count += item.quantity
-        if (item.unitCost != null) {
-          entry.totalCost += item.unitCost
-          entry.sampleCount += 1
-        }
-        agg.set(key, entry)
-      }
-    }
-    return [...agg.values()]
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5)
-      .map(v => ({ name: v.name, avgCost: v.sampleCount > 0 ? v.totalCost / v.sampleCount : null }))
-  }, [providerOrders])
+  // Hide the whole section until the provider has at least 3 orders —
+  // anything less and the "what you habitually buy" narrative is noise.
+  const typicalItems = useMemo(
+    () => (providerOrders.length < 3 ? [] : computeTypicalItems(providerOrders)),
+    [providerOrders],
+  )
+  // Look up the current product for each typical item so we can render
+  // its icon. Items keyed by productName (product was deleted) fall
+  // through to the default placeholder chip.
+  const productsById = useMemo(() => {
+    const map = new Map<string, Product>()
+    for (const p of products) map.set(p.id, p)
+    return map
+  }, [products])
+
+  // ===== Monthly spend =====
+  // Fixed 6-month window ending at the current month. Shown whenever the
+  // provider has at least one order; months with no orders render as stubs.
+  const monthlySpend = useMemo(() => computeMonthlySpend(providerOrders), [providerOrders])
+  const monthlySpendMax = useMemo(
+    () => monthlySpend.reduce((max, b) => Math.max(max, b.total), 0),
+    [monthlySpend],
+  )
 
   if (isLoading) {
     return (
@@ -496,15 +488,13 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           swipeable
           fitActiveHeight
         >
-          {/* ---- Summary ---- */}
+          {/* ---- Summary ----
+              Cards always render — on a brand-new provider, each card
+              tells its own empty-state story (stats at zero, reliability
+              as "not enough data", typical items promising what will
+              appear). The overdue banner is the only card that stays
+              conditional (only shown when orders are actually overdue). */}
           <TabContainer.Tab id="summary">
-            {!hasOrders ? (
-              <div className="card p-4">
-                <p className="text-sm text-text-tertiary text-center py-6">
-                  {t('order_history_empty')}
-                </p>
-              </div>
-            ) : (
               <div className="space-y-4">
                 {/* Overdue orders banner — jumps the user to the History
                     tab so they can see which orders need attention. */}
@@ -539,62 +529,191 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   </button>
                 )}
 
-                {/* 3-column stats row as the overview header */}
-                <div className="flex pt-1">
-                  <div className="flex-1 flex flex-col items-center text-center px-2">
-                    <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
-                      {t('stat_total_orders')}
-                    </div>
-                    <div className="text-lg font-semibold text-text-primary tabular-nums mt-1">
-                      {stats.totalOrders}
-                    </div>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center text-center px-2 border-l border-border">
-                    <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
+                {/* Stats — two side-by-side cards. Both are left-aligned
+                    with the same vertical rhythm: label at top, big
+                    primary value, subtext at the bottom. The right
+                    card's horizontal bar sits between the percentage
+                    and the breakdown as a visual reinforcement. */}
+                <div className="grid grid-cols-2 gap-3 items-stretch">
+                  {/* ---- GASTO TOTAL / Total Spent ---- */}
+                  <div className="card p-4 flex flex-col gap-1">
+                    <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary">
                       {t('stat_total_spent')}
                     </div>
-                    <div className="text-lg font-semibold text-text-primary tabular-nums mt-1">
-                      {formatCurrency(stats.totalSpent)}
+                    <div className="text-xl font-semibold text-text-primary tabular-nums mt-1">
+                      {formatCurrencyCompact(metrics.totalSpent)}
+                    </div>
+                    <div className="text-xs text-text-tertiary tabular-nums mt-auto pt-2">
+                      {metrics.orderCount === 0
+                        ? t('stat_never_ordered')
+                        : metrics.cadenceDays != null
+                          ? t('stat_total_spent_subtext_with_cadence', {
+                              count: metrics.orderCount,
+                              days: metrics.cadenceDays,
+                            })
+                          : t('stat_total_spent_subtext_orders_only', {
+                              count: metrics.orderCount,
+                            })}
                     </div>
                   </div>
-                  <div className="flex-1 flex flex-col items-center text-center px-2 border-l border-border">
-                    <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
-                      {t('stat_last_order')}
+
+                  {/* ---- CUMPLIMIENTO / Reliability ----
+                      Label → big percent → horizontal bar → breakdown
+                      at the bottom (with optional window scope). The
+                      "last N" tail is only appended when we're showing
+                      a subset of the provider's orders — otherwise the
+                      breakdown denominator already communicates sample
+                      size. */}
+                  <div className="card p-4 flex flex-col gap-1">
+                    <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary">
+                      {t('stat_reliability_label')}
                     </div>
-                    <div className="text-base font-semibold text-text-primary mt-1">
-                      {stats.lastOrderDate
-                        ? formatRelative(stats.lastOrderDate, userLocale)
-                        : t('stat_never_ordered')}
-                    </div>
+                    {metrics.reliability ? (
+                      <>
+                        <div className="text-xl font-semibold text-text-primary tabular-nums mt-1">
+                          {metrics.reliability.percent}%
+                        </div>
+                        <div className="mt-1">
+                          <ReliabilityBar
+                            percent={metrics.reliability.percent}
+                            ariaLabel={t('stat_reliability_label') + ': ' + metrics.reliability.percent + '%'}
+                          />
+                        </div>
+                        <div className="text-xs text-text-tertiary tabular-nums mt-auto pt-2">
+                          {t('stat_reliability_breakdown', {
+                            onTime: metrics.reliability.onTime,
+                            total: metrics.reliability.resolved,
+                          })}
+                          {metrics.reliability.windowSize < metrics.orderCount && (
+                            <>
+                              {' · '}
+                              {t('stat_reliability_window', {
+                                count: metrics.reliability.windowSize,
+                              })}
+                            </>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-sm text-text-tertiary mt-1">
+                        {t('stat_reliability_insufficient')}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {typicalItems.length > 0 && (
-                  <div className="card p-4 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Repeat className="w-4 h-4 text-text-tertiary" />
-                      <h3 className="text-sm font-semibold text-text-primary">
-                        {t('typical_items_title')}
-                      </h3>
-                    </div>
-                    <hr className="border-border" />
-                    <div className="space-y-2">
-                      {typicalItems.map(item => (
-                        <div key={item.name} className="flex items-baseline justify-between gap-3 text-sm">
-                          <span className="text-text-primary truncate flex-1 min-w-0">{item.name}</span>
-                          {item.avgCost != null && (
-                            <span className="text-xs text-text-tertiary flex-shrink-0 tabular-nums">
-                              {t('typical_items_avg_cost', { cost: formatCurrency(item.avgCost) })}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                <div className="card p-4 space-y-4">
+                  <div className="text-sm text-text-secondary">
+                    {t('typical_items_title')}
                   </div>
-                )}
+                  <hr className="border-border" />
+                  {typicalItems.length > 0 ? (
+                    <div className="space-y-3">
+                      {typicalItems.map(item => {
+                        const product = productsById.get(item.key)
+                        const iconUrl = product ? getProductIconUrl(product) : null
+                        return (
+                          <div key={item.key} className="flex items-center gap-3">
+                            <div className="product-list-image">
+                              {iconUrl && isPresetIcon(iconUrl) ? (
+                                (() => {
+                                  const p = getPresetIcon(iconUrl)
+                                  return p ? <p.icon size={24} className="text-text-primary" /> : null
+                                })()
+                              ) : iconUrl ? (
+                                <Image
+                                  src={iconUrl}
+                                  alt={item.name}
+                                  width={48}
+                                  height={48}
+                                  className="product-list-image-img"
+                                  unoptimized
+                                />
+                              ) : (
+                                <ImageAttachIcon className="w-5 h-5 text-text-tertiary" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-text-primary truncate">
+                                {item.name}
+                              </div>
+                              <div className="text-xs text-text-tertiary mt-0.5 tabular-nums">
+                                {t('typical_items_subtitle', {
+                                  units: item.totalUnits,
+                                  date: formatRelative(item.lastOrderedAt, userLocale),
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-text-tertiary text-center py-2">
+                      {t('typical_items_empty')}
+                    </p>
+                  )}
+                </div>
+
+                {/* ---- Monthly spend ----
+                    Fixed 6-month window ending at the current month. Bars
+                    scale relative to the tallest in the window; empty
+                    months render as thin stubs so the time axis stays
+                    consistent. The current-month bar uses the brand
+                    color; past months are muted. */}
+                <div className="card p-4 space-y-4">
+                  <div className="text-sm text-text-secondary">
+                    {t('monthly_spend_title')}
+                  </div>
+                  <hr className="border-border" />
+                  <div className="flex items-stretch gap-2 h-36">
+                    {monthlySpend.map(bucket => {
+                      const heightPct =
+                        monthlySpendMax > 0 && bucket.total > 0
+                          ? Math.max(6, (bucket.total / monthlySpendMax) * 100)
+                          : 0
+                      const monthLabel = new Intl.DateTimeFormat(userLocale, {
+                        month: 'short',
+                      }).format(bucket.start)
+                      const valueLabel = formatCurrencyCompact(bucket.total)
+                      return (
+                        <div
+                          key={bucket.start.toISOString()}
+                          className="flex-1 flex flex-col items-center min-w-0"
+                        >
+                          <span
+                            className={`text-xs tabular-nums truncate ${
+                              bucket.isCurrent ? 'text-brand font-semibold' : 'text-text-tertiary'
+                            }`}
+                          >
+                            {valueLabel}
+                          </span>
+                          <div className="flex-1 w-full flex items-end py-1">
+                            {bucket.total > 0 ? (
+                              <div
+                                className={`w-full rounded-lg ${
+                                  bucket.isCurrent ? 'bg-brand' : 'bg-bg-muted'
+                                }`}
+                                style={{ height: `${heightPct}%` }}
+                              />
+                            ) : (
+                              <div className="w-full h-[3px] rounded-full bg-bg-muted opacity-60" />
+                            )}
+                          </div>
+                          <span
+                            className={`text-xs mt-1 truncate ${
+                              bucket.isCurrent ? 'text-brand font-semibold' : 'text-text-tertiary'
+                            }`}
+                          >
+                            {monthLabel}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
 
               </div>
-            )}
           </TabContainer.Tab>
 
           {/* ---- History ----
@@ -610,7 +729,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   <div className="text-text-tertiary">
                     {tOrders('order_count', { count: providerOrders.length })}
                     <span className="mx-1.5">&#183;</span>
-                    {formatCurrency(stats.totalSpent)}
+                    {formatCurrencyCompact(metrics.totalSpent)}
                   </div>
                 )}
               </div>

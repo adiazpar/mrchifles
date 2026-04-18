@@ -6,3 +6,5 @@ export type { ProviderModalProps } from './ProviderModal'
 
 export { ProviderNotesModal } from './ProviderNotesModal'
 export type { ProviderNotesModalProps } from './ProviderNotesModal'
+
+export { ReliabilityBar } from './ReliabilityBar'

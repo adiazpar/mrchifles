@@ -22,6 +22,31 @@ export function formatCurrency(
 }
 
 /**
+ * Format a monetary amount in compact notation for space-constrained
+ * surfaces (bar charts, stat tiles, tight card labels).
+ *
+ * Small values render normally — "$420", "S/ 68" — while large values
+ * collapse into the locale's compact form: "$1.2K", "$3.4M", "S/ 1,2 mil".
+ * Fractional digits are clamped to at most 1 to avoid strings like
+ * "$1.234K". Zero-decimal currencies (CLP, COP, etc.) remain integer.
+ *
+ * Callers should generally go through `useBusinessFormat()` instead.
+ */
+export function formatCurrencyCompact(
+  amount: number,
+  locale: string = 'en-US',
+  currency: string = 'USD',
+): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: 1,
+  }).format(amount)
+}
+
+/**
  * Format a date in the given locale. Uses the browser's local timezone,
  * which is correct for the vast majority of cases (user's phone time =
  * business physical location time).
