@@ -586,7 +586,15 @@
     "action_message_sublabel": "Mensaje",
     "action_write_sublabel": "Escribir",
     "edit_provider_aria": "Editar proveedor",
-    "since_date": "Desde {date}"
+    "since_date": "Desde {date}",
+    "tab_summary": "Resumen",
+    "tab_stats": "Estadísticas",
+    "tab_history": "Historial",
+    "tab_notes": "Notas",
+    "notes_empty": "No hay notas para este proveedor",
+    "stats_empty_title": "Aún no hay estadísticas",
+    "stats_empty_description": "Crea una orden con este proveedor para empezar a registrar actividad.",
+    "summary_recent_orders": "Órdenes recientes"
   },
   "team": {
     "member_count": "{count, plural, one {# miembro} other {# miembros}}",

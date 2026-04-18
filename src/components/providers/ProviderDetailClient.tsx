@@ -1,12 +1,12 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { Plus, ChevronRight, Phone, Mail, MessageCircle, ClipboardList, Repeat } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import { ClipboardIcon, EditIcon } from '@/components/icons'
-import { Spinner } from '@/components/ui'
+import { Spinner, TabContainer } from '@/components/ui'
 import { ProviderModal, getProviderInitials } from './'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
@@ -51,8 +51,17 @@ export interface ProviderDetailClientProps {
   providerId: string
 }
 
+type DetailTab = 'summary' | 'stats' | 'history' | 'notes'
+
+const DETAIL_TAB_IDS: readonly DetailTab[] = ['summary', 'stats', 'history', 'notes'] as const
+
+function isDetailTab(value: string | null): value is DetailTab {
+  return (DETAIL_TAB_IDS as readonly string[]).includes(value ?? '')
+}
+
 export function ProviderDetailClient({ businessId, providerId }: ProviderDetailClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const t = useTranslations('providers')
   const tOrders = useTranslations('orders')
   const { formatCurrency } = useBusinessFormat()
@@ -63,6 +72,30 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const { role } = useBusiness()
   const { setSlideDirection, setSlideTargetPath, setPendingHref, setPageSubtitleSuffix, setNavOverride } = useNavbar()
   const canManage = canManageBusiness(role)
+
+  // Tab state — initialized from the URL so browser back/forward and
+  // router.back() restore the tab the user was on (mirrors the products
+  // page pattern).
+  const [activeTab, setActiveTab] = useState<DetailTab>(() => {
+    const fromUrl = searchParams?.get('tab') ?? null
+    return isDetailTab(fromUrl) ? fromUrl : 'summary'
+  })
+
+  const urlForTab = useCallback(
+    (tab: DetailTab) => {
+      const base = `/${businessId}/providers/${providerId}`
+      return tab === 'summary' ? base : `${base}?tab=${tab}`
+    },
+    [businessId, providerId],
+  )
+
+  const handleTabChange = useCallback(
+    (tab: DetailTab) => {
+      setActiveTab(tab)
+      router.replace(urlForTab(tab), { scroll: false })
+    },
+    [router, urlForTab],
+  )
 
   // Append the provider name to the header subtitle ("Providers · Name").
   // Clear on unmount so the subtitle reverts when leaving the page.
@@ -369,117 +402,200 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           </div>
         </div>
 
-        {provider.notes && (
-          <div className="card p-4">
-            <p className="text-sm text-text-secondary whitespace-pre-wrap">
-              {provider.notes}
-            </p>
-          </div>
-        )}
-
-        {/* ============== Stats ==============
-            Three centered columns with hairline dividers. No card, so they
-            feel like attribute chips rather than boxed-in data. */}
-        {stats && (
-          <div className="flex pt-1">
-            <div className="flex-1 flex flex-col items-center text-center px-2">
-              <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
-                {t('stat_total_orders')}
-              </div>
-              <div className="text-lg font-semibold text-text-primary tabular-nums mt-1">
-                {stats.totalOrders}
-              </div>
-            </div>
-            <div className="flex-1 flex flex-col items-center text-center px-2 border-l border-border">
-              <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
-                {t('stat_total_spent')}
-              </div>
-              <div className="text-lg font-semibold text-text-primary tabular-nums mt-1">
-                {formatCurrency(stats.totalSpent)}
-              </div>
-            </div>
-            <div className="flex-1 flex flex-col items-center text-center px-2 border-l border-border">
-              <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
-                {t('stat_last_order')}
-              </div>
-              <div className="text-base font-semibold text-text-primary mt-1">
-                {stats.lastOrderDate
-                  ? formatRelative(stats.lastOrderDate, userLocale)
-                  : t('stat_never_ordered')}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ============== Order History ==============
-            Products-page card pattern: title + count + hr + list. */}
-        <div className="card p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ClipboardList className="w-4 h-4 text-text-tertiary" />
-              <h3 className="text-sm font-semibold text-text-primary">
-                {t('order_history_title')}
-              </h3>
-              {hasOrders && (
-                <>
-                  <span className="text-text-tertiary">&#183;</span>
-                  <span className="text-sm text-text-secondary">
-                    {tOrders('order_count', { count: providerOrders.length })}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          <hr className="border-border" />
-
-          {!hasOrders ? (
-            <p className="text-sm text-text-tertiary text-center py-6">
-              {t('order_history_empty')}
-            </p>
-          ) : (
-            <div>
-              {providerOrders.map(order => (
-                <OrderHistoryRow
-                  key={order.id}
-                  order={order}
-                  onView={() => orderFlows.openOrderDetail(order)}
-                  formatCurrency={formatCurrency}
-                  userLocale={userLocale}
-                  tStatusPending={tOrders('status_pending')}
-                  tStatusReceived={tOrders('status_received')}
-                  tStatusOverdue={tOrders('status_overdue')}
-                  tUnitCount={(count: number) => tOrders('item_unit_count', { count })}
-                />
-              ))}
-            </div>
-          )}
+        {/* ============== Tabs ==============
+            Summary / Stats / History / Notes. Mirrors the products page
+            pattern: a section-tabs bar driving a swipeable TabContainer.
+            The tab is persisted in the URL so browser back/forward and
+            tab reloads restore the user's position. */}
+        <div className="section-tabs">
+          {DETAIL_TAB_IDS.map(id => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => handleTabChange(id)}
+              className={`section-tab ${activeTab === id ? 'section-tab-active' : ''}`}
+            >
+              {t(`tab_${id}`)}
+            </button>
+          ))}
         </div>
 
-        {/* ============== Typical items (conditional, >=3 orders) ============== */}
-        {typicalItems.length > 0 && (
-          <div className="card p-4 space-y-4">
-            <div className="flex items-center gap-2">
-              <Repeat className="w-4 h-4 text-text-tertiary" />
-              <h3 className="text-sm font-semibold text-text-primary">
-                {t('typical_items_title')}
-              </h3>
+        <TabContainer
+          activeTab={activeTab}
+          onTabChange={id => handleTabChange(id as DetailTab)}
+          swipeable
+          fitActiveHeight
+        >
+          {/* ---- Summary ---- */}
+          <TabContainer.Tab id="summary">
+            <div className="space-y-4">
+              {typicalItems.length > 0 && (
+                <div className="card p-4 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Repeat className="w-4 h-4 text-text-tertiary" />
+                    <h3 className="text-sm font-semibold text-text-primary">
+                      {t('typical_items_title')}
+                    </h3>
+                  </div>
+                  <hr className="border-border" />
+                  <div className="space-y-2">
+                    {typicalItems.map(item => (
+                      <div key={item.name} className="flex items-baseline justify-between gap-3 text-sm">
+                        <span className="text-text-primary truncate flex-1 min-w-0">{item.name}</span>
+                        {item.avgCost != null && (
+                          <span className="text-xs text-text-tertiary flex-shrink-0 tabular-nums">
+                            {t('typical_items_avg_cost', { cost: formatCurrency(item.avgCost) })}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {hasOrders && (
+                <div className="card p-4 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4 text-text-tertiary" />
+                    <h3 className="text-sm font-semibold text-text-primary">
+                      {t('summary_recent_orders')}
+                    </h3>
+                  </div>
+                  <hr className="border-border" />
+                  <div>
+                    {providerOrders.slice(0, 3).map(order => (
+                      <OrderHistoryRow
+                        key={order.id}
+                        order={order}
+                        onView={() => orderFlows.openOrderDetail(order)}
+                        formatCurrency={formatCurrency}
+                        userLocale={userLocale}
+                        tStatusPending={tOrders('status_pending')}
+                        tStatusReceived={tOrders('status_received')}
+                        tStatusOverdue={tOrders('status_overdue')}
+                        tUnitCount={(count: number) => tOrders('item_unit_count', { count })}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!hasOrders && (
+                <div className="card p-4">
+                  <p className="text-sm text-text-tertiary text-center py-6">
+                    {t('order_history_empty')}
+                  </p>
+                </div>
+              )}
             </div>
-            <hr className="border-border" />
-            <div className="space-y-2">
-              {typicalItems.map(item => (
-                <div key={item.name} className="flex items-baseline justify-between gap-3 text-sm">
-                  <span className="text-text-primary truncate flex-1 min-w-0">{item.name}</span>
-                  {item.avgCost != null && (
-                    <span className="text-xs text-text-tertiary flex-shrink-0 tabular-nums">
-                      {t('typical_items_avg_cost', { cost: formatCurrency(item.avgCost) })}
-                    </span>
+          </TabContainer.Tab>
+
+          {/* ---- Stats ---- */}
+          <TabContainer.Tab id="stats">
+            {hasOrders ? (
+              <div className="flex pt-1">
+                <div className="flex-1 flex flex-col items-center text-center px-2">
+                  <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
+                    {t('stat_total_orders')}
+                  </div>
+                  <div className="text-lg font-semibold text-text-primary tabular-nums mt-1">
+                    {stats.totalOrders}
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col items-center text-center px-2 border-l border-border">
+                  <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
+                    {t('stat_total_spent')}
+                  </div>
+                  <div className="text-lg font-semibold text-text-primary tabular-nums mt-1">
+                    {formatCurrency(stats.totalSpent)}
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col items-center text-center px-2 border-l border-border">
+                  <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary min-h-[2.25rem] flex items-end">
+                    {t('stat_last_order')}
+                  </div>
+                  <div className="text-base font-semibold text-text-primary mt-1">
+                    {stats.lastOrderDate
+                      ? formatRelative(stats.lastOrderDate, userLocale)
+                      : t('stat_never_ordered')}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="card p-4 space-y-1 text-center">
+                <h3 className="text-sm font-semibold text-text-primary">
+                  {t('stats_empty_title')}
+                </h3>
+                <p className="text-sm text-text-tertiary">
+                  {t('stats_empty_description')}
+                </p>
+              </div>
+            )}
+          </TabContainer.Tab>
+
+          {/* ---- History ---- */}
+          <TabContainer.Tab id="history">
+            <div className="card p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-text-tertiary" />
+                  <h3 className="text-sm font-semibold text-text-primary">
+                    {t('order_history_title')}
+                  </h3>
+                  {hasOrders && (
+                    <>
+                      <span className="text-text-tertiary">&#183;</span>
+                      <span className="text-sm text-text-secondary">
+                        {tOrders('order_count', { count: providerOrders.length })}
+                      </span>
+                    </>
                   )}
                 </div>
-              ))}
+              </div>
+
+              <hr className="border-border" />
+
+              {!hasOrders ? (
+                <p className="text-sm text-text-tertiary text-center py-6">
+                  {t('order_history_empty')}
+                </p>
+              ) : (
+                <div>
+                  {providerOrders.map(order => (
+                    <OrderHistoryRow
+                      key={order.id}
+                      order={order}
+                      onView={() => orderFlows.openOrderDetail(order)}
+                      formatCurrency={formatCurrency}
+                      userLocale={userLocale}
+                      tStatusPending={tOrders('status_pending')}
+                      tStatusReceived={tOrders('status_received')}
+                      tStatusOverdue={tOrders('status_overdue')}
+                      tUnitCount={(count: number) => tOrders('item_unit_count', { count })}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          </TabContainer.Tab>
+
+          {/* ---- Notes ---- */}
+          <TabContainer.Tab id="notes">
+            {provider.notes ? (
+              <div className="card p-4">
+                <p className="text-sm text-text-secondary whitespace-pre-wrap">
+                  {provider.notes}
+                </p>
+              </div>
+            ) : (
+              <div className="card p-4">
+                <p className="text-sm text-text-tertiary text-center py-6">
+                  {t('notes_empty')}
+                </p>
+              </div>
+            )}
+          </TabContainer.Tab>
+        </TabContainer>
 
       </main>
 

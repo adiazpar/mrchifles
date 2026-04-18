@@ -586,7 +586,15 @@
     "action_message_sublabel": "Message",
     "action_write_sublabel": "Write",
     "edit_provider_aria": "Edit provider",
-    "since_date": "Since {date}"
+    "since_date": "Since {date}",
+    "tab_summary": "Summary",
+    "tab_stats": "Stats",
+    "tab_history": "History",
+    "tab_notes": "Notes",
+    "notes_empty": "No notes for this provider",
+    "stats_empty_title": "No stats yet",
+    "stats_empty_description": "Place an order from this provider to start tracking activity.",
+    "summary_recent_orders": "Recent orders"
   },
   "team": {
     "member_count": "{count, plural, one {# member} other {# members}}",
