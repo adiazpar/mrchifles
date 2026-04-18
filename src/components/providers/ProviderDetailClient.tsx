@@ -441,14 +441,12 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             <ContactActionButton
               icon={<Phone className="w-5 h-5" />}
               label={t('action_phone')}
-              sublabel={provider.phone ? t('action_call_sublabel') : '—'}
               href={provider.phone ? `tel:${provider.phone}` : undefined}
               disabled={!provider.phone}
             />
             <ContactActionButton
               icon={<MessageCircle className="w-5 h-5" />}
               label={t('action_whatsapp')}
-              sublabel={provider.phone ? t('action_message_sublabel') : '—'}
               href={provider.phone ? `https://wa.me/${provider.phone.replace(/\D/g, '')}` : undefined}
               disabled={!provider.phone}
               external
@@ -456,7 +454,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             <ContactActionButton
               icon={<Mail className="w-5 h-5" />}
               label={t('action_email')}
-              sublabel={provider.email ? t('action_write_sublabel') : '—'}
               href={provider.email ? `mailto:${provider.email}` : undefined}
               disabled={!provider.email}
             />
@@ -896,7 +893,6 @@ function formatMonthYear(date: Date | string, locale: string): string {
 interface ContactActionButtonProps {
   icon: ReactNode
   label: string
-  sublabel: string
   href?: string
   disabled: boolean
   external?: boolean
@@ -905,21 +901,17 @@ interface ContactActionButtonProps {
 function ContactActionButton({
   icon,
   label,
-  sublabel,
   href,
   disabled,
   external,
 }: ContactActionButtonProps) {
   const className =
-    'flex flex-col items-center justify-center gap-0.5 py-3 px-2 rounded-xl bg-bg-muted text-center transition-colors'
+    'flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl bg-bg-muted text-center transition-colors'
 
   const body = (
     <>
       <span className="text-brand">{icon}</span>
-      <span className="text-sm font-semibold text-text-primary mt-1">{label}</span>
-      <span className="text-xs text-text-tertiary truncate max-w-full tabular-nums">
-        {sublabel}
-      </span>
+      <span className="text-sm font-semibold text-text-primary">{label}</span>
     </>
   )
 
