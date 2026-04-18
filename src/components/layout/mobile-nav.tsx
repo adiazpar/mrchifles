@@ -16,7 +16,7 @@ export function MobileNav() {
   const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
-  const { isVisible, pendingHref, setPendingHref, slideDirection } = useNavbar()
+  const { isVisible, pendingHref, setPendingHref, slideDirection, navOverride: liveNavOverride } = useNavbar()
   const businessContext = useOptionalBusiness()
   const { openJoinModal, isJoinModalOpen } = useJoinBusinessModal()
   const { openCreateModal, isCreateModalOpen } = useCreateBusinessModal()
@@ -32,6 +32,18 @@ export function MobileNav() {
 
   // Local state to control the hidden class
   const [isHidden, setIsHidden] = useState(false)
+
+  // Snapshot of navOverride that stays frozen during slide transitions so the
+  // nav slides out with the previous page's content and slides back in with
+  // the new page's content. Without this, updating navOverride mid-slide
+  // would cause the new content to flash into the still-visible nav before
+  // the slide-down animation begins.
+  const [displayNavOverride, setDisplayNavOverride] = useState<typeof liveNavOverride>(liveNavOverride)
+  useEffect(() => {
+    if (slideDirection === null) {
+      setDisplayNavOverride(liveNavOverride)
+    }
+  }, [liveNavOverride, slideDirection])
 
   // Map nav path segments to translation keys
   const NAV_LABEL_MAP: Record<string, string> = {
@@ -147,6 +159,23 @@ export function MobileNav() {
 
   // Business context: render nav items
   if (!businessId) return null
+
+  // A page can replace the standard nav items with a custom action
+  // (e.g. the provider detail page's "New order" CTA) via useNavbar().
+  // Using the frozen displayNavOverride (not the live one) ensures the
+  // nav slides out with the old content and slides back in with the new.
+  if (displayNavOverride !== null) {
+    return (
+      <nav
+        ref={navRef}
+        className={`mobile-nav ${isHidden ? 'mobile-nav--hidden' : ''}`}
+      >
+        <div className="flex w-full items-center px-4" style={contentFadeStyle}>
+          {displayNavOverride}
+        </div>
+      </nav>
+    )
+  }
 
   return (
     <nav

@@ -28,7 +28,7 @@ export function PageHeader() {
   const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
-  const { pendingHref, setPendingHref, slideDirection, setSlideDirection, setSlideTargetPath } = useNavbar()
+  const { pendingHref, setPendingHref, slideDirection, setSlideDirection, setSlideTargetPath, pageSubtitleSuffix } = useNavbar()
   const businessContext = useOptionalBusiness()
   const [isScrolled, setIsScrolled] = useState(false)
 
@@ -84,7 +84,10 @@ export function PageHeader() {
 
   const { title: rawTitle, pageTitle: rawPageTitle, backTo } = config
   const title = rawTitle ? (PAGE_TITLE_MAP[rawTitle] ?? rawTitle) : rawTitle
-  const pageTitle = rawPageTitle ? (PAGE_TITLE_MAP[rawPageTitle] ?? rawPageTitle) : rawPageTitle
+  const basePageTitle = rawPageTitle ? (PAGE_TITLE_MAP[rawPageTitle] ?? rawPageTitle) : rawPageTitle
+  const pageTitle = basePageTitle && pageSubtitleSuffix
+    ? `${basePageTitle} · ${pageSubtitleSuffix}`
+    : basePageTitle
 
   // Determine back button behavior:
   // - Hub pages with back button: use browser back

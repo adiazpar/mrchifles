@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 
 const BUSINESS_CACHE_STORAGE_KEY = 'kasero_business_cache'
@@ -31,6 +31,18 @@ interface NavbarContextValue {
   // Optimistic navigation state - shared across nav components and header
   pendingHref: string | null
   setPendingHref: (href: string | null) => void
+  // Optional suffix appended to the header's page subtitle (e.g. the
+  // provider name on a provider detail page). Cleared by the detail
+  // page on unmount.
+  pageSubtitleSuffix: string | null
+  setPageSubtitleSuffix: (suffix: string | null) => void
+  // Optional content that replaces the bottom nav's items for the current
+  // page (e.g. a single primary action on a detail page). Registered by
+  // the page on mount and cleared on unmount. The existing slide-hide/
+  // slide-show animation still applies — the nav hides during page
+  // transitions and reappears with whatever the new page registered.
+  navOverride: ReactNode | null
+  setNavOverride: (node: ReactNode | null) => void
   // Business cache for instant display and access validation
   getCachedBusiness: (businessId: string) => CachedBusiness | null
   setCachedBusiness: (businessId: string, data: CachedBusiness) => void
@@ -57,6 +69,8 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
   const [slideDirection, setSlideDirectionState] = useState<SlideDirection>(null)
   const [slideTargetPath, setSlideTargetPathState] = useState<string | null>(null)
   const [pendingHref, setPendingHrefState] = useState<string | null>(null)
+  const [pageSubtitleSuffix, setPageSubtitleSuffixState] = useState<string | null>(null)
+  const [navOverride, setNavOverrideState] = useState<ReactNode | null>(null)
 
   // Business cache - use ref to avoid re-renders, initialize from sessionStorage
   const businessCacheRef = useRef<Record<string, CachedBusiness>>({})
@@ -78,6 +92,8 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
   const setSlideDirection = useCallback((dir: SlideDirection) => setSlideDirectionState(dir), [])
   const setSlideTargetPath = useCallback((path: string | null) => setSlideTargetPathState(path), [])
   const setPendingHref = useCallback((href: string | null) => setPendingHrefState(href), [])
+  const setPageSubtitleSuffix = useCallback((suffix: string | null) => setPageSubtitleSuffixState(suffix), [])
+  const setNavOverride = useCallback((node: ReactNode | null) => setNavOverrideState(node), [])
 
   // Business cache functions
   const getCachedBusiness = useCallback((businessId: string): CachedBusiness | null => {
@@ -131,6 +147,8 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
       slideDirection, setSlideDirection,
       slideTargetPath, setSlideTargetPath,
       pendingHref, setPendingHref,
+      pageSubtitleSuffix, setPageSubtitleSuffix,
+      navOverride, setNavOverride,
       getCachedBusiness, setCachedBusiness, setCachedBusinesses,
     }}>
       {children}

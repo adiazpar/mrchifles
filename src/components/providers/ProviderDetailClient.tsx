@@ -1,13 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, ChevronRight, Phone, Mail, ClipboardList, Repeat, Trash2 } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { Plus, ChevronRight, Phone, Mail, MessageCircle, ClipboardList, Repeat, Trash2 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import { ClipboardIcon, EditIcon } from '@/components/icons'
 import { Spinner, Modal } from '@/components/ui'
 import { ProviderModal, getProviderInitials } from './'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
+import { useOrders } from '@/contexts/orders-context'
 import { apiRequest, apiPatch, apiDelete, ApiError } from '@/lib/api-client'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -29,12 +31,6 @@ interface ProviderDetailResponse {
   success?: boolean
   provider: Provider
   stats: ProviderStats
-  [key: string]: unknown
-}
-
-interface OrdersResponse {
-  success?: boolean
-  orders: ExpandedOrder[]
   [key: string]: unknown
 }
 
@@ -66,18 +62,16 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const userLocale = useLocale()
   const translateApiMessage = useApiMessage()
   const { role } = useBusiness()
-  const { hide, show, setSlideDirection, setSlideTargetPath, setPendingHref } = useNavbar()
+  const { setSlideDirection, setSlideTargetPath, setPendingHref, setPageSubtitleSuffix, setNavOverride } = useNavbar()
   const canManage = canManageBusiness(role)
 
-  // Hide the bottom nav while viewing the detail page.
+  // Append the provider name to the header subtitle ("Providers · Name").
+  // Clear on unmount so the subtitle reverts when leaving the page.
   useEffect(() => {
-    hide()
-    return () => show()
-  }, [hide, show])
+    return () => setPageSubtitleSuffix(null)
+  }, [setPageSubtitleSuffix])
 
   const [provider, setProvider] = useState<Provider | null>(null)
-  const [stats, setStats] = useState<ProviderStats | null>(null)
-  const [providerOrders, setProviderOrders] = useState<ExpandedOrder[]>([])
   // Products and all providers fetched so the New Order and Order Detail
   // modals have the full catalog and can populate the provider dropdown.
   const [products, setProducts] = useState<Product[]>([])
@@ -99,43 +93,79 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const [editError, setEditError] = useState('')
   const [providerSaved, setProviderSaved] = useState(false)
 
-  // ===== Filtered setOrders =====
-  // When an order's provider is changed via the edit flow (detached from
-  // THIS provider), it should vanish from the list. Wrap setOrders so the
-  // filter is applied on every update the hook makes.
-  const setFilteredProviderOrders = useCallback(
-    (updater: ExpandedOrder[] | ((prev: ExpandedOrder[]) => ExpandedOrder[])) => {
-      setProviderOrders(prev => {
-        const next = typeof updater === 'function' ? updater(prev) : updater
-        return next.filter(o => o.providerId === providerId)
-      })
-    },
-    [providerId],
+  // Shared orders store (see src/contexts/orders-context). We use the
+  // global list directly; orders whose providerId changes elsewhere
+  // fall out of this page's derived list automatically.
+  const { orders: allOrders, setOrders, ensureLoaded: ensureOrdersLoaded } = useOrders()
+  const providerOrders = useMemo(
+    () => allOrders.filter(o => o.providerId === providerId),
+    [allOrders, providerId],
   )
+  const stats = useMemo<ProviderStats>(() => {
+    const totalOrders = providerOrders.length
+    const totalSpent = providerOrders.reduce((sum, o) => sum + o.total, 0)
+    const lastOrderTs = providerOrders
+      .map(o => new Date(o.date).getTime())
+      .reduce<number | null>((max, t) => (max === null || t > max ? t : max), null)
+    return {
+      totalOrders,
+      totalSpent,
+      lastOrderDate: lastOrderTs ? new Date(lastOrderTs).toISOString() : null,
+    }
+  }, [providerOrders])
 
   // ===== Wire up the shared order-flows hook =====
   const orderFlows = useOrderFlows({
     businessId,
     products,
     providers: allProviders,
-    setOrders: setFilteredProviderOrders,
+    setOrders,
     // setProducts omitted: this page does not display product stock.
     canDelete: canManage,
   })
 
+  // ===== Navbar override: replace the standard nav items with the
+  // page's primary action (New order from this provider). The existing
+  // slide animation handles hide-on-leave / slide-up-with-new-content.
+  //
+  // useOrderFlows returns a fresh object each render, so we read the
+  // current opener through a ref to keep the click handler stable and
+  // prevent an effect re-run loop that would otherwise thrash setState.
+  const orderFlowsRef = useRef(orderFlows)
+  orderFlowsRef.current = orderFlows
+  const openNewOrderForProvider = useCallback(() => {
+    orderFlowsRef.current.openNewOrder(providerId)
+  }, [providerId])
+
+  useEffect(() => {
+    if (!canManage) return
+    setNavOverride(
+      <button
+        type="button"
+        onClick={openNewOrderForProvider}
+        className="btn btn-primary w-full"
+      >
+        <Plus className="w-4 h-4" />
+        {t('new_order_button')}
+      </button>
+    )
+    return () => setNavOverride(null)
+  }, [canManage, openNewOrderForProvider, setNavOverride, t])
+
   // ===== Load data =====
+  // Page-specific data (provider, product catalog, providers list for the
+  // order modal dropdown). The orders list comes from the shared
+  // OrdersContext below — see ensureOrdersLoaded().
   const loadAll = useCallback(async () => {
     try {
       setError('')
-      const [detail, ordersData, productsData, providersData] = await Promise.all([
+      const [detail, productsData, providersData] = await Promise.all([
         apiRequest<ProviderDetailResponse>(`/api/businesses/${businessId}/providers/${providerId}`),
-        apiRequest<OrdersResponse>(`/api/businesses/${businessId}/orders?providerId=${providerId}`),
         apiRequest<ProductsResponse>(`/api/businesses/${businessId}/products`),
         apiRequest<ProvidersResponse>(`/api/businesses/${businessId}/providers`),
+        ensureOrdersLoaded(),
       ])
       setProvider(detail.provider)
-      setStats(detail.stats)
-      setProviderOrders(ordersData.orders)
       setProducts(productsData.products)
       setAllProviders(providersData.providers)
     } catch (err) {
@@ -147,27 +177,13 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsLoading(false)
     }
-  }, [businessId, providerId, t, translateApiMessage])
+  }, [businessId, providerId, ensureOrdersLoaded, t, translateApiMessage])
 
   useEffect(() => { loadAll() }, [loadAll])
 
-  // Refresh stats when provider orders change (edits/receives/deletes).
-  // The hook updates providerOrders via setOrders; recompute a fresh stats
-  // snapshot from the list so the Activity card stays in sync without an
-  // extra API call.
   useEffect(() => {
-    if (!providerOrders) return
-    const totalOrders = providerOrders.length
-    const totalSpent = providerOrders.reduce((sum, o) => sum + o.total, 0)
-    const lastOrderDate = providerOrders
-      .map(o => new Date(o.date).getTime())
-      .reduce<number | null>((max, t) => (max === null || t > max ? t : max), null)
-    setStats({
-      totalOrders,
-      totalSpent,
-      lastOrderDate: lastOrderDate ? new Date(lastOrderDate).toISOString() : null,
-    })
-  }, [providerOrders])
+    if (provider?.name) setPageSubtitleSuffix(provider.name)
+  }, [provider?.name, setPageSubtitleSuffix])
 
   // ===== Edit provider =====
   const openEdit = () => {
@@ -285,50 +301,74 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     <>
       <main className="page-content space-y-4">
         {/* ============== Identity Card ==============
-            Tappable hero. Left: initials avatar. Middle: name + contact
-            rows with inline icons. Right: subtle edit chevron indicator. */}
-        <button
-          type="button"
-          onClick={canManage ? openEdit : undefined}
-          disabled={!canManage}
-          className="card card-interactive w-full p-4 flex items-center gap-4 text-left disabled:cursor-default"
-        >
-          <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-brand-subtle text-brand">
-            <span className="text-lg font-semibold">{initials}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            Top row: avatar, name, active/inactive status text, edit button.
+            Bottom row: three contact actions (call / whatsapp / email).
+            Each action is disabled — but still visible — when its
+            underlying contact field is empty. */}
+        <div className="card p-4 space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-brand-subtle text-brand">
+              <span className="text-lg font-semibold">{initials}</span>
+            </div>
+            <div className="flex-1 min-w-0">
               <div className="text-base font-semibold text-text-primary truncate">
                 {provider.name}
               </div>
-              {!provider.active && (
-                <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-bg-muted text-text-tertiary flex-shrink-0">
-                  {t('status_inactive')}
+              <div className="text-sm mt-0.5 flex items-center gap-1.5 min-w-0">
+                <span
+                  className={`font-medium flex-shrink-0 ${
+                    provider.active ? 'text-success' : 'text-error'
+                  }`}
+                >
+                  {provider.active ? t('status_active') : t('status_inactive')}
                 </span>
-              )}
+                {provider.createdAt && (
+                  <>
+                    <span className="text-text-tertiary flex-shrink-0">&#183;</span>
+                    <span className="text-text-tertiary truncate">
+                      {t('since_date', { date: formatMonthYear(provider.createdAt, userLocale) })}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
-            {provider.phone && (
-              <div className="text-sm text-text-tertiary truncate flex items-center gap-1.5 mt-0.5">
-                <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-                {provider.phone}
-              </div>
-            )}
-            {provider.email && (
-              <div className="text-sm text-text-tertiary truncate flex items-center gap-1.5 mt-0.5">
-                <Mail className="w-3.5 h-3.5 flex-shrink-0" />
-                {provider.email}
-              </div>
-            )}
-            {!provider.phone && !provider.email && !provider.notes && canManage && (
-              <div className="text-sm text-text-tertiary mt-0.5">
-                {t('tap_to_add_contact')}
-              </div>
+            {canManage && (
+              <button
+                type="button"
+                onClick={openEdit}
+                className="btn btn-secondary btn-icon flex-shrink-0"
+                aria-label={t('edit_provider_aria')}
+              >
+                <EditIcon className="text-brand" style={{ width: 18, height: 18 }} />
+              </button>
             )}
           </div>
-          {canManage && (
-            <EditIcon className="text-brand flex-shrink-0" style={{ width: 18, height: 18 }} />
-          )}
-        </button>
+
+          <div className="grid grid-cols-3 gap-2">
+            <ContactActionButton
+              icon={<Phone className="w-5 h-5" />}
+              label={t('action_phone')}
+              sublabel={provider.phone ? t('action_call_sublabel') : '—'}
+              href={provider.phone ? `tel:${provider.phone}` : undefined}
+              disabled={!provider.phone}
+            />
+            <ContactActionButton
+              icon={<MessageCircle className="w-5 h-5" />}
+              label={t('action_whatsapp')}
+              sublabel={provider.phone ? t('action_message_sublabel') : '—'}
+              href={provider.phone ? `https://wa.me/${provider.phone.replace(/\D/g, '')}` : undefined}
+              disabled={!provider.phone}
+              external
+            />
+            <ContactActionButton
+              icon={<Mail className="w-5 h-5" />}
+              label={t('action_email')}
+              sublabel={provider.email ? t('action_write_sublabel') : '—'}
+              href={provider.email ? `mailto:${provider.email}` : undefined}
+              disabled={!provider.email}
+            />
+          </div>
+        </div>
 
         {provider.notes && (
           <div className="card p-4">
@@ -370,20 +410,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               </div>
             </div>
           </div>
-        )}
-
-        {/* ============== New order CTA ==============
-            Matches the "Add" button styling used in Products and Orders tabs
-            but full-width since it IS the page's primary action. */}
-        {canManage && (
-          <button
-            type="button"
-            onClick={() => orderFlows.openNewOrder(providerId)}
-            className="btn btn-primary w-full"
-          >
-            <Plus className="w-4 h-4" />
-            {t('new_order_button')}
-          </button>
         )}
 
         {/* ============== Order History ==============
@@ -599,5 +625,59 @@ function OrderHistoryRow({
         </div>
       </div>
     </div>
+  )
+}
+
+function formatMonthYear(date: Date | string, locale: string): string {
+  const d = typeof date === 'string' ? new Date(date) : date
+  return new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' }).format(d)
+}
+
+interface ContactActionButtonProps {
+  icon: ReactNode
+  label: string
+  sublabel: string
+  href?: string
+  disabled: boolean
+  external?: boolean
+}
+
+function ContactActionButton({
+  icon,
+  label,
+  sublabel,
+  href,
+  disabled,
+  external,
+}: ContactActionButtonProps) {
+  const className =
+    'flex flex-col items-center justify-center gap-0.5 py-3 px-2 rounded-xl bg-bg-muted text-center transition-colors'
+
+  const body = (
+    <>
+      <span className="text-brand">{icon}</span>
+      <span className="text-sm font-semibold text-text-primary mt-1">{label}</span>
+      <span className="text-xs text-text-tertiary truncate max-w-full tabular-nums">
+        {sublabel}
+      </span>
+    </>
+  )
+
+  if (disabled || !href) {
+    return (
+      <div className={`${className} opacity-50 cursor-not-allowed`} aria-disabled="true">
+        {body}
+      </div>
+    )
+  }
+
+  return (
+    <a
+      href={href}
+      className={`${className} hover:bg-brand-subtle`}
+      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+    >
+      {body}
+    </a>
   )
 }

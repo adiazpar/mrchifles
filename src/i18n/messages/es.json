@@ -578,7 +578,15 @@
     "stats_section_header": "Actividad",
     "actions_section_header": "Acciones",
     "danger_zone_section_header": "Zona peligrosa",
-    "tap_to_add_contact": "Toca para agregar información de contacto"
+    "tap_to_add_contact": "Toca para agregar información de contacto",
+    "action_phone": "Teléfono",
+    "action_whatsapp": "WhatsApp",
+    "action_email": "Email",
+    "action_call_sublabel": "Llamar",
+    "action_message_sublabel": "Mensaje",
+    "action_write_sublabel": "Escribir",
+    "edit_provider_aria": "Editar proveedor",
+    "since_date": "Desde {date}"
   },
   "team": {
     "member_count": "{count, plural, one {# miembro} other {# miembros}}",

@@ -102,6 +102,7 @@ export interface Provider {
   email?: string | null
   notes?: string | null
   active: boolean
+  createdAt?: Date | string | null
 }
 
 // ============================================

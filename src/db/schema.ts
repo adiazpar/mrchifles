@@ -112,6 +112,9 @@ export const providers = sqliteTable('providers', {
   email: text('email'),
   notes: text('notes'),
   active: integer('active', { mode: 'boolean' }).default(true),
+  // Functional timestamp: displayed on the provider detail page ("Since Oct 2025").
+  // Nullable so pre-existing rows without a stamp gracefully omit the line.
+  createdAt: integer('created_at', { mode: 'timestamp' }),
 }, (table) => ({
   businessIdIdx: index('idx_providers_business_id').on(table.businessId),
 }))

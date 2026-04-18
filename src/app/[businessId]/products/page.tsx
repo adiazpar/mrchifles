@@ -20,7 +20,6 @@ import { ProductFormProvider, useProductForm } from '@/contexts/product-form-con
 import type { PipelineStep } from '@/hooks'
 import {
   type PageTab,
-  type ExpandedOrder,
   type OrderStatusFilter,
   type OrderSortOption,
   type SortOption,
@@ -29,6 +28,7 @@ import {
 import { getProductIconUrl } from '@/lib/utils'
 import { useAiProductPipeline, useImageCompression, useBusinessFormat } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
+import { useOrders } from '@/contexts/orders-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { useTranslations } from 'next-intl'
 import type { Product, Provider, SortPreference, ProductCategory } from '@/types'
@@ -282,14 +282,18 @@ export default function ProductosPage() {
   const bid = businessId || ''
   const productsCache = useMemo(() => scopedCache<Product[]>(CACHE_KEYS.PRODUCTS, bid), [bid])
   const providersCache = useMemo(() => scopedCache<Provider[]>(CACHE_KEYS.PROVIDERS, bid), [bid])
-  const ordersCache = useMemo(() => scopedCache<ExpandedOrder[]>(CACHE_KEYS.ORDERS, bid), [bid])
 
   // Data state - initialize from cache
   const [products, setProductsState] = useState<Product[]>(() => scopedCache<Product[]>(CACHE_KEYS.PRODUCTS, bid).get() || [])
-  const [orders, setOrdersState] = useState<ExpandedOrder[]>(() => scopedCache<ExpandedOrder[]>(CACHE_KEYS.ORDERS, bid).get() || [])
   const [providers, setProvidersState] = useState<Provider[]>(() => scopedCache<Provider[]>(CACHE_KEYS.PROVIDERS, bid).get() || [])
   const [isLoading, setIsLoading] = useState(() => !scopedCache<Product[]>(CACHE_KEYS.PRODUCTS, bid).get())
   const [error, setError] = useState('')
+
+  // Shared orders store (see src/contexts/orders-context). Any mutation
+  // anywhere in the app updates this single source of truth, so the
+  // Orders tab automatically stays in sync with, e.g., edits made from
+  // the provider detail page.
+  const { orders, setOrders, ensureLoaded: ensureOrdersLoaded } = useOrders()
 
   // Wrapper functions that update both state and cache
   const setProducts = useCallback((updater: Product[] | ((prev: Product[]) => Product[])) => {
@@ -307,14 +311,6 @@ export default function ProductosPage() {
       return newProviders
     })
   }, [providersCache])
-
-  const setOrders = useCallback((updater: ExpandedOrder[] | ((prev: ExpandedOrder[]) => ExpandedOrder[])) => {
-    setOrdersState(prev => {
-      const newOrders = typeof updater === 'function' ? updater(prev) : updater
-      ordersCache.set(newOrders)
-      return newOrders
-    })
-  }, [ordersCache])
 
   // Product settings
   const productSettings = useProductSettings({ businessId: businessId || '' })
@@ -388,9 +384,6 @@ export default function ProductosPage() {
     canDelete,
   })
 
-  // Track if orders have been loaded (check cache on init)
-  const [ordersLoaded, setOrdersLoaded] = useState(() => !!scopedCache<ExpandedOrder[]>(CACHE_KEYS.ORDERS, bid).get())
-
   // Load products and providers on mount if not cached
   useEffect(() => {
     if (!businessId) return
@@ -445,32 +438,11 @@ export default function ProductosPage() {
     return () => { cancelled = true }
   }, [businessId, setProducts, setProviders, productsCache, providersCache, tOrders])
 
-  // Lazy load orders when switching to orders tab
+  // Lazy load orders when switching to orders tab (idempotent via context).
   useEffect(() => {
-    if (!businessId || activeTab !== 'orders' || ordersLoaded) return
-
-    let cancelled = false
-
-    async function loadOrders() {
-      try {
-        const response = await fetchDeduped(`/api/businesses/${businessId}/orders`)
-        const data = await response.json()
-
-        if (cancelled) return
-
-        if (response.ok && data.success) {
-          setOrders(data.orders)
-          setOrdersLoaded(true)
-        }
-      } catch (err) {
-        if (cancelled) return
-        console.error('Error loading orders:', err)
-      }
-    }
-
-    loadOrders()
-    return () => { cancelled = true }
-  }, [activeTab, businessId, ordersLoaded, setOrders])
+    if (!businessId || activeTab !== 'orders') return
+    ensureOrdersLoaded()
+  }, [activeTab, businessId, ensureOrdersLoaded])
 
   // Open modals from query string (deep-links from provider detail page)
   useEffect(() => {

@@ -65,6 +65,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     email: email || null,
     notes: notes || null,
     active,
+    createdAt: new Date(),
   }).returning()
 
   return successResponse({ provider: newProvider })
