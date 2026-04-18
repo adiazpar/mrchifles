@@ -395,6 +395,7 @@
     "new_order_success_heading": "¡Pedido registrado!",
     "new_order_success_description": "El pedido ha sido guardado exitosamente",
     "detail_title": "Detalle del pedido",
+    "detail_title_with_ref": "Orden #{number}",
     "status_label": "Estado",
     "date_label": "Fecha",
     "received_date_label": "Fecha de recepción",
@@ -436,7 +437,9 @@
     "variance_item_line": "Pedido {ordered}, recibido {received}",
     "import_invoice_button": "Importar desde factura o cotización",
     "import_coming_soon": "Próximamente",
-    "ordered_to_label": "Pedido a:"
+    "ordered_to_label": "Pedido a:",
+    "ordered_on_label": "Fecha:",
+    "ordered_by_label": "Pedido por:"
   },
   "navigation": {
     "home": "Inicio",

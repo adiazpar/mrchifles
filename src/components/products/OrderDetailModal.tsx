@@ -269,16 +269,23 @@ export function OrderDetailModal({
 
   if (!order) return null
 
+  // Prefer the human-readable reference ("Order #47") when the server
+  // has stamped one on the row. Falls back to the generic label for any
+  // legacy order still missing the column.
+  const headingTitle = order.orderNumber != null
+    ? t('detail_title_with_ref', { number: order.orderNumber })
+    : t('detail_title')
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       onExitComplete={onExitComplete}
-      title={t('detail_title')}
+      title={headingTitle}
       size="large"
     >
       {/* Step 0: Order Details */}
-      <Modal.Step title={t('detail_title')}>
+      <Modal.Step title={headingTitle}>
         {/* Products list - compact */}
         <Modal.Item>
           <div className="space-y-1">
@@ -331,7 +338,7 @@ export function OrderDetailModal({
           <div className="border-t border-dashed border-border" />
         </Modal.Item>
 
-        {/* Details */}
+        {/* Details: Total + Status */}
         <Modal.Item>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -339,7 +346,38 @@ export function OrderDetailModal({
               <span className="font-semibold">{formatCurrency(order.total)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-text-tertiary">{t('provider_label')}</span>
+              <span className="text-text-tertiary">{t('status_label')}</span>
+              {(() => {
+                const ds = getOrderDisplayStatus(order)
+                const colorMap = { pending: 'text-warning', received: 'text-success', overdue: 'text-error' }
+                const labelMap = { pending: t('status_pending'), received: t('status_received'), overdue: t('status_overdue') }
+                return <span className={colorMap[ds]}>{labelMap[ds]}</span>
+              })()}
+            </div>
+          </div>
+        </Modal.Item>
+
+        {/* Divider — same dashed style + Modal.Item spacing as the
+            products → totals divider above. */}
+        <Modal.Item>
+          <div className="border-t border-dashed border-border" />
+        </Modal.Item>
+
+        {/* Details: Ordered on / by / to + arrival + receipt */}
+        <Modal.Item>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-text-tertiary">{t('ordered_on_label')}</span>
+              <span className="tabular-nums">{formatDate(new Date(order.date))}</span>
+            </div>
+            {order.expand?.createdByUser && (
+              <div className="flex justify-between">
+                <span className="text-text-tertiary">{t('ordered_by_label')}</span>
+                <span>{order.expand.createdByUser.name || order.expand.createdByUser.email}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-text-tertiary">{t('ordered_to_label')}</span>
               {order.providerId && order.expand?.provider?.name ? (
                 <button
                   type="button"
@@ -367,25 +405,16 @@ export function OrderDetailModal({
                 <span>{order.expand?.provider?.name || '-'}</span>
               )}
             </div>
-            <div className="flex justify-between">
-              <span className="text-text-tertiary">{t('status_label')}</span>
-              {(() => {
-                const ds = getOrderDisplayStatus(order)
-                const colorMap = { pending: 'text-warning', received: 'text-success', overdue: 'text-error' }
-                const labelMap = { pending: t('status_pending'), received: t('status_received'), overdue: t('status_overdue') }
-                return <span className={colorMap[ds]}>{labelMap[ds]}</span>
-              })()}
-            </div>
             {order.estimatedArrival && order.status !== 'received' && (
               <div className="flex justify-between">
                 <span className="text-text-tertiary">{t('est_arrival_label')}</span>
-                <span>{formatDate(new Date(order.estimatedArrival))}</span>
+                <span className="tabular-nums">{formatDate(new Date(order.estimatedArrival))}</span>
               </div>
             )}
             {order.receivedDate && (
               <div className="flex justify-between">
                 <span className="text-text-tertiary">{t('received_date_label')}</span>
-                <span>{formatDate(new Date(order.receivedDate))}</span>
+                <span className="tabular-nums">{formatDate(new Date(order.receivedDate))}</span>
               </div>
             )}
             {order.receipt && (

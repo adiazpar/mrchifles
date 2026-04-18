@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { Plus, ChevronRight, Phone, Mail, MessageCircle, ClipboardList, Repeat } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
-import { CheckmarkIcon, ClipboardIcon, EditIcon } from '@/components/icons'
+import { CheckmarkIcon, ClipboardIcon, ClockIcon, EditIcon, XMarkIcon } from '@/components/icons'
 import { Spinner, TabContainer } from '@/components/ui'
 import { ProviderModal, getProviderInitials } from './'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
@@ -702,8 +702,10 @@ function OrderHistoryRow({
           <div className={`product-list-image flex items-center justify-center ${colors.bg}`}>
             {displayStatus === 'received' ? (
               <CheckmarkIcon className={`w-5 h-5 ${colors.text}`} />
+            ) : displayStatus === 'pending' ? (
+              <ClockIcon className={`w-5 h-5 ${colors.text}`} />
             ) : (
-              <ClipboardIcon className={`w-5 h-5 ${colors.text}`} />
+              <XMarkIcon className={`w-5 h-5 ${colors.text}`} />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -727,7 +729,7 @@ function OrderHistoryRow({
 
 function formatMonthYear(date: Date | string, locale: string): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' }).format(d)
+  return new Intl.DateTimeFormat(locale, { month: 'short', year: '2-digit' }).format(d)
 }
 
 interface ContactActionButtonProps {

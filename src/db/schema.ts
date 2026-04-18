@@ -18,6 +18,9 @@ export const businesses = sqliteTable('businesses', {
   // Product settings (inline - no separate table needed)
   defaultCategoryId: text('default_category_id'),
   sortPreference: text('sort_preference').default('name_asc'),
+  // Monotonic counter for orders.order_number. Incremented atomically
+  // on each order insert so references are stable even after deletes.
+  nextOrderNumber: integer('next_order_number').default(1).notNull(),
 })
 
 // ===========================================
@@ -126,6 +129,13 @@ export const orders = sqliteTable('orders', {
   id: text('id').primaryKey(),
   businessId: text('business_id').references(() => businesses.id).notNull(),
   providerId: text('provider_id').references(() => providers.id),
+  // User who created the order. Nullable so legacy rows from before this
+  // column existed stay valid; new inserts always set it.
+  createdByUserId: text('created_by_user_id').references(() => users.id),
+  // Human-readable reference, auto-numbered per business ("#47"). Nullable
+  // so existing rows can be backfilled post-migration; new inserts always
+  // compute it in the create route.
+  orderNumber: integer('order_number'),
   date: integer('date', { mode: 'timestamp' }).notNull(),
   receivedDate: integer('received_date', { mode: 'timestamp' }),
   total: real('total').notNull(),

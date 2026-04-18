@@ -115,6 +115,11 @@ export interface Order {
   id: string
   businessId: string
   providerId?: string | null
+  // User who created the order. Nullable for legacy rows.
+  createdByUserId?: string | null
+  // Human-readable, per-business sequential reference ("#47"). Nullable
+  // to tolerate rows that pre-date the backfill.
+  orderNumber?: number | null
   date: Date | string
   receivedDate?: Date | string | null
   total: number

@@ -27,6 +27,11 @@ export { HelpIcon } from './HelpIcon'
 // Product icons
 export { TagsIcon } from './TagsIcon'
 export { ClipboardIcon } from './ClipboardIcon'
+export { CheckmarkIcon } from './CheckmarkIcon'
+export { ClockIcon } from './ClockIcon'
+export { XMarkIcon } from './XMarkIcon'
+export { SupplierIcon } from './SupplierIcon'
+export { CalendarIcon } from './CalendarIcon'
 
 // Business type icons
 export { FoodBeverageIcon } from './FoodBeverageIcon'

@@ -1,5 +1,5 @@
-import { db, orders, orderItems, providers, products } from '@/db'
-import { eq, desc, inArray, and } from 'drizzle-orm'
+import { db, orders, orderItems, providers, products, businesses, users } from '@/db'
+import { eq, desc, inArray, and, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
@@ -83,6 +83,20 @@ export const GET = withBusinessAuth(async (request, access) => {
 
   const providersMap = new Map(providersList.map(p => [p.id, p]))
 
+  // Creator expansion — fetch the slim user shape for any creators
+  // referenced by these orders. Skipped entirely if no order has a
+  // creator (only possible for legacy rows).
+  const creatorIds = [
+    ...new Set(ordersList.map(o => o.createdByUserId).filter(Boolean)),
+  ] as string[]
+  const creatorsList = creatorIds.length > 0
+    ? await db
+        .select({ id: users.id, name: users.name, email: users.email })
+        .from(users)
+        .where(inArray(users.id, creatorIds))
+    : []
+  const creatorsMap = new Map(creatorsList.map(u => [u.id, u]))
+
   // Group items by orderId for efficient lookup
   const itemsByOrderId = new Map<string, typeof allItems>()
   for (const item of allItems) {
@@ -99,6 +113,7 @@ export const GET = withBusinessAuth(async (request, access) => {
       providerId: order.providerId,
       expand: {
         provider: order.providerId ? providersMap.get(order.providerId) || null : null,
+        createdByUser: order.createdByUserId ? creatorsMap.get(order.createdByUserId) || null : null,
         'order_items(order)': items.map(item => ({
           ...item,
           expand: {
@@ -163,6 +178,18 @@ export const POST = withBusinessAuth(async (request, access) => {
   const orderStatus = status === 'received' ? 'received' : 'pending'
   const estimatedArrival = estimatedArrivalStr ? new Date(estimatedArrivalStr) : null
 
+  // Per-business sequential reference ("#47"). Pulled from a monotonic
+  // counter on the businesses row via atomic UPDATE ... RETURNING, so
+  // numbers are stable even after deletes and safe under concurrent
+  // inserts. The returned value is the number to use for THIS order;
+  // the stored next_order_number has already been incremented.
+  const reservation = await db
+    .update(businesses)
+    .set({ nextOrderNumber: sql`${businesses.nextOrderNumber} + 1` })
+    .where(eq(businesses.id, access.businessId))
+    .returning({ reserved: sql<number>`${businesses.nextOrderNumber} - 1` })
+  const orderNumber = Number(reservation[0]?.reserved ?? 1)
+
   // Batch insert order + items in a single transaction
   const itemValues = items.map(item => ({
     id: nanoid(),
@@ -179,6 +206,8 @@ export const POST = withBusinessAuth(async (request, access) => {
       id: orderId,
       businessId: access.businessId,
       providerId: providerId || null,
+      createdByUserId: access.userId,
+      orderNumber,
       date: orderDate,
       total,
       status: orderStatus,
@@ -201,12 +230,23 @@ export const POST = withBusinessAuth(async (request, access) => {
       .get() || null
   }
 
+  // Slim creator shape so the list can render "Ordered by:" without a
+  // refetch. Safe to expose name/email — the caller already has access
+  // to this business.
+  const createdByUser = await db
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.id, access.userId))
+    .get() || null
+
   // Return full expanded order so client can append without refetching
   return successResponse({
     order: {
       id: orderId,
       businessId: access.businessId,
       providerId: providerId || null,
+      createdByUserId: access.userId,
+      orderNumber,
       date: orderDate,
       total,
       status: orderStatus,
@@ -215,6 +255,7 @@ export const POST = withBusinessAuth(async (request, access) => {
       notes: null,
       expand: {
         provider,
+        createdByUser,
         'order_items(order)': itemValues.map(item => ({
           ...item,
           receivedQuantity: null,

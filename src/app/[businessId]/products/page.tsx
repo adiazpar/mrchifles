@@ -492,7 +492,8 @@ export default function ProductosPage() {
           d.toLocaleDateString(l, { weekday: 'long' }),
           d.toLocaleDateString(l, { weekday: 'short' }),
         ]).join(' ').toLowerCase()
-        const searchable = `${dateStr} ${names} ${dayNum} ${year} ${providerName}`
+        const orderNumber = o.orderNumber != null ? `#${o.orderNumber} ${o.orderNumber}` : ''
+        const searchable = `${orderNumber} ${dateStr} ${names} ${dayNum} ${year} ${providerName}`
         return searchable.includes(query)
       })
     }

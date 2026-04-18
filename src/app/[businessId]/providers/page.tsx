@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Plus, Van } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Spinner } from '@/components/ui'
+import { SupplierIcon } from '@/components/icons'
 import { useProviderManagement } from '@/hooks'
 import { useBusiness } from '@/contexts/business-context'
 import { ProviderListItem, ProviderModal } from '@/components/providers'
@@ -117,7 +118,7 @@ export default function ProveedoresPage() {
           {/* Empty state - no providers at all */}
           {providers.length === 0 && (
             <div className="empty-state-fill">
-              <Van className="empty-state-icon" />
+              <SupplierIcon className="empty-state-icon" />
               <h3 className="empty-state-title">{t('empty_title')}</h3>
               <p className="empty-state-description">
                 {t('empty_description')}

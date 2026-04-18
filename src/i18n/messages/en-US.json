@@ -395,6 +395,7 @@
     "new_order_success_heading": "Order registered!",
     "new_order_success_description": "The order has been saved successfully",
     "detail_title": "Order Detail",
+    "detail_title_with_ref": "Order #{number}",
     "status_label": "Status",
     "date_label": "Date",
     "received_date_label": "Received date",
@@ -436,7 +437,9 @@
     "variance_item_line": "Ordered {ordered}, received {received}",
     "import_invoice_button": "Import from invoice or quote",
     "import_coming_soon": "Coming soon",
-    "ordered_to_label": "Ordered to:"
+    "ordered_to_label": "Ordered to:",
+    "ordered_on_label": "Ordered on:",
+    "ordered_by_label": "Ordered by:"
   },
   "navigation": {
     "home": "Home",

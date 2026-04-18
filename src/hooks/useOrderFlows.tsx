@@ -49,6 +49,35 @@ export interface UseOrderFlowsReturn {
 }
 
 /**
+ * Convert an HTML "YYYY-MM-DD" date-input value into an ISO timestamp
+ * anchored at local midnight of that calendar day.
+ *
+ * `new Date("2026-04-19")` parses as UTC midnight, which for any user
+ * west of UTC becomes the previous day once formatted back in local
+ * time — a classic off-by-one on date-only pickers. Building the Date
+ * from local components avoids that shift.
+ */
+function dateOnlyToLocalISO(ymd: string): string {
+  const [y, m, d] = ymd.split('-').map(Number)
+  if (!y || !m || !d) return new Date(ymd).toISOString()
+  return new Date(y, m - 1, d).toISOString()
+}
+
+/**
+ * Inverse of dateOnlyToLocalISO: extract the local calendar day from a
+ * stored ISO timestamp as "YYYY-MM-DD", suitable for seeding an HTML
+ * date input. Using the UTC date (via .toISOString().split('T')[0])
+ * would shift by a day for users east or west of UTC.
+ */
+function isoToLocalDateOnly(iso: string | Date): string {
+  const d = typeof iso === 'string' ? new Date(iso) : iso
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/**
  * Encapsulates the New Order and Order Detail modal flows (create, edit,
  * receive, delete) so multiple pages can reuse them without duplicating ~250
  * lines of state and handlers.
@@ -150,7 +179,7 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     formData.append('date', new Date().toISOString())
     formData.append('total', totalNum.toString())
     formData.append('status', 'pending')
-    if (orderEstimatedArrival) formData.append('estimatedArrival', new Date(orderEstimatedArrival).toISOString())
+    if (orderEstimatedArrival) formData.append('estimatedArrival', dateOnlyToLocalISO(orderEstimatedArrival))
     if (orderReceiptFile) formData.append('receipt', orderReceiptFile)
     if (orderProvider) formData.append('providerId', orderProvider)
     formData.append('items', JSON.stringify(orderItems.map(item => ({
@@ -202,7 +231,7 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       const formData = new FormData()
       formData.append('total', totalNum.toString())
       if (orderEstimatedArrival) {
-        formData.append('estimatedArrival', new Date(orderEstimatedArrival).toISOString())
+        formData.append('estimatedArrival', dateOnlyToLocalISO(orderEstimatedArrival))
       }
       if (orderReceiptFile) formData.append('receipt', orderReceiptFile)
       formData.append('providerId', orderProvider || '')
@@ -348,7 +377,7 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     setOrderItems(formItems)
     const total = order.total.toString()
     const provider = order.providerId || ''
-    const arrival = order.estimatedArrival ? new Date(order.estimatedArrival).toISOString().split('T')[0] : ''
+    const arrival = order.estimatedArrival ? isoToLocalDateOnly(order.estimatedArrival) : ''
     setOrderTotal(total)
     setOrderEstimatedArrival(arrival)
     setOrderProvider(provider)

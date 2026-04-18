@@ -25,16 +25,39 @@ export function formatCurrency(
  * Format a date in the given locale. Uses the browser's local timezone,
  * which is correct for the vast majority of cases (user's phone time =
  * business physical location time).
+ *
+ * A "YYYY-MM-DD" string (e.g. an HTML date-input value) is treated as
+ * that calendar day in the local timezone — not UTC midnight. Passing
+ * it to `new Date(str)` would otherwise parse per the ECMAScript spec
+ * as UTC, which shifts the displayed day by one for any locale east or
+ * west of UTC.
+ *
+ * Year is rendered as 2 digits ("26") to keep list rows compact; the
+ * underlying data still holds the full year, so callers that power
+ * search (e.g. the orders tab) can use `d.getFullYear()` to keep
+ * 4-digit queries matching.
  */
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/
+
 export function formatDate(
   date: Date | string,
   locale: string = 'en-US',
 ): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  let d: Date
+  if (typeof date === 'string') {
+    if (DATE_ONLY_RE.test(date)) {
+      const [y, m, day] = date.split('-').map(Number)
+      d = new Date(y, m - 1, day)
+    } else {
+      d = new Date(date)
+    }
+  } else {
+    d = date
+  }
   return new Intl.DateTimeFormat(locale, {
     month: '2-digit',
     day: '2-digit',
-    year: 'numeric',
+    year: '2-digit',
   }).format(d)
 }
 

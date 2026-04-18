@@ -71,6 +71,8 @@ export interface ExpandedOrder extends Order {
       }
     })[]
     provider?: Provider
+    /** The user who created the order. Slim shape (no sensitive fields). */
+    createdByUser?: { id: string; name: string; email: string }
   }
 }
 
