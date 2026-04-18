@@ -764,20 +764,24 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               so the card's dimensions don't jump when a note is first
               added. Actions are hidden entirely for non-managers. */}
           <TabContainer.Tab id="notes">
-            <div className="card p-4 space-y-3">
-              {/* Row 1 — header + written date */}
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-text-primary">
+            <div className="card p-4 space-y-4">
+              {/* Row 1 — header + written date. Mirrors the History /
+                  What you buy / Monthly spend cards: text-secondary
+                  title on the left, muted metadata on the right. */}
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-text-secondary">
                   {t('notes_card_header')}
-                </h3>
+                </span>
                 {provider.notesUpdatedAt && (
-                  <span className="text-xs text-text-tertiary flex-shrink-0">
+                  <span className="text-text-tertiary flex-shrink-0">
                     {t('notes_edited_on', {
                       date: formatRelative(provider.notesUpdatedAt, userLocale),
                     })}
                   </span>
                 )}
               </div>
+
+              <hr className="border-border" />
 
               {/* Row 2 — note content */}
               <p
@@ -788,9 +792,12 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                 {provider.notes || t('notes_empty')}
               </p>
 
-              {/* Row 3 — right-aligned compact action */}
+              {/* Row 3 — right-aligned compact action, separated from
+                  the content by the same hairline the header uses. */}
               {canManage && (
-                <div className="flex justify-end">
+                <>
+                  <hr className="border-border" />
+                  <div className="flex justify-end">
                   <button
                     type="button"
                     onClick={openNotes}
@@ -811,6 +818,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     {provider.notes ? t('edit_note_button') : t('add_note_button')}
                   </button>
                 </div>
+                </>
               )}
             </div>
           </TabContainer.Tab>
