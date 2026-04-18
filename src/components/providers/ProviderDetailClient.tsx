@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { Plus, ChevronRight, Phone, Mail, MessageCircle, ClipboardList, Repeat } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
-import { ClipboardIcon, EditIcon } from '@/components/icons'
+import { CheckmarkIcon, ClipboardIcon, EditIcon } from '@/components/icons'
 import { Spinner, TabContainer } from '@/components/ui'
 import { ProviderModal, getProviderInitials } from './'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
+import { useProviders } from '@/contexts/providers-context'
 import { apiRequest, apiPatch, apiDelete, ApiError } from '@/lib/api-client'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -31,12 +32,6 @@ interface ProviderDetailResponse {
   success?: boolean
   provider: Provider
   stats: ProviderStats
-  [key: string]: unknown
-}
-
-interface ProvidersResponse {
-  success?: boolean
-  providers: Provider[]
   [key: string]: unknown
 }
 
@@ -104,10 +99,10 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   }, [setPageSubtitleSuffix])
 
   const [provider, setProvider] = useState<Provider | null>(null)
-  // Products and all providers fetched so the New Order and Order Detail
-  // modals have the full catalog and can populate the provider dropdown.
+  // Products are fetched locally (no shared store yet). The providers
+  // dropdown used by the order modals reads from the shared providers
+  // store below.
   const [products, setProducts] = useState<Product[]>([])
-  const [allProviders, setAllProviders] = useState<Provider[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -124,10 +119,19 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const [editError, setEditError] = useState('')
   const [providerSaved, setProviderSaved] = useState(false)
 
-  // Shared orders store (see src/contexts/orders-context). We use the
-  // global list directly; orders whose providerId changes elsewhere
-  // fall out of this page's derived list automatically.
+  // Shared orders + providers stores. Orders whose providerId changes
+  // elsewhere fall out of this page's derived list automatically; the
+  // providers store powers the New Order / Order Detail modal dropdowns.
   const { orders: allOrders, setOrders, ensureLoaded: ensureOrdersLoaded } = useOrders()
+  const {
+    providers: allProvidersAll,
+    setProviders,
+    ensureLoaded: ensureProvidersLoaded,
+  } = useProviders()
+  const allProviders = useMemo(
+    () => allProvidersAll.filter(p => p.active),
+    [allProvidersAll],
+  )
   const providerOrders = useMemo(
     () => allOrders.filter(o => o.providerId === providerId),
     [allOrders, providerId],
@@ -169,7 +173,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   }, [providerId])
 
   useEffect(() => {
-    if (!canManage) return
+    if (!canManage || !provider?.name) return
     setNavOverride(
       <button
         type="button"
@@ -177,11 +181,13 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         className="btn btn-primary w-full"
       >
         <Plus className="w-4 h-4" />
-        {t('new_order_button')}
+        <span className="truncate">
+          {t('new_order_button', { name: provider.name })}
+        </span>
       </button>
     )
     return () => setNavOverride(null)
-  }, [canManage, openNewOrderForProvider, setNavOverride, t])
+  }, [canManage, provider?.name, openNewOrderForProvider, setNavOverride, t])
 
   // ===== Load data =====
   // Page-specific data (provider, product catalog, providers list for the
@@ -190,15 +196,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const loadAll = useCallback(async () => {
     try {
       setError('')
-      const [detail, productsData, providersData] = await Promise.all([
+      const [detail, productsData] = await Promise.all([
         apiRequest<ProviderDetailResponse>(`/api/businesses/${businessId}/providers/${providerId}`),
         apiRequest<ProductsResponse>(`/api/businesses/${businessId}/products`),
-        apiRequest<ProvidersResponse>(`/api/businesses/${businessId}/providers`),
         ensureOrdersLoaded(),
+        ensureProvidersLoaded(),
       ])
       setProvider(detail.provider)
       setProducts(productsData.products)
-      setAllProviders(providersData.providers)
     } catch (err) {
       setError(
         err instanceof ApiError && err.envelope
@@ -208,7 +213,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsLoading(false)
     }
-  }, [businessId, providerId, ensureOrdersLoaded, t, translateApiMessage])
+  }, [businessId, providerId, ensureOrdersLoaded, ensureProvidersLoaded, t, translateApiMessage])
 
   useEffect(() => { loadAll() }, [loadAll])
 
@@ -243,10 +248,10 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         `/api/businesses/${businessId}/providers/${providerId}`,
         payload,
       )
-      // Optimistic update of local provider state + allProviders list used
-      // by the order modals' dropdown.
+      // Update local provider state + sync the shared providers list so
+      // the order-modal dropdowns on other pages see the new values.
       setProvider(result.provider)
-      setAllProviders(prev => prev.map(p => p.id === result.provider.id ? result.provider : p))
+      setProviders(prev => prev.map(p => (p.id === result.provider.id ? result.provider : p)))
       setProviderSaved(true)
       return true
     } catch (err) {
@@ -259,7 +264,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsSaving(false)
     }
-  }, [businessId, providerId, name, phone, email, active, t, translateApiMessage])
+  }, [businessId, providerId, name, phone, email, active, setProviders, t, translateApiMessage])
 
   // ===== Delete provider =====
   // Returns true on successful delete, which lets the modal navigate to the
@@ -271,6 +276,22 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     setEditError('')
     try {
       await apiDelete(`/api/businesses/${businessId}/providers/${providerId}`)
+      // Detach the provider from every piece of client state so no UI
+      // anywhere in the app keeps a dangling reference:
+      //   - Remove it from the shared providers list (dropdowns, the
+      //     /providers list page).
+      //   - Null out providerId and drop the `provider` expansion on
+      //     every order that referenced it (matches the backend, which
+      //     already nulls orders.providerId on delete).
+      setProviders(prev => prev.filter(p => p.id !== providerId))
+      setOrders(prev =>
+        prev.map(o => {
+          if (o.providerId !== providerId) return o
+          const nextExpand = o.expand ? { ...o.expand } : undefined
+          if (nextExpand) delete nextExpand.provider
+          return { ...o, providerId: null, expand: nextExpand }
+        }),
+      )
       setProviderDeleted(true)
       return true
     } catch (err) {
@@ -283,7 +304,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsDeleting(false)
     }
-  }, [businessId, providerId, t, translateApiMessage])
+  }, [businessId, providerId, setOrders, setProviders, t, translateApiMessage])
 
   // ===== Typical items =====
   const typicalItems = useMemo(() => {
@@ -679,7 +700,11 @@ function OrderHistoryRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3">
           <div className={`product-list-image flex items-center justify-center ${colors.bg}`}>
-            <ClipboardIcon className={`w-5 h-5 ${colors.text}`} />
+            {displayStatus === 'received' ? (
+              <CheckmarkIcon className={`w-5 h-5 ${colors.text}`} />
+            ) : (
+              <ClipboardIcon className={`w-5 h-5 ${colors.text}`} />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <span className="font-medium block text-text-primary">

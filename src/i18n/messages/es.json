@@ -567,7 +567,7 @@
     "stat_total_spent": "Total gastado",
     "stat_last_order": "Última orden",
     "stat_never_ordered": "Sin órdenes",
-    "new_order_button": "Nueva orden de este proveedor",
+    "new_order_button": "Nueva orden con {name}",
     "order_history_title": "Historial de órdenes",
     "order_history_empty": "Aún no hay órdenes de este proveedor.",
     "typical_items_title": "Artículos frecuentes",

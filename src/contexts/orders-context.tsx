@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -104,6 +105,14 @@ export function OrdersProvider({ businessId, children }: OrdersProviderProps) {
     inFlight.current = fetchOrders()
     return inFlight.current
   }, [fetchOrders])
+
+  // Stale-while-revalidate: always refetch on mount so a stale
+  // sessionStorage cache (e.g. from a prior session) can't serve as the
+  // source of truth. Cache is kept for instant first paint only.
+  useEffect(() => {
+    refetch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <OrdersContext.Provider

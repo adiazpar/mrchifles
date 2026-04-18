@@ -3,17 +3,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { useBusiness } from '@/contexts/business-context'
+import { useProviders } from '@/contexts/providers-context'
 import { canManageBusiness } from '@/lib/business-role'
-import { apiRequest, apiPost, apiPatch, ApiError, ApiResponse } from '@/lib/api-client'
+import { apiPost, apiPatch, ApiError, ApiResponse } from '@/lib/api-client'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import type { Provider } from '@/types'
 
 export interface UseProviderManagementOptions {
   businessId: string
-}
-
-interface ProvidersResponse extends ApiResponse {
-  providers: Provider[]
 }
 
 interface ProviderResponse extends ApiResponse {
@@ -59,10 +56,19 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
   const t = useTranslations('providers')
   const translateApiMessage = useApiMessage()
 
-  // Data state
-  const [providers, setProviders] = useState<Provider[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  // Data comes from the shared providers store so mutations anywhere in
+  // the app (e.g. a delete on the detail page) are reflected here
+  // without a manual refetch.
+  const {
+    providers,
+    setProviders,
+    isLoading: providersLoading,
+    isLoaded: providersLoaded,
+    ensureLoaded: ensureProvidersLoaded,
+    error: providersError,
+  } = useProviders()
   const [error, setError] = useState('')
+  const isLoading = providersLoading || !providersLoaded
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -79,38 +85,15 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
   // Check if current user can manage providers
   const canManage = canManageBusiness(role)
 
-  // Load providers
   useEffect(() => {
-    let cancelled = false
+    ensureProvidersLoaded()
+  }, [ensureProvidersLoaded])
 
-    async function loadData() {
-      try {
-        const data = await apiRequest<ProvidersResponse>(`/api/businesses/${businessId}/providers`)
-
-        if (cancelled) return
-
-        setProviders(data.providers)
-      } catch (err) {
-        if (cancelled) return
-        console.error('Error loading providers:', err)
-        setError(
-          err instanceof ApiError && err.envelope
-            ? translateApiMessage(err.envelope)
-            : t('error_failed_to_load')
-        )
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    loadData()
-
-    return () => {
-      cancelled = true
-    }
-  }, [businessId, t, translateApiMessage])
+  // Surface context fetch errors through the hook's error field so the
+  // page's existing error banner keeps working.
+  useEffect(() => {
+    if (providersError) setError(providersError)
+  }, [providersError])
 
   // Sort providers: active first, then by name
   const sortedProviders = useMemo(() => {
@@ -172,20 +155,20 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
       }
 
       if (editingProvider) {
-        await apiPatch<ProviderResponse>(
+        const result = await apiPatch<ProviderResponse>(
           `/api/businesses/${businessId}/providers/${editingProvider.id}`,
           providerData
         )
+        setProviders(prev =>
+          prev.map(p => (p.id === result.provider.id ? result.provider : p)),
+        )
       } else {
-        await apiPost<ProviderResponse>(
+        const result = await apiPost<ProviderResponse>(
           `/api/businesses/${businessId}/providers`,
           providerData
         )
+        setProviders(prev => [...prev, result.provider])
       }
-
-      // Reload providers
-      const listData = await apiRequest<ProvidersResponse>(`/api/businesses/${businessId}/providers`)
-      setProviders(listData.providers)
 
       setProviderSaved(true)
       return true
@@ -200,7 +183,7 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     } finally {
       setIsSaving(false)
     }
-  }, [businessId, name, phone, email, active, editingProvider, t, translateApiMessage])
+  }, [businessId, name, phone, email, active, editingProvider, setProviders, t, translateApiMessage])
 
   return {
     // Data

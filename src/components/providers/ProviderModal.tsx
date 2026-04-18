@@ -136,6 +136,16 @@ export function ProviderModal({
   const tCommon = useTranslations('common')
   const isFormValid = name.trim().length > 0
   const showDeleteAction = !!editingProvider && canDelete
+  // In edit mode the Save button is disabled until the user changes
+  // something; Add mode always has "changes" (the user is creating new).
+  const hasChanges = editingProvider
+    ? (
+        name.trim() !== (editingProvider.name ?? '').trim() ||
+        phone.trim() !== (editingProvider.phone ?? '').trim() ||
+        email.trim() !== (editingProvider.email ?? '').trim() ||
+        active !== editingProvider.active
+      )
+    : true
 
   return (
     <Modal
@@ -164,6 +174,7 @@ export function ProviderModal({
             className="input"
             placeholder={t('name_placeholder')}
             autoComplete="off"
+            maxLength={80}
           />
         </Modal.Item>
 
@@ -215,7 +226,7 @@ export function ProviderModal({
           <SaveProviderButton
             onSubmit={onSubmit}
             isSaving={isSaving}
-            disabled={isSaving || !isFormValid}
+            disabled={isSaving || !isFormValid || !hasChanges}
           />
         </Modal.Footer>
       </Modal.Step>

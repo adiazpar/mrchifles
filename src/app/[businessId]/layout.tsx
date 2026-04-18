@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { PageTransition } from '@/components/layout'
 import { ContentGuard } from '@/components/auth'
 import { OrdersProvider } from '@/contexts/orders-context'
+import { ProvidersProvider } from '@/contexts/providers-context'
 
 /**
  * Business layout.
@@ -22,8 +23,10 @@ export default function BusinessLayout({
   return (
     <PageTransition>
       <ContentGuard>
-        <OrdersProvider key={businessId} businessId={businessId}>
-          {children}
+        <OrdersProvider key={`orders-${businessId}`} businessId={businessId}>
+          <ProvidersProvider key={`providers-${businessId}`} businessId={businessId}>
+            {children}
+          </ProvidersProvider>
         </OrdersProvider>
       </ContentGuard>
     </PageTransition>

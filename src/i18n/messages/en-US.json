@@ -567,7 +567,7 @@
     "stat_total_spent": "Total spent",
     "stat_last_order": "Last order",
     "stat_never_ordered": "No orders yet",
-    "new_order_button": "New order from this provider",
+    "new_order_button": "New order with {name}",
     "order_history_title": "Order history",
     "order_history_empty": "No orders from this provider yet.",
     "typical_items_title": "Typical items",

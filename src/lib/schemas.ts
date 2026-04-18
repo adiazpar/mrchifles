@@ -17,9 +17,12 @@ export const Schemas = {
   email: () => z.email().toLowerCase(),
 
   /**
-   * Required name field with minimum length.
+   * Required name field with minimum and maximum length. The 80-char default
+   * is a permissive safety net: plenty of room for real business/product
+   * names while blocking pathological pasted values.
    */
-  name: (minLength = 1) => z.string().min(minLength),
+  name: (minLength = 1, maxLength = 80) =>
+    z.string().min(minLength).max(maxLength),
 
   /**
    * Required ID field.
