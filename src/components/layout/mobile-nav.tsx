@@ -14,36 +14,61 @@ import { useCreateBusinessModal } from '@/contexts/create-business-context'
 export function MobileNav() {
   const t = useTranslations('ui.nav')
   const tNav = useTranslations('navigation')
-  const pathname = usePathname()
+  const livePathname = usePathname()
   const router = useRouter()
-  const { isVisible, pendingHref, setPendingHref, slideDirection, navOverride: liveNavOverride } = useNavbar()
+  const {
+    isVisible,
+    pendingHref: livePendingHref,
+    setPendingHref,
+    slideDirection,
+    navOverride: liveNavOverride,
+  } = useNavbar()
   const businessContext = useOptionalBusiness()
   const { openJoinModal, isJoinModalOpen } = useJoinBusinessModal()
   const { openCreateModal, isCreateModalOpen } = useCreateBusinessModal()
   const navRef = useRef<HTMLElement>(null)
 
-  // Get businessId from pathname (immediate) for context detection
-  // This prevents flicker while waiting for context API to load
-  const businessIdFromPath = getBusinessIdFromPath(pathname)
-  const businessId = businessContext?.businessId ?? businessIdFromPath
-
-  // Determine if we're in hub context based on pathname
-  const isHubContext = !businessIdFromPath
+  // Live route state (used for prefetch and for releasing the snapshot below
+  // once a slide ends). Everything the nav actually RENDERS reads from the
+  // frozen display state a few lines down.
+  const liveBusinessIdFromPath = getBusinessIdFromPath(livePathname)
+  const liveBusinessId = businessContext?.businessId ?? liveBusinessIdFromPath
 
   // Local state to control the hidden class
   const [isHidden, setIsHidden] = useState(false)
 
-  // Snapshot of navOverride that stays frozen during slide transitions so the
-  // nav slides out with the previous page's content and slides back in with
-  // the new page's content. Without this, updating navOverride mid-slide
-  // would cause the new content to flash into the still-visible nav before
-  // the slide-down animation begins.
-  const [displayNavOverride, setDisplayNavOverride] = useState<typeof liveNavOverride>(liveNavOverride)
+  // Snapshot of everything the nav renders, frozen during slide transitions so
+  // the nav slides out with the previous page's content and slides back in
+  // with the new page's content. Without this freeze the nav flickers mid
+  // slide: the active item loses its brand color the moment pendingHref is
+  // set, hub/business icons swap the moment pathname changes, and any late
+  // navOverride (e.g. provider detail's "New order" button, which depends on
+  // an async fetch) replaces the standard tab icons after the slide has
+  // already started coming back up. Capturing a snapshot and only refreshing
+  // it when slideDirection === null keeps every visible change outside the
+  // hidden/slid-down window.
+  const [display, setDisplay] = useState(() => ({
+    pathname: livePathname,
+    pendingHref: livePendingHref,
+    businessId: liveBusinessId,
+    navOverride: liveNavOverride,
+  }))
   useEffect(() => {
     if (slideDirection === null) {
-      setDisplayNavOverride(liveNavOverride)
+      setDisplay({
+        pathname: livePathname,
+        pendingHref: livePendingHref,
+        businessId: liveBusinessId,
+        navOverride: liveNavOverride,
+      })
     }
-  }, [liveNavOverride, slideDirection])
+  }, [slideDirection, livePathname, livePendingHref, liveBusinessId, liveNavOverride])
+
+  const pathname = display.pathname
+  const pendingHref = display.pendingHref
+  const businessId = display.businessId
+  const displayNavOverride = display.navOverride
+  const isHubContext = !getBusinessIdFromPath(pathname)
 
   // Map nav path segments to translation keys
   const NAV_LABEL_MAP: Record<string, string> = {
@@ -61,16 +86,18 @@ export function MobileNav() {
     return getNavItems(businessId)
   }, [businessId])
 
-  // Prefetch all routes on mount for instant navigation
+  // Prefetch all routes on mount for instant navigation. Uses the LIVE
+  // businessId (not the frozen snapshot) so prefetching kicks in as soon as
+  // we enter a new business context, not after the slide completes.
   useEffect(() => {
-    if (!businessId) return
-    navItems.forEach((item) => {
+    if (!liveBusinessId) return
+    getNavItems(liveBusinessId).forEach((item) => {
       router.prefetch(item.href)
     })
-    getPrefetchRoutes(businessId).forEach((route) => {
+    getPrefetchRoutes(liveBusinessId).forEach((route) => {
       router.prefetch(route)
     })
-  }, [router, businessId, navItems])
+  }, [router, liveBusinessId])
 
   // Hide the nav when:
   //   • isVisible is false (explicit hide() from drill-down pages like

@@ -65,7 +65,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const userLocale = useLocale()
   const translateApiMessage = useApiMessage()
   const { role } = useBusiness()
-  const { setSlideDirection, setSlideTargetPath, setPendingHref, setPageSubtitleSuffix, setNavOverride } = useNavbar()
+  const { setSlideDirection, setSlideTargetPath, setPendingHref, setPageSubtitleSuffix, setNavOverride, hide, show } = useNavbar()
   const canManage = canManageBusiness(role)
 
   // Tab state — initialized from the URL so browser back/forward and
@@ -193,6 +193,19 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     )
     return () => setNavOverride(null)
   }, [canManage, provider?.name, openNewOrderForProvider, setNavOverride, t])
+
+  // The provider fetch almost always outlasts the 180ms slideDirection
+  // window. Without this, the nav would slide back up with the standard tab
+  // icons and then — once provider loads — flash to the "New order" override
+  // button. Keep the nav hidden until we have the data so the first slide-up
+  // already holds whatever the detail page ends up rendering (override for
+  // managers, standard tabs for read-only viewers).
+  useEffect(() => {
+    if (!provider) {
+      hide()
+      return () => show()
+    }
+  }, [provider, hide, show])
 
   // ===== Load data =====
   // Page-specific data (provider, product catalog, providers list for the
