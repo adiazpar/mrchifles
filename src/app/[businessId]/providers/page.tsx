@@ -47,8 +47,6 @@ export default function ProveedoresPage() {
     setPhone,
     email,
     setEmail,
-    notes,
-    setNotes,
     active,
     setActive,
 
@@ -139,7 +137,8 @@ export default function ProveedoresPage() {
           )}
       </main>
 
-      {/* Provider Modal */}
+      {/* Provider Modal — only used for Add on this page (editing lives on
+          the detail page), so delete controls are stubbed off. */}
       <ProviderModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
@@ -150,8 +149,6 @@ export default function ProveedoresPage() {
         onPhoneChange={setPhone}
         email={email}
         onEmailChange={setEmail}
-        notes={notes}
-        onNotesChange={setNotes}
         active={active}
         onActiveChange={setActive}
         editingProvider={editingProvider}
@@ -159,6 +156,10 @@ export default function ProveedoresPage() {
         error={error}
         providerSaved={providerSaved}
         onSubmit={handleSubmit}
+        canDelete={false}
+        isDeleting={false}
+        providerDeleted={false}
+        onDelete={async () => false}
       />
     </>
   )

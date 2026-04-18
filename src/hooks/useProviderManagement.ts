@@ -43,8 +43,6 @@ export interface UseProviderManagementReturn {
   setPhone: (phone: string) => void
   email: string
   setEmail: (email: string) => void
-  notes: string
-  setNotes: (notes: string) => void
   active: boolean
   setActive: (active: boolean) => void
 
@@ -76,7 +74,6 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
-  const [notes, setNotes] = useState('')
   const [active, setActive] = useState(true)
 
   // Check if current user can manage providers
@@ -130,7 +127,6 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     setName('')
     setPhone('')
     setEmail('')
-    setNotes('')
     setActive(true)
     setEditingProvider(null)
     setError('')
@@ -143,7 +139,6 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
       setName(provider.name)
       setPhone(provider.phone || '')
       setEmail(provider.email || '')
-      setNotes(provider.notes || '')
       setActive(provider.active)
     } else {
       resetForm()
@@ -173,7 +168,6 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
         name: name.trim(),
         phone: phone.trim() || null,
         email: email.trim() || null,
-        notes: notes.trim() || null,
         active,
       }
 
@@ -206,7 +200,7 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     } finally {
       setIsSaving(false)
     }
-  }, [businessId, name, phone, email, notes, active, editingProvider, t, translateApiMessage])
+  }, [businessId, name, phone, email, active, editingProvider, t, translateApiMessage])
 
   return {
     // Data
@@ -231,8 +225,6 @@ export function useProviderManagement({ businessId }: UseProviderManagementOptio
     setPhone,
     email,
     setEmail,
-    notes,
-    setNotes,
     active,
     setActive,
 

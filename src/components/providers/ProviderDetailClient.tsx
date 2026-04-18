@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { Plus, ChevronRight, Phone, Mail, MessageCircle, ClipboardList, Repeat, Trash2 } from 'lucide-react'
+import { Plus, ChevronRight, Phone, Mail, MessageCircle, ClipboardList, Repeat } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import { ClipboardIcon, EditIcon } from '@/components/icons'
-import { Spinner, Modal } from '@/components/ui'
+import { Spinner } from '@/components/ui'
 import { ProviderModal, getProviderInitials } from './'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
@@ -55,7 +55,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const router = useRouter()
   const t = useTranslations('providers')
   const tOrders = useTranslations('orders')
-  const tCommon = useTranslations('common')
   const { formatCurrency } = useBusinessFormat()
   // Relative time ("3 days ago") is LANGUAGE, not formatting — use user UI
   // locale, not business locale, so an English UI doesn't show "hace 3 días".
@@ -80,14 +79,13 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const [error, setError] = useState('')
 
   const [isEditOpen, setEditOpen] = useState(false)
-  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [providerDeleted, setProviderDeleted] = useState(false)
 
   // Edit modal form state
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
-  const [notes, setNotes] = useState('')
   const [active, setActive] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [editError, setEditError] = useState('')
@@ -191,7 +189,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     setName(provider.name)
     setPhone(provider.phone || '')
     setEmail(provider.email || '')
-    setNotes(provider.notes || '')
     setActive(provider.active)
     setProviderSaved(false)
     setEditError('')
@@ -207,7 +204,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         name: name.trim(),
         phone: phone.trim() || null,
         email: email.trim() || null,
-        notes: notes.trim() || null,
         active,
       }
       const result = await apiPatch<{ success: true; provider: Provider }>(
@@ -230,28 +226,31 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsSaving(false)
     }
-  }, [businessId, providerId, name, phone, email, notes, active, t, translateApiMessage])
+  }, [businessId, providerId, name, phone, email, active, t, translateApiMessage])
 
   // ===== Delete provider =====
-  const handleDelete = useCallback(async () => {
+  // Returns true on successful delete, which lets the modal navigate to the
+  // delete-success step. The actual navigation back to the providers list
+  // happens once the modal has fully closed — see onExitComplete below —
+  // so the delete-success animation plays before the slide-back fires.
+  const handleDelete = useCallback(async (): Promise<boolean> => {
     setIsDeleting(true)
+    setEditError('')
     try {
       await apiDelete(`/api/businesses/${businessId}/providers/${providerId}`)
-      const href = `/${businessId}/providers`
-      setSlideTargetPath(`/${businessId}/providers/${providerId}`)
-      setSlideDirection('back')
-      setPendingHref(href)
-      router.push(href)
+      setProviderDeleted(true)
+      return true
     } catch (err) {
-      setError(
+      setEditError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
           : t('error_failed_to_delete')
       )
+      return false
+    } finally {
       setIsDeleting(false)
-      setDeleteModalOpen(false)
     }
-  }, [businessId, providerId, router, setSlideTargetPath, setSlideDirection, setPendingHref, t, translateApiMessage])
+  }, [businessId, providerId, t, translateApiMessage])
 
   // ===== Typical items =====
   const typicalItems = useMemo(() => {
@@ -482,35 +481,34 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           </div>
         )}
 
-        {/* ============== Danger zone ==============
-            Tiny underlined link at the bottom; opens a confirmation modal. */}
-        {canManage && (
-          <div className="pt-4 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setDeleteModalOpen(true)}
-              className="inline-flex items-center gap-2 text-sm text-error hover:underline"
-            >
-              <Trash2 className="w-4 h-4" />
-              {t('delete_provider_button')}
-            </button>
-          </div>
-        )}
       </main>
 
-      {/* ============== Edit modal ============== */}
+      {/* ============== Edit modal ==============
+          Hosts the delete flow as extra morph steps (see ProviderModal).
+          When the modal has finished closing after a successful delete we
+          slide back to the providers list — deferring the navigation
+          lets the delete-success animation play inside the modal first. */}
       <ProviderModal
         isOpen={isEditOpen}
         onClose={() => setEditOpen(false)}
-        onExitComplete={() => { setProviderSaved(false); setEditError('') }}
+        onExitComplete={() => {
+          setProviderSaved(false)
+          setEditError('')
+          if (providerDeleted) {
+            const href = `/${businessId}/providers`
+            setSlideTargetPath(`/${businessId}/providers/${providerId}`)
+            setSlideDirection('back')
+            setPendingHref(href)
+            router.push(href)
+            setProviderDeleted(false)
+          }
+        }}
         name={name}
         onNameChange={setName}
         phone={phone}
         onPhoneChange={setPhone}
         email={email}
         onEmailChange={setEmail}
-        notes={notes}
-        onNotesChange={setNotes}
         active={active}
         onActiveChange={setActive}
         editingProvider={provider}
@@ -518,38 +516,11 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         error={editError}
         providerSaved={providerSaved}
         onSubmit={handleSaveEdit}
+        canDelete={canManage}
+        isDeleting={isDeleting}
+        providerDeleted={providerDeleted}
+        onDelete={handleDelete}
       />
-
-      {/* ============== Delete confirmation modal ============== */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => !isDeleting && setDeleteModalOpen(false)}
-        title={t('delete_provider_confirm_title')}
-      >
-        <Modal.Item>
-          <p className="text-sm text-text-secondary">
-            {t('delete_provider_confirm_body', { name: provider.name })}
-          </p>
-        </Modal.Item>
-        <Modal.Footer>
-          <button
-            type="button"
-            onClick={() => setDeleteModalOpen(false)}
-            className="btn btn-secondary flex-1"
-            disabled={isDeleting}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="btn btn-danger flex-1"
-            disabled={isDeleting}
-          >
-            {isDeleting ? <Spinner /> : tCommon('delete')}
-          </button>
-        </Modal.Footer>
-      </Modal>
 
       {/* ============== Order flows (new order + order detail/edit/receive/delete) ============== */}
       {orderFlows.modals}
