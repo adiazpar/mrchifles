@@ -6,6 +6,8 @@ export type { ProductsTabProps } from './ProductsTab'
 export { OrdersTab } from './OrdersTab'
 export type { OrdersTabProps } from './OrdersTab'
 
+export { OrderListItem } from './OrderListItem'
+
 export { AddProductModal } from './AddProductModal'
 export type { AddProductModalProps } from './AddProductModal'
 

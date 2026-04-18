@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { Plus, ChevronRight, Phone, Mail, MessageCircle, ClipboardList, Repeat } from 'lucide-react'
+import { Plus, Phone, Mail, MessageCircle, ClipboardList, Repeat } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
-import { CheckmarkIcon, ClipboardIcon, ClockIcon, EditIcon, XMarkIcon } from '@/components/icons'
+import { EditIcon } from '@/components/icons'
 import { Spinner, TabContainer } from '@/components/ui'
 import { ProviderModal, getProviderInitials } from './'
+import { OrderListItem } from '@/components/products'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
 import { useProviders } from '@/contexts/providers-context'
@@ -18,9 +19,7 @@ import { useBusiness } from '@/contexts/business-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { canManageBusiness } from '@/lib/business-role'
 import { formatRelative } from '@/lib/formatRelative'
-import { getOrderDisplayStatus } from '@/lib/products'
 import type { Provider, Product } from '@/types'
-import type { ExpandedOrder } from '@/lib/products'
 
 interface ProviderStats {
   totalOrders: number
@@ -521,16 +520,11 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   <hr className="border-border" />
                   <div>
                     {providerOrders.slice(0, 3).map(order => (
-                      <OrderHistoryRow
+                      <OrderListItem
                         key={order.id}
                         order={order}
                         onView={() => orderFlows.openOrderDetail(order)}
-                        formatCurrency={formatCurrency}
-                        userLocale={userLocale}
-                        tStatusPending={tOrders('status_pending')}
-                        tStatusReceived={tOrders('status_received')}
-                        tStatusOverdue={tOrders('status_overdue')}
-                        tUnitCount={(count: number) => tOrders('item_unit_count', { count })}
+                        hideProviderRow
                       />
                     ))}
                   </div>
@@ -539,24 +533,21 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             )}
           </TabContainer.Tab>
 
-          {/* ---- History ---- */}
+          {/* ---- History ----
+              Same card pattern and list item styles as the products
+              page's Orders tab, scoped to this provider. The "Ordered
+              to:" metadata row is suppressed because the whole page is
+              already about one provider — the row would be redundant. */}
           <TabContainer.Tab id="history">
             <div className="card p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4 text-text-tertiary" />
-                  <h3 className="text-sm font-semibold text-text-primary">
-                    {t('order_history_title')}
-                  </h3>
-                  {hasOrders && (
-                    <>
-                      <span className="text-text-tertiary">&#183;</span>
-                      <span className="text-sm text-text-secondary">
-                        {tOrders('order_count', { count: providerOrders.length })}
-                      </span>
-                    </>
-                  )}
-                </div>
+              <div className="text-sm text-text-tertiary">
+                {t('order_history_title')}
+                {hasOrders && (
+                  <>
+                    <span className="mx-1.5">&#183;</span>
+                    {tOrders('order_count', { count: providerOrders.length })}
+                  </>
+                )}
               </div>
 
               <hr className="border-border" />
@@ -568,16 +559,11 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               ) : (
                 <div>
                   {providerOrders.map(order => (
-                    <OrderHistoryRow
+                    <OrderListItem
                       key={order.id}
                       order={order}
                       onView={() => orderFlows.openOrderDetail(order)}
-                      formatCurrency={formatCurrency}
-                      userLocale={userLocale}
-                      tStatusPending={tOrders('status_pending')}
-                      tStatusReceived={tOrders('status_received')}
-                      tStatusOverdue={tOrders('status_overdue')}
-                      tUnitCount={(count: number) => tOrders('item_unit_count', { count })}
+                      hideProviderRow
                     />
                   ))}
                 </div>
@@ -647,83 +633,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       {/* ============== Order flows (new order + order detail/edit/receive/delete) ============== */}
       {orderFlows.modals}
     </>
-  )
-}
-
-interface OrderHistoryRowProps {
-  order: ExpandedOrder
-  onView: () => void
-  formatCurrency: (n: number) => string
-  userLocale: string
-  tStatusPending: string
-  tStatusReceived: string
-  tStatusOverdue: string
-  tUnitCount: (count: number) => string
-}
-
-function OrderHistoryRow({
-  order,
-  onView,
-  formatCurrency,
-  userLocale,
-  tStatusPending,
-  tStatusReceived,
-  tStatusOverdue,
-  tUnitCount,
-}: OrderHistoryRowProps) {
-  const items = order.expand?.['order_items(order)'] || []
-  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0)
-  const displayStatus = getOrderDisplayStatus(order)
-
-  const statusColors = {
-    pending: { bg: '!bg-warning-subtle', text: 'text-warning' },
-    received: { bg: '!bg-success-subtle', text: 'text-success' },
-    overdue: { bg: '!bg-error-subtle', text: 'text-error' },
-  } as const
-  const statusLabels = {
-    pending: tStatusPending,
-    received: tStatusReceived,
-    overdue: tStatusOverdue,
-  } as const
-
-  const colors = statusColors[displayStatus]
-  const label = statusLabels[displayStatus]
-
-  return (
-    <div
-      className="list-item-clickable"
-      onClick={onView}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onView() } }}
-      role="button"
-      tabIndex={0}
-    >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3">
-          <div className={`product-list-image flex items-center justify-center ${colors.bg}`}>
-            {displayStatus === 'received' ? (
-              <CheckmarkIcon className={`w-5 h-5 ${colors.text}`} />
-            ) : displayStatus === 'pending' ? (
-              <ClockIcon className={`w-5 h-5 ${colors.text}`} />
-            ) : (
-              <XMarkIcon className={`w-5 h-5 ${colors.text}`} />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <span className="font-medium block text-text-primary">
-              {formatRelative(order.date, userLocale)}
-            </span>
-            <span className="text-xs text-text-tertiary mt-0.5 block">
-              {tUnitCount(itemCount)}
-            </span>
-          </div>
-          <div className="text-right flex-shrink-0">
-            <span className="font-medium block text-error">-{formatCurrency(order.total)}</span>
-            <span className={`text-xs mt-0.5 block ${colors.text}`}>{label}</span>
-          </div>
-          <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 ml-2" />
-        </div>
-      </div>
-    </div>
   )
 }
 

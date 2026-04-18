@@ -1,22 +1,21 @@
 'use client'
 
-import { memo, useState } from 'react'
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { X, Plus, ChevronUp, ChevronRight } from 'lucide-react'
-import { CalendarIcon, CheckmarkIcon, ClipboardIcon, ClockIcon, FilterIcon, JoinIcon, SupplierIcon, XMarkIcon } from '@/components/icons'
+import { X, Plus, ChevronUp } from 'lucide-react'
+import { ClipboardIcon, FilterIcon } from '@/components/icons'
 import { Modal } from '@/components/ui'
-import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useTranslations } from 'next-intl'
 import { scrollToTop } from '@/lib/scroll'
 import {
   ORDER_SORT_OPTIONS,
-  getOrderDisplayStatus,
   type OrderSortOption,
   type OrderStatusFilter,
 } from '@/lib/products'
 import type { Product } from '@/types'
 import type { ExpandedOrder } from '@/lib/products'
+import { OrderListItem } from './OrderListItem'
 
 // ============================================
 // PROPS INTERFACE
@@ -306,138 +305,3 @@ export function OrdersTab({
     </div>
   )
 }
-
-// ============================================
-// MEMOIZED LIST ITEM
-// ============================================
-
-interface OrderListItemProps {
-  order: ExpandedOrder
-  onView: (order: ExpandedOrder) => void
-}
-
-const OrderListItem = memo(function OrderListItem({
-  order,
-  onView,
-}: OrderListItemProps) {
-  const t = useTranslations('orders')
-  const { formatCurrency, formatDate } = useBusinessFormat()
-  const items = order.expand?.['order_items(order)'] || []
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-  const displayStatus = getOrderDisplayStatus(order)
-
-  const statusColors = {
-    pending: { bg: '!bg-warning-subtle', text: 'text-warning' },
-    received: { bg: '!bg-success-subtle', text: 'text-success' },
-    overdue: { bg: '!bg-error-subtle', text: 'text-error' },
-  }
-  const statusLabel = {
-    pending: t('status_pending'),
-    received: t('status_received'),
-    overdue: t('status_overdue'),
-  }
-  const colors = statusColors[displayStatus]
-
-  const hasProvider = !!order.expand?.provider
-
-  const orderLabel = order.orderNumber != null ? `#${order.orderNumber}` : `#${order.id.slice(0, 6)}`
-
-  return (
-    <div
-      className="list-item-clickable items-start"
-      onClick={() => onView(order)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onView(order)
-        }
-      }}
-      role="button"
-      tabIndex={0}
-    >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3">
-          {/* Status indicator */}
-          <div className={`product-list-image flex items-center justify-center ${colors.bg}`}>
-            {displayStatus === 'received' ? (
-              <CheckmarkIcon className={`w-5 h-5 ${colors.text}`} />
-            ) : displayStatus === 'pending' ? (
-              <ClockIcon className={`w-5 h-5 ${colors.text}`} />
-            ) : (
-              <XMarkIcon className={`w-5 h-5 ${colors.text}`} />
-            )}
-          </div>
-
-          {/* Order reference + item count */}
-          <div className="flex-1 min-w-0">
-            <span className="font-medium block tabular-nums">
-              {orderLabel}
-            </span>
-            <span className="text-xs text-text-tertiary mt-0.5 block">
-              {t('item_unit_count', { count: itemCount })}
-            </span>
-          </div>
-
-          {/* Total and Status */}
-          <div className="text-right flex-shrink-0">
-            <span className="font-medium block text-error">
-              -{formatCurrency(order.total)}
-            </span>
-            <span className={`text-xs mt-0.5 block ${colors.text}`}>
-              {statusLabel[displayStatus]}
-            </span>
-          </div>
-
-          {/* Chevron */}
-          <div className="text-text-tertiary ml-2 flex-shrink-0">
-            <ChevronRight className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Creation date as metadata, mirroring the "Ordered to:" row layout */}
-        <div className="mt-3 flex items-center gap-3">
-          <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-            <CalendarIcon className="w-4 h-4 text-text-tertiary" />
-          </div>
-          <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-            {t('ordered_on_label')}
-          </span>
-          <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate tabular-nums">
-            {formatDate(new Date(order.date))}
-          </span>
-          <div className="ml-2 flex-shrink-0" style={{ width: 20 }} aria-hidden="true" />
-        </div>
-
-        {order.expand?.createdByUser && (
-          <div className="mt-2 flex items-center gap-3">
-            <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <JoinIcon className="w-4 h-4 text-text-tertiary" />
-            </div>
-            <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-              {t('ordered_by_label')}
-            </span>
-            <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
-              {order.expand.createdByUser.name || order.expand.createdByUser.email}
-            </span>
-            <div className="ml-2 flex-shrink-0" style={{ width: 20 }} aria-hidden="true" />
-          </div>
-        )}
-
-        {hasProvider && order.expand?.provider && (
-          <div className="mt-2 flex items-center gap-3">
-            <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <SupplierIcon className="w-4 h-4 text-text-tertiary" />
-            </div>
-            <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-              {t('ordered_to_label')}
-            </span>
-            <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
-              {order.expand.provider.name}
-            </span>
-            <div className="ml-2 flex-shrink-0" style={{ width: 20 }} aria-hidden="true" />
-          </div>
-        )}
-      </div>
-    </div>
-  )
-})
