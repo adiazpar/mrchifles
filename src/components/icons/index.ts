@@ -32,6 +32,7 @@ export { ClockIcon } from './ClockIcon'
 export { XMarkIcon } from './XMarkIcon'
 export { SupplierIcon } from './SupplierIcon'
 export { CalendarIcon } from './CalendarIcon'
+export { BellIcon } from './BellIcon'
 
 // Business type icons
 export { FoodBeverageIcon } from './FoodBeverageIcon'

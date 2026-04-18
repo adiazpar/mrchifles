@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { Plus, Phone, Mail, MessageCircle, ClipboardList, Repeat, Pencil } from 'lucide-react'
+import { Plus, Phone, Mail, MessageCircle, Repeat, Pencil, ChevronRight } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
-import { EditIcon } from '@/components/icons'
+import { BellIcon, EditIcon } from '@/components/icons'
 import { Spinner, TabContainer } from '@/components/ui'
 import { ProviderModal, ProviderNotesModal, getProviderInitials } from './'
 import { OrderListItem } from '@/components/products'
@@ -19,6 +19,7 @@ import { useBusiness } from '@/contexts/business-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { canManageBusiness } from '@/lib/business-role'
 import { formatRelative } from '@/lib/formatRelative'
+import { getOrderDisplayStatus } from '@/lib/products'
 import type { Provider, Product } from '@/types'
 
 interface ProviderStats {
@@ -156,6 +157,13 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       lastOrderDate: lastOrderTs ? new Date(lastOrderTs).toISOString() : null,
     }
   }, [providerOrders])
+
+  // Count of orders currently in "overdue" display status — powers the
+  // red banner at the top of the Summary tab.
+  const overdueCount = useMemo(
+    () => providerOrders.filter(o => getOrderDisplayStatus(o) === 'overdue').length,
+    [providerOrders],
+  )
 
   // ===== Wire up the shared order-flows hook =====
   const orderFlows = useOrderFlows({
@@ -498,6 +506,39 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               </div>
             ) : (
               <div className="space-y-4">
+                {/* Overdue orders banner — jumps the user to the History
+                    tab so they can see which orders need attention. */}
+                {overdueCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('history')}
+                    className="card card-interactive w-full p-3 flex items-center gap-3 text-left bg-error-subtle"
+                  >
+                    {/* Icon chip — uses color-mix on the error token so it
+                        reads as a darker red against the error-subtle
+                        banner (Tailwind's /alpha modifiers don't work on
+                        the app's plain var(...) color tokens). */}
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{
+                        backgroundColor:
+                          'color-mix(in oklab, var(--color-error) 22%, transparent)',
+                      }}
+                    >
+                      <BellIcon className="w-5 h-5 text-error" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-error">
+                        {t('overdue_banner_title', { count: overdueCount })}
+                      </div>
+                      <div className="text-xs text-text-secondary mt-0.5">
+                        {t('overdue_banner_subtitle')}
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
+                  </button>
+                )}
+
                 {/* 3-column stats row as the overview header */}
                 <div className="flex pt-1">
                   <div className="flex-1 flex flex-col items-center text-center px-2">
@@ -552,25 +593,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   </div>
                 )}
 
-                <div className="card p-4 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <ClipboardList className="w-4 h-4 text-text-tertiary" />
-                    <h3 className="text-sm font-semibold text-text-primary">
-                      {t('summary_recent_orders')}
-                    </h3>
-                  </div>
-                  <hr className="border-border" />
-                  <div>
-                    {providerOrders.slice(0, 3).map(order => (
-                      <OrderListItem
-                        key={order.id}
-                        order={order}
-                        onView={() => orderFlows.openOrderDetail(order)}
-                        hideProviderRow
-                      />
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
           </TabContainer.Tab>
