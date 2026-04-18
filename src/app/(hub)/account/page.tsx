@@ -7,11 +7,10 @@ import {
   Palette,
   KeyRound,
   Info,
-  LifeBuoy,
-  LogOut,
   UserX,
   ChevronRight,
 } from 'lucide-react'
+import { HelpIcon, LogoutIcon } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { Spinner } from '@/components/ui'
@@ -144,7 +143,7 @@ export default function AccountPage() {
           />
           <div className="settings-divider" />
           <SettingsRow
-            icon={LifeBuoy}
+            icon={HelpIcon}
             label={t('row_contact_support')}
             onClick={() => setIsSupportModalOpen(true)}
           />
@@ -156,7 +155,7 @@ export default function AccountPage() {
         <SettingsSectionHeader label={t('section_danger_zone')} danger />
         <div className="bg-bg-surface rounded-xl overflow-hidden">
           <SettingsRow
-            icon={LogOut}
+            icon={LogoutIcon}
             label={t('row_logout')}
             onClick={handleLogout}
             danger

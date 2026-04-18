@@ -2,7 +2,8 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { Upload, Trash2 } from 'lucide-react'
+import { Upload } from 'lucide-react'
+import { TrashIcon } from '@/components/icons'
 import { Modal, Input, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
@@ -162,7 +163,7 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
                   onClick={handleRemoveAvatar}
                   className="btn btn-ghost btn-sm text-error"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <TrashIcon className="w-4 h-4" />
                   {t('profile_avatar_remove')}
                 </button>
               )}

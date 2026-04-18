@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Copy, Plus, Printer, ScanBarcode } from 'lucide-react'
+import { Check, Copy, Plus, Printer } from 'lucide-react'
+import { BarcodeScanIcon } from '@/components/icons'
 import { useTranslations } from 'next-intl'
 import { useProductForm } from '@/contexts/product-form-context'
 import { detectBarcodeFormat, generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
@@ -336,7 +337,7 @@ export function BarcodeFields() {
           className="caja-action-btn caja-action-btn--ghost"
           style={{ border: 'none', background: 'var(--color-bg-muted)' }}
         >
-          <ScanBarcode className="caja-action-btn__icon text-brand" />
+          <BarcodeScanIcon className="caja-action-btn__icon text-brand" />
           <span>{scanBusy ? t('scan_reading') : t('scan_button')}</span>
         </button>
         <button

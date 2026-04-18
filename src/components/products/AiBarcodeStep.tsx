@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect } from 'react'
-import { Plus, ScanBarcode } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import { BarcodeScanIcon } from '@/components/icons'
 import { useTranslations } from 'next-intl'
 import { useMorphingModal } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
@@ -132,7 +133,7 @@ export function AiBarcodeStepBody() {
           className="caja-action-btn caja-action-btn--ghost"
           style={{ border: 'none', background: 'var(--color-bg-muted)' }}
         >
-          <ScanBarcode className="caja-action-btn__icon text-brand" />
+          <BarcodeScanIcon className="caja-action-btn__icon text-brand" />
           <span>{scanBusy ? t('scan_reading') : t('scan_button')}</span>
         </button>
         <button
