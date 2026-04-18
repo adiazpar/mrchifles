@@ -2,9 +2,8 @@
 
 import { useCallback, useRef, useState } from 'react'
 import Image from 'next/image'
-import { X, ImageIcon, ChevronDown, CalendarClock, Minus, Plus, Loader2 } from 'lucide-react'
+import { X, ImageIcon, ChevronDown, CalendarClock, Minus, Plus, Loader2, ImagePlus, ScanLine, Trash2 } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
-import { ImageAttachIcon, BarcodeScanIcon, TrashIcon } from '@/components/icons'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -195,7 +194,7 @@ export function NewOrderModal({
               {scanBusy ? (
                 <Loader2 className="w-[18px] h-[18px] animate-spin" />
               ) : (
-                <BarcodeScanIcon size={18} />
+                <ScanLine size={18} />
               )}
             </button>
           </div>
@@ -213,7 +212,7 @@ export function NewOrderModal({
             title={t('import_coming_soon')}
             aria-label={t('import_invoice_button')}
           >
-            <ImageAttachIcon className="w-6 h-6 text-text-tertiary" />
+            <ImagePlus className="w-6 h-6 text-text-tertiary" />
             <span className="text-sm text-text-tertiary mt-2">{t('import_invoice_button')}</span>
             <span className="text-xs text-text-tertiary mt-1">{t('import_coming_soon')}</span>
           </button>
@@ -273,7 +272,7 @@ export function NewOrderModal({
                             />
                           )
                         }
-                        return <ImageAttachIcon className="w-5 h-5 text-text-tertiary" />
+                        return <ImagePlus className="w-5 h-5 text-text-tertiary" />
                       })()}
                     </div>
                     {/* Product name and stock */}
@@ -540,7 +539,7 @@ export function NewOrderModal({
                 className="p-1 text-error hover:text-error transition-colors flex-shrink-0"
                 aria-label={tCommon('remove')}
               >
-                <TrashIcon style={{ width: 16, height: 16 }} />
+                <Trash2 style={{ width: 16, height: 16 }} />
               </button>
             </div>
           ) : (
@@ -549,7 +548,7 @@ export function NewOrderModal({
               onClick={() => receiptInputRef.current?.click()}
               className="image-upload-zone"
             >
-              <ImageAttachIcon className="w-6 h-6 text-text-tertiary" />
+              <ImagePlus className="w-6 h-6 text-text-tertiary" />
               <span className="text-sm text-text-tertiary mt-2">{t('receipt_attach_placeholder')}</span>
             </button>
           )}

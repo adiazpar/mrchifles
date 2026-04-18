@@ -7,8 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { getUserInitials } from '@/lib/auth'
-import { ChevronRight } from 'lucide-react'
-import { SettingsIcon, HelpIcon, LogoutIcon } from '@/components/icons'
+import { ChevronRight, Settings, CircleHelp, LogOut } from 'lucide-react'
 
 interface UserMenuContentProps {
   onAction?: () => void
@@ -79,7 +78,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           className="user-menu-item"
           onClick={(e) => handleLinkClick(e, '/account')}
         >
-          <SettingsIcon />
+          <Settings />
           <span>{t('account_settings')}</span>
           <ChevronRight size={16} className="user-menu-item-arrow" />
         </Link>
@@ -89,7 +88,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           className="user-menu-item"
           onClick={(e) => handleLinkClick(e, '/support')}
         >
-          <HelpIcon />
+          <CircleHelp />
           <span>{t('support')}</span>
           <ChevronRight size={16} className="user-menu-item-arrow" />
         </Link>
@@ -99,7 +98,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           className="user-menu-item"
           onClick={handleLogout}
         >
-          <LogoutIcon />
+          <LogOut />
           <span>{t('log_out')}</span>
         </button>
       </div>

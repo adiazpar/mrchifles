@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { TrashIcon } from '@/components/icons'
+import { Trash2 } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal, ConfirmationAnimation } from '@/components/ui'
 import type { Provider } from '@/types'
 
@@ -220,7 +220,7 @@ export function ProviderModal({
         <Modal.Footer>
           {showDeleteAction && (
             <Modal.GoToStepButton step={1} className="btn btn-secondary btn-icon">
-              <TrashIcon className="text-error" style={{ width: 16, height: 16 }} />
+              <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
             </Modal.GoToStepButton>
           )}
           <SaveProviderButton

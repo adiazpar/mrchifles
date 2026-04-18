@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ChevronRight, X } from 'lucide-react'
+import { ChevronRight, X, Building2, Filter, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { BusinessIcon, FilterIcon, FoodBeverageIcon, ServicesIcon, RetailIcon, WholesaleIcon, ManufacturingIcon, OtherBusinessIcon } from '@/components/icons'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
@@ -38,12 +37,12 @@ const DEFAULT_TYPE_EMOJIS: Record<BusinessType, string> = {
 
 // Custom icon components for business types (takes precedence over emojis)
 const BUSINESS_TYPE_ICONS: Partial<Record<BusinessType, React.ComponentType<{ className?: string }>>> = {
-  food: FoodBeverageIcon,
-  retail: RetailIcon,
-  services: ServicesIcon,
-  wholesale: WholesaleIcon,
-  manufacturing: ManufacturingIcon,
-  other: OtherBusinessIcon,
+  food: ChefHat,
+  retail: Store,
+  services: HandHelping,
+  wholesale: Boxes,
+  manufacturing: Factory,
+  other: Shapes,
 }
 
 /**
@@ -142,7 +141,7 @@ export default function HubPage() {
     return (
       <main className="page-loading">
         <div className="empty-state-fill">
-          <BusinessIcon className="empty-state-icon" />
+          <Building2 className="empty-state-icon" />
           <h3 className="empty-state-title">{t('empty_state_title')}</h3>
           <p className="empty-state-description">
             {t('empty_state_description')}
@@ -186,7 +185,7 @@ export default function HubPage() {
     }
 
     // Ultimate fallback
-    return <BusinessIcon className="w-5 h-5 text-brand" />
+    return <Building2 className="w-5 h-5 text-brand" />
   }
 
   const renderBusinessItem = (business: Business) => (
@@ -257,7 +256,7 @@ export default function HubPage() {
           className="btn btn-secondary btn-icon flex-shrink-0"
           aria-label={t('sort_and_filter')}
         >
-          <FilterIcon style={{ width: 18, height: 18 }} />
+          <Filter style={{ width: 18, height: 18 }} />
         </button>
       </div>
 

@@ -2,14 +2,7 @@
 
 import { memo } from 'react'
 import { useTranslations } from 'next-intl'
-import {
-  CalendarIcon,
-  CheckmarkIcon,
-  ClockIcon,
-  JoinIcon,
-  SupplierIcon,
-  XMarkIcon,
-} from '@/components/icons'
+import { Calendar, Check, Clock, UserPlus, Truck, X } from 'lucide-react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getOrderDisplayStatus, type ExpandedOrder } from '@/lib/products'
 
@@ -76,11 +69,11 @@ export const OrderListItem = memo(function OrderListItem({
           {/* Status indicator */}
           <div className={`product-list-image flex items-center justify-center ${colors.bg}`}>
             {displayStatus === 'received' ? (
-              <CheckmarkIcon className={`w-5 h-5 ${colors.text}`} />
+              <Check className={`w-5 h-5 ${colors.text}`} />
             ) : displayStatus === 'pending' ? (
-              <ClockIcon className={`w-5 h-5 ${colors.text}`} />
+              <Clock className={`w-5 h-5 ${colors.text}`} />
             ) : (
-              <XMarkIcon className={`w-5 h-5 ${colors.text}`} />
+              <X className={`w-5 h-5 ${colors.text}`} />
             )}
           </div>
 
@@ -108,7 +101,7 @@ export const OrderListItem = memo(function OrderListItem({
         {/* Creation date as metadata, mirroring the "Ordered to:" row layout */}
         <div className="mt-3 flex items-center gap-3">
           <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-            <CalendarIcon className="w-4 h-4 text-text-tertiary" />
+            <Calendar className="w-4 h-4 text-text-tertiary" />
           </div>
           <span className="flex-1 min-w-0 text-xs text-text-tertiary">
             {t('ordered_on_label')}
@@ -121,7 +114,7 @@ export const OrderListItem = memo(function OrderListItem({
         {order.expand?.createdByUser && (
           <div className="mt-2 flex items-center gap-3">
             <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <JoinIcon className="w-4 h-4 text-text-tertiary" />
+              <UserPlus className="w-4 h-4 text-text-tertiary" />
             </div>
             <span className="flex-1 min-w-0 text-xs text-text-tertiary">
               {t('ordered_by_label')}
@@ -135,7 +128,7 @@ export const OrderListItem = memo(function OrderListItem({
         {!hideProviderRow && hasProvider && order.expand?.provider && (
           <div className="mt-2 flex items-center gap-3">
             <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <SupplierIcon className="w-4 h-4 text-text-tertiary" />
+              <Truck className="w-4 h-4 text-text-tertiary" />
             </div>
             <span className="flex-1 min-w-0 text-xs text-text-tertiary">
               {t('ordered_to_label')}

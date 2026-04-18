@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { HelpIcon } from '@/components/icons'
+import { CircleHelp } from 'lucide-react'
 import { Modal } from '@/components/ui'
 
 export interface ContactSupportModalProps {
@@ -25,7 +25,7 @@ export function ContactSupportModal({ isOpen, onClose }: ContactSupportModalProp
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-6">
             <div className="w-16 h-16 rounded-full bg-brand-subtle flex items-center justify-center mb-4">
-              <HelpIcon className="w-8 h-8 text-brand" />
+              <CircleHelp className="w-8 h-8 text-brand" />
             </div>
             <h2 className="text-lg font-semibold text-text-primary">
               {t('support_coming_soon_heading')}

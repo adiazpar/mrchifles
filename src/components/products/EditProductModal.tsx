@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
-import { TrashIcon, SlidersIcon, ImageAttachIcon } from '@/components/icons'
+import { Trash2, SlidersHorizontal, ImagePlus } from 'lucide-react'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
@@ -199,11 +199,11 @@ export function EditProductModal({
         <Modal.Footer>
           {canDelete && (
             <Modal.GoToStepButton step={2} className="btn btn-secondary btn-icon">
-              <TrashIcon className="text-error" style={{ width: 16, height: 16 }} />
+              <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
             </Modal.GoToStepButton>
           )}
           <Modal.GoToStepButton step={1} className="btn btn-secondary btn-icon">
-            <SlidersIcon className="text-brand" style={{ width: 16, height: 16 }} />
+            <SlidersHorizontal className="text-brand" style={{ width: 16, height: 16 }} />
           </Modal.GoToStepButton>
           <SaveButton onSubmit={onSubmit} />
         </Modal.Footer>
@@ -227,7 +227,7 @@ export function EditProductModal({
                     unoptimized
                   />
                 ) : (
-                  <ImageAttachIcon className="w-20 h-20 text-text-tertiary" />
+                  <ImagePlus className="w-20 h-20 text-text-tertiary" />
                 )}
               </div>
               <div className="font-medium text-lg mt-4">{editingProduct.name}</div>

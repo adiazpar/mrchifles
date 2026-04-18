@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { X, Plus, ChevronUp } from 'lucide-react'
-import { ClipboardIcon, FilterIcon } from '@/components/icons'
+import { X, Plus, ChevronUp, Clipboard, Filter } from 'lucide-react'
 import { Modal } from '@/components/ui'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useTranslations } from 'next-intl'
@@ -103,7 +102,7 @@ export function OrdersTab({
       {/* No products and no orders - show empty state */}
       {products.length === 0 && orders.length === 0 ? (
         <div className="empty-state-fill">
-          <ClipboardIcon className="empty-state-icon" />
+          <Clipboard className="empty-state-icon" />
           <h3 className="empty-state-title">{t('empty_no_products_title')}</h3>
           <p className="empty-state-description">
             {t('empty_no_products_description')}
@@ -112,7 +111,7 @@ export function OrdersTab({
       ) : orders.length === 0 ? (
         /* Products exist but no orders yet */
         <div className="empty-state-fill">
-          <ClipboardIcon className="empty-state-icon" />
+          <Clipboard className="empty-state-icon" />
           <h3 className="empty-state-title">{t('empty_no_orders_title')}</h3>
           <p className="empty-state-description">
             {t('empty_no_orders_description')}
@@ -158,7 +157,7 @@ export function OrdersTab({
               className="btn btn-secondary btn-icon flex-shrink-0"
               aria-label={t('sort_filter_aria')}
             >
-              <FilterIcon style={{ width: 18, height: 18 }} />
+              <Filter style={{ width: 18, height: 18 }} />
             </button>
           </div>
 

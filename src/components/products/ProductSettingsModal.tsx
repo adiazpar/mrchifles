@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Plus, ChevronRight, GripVertical } from 'lucide-react'
+import { Plus, ChevronRight, GripVertical, Trash2, Pencil } from 'lucide-react'
 import { Reorder, useDragControls } from 'framer-motion'
 import { useTranslations } from 'next-intl'
-import { TrashIcon, EditIcon } from '@/components/icons'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { SORT_OPTIONS } from '@/lib/products'
@@ -130,7 +129,7 @@ function SortableCategoryItem({ category, onEditClick, onDeleteClick, onDragEnd 
         className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
         aria-label={t('edit_category_aria')}
       >
-        <EditIcon style={{ width: 16, height: 16 }} />
+        <Pencil style={{ width: 16, height: 16 }} />
       </button>
       <button
         type="button"
@@ -138,7 +137,7 @@ function SortableCategoryItem({ category, onEditClick, onDeleteClick, onDragEnd 
         className="p-1 text-error hover:text-error transition-colors"
         aria-label={t('delete_category_aria')}
       >
-        <TrashIcon style={{ width: 16, height: 16 }} />
+        <Trash2 style={{ width: 16, height: 16 }} />
       </button>
     </Reorder.Item>
   )

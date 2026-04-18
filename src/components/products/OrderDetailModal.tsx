@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
 import { useNavbar } from '@/contexts/navbar-context'
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
-import { TrashIcon, EditIcon, ImageAttachIcon } from '@/components/icons'
+import { Trash2, Pencil, ImagePlus } from 'lucide-react'
 
 // Inline SVG icons — keeps this modal free of lucide-react
 function PlusGlyph({ className, size = 24 }: { className?: string; size?: number }) {
@@ -140,7 +140,7 @@ function GoToEditStepButton({ order, onInitialize }: { order: ExpandedOrder; onI
       className="btn btn-secondary btn-icon"
       title={t('edit_order_aria')}
     >
-      <EditIcon className="text-brand" style={{ width: 16, height: 16 }} />
+      <Pencil className="text-brand" style={{ width: 16, height: 16 }} />
     </button>
   )
 }
@@ -438,7 +438,7 @@ export function OrderDetailModal({
           <Modal.Footer>
             {canDelete && (
               <Modal.GoToStepButton step={5} className="btn btn-secondary btn-icon">
-                <TrashIcon className="text-error" style={{ width: 16, height: 16 }} />
+                <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
               </Modal.GoToStepButton>
             )}
             <GoToEditStepButton order={order} onInitialize={onInitializeEditForm} />
@@ -507,7 +507,7 @@ export function OrderDetailModal({
                             <Image src={iconUrl} alt={product.name} width={48} height={48} className="product-list-image-img" unoptimized />
                           )
                         }
-                        return <ImageAttachIcon className="w-5 h-5 text-text-tertiary" />
+                        return <ImagePlus className="w-5 h-5 text-text-tertiary" />
                       })()}
                     </div>
                     <div className="flex-1 min-w-0 text-left">
@@ -624,16 +624,16 @@ export function OrderDetailModal({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={orderReceiptPreview} alt="" className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
               ) : (
-                <div className="w-10 h-10 rounded-md bg-bg-surface flex items-center justify-center flex-shrink-0"><ImageAttachIcon className="w-5 h-5 text-text-tertiary" /></div>
+                <div className="w-10 h-10 rounded-md bg-bg-surface flex items-center justify-center flex-shrink-0"><ImagePlus className="w-5 h-5 text-text-tertiary" /></div>
               )}
               <span className="text-sm text-text-secondary truncate flex-1 min-w-0">{orderReceiptFile.name}</span>
               <button type="button" onClick={() => { onOrderReceiptFileChange(null); onOrderReceiptPreviewChange(null); if (editReceiptInputRef.current) editReceiptInputRef.current.value = '' }} className="p-1 text-error hover:text-error transition-colors flex-shrink-0" aria-label={tCommon('remove')}>
-                <TrashIcon style={{ width: 16, height: 16 }} />
+                <Trash2 style={{ width: 16, height: 16 }} />
               </button>
             </div>
           ) : (
             <button type="button" onClick={() => editReceiptInputRef.current?.click()} className="image-upload-zone">
-              <ImageAttachIcon className="w-6 h-6 text-text-tertiary" />
+              <ImagePlus className="w-6 h-6 text-text-tertiary" />
               <span className="text-sm text-text-tertiary mt-2">{t('receipt_attach_placeholder')}</span>
             </button>
           )}

@@ -1,8 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Crown } from 'lucide-react'
-import { BusinessIcon } from '@/components/icons'
+import { Crown, Building2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
@@ -272,7 +271,7 @@ function PreviewContent({ codeType, business, role, fromUser, isJoining }: Previ
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div className="w-16 h-16 rounded-2xl bg-brand-subtle text-brand flex items-center justify-center mb-4">
-              <BusinessIcon className="w-8 h-8" />
+              <Building2 className="w-8 h-8" />
             </div>
             <h3 className="text-lg font-semibold text-text-primary">{business.name}</h3>
             <p className="text-sm text-text-secondary mt-2">

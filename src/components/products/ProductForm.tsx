@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Plus, Minus } from 'lucide-react'
+import { Plus, Minus, ImagePlus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { BarcodeFields } from './BarcodeFields'
-import { ImageAttachIcon } from '@/components/icons'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { TabContainer, PriceInput } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
@@ -99,7 +98,7 @@ export function ProductForm({
                       unoptimized
                     />
                   ) : (
-                    <ImageAttachIcon size={28} className="text-text-tertiary" />
+                    <ImagePlus size={28} className="text-text-tertiary" />
                   )}
                 </div>
                 <div className="w-px self-stretch bg-border flex-shrink-0" />

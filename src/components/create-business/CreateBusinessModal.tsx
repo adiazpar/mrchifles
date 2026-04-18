@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Upload, X } from 'lucide-react'
+import { Upload, X, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
@@ -13,7 +13,6 @@ import {
   getCurrencyConfig,
 } from '@/lib/locale-config'
 import type { Region } from '@/lib/locale-config'
-import { FoodBeverageIcon, ServicesIcon, RetailIcon, WholesaleIcon, ManufacturingIcon, OtherBusinessIcon } from '@/components/icons'
 import type { UseCreateBusinessReturn, BusinessType } from '@/hooks'
 
 interface CreateBusinessModalProps {
@@ -182,12 +181,12 @@ interface TypeContentProps {
 
 // Custom icon components for business types (takes precedence over emojis)
 const BUSINESS_TYPE_ICONS: Partial<Record<string, React.ComponentType<{ className?: string }>>> = {
-  food: FoodBeverageIcon,
-  retail: RetailIcon,
-  services: ServicesIcon,
-  wholesale: WholesaleIcon,
-  manufacturing: ManufacturingIcon,
-  other: OtherBusinessIcon,
+  food: ChefHat,
+  retail: Store,
+  services: HandHelping,
+  wholesale: Boxes,
+  manufacturing: Factory,
+  other: Shapes,
 }
 
 // Fallback emojis for types without custom icons

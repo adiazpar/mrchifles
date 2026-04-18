@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { PlusIcon, JoinIcon } from '@/components/icons'
+import { Plus, UserPlus } from 'lucide-react'
 import { getNavItems, getPrefetchRoutes, getBusinessIdFromPath } from '@/lib/navigation'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useOptionalBusiness } from '@/contexts/business-context'
@@ -139,7 +139,7 @@ export function MobileNav() {
             data-pressed={pressedHubItem === 'create'}
             {...pressHandlers('create')}
           >
-            <PlusIcon className="mobile-nav-icon" />
+            <Plus className="mobile-nav-icon" />
             <span>{t('create_business')}</span>
           </button>
           <button
@@ -149,7 +149,7 @@ export function MobileNav() {
             data-pressed={pressedHubItem === 'join'}
             {...pressHandlers('join')}
           >
-            <JoinIcon className="mobile-nav-icon" />
+            <UserPlus className="mobile-nav-icon" />
             <span>{t('join_a_business')}</span>
           </button>
         </div>

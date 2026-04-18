@@ -2,8 +2,7 @@
 
 import { memo } from 'react'
 import Image from 'next/image'
-import { X, Plus, ChevronUp, ChevronRight, Loader2 } from 'lucide-react'
-import { TagsIcon, FilterIcon, BarcodeScanIcon, ImageAttachIcon, SlidersIcon, EyeIcon, EyeOffIcon } from '@/components/icons'
+import { X, Plus, ChevronUp, ChevronRight, Loader2, Tags, Filter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff } from 'lucide-react'
 import { Modal, SwipeableRow } from '@/components/ui'
 import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -158,7 +157,7 @@ export function ProductsTab({
                   {scanBusy ? (
                     <Loader2 className="w-[18px] h-[18px] animate-spin" />
                   ) : (
-                    <BarcodeScanIcon size={18} />
+                    <ScanLine size={18} />
                   )}
                 </button>
               )}
@@ -168,7 +167,7 @@ export function ProductsTab({
                 className="btn btn-secondary btn-icon flex-shrink-0"
                 aria-label={t('sort_filter_aria')}
               >
-                <FilterIcon style={{ width: 18, height: 18 }} />
+                <Filter style={{ width: 18, height: 18 }} />
               </button>
             </div>
             {scanHiddenInput}
@@ -242,7 +241,7 @@ export function ProductsTab({
         {/* Empty state - no products at all */}
         {products.length === 0 && (
           <div className="empty-state-fill">
-            <TagsIcon className="empty-state-icon" />
+            <Tags className="empty-state-icon" />
             <h3 className="empty-state-title">{t('empty_state_title')}</h3>
             <p className="empty-state-description">
               {t('empty_state_description')}
@@ -388,13 +387,13 @@ const ProductListItem = memo(function ProductListItem({
   const swipeActions = canModify && onAdjustInventory && onToggleActive
     ? [
         {
-          icon: isActive ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />,
+          icon: isActive ? <EyeOff size={20} /> : <Eye size={20} />,
           label: isActive ? t('action_disable') : t('action_enable'),
           variant: 'neutral' as const,
           onClick: () => onToggleActive(product),
         },
         {
-          icon: <SlidersIcon size={20} />,
+          icon: <SlidersHorizontal size={20} />,
           label: t('action_inventory'),
           variant: 'info' as const,
           onClick: () => onAdjustInventory(product),
@@ -432,7 +431,7 @@ const ProductListItem = memo(function ProductListItem({
                 unoptimized
               />
             ) : (
-              <ImageAttachIcon className="w-5 h-5 text-text-tertiary" />
+              <ImagePlus className="w-5 h-5 text-text-tertiary" />
             )}
           </div>
 
@@ -465,7 +464,7 @@ const ProductListItem = memo(function ProductListItem({
         {hasBarcode && (
           <div className="mt-3 flex items-center gap-3 text-left">
             <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <BarcodeScanIcon className="w-4 h-4 text-text-tertiary" />
+              <ScanLine className="w-4 h-4 text-text-tertiary" />
             </div>
             <span className="text-xs text-text-tertiary break-all block min-w-0">
               {product.barcode}

@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { CameraIcon, MagicWandIcon, JoinIcon, ImageAttachIcon } from '@/components/icons'
+import { Camera, Sparkles, UserPlus, ImagePlus } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm } from '@/contexts/product-form-context'
@@ -149,7 +149,7 @@ function AiPhotoStepInput({
         onClick={() => cameraInputRef.current?.click()}
         className="caja-action-btn caja-action-btn--large w-full"
       >
-        <CameraIcon className="caja-action-btn__icon text-brand" />
+        <Camera className="caja-action-btn__icon text-brand" />
         <div className="caja-action-btn__text">
           <span className="caja-action-btn__title">{buttonLabel}</span>
           <span className="caja-action-btn__desc">{buttonDescription}</span>
@@ -340,7 +340,7 @@ export function AddProductModal({
         <Modal.Item>
           <div className="caja-actions caja-actions--stacked">
             <Modal.GoToStepButton step={1} className="caja-action-btn caja-action-btn--large">
-              <MagicWandIcon className="caja-action-btn__icon text-brand" />
+              <Sparkles className="caja-action-btn__icon text-brand" />
               <div className="caja-action-btn__text">
                 <span className="caja-action-btn__title">{t('snap_to_add_title')}</span>
                 <span className="caja-action-btn__desc">{t('snap_to_add_desc')}</span>
@@ -348,7 +348,7 @@ export function AddProductModal({
             </Modal.GoToStepButton>
 
             <Modal.GoToStepButton step={5} className="caja-action-btn caja-action-btn--large">
-              <JoinIcon className="caja-action-btn__icon text-text-secondary" />
+              <UserPlus className="caja-action-btn__icon text-text-secondary" />
               <div className="caja-action-btn__text">
                 <span className="caja-action-btn__title">{t('add_manually_title')}</span>
                 <span className="caja-action-btn__desc">{t('add_manually_desc')}</span>
@@ -361,7 +361,7 @@ export function AddProductModal({
               className="caja-action-btn caja-action-btn--large w-full"
               title={t('add_from_document_desc')}
             >
-              <ImageAttachIcon className="caja-action-btn__icon text-text-tertiary" />
+              <ImagePlus className="caja-action-btn__icon text-text-tertiary" />
               <div className="caja-action-btn__text">
                 <span className="caja-action-btn__title">{t('add_from_document_title')}</span>
                 <span className="caja-action-btn__desc">{t('add_from_document_desc')}</span>

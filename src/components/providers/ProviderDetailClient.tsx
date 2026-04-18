@@ -4,9 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight } from 'lucide-react'
+import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
-import { BellIcon, EditIcon, ImageAttachIcon } from '@/components/icons'
 import { Spinner, TabContainer } from '@/components/ui'
 import { ProviderModal, ProviderNotesModal, ReliabilityBar, getProviderInitials } from './'
 import { OrderListItem } from '@/components/products'
@@ -433,7 +432,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                 className="btn btn-secondary btn-icon flex-shrink-0"
                 aria-label={t('edit_provider_aria')}
               >
-                <EditIcon className="text-brand" style={{ width: 18, height: 18 }} />
+                <Pencil className="text-brand" style={{ width: 18, height: 18 }} />
               </button>
             )}
           </div>
@@ -515,7 +514,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                           'color-mix(in oklab, var(--color-error) 22%, transparent)',
                       }}
                     >
-                      <BellIcon className="w-5 h-5 text-error" />
+                      <Bell className="w-5 h-5 text-error" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-error">
@@ -630,7 +629,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                                   unoptimized
                                 />
                               ) : (
-                                <ImageAttachIcon className="w-5 h-5 text-text-tertiary" />
+                                <ImagePlus className="w-5 h-5 text-text-tertiary" />
                               )}
                             </div>
                             <div className="min-w-0 flex-1">

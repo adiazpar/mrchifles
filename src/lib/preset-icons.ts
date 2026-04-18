@@ -1,8 +1,4 @@
-import { PresetBagSideIcon } from '@/components/icons/presets/PresetBagSideIcon'
-import { PresetShoppingBagsIcon } from '@/components/icons/presets/PresetShoppingBagsIcon'
-import { PresetPurseIcon } from '@/components/icons/presets/PresetPurseIcon'
-import { PresetPurse2Icon } from '@/components/icons/presets/PresetPurse2Icon'
-import { PresetMoneyBagIcon } from '@/components/icons/presets/PresetMoneyBagIcon'
+import { ShoppingBag, ShoppingBasket, Briefcase, Backpack, Wallet } from 'lucide-react'
 import type { ComponentType } from 'react'
 
 export interface PresetIcon {
@@ -12,11 +8,11 @@ export interface PresetIcon {
 }
 
 export const PRESET_ICONS: PresetIcon[] = [
-  { id: 'preset:bag-side', label: 'Bag', icon: PresetBagSideIcon },
-  { id: 'preset:shopping-bags', label: 'Shopping', icon: PresetShoppingBagsIcon },
-  { id: 'preset:purse', label: 'Purse', icon: PresetPurseIcon },
-  { id: 'preset:purse-2', label: 'Handbag', icon: PresetPurse2Icon },
-  { id: 'preset:money-bag', label: 'Money', icon: PresetMoneyBagIcon },
+  { id: 'preset:bag-side', label: 'Bag', icon: ShoppingBag },
+  { id: 'preset:shopping-bags', label: 'Shopping', icon: ShoppingBasket },
+  { id: 'preset:purse', label: 'Purse', icon: Briefcase },
+  { id: 'preset:purse-2', label: 'Handbag', icon: Backpack },
+  { id: 'preset:money-bag', label: 'Money', icon: Wallet },
 ]
 
 export function getPresetIcon(id: string): PresetIcon | undefined {

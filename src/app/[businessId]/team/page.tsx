@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Plus, Check, Copy } from 'lucide-react'
-import { TrashIcon } from '@/components/icons'
+import { Plus, Check, Copy, Trash2 } from 'lucide-react'
 import { Spinner, Modal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useTranslations } from 'next-intl'
@@ -192,7 +191,7 @@ export default function TeamPage() {
           )}
           <Modal.Footer>
             <Modal.GoToStepButton step={2} className="btn btn-secondary">
-              <TrashIcon className="w-5 h-5" />
+              <Trash2 className="w-5 h-5" />
             </Modal.GoToStepButton>
             <button
               type="button"
