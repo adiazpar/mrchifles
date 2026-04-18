@@ -114,6 +114,10 @@ export const providers = sqliteTable('providers', {
   phone: text('phone'),
   email: text('email'),
   notes: text('notes'),
+  // Last time the notes field was written. Stamped on create (when notes
+  // is provided) and on every PATCH that changes the notes value. Shown
+  // on the Notes tab as the "written date".
+  notesUpdatedAt: integer('notes_updated_at', { mode: 'timestamp' }),
   active: integer('active', { mode: 'boolean' }).default(true),
   // Functional timestamp: displayed on the provider detail page ("Since Oct 2025").
   // Nullable so pre-existing rows without a stamp gracefully omit the line.

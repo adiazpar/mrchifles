@@ -16,7 +16,6 @@ export { EyeIcon } from './EyeIcon'
 export { EyeOffIcon } from './EyeOffIcon'
 export { FilterIcon } from './FilterIcon'
 export { BarcodeScanIcon } from './BarcodeScanIcon'
-export { BarcodeIcon } from './BarcodeIcon'
 export { ImageAttachIcon } from './ImageAttachIcon'
 export { SlidersIcon } from './SlidersIcon'
 

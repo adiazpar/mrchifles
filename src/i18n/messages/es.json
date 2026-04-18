@@ -593,8 +593,19 @@
     "tab_summary": "Resumen",
     "tab_history": "Historial",
     "tab_notes": "Notas",
-    "notes_empty": "No hay notas para este proveedor",
-    "summary_recent_orders": "Órdenes recientes"
+    "notes_empty": "Aún no hay notas",
+    "notes_card_header": "Notas",
+    "notes_edited_on": "Editada {date}",
+    "edit_note_button": "Editar",
+    "summary_recent_orders": "Órdenes recientes",
+    "notes_modal_title_add": "Agregar nota",
+    "notes_modal_title_edit": "Editar nota",
+    "notes_textarea_placeholder": "Notas sobre este proveedor...",
+    "add_note_button": "Agregar nota",
+    "edit_note_aria": "Editar nota",
+    "success_notes_saved_title": "Nota guardada",
+    "success_notes_saved_heading": "¡Nota guardada!",
+    "success_notes_saved_subtitle": "Las notas han sido actualizadas"
   },
   "team": {
     "member_count": "{count, plural, one {# miembro} other {# miembros}}",

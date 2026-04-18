@@ -3,7 +3,7 @@
 import { memo } from 'react'
 import Image from 'next/image'
 import { X, Plus, ChevronUp, ChevronRight, Loader2 } from 'lucide-react'
-import { TagsIcon, FilterIcon, BarcodeIcon, BarcodeScanIcon, ImageAttachIcon, SlidersIcon, EyeIcon, EyeOffIcon } from '@/components/icons'
+import { TagsIcon, FilterIcon, BarcodeScanIcon, ImageAttachIcon, SlidersIcon, EyeIcon, EyeOffIcon } from '@/components/icons'
 import { Modal, SwipeableRow } from '@/components/ui'
 import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -465,7 +465,7 @@ const ProductListItem = memo(function ProductListItem({
         {hasBarcode && (
           <div className="mt-3 flex items-center gap-3 text-left">
             <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <BarcodeIcon className="w-4 h-4 text-text-tertiary" />
+              <BarcodeScanIcon className="w-4 h-4 text-text-tertiary" />
             </div>
             <span className="text-xs text-text-tertiary break-all block min-w-0">
               {product.barcode}

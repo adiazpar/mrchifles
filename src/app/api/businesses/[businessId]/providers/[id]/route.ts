@@ -91,7 +91,13 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   if (name !== undefined) updateData.name = name
   if (phone !== undefined) updateData.phone = phone || null
   if (email !== undefined) updateData.email = email || null
-  if (notes !== undefined) updateData.notes = notes || null
+  if (notes !== undefined) {
+    const nextNotes = notes || null
+    updateData.notes = nextNotes
+    // Stamp (or clear) the "written date" in the same write so the UI
+    // can show "Edited X ago" next to the note.
+    updateData.notesUpdatedAt = nextNotes ? new Date() : null
+  }
   if (active !== undefined) updateData.active = active
 
   const [updated] = await db

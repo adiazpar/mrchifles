@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { Plus, Phone, Mail, MessageCircle, ClipboardList, Repeat } from 'lucide-react'
+import { Plus, Phone, Mail, MessageCircle, ClipboardList, Repeat, Pencil } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import { EditIcon } from '@/components/icons'
 import { Spinner, TabContainer } from '@/components/ui'
-import { ProviderModal, getProviderInitials } from './'
+import { ProviderModal, ProviderNotesModal, getProviderInitials } from './'
 import { OrderListItem } from '@/components/products'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
@@ -117,6 +117,15 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const [isSaving, setIsSaving] = useState(false)
   const [editError, setEditError] = useState('')
   const [providerSaved, setProviderSaved] = useState(false)
+
+  // Notes modal state — its own textarea value + save-lifecycle flags so
+  // the Notes modal can live alongside the provider edit modal without
+  // interleaving state.
+  const [isNotesOpen, setNotesOpen] = useState(false)
+  const [notesDraft, setNotesDraft] = useState('')
+  const [isSavingNotes, setIsSavingNotes] = useState(false)
+  const [notesSaved, setNotesSaved] = useState(false)
+  const [notesError, setNotesError] = useState('')
 
   // Shared orders + providers stores. Orders whose providerId changes
   // elsewhere fall out of this page's derived list automatically; the
@@ -264,6 +273,39 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setIsSaving(false)
     }
   }, [businessId, providerId, name, phone, email, active, setProviders, t, translateApiMessage])
+
+  // ===== Notes =====
+  const openNotes = useCallback(() => {
+    setNotesDraft(provider?.notes ?? '')
+    setNotesError('')
+    setNotesSaved(false)
+    setNotesOpen(true)
+  }, [provider?.notes])
+
+  const handleSaveNotes = useCallback(async (): Promise<boolean> => {
+    setIsSavingNotes(true)
+    setNotesError('')
+    try {
+      const trimmed = notesDraft.trim()
+      const result = await apiPatch<{ success: true; provider: Provider }>(
+        `/api/businesses/${businessId}/providers/${providerId}`,
+        { notes: trimmed || null },
+      )
+      setProvider(result.provider)
+      setProviders(prev => prev.map(p => (p.id === result.provider.id ? result.provider : p)))
+      setNotesSaved(true)
+      return true
+    } catch (err) {
+      setNotesError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_save')
+      )
+      return false
+    } finally {
+      setIsSavingNotes(false)
+    }
+  }, [businessId, providerId, notesDraft, setProviders, t, translateApiMessage])
 
   // ===== Delete provider =====
   // Returns true on successful delete, which lets the modal navigate to the
@@ -540,13 +582,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               already about one provider — the row would be redundant. */}
           <TabContainer.Tab id="history">
             <div className="card p-4 space-y-4">
-              <div className="text-sm text-text-tertiary">
-                {t('order_history_title')}
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">{t('order_history_title')}</span>
                 {hasOrders && (
-                  <>
-                    <span className="mx-1.5">&#183;</span>
+                  <div className="text-text-tertiary">
                     {tOrders('order_count', { count: providerOrders.length })}
-                  </>
+                    <span className="mx-1.5">&#183;</span>
+                    {formatCurrency(stats.totalSpent)}
+                  </div>
                 )}
               </div>
 
@@ -571,21 +614,64 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             </div>
           </TabContainer.Tab>
 
-          {/* ---- Notes ---- */}
+          {/* ---- Notes ----
+              Three-row card:
+                1. Header: "Notes" title + written/edited date (if any)
+                2. Content: the note text, or a muted "No notes yet" line
+                3. Actions: right-aligned compact Add/Edit button
+              The same shell is used for both empty and populated states
+              so the card's dimensions don't jump when a note is first
+              added. Actions are hidden entirely for non-managers. */}
           <TabContainer.Tab id="notes">
-            {provider.notes ? (
-              <div className="card p-4">
-                <p className="text-sm text-text-secondary whitespace-pre-wrap">
-                  {provider.notes}
-                </p>
+            <div className="card p-4 space-y-3">
+              {/* Row 1 — header + written date */}
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-text-primary">
+                  {t('notes_card_header')}
+                </h3>
+                {provider.notesUpdatedAt && (
+                  <span className="text-xs text-text-tertiary flex-shrink-0">
+                    {t('notes_edited_on', {
+                      date: formatRelative(provider.notesUpdatedAt, userLocale),
+                    })}
+                  </span>
+                )}
               </div>
-            ) : (
-              <div className="card p-4">
-                <p className="text-sm text-text-tertiary text-center py-6">
-                  {t('notes_empty')}
-                </p>
-              </div>
-            )}
+
+              {/* Row 2 — note content */}
+              <p
+                className={`text-sm whitespace-pre-wrap ${
+                  provider.notes ? 'text-text-secondary' : 'text-text-tertiary italic'
+                }`}
+              >
+                {provider.notes || t('notes_empty')}
+              </p>
+
+              {/* Row 3 — right-aligned compact action */}
+              {canManage && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={openNotes}
+                    className="btn btn-secondary"
+                    style={{
+                      fontSize: 'var(--text-sm)',
+                      padding: 'var(--space-2) var(--space-4)',
+                      minHeight: 'unset',
+                      gap: 'var(--space-2)',
+                      borderRadius: 'var(--radius-md)',
+                    }}
+                  >
+                    {provider.notes ? (
+                      <Pencil style={{ width: 14, height: 14 }} />
+                    ) : (
+                      <Plus style={{ width: 14, height: 14 }} />
+                    )}
+                    {provider.notes ? t('edit_note_button') : t('add_note_button')}
+                  </button>
+                </div>
+              )}
+            </div>
           </TabContainer.Tab>
         </TabContainer>
 
@@ -628,6 +714,24 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         isDeleting={isDeleting}
         providerDeleted={providerDeleted}
         onDelete={handleDelete}
+      />
+
+      {/* ============== Notes modal ============== */}
+      <ProviderNotesModal
+        isOpen={isNotesOpen}
+        onClose={() => setNotesOpen(false)}
+        onExitComplete={() => {
+          setNotesDraft('')
+          setNotesSaved(false)
+          setNotesError('')
+        }}
+        notes={notesDraft}
+        onNotesChange={setNotesDraft}
+        originalNotes={provider.notes ?? ''}
+        isSaving={isSavingNotes}
+        notesSaved={notesSaved}
+        error={notesError}
+        onSubmit={handleSaveNotes}
       />
 
       {/* ============== Order flows (new order + order detail/edit/receive/delete) ============== */}

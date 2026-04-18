@@ -593,8 +593,19 @@
     "tab_summary": "Summary",
     "tab_history": "History",
     "tab_notes": "Notes",
-    "notes_empty": "No notes for this provider",
-    "summary_recent_orders": "Recent orders"
+    "notes_empty": "No notes yet",
+    "notes_card_header": "Notes",
+    "notes_edited_on": "Edited {date}",
+    "edit_note_button": "Edit",
+    "summary_recent_orders": "Recent orders",
+    "notes_modal_title_add": "Add note",
+    "notes_modal_title_edit": "Edit note",
+    "notes_textarea_placeholder": "Notes about this provider...",
+    "add_note_button": "Add note",
+    "edit_note_aria": "Edit note",
+    "success_notes_saved_title": "Note saved",
+    "success_notes_saved_heading": "Note saved!",
+    "success_notes_saved_subtitle": "Your notes have been updated"
   },
   "team": {
     "member_count": "{count, plural, one {# member} other {# members}}",

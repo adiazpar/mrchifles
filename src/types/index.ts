@@ -101,6 +101,8 @@ export interface Provider {
   phone?: string | null
   email?: string | null
   notes?: string | null
+  /** Last time notes was written. Null when notes is null. */
+  notesUpdatedAt?: Date | string | null
   active: boolean
   createdAt?: Date | string | null
 }

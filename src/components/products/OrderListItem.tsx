@@ -1,7 +1,6 @@
 'use client'
 
 import { memo } from 'react'
-import { ChevronRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import {
   CalendarIcon,
@@ -27,9 +26,9 @@ interface OrderListItemProps {
 
 /**
  * Shared order list row — used on the products page's Orders tab and on
- * the provider detail page's History tab. Renders a three-column main
- * row (status icon · reference + item count · total + status · chevron)
- * plus metadata rows for Ordered on / Ordered by / Ordered to.
+ * the provider detail page's History tab. Renders a two-column main row
+ * (status icon · reference + item count · total + status) plus metadata
+ * rows for Ordered on / Ordered by / Ordered to.
  */
 export const OrderListItem = memo(function OrderListItem({
   order,
@@ -104,11 +103,6 @@ export const OrderListItem = memo(function OrderListItem({
               {statusLabel[displayStatus]}
             </span>
           </div>
-
-          {/* Chevron */}
-          <div className="text-text-tertiary ml-2 flex-shrink-0">
-            <ChevronRight className="w-5 h-5" />
-          </div>
         </div>
 
         {/* Creation date as metadata, mirroring the "Ordered to:" row layout */}
@@ -122,7 +116,6 @@ export const OrderListItem = memo(function OrderListItem({
           <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate tabular-nums">
             {formatDate(new Date(order.date))}
           </span>
-          <div className="ml-2 flex-shrink-0" style={{ width: 20 }} aria-hidden="true" />
         </div>
 
         {order.expand?.createdByUser && (
@@ -136,7 +129,6 @@ export const OrderListItem = memo(function OrderListItem({
             <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
               {order.expand.createdByUser.name || order.expand.createdByUser.email}
             </span>
-            <div className="ml-2 flex-shrink-0" style={{ width: 20 }} aria-hidden="true" />
           </div>
         )}
 
@@ -151,7 +143,6 @@ export const OrderListItem = memo(function OrderListItem({
             <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
               {order.expand.provider.name}
             </span>
-            <div className="ml-2 flex-shrink-0" style={{ width: 20 }} aria-hidden="true" />
           </div>
         )}
       </div>

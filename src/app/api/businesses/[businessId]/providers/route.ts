@@ -64,6 +64,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     phone: phone || null,
     email: email || null,
     notes: notes || null,
+    notesUpdatedAt: notes ? new Date() : null,
     active,
     createdAt: new Date(),
   }).returning()
