@@ -574,7 +574,11 @@
     "typical_items_avg_cost": "prom {cost}",
     "delete_provider_button": "Eliminar proveedor",
     "delete_provider_confirm_title": "¿Eliminar proveedor?",
-    "delete_provider_confirm_body": "¿Eliminar {name}? Las órdenes de este proveedor permanecerán pero sin vincular."
+    "delete_provider_confirm_body": "¿Eliminar {name}? Las órdenes de este proveedor permanecerán pero sin vincular.",
+    "stats_section_header": "Actividad",
+    "actions_section_header": "Acciones",
+    "danger_zone_section_header": "Zona peligrosa",
+    "tap_to_add_contact": "Toca para agregar información de contacto"
   },
   "team": {
     "member_count": "{count, plural, one {# miembro} other {# miembros}}",

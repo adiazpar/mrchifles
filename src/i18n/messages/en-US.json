@@ -574,7 +574,11 @@
     "typical_items_avg_cost": "avg {cost}",
     "delete_provider_button": "Delete provider",
     "delete_provider_confirm_title": "Delete provider?",
-    "delete_provider_confirm_body": "Delete {name}? Orders from this provider will remain but unlinked."
+    "delete_provider_confirm_body": "Delete {name}? Orders from this provider will remain but unlinked.",
+    "stats_section_header": "Activity",
+    "actions_section_header": "Actions",
+    "danger_zone_section_header": "Danger zone",
+    "tap_to_add_contact": "Tap to add contact info"
   },
   "team": {
     "member_count": "{count, plural, one {# member} other {# members}}",
