@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
@@ -496,6 +496,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           onTabChange={id => handleTabChange(id as DetailTab)}
           swipeable
           fitActiveHeight
+          preserveScrollOnChange
         >
           {/* ---- Summary ----
               Cards always render — on a brand-new provider, each card
@@ -750,14 +751,16 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   {t('order_history_empty')}
                 </p>
               ) : (
-                <div>
-                  {providerOrders.map(order => (
-                    <OrderListItem
-                      key={order.id}
-                      order={order}
-                      onView={() => orderFlows.openOrderDetail(order)}
-                      hideProviderRow
-                    />
+                <div className="list-divided">
+                  {providerOrders.map((order, i) => (
+                    <Fragment key={order.id}>
+                      {i > 0 && <hr className="list-divider" />}
+                      <OrderListItem
+                        order={order}
+                        onView={() => orderFlows.openOrderDetail(order)}
+                        hideProviderRow
+                      />
+                    </Fragment>
                   ))}
                 </div>
               )}

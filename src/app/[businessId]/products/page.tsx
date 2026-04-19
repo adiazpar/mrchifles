@@ -811,6 +811,7 @@ export default function ProductosPage() {
           }}
           swipeable
           fitActiveHeight
+          preserveScrollOnChange
         >
           <TabContainer.Tab id="products">
             <ProductsTab

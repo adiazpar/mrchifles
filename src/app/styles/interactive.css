@@ -2204,6 +2204,17 @@ transition: background var(--duration-fast) ease-out;
   }
 }
 
+/* Divided list container — renders an explicit hairline between adjacent
+   children with outside breathing room on both sides of the line. The
+   separator is a standalone element so the space around it is real outside
+   space, not inner padding, and inner row padding is untouched. */
+.list-divided > .list-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin-block: var(--space-3);
+  border: 0;
+}
+
 /* ===== Balance Hero Container ===== */
 .balance-hero-container {
 position: relative;

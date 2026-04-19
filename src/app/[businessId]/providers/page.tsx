@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import { Plus, Truck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Spinner } from '@/components/ui'
@@ -96,19 +96,21 @@ export default function ProveedoresPage() {
 
               <hr className="border-border" />
 
-              <div>
-                {sortedProviders.map((provider) => (
-                  <ProviderListItem
-                    key={provider.id}
-                    provider={provider}
-                    onClick={() => {
-                      const href = `/${businessId}/providers/${provider.id}`
-                      setSlideTargetPath(href)
-                      setSlideDirection('forward')
-                      setPendingHref(href)
-                      router.push(href)
-                    }}
-                  />
+              <div className="list-divided">
+                {sortedProviders.map((provider, i) => (
+                  <Fragment key={provider.id}>
+                    {i > 0 && <hr className="list-divider" />}
+                    <ProviderListItem
+                      provider={provider}
+                      onClick={() => {
+                        const href = `/${businessId}/providers/${provider.id}`
+                        setSlideTargetPath(href)
+                        setSlideDirection('forward')
+                        setPendingHref(href)
+                        router.push(href)
+                      }}
+                    />
+                  </Fragment>
                 ))}
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { useTranslations } from 'next-intl'
-import { Calendar, Check, Clock, UserPlus, Truck, X } from 'lucide-react'
+import { Calendar, CircleCheckBig, CircleAlert, Clock, UserPlus, Truck } from 'lucide-react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getOrderDisplayStatus, type ExpandedOrder } from '@/lib/products'
 
@@ -69,11 +69,11 @@ export const OrderListItem = memo(function OrderListItem({
           {/* Status indicator */}
           <div className={`product-list-image flex items-center justify-center ${colors.bg}`}>
             {displayStatus === 'received' ? (
-              <Check className={`w-5 h-5 ${colors.text}`} />
+              <CircleCheckBig className={`w-5 h-5 ${colors.text}`} />
             ) : displayStatus === 'pending' ? (
               <Clock className={`w-5 h-5 ${colors.text}`} />
             ) : (
-              <X className={`w-5 h-5 ${colors.text}`} />
+              <CircleAlert className={`w-5 h-5 ${colors.text}`} />
             )}
           </div>
 

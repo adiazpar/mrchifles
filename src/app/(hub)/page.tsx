@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ChevronRight, X, Building2, Filter, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
+import { ChevronRight, X, Building2, ListFilter, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
@@ -256,7 +256,7 @@ export default function HubPage() {
           className="btn btn-secondary btn-icon flex-shrink-0"
           aria-label={t('sort_and_filter')}
         >
-          <Filter style={{ width: 18, height: 18 }} />
+          <ListFilter style={{ width: 18, height: 18 }} />
         </button>
       </div>
 

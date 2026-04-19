@@ -23,6 +23,15 @@ interface TabContainerProps {
    * (stable height = tallest), which is best for modals.
    */
   fitActiveHeight?: boolean
+  /**
+   * When true, the closest scrollable ancestor's scroll position is preserved
+   * across tab changes. Default is false — the container resets that ancestor
+   * to `scrollTop: 0` so the new tab starts at its content origin. Opt in when
+   * the tabs share a page header/identity section above them and jumping back
+   * to the top on every switch would be disorienting (e.g. the provider
+   * detail page).
+   */
+  preserveScrollOnChange?: boolean
 }
 
 const SWIPE_OFFSET_THRESHOLD = 60
@@ -48,7 +57,8 @@ const SWIPE_VELOCITY_THRESHOLD = 400
  * When `swipeable` is false, falls back to a plain opacity cross-fade.
  *
  * On every tab change the closest scrollable ancestor is reset to scrollTop 0
- * so the new tab starts at its content origin.
+ * so the new tab starts at its content origin. Pass `preserveScrollOnChange`
+ * to keep the current scroll position across switches.
  *
  * Usage:
  * <TabContainer activeTab={tab} onTabChange={setTab} swipeable>
@@ -56,7 +66,7 @@ const SWIPE_VELOCITY_THRESHOLD = 400
  *   <TabContainer.Tab id="barcode">{content}</TabContainer.Tab>
  * </TabContainer>
  */
-function TabContainerRoot({ activeTab, children, onTabChange, swipeable = false, fitActiveHeight = false }: TabContainerProps) {
+function TabContainerRoot({ activeTab, children, onTabChange, swipeable = false, fitActiveHeight = false, preserveScrollOnChange = false }: TabContainerProps) {
   const tabs = Children.toArray(children).filter(
     (child): child is ReactElement<TabProps> => isValidElement(child) && (child.type as { _isTab?: boolean })._isTab === true
   )
@@ -73,6 +83,7 @@ function TabContainerRoot({ activeTab, children, onTabChange, swipeable = false,
       isFirstRender.current = false
       return
     }
+    if (preserveScrollOnChange) return
     const el = wrapperRef.current
     if (!el) return
     let parent: HTMLElement | null = el.parentElement
@@ -84,7 +95,7 @@ function TabContainerRoot({ activeTab, children, onTabChange, swipeable = false,
       }
       parent = parent.parentElement
     }
-  }, [activeTab])
+  }, [activeTab, preserveScrollOnChange])
 
   if (swipeable && onTabChange) {
     const handleDragEnd = (_: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => {

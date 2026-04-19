@@ -1,8 +1,8 @@
 'use client'
 
-import { memo } from 'react'
+import { Fragment, memo } from 'react'
 import Image from 'next/image'
-import { X, Plus, ChevronUp, ChevronRight, Loader2, Tags, Filter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff } from 'lucide-react'
+import { X, Plus, ChevronUp, ChevronRight, Loader2, Tags, ListFilter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff } from 'lucide-react'
 import { Modal, SwipeableRow } from '@/components/ui'
 import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -167,7 +167,7 @@ export function ProductsTab({
                 className="btn btn-secondary btn-icon flex-shrink-0"
                 aria-label={t('sort_filter_aria')}
               >
-                <Filter style={{ width: 18, height: 18 }} />
+                <ListFilter style={{ width: 18, height: 18 }} />
               </button>
             </div>
             {scanHiddenInput}
@@ -208,17 +208,19 @@ export function ProductsTab({
                   <p>{t('no_results')}</p>
                 </div>
               ) : (
-                <div>
-                  {filteredProducts.map((product) => (
-                    <ProductListItem
-                      key={product.id}
-                      product={product}
-                      categoryName={getCategoryName(product.categoryId)}
-                      onEdit={onEditProduct}
-                      onAdjustInventory={onAdjustInventory}
-                      onToggleActive={onToggleActive}
-                      canModify={canModify}
-                    />
+                <div className="list-divided">
+                  {filteredProducts.map((product, i) => (
+                    <Fragment key={product.id}>
+                      {i > 0 && <hr className="list-divider" />}
+                      <ProductListItem
+                        product={product}
+                        categoryName={getCategoryName(product.categoryId)}
+                        onEdit={onEditProduct}
+                        onAdjustInventory={onAdjustInventory}
+                        onToggleActive={onToggleActive}
+                        canModify={canModify}
+                      />
+                    </Fragment>
                   ))}
                 </div>
               )}

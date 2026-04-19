@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { X, Plus, ChevronUp, Clipboard, Filter } from 'lucide-react'
+import { X, Plus, ChevronUp, Clipboard, ListFilter } from 'lucide-react'
 import { Modal } from '@/components/ui'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useTranslations } from 'next-intl'
@@ -157,7 +157,7 @@ export function OrdersTab({
               className="btn btn-secondary btn-icon flex-shrink-0"
               aria-label={t('sort_filter_aria')}
             >
-              <Filter style={{ width: 18, height: 18 }} />
+              <ListFilter style={{ width: 18, height: 18 }} />
             </button>
           </div>
 
@@ -204,13 +204,12 @@ export function OrdersTab({
                 <p>{t('no_results')}</p>
               </div>
             ) : (
-              <div>
-                {filteredOrders.map((order) => (
-                  <OrderListItem
-                    key={order.id}
-                    order={order}
-                    onView={onViewOrder}
-                  />
+              <div className="list-divided">
+                {filteredOrders.map((order, i) => (
+                  <Fragment key={order.id}>
+                    {i > 0 && <hr className="list-divider" />}
+                    <OrderListItem order={order} onView={onViewOrder} />
+                  </Fragment>
                 ))}
               </div>
             )}
