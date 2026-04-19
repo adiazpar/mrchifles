@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, useMotionValue, useTransform, animate, type MotionValue, type PanInfo } from 'framer-motion'
+import { useHorizontalSwipeIntent } from '@/hooks/useHorizontalSwipeIntent'
 
 export type SwipeActionVariant = 'neutral' | 'info' | 'danger'
 
@@ -26,7 +27,15 @@ interface SwipeableRowProps {
 
 const ACTION_WIDTH = 88
 const SWIPE_VELOCITY_THRESHOLD = 400
-const SPRING = { type: 'spring' as const, stiffness: 500, damping: 40 }
+// Tween with iOS-style cubic bezier (matches TabContainer's tab slide).
+// Swapped in for a spring to avoid the underdamped overshoot + frame-by-
+// frame JS cost that read as jitter on iOS PWA when the row snaps back
+// after a release. Tween math is cheaper and monotonic — no oscillation.
+const RELEASE_TRANSITION = {
+  type: 'tween' as const,
+  duration: 0.28,
+  ease: [0.32, 0.72, 0, 1] as [number, number, number, number],
+}
 
 /**
  * Cross-row registry so only one row is open at a time (Mail.app behavior).
@@ -64,12 +73,12 @@ export function SwipeableRow({ actions, children, className }: SwipeableRowProps
 
   const close = useCallback(() => {
     setIsOpen(false)
-    animate(x, 0, SPRING)
+    animate(x, 0, RELEASE_TRANSITION)
   }, [x])
 
   const open = useCallback(() => {
     setIsOpen(true)
-    animate(x, -revealWidth, SPRING)
+    animate(x, -revealWidth, RELEASE_TRANSITION)
     closeAllExcept(close)
   }, [x, revealWidth, close])
 
@@ -91,6 +100,12 @@ export function SwipeableRow({ actions, children, className }: SwipeableRowProps
     return () => document.removeEventListener('pointerdown', handlePointerDown)
   }, [isOpen, close])
 
+  // iOS touch-intent disambiguation so a slightly-diagonal swipe
+  // doesn't let iOS commit to vertical scroll before framer-motion
+  // locks the drag axis. See useHorizontalSwipeIntent for the full
+  // rationale.
+  useHorizontalSwipeIntent(containerRef)
+
   const handleDragEnd = (_: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => {
     const { offset, velocity } = info
     const passedHalf = offset.x < -revealWidth / 2
@@ -99,12 +114,49 @@ export function SwipeableRow({ actions, children, className }: SwipeableRowProps
     else close()
   }
 
-  // While open, tapping the row content closes it instead of triggering the children's onClick.
+  // When the row is open, a tap on its content should close the row
+  // instead of activating the inner onClick (e.g. "open detail modal").
+  //
+  // Two things to suppress for this gesture:
+  //   1. The synthesized `click` that follows pointerdown — stopping
+  //      pointerdown doesn't cancel it, so we latch a ref and consume
+  //      click in a separate capture handler.
+  //   2. The native `:hover` / `:active` pseudo-classes on the inner
+  //      `.list-item-clickable`. These are triggered by the browser
+  //      from raw pointer/touch input, independent of React, so
+  //      `stopPropagation` on the synthetic event does nothing. We
+  //      imperatively add a class on the draggable element that sets
+  //      `pointer-events: none` on its children — the inner element
+  //      is no longer a pointer target so the browser never enters
+  //      its `:active` state. The motion.div itself still receives
+  //      pointer events so drag stays functional.
+  //
+  // The 400ms timeout is a safety net for edge cases where a click
+  // never fires (e.g. the gesture turned into a scroll) — without it
+  // the latch/class could leak onto an unrelated future tap.
+  const suppressNextClickRef = useRef(false)
+  const rowElRef = useRef<HTMLDivElement>(null)
+
   const handleRowPointerDownCapture = (e: React.PointerEvent) => {
     if (isOpen) {
       e.stopPropagation()
       e.preventDefault()
+      suppressNextClickRef.current = true
+      const el = rowElRef.current
+      if (el) el.classList.add('swipeable-row--suppress-interactive')
+      setTimeout(() => {
+        suppressNextClickRef.current = false
+        if (el) el.classList.remove('swipeable-row--suppress-interactive')
+      }, 400)
       close()
+    }
+  }
+
+  const handleRowClickCapture = (e: React.MouseEvent) => {
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false
+      e.stopPropagation()
+      e.preventDefault()
     }
   }
 
@@ -138,13 +190,20 @@ export function SwipeableRow({ actions, children, className }: SwipeableRowProps
           Intentionally has no background or padding: the consumer's row content
           is responsible for being opaque so the action layer doesn't bleed through. */}
       <motion.div
+        ref={rowElRef}
         drag="x"
         dragDirectionLock
         dragConstraints={{ left: -revealWidth, right: 0 }}
         dragElastic={0.1}
-        style={{ x }}
+        // `willChange: transform` is a hint that promotes this element
+        // to its own composite layer on iOS Safari (especially inside a
+        // standalone PWA), where the compositor otherwise re-evaluates
+        // layer promotion frame-by-frame and causes visible jitter
+        // during drag. Cheap for the ~dozens of rows we render.
+        style={{ x, willChange: 'transform' }}
         onDragEnd={handleDragEnd}
         onPointerDownCapture={handleRowPointerDownCapture}
+        onClickCapture={handleRowClickCapture}
         className="relative"
       >
         {children}

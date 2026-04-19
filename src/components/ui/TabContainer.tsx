@@ -2,6 +2,7 @@
 
 import { Children, isValidElement, useEffect, useRef, type ReactElement, type ReactNode } from 'react'
 import { motion, type PanInfo } from 'framer-motion'
+import { useHorizontalSwipeIntent } from '@/hooks/useHorizontalSwipeIntent'
 
 interface TabProps {
   id: string
@@ -78,6 +79,10 @@ function TabContainerRoot({ activeTab, children, onTabChange, swipeable = false,
   // tab starts at its content origin instead of inheriting the previous scroll.
   const wrapperRef = useRef<HTMLDivElement>(null)
   const isFirstRender = useRef(true)
+
+  // In swipeable mode, prevent iOS from stealing a slightly-diagonal
+  // swipe as a vertical scroll. No-op when swipeable is off.
+  useHorizontalSwipeIntent(wrapperRef, swipeable && !!onTabChange)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false

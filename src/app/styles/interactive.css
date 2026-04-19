@@ -188,10 +188,32 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform var(--duration-fast) ease-out;
+  /* Pair with the row-layer hint so iOS Safari keeps the button as its
+     own composite layer while the row is being dragged — avoids the
+     per-frame compositor re-evaluation that causes visible jitter on
+     PWA. opacity + scale are driven by useTransform on the row's x. */
+  will-change: transform, opacity;
 }
 
 .swipeable-row-action:active {
   transform: scale(0.92);
+}
+
+/* Applied imperatively while a tap on an already-open row is being
+   suppressed. Overrides the `:hover` / `:active` backgrounds on the
+   inner list-item-clickable so there's no background flash during the
+   close animation. Kept as pure CSS (higher-specificity override, no
+   pointer-events manipulation) so the click-suppression event flow on
+   motion.div isn't disturbed. */
+.swipeable-row--suppress-interactive .list-item-clickable,
+.swipeable-row--suppress-interactive .list-item-clickable:hover,
+.swipeable-row--suppress-interactive .list-item-clickable:active {
+  background: transparent;
+}
+
+.swipeable-row--suppress-interactive .list-item,
+.swipeable-row--suppress-interactive .list-item:hover {
+  background: transparent;
 }
 
 /* ===== Hub Header (Zone 2 - No business context) ===== */
@@ -2134,14 +2156,17 @@
   border-bottom-color: var(--color-brand);
 }
 
-/* ===== Product List Image ===== */
+/* ===== Product List Image =====
+   Uses --color-bg-base so the icon tile is distinct from both the
+   surrounding surface (card/modal bg) AND the hover bg (--color-bg-muted).
+   Stays the same shade at rest and on hover — no swap, no flicker. */
 .product-list-image {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-lg);
   overflow: hidden;
   flex-shrink: 0;
-  background: var(--color-bg-muted);
+  background: var(--color-bg-base);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2152,11 +2177,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.list-item-clickable:hover .product-list-image,
-.list-item-clickable:active .product-list-image {
-  background: var(--color-bg-surface);
 }
 
 /* Clickable list item (mobile-friendly hover) */

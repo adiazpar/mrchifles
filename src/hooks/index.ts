@@ -41,3 +41,5 @@ export { useCreateBusiness } from './useCreateBusiness'
 export type { UseCreateBusinessReturn, BusinessFormData, BusinessType } from './useCreateBusiness'
 
 export { useBusinessFormat } from './useBusinessFormat'
+
+export { useHorizontalSwipeIntent } from './useHorizontalSwipeIntent'
