@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
@@ -72,7 +72,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const userLocale = useLocale()
   const translateApiMessage = useApiMessage()
   const { role } = useBusiness()
-  const { setSlideDirection, setSlideTargetPath, setPendingHref, setPageSubtitleSuffix, setNavOverride, hide, show } = useNavbar()
+  const { setSlideDirection, setSlideTargetPath, setPendingHref, setPageSubtitleSuffix, hide, show } = useNavbar()
   const canManage = canManageBusiness(role)
 
   // Tab state — initialized from the URL so browser back/forward and
@@ -104,6 +104,13 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   useEffect(() => {
     return () => setPageSubtitleSuffix(null)
   }, [setPageSubtitleSuffix])
+
+  // Keep the bottom navbar hidden while on this page; the primary action
+  // (New order) lives in the Summary tab instead.
+  useEffect(() => {
+    hide()
+    return () => show()
+  }, [hide, show])
 
   const [provider, setProvider] = useState<Provider | null>(null)
   // Products are fetched locally (no shared store yet). The providers
@@ -177,49 +184,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     // setProducts omitted: this page does not display product stock.
     canDelete: canManage,
   })
-
-  // ===== Navbar override: replace the standard nav items with the
-  // page's primary action (New order from this provider). The existing
-  // slide animation handles hide-on-leave / slide-up-with-new-content.
-  //
-  // useOrderFlows returns a fresh object each render, so we read the
-  // current opener through a ref to keep the click handler stable and
-  // prevent an effect re-run loop that would otherwise thrash setState.
-  const orderFlowsRef = useRef(orderFlows)
-  orderFlowsRef.current = orderFlows
-  const openNewOrderForProvider = useCallback(() => {
-    orderFlowsRef.current.openNewOrder(providerId)
-  }, [providerId])
-
-  useEffect(() => {
-    if (!canManage || !provider?.name) return
-    setNavOverride(
-      <button
-        type="button"
-        onClick={openNewOrderForProvider}
-        className="btn btn-primary w-full"
-      >
-        <Plus className="w-4 h-4" />
-        <span className="truncate">
-          {t('new_order_button', { name: provider.name })}
-        </span>
-      </button>
-    )
-    return () => setNavOverride(null)
-  }, [canManage, provider?.name, openNewOrderForProvider, setNavOverride, t])
-
-  // The provider fetch almost always outlasts the 180ms slideDirection
-  // window. Without this, the nav would slide back up with the standard tab
-  // icons and then — once provider loads — flash to the "New order" override
-  // button. Keep the nav hidden until we have the data so the first slide-up
-  // already holds whatever the detail page ends up rendering (override for
-  // managers, standard tabs for read-only viewers).
-  useEffect(() => {
-    if (!provider) {
-      hide()
-      return () => show()
-    }
-  }, [provider, hide, show])
 
   // ===== Load data =====
   // Page-specific data (provider, product catalog, providers list for the
@@ -605,6 +569,19 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               conditional (only shown when orders are actually overdue). */}
           <TabContainer.Tab id="summary">
               <div className="space-y-4">
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => orderFlows.openNewOrder(providerId)}
+                    className="btn btn-primary w-full"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="truncate">
+                      {t('new_order_button', { name: provider.name })}
+                    </span>
+                  </button>
+                )}
+
                 {/* Overdue orders banner — jumps the user to the History
                     tab so they can see which orders need attention. */}
                 {overdueCount > 0 && (
