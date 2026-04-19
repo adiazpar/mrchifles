@@ -94,17 +94,29 @@ export interface Product {
 // PROVIDER TYPES
 // ============================================
 
+export interface ProviderNote {
+  id: string
+  providerId: string
+  businessId: string
+  title: string
+  body: string
+  createdAt: Date | string
+  updatedAt: Date | string
+}
+
 export interface Provider {
   id: string
   businessId: string
   name: string
   phone?: string | null
   email?: string | null
-  notes?: string | null
-  /** Last time notes was written. Null when notes is null. */
-  notesUpdatedAt?: Date | string | null
   active: boolean
   createdAt?: Date | string | null
+  /**
+   * Notes embedded on the provider-detail response. Newest-first by
+   * createdAt. Omitted from list responses.
+   */
+  notes?: ProviderNote[]
 }
 
 // ============================================

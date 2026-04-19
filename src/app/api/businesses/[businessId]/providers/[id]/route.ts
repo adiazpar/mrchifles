@@ -1,5 +1,5 @@
-import { db, providers, orders } from '@/db'
-import { eq, and, sql } from 'drizzle-orm'
+import { db, providers, providerNotes, orders } from '@/db'
+import { eq, and, desc, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
@@ -10,7 +10,6 @@ const updateProviderSchema = z.object({
   name: Schemas.name().optional(),
   phone: Schemas.phone(),
   email: Schemas.email().nullable().optional(),
-  notes: Schemas.notes(),
   active: z.boolean().optional(),
 })
 
@@ -45,8 +44,20 @@ export const GET = withBusinessAuth(async (_request, access, routeParams) => {
     .from(orders)
     .where(and(eq(orders.providerId, id), eq(orders.businessId, access.businessId)))
 
+  // Notes list is embedded in the provider-detail response so a single
+  // fetch hydrates everything the detail page renders. Newest-first by
+  // createdAt — list order is stable across edits.
+  const notes = await db
+    .select()
+    .from(providerNotes)
+    .where(and(
+      eq(providerNotes.providerId, id),
+      eq(providerNotes.businessId, access.businessId),
+    ))
+    .orderBy(desc(providerNotes.createdAt))
+
   return successResponse({
-    provider,
+    provider: { ...provider, notes },
     stats: {
       totalOrders: Number(stats?.totalOrders ?? 0),
       totalSpent: Number(stats?.totalSpent ?? 0),
@@ -86,18 +97,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     return validationError(validation)
   }
 
-  const { name, phone, email, notes, active } = validation.data
+  const { name, phone, email, active } = validation.data
   const updateData: Record<string, unknown> = {}
   if (name !== undefined) updateData.name = name
   if (phone !== undefined) updateData.phone = phone || null
   if (email !== undefined) updateData.email = email || null
-  if (notes !== undefined) {
-    const nextNotes = notes || null
-    updateData.notes = nextNotes
-    // Stamp (or clear) the "written date" in the same write so the UI
-    // can show "Edited X ago" next to the note.
-    updateData.notesUpdatedAt = nextNotes ? new Date() : null
-  }
   if (active !== undefined) updateData.active = active
 
   const [updated] = await db
@@ -106,7 +110,18 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     .where(eq(providers.id, id))
     .returning()
 
-  return successResponse({ provider: updated })
+  // Return the provider with its notes embedded (same shape as GET) so the
+  // client's setProvider(result.provider) keeps the notes list intact.
+  const notes = await db
+    .select()
+    .from(providerNotes)
+    .where(and(
+      eq(providerNotes.providerId, id),
+      eq(providerNotes.businessId, access.businessId),
+    ))
+    .orderBy(desc(providerNotes.createdAt))
+
+  return successResponse({ provider: { ...updated, notes } })
 })
 
 /**

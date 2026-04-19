@@ -113,17 +113,31 @@ export const providers = sqliteTable('providers', {
   name: text('name').notNull(),
   phone: text('phone'),
   email: text('email'),
-  notes: text('notes'),
-  // Last time the notes field was written. Stamped on create (when notes
-  // is provided) and on every PATCH that changes the notes value. Shown
-  // on the Notes tab as the "written date".
-  notesUpdatedAt: integer('notes_updated_at', { mode: 'timestamp' }),
   active: integer('active', { mode: 'boolean' }).default(true),
   // Functional timestamp: displayed on the provider detail page ("Since Oct 2025").
   // Nullable so pre-existing rows without a stamp gracefully omit the line.
   createdAt: integer('created_at', { mode: 'timestamp' }),
 }, (table) => ({
   businessIdIdx: index('idx_providers_business_id').on(table.businessId),
+}))
+
+// ===========================================
+// PROVIDER NOTES
+// ===========================================
+// Up to MAX_PROVIDER_NOTES (5) per provider. Cap is enforced in the
+// POST /providers/[id]/notes route.
+export const providerNotes = sqliteTable('provider_notes', {
+  id: text('id').primaryKey(),
+  providerId: text('provider_id').references(() => providers.id, { onDelete: 'cascade' }).notNull(),
+  // Denormalized for multi-tenant scoping without a join.
+  businessId: text('business_id').references(() => businesses.id, { onDelete: 'cascade' }).notNull(),
+  title: text('title').notNull(),
+  body: text('body').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  providerIdIdx: index('idx_provider_notes_provider_id').on(table.providerId),
+  businessProviderIdx: index('idx_provider_notes_business_provider').on(table.businessId, table.providerId),
 }))
 
 // ===========================================
@@ -261,6 +275,18 @@ export const providersRelations = relations(providers, ({ one, many }) => ({
     references: [businesses.id],
   }),
   orders: many(orders),
+  notes: many(providerNotes),
+}))
+
+export const providerNotesRelations = relations(providerNotes, ({ one }) => ({
+  provider: one(providers, {
+    fields: [providerNotes.providerId],
+    references: [providers.id],
+  }),
+  business: one(businesses, {
+    fields: [providerNotes.businessId],
+    references: [businesses.id],
+  }),
 }))
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({

@@ -11,7 +11,6 @@ const createProviderSchema = z.object({
   name: Schemas.name(),
   phone: Schemas.phone(),
   email: Schemas.email().nullable().optional(),
-  notes: Schemas.notes(),
   active: z.boolean().default(true),
 })
 
@@ -53,7 +52,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     return validationError(validation)
   }
 
-  const { name, phone, email, notes, active } = validation.data
+  const { name, phone, email, active } = validation.data
 
   const providerId = nanoid()
 
@@ -63,11 +62,11 @@ export const POST = withBusinessAuth(async (request, access) => {
     name,
     phone: phone || null,
     email: email || null,
-    notes: notes || null,
-    notesUpdatedAt: notes ? new Date() : null,
     active,
     createdAt: new Date(),
   }).returning()
 
-  return successResponse({ provider: newProvider })
+  // Fresh providers have no notes yet; include the empty array so the
+  // client sees the same shape as the GET response.
+  return successResponse({ provider: { ...newProvider, notes: [] } })
 })

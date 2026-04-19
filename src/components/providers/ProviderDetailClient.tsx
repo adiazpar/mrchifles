@@ -4,10 +4,16 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus } from 'lucide-react'
+import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Spinner, TabContainer } from '@/components/ui'
-import { ProviderModal, ProviderNotesModal, ReliabilityBar, getProviderInitials } from './'
+import {
+  ProviderModal,
+  AddProviderNoteModal,
+  EditProviderNoteModal,
+  ReliabilityBar,
+  getProviderInitials,
+} from './'
 import { OrderListItem } from '@/components/products'
 import {
   computeProviderMetrics,
@@ -17,7 +23,7 @@ import {
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
 import { useProviders } from '@/contexts/providers-context'
-import { apiRequest, apiPatch, apiDelete, ApiError } from '@/lib/api-client'
+import { apiRequest, apiPost, apiPatch, apiDelete, ApiError } from '@/lib/api-client'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useBusiness } from '@/contexts/business-context'
@@ -27,7 +33,8 @@ import { formatRelative } from '@/lib/formatRelative'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import type { Provider, Product } from '@/types'
+import { MAX_PROVIDER_NOTES } from '@/lib/provider-notes'
+import type { Provider, Product, ProviderNote } from '@/types'
 
 interface ProviderDetailResponse {
   success?: boolean
@@ -119,14 +126,21 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const [editError, setEditError] = useState('')
   const [providerSaved, setProviderSaved] = useState(false)
 
-  // Notes modal state — its own textarea value + save-lifecycle flags so
-  // the Notes modal can live alongside the provider edit modal without
-  // interleaving state.
-  const [isNotesOpen, setNotesOpen] = useState(false)
-  const [notesDraft, setNotesDraft] = useState('')
-  const [isSavingNotes, setIsSavingNotes] = useState(false)
-  const [notesSaved, setNotesSaved] = useState(false)
-  const [notesError, setNotesError] = useState('')
+  // Notes state — one add modal and one edit/delete modal. Draft state
+  // (title + body) is shared between them since only one is ever open at
+  // a time; `editingNoteId` is the discriminator that also surfaces the
+  // existing note for the confirm-delete copy and the hasChanges gate.
+  const [isAddNoteOpen, setAddNoteOpen] = useState(false)
+  const [isEditNoteOpen, setEditNoteOpen] = useState(false)
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [editNoteInitialStep, setEditNoteInitialStep] = useState<0 | 1>(0)
+  const [noteTitle, setNoteTitle] = useState('')
+  const [noteBody, setNoteBody] = useState('')
+  const [isSavingNote, setIsSavingNote] = useState(false)
+  const [noteSaved, setNoteSaved] = useState(false)
+  const [noteError, setNoteError] = useState('')
+  const [isDeletingNote, setIsDeletingNote] = useState(false)
+  const [noteDeleted, setNoteDeleted] = useState(false)
 
   // Shared orders + providers stores. Orders whose providerId changes
   // elsewhere fall out of this page's derived list automatically; the
@@ -285,37 +299,120 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   }, [businessId, providerId, name, phone, email, active, setProviders, t, translateApiMessage])
 
   // ===== Notes =====
-  const openNotes = useCallback(() => {
-    setNotesDraft(provider?.notes ?? '')
-    setNotesError('')
-    setNotesSaved(false)
-    setNotesOpen(true)
-  }, [provider?.notes])
+  // The list lives on `provider.notes` (seeded from the detail GET). Each
+  // create/update/delete returns the full, already-sorted list so we can
+  // replace it in one shot without re-sorting on the client.
+  const notes = provider?.notes ?? []
+  const notesCount = notes.length
+  const atNotesLimit = notesCount >= MAX_PROVIDER_NOTES
+  const editingNote = editingNoteId
+    ? notes.find(n => n.id === editingNoteId) ?? null
+    : null
 
-  const handleSaveNotes = useCallback(async (): Promise<boolean> => {
-    setIsSavingNotes(true)
-    setNotesError('')
+  const applyNotesUpdate = useCallback((next: ProviderNote[]) => {
+    setProvider(prev => (prev ? { ...prev, notes: next } : prev))
+  }, [])
+
+  const openAddNote = useCallback(() => {
+    if (atNotesLimit) return
+    setNoteTitle('')
+    setNoteBody('')
+    setNoteError('')
+    setNoteSaved(false)
+    setAddNoteOpen(true)
+  }, [atNotesLimit])
+
+  const openEditNote = useCallback((note: ProviderNote) => {
+    setEditingNoteId(note.id)
+    setNoteTitle(note.title)
+    setNoteBody(note.body)
+    setNoteError('')
+    setNoteSaved(false)
+    setNoteDeleted(false)
+    setEditNoteInitialStep(0)
+    setEditNoteOpen(true)
+  }, [])
+
+  const openDeleteNote = useCallback((note: ProviderNote) => {
+    setEditingNoteId(note.id)
+    setNoteTitle(note.title)
+    setNoteBody(note.body)
+    setNoteError('')
+    setNoteSaved(false)
+    setNoteDeleted(false)
+    setEditNoteInitialStep(1)
+    setEditNoteOpen(true)
+  }, [])
+
+  const handleAddNote = useCallback(async (): Promise<boolean> => {
+    setIsSavingNote(true)
+    setNoteError('')
     try {
-      const trimmed = notesDraft.trim()
-      const result = await apiPatch<{ success: true; provider: Provider }>(
-        `/api/businesses/${businessId}/providers/${providerId}`,
-        { notes: trimmed || null },
+      const result = await apiPost<{ success: true; notes: ProviderNote[] }>(
+        `/api/businesses/${businessId}/providers/${providerId}/notes`,
+        { title: noteTitle.trim(), body: noteBody.trim() },
       )
-      setProvider(result.provider)
-      setProviders(prev => prev.map(p => (p.id === result.provider.id ? result.provider : p)))
-      setNotesSaved(true)
+      applyNotesUpdate(result.notes)
+      setNoteSaved(true)
       return true
     } catch (err) {
-      setNotesError(
+      setNoteError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
           : t('error_failed_to_save')
       )
       return false
     } finally {
-      setIsSavingNotes(false)
+      setIsSavingNote(false)
     }
-  }, [businessId, providerId, notesDraft, setProviders, t, translateApiMessage])
+  }, [businessId, providerId, noteTitle, noteBody, applyNotesUpdate, t, translateApiMessage])
+
+  const handleUpdateNote = useCallback(async (): Promise<boolean> => {
+    if (!editingNoteId) return false
+    setIsSavingNote(true)
+    setNoteError('')
+    try {
+      const result = await apiPatch<{ success: true; notes: ProviderNote[] }>(
+        `/api/businesses/${businessId}/providers/${providerId}/notes/${editingNoteId}`,
+        { title: noteTitle.trim(), body: noteBody.trim() },
+      )
+      applyNotesUpdate(result.notes)
+      setNoteSaved(true)
+      return true
+    } catch (err) {
+      setNoteError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_save')
+      )
+      return false
+    } finally {
+      setIsSavingNote(false)
+    }
+  }, [businessId, providerId, editingNoteId, noteTitle, noteBody, applyNotesUpdate, t, translateApiMessage])
+
+  const handleDeleteNote = useCallback(async (): Promise<boolean> => {
+    if (!editingNoteId) return false
+    setIsDeletingNote(true)
+    setNoteError('')
+    try {
+      const result = await apiDelete<{ success: true; notes: ProviderNote[] }>(
+        `/api/businesses/${businessId}/providers/${providerId}/notes/${editingNoteId}`,
+      )
+      applyNotesUpdate(result.notes)
+      setNoteDeleted(true)
+      return true
+    } catch (err) {
+      setNoteError(
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : t('error_failed_to_delete')
+      )
+      return false
+    } finally {
+      setIsDeletingNote(false)
+    }
+  }, [businessId, providerId, editingNoteId, applyNotesUpdate, t, translateApiMessage])
 
   // ===== Delete provider =====
   // Returns true on successful delete, which lets the modal navigate to the
@@ -777,59 +874,100 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               added. Actions are hidden entirely for non-managers. */}
           <TabContainer.Tab id="notes">
             <div className="card p-4 space-y-4">
-              {/* Row 1 — header + written date. Mirrors the History /
-                  What you buy / Monthly spend cards: text-secondary
-                  title on the left, muted metadata on the right. */}
+              {/* Header row — label on the left, X/5 count on the right.
+                  Mirrors the other Summary cards' header pattern. */}
               <div className="flex items-center justify-between gap-3 text-sm">
                 <span className="text-text-secondary">
                   {t('notes_card_header')}
                 </span>
-                {provider.notesUpdatedAt && (
-                  <span className="text-text-tertiary flex-shrink-0">
-                    {t('notes_edited_on', {
-                      date: formatRelative(provider.notesUpdatedAt, userLocale),
-                    })}
-                  </span>
-                )}
+                <span className="text-text-tertiary tabular-nums flex-shrink-0">
+                  {t('notes_count_label', {
+                    count: notesCount,
+                    max: MAX_PROVIDER_NOTES,
+                  })}
+                </span>
               </div>
 
               <hr className="border-border" />
 
-              {/* Row 2 — note content */}
-              <p
-                className={`text-sm whitespace-pre-wrap ${
-                  provider.notes ? 'text-text-secondary' : 'text-text-tertiary italic'
-                }`}
-              >
-                {provider.notes || t('notes_empty')}
-              </p>
+              {/* List of notes, or the empty-state line when none exist.
+                  Each note is its own bordered mini-container with title +
+                  action icons on top, "Edited X ago" subtitle below, and
+                  the body underneath — no hairline between header and body. */}
+              {notesCount === 0 ? (
+                <p className="text-sm text-text-tertiary italic">
+                  {t('notes_empty')}
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {notes.map(note => (
+                    <div
+                      key={note.id}
+                      className="rounded-lg border border-border p-3 space-y-2"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-text-primary truncate">
+                            {note.title}
+                          </div>
+                          <div className="text-xs text-text-tertiary mt-0.5">
+                            {t('note_edited_on', {
+                              date: formatRelative(note.updatedAt, userLocale),
+                            })}
+                          </div>
+                        </div>
+                        {canManage && (
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => openEditNote(note)}
+                              className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
+                              aria-label={t('note_edit_aria')}
+                            >
+                              <Pencil style={{ width: 16, height: 16 }} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openDeleteNote(note)}
+                              className="p-1 text-error hover:text-error transition-colors"
+                              aria-label={t('note_delete_aria')}
+                            >
+                              <Trash2 style={{ width: 16, height: 16 }} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-text-secondary whitespace-pre-wrap">
+                        {note.body}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-              {/* Row 3 — right-aligned compact action, separated from
-                  the content by the same hairline the header uses. */}
+              {/* Bottom-right "+ Add note" button. Disabled when the
+                  per-provider cap is reached; server still enforces. */}
               {canManage && (
                 <>
                   <hr className="border-border" />
                   <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={openNotes}
-                    className="btn btn-secondary"
-                    style={{
-                      fontSize: 'var(--text-sm)',
-                      padding: 'var(--space-2) var(--space-4)',
-                      minHeight: 'unset',
-                      gap: 'var(--space-2)',
-                      borderRadius: 'var(--radius-md)',
-                    }}
-                  >
-                    {provider.notes ? (
-                      <Pencil style={{ width: 14, height: 14 }} />
-                    ) : (
+                    <button
+                      type="button"
+                      onClick={openAddNote}
+                      disabled={atNotesLimit}
+                      className="btn btn-secondary"
+                      style={{
+                        fontSize: 'var(--text-sm)',
+                        padding: 'var(--space-2) var(--space-4)',
+                        minHeight: 'unset',
+                        gap: 'var(--space-2)',
+                        borderRadius: 'var(--radius-md)',
+                      }}
+                    >
                       <Plus style={{ width: 14, height: 14 }} />
-                    )}
-                    {provider.notes ? t('edit_note_button') : t('add_note_button')}
-                  </button>
-                </div>
+                      {t('add_note_button')}
+                    </button>
+                  </div>
                 </>
               )}
             </div>
@@ -877,22 +1015,55 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         onDelete={handleDelete}
       />
 
-      {/* ============== Notes modal ============== */}
-      <ProviderNotesModal
-        isOpen={isNotesOpen}
-        onClose={() => setNotesOpen(false)}
+      {/* ============== Add note modal ============== */}
+      <AddProviderNoteModal
+        isOpen={isAddNoteOpen}
+        onClose={() => setAddNoteOpen(false)}
         onExitComplete={() => {
-          setNotesDraft('')
-          setNotesSaved(false)
-          setNotesError('')
+          setNoteTitle('')
+          setNoteBody('')
+          setNoteSaved(false)
+          setNoteError('')
         }}
-        notes={notesDraft}
-        onNotesChange={setNotesDraft}
-        originalNotes={provider.notes ?? ''}
-        isSaving={isSavingNotes}
-        notesSaved={notesSaved}
-        error={notesError}
-        onSubmit={handleSaveNotes}
+        title={noteTitle}
+        onTitleChange={setNoteTitle}
+        body={noteBody}
+        onBodyChange={setNoteBody}
+        isSaving={isSavingNote}
+        noteSaved={noteSaved}
+        error={noteError}
+        onSubmit={handleAddNote}
+      />
+
+      {/* ============== Edit / delete note modal ==============
+          Opens at step 0 from the edit pencil and step 1 (delete confirm)
+          from the trash icon. Delete-success plays as step 2, save-success
+          as step 3 — same shape as ProviderModal. */}
+      <EditProviderNoteModal
+        isOpen={isEditNoteOpen}
+        onClose={() => setEditNoteOpen(false)}
+        onExitComplete={() => {
+          setEditingNoteId(null)
+          setNoteTitle('')
+          setNoteBody('')
+          setNoteSaved(false)
+          setNoteDeleted(false)
+          setNoteError('')
+          setEditNoteInitialStep(0)
+        }}
+        initialStep={editNoteInitialStep}
+        editingNote={editingNote}
+        title={noteTitle}
+        onTitleChange={setNoteTitle}
+        body={noteBody}
+        onBodyChange={setNoteBody}
+        isSaving={isSavingNote}
+        noteSaved={noteSaved}
+        error={noteError}
+        onSubmit={handleUpdateNote}
+        isDeleting={isDeletingNote}
+        noteDeleted={noteDeleted}
+        onDelete={handleDeleteNote}
       />
 
       {/* ============== Order flows (new order + order detail/edit/receive/delete) ============== */}
