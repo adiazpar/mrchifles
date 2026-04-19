@@ -399,6 +399,7 @@
     "status_label": "Status",
     "date_label": "Date",
     "received_date_label": "Received date",
+    "received_by_label": "Received by:",
     "view_attachment": "View attachment",
     "delete_order_aria": "Delete order",
     "receive_button": "Receive",

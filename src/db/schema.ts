@@ -150,6 +150,9 @@ export const orders = sqliteTable('orders', {
   // User who created the order. Nullable so legacy rows from before this
   // column existed stay valid; new inserts always set it.
   createdByUserId: text('created_by_user_id').references(() => users.id),
+  // User who received the order. Null until status transitions to
+  // 'received'; stamped with the acting user at receive time.
+  receivedByUserId: text('received_by_user_id').references(() => users.id),
   // Human-readable reference, auto-numbered per business ("#47"). Nullable
   // so existing rows can be backfilled post-migration; new inserts always
   // compute it in the create route.

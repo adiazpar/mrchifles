@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { useTranslations } from 'next-intl'
-import { Calendar, CircleCheckBig, CircleAlert, Clock, UserPlus, Truck } from 'lucide-react'
+import { Calendar, CircleCheckBig, CircleAlert, Clock, UserPlus, UserCheck, Truck } from 'lucide-react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getOrderDisplayStatus, type ExpandedOrder } from '@/lib/products'
 
@@ -121,6 +121,20 @@ export const OrderListItem = memo(function OrderListItem({
             </span>
             <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
               {order.expand.createdByUser.name || order.expand.createdByUser.email}
+            </span>
+          </div>
+        )}
+
+        {order.expand?.receivedByUser && (
+          <div className="mt-2 flex items-center gap-3">
+            <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
+              <UserCheck className="w-4 h-4 text-text-tertiary" />
+            </div>
+            <span className="flex-1 min-w-0 text-xs text-text-tertiary">
+              {t('received_by_label')}
+            </span>
+            <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
+              {order.expand.receivedByUser.name || order.expand.receivedByUser.email}
             </span>
           </div>
         )}

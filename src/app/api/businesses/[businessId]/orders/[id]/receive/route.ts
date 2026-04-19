@@ -75,12 +75,13 @@ export const POST = withBusinessAuth(async (request, access, routeParams) => {
     }
   }
 
-  // Update order status
+  // Update order status + stamp who did the receiving.
   await db
     .update(orders)
     .set({
       status: 'received',
       receivedDate: now,
+      receivedByUserId: access.userId,
     })
     .where(eq(orders.id, id))
 

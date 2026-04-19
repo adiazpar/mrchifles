@@ -131,6 +131,8 @@ export interface Order {
   providerId?: string | null
   // User who created the order. Nullable for legacy rows.
   createdByUserId?: string | null
+  // User who received the order. Null until the order is received.
+  receivedByUserId?: string | null
   // Human-readable, per-business sequential reference ("#47"). Nullable
   // to tolerate rows that pre-date the backfill.
   orderNumber?: number | null

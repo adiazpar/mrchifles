@@ -417,6 +417,12 @@ export function OrderDetailModal({
                 <span className="tabular-nums">{formatDate(new Date(order.receivedDate))}</span>
               </div>
             )}
+            {order.expand?.receivedByUser && (
+              <div className="flex justify-between">
+                <span className="text-text-tertiary">{t('received_by_label')}</span>
+                <span>{order.expand.receivedByUser.name || order.expand.receivedByUser.email}</span>
+              </div>
+            )}
             {order.receipt && (
               <div className="flex justify-between">
                 <span className="text-text-tertiary">{t('receipt_attached_label')}</span>

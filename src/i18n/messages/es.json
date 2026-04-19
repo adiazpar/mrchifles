@@ -399,6 +399,7 @@
     "status_label": "Estado",
     "date_label": "Fecha",
     "received_date_label": "Fecha de recepción",
+    "received_by_label": "Recibido por:",
     "view_attachment": "Ver adjunto",
     "delete_order_aria": "Eliminar pedido",
     "receive_button": "Recibir",

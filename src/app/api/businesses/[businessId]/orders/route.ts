@@ -83,19 +83,24 @@ export const GET = withBusinessAuth(async (request, access) => {
 
   const providersMap = new Map(providersList.map(p => [p.id, p]))
 
-  // Creator expansion — fetch the slim user shape for any creators
-  // referenced by these orders. Skipped entirely if no order has a
-  // creator (only possible for legacy rows).
-  const creatorIds = [
-    ...new Set(ordersList.map(o => o.createdByUserId).filter(Boolean)),
+  // User expansion — fetch the slim user shape for every user id
+  // referenced by these orders (creators AND receivers). Done in one
+  // query rather than two so duplicates (a user who both placed and
+  // received the same order) only cost a single row.
+  const userIds = [
+    ...new Set(
+      ordersList
+        .flatMap(o => [o.createdByUserId, o.receivedByUserId])
+        .filter(Boolean),
+    ),
   ] as string[]
-  const creatorsList = creatorIds.length > 0
+  const usersList = userIds.length > 0
     ? await db
         .select({ id: users.id, name: users.name, email: users.email })
         .from(users)
-        .where(inArray(users.id, creatorIds))
+        .where(inArray(users.id, userIds))
     : []
-  const creatorsMap = new Map(creatorsList.map(u => [u.id, u]))
+  const usersMap = new Map(usersList.map(u => [u.id, u]))
 
   // Group items by orderId for efficient lookup
   const itemsByOrderId = new Map<string, typeof allItems>()
@@ -113,7 +118,8 @@ export const GET = withBusinessAuth(async (request, access) => {
       providerId: order.providerId,
       expand: {
         provider: order.providerId ? providersMap.get(order.providerId) || null : null,
-        createdByUser: order.createdByUserId ? creatorsMap.get(order.createdByUserId) || null : null,
+        createdByUser: order.createdByUserId ? usersMap.get(order.createdByUserId) || null : null,
+        receivedByUser: order.receivedByUserId ? usersMap.get(order.receivedByUserId) || null : null,
         'order_items(order)': items.map(item => ({
           ...item,
           expand: {

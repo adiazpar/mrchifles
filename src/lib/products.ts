@@ -73,6 +73,8 @@ export interface ExpandedOrder extends Order {
     provider?: Provider
     /** The user who created the order. Slim shape (no sensitive fields). */
     createdByUser?: { id: string; name: string; email: string }
+    /** The user who received the order. Only present once the order is received. */
+    receivedByUser?: { id: string; name: string; email: string }
   }
 }
 
