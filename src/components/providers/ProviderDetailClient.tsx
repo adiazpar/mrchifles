@@ -503,12 +503,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   return (
     <>
       <main className="page-content space-y-4">
-        {/* ============== Identity Card ==============
+        {/* ============== Identity Header ==============
             Top row: avatar, name, active/inactive status text, edit button.
             Bottom row: three contact actions (call / whatsapp / email).
             Each action is disabled — but still visible — when its
-            underlying contact field is empty. */}
-        <div className="card p-4 space-y-4">
+            underlying contact field is empty.
+            Rendered without the card chrome (no bg, no border, no inner
+            padding) so it reads as the page header rather than a card. */}
+        <div className="space-y-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-brand-subtle text-brand">
               <span className="text-lg font-semibold">{initials}</span>
@@ -891,56 +893,58 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               <hr className="border-border" />
 
               {/* List of notes, or the empty-state line when none exist.
-                  Each note is its own bordered mini-container with title +
-                  action icons on top, "Edited X ago" subtitle below, and
-                  the body underneath — no hairline between header and body. */}
+                  Matches the app's list-divided pattern: no border or
+                  background on individual notes, separated by hairline
+                  dividers. Title + action icons on top, "Edited X ago"
+                  subtitle, body below — no hairline between header and
+                  body, just spacing. */}
               {notesCount === 0 ? (
                 <p className="text-sm text-text-tertiary italic">
                   {t('notes_empty')}
                 </p>
               ) : (
-                <div className="space-y-3">
-                  {notes.map(note => (
-                    <div
-                      key={note.id}
-                      className="rounded-lg border border-border p-3 space-y-2"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-text-primary truncate">
-                            {note.title}
+                <div className="list-divided">
+                  {notes.map((note, i) => (
+                    <Fragment key={note.id}>
+                      {i > 0 && <hr className="list-divider" />}
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-text-primary truncate">
+                              {note.title}
+                            </div>
+                            <div className="text-xs text-text-tertiary mt-0.5">
+                              {t('note_edited_on', {
+                                date: formatRelative(note.updatedAt, userLocale),
+                              })}
+                            </div>
                           </div>
-                          <div className="text-xs text-text-tertiary mt-0.5">
-                            {t('note_edited_on', {
-                              date: formatRelative(note.updatedAt, userLocale),
-                            })}
-                          </div>
+                          {canManage && (
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => openEditNote(note)}
+                                className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
+                                aria-label={t('note_edit_aria')}
+                              >
+                                <Pencil style={{ width: 16, height: 16 }} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openDeleteNote(note)}
+                                className="p-1 text-error hover:text-error transition-colors"
+                                aria-label={t('note_delete_aria')}
+                              >
+                                <Trash2 style={{ width: 16, height: 16 }} />
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        {canManage && (
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => openEditNote(note)}
-                              className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
-                              aria-label={t('note_edit_aria')}
-                            >
-                              <Pencil style={{ width: 16, height: 16 }} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openDeleteNote(note)}
-                              className="p-1 text-error hover:text-error transition-colors"
-                              aria-label={t('note_delete_aria')}
-                            >
-                              <Trash2 style={{ width: 16, height: 16 }} />
-                            </button>
-                          </div>
-                        )}
+                        <p className="text-sm text-text-secondary whitespace-pre-wrap">
+                          {note.body}
+                        </p>
                       </div>
-                      <p className="text-sm text-text-secondary whitespace-pre-wrap">
-                        {note.body}
-                      </p>
-                    </div>
+                    </Fragment>
                   ))}
                 </div>
               )}
