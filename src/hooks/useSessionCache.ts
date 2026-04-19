@@ -91,3 +91,13 @@ export const CACHE_KEYS = {
   ORDERS: 'orders_cache',
   CATEGORIES: 'categories_cache',
 } as const
+
+/**
+ * Business-scoped cache helper. The products cache (and any other
+ * per-business list) must not bleed across businesses in the same session,
+ * so we suffix the key with the businessId. Shared so every site that
+ * reads/writes/clears the same logical cache agrees on the key.
+ */
+export function scopedCache<T>(key: string, businessId: string) {
+  return createSessionCache<T>(`${key}_${businessId}`)
+}

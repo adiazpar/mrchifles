@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { fetchDeduped } from '@/lib/fetch'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
+import { scopedCache, CACHE_KEYS } from '@/hooks/useSessionCache'
 import { hasMessageEnvelope } from '@/lib/api-messages'
 import { NewOrderModal, OrderDetailModal } from '@/components/products'
 import type { Product, Provider } from '@/types'
@@ -314,6 +315,16 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       if (setProducts && responses[1]?.ok && productsData?.success) {
         setProducts(productsData.products)
       }
+
+      // Receiving an order increments product stock in the DB. The Products
+      // page keeps its list in a sessionStorage cache and skips refetching on
+      // mount when the cache exists, so without explicit invalidation it
+      // would keep showing the stale (pre-receive) stock — even across a
+      // full page refresh, since sessionStorage survives it. Clear the cache
+      // so the next Products-page mount fetches fresh stock. This is the
+      // only path that matters when the caller didn't pass setProducts
+      // (e.g. the provider detail page), but it's safe to run in both cases.
+      scopedCache<Product[]>(CACHE_KEYS.PRODUCTS, businessId).clear()
 
       setOrderReceived(true)
       return true

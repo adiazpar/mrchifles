@@ -32,7 +32,7 @@ export type { Theme, UseThemeReturn } from './useTheme'
 
 export { useFormModal } from './useFormModal'
 
-export { useSessionCache, createSessionCache, CACHE_KEYS } from './useSessionCache'
+export { useSessionCache, createSessionCache, scopedCache, CACHE_KEYS } from './useSessionCache'
 
 export { useJoinBusiness } from './useJoinBusiness'
 export type { UseJoinBusinessReturn, CodeType } from './useJoinBusiness'

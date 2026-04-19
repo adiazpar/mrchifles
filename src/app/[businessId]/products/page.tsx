@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { fetchDeduped } from '@/lib/fetch'
 import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
-import { useProductFilters, useProductSettings, createSessionCache, CACHE_KEYS } from '@/hooks'
+import { useProductFilters, useProductSettings, scopedCache, CACHE_KEYS } from '@/hooks'
 import { Spinner, TabContainer } from '@/components/ui'
 import {
   ProductsTab,
@@ -33,14 +33,6 @@ import { useProviders } from '@/contexts/providers-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { useTranslations } from 'next-intl'
 import type { Product, SortPreference, ProductCategory } from '@/types'
-
-// ============================================
-// SESSION CACHE
-// ============================================
-
-function scopedCache<T>(key: string, businessId: string) {
-  return createSessionCache<T>(`${key}_${businessId}`)
-}
 
 // ============================================
 // PRODUCT MODAL WRAPPER
