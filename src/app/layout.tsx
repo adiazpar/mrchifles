@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 import { AuthProvider } from '@/contexts/auth-context'
 import { NavbarProvider } from '@/contexts/navbar-context'
-import { AppShell } from '@/components/layout'
+import { AppShell, TapFeedbackProvider } from '@/components/layout'
 import './globals.css'
 
 const dmSans = DM_Sans({
@@ -104,6 +104,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="h-full antialiased bg-bg-base text-text-primary" suppressHydrationWarning>
+        <TapFeedbackProvider />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
             <NavbarProvider>
