@@ -2,8 +2,9 @@
 
 import { Fragment, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { X, Plus, ChevronUp, Clipboard, ListFilter } from 'lucide-react'
-import { Modal } from '@/components/ui'
+import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig, Pencil, Trash2 } from 'lucide-react'
+import { Modal, SwipeableRow } from '@/components/ui'
+import { getOrderDisplayStatus } from '@/lib/products'
 import { useNavbar } from '@/contexts/navbar-context'
 import { useTranslations } from 'next-intl'
 import { scrollToTop } from '@/lib/scroll'
@@ -41,6 +42,15 @@ export interface OrdersTabProps {
   // Handlers
   onNewOrder: () => void
   onViewOrder: (order: ExpandedOrder) => void
+  /**
+   * Optional swipe-action handlers. Each takes the order and opens the detail
+   * modal on the corresponding step. Pass all three to enable the swipe tray.
+   */
+  onReceiveOrder?: (order: ExpandedOrder) => void
+  onEditOrder?: (order: ExpandedOrder) => void
+  onDeleteOrder?: (order: ExpandedOrder) => void
+  /** Gates the delete swipe action; matches the canDelete used by the modal. */
+  canDelete?: boolean
 
   // Error state
   error?: string
@@ -66,6 +76,10 @@ export function OrdersTab({
   onStatusFilterChange,
   onNewOrder,
   onViewOrder,
+  onReceiveOrder,
+  onEditOrder,
+  onDeleteOrder,
+  canDelete = false,
   error,
   isModalOpen,
 }: OrdersTabProps) {
@@ -205,12 +219,54 @@ export function OrdersTab({
               </div>
             ) : (
               <div className="list-divided">
-                {filteredOrders.map((order, i) => (
-                  <Fragment key={order.id}>
-                    {i > 0 && <hr className="list-divider" />}
-                    <OrderListItem order={order} onView={onViewOrder} />
-                  </Fragment>
-                ))}
+                {filteredOrders.map((order, i) => {
+                  const hasSwipeActions = !!(onReceiveOrder && onEditOrder && onDeleteOrder)
+                  const alreadyReceived = getOrderDisplayStatus(order) === 'received'
+                  // Mirrors the products list ordering for muscle-memory consistency:
+                  // primary action leftmost (deepest swipe), secondary middle, the
+                  // remove-ish action rightmost (shallowest swipe).
+                  const swipeActions = hasSwipeActions
+                    ? [
+                        {
+                          icon: <CircleCheckBig size={20} />,
+                          label: t('action_receive'),
+                          variant: 'info' as const,
+                          disabled: alreadyReceived,
+                          onClick: () => onReceiveOrder!(order),
+                        },
+                        {
+                          icon: <Pencil size={20} />,
+                          label: t('action_edit'),
+                          variant: 'neutral' as const,
+                          // Received orders are locked — no quantity / total /
+                          // provider edits once stock has been posted.
+                          disabled: alreadyReceived,
+                          onClick: () => onEditOrder!(order),
+                        },
+                        {
+                          icon: <Trash2 size={20} />,
+                          label: t('action_delete'),
+                          variant: 'danger' as const,
+                          // Received orders can't be deleted either — would
+                          // require rolling back the stock changes they posted.
+                          disabled: !canDelete || alreadyReceived,
+                          onClick: () => onDeleteOrder!(order),
+                        },
+                      ]
+                    : []
+                  return (
+                    <Fragment key={order.id}>
+                      {i > 0 && <hr className="list-divider" />}
+                      {hasSwipeActions ? (
+                        <SwipeableRow actions={swipeActions}>
+                          <OrderListItem order={order} onView={onViewOrder} />
+                        </SwipeableRow>
+                      ) : (
+                        <OrderListItem order={order} onView={onViewOrder} />
+                      )}
+                    </Fragment>
+                  )
+                })}
               </div>
             )}
           </div>

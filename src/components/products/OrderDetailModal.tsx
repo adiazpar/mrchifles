@@ -48,6 +48,8 @@ const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/
 export interface OrderDetailModalProps {
   // Modal state
   isOpen: boolean
+  /** Step to open on (0 = overview, 1 = edit, 3 = receive, 5 = delete). Default 0. */
+  initialStep?: number
   onClose: () => void
   onExitComplete: () => void
 
@@ -222,6 +224,7 @@ function DeleteOrderButton({ onDelete, isDeleting }: { onDelete: () => Promise<b
 
 export function OrderDetailModal({
   isOpen,
+  initialStep = 0,
   onClose,
   onExitComplete,
   order,
@@ -267,6 +270,11 @@ export function OrderDetailModal({
   const [editReceiptError, setEditReceiptError] = useState('')
   const productsById = useMemo(() => new Map(products.map(p => [p.id, p])), [products])
 
+  // When the modal was opened at a sub-step directly (via a swipe-tray action
+  // on the list row), the overview isn't part of the user's mental stack —
+  // so Back / Cancel should dismiss the modal rather than slide to step 0.
+  const openedFromSwipe = initialStep !== 0
+
   if (!order) return null
 
   // Prefer the human-readable reference ("Order #47") when the server
@@ -279,6 +287,7 @@ export function OrderDetailModal({
   return (
     <Modal
       isOpen={isOpen}
+      initialStep={initialStep}
       onClose={onClose}
       onExitComplete={onExitComplete}
       title={headingTitle}
@@ -464,7 +473,10 @@ export function OrderDetailModal({
       </Modal.Step>
 
       {/* Step 1: Edit Order */}
-      <Modal.Step title={t('edit_order_title')} backStep={0}>
+      <Modal.Step
+        title={t('edit_order_title')}
+        {...(openedFromSwipe ? { hideBackButton: true } : { backStep: 0 })}
+      >
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
@@ -650,9 +662,15 @@ export function OrderDetailModal({
         </Modal.Item>
 
         <Modal.Footer>
-          <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1">
-            {tCommon('cancel')}
-          </Modal.GoToStepButton>
+          {openedFromSwipe ? (
+            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
+              {tCommon('cancel')}
+            </button>
+          ) : (
+            <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1">
+              {tCommon('cancel')}
+            </Modal.GoToStepButton>
+          )}
           <SaveEditOrderButton
             onSave={onSaveEditOrder}
             isSaving={isSaving}
@@ -708,7 +726,10 @@ export function OrderDetailModal({
       </Modal.Step>
 
       {/* Step 3: Receive Order - Confirmation */}
-      <Modal.Step title={t('receive_order_title')} backStep={0}>
+      <Modal.Step
+        title={t('receive_order_title')}
+        {...(openedFromSwipe ? { hideBackButton: true } : { backStep: 0 })}
+      >
         {/* Products list */}
         <Modal.Item>
           <div className="space-y-1">
@@ -750,9 +771,15 @@ export function OrderDetailModal({
         </Modal.Item>
 
         <Modal.Footer>
-          <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1">
-            {tCommon('cancel')}
-          </Modal.GoToStepButton>
+          {openedFromSwipe ? (
+            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
+              {tCommon('cancel')}
+            </button>
+          ) : (
+            <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1">
+              {tCommon('cancel')}
+            </Modal.GoToStepButton>
+          )}
           <ConfirmReceiveButton onReceive={onReceiveOrder} isReceiving={isReceiving} />
         </Modal.Footer>
       </Modal.Step>
@@ -799,16 +826,25 @@ export function OrderDetailModal({
       </Modal.Step>
 
       {/* Step 5: Delete Confirmation */}
-      <Modal.Step title={t('delete_order_title')} backStep={0}>
+      <Modal.Step
+        title={t('delete_order_title')}
+        {...(openedFromSwipe ? { hideBackButton: true } : { backStep: 0 })}
+      >
         <Modal.Item>
           <p className="text-text-secondary">
             {tCommon('delete')} <strong>{t('delete_item_name', { date: formatDate(new Date(order.date)) })}</strong>? {t('delete_cannot_be_undone')}
           </p>
         </Modal.Item>
         <Modal.Footer>
-          <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
-            {tCommon('cancel')}
-          </Modal.GoToStepButton>
+          {openedFromSwipe ? (
+            <button type="button" onClick={onClose} className="btn btn-secondary flex-1" disabled={isDeleting}>
+              {tCommon('cancel')}
+            </button>
+          ) : (
+            <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
+              {tCommon('cancel')}
+            </Modal.GoToStepButton>
+          )}
           <DeleteOrderButton onDelete={onDeleteOrder} isDeleting={isDeleting} />
         </Modal.Footer>
       </Modal.Step>

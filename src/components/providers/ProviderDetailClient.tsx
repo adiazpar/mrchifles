@@ -4,9 +4,9 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2 } from 'lucide-react'
+import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2, CircleCheckBig } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
-import { Spinner, TabContainer } from '@/components/ui'
+import { Spinner, SwipeableRow, TabContainer } from '@/components/ui'
 import {
   ProviderModal,
   AddProviderNoteModal,
@@ -828,16 +828,49 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                 </p>
               ) : (
                 <div className="list-divided">
-                  {providerOrders.map((order, i) => (
-                    <Fragment key={order.id}>
-                      {i > 0 && <hr className="list-divider" />}
-                      <OrderListItem
-                        order={order}
-                        onView={() => orderFlows.openOrderDetail(order)}
-                        hideProviderRow
-                      />
-                    </Fragment>
-                  ))}
+                  {providerOrders.map((order, i) => {
+                    const alreadyReceived = getOrderDisplayStatus(order) === 'received'
+                    // Same semantic ordering as the Products page Orders tab
+                    // for muscle-memory consistency across surfaces.
+                    const swipeActions = [
+                      {
+                        icon: <CircleCheckBig size={20} />,
+                        label: tOrders('action_receive'),
+                        variant: 'info' as const,
+                        disabled: alreadyReceived,
+                        onClick: () => orderFlows.openOrderDetail(order, 'receive'),
+                      },
+                      {
+                        icon: <Pencil size={20} />,
+                        label: tOrders('action_edit'),
+                        variant: 'neutral' as const,
+                        // Received orders are locked — no edits once stock posted.
+                        disabled: alreadyReceived,
+                        onClick: () => orderFlows.openOrderDetail(order, 'edit'),
+                      },
+                      {
+                        icon: <Trash2 size={20} />,
+                        label: tOrders('action_delete'),
+                        variant: 'danger' as const,
+                        // Received orders can't be deleted either — would
+                        // require rolling back the stock changes they posted.
+                        disabled: !canManage || alreadyReceived,
+                        onClick: () => orderFlows.openOrderDetail(order, 'delete'),
+                      },
+                    ]
+                    return (
+                      <Fragment key={order.id}>
+                        {i > 0 && <hr className="list-divider" />}
+                        <SwipeableRow actions={swipeActions}>
+                          <OrderListItem
+                            order={order}
+                            onView={() => orderFlows.openOrderDetail(order)}
+                            hideProviderRow
+                          />
+                        </SwipeableRow>
+                      </Fragment>
+                    )
+                  })}
                 </div>
               )}
             </div>

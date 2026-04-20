@@ -255,8 +255,10 @@
   color: var(--color-pos);
 }
 
+/* Delete action — muted background like every other variant; only the icon
+   carries the red (error) semantic. */
 .swipeable-row-action--danger {
-  background: var(--color-error-subtle);
+  background: var(--color-bg-muted);
 }
 
 .swipeable-row-action--danger .swipeable-row-action__icon {

@@ -845,6 +845,10 @@ export default function ProductosPage() {
               onStatusFilterChange={setOrderStatusFilter}
               onNewOrder={() => orderFlows.openNewOrder()}
               onViewOrder={(order) => orderFlows.openOrderDetail(order)}
+              onReceiveOrder={(order) => orderFlows.openOrderDetail(order, 'receive')}
+              onEditOrder={(order) => orderFlows.openOrderDetail(order, 'edit')}
+              onDeleteOrder={(order) => orderFlows.openOrderDetail(order, 'delete')}
+              canDelete={canDelete}
               error={error || orderFlows.error}
               isModalOpen={orderFlows.isNewOrderOpen}
             />

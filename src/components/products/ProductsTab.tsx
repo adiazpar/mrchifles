@@ -384,17 +384,19 @@ const ProductListItem = memo(function ProductListItem({
   const hasBarcode = !!product.barcode
   const isActive = product.active
 
-  // Swipe actions render left-to-right; the rightmost is exposed first as the row slides.
-  // Inventory is the most-frequently-used action, so it sits on the right (revealed first);
-  // Print sits in the middle (disabled when the product has no barcode); Enable/Disable
-  // sits on the left (revealed on the deepest swipe).
+  // Swipe actions render left-to-right; the rightmost is exposed first as the row
+  // slides. Semantic ordering mirrors the orders list so muscle memory carries across
+  // surfaces: the "remove-ish" action sits rightmost (easiest to reach), the primary
+  // everyday action sits leftmost (requires the deepest swipe), and the secondary
+  // action is in the middle. For products that means:
+  //   inventory  (primary)  →  print  (secondary)  →  disable/enable  (remove-ish)
   const swipeActions = canModify && onAdjustInventory && onToggleActive
     ? [
         {
-          icon: isActive ? <EyeOff size={20} /> : <Eye size={20} />,
-          label: isActive ? t('action_disable') : t('action_enable'),
-          variant: 'neutral' as const,
-          onClick: () => onToggleActive(product),
+          icon: <SlidersHorizontal size={20} />,
+          label: t('action_inventory'),
+          variant: 'info' as const,
+          onClick: () => onAdjustInventory(product),
         },
         {
           icon: <Printer size={20} />,
@@ -408,10 +410,10 @@ const ProductListItem = memo(function ProductListItem({
           }),
         },
         {
-          icon: <SlidersHorizontal size={20} />,
-          label: t('action_inventory'),
-          variant: 'info' as const,
-          onClick: () => onAdjustInventory(product),
+          icon: isActive ? <EyeOff size={20} /> : <Eye size={20} />,
+          label: isActive ? t('action_disable') : t('action_enable'),
+          variant: 'neutral' as const,
+          onClick: () => onToggleActive(product),
         },
       ]
     : []

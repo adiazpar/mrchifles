@@ -42,7 +42,12 @@ export interface UseOrderFlowsReturn {
   // Openers / closers
   openNewOrder: (presetProviderId?: string) => void
   closeNewOrder: () => void
-  openOrderDetail: (order: ExpandedOrder) => void
+  /**
+   * Open the order detail modal. Pass `initialAction` to land directly on a
+   * sub-step (receive / edit / delete confirm) — used by the swipe tray on
+   * list rows so a single tap takes the user straight to the action.
+   */
+  openOrderDetail: (order: ExpandedOrder, initialAction?: 'receive' | 'edit' | 'delete') => void
   closeOrderDetail: () => void
 
   // Ready-to-render modal JSX. Drop into your page: {orderFlows.modals}
@@ -99,6 +104,10 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false)
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false)
   const [viewingOrder, setViewingOrder] = useState<ExpandedOrder | null>(null)
+  // Step the OrderDetailModal should open on. Set by openOrderDetail when a
+  // swipe-tray action jumps straight into receive/edit/delete. Modal reads
+  // this at mount only; subsequent opens reset it to 0 (overview).
+  const [detailInitialStep, setDetailInitialStep] = useState(0)
 
   // ===== Order form state =====
   const [orderItems, setOrderItems] = useState<OrderFormItem[]>([])
@@ -419,15 +428,28 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
 
   const closeNewOrder = useCallback(() => setIsNewOrderOpen(false), [])
 
-  const openOrderDetail = useCallback((order: ExpandedOrder) => {
+  const openOrderDetail = useCallback((order: ExpandedOrder, initialAction?: 'receive' | 'edit' | 'delete') => {
     setViewingOrder(order)
     setReceivedQuantities({})
     setOrderReceived(false)
     setOrderDeleted(false)
     setEditOrderSaved(false)
     setError('')
+
+    // Seed the form state for edit/receive so landing directly on those steps
+    // renders with data populated (normally done by the step-button click in
+    // the overview). Delete has no form state to prime.
+    if (initialAction === 'edit') initializeEditForm(order)
+    if (initialAction === 'receive') initializeReceiveQuantities(order)
+
+    const stepByAction: Record<'receive' | 'edit' | 'delete', number> = {
+      edit: 1,
+      receive: 3,
+      delete: 5,
+    }
+    setDetailInitialStep(initialAction ? stepByAction[initialAction] : 0)
     setIsOrderDetailOpen(true)
-  }, [])
+  }, [initializeEditForm, initializeReceiveQuantities])
 
   const closeOrderDetail = useCallback(() => setIsOrderDetailOpen(false), [])
 
@@ -465,10 +487,12 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       {viewingOrder && (
         <OrderDetailModal
           isOpen={isOrderDetailOpen}
+          initialStep={detailInitialStep}
           onClose={closeOrderDetail}
           onExitComplete={() => {
             setViewingOrder(null)
             setReceivedQuantities({})
+            setDetailInitialStep(0)
           }}
           order={viewingOrder}
           products={products}
