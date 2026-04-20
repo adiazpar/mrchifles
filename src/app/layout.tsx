@@ -22,6 +22,11 @@ const ibmPlexSans = IBM_Plex_Sans({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : 'http://localhost:3000'
+  ),
   title: 'Kasero',
   description: 'Multi-business management system',
   manifest: '/manifest.json',
@@ -30,9 +35,18 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'Kasero',
   },
-  icons: {
-    icon: '/favicon.ico',
-    apple: '/icons/apple-touch-icon.png',
+  openGraph: {
+    title: 'Kasero',
+    description: 'Multi-business management system',
+    siteName: 'Kasero',
+    images: ['/og-image.png'],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Kasero',
+    description: 'Multi-business management system',
+    images: ['/og-image.png'],
   },
 }
 
