@@ -7,6 +7,12 @@
  * window blur, clears the attribute — but only after the element has been
  * pressed for at least MIN_PRESS_MS. This guarantees even microtaps produce
  * a visibly pronounced press state.
+ *
+ * We deliberately do NOT listen for `pointerleave`. On touch, a finger that
+ * slides slightly while still touching the screen can fire leave events, and
+ * treating those as releases makes the pressed state look glitchy. The real
+ * release cases (lift, scroll-steal, tab blur) are already covered by
+ * `pointerup`, `pointercancel`, and window `blur`.
  */
 
 export const MIN_PRESS_MS = 120
@@ -35,11 +41,14 @@ function isDisabled(el: HTMLElement): boolean {
   return false
 }
 
-function clearPress(record: PressRecord) {
+function clearPress(pointerId: number) {
+  const record = activePresses.get(pointerId)
+  if (!record) return
   if (record.clearTimer !== null) {
     window.clearTimeout(record.clearTimer)
   }
   record.element.removeAttribute('data-pressed')
+  activePresses.delete(pointerId)
 }
 
 function schedulePressClear(pointerId: number) {
@@ -49,10 +58,7 @@ function schedulePressClear(pointerId: number) {
   const elapsed = performance.now() - record.pressStart
   const remaining = Math.max(0, MIN_PRESS_MS - elapsed)
 
-  const run = () => {
-    activePresses.delete(pointerId)
-    record.element.removeAttribute('data-pressed')
-  }
+  const run = () => clearPress(pointerId)
 
   if (remaining === 0) {
     run()
@@ -68,9 +74,9 @@ function handlePointerDown(e: PointerEvent) {
   if (!el) return
   if (isDisabled(el)) return
 
-  // If there's already a press record for this pointerId, clear it first.
-  const existing = activePresses.get(e.pointerId)
-  if (existing) clearPress(existing)
+  // If a previous press for this pointerId is still pending, fully clear it
+  // (cancels its timer and removes its map entry) before starting the new one.
+  clearPress(e.pointerId)
 
   el.setAttribute('data-pressed', 'true')
   activePresses.set(e.pointerId, {
@@ -108,6 +114,7 @@ export function unmount() {
   document.removeEventListener('pointerup', handlePointerRelease)
   document.removeEventListener('pointercancel', handlePointerRelease)
   window.removeEventListener('blur', handleWindowBlur)
-  for (const record of activePresses.values()) clearPress(record)
-  activePresses.clear()
+  for (const pointerId of [...activePresses.keys()]) {
+    clearPress(pointerId)
+  }
 }
