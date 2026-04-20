@@ -158,7 +158,7 @@
 
 .mobile-nav-item:active,
 .mobile-nav-item[data-pressed='true'] {
-  transform: scale(0.92);
+  transform: scale(0.94);
 }
 
 .mobile-nav-item.active {
@@ -201,8 +201,9 @@
   transition: transform var(--duration-fast) ease-out;
 }
 
-.swipeable-row-action:active {
-  transform: scale(0.92);
+.swipeable-row-action:active,
+.swipeable-row-action[data-pressed='true'] {
+  transform: scale(0.94);
 }
 
 /* Label is decoupled from the button's tint — it always renders as secondary
@@ -223,7 +224,8 @@
   color: var(--color-text-tertiary);
 }
 
-.swipeable-row-action:disabled:active {
+.swipeable-row-action:disabled:active,
+.swipeable-row-action:disabled[data-pressed='true'] {
   transform: none;
 }
 
@@ -574,8 +576,10 @@
   }
 }
 
-.fab:active {
+.fab:active,
+.fab[data-pressed='true'] {
   filter: brightness(0.88);
+  transform: scale(0.94);
 }
 
 /* ===== Product Categories ===== */
@@ -982,7 +986,7 @@
   font-weight: 600;
   font-size: var(--text-sm);
   min-height: 64px;
-  transition: filter var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out;
+  transition: transform var(--duration-instant) ease-out, filter var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out;
   color: white;
 }
 
@@ -992,8 +996,10 @@
   }
 }
 
-.payment-btn:active {
+.payment-btn:active,
+.payment-btn[data-pressed='true'] {
   filter: brightness(0.88);
+  transform: scale(0.94);
 }
 
 .payment-btn.selected {
@@ -2362,8 +2368,10 @@ cursor: not-allowed;
 }
 }
 
-.caja-action-btn:active:not(:disabled) {
+.caja-action-btn:active:not(:disabled),
+.caja-action-btn[data-pressed='true']:not(:disabled) {
 filter: brightness(0.88);
+transform: scale(0.94);
 }
 
 .caja-action-btn__icon {
