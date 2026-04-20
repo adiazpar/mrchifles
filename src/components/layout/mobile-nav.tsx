@@ -131,14 +131,6 @@ export function MobileNav() {
     openJoinModal()
   }
 
-  const [pressedHubItem, setPressedHubItem] = useState<'create' | 'join' | null>(null)
-  const pressHandlers = (key: 'create' | 'join') => ({
-    onPointerDown: () => setPressedHubItem(key),
-    onPointerUp: () => setPressedHubItem(null),
-    onPointerLeave: () => setPressedHubItem(null),
-    onPointerCancel: () => setPressedHubItem(null),
-  })
-
   // Fade out during cross-context navigation (hub <-> business)
   const isCrossContextNav = pendingHref && (
     (isHubContext && !pendingHref.startsWith('/account') && !pendingHref.startsWith('/join')) ||
@@ -163,8 +155,6 @@ export function MobileNav() {
             type="button"
             onClick={handleCreateBusiness}
             className={`mobile-nav-item ${isCreateModalOpen ? 'active' : ''}`}
-            data-pressed={pressedHubItem === 'create'}
-            {...pressHandlers('create')}
           >
             <Plus className="mobile-nav-icon" />
             <span>{t('create_business')}</span>
@@ -173,8 +163,6 @@ export function MobileNav() {
             type="button"
             onClick={handleJoinBusiness}
             className={`mobile-nav-item ${isJoinModalOpen ? 'active' : ''}`}
-            data-pressed={pressedHubItem === 'join'}
-            {...pressHandlers('join')}
           >
             <UserPlus className="mobile-nav-icon" />
             <span>{t('join_a_business')}</span>

@@ -79,7 +79,8 @@ export function StockStepper({
           type="button"
           onClick={handleDecrement}
           disabled={value <= min}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed text-text-primary active:scale-[0.98]"
+          data-tap-feedback
+          className="w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-transform duration-150 disabled:opacity-30 disabled:cursor-not-allowed text-text-primary data-[pressed=true]:scale-[0.94]"
         >
           -
         </button>
@@ -103,7 +104,8 @@ export function StockStepper({
           type="button"
           onClick={handleIncrement}
           disabled={value >= max}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed text-text-primary active:scale-[0.98]"
+          data-tap-feedback
+          className="w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-transform duration-150 disabled:opacity-30 disabled:cursor-not-allowed text-text-primary data-[pressed=true]:scale-[0.94]"
         >
           +
         </button>
