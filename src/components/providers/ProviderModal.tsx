@@ -78,6 +78,8 @@ function DeleteProviderButton({ onConfirm, isDeleting }: DeleteProviderButtonPro
 
 export interface ProviderModalProps {
   isOpen: boolean
+  /** Step to open on (0 = form, 1 = delete confirm). Default 0. */
+  initialStep?: number
   onClose: () => void
   onExitComplete: () => void
 
@@ -112,6 +114,7 @@ export interface ProviderModalProps {
 
 export function ProviderModal({
   isOpen,
+  initialStep = 0,
   onClose,
   onExitComplete,
   name,
@@ -136,6 +139,11 @@ export function ProviderModal({
   const tCommon = useTranslations('common')
   const isFormValid = name.trim().length > 0
   const showDeleteAction = !!editingProvider && canDelete
+  // Mirrors OrderDetailModal: when the modal was opened directly at the
+  // delete step (via a swipe-tray action), the form step isn't part of the
+  // user's mental stack — so back / cancel should dismiss instead of
+  // sliding back to the form.
+  const openedFromSwipe = initialStep !== 0
   // In edit mode the Save button is disabled until the user changes
   // something; Add mode always has "changes" (the user is creating new).
   const hasChanges = editingProvider
@@ -150,6 +158,7 @@ export function ProviderModal({
   return (
     <Modal
       isOpen={isOpen}
+      initialStep={initialStep}
       onClose={onClose}
       onExitComplete={onExitComplete}
       title={editingProvider ? t('modal_title_edit') : t('modal_title_add')}
@@ -232,7 +241,10 @@ export function ProviderModal({
       </Modal.Step>
 
       {/* Step 1: Delete confirmation */}
-      <Modal.Step title={t('delete_provider_confirm_title')} backStep={0}>
+      <Modal.Step
+        title={t('delete_provider_confirm_title')}
+        {...(openedFromSwipe ? { hideBackButton: true } : { backStep: 0 })}
+      >
         <Modal.Item>
           <p className="text-text-secondary">
             {t('delete_provider_confirm_body', { name: editingProvider?.name ?? '' })}
@@ -240,9 +252,15 @@ export function ProviderModal({
         </Modal.Item>
 
         <Modal.Footer>
-          <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
-            {tCommon('cancel')}
-          </Modal.GoToStepButton>
+          {openedFromSwipe ? (
+            <button type="button" onClick={onClose} className="btn btn-secondary flex-1" disabled={isDeleting}>
+              {tCommon('cancel')}
+            </button>
+          ) : (
+            <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
+              {tCommon('cancel')}
+            </Modal.GoToStepButton>
+          )}
           <DeleteProviderButton onConfirm={onDelete} isDeleting={isDeleting} />
         </Modal.Footer>
       </Modal.Step>

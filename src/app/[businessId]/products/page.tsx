@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { fetchDeduped } from '@/lib/fetch'
 import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
-import { useProductFilters, useProductSettings, scopedCache, CACHE_KEYS } from '@/hooks'
+import { useProductFilters, useProductSettings } from '@/hooks'
 import { Spinner, TabContainer } from '@/components/ui'
 import {
   ProductsTab,
@@ -30,6 +30,7 @@ import { useAiProductPipeline, useImageCompression, useBusinessFormat } from '@/
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
 import { useProviders } from '@/contexts/providers-context'
+import { useProducts } from '@/contexts/products-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { useTranslations } from 'next-intl'
 import type { Product, SortPreference, ProductCategory } from '@/types'
@@ -272,19 +273,14 @@ export default function ProductosPage() {
   )
 
   // Business-scoped caches (only products remain page-local; orders and
-  // providers live in shared contexts now).
-  const bid = businessId || ''
-  const productsCache = useMemo(() => scopedCache<Product[]>(CACHE_KEYS.PRODUCTS, bid), [bid])
-
-  // Data state - initialize from cache
-  const [products, setProductsState] = useState<Product[]>(() => scopedCache<Product[]>(CACHE_KEYS.PRODUCTS, bid).get() || [])
-  const [isLoading, setIsLoading] = useState(() => !scopedCache<Product[]>(CACHE_KEYS.PRODUCTS, bid).get())
+  // Products, orders, and providers all live in shared contexts now. Any
+  // mutation anywhere in the app updates these single sources of truth, so
+  // e.g. the Orders tab automatically stays in sync with a provider
+  // deletion from the provider detail page.
+  const { products, setProducts, isLoaded: productsLoaded, error: productsError } = useProducts()
+  const [isLoading, setIsLoading] = useState(() => !productsLoaded)
   const [error, setError] = useState('')
 
-  // Shared stores (see src/contexts/{orders,providers}-context). Any
-  // mutation anywhere in the app updates these single sources of truth,
-  // so the Orders tab automatically stays in sync with, e.g., a provider
-  // deletion from the provider detail page.
   const { orders, setOrders, ensureLoaded: ensureOrdersLoaded } = useOrders()
   const {
     providers,
@@ -293,14 +289,16 @@ export default function ProductosPage() {
   // The new-order modal dropdown should only surface usable providers.
   const activeProviders = useMemo(() => providers.filter(p => p.active), [providers])
 
-  // Wrapper function that updates both state and sessionStorage cache.
-  const setProducts = useCallback((updater: Product[] | ((prev: Product[]) => Product[])) => {
-    setProductsState(prev => {
-      const newProducts = typeof updater === 'function' ? updater(prev) : updater
-      productsCache.set(newProducts)
-      return newProducts
-    })
-  }, [productsCache])
+  // Surface the context's fetch error through the page's error banner.
+  useEffect(() => {
+    if (productsError) setError(productsError)
+  }, [productsError])
+
+  // Flip the page-level loading flag off once the context finishes its
+  // initial fetch (isLoaded stays true for the rest of the session).
+  useEffect(() => {
+    if (productsLoaded) setIsLoading(false)
+  }, [productsLoaded])
 
   // Product settings
   const productSettings = useProductSettings({ businessId: businessId || '' })
@@ -367,52 +365,18 @@ export default function ProductosPage() {
   // multiple pages can reuse them (products tab, provider detail, etc.).
   const orderFlows = useOrderFlows({
     businessId: businessId || '',
-    products,
     providers: activeProviders,
     setOrders,
-    setProducts,
     canDelete,
   })
 
-  // Load products (page-local) + providers (shared context) on mount.
+  // Providers live in the shared context; ensureLoaded is idempotent so a
+  // previously-hydrated context is a no-op. Products are loaded by the
+  // ProductsProvider itself — nothing for this page to kick off.
   useEffect(() => {
     if (!businessId) return
-
-    const cachedProducts = productsCache.get()
-
-    // Providers live in the shared context; ensureLoaded is idempotent
-    // so a previously-hydrated context is a no-op.
     ensureProvidersLoaded()
-
-    if (cachedProducts) {
-      // Products already loaded from cache in useState.
-      return
-    }
-
-    let cancelled = false
-
-    async function loadInitialData() {
-      try {
-        const response = await fetchDeduped(`/api/businesses/${businessId}/products`)
-        const result = await response.json()
-        if (cancelled) return
-        if (response.ok && result.success) {
-          setProducts(result.products)
-        }
-      } catch (err) {
-        if (cancelled) return
-        console.error('Error loading data:', err)
-        setError(tOrders('error_failed_to_load'))
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    loadInitialData()
-    return () => { cancelled = true }
-  }, [businessId, setProducts, productsCache, ensureProvidersLoaded, tOrders])
+  }, [businessId, ensureProvidersLoaded])
 
   // Lazy load orders when switching to orders tab (idempotent via context).
   useEffect(() => {

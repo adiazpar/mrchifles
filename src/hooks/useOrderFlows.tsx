@@ -4,8 +4,8 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { fetchDeduped } from '@/lib/fetch'
 import { useAuth } from '@/contexts/auth-context'
+import { useProducts } from '@/contexts/products-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
-import { scopedCache, CACHE_KEYS } from '@/hooks/useSessionCache'
 import { hasMessageEnvelope } from '@/lib/api-messages'
 import { NewOrderModal, OrderDetailModal } from '@/components/products'
 import type { Product, Provider } from '@/types'
@@ -13,18 +13,15 @@ import type { ExpandedOrder, OrderFormItem } from '@/lib/products'
 
 export interface UseOrderFlowsOptions {
   businessId: string
-  products: Product[]
+  /**
+   * Active providers used by the new-order modal's provider dropdown. The
+   * caller is responsible for filtering since different pages have
+   * different rules for what counts as "selectable" (e.g. provider detail
+   * pre-selects the current one even if inactive).
+   */
   providers: Provider[]
   setOrders: (
     updater: ExpandedOrder[] | ((prev: ExpandedOrder[]) => ExpandedOrder[])
-  ) => void
-  /**
-   * Only needed by consumers that display product stock, so the receive flow
-   * can refresh the in-memory product list after the API updates stock.
-   * Omit on pages that don't care about product state (e.g. provider detail).
-   */
-  setProducts?: (
-    updater: Product[] | ((prev: Product[]) => Product[])
   ) => void
   canDelete: boolean
 }
@@ -94,11 +91,16 @@ function isoToLocalDateOnly(iso: string | Date): string {
  * provider's orders) can wrap `setOrders` with a filter on the way in.
  */
 export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
-  const { businessId, products, providers, setOrders, setProducts, canDelete } = opts
+  const { businessId, providers, setOrders, canDelete } = opts
 
   const tOrders = useTranslations('orders')
   const translateApiMessage = useApiMessage()
   const { user } = useAuth()
+  // Products come from the shared ProductsProvider. Refetching here keeps
+  // the provider's in-memory state + session cache in sync, so every page
+  // that reads useProducts() sees stock changes from the receive flow
+  // without any caller-level plumbing.
+  const { products, refetch: refetchProducts } = useProducts()
 
   // ===== Modal state =====
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false)
@@ -307,33 +309,18 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
         return false
       }
 
-      // Refetch orders always; products only if the consumer cares about stock.
-      const fetches: Promise<Response>[] = [
+      // Orders: always refetch so any server-side computed fields (status,
+      // totals) are fresh. Products: receiving increments stock in the DB,
+      // so we refetch via the shared provider — every page reading from
+      // useProducts() sees the new stock without any page-local plumbing.
+      const [ordersResponse] = await Promise.all([
         fetchDeduped(`/api/businesses/${businessId}/orders`),
-      ]
-      if (setProducts) {
-        fetches.push(fetchDeduped(`/api/businesses/${businessId}/products`))
-      }
-      const responses = await Promise.all(fetches)
-      const payloads = await Promise.all(responses.map(r => r.json()))
-      const [ordersData, productsData] = payloads
-
-      if (responses[0].ok && ordersData.success) {
+        refetchProducts(),
+      ])
+      const ordersData = await ordersResponse.json()
+      if (ordersResponse.ok && ordersData.success) {
         setOrders(ordersData.orders)
       }
-      if (setProducts && responses[1]?.ok && productsData?.success) {
-        setProducts(productsData.products)
-      }
-
-      // Receiving an order increments product stock in the DB. The Products
-      // page keeps its list in a sessionStorage cache and skips refetching on
-      // mount when the cache exists, so without explicit invalidation it
-      // would keep showing the stale (pre-receive) stock — even across a
-      // full page refresh, since sessionStorage survives it. Clear the cache
-      // so the next Products-page mount fetches fresh stock. This is the
-      // only path that matters when the caller didn't pass setProducts
-      // (e.g. the provider detail page), but it's safe to run in both cases.
-      scopedCache<Product[]>(CACHE_KEYS.PRODUCTS, businessId).clear()
 
       setOrderReceived(true)
       return true
@@ -344,7 +331,7 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     } finally {
       setIsReceiving(false)
     }
-  }, [businessId, viewingOrder, user, receivedQuantities, setProducts, setOrders, tOrders, translateApiMessage])
+  }, [businessId, viewingOrder, user, receivedQuantities, refetchProducts, setOrders, tOrders, translateApiMessage])
 
   const handleDeleteOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder) return false

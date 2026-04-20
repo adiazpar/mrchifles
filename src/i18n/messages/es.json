@@ -537,6 +537,9 @@
   },
   "providers": {
     "count": "{count, plural, one {# proveedor} other {# proveedores}}",
+    "action_new_order": "+ Orden",
+    "action_edit": "Editar",
+    "action_delete": "Eliminar",
     "add_button": "Agregar",
     "add_provider_button": "Agregar proveedor",
     "empty_title": "Sin proveedores",

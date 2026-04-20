@@ -23,6 +23,7 @@ import {
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
 import { useProviders } from '@/contexts/providers-context'
+import { useProducts } from '@/contexts/products-context'
 import { apiRequest, apiPost, apiPatch, apiDelete, ApiError } from '@/lib/api-client'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -39,12 +40,6 @@ import type { Provider, Product, ProviderNote } from '@/types'
 interface ProviderDetailResponse {
   success?: boolean
   provider: Provider
-  [key: string]: unknown
-}
-
-interface ProductsResponse {
-  success?: boolean
-  products: Product[]
   [key: string]: unknown
 }
 
@@ -113,10 +108,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   }, [hide, show])
 
   const [provider, setProvider] = useState<Provider | null>(null)
-  // Products are fetched locally (no shared store yet). The providers
-  // dropdown used by the order modals reads from the shared providers
-  // store below.
-  const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -149,15 +140,17 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const [isDeletingNote, setIsDeletingNote] = useState(false)
   const [noteDeleted, setNoteDeleted] = useState(false)
 
-  // Shared orders + providers stores. Orders whose providerId changes
-  // elsewhere fall out of this page's derived list automatically; the
-  // providers store powers the New Order / Order Detail modal dropdowns.
+  // Shared orders + providers + products stores. Orders whose providerId
+  // changes elsewhere fall out of this page's derived list automatically;
+  // the providers + products stores power the New Order / Order Detail
+  // modal dropdowns and picker without any local fetch on this page.
   const { orders: allOrders, setOrders, ensureLoaded: ensureOrdersLoaded } = useOrders()
   const {
     providers: allProvidersAll,
     setProviders,
     ensureLoaded: ensureProvidersLoaded,
   } = useProviders()
+  const { products } = useProducts()
   const allProviders = useMemo(
     () => allProvidersAll.filter(p => p.active),
     [allProvidersAll],
@@ -178,28 +171,24 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   // ===== Wire up the shared order-flows hook =====
   const orderFlows = useOrderFlows({
     businessId,
-    products,
     providers: allProviders,
     setOrders,
-    // setProducts omitted: this page does not display product stock.
     canDelete: canManage,
   })
 
   // ===== Load data =====
-  // Page-specific data (provider, product catalog, providers list for the
-  // order modal dropdown). The orders list comes from the shared
-  // OrdersContext below — see ensureOrdersLoaded().
+  // Only the provider detail is page-specific. Orders, providers list, and
+  // products all come from shared contexts — we just ensure each is loaded
+  // in parallel with the detail fetch.
   const loadAll = useCallback(async () => {
     try {
       setError('')
-      const [detail, productsData] = await Promise.all([
+      const [detail] = await Promise.all([
         apiRequest<ProviderDetailResponse>(`/api/businesses/${businessId}/providers/${providerId}`),
-        apiRequest<ProductsResponse>(`/api/businesses/${businessId}/products`),
         ensureOrdersLoaded(),
         ensureProvidersLoaded(),
       ])
       setProvider(detail.provider)
-      setProducts(productsData.products)
     } catch (err) {
       setError(
         err instanceof ApiError && err.envelope
