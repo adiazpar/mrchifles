@@ -205,11 +205,22 @@
   transform: scale(0.92);
 }
 
+/* Label is decoupled from the button's tint — it always renders as secondary
+   text (matching the barcode-tab buttons in the product modal) so the color
+   semantics read from the icon, not from the whole button. */
+.swipeable-row-action__label {
+  color: var(--color-text-secondary);
+}
+
 .swipeable-row-action:disabled {
   cursor: default;
-  color: var(--color-text-tertiary);
   background: var(--color-bg-muted);
   opacity: 0.5;
+}
+
+.swipeable-row-action:disabled .swipeable-row-action__icon,
+.swipeable-row-action:disabled .swipeable-row-action__label {
+  color: var(--color-text-tertiary);
 }
 
 .swipeable-row-action:disabled:active {
@@ -218,16 +229,37 @@
 
 .swipeable-row-action--neutral {
   background: var(--color-bg-muted);
+}
+
+.swipeable-row-action--neutral .swipeable-row-action__icon {
   color: var(--color-text-primary);
 }
 
+/* Inventory action — icon stays brand-blue, but the background drops the
+   blue tint so only the icon carries the semantic color. */
 .swipeable-row-action--info {
-  background: var(--color-brand-subtle);
+  background: var(--color-bg-muted);
+}
+
+.swipeable-row-action--info .swipeable-row-action__icon {
   color: var(--color-brand);
+}
+
+/* Print action — standard muted background; POS orange is carried only by
+   the icon, matching the Printer icon in the product modal's barcode tab. */
+.swipeable-row-action--pos {
+  background: var(--color-bg-muted);
+}
+
+.swipeable-row-action--pos .swipeable-row-action__icon {
+  color: var(--color-pos);
 }
 
 .swipeable-row-action--danger {
   background: var(--color-error-subtle);
+}
+
+.swipeable-row-action--danger .swipeable-row-action__icon {
   color: var(--color-error);
 }
 

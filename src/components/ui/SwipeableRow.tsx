@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, useMotionValue, useTransform, animate, type MotionValue, type PanInfo } from 'framer-motion'
 import { useHorizontalSwipeIntent } from '@/hooks/useHorizontalSwipeIntent'
 
-export type SwipeActionVariant = 'neutral' | 'info' | 'danger'
+export type SwipeActionVariant = 'neutral' | 'info' | 'pos' | 'danger'
 
 export interface SwipeAction {
   /** Icon node rendered above the label. */
@@ -72,8 +72,9 @@ function closeAllExcept(self: () => void) {
  * style writes (2 per button per frame during motion) stay on the compositor and
  * don't trigger layout/paint.
  *
- * Buttons are square, shorter than the list row, and carry a subtle background tinted
- * by variant (`neutral` = muted, `info` = brand-subtle, `danger` = error-subtle).
+ * Buttons are square, shorter than the list row, and carry a background tinted by variant.
+ * The icon is tinted by variant (brand/pos/error/text-primary); labels always render in
+ * `--color-text-secondary` so the semantics read from the icon, not the whole button.
  *
  * Other behavior: tap-to-close, tap-outside-to-close, and one-row-open-at-a-time. See the
  * tab-system-style guide doc for details.
@@ -261,8 +262,8 @@ function SwipeActionButton({ action, slotIndex, x, onTap }: SwipeActionButtonPro
         style={{ opacity, scale }}
         className={`swipeable-row-action swipeable-row-action--${action.variant ?? 'neutral'}`}
       >
-        <span className="flex items-center justify-center w-6 h-6">{action.icon}</span>
-        <span className="text-[11px] font-medium">{action.label}</span>
+        <span className="swipeable-row-action__icon flex items-center justify-center w-6 h-6">{action.icon}</span>
+        <span className="swipeable-row-action__label text-[11px] font-medium">{action.label}</span>
       </motion.button>
     </div>
   )

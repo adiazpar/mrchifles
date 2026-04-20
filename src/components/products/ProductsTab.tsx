@@ -399,7 +399,7 @@ const ProductListItem = memo(function ProductListItem({
         {
           icon: <Printer size={20} />,
           label: t('action_print'),
-          variant: 'neutral' as const,
+          variant: 'pos' as const,
           disabled: !hasBarcode,
           onClick: () => printBarcodeLabel({
             barcode: product.barcode ?? '',
