@@ -177,26 +177,58 @@
 }
 
 /* ===== SwipeableRow action buttons ===== */
+/* Slot wrapper — spans the full row height so the action layer fills the
+   row, but centers the actual (square, shorter) button inside. */
+.swipeable-row-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
 .swipeable-row-action {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  height: 100%;
+  gap: 2px;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-lg);
   border: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform var(--duration-fast) ease-out;
-  /* Pair with the row-layer hint so iOS Safari keeps the button as its
-     own composite layer while the row is being dragged — avoids the
-     per-frame compositor re-evaluation that causes visible jitter on
-     PWA. opacity + scale are driven by useTransform on the row's x. */
-  will-change: transform, opacity;
 }
 
 .swipeable-row-action:active {
   transform: scale(0.92);
+}
+
+.swipeable-row-action:disabled {
+  cursor: default;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-muted);
+  opacity: 0.5;
+}
+
+.swipeable-row-action:disabled:active {
+  transform: none;
+}
+
+.swipeable-row-action--neutral {
+  background: var(--color-bg-muted);
+  color: var(--color-text-primary);
+}
+
+.swipeable-row-action--info {
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+}
+
+.swipeable-row-action--danger {
+  background: var(--color-error-subtle);
+  color: var(--color-error);
 }
 
 /* Applied imperatively while a tap on an already-open row is being

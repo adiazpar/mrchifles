@@ -161,6 +161,7 @@
     "action_enable": "Activar",
     "action_disable": "Desactivar",
     "action_inventory": "Inventario",
+    "action_print": "Imprimir",
     "units_count": "{count} unidades"
   },
   "productForm": {

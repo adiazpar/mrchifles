@@ -2,8 +2,9 @@
 
 import { Fragment, memo } from 'react'
 import Image from 'next/image'
-import { X, Plus, ChevronUp, ChevronRight, Loader2, Tags, ListFilter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff } from 'lucide-react'
+import { X, Plus, ChevronUp, ChevronRight, Loader2, Tags, ListFilter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff, Printer } from 'lucide-react'
 import { Modal, SwipeableRow } from '@/components/ui'
+import { printBarcodeLabel } from '@/lib/barcode-print'
 import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getProductIconUrl } from '@/lib/utils'
@@ -385,7 +386,8 @@ const ProductListItem = memo(function ProductListItem({
 
   // Swipe actions render left-to-right; the rightmost is exposed first as the row slides.
   // Inventory is the most-frequently-used action, so it sits on the right (revealed first);
-  // Enable/Disable sits to its left (revealed on a deeper swipe).
+  // Print sits in the middle (disabled when the product has no barcode); Enable/Disable
+  // sits on the left (revealed on the deepest swipe).
   const swipeActions = canModify && onAdjustInventory && onToggleActive
     ? [
         {
@@ -393,6 +395,17 @@ const ProductListItem = memo(function ProductListItem({
           label: isActive ? t('action_disable') : t('action_enable'),
           variant: 'neutral' as const,
           onClick: () => onToggleActive(product),
+        },
+        {
+          icon: <Printer size={20} />,
+          label: t('action_print'),
+          variant: 'neutral' as const,
+          disabled: !hasBarcode,
+          onClick: () => printBarcodeLabel({
+            barcode: product.barcode ?? '',
+            barcodeFormat: product.barcodeFormat ?? null,
+            name: product.name,
+          }),
         },
         {
           icon: <SlidersHorizontal size={20} />,

@@ -13,6 +13,8 @@ export interface SwipeAction {
   label: string
   /** Visual treatment. `info` = brand/sky-blue, `danger` = red. Default: `neutral`. */
   variant?: SwipeActionVariant
+  /** When true, the button is visually muted and non-interactive (tap does nothing). */
+  disabled?: boolean
   /** Called when the user taps the action. The row closes automatically just before this fires. */
   onClick: () => void
 }
@@ -25,8 +27,14 @@ interface SwipeableRowProps {
   className?: string
 }
 
-const ACTION_WIDTH = 88
+const ACTION_WIDTH = 72
 const SWIPE_VELOCITY_THRESHOLD = 400
+// Push each button's scale-in ramp this many px further into the drag.
+// Without this, the rightmost button starts scaling the instant the row
+// moves; with it, the row slides a bit before the first button appears,
+// then each button still lands at scale(1) by the time its slot is
+// fully exposed (the ramp just gets compressed, not shifted past it).
+const APPEAR_DELAY = 40
 // Tween with iOS-style cubic bezier (matches TabContainer's tab slide).
 // Swapped in for a spring to avoid the underdamped overshoot + frame-by-
 // frame JS cost that read as jitter on iOS PWA when the row snaps back
@@ -48,19 +56,24 @@ function closeAllExcept(self: () => void) {
   })
 }
 
-const variantClass: Record<SwipeActionVariant, string> = {
-  neutral: 'text-text-primary',
-  info: 'text-brand',
-  danger: 'text-error',
-}
 
 /**
  * SwipeableRow — swipe-left to reveal action buttons (Mail.app style).
  *
- * Action buttons are not visually present until the user starts swiping. Each button's
- * opacity and scale are driven by the live drag offset via `useTransform`, so the buttons
- * scale-fade in progressively as their slot is exposed. Buttons have no background — they
- * are icon + label only, colored by variant (`neutral` = text-primary, `danger` = error red).
+ * Architecture: the action layer sits BEHIND the draggable row (absolute, anchored
+ * to the right edge). Each button's `opacity` and `scale` are driven per-frame by
+ * `useTransform(x, ...)` over the slot's exposure range — so every button scale-fades
+ * in as its slot is uncovered, tracking the finger rather than firing on a threshold.
+ * That also keeps the buttons visually absent at rest (scale/opacity = 0), so the
+ * transparent row + transparent `.list-item-clickable` hover highlight render without
+ * the buttons bleeding through.
+ *
+ * `opacity` and `scale` are both composited on modern engines, so the per-frame
+ * style writes (2 per button per frame during motion) stay on the compositor and
+ * don't trigger layout/paint.
+ *
+ * Buttons are square, shorter than the list row, and carry a subtle background tinted
+ * by variant (`neutral` = muted, `info` = brand-subtle, `danger` = error-subtle).
  *
  * Other behavior: tap-to-close, tap-outside-to-close, and one-row-open-at-a-time. See the
  * tab-system-style guide doc for details.
@@ -166,9 +179,16 @@ export function SwipeableRow({ actions, children, className }: SwipeableRowProps
       className={`relative overflow-hidden ${className ?? ''}`}
       style={{ touchAction: 'pan-y' }}
     >
-      {/* Action layer — sits behind the row. Each button's opacity/scale is driven by the
-          row's live drag offset, so they scale-fade in as their slot is revealed. */}
-      <div className="absolute inset-y-0 right-0 flex pointer-events-auto" aria-hidden={!isOpen}>
+      {/* Action layer — sits behind the row, pinned to the right edge of the
+          container. Each button's opacity/scale is driven by `useTransform(x)`
+          over the range in which its slot is being exposed, so every button
+          scale-fades in as its slot emerges. At x=0 all buttons are scale 0
+          + opacity 0, which is why the row can stay transparent without any
+          button bleed-through. */}
+      <div
+        className="absolute inset-y-0 right-0 flex pointer-events-auto"
+        aria-hidden={!isOpen}
+      >
         {actions.map((action, i) => (
           <SwipeActionButton
             key={i}
@@ -179,6 +199,7 @@ export function SwipeableRow({ actions, children, className }: SwipeableRowProps
             slotIndex={actions.length - 1 - i}
             x={x}
             onTap={() => {
+              if (action.disabled) return
               close()
               action.onClick()
             }}
@@ -186,9 +207,9 @@ export function SwipeableRow({ actions, children, className }: SwipeableRowProps
         ))}
       </div>
 
-      {/* Row layer — draggable, sits on top of the action layer.
-          Intentionally has no background or padding: the consumer's row content
-          is responsible for being opaque so the action layer doesn't bleed through. */}
+      {/* Row layer — draggable, full container width, transparent so the consumer's
+          hover/active styles render unobscured. Sits on top of the action layer;
+          since the action buttons are at scale(0) at rest, nothing shows through. */}
       <motion.div
         ref={rowElRef}
         drag="x"
@@ -221,24 +242,28 @@ interface SwipeActionButtonProps {
 }
 
 function SwipeActionButton({ action, slotIndex, x, onTap }: SwipeActionButtonProps) {
-  // Each button reveals as its slot is exposed. Slot N spans from -N*W (just starting to
-  // appear) to -(N+1)*W (fully visible). useTransform requires a monotonically-ascending
-  // input range, so we use [-(N+1)*W, -N*W] ascending and reverse the output to [1, 0].
-  const start = -(slotIndex + 1) * ACTION_WIDTH
-  const end = -slotIndex * ACTION_WIDTH
-  const opacity = useTransform(x, [start, end], [1, 0], { clamp: true })
-  const scale = useTransform(x, [start, end], [1, 0], { clamp: true })
+  // Slot N is fully exposed at x = -(N+1)*W. Button reaches scale(1) there.
+  // The "just starting to appear" end is pushed further into the drag by
+  // APPEAR_DELAY, so the row has to slide that much past the slot's normal
+  // start before the button begins scaling up.
+  const fullyVisibleAt = -(slotIndex + 1) * ACTION_WIDTH
+  const startAppearingAt = -slotIndex * ACTION_WIDTH - APPEAR_DELAY
+  const opacity = useTransform(x, [fullyVisibleAt, startAppearingAt], [1, 0], { clamp: true })
+  const scale = useTransform(x, [fullyVisibleAt, startAppearingAt], [1, 0], { clamp: true })
 
   return (
-    <motion.button
-      type="button"
-      aria-label={action.label}
-      onClick={onTap}
-      style={{ width: ACTION_WIDTH, opacity, scale }}
-      className={`swipeable-row-action ${variantClass[action.variant ?? 'neutral']}`}
-    >
-      <span className="flex items-center justify-center w-7 h-7">{action.icon}</span>
-      <span className="text-[11px] font-medium">{action.label}</span>
-    </motion.button>
+    <div className="swipeable-row-slot" style={{ width: ACTION_WIDTH }}>
+      <motion.button
+        type="button"
+        aria-label={action.label}
+        onClick={onTap}
+        disabled={action.disabled}
+        style={{ opacity, scale }}
+        className={`swipeable-row-action swipeable-row-action--${action.variant ?? 'neutral'}`}
+      >
+        <span className="flex items-center justify-center w-6 h-6">{action.icon}</span>
+        <span className="text-[11px] font-medium">{action.label}</span>
+      </motion.button>
+    </div>
   )
 }

@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useProductForm } from '@/contexts/product-form-context'
 import { detectBarcodeFormat, generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
-import { renderBarcodeSvg } from '@/lib/barcode-render'
+import { printBarcodeLabel } from '@/lib/barcode-print'
 import { BarcodeDisplay } from './BarcodeDisplay'
 import type { BarcodeSource } from '@/types'
 
@@ -78,134 +78,7 @@ export function BarcodeFields() {
   }
 
   const handlePrint = useCallback(() => {
-    if (!barcode) return
-
-    const result = renderBarcodeSvg(barcode, barcodeFormat, {
-      scale: 3,
-      height: 18,
-      includetext: true,
-      paddingwidth: 0,
-      paddingheight: 0,
-    })
-
-    if (!result.svg || result.error) {
-      return
-    }
-
-    const escapeHtml = (input: string) => input
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;')
-
-    const title = (name || 'Product barcode').trim()
-    const label = `${barcode} · ${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : 'Code 128'}`
-    const safeTitle = escapeHtml(title)
-    const safeLabel = escapeHtml(label)
-    const iframe = document.createElement('iframe')
-    iframe.style.position = 'fixed'
-    iframe.style.right = '0'
-    iframe.style.bottom = '0'
-    iframe.style.width = '0'
-    iframe.style.height = '0'
-    iframe.style.border = '0'
-    iframe.setAttribute('aria-hidden', 'true')
-    document.body.appendChild(iframe)
-
-    const printDocument = iframe.contentWindow?.document
-    if (!printDocument || !iframe.contentWindow) {
-      document.body.removeChild(iframe)
-      return
-    }
-
-    printDocument.open()
-    printDocument.write(`
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>${safeTitle}</title>
-          <style>
-            * { box-sizing: border-box; }
-            body {
-              margin: 0;
-              font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-              background: #ffffff;
-              color: #111827;
-            }
-            .label {
-              width: 100%;
-              min-height: 100vh;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              padding: 24px;
-            }
-            .label-card {
-              width: 100%;
-              max-width: 520px;
-              border: 1px solid #d1d5db;
-              border-radius: 16px;
-              padding: 24px;
-              text-align: center;
-            }
-            .title {
-              font-size: 18px;
-              font-weight: 600;
-              margin-bottom: 16px;
-            }
-            .barcode {
-              display: flex;
-              justify-content: center;
-              overflow: hidden;
-            }
-            .meta {
-              margin-top: 14px;
-              font-size: 13px;
-              color: #4b5563;
-              word-break: break-all;
-            }
-            @media print {
-              body { background: #ffffff; }
-              .label { min-height: auto; padding: 0; }
-              .label-card {
-                border: none;
-                border-radius: 0;
-                max-width: none;
-                padding: 0;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <main class="label">
-            <section class="label-card">
-              <div class="title">${safeTitle}</div>
-              <div class="barcode">${result.svg}</div>
-              <div class="meta">${safeLabel}</div>
-            </section>
-          </main>
-        </body>
-      </html>
-    `)
-    printDocument.close()
-
-    const printWindow = iframe.contentWindow
-    const cleanup = () => {
-      window.setTimeout(() => {
-        if (document.body.contains(iframe)) {
-          document.body.removeChild(iframe)
-        }
-      }, 250)
-    }
-
-    printWindow.addEventListener('afterprint', cleanup, { once: true })
-    printWindow.focus()
-    window.setTimeout(() => {
-      printWindow.print()
-    }, 50)
+    printBarcodeLabel({ barcode, barcodeFormat, name })
   }, [barcode, barcodeFormat, name])
 
   const handleCopy = useCallback(async () => {
