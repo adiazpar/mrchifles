@@ -162,20 +162,10 @@ export function PageHeader() {
         ) : isHubContext ? (
           <div className="page-header__logo">
             <Image
-              src="/kasero-logo-light.png"
+              src="/kasero-logo.png"
               alt="Kasero"
               width={160}
               height={56}
-              className="logo-light"
-              style={{ height: 'auto' }}
-              priority
-            />
-            <Image
-              src="/kasero-logo-dark.png"
-              alt="Kasero"
-              width={160}
-              height={56}
-              className="logo-dark"
               style={{ height: 'auto' }}
               priority
             />

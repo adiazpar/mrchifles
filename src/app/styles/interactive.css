@@ -444,23 +444,6 @@
   height: 56px;
 }
 
-/* Light/dark mode logo switching */
-.logo-light {
-  display: block;
-}
-
-.logo-dark {
-  display: none;
-}
-
-.dark .logo-light {
-  display: none;
-}
-
-.dark .logo-dark {
-  display: block;
-}
-
 /* Business switcher button */
 .page-header__business-btn {
   display: flex;

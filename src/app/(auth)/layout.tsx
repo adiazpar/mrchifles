@@ -17,19 +17,10 @@ export default function AuthLayout({
           {/* Logo */}
           <div className="auth-logo">
             <Image
-              src="/kasero-logo-light.png"
+              src="/kasero-logo.png"
               alt={t('logo_alt')}
               width={320}
               height={107}
-              className="logo-light"
-              priority
-            />
-            <Image
-              src="/kasero-logo-dark.png"
-              alt={t('logo_alt')}
-              width={320}
-              height={107}
-              className="logo-dark"
               priority
             />
           </div>
