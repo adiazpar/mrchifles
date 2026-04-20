@@ -537,7 +537,7 @@
   },
   "providers": {
     "count": "{count, plural, one {# provider} other {# providers}}",
-    "action_new_order": "+ Order",
+    "action_new_order": "Order",
     "action_edit": "Edit",
     "action_delete": "Delete",
     "add_button": "Add",

@@ -89,7 +89,7 @@ export default function ProveedoresPage() {
 
   return (
     <>
-      <main className="page-content space-y-6">
+      <main className="page-content page-content--no-navbar space-y-6">
         {error && !isModalOpen && (
             <div className="p-4 bg-error-subtle text-error rounded-lg">
               {error}

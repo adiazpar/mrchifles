@@ -38,6 +38,57 @@ export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'category', label: 'Category' },
 ]
 
+/**
+ * Sort a product list by the given SortOption. Returns a new array (does not
+ * mutate). `categories` is only needed for `'category'` sort; for other
+ * sorts it can be omitted.
+ *
+ * Shared between the Products tab (useProductFilters) and the new-order
+ * modal's product picker (useOrderFlows) so a single source of truth
+ * defines how products are ordered wherever the user sees them.
+ */
+export function sortProducts(
+  products: Product[],
+  sortBy: SortOption,
+  categories?: ProductCategory[],
+): Product[] {
+  const categoryOrderMap = categories
+    ? new Map(categories.map((c, i) => [c.id, c.sortOrder ?? i]))
+    : new Map<string, number>()
+  return [...products].sort((a, b) => {
+    switch (sortBy) {
+      case 'name_asc':
+        return a.name.localeCompare(b.name)
+      case 'name_desc':
+        return b.name.localeCompare(a.name)
+      case 'price_asc':
+        return a.price - b.price
+      case 'price_desc':
+        return b.price - a.price
+      case 'stock_asc': {
+        const stockA = a.stock ?? 0
+        const stockB = b.stock ?? 0
+        if (stockA !== stockB) return stockA - stockB
+        return a.name.localeCompare(b.name)
+      }
+      case 'stock_desc': {
+        const stockA = a.stock ?? 0
+        const stockB = b.stock ?? 0
+        if (stockA !== stockB) return stockB - stockA
+        return a.name.localeCompare(b.name)
+      }
+      case 'category': {
+        const catA = a.categoryId ? (categoryOrderMap.get(a.categoryId) ?? 99) : 99
+        const catB = b.categoryId ? (categoryOrderMap.get(b.categoryId) ?? 99) : 99
+        if (catA !== catB) return catA - catB
+        return a.name.localeCompare(b.name)
+      }
+      default:
+        return a.name.localeCompare(b.name)
+    }
+  })
+}
+
 // ============================================
 // TAB TYPES
 // ============================================

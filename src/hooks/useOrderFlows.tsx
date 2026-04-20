@@ -6,8 +6,10 @@ import { fetchDeduped } from '@/lib/fetch'
 import { useAuth } from '@/contexts/auth-context'
 import { useProducts } from '@/contexts/products-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
+import { useProductSettings } from '@/hooks/useProductSettings'
 import { hasMessageEnvelope } from '@/lib/api-messages'
 import { NewOrderModal, OrderDetailModal } from '@/components/products'
+import { sortProducts } from '@/lib/products'
 import type { Product, Provider } from '@/types'
 import type { ExpandedOrder, OrderFormItem } from '@/lib/products'
 
@@ -101,6 +103,12 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
   // that reads useProducts() sees stock changes from the receive flow
   // without any caller-level plumbing.
   const { products, refetch: refetchProducts } = useProducts()
+  // The new-order picker respects the user's Products-tab sort preference
+  // (saved on the businesses row via useProductSettings). That way
+  // whatever ordering the user curated on the Products page applies
+  // everywhere they pick products — consistent muscle memory on the
+  // Products page Orders tab, provider detail, and providers list swipe.
+  const { settings: productSettings, categories: productCategories } = useProductSettings({ businessId })
 
   // ===== Modal state =====
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false)
@@ -134,12 +142,17 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
   // Error shared across modals so they can display it
   const [error, setError] = useState('')
 
-  // ===== Filtered products for the New Order picker =====
+  // ===== Filtered + sorted products for the New Order picker =====
   const orderFilteredProducts = useMemo(() => {
-    if (!orderProductSearchQuery.trim()) return products.filter(p => p.active)
-    const query = orderProductSearchQuery.toLowerCase()
-    return products.filter(p => p.active && p.name.toLowerCase().includes(query))
-  }, [products, orderProductSearchQuery])
+    const query = orderProductSearchQuery.trim().toLowerCase()
+    const filtered = query
+      ? products.filter(p => p.active && p.name.toLowerCase().includes(query))
+      : products.filter(p => p.active)
+    // Default to name_asc if the user hasn't saved a preference yet so the
+    // picker is never at the API's arbitrary row order.
+    const sortBy = productSettings?.sortPreference ?? 'name_asc'
+    return sortProducts(filtered, sortBy, productCategories)
+  }, [products, orderProductSearchQuery, productSettings?.sortPreference, productCategories])
 
   // ===== Form manipulation =====
   const resetOrderForm = useCallback(() => {

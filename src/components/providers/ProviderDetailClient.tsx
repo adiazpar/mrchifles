@@ -455,7 +455,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   return (
     <>
-      <main className="page-content space-y-4">
+      <main className="page-content page-content--no-navbar space-y-4">
         {/* ============== Identity Header ==============
             Top row: avatar, name, active/inactive status text, edit button.
             Bottom row: three contact actions (call / whatsapp / email).

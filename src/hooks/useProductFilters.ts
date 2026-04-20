@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
+  sortProducts,
   type FilterCategory,
   type SortOption,
 } from '@/lib/products'
@@ -72,13 +73,6 @@ export function useProductFilters({
     onSortChange?.(sort)
   }, [onSortChange])
 
-  // Build a map of category IDs to sort orders for efficient sorting
-  const categoryOrderMap = useMemo(() => {
-    const map = new Map<string, number>()
-    categories.forEach(c => map.set(c.id, c.sortOrder))
-    return map
-  }, [categories])
-
   // Get available filters based on products
   const availableFilters = useMemo(() => {
     const productCategoryIds = new Set<string>()
@@ -99,7 +93,8 @@ export function useProductFilters({
     return filters
   }, [products, categories])
 
-  // Filter and search products
+  // Filter and search products, then sort via the shared `sortProducts`
+  // util — same sort the new-order modal uses, so the two surfaces agree.
   const filteredProducts = useMemo(() => {
     let result = products
 
@@ -123,40 +118,8 @@ export function useProductFilters({
       )
     }
 
-    // Sort by selected sort option
-    return result.sort((a, b) => {
-      switch (sortBy) {
-        case 'name_asc':
-          return a.name.localeCompare(b.name)
-        case 'name_desc':
-          return b.name.localeCompare(a.name)
-        case 'price_asc':
-          return a.price - b.price
-        case 'price_desc':
-          return b.price - a.price
-        case 'stock_asc': {
-          const stockA = a.stock ?? 0
-          const stockB = b.stock ?? 0
-          if (stockA !== stockB) return stockA - stockB
-          return a.name.localeCompare(b.name)
-        }
-        case 'stock_desc': {
-          const stockA = a.stock ?? 0
-          const stockB = b.stock ?? 0
-          if (stockA !== stockB) return stockB - stockA
-          return a.name.localeCompare(b.name)
-        }
-        case 'category': {
-          const catA = a.categoryId ? (categoryOrderMap.get(a.categoryId) ?? 99) : 99
-          const catB = b.categoryId ? (categoryOrderMap.get(b.categoryId) ?? 99) : 99
-          if (catA !== catB) return catA - catB
-          return a.name.localeCompare(b.name)
-        }
-        default:
-          return a.name.localeCompare(b.name)
-      }
-    })
-  }, [products, selectedFilter, searchQuery, sortBy, categoryOrderMap])
+    return sortProducts(result, sortBy, categories)
+  }, [products, selectedFilter, searchQuery, sortBy, categories])
 
   return {
     searchQuery,
