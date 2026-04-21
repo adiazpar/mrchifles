@@ -1,10 +1,22 @@
 import { NextRequest } from 'next/server'
+import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { requireBusinessAccess, isOwner } from '@/lib/business-auth'
-import { withBusinessAuth, errorResponse, successResponse, type RouteParams } from '@/lib/api-middleware'
+import { withBusinessAuth, errorResponse, successResponse, validationError, type RouteParams } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { db, businesses } from '@/db'
 import { eq } from 'drizzle-orm'
+import { getLocaleConfig, BUSINESS_TYPES } from '@/lib/locale-config'
+
+const BUSINESS_TYPE_VALUES = BUSINESS_TYPES.map(t => t.value) as [string, ...string[]]
+const MAX_LOGO_BYTES = 2 * 1024 * 1024
+
+const patchSchema = z.object({
+  name: z.string().trim().min(1).max(100).optional(),
+  type: z.enum(BUSINESS_TYPE_VALUES).optional(),
+  locale: z.string().optional(),
+  removeLogo: z.literal('true').optional(),
+})
 
 /**
  * GET /api/businesses/[businessId]
@@ -32,6 +44,96 @@ export const GET = withBusinessAuth(async (_request, access) => {
       currency: row.currency,
     },
   })
+})
+
+/**
+ * PATCH /api/businesses/[businessId]
+ * Update business details. Owner or partner only.
+ * Accepts FormData with any subset of: name, type, locale, logo (File), removeLogo=true.
+ * Currency is derived server-side from locale.
+ */
+export const PATCH = withBusinessAuth(async (request, access) => {
+  if (access.role !== 'owner' && access.role !== 'partner') {
+    return errorResponse(ApiMessageCode.BUSINESS_UPDATE_FORBIDDEN, 403)
+  }
+
+  const formData = await request.formData()
+
+  // Extract logo File separately (Zod can't validate File)
+  const logoEntry = formData.get('logo')
+  const logoFile = logoEntry instanceof File && logoEntry.size > 0 ? logoEntry : null
+
+  // Build plain object for Zod validation
+  const plain: Record<string, string> = {}
+  for (const [k, v] of formData.entries()) {
+    if (k === 'logo') continue
+    if (typeof v === 'string') plain[k] = v
+  }
+
+  const validation = patchSchema.safeParse(plain)
+  if (!validation.success) {
+    return validationError(validation)
+  }
+
+  const { name, type, locale, removeLogo } = validation.data
+
+  // Validate locale — getLocaleConfig returns undefined for unknown locales
+  let currency: string | undefined
+  if (locale !== undefined) {
+    const localeConfig = getLocaleConfig(locale)
+    if (!localeConfig) {
+      return errorResponse(ApiMessageCode.BUSINESS_UPDATE_INVALID_LOCALE, 400)
+    }
+    currency = localeConfig.currency
+  }
+
+  // Validate logo file
+  if (logoFile) {
+    if (!logoFile.type.startsWith('image/')) {
+      return errorResponse(ApiMessageCode.BUSINESS_UPDATE_LOGO_INVALID_TYPE, 400)
+    }
+    if (logoFile.size > MAX_LOGO_BYTES) {
+      return errorResponse(ApiMessageCode.BUSINESS_UPDATE_LOGO_TOO_LARGE, 400)
+    }
+  }
+
+  // Build update object
+  const update: Partial<typeof businesses.$inferInsert> = {}
+  if (name !== undefined) update.name = name
+  if (type !== undefined) update.type = type as typeof update.type
+  if (locale !== undefined) { update.locale = locale; update.currency = currency }
+  if (removeLogo === 'true') update.icon = null
+  if (logoFile) {
+    const buffer = Buffer.from(await logoFile.arrayBuffer())
+    update.icon = `data:${logoFile.type};base64,${buffer.toString('base64')}`
+  }
+
+  if (Object.keys(update).length === 0) {
+    // Nothing to update — treat as success (idempotent)
+    const [row] = await db.select().from(businesses).where(eq(businesses.id, access.businessId)).limit(1)
+    if (!row) return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND, 404)
+    return successResponse({
+      business: {
+        id: row.id, name: row.name, type: row.type, icon: row.icon,
+        locale: row.locale, currency: row.currency,
+      },
+    }, ApiMessageCode.BUSINESS_UPDATE_SUCCESS)
+  }
+
+  try {
+    await db.update(businesses).set(update).where(eq(businesses.id, access.businessId))
+    const [row] = await db.select().from(businesses).where(eq(businesses.id, access.businessId)).limit(1)
+    if (!row) return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND, 404)
+    return successResponse({
+      business: {
+        id: row.id, name: row.name, type: row.type, icon: row.icon,
+        locale: row.locale, currency: row.currency,
+      },
+    }, ApiMessageCode.BUSINESS_UPDATE_SUCCESS)
+  } catch (err) {
+    console.error('Business update error:', err)
+    return errorResponse(ApiMessageCode.BUSINESS_UPDATE_FAILED, 500)
+  }
 })
 
 /**
