@@ -16,7 +16,7 @@
 
 .card-interactive {
   cursor: pointer;
-  transition: border-color var(--duration-fast) ease-out;
+  transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
 }
 
 /* Border color change on hover (NOT shadow/lift) */

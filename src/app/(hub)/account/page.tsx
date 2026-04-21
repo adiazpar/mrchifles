@@ -74,7 +74,7 @@ export default function AccountPage() {
         type="button"
         onClick={() => setIsProfileModalOpen(true)}
         data-tap-feedback
-        className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left transition-colors duration-150 data-[pressed='true']:bg-bg-muted"
+        className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left data-[pressed='true']:bg-bg-muted"
       >
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
