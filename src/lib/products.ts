@@ -139,6 +139,16 @@ export interface OrderFormItem {
 }
 
 // ============================================
+// ORDER VIEW MODE
+// ============================================
+
+/**
+ * Top-level split for the orders UI. "active" shows pending + overdue;
+ * "completed" shows received. Held in component state, never persisted.
+ */
+export type OrderViewMode = 'active' | 'completed'
+
+// ============================================
 // ORDER STATUS FILTER
 // ============================================
 

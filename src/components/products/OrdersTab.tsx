@@ -12,6 +12,7 @@ import {
   ORDER_SORT_OPTIONS,
   type OrderSortOption,
   type OrderStatusFilter,
+  type OrderViewMode,
 } from '@/lib/products'
 import type { Product } from '@/types'
 import type { ExpandedOrder } from '@/lib/products'
@@ -38,6 +39,10 @@ export interface OrdersTabProps {
   // Filter state
   statusFilter: OrderStatusFilter
   onStatusFilterChange: (filter: OrderStatusFilter) => void
+
+  // View mode (active vs completed)
+  viewMode: OrderViewMode
+  onViewModeChange: (mode: OrderViewMode) => void
 
   // Handlers
   onNewOrder: () => void
@@ -74,6 +79,8 @@ export function OrdersTab({
   onSortChange,
   statusFilter,
   onStatusFilterChange,
+  viewMode,
+  onViewModeChange,
   onNewOrder,
   onViewOrder,
   onReceiveOrder,
@@ -165,6 +172,23 @@ export function OrdersTab({
                 </button>
               )}
             </div>
+            <button
+              type="button"
+              onClick={() => onViewModeChange(viewMode === 'completed' ? 'active' : 'completed')}
+              aria-pressed={viewMode === 'completed'}
+              aria-label={
+                viewMode === 'completed'
+                  ? t('toggle_showing_completed_aria')
+                  : t('toggle_show_completed_aria')
+              }
+              className={`btn btn-icon flex-shrink-0 ${
+                viewMode === 'completed'
+                  ? 'border-brand bg-brand-subtle text-brand'
+                  : 'btn-secondary'
+              }`}
+            >
+              <CircleCheckBig style={{ width: 18, height: 18 }} />
+            </button>
             <button
               type="button"
               onClick={() => setSortSheetOpen(true)}
