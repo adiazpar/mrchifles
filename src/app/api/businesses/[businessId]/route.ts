@@ -1,10 +1,38 @@
 import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { requireBusinessAccess, isOwner } from '@/lib/business-auth'
-import { errorResponse, successResponse, type RouteParams } from '@/lib/api-middleware'
+import { withBusinessAuth, errorResponse, successResponse, type RouteParams } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { db, businesses } from '@/db'
 import { eq } from 'drizzle-orm'
+
+/**
+ * GET /api/businesses/[businessId]
+ * Returns the full business record for the current user's business.
+ * Any member (owner/partner/employee) can read.
+ */
+export const GET = withBusinessAuth(async (_request, access) => {
+  const [row] = await db
+    .select()
+    .from(businesses)
+    .where(eq(businesses.id, access.businessId))
+    .limit(1)
+
+  if (!row) {
+    return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND_DELETE, 404)
+  }
+
+  return successResponse({
+    business: {
+      id: row.id,
+      name: row.name,
+      type: row.type,
+      icon: row.icon,
+      locale: row.locale,
+      currency: row.currency,
+    },
+  })
+})
 
 /**
  * DELETE /api/businesses/[businessId]
