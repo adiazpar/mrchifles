@@ -8,5 +8,5 @@ export { EditLocationModal } from './EditLocationModal'
 export { EditLogoModal } from './EditLogoModal'
 export { PendingTransferCard } from './PendingTransferCard'
 export { TransferOwnershipModal } from './TransferOwnershipModal'
-export function LeaveBusinessModal(_p: ModalProps) { return null }
+export { LeaveBusinessModal } from './LeaveBusinessModal'
 export function DeleteBusinessModal(_p: ModalProps) { return null }
