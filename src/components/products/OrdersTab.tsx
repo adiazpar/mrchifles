@@ -342,33 +342,35 @@ export function OrdersTab({
           </div>
         </Modal.Item>
 
-        {/* Filter by Status */}
-        <Modal.Item>
-          <div className="space-y-2">
-            <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('filter_by_status_label')}</span>
-            <div className="space-y-1">
-              {(['all', 'pending', 'received', 'overdue'] as OrderStatusFilter[]).map(status => (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => onStatusFilterChange(status)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
-                >
-                  <span className={statusFilter === status ? 'font-medium text-brand' : 'text-text-primary'}>
-                    {statusFilterLabels[status]}
-                  </span>
-                  {statusFilter === status && (
-                    <span className="w-5 h-5 text-brand">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
+        {/* Filter by Status — only shown in Active view (Completed has a single status) */}
+        {viewMode === 'active' && (
+          <Modal.Item>
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('filter_by_status_label')}</span>
+              <div className="space-y-1">
+                {(['all', 'pending', 'overdue'] as OrderStatusFilter[]).map(status => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => onStatusFilterChange(status)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
+                  >
+                    <span className={statusFilter === status ? 'font-medium text-brand' : 'text-text-primary'}>
+                      {statusFilterLabels[status]}
                     </span>
-                  )}
-                </button>
-              ))}
+                    {statusFilter === status && (
+                      <span className="w-5 h-5 text-brand">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        </Modal.Item>
+          </Modal.Item>
+        )}
 
         <Modal.Footer>
           <button
