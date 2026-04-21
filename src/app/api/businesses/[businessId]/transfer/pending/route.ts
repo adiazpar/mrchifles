@@ -1,5 +1,5 @@
-import { db, ownershipTransfers, users } from '@/db'
-import { eq, and, or } from 'drizzle-orm'
+import { db, ownershipTransfers } from '@/db'
+import { eq, and } from 'drizzle-orm'
 import { isOwner } from '@/lib/business-auth'
 import { withBusinessAuth, successResponse } from '@/lib/api-middleware'
 
@@ -15,17 +15,14 @@ export const GET = withBusinessAuth(async (request, access) => {
     return successResponse({ transfer: null })
   }
 
-  // Find pending or accepted transfer from this user
+  // Find pending transfer from this user
   const [transfer] = await db
     .select()
     .from(ownershipTransfers)
     .where(
       and(
         eq(ownershipTransfers.fromUser, access.userId),
-        or(
-          eq(ownershipTransfers.status, 'pending'),
-          eq(ownershipTransfers.status, 'accepted')
-        )
+        eq(ownershipTransfers.status, 'pending')
       )
     )
     .limit(1)
@@ -47,30 +44,14 @@ export const GET = withBusinessAuth(async (request, access) => {
     return successResponse({ transfer: null })
   }
 
-  // Get recipient user info if they've accepted
-  let toUser = null
-  if (transfer.toUser) {
-    const [recipient] = await db
-      .select({
-        id: users.id,
-        name: users.name,
-      })
-      .from(users)
-      .where(eq(users.id, transfer.toUser))
-      .limit(1)
-
-    toUser = recipient || null
-  }
-
   return successResponse({
     transfer: {
       code: transfer.code,
       toEmail: transfer.toEmail,
-      status: transfer.status,
+      status: 'pending' as const,
       expiresAt: transfer.expiresAt instanceof Date
         ? transfer.expiresAt.toISOString()
         : transfer.expiresAt,
-      toUser,
     },
   })
 })
