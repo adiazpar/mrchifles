@@ -13,8 +13,19 @@ const nextConfig = {
   // Optimize for production
   poweredByHeader: false,
 
-  // Allow Tailscale IP for mobile testing in development
-  allowedDevOrigins: ['100.113.9.34'],
+  // Allow Tailscale IP and hostname for mobile testing in development.
+  // The hostname is needed for HMR WebSocket upgrades when dev is served
+  // over HTTPS at the Tailscale tailnet hostname.
+  allowedDevOrigins: ['100.113.9.34', 'alejandros-macbook-air.tail37df1e.ts.net'],
+
+  // Locally uploaded product icons are served from /media/products/<id>.<ext>
+  // with a ?v=<timestamp> cache-buster (see src/lib/storage.ts). Next.js 16
+  // will require query-stringed local paths to be explicitly allowlisted.
+  images: {
+    localPatterns: [
+      { pathname: '/media/products/**', search: '' },
+    ],
+  },
 
   // Lint runs separately via `npm run lint` with our flat eslint.config.mjs.
   // Next's build-time lint only detects legacy .eslintrc* files, so letting
