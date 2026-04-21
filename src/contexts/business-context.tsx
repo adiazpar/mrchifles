@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -24,6 +25,8 @@ export type { BusinessRole }
 export interface Business {
   id: string
   name: string
+  type: 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other' | null
+  icon: string | null
   locale: string
   currency: string
 }
@@ -37,6 +40,7 @@ interface BusinessContextType {
   // Helpers
   canManage: boolean  // owner or partner
   isOwner: boolean
+  refreshBusiness: () => Promise<void>
 }
 
 // ============================================
@@ -64,6 +68,44 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const validateAccess = useCallback(async () => {
+    if (!businessId) return
+    try {
+      setIsLoading(true)
+      setError(null)
+      const response = await fetch(`/api/businesses/${businessId}/access`)
+      if (!response.ok) {
+        if (response.status === 404) { setError(t('error_not_found')); router.replace('/'); return }
+        if (response.status === 403) { setError(t('error_no_access')); router.replace('/'); return }
+        throw new Error('Failed to validate access')
+      }
+      const data = await response.json()
+      setBusiness({
+        id: data.businessId,
+        name: data.businessName,
+        type: data.businessType ?? null,
+        icon: data.businessIcon ?? null,
+        locale: data.businessLocale ?? 'en-US',
+        currency: data.businessCurrency ?? 'USD',
+      })
+      setRole(data.role as BusinessRole)
+      setCachedBusiness(data.businessId, {
+        name: data.businessName,
+        type: data.businessType ?? null,
+        icon: data.businessIcon ?? null,
+        locale: data.businessLocale ?? 'en-US',
+        currency: data.businessCurrency ?? 'USD',
+        role: data.role,
+        isOwner: data.role === 'owner',
+      })
+    } catch (err) {
+      console.error('Business access validation error:', err)
+      setError(t('error_failed_to_validate'))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [businessId, router, setCachedBusiness, t])
+
   useEffect(() => {
     // No business ID - reset state and skip validation
     if (!businessId) {
@@ -80,6 +122,8 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
       setBusiness({
         id: businessId,
         name: cached.name,
+        type: (cached.type ?? null) as Business['type'],
+        icon: cached.icon ?? null,
         locale: cached.locale,
         currency: cached.currency,
       })
@@ -99,53 +143,8 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
     }
 
     // No cache - validate business access via API
-    async function validateAccess() {
-      try {
-        setIsLoading(true)
-        setError(null)
-
-        const response = await fetch(`/api/businesses/${businessId}/access`)
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError(t('error_not_found'))
-            router.replace('/')
-            return
-          }
-          if (response.status === 403) {
-            setError(t('error_no_access'))
-            router.replace('/')
-            return
-          }
-          throw new Error('Failed to validate access')
-        }
-
-        const data = await response.json()
-        setBusiness({
-          id: data.businessId,
-          name: data.businessName,
-          locale: data.businessLocale ?? 'en-US',
-          currency: data.businessCurrency ?? 'USD',
-        })
-        setRole(data.role as BusinessRole)
-        // Cache for future navigation
-        setCachedBusiness(data.businessId, {
-          name: data.businessName,
-          locale: data.businessLocale ?? 'en-US',
-          currency: data.businessCurrency ?? 'USD',
-          role: data.role,
-          isOwner: data.role === 'owner',
-        })
-      } catch (err) {
-        console.error('Business access validation error:', err)
-        setError(t('error_failed_to_validate'))
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     validateAccess()
-  }, [businessId, user, authLoading, router, getCachedBusiness, setCachedBusiness, t])
+  }, [businessId, user, authLoading, router, getCachedBusiness, validateAccess])
 
   // ============================================
   // CONTEXT VALUE
@@ -159,7 +158,8 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
     error,
     canManage: role === 'owner' || role === 'partner',
     isOwner: role === 'owner',
-  }), [business, role, isLoading, authLoading, error])
+    refreshBusiness: validateAccess,
+  }), [business, role, isLoading, authLoading, error, validateAccess])
 
   return (
     <BusinessContext.Provider value={value}>

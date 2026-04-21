@@ -11,6 +11,8 @@ interface CachedBusiness {
   isOwner: boolean
   locale: string
   currency: string
+  type: string | null
+  icon: string | null
 }
 
 export type SlideDirection = 'forward' | 'back' | null
@@ -46,7 +48,7 @@ interface NavbarContextValue {
   // Business cache for instant display and access validation
   getCachedBusiness: (businessId: string) => CachedBusiness | null
   setCachedBusiness: (businessId: string, data: CachedBusiness) => void
-  setCachedBusinesses: (businesses: Array<{ id: string; name: string; role: string; isOwner: boolean; locale: string; currency: string }>) => void
+  setCachedBusinesses: (businesses: Array<{ id: string; name: string; role: string; isOwner: boolean; locale: string; currency: string; type: string | null; icon: string | null }>) => void
 }
 
 const NavbarContext = createContext<NavbarContextValue | null>(null)
@@ -109,7 +111,7 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
     }
   }, [])
 
-  const setCachedBusinesses = useCallback((businesses: Array<{ id: string; name: string; role: string; isOwner: boolean; locale: string; currency: string }>) => {
+  const setCachedBusinesses = useCallback((businesses: Array<{ id: string; name: string; role: string; isOwner: boolean; locale: string; currency: string; type: string | null; icon: string | null }>) => {
     businesses.forEach(b => {
       businessCacheRef.current[b.id] = {
         name: b.name,
@@ -117,6 +119,8 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
         isOwner: b.isOwner,
         locale: b.locale,
         currency: b.currency,
+        type: b.type ?? null,
+        icon: b.icon ?? null,
       }
     })
     try {
