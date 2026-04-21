@@ -47,8 +47,8 @@ export const POST = withBusinessAuth(async (request, access) => {
     return errorResponse(ApiMessageCode.TRANSFER_NOT_FOUND, 404)
   }
 
-  // Can only cancel pending or accepted transfers
-  if (transfer.status !== 'pending' && transfer.status !== 'accepted') {
+  // Can only cancel pending transfers
+  if (transfer.status !== 'pending') {
     return errorResponse(ApiMessageCode.TRANSFER_CANNOT_CANCEL, 400)
   }
 
