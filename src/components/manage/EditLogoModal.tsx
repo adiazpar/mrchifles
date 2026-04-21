@@ -39,6 +39,14 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
     }
   }, [isOpen])
 
+  // Revoke object URLs when replaced or on unmount to avoid leaking blobs
+  useEffect(() => {
+    const url = pendingPreview
+    return () => {
+      if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+    }
+  }, [pendingPreview])
+
   const handleExitComplete = () => {
     setPendingFile(null)
     setPendingPreview(null)

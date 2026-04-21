@@ -21,6 +21,7 @@ import {
 
 export default function ManagePage() {
   const t = useTranslations('manage')
+  const tCreate = useTranslations('createBusiness')
   const router = useRouter()
   const { business, businessId, role, isOwner } = useBusiness()
 
@@ -54,7 +55,7 @@ export default function ManagePage() {
       <SettingsRow
         icon={Palette}
         label={t('row_type')}
-        value={business.type ?? '—'}
+        value={business.type ? tCreate(`business_type_${business.type}`) : '—'}
         onClick={canEdit ? () => setTypeOpen(true) : undefined}
         hideChevron={!canEdit}
       />

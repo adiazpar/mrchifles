@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Crown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Spinner } from '@/components/ui'
@@ -8,6 +9,13 @@ import { usePendingTransfer } from '@/hooks/usePendingTransfer'
 export function PendingTransferCard() {
   const t = useTranslations('manage')
   const { transfer, isLoading, error, isCancelling, cancel } = usePendingTransfer()
+  const [, forceTick] = useState(0)
+
+  useEffect(() => {
+    if (!transfer) return
+    const id = setInterval(() => forceTick(n => n + 1), 60_000)
+    return () => clearInterval(id)
+  }, [transfer])
 
   function formatExpiry(expiresAt: string) {
     const msRemaining = new Date(expiresAt).getTime() - Date.now()
