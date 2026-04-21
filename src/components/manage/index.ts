@@ -6,7 +6,7 @@ export { EditNameModal } from './EditNameModal'
 export { EditTypeModal } from './EditTypeModal'
 export { EditLocationModal } from './EditLocationModal'
 export { EditLogoModal } from './EditLogoModal'
-export function PendingTransferCard() { return null }
+export { PendingTransferCard } from './PendingTransferCard'
 export function TransferOwnershipModal(_p: ModalProps) { return null }
 export function LeaveBusinessModal(_p: ModalProps) { return null }
 export function DeleteBusinessModal(_p: ModalProps) { return null }
