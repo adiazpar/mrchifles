@@ -244,7 +244,7 @@ export function OrdersTab({
             ) : (
               <div className="list-divided">
                 {filteredOrders.map((order, i) => {
-                  const hasSwipeActions = !!(onReceiveOrder && onEditOrder && onDeleteOrder)
+                  const hasSwipeActions = viewMode !== 'completed' && !!(onReceiveOrder && onEditOrder && onDeleteOrder)
                   const alreadyReceived = getOrderDisplayStatus(order) === 'received'
                   // Mirrors the products list ordering for muscle-memory consistency:
                   // primary action leftmost (deepest swipe), secondary middle, the
