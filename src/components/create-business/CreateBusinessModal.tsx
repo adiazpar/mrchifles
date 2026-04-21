@@ -6,14 +6,8 @@ import { Upload, X, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from '
 import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
-import {
-  REGIONS,
-  getLocalesByRegion,
-  getCurrencyConfig,
-} from '@/lib/locale-config'
-import type { Region } from '@/lib/locale-config'
 import type { UseCreateBusinessReturn, BusinessType } from '@/hooks'
-import { BusinessTypeGrid } from '@/components/businesses/shared'
+import { BusinessTypeGrid, LocalePicker } from '@/components/businesses/shared'
 
 interface CreateBusinessModalProps {
   createBusiness: UseCreateBusinessReturn
@@ -77,7 +71,6 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
         <LocaleContent
           locale={formData.locale}
           setLocale={setLocale}
-          currency={formData.currency}
         />
         <Modal.Footer>
           <Modal.BackButton className="btn btn-secondary flex-1" />
@@ -226,25 +219,10 @@ function TypeContent({ type, setType }: TypeContentProps) {
 interface LocaleContentProps {
   locale: string
   setLocale: (locale: string) => void
-  currency: string
 }
 
-function LocaleContent({
-  locale,
-  setLocale,
-  currency,
-}: LocaleContentProps) {
+function LocaleContent({ locale, setLocale }: LocaleContentProps) {
   const t = useTranslations('createBusiness')
-  const localesByRegion = getLocalesByRegion()
-  const currencyConfig = getCurrencyConfig(currency)
-
-  const regionLabels: Record<Region, string> = {
-    'North America': t('region_north_america'),
-    'Central America': t('region_central_america'),
-    'South America': t('region_south_america'),
-    'Caribbean': t('region_caribbean'),
-    'Europe': t('region_europe'),
-  }
 
   return (
     <>
@@ -257,35 +235,8 @@ function LocaleContent({
         </p>
       </Modal.Item>
       <Modal.Item>
-        <label className="block text-sm font-medium text-text-primary mb-2">
-          {t('location_label')}
-        </label>
-        <select
-          value={locale}
-          onChange={(e) => setLocale(e.target.value)}
-          className="input"
-        >
-          {REGIONS.map((region) => (
-            <optgroup key={region} label={regionLabels[region]}>
-              {localesByRegion[region].map((loc) => (
-                <option key={loc.code} value={loc.code}>
-                  {loc.flag} {loc.country} ({loc.name})
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        <LocalePicker value={locale} onChange={setLocale} />
       </Modal.Item>
-      {currencyConfig && (
-        <Modal.Item>
-          <div className="flex items-center justify-between rounded-lg bg-bg-muted px-3 py-2">
-            <span className="text-sm text-text-secondary">{t('currency_label')}</span>
-            <span className="text-sm font-medium text-text-primary">
-              {currencyConfig.symbol} {currencyConfig.name} ({currencyConfig.code})
-            </span>
-          </div>
-        </Modal.Item>
-      )}
     </>
   )
 }
