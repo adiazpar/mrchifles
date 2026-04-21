@@ -216,7 +216,9 @@
     "continue_button": "Continue",
     "barcode_already_used": "Barcode already used by \"{name}\"",
     "add_from_document_title": "Scan a File",
-    "add_from_document_desc": "AI adds the products for you"
+    "add_from_document_desc": "AI adds the products for you",
+    "import_file_title": "Import File",
+    "import_file_desc": "From a CSV or spreadsheet"
   },
   "productSettings": {
     "title": "Product Settings",
@@ -537,7 +539,43 @@
     "transfer_no_business": "No business context"
   },
   "manage": {
-    "coming_soon": "Coming soon"
+    "header_title": "Manage",
+    "section_details": "Business details",
+    "section_shortcuts": "Shortcuts",
+    "section_ownership": "Ownership",
+    "section_danger": "Danger zone",
+    "row_name": "Name",
+    "row_type": "Type",
+    "row_location": "Location",
+    "row_logo": "Logo",
+    "shortcut_team": "Team",
+    "shortcut_providers": "Providers",
+    "edit_name_title": "Edit name",
+    "edit_type_title": "Change type",
+    "edit_location_title": "Change location",
+    "edit_logo_title": "Change logo",
+    "save": "Save",
+    "transfer_ownership": "Transfer ownership",
+    "transfer_pending_heading": "Transfer pending",
+    "transfer_pending_waiting": "Waiting for {recipient} to accept",
+    "transfer_pending_expires_hours": "Expires in {hours}h",
+    "transfer_pending_expires_minutes": "Expires in {minutes}m",
+    "transfer_pending_expires_soon": "Expiring soon",
+    "transfer_cancel": "Cancel transfer",
+    "transfer_pick_recipient_subtitle": "Choose a team member to become the new owner.",
+    "transfer_enter_different_email": "Enter a different email",
+    "transfer_recipient_must_have_account": "Recipient must already have a Kasero account.",
+    "transfer_confirm_warning": "You'll lose ownership the moment {recipient} accepts. You can cancel before then.",
+    "transfer_confirm_summary": "Transferring {businessName} to {recipient}.",
+    "transfer_type_to_confirm": "Type {businessName} to confirm.",
+    "transfer_send_request": "Send request",
+    "leave_business": "Leave business",
+    "leave_business_warning": "You'll lose access to {businessName}. You'll need a new invite to rejoin.",
+    "leave_business_button": "Leave",
+    "delete_business": "Delete business",
+    "delete_business_warning": "This permanently deletes {businessName} and all its products, orders, providers, and team data. This cannot be undone.",
+    "delete_business_button": "Delete",
+    "error_update_failed": "Couldn't save changes. Try again."
   },
   "providers": {
     "count": "{count, plural, one {# provider} other {# providers}}",
@@ -830,6 +868,17 @@
     "ai_rate_limited": "Rate limit reached. Try again in a few seconds.",
     "heic_no_file": "No file provided",
     "heic_convert_failed": "Failed to convert image",
-    "business_icon_invalid": "Icon must be a PNG, JPEG, WebP, or GIF image under 2MB"
+    "business_icon_invalid": "Icon must be a PNG, JPEG, WebP, or GIF image under 2MB",
+    "business_update_forbidden": "You don't have permission to update this business.",
+    "business_update_not_found": "Business not found.",
+    "business_update_invalid_locale": "That location isn't supported.",
+    "business_update_invalid_type": "That business type isn't valid.",
+    "business_update_name_required": "Name is required.",
+    "business_update_logo_too_large": "Logo file is too large. Maximum 2 MB.",
+    "business_update_logo_invalid_type": "Logo must be an image file.",
+    "business_update_failed": "Couldn't save changes. Try again.",
+    "business_update_success": "Business updated.",
+    "business_fetch_failed": "Couldn't load business details.",
+    "business_not_found": "Business not found."
   }
 }
