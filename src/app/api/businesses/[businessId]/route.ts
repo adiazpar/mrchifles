@@ -19,7 +19,7 @@ export const GET = withBusinessAuth(async (_request, access) => {
     .limit(1)
 
   if (!row) {
-    return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND_DELETE, 404)
+    return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND, 404)
   }
 
   return successResponse({
