@@ -7,6 +7,7 @@ import type { ReactNode } from 'react'
 import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2, CircleCheckBig } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Spinner, SwipeableRow, TabContainer } from '@/components/ui'
+import { BottomSheet } from '@/components/ui/bottom-sheet'
 import {
   ProviderModal,
   AddProviderNoteModal,
@@ -114,6 +115,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const [isEditOpen, setEditOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [providerDeleted, setProviderDeleted] = useState(false)
+  const [isContactSheetOpen, setContactSheetOpen] = useState(false)
 
   // Edit modal form state
   const [name, setName] = useState('')
@@ -453,75 +455,86 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const initials = getProviderInitials(provider.name)
   const hasOrders = providerOrders.length > 0
 
+  const identityContent = (
+    <>
+      <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-brand-subtle text-brand">
+        <span className="text-lg font-semibold">{initials}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-base font-semibold text-text-primary truncate">
+          {provider.name}
+        </div>
+        <div className="text-sm mt-0.5 flex items-center gap-1.5 min-w-0">
+          <span
+            className={`font-medium flex-shrink-0 ${
+              provider.active ? 'text-success' : 'text-error'
+            }`}
+          >
+            {provider.active ? t('status_active') : t('status_inactive')}
+          </span>
+          {provider.createdAt && (
+            <>
+              <span className="text-text-tertiary flex-shrink-0">&#183;</span>
+              <span className="text-text-tertiary truncate">
+                {t('since_date', { date: formatMonthYear(provider.createdAt, userLocale) })}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  )
+
   return (
     <>
       <main className="page-content page-content--no-navbar space-y-4">
         {/* ============== Identity Header ==============
-            Top row: avatar, name, active/inactive status text, edit button.
-            Bottom row: three contact actions (call / whatsapp / email).
-            Each action is disabled — but still visible — when its
-            underlying contact field is empty.
-            Rendered without the card chrome (no bg, no border, no inner
-            padding) so it reads as the page header rather than a card. */}
+            Top row: avatar + name/status. Tappable for managers — opens
+            the edit modal, mirroring the account-page profile card. For
+            non-managers the same content renders as a static div.
+            Below: the two primary actions (New order / Contact). */}
         <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-brand-subtle text-brand">
-              <span className="text-lg font-semibold">{initials}</span>
+          {canManage ? (
+            <button
+              type="button"
+              onClick={openEdit}
+              data-tap-feedback
+              aria-label={t('edit_provider_aria')}
+              className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left data-[pressed='true']:bg-bg-muted"
+            >
+              {identityContent}
+              <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
+            </button>
+          ) : (
+            <div className="flex items-center gap-4">
+              {identityContent}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-base font-semibold text-text-primary truncate">
-                {provider.name}
-              </div>
-              <div className="text-sm mt-0.5 flex items-center gap-1.5 min-w-0">
-                <span
-                  className={`font-medium flex-shrink-0 ${
-                    provider.active ? 'text-success' : 'text-error'
-                  }`}
-                >
-                  {provider.active ? t('status_active') : t('status_inactive')}
-                </span>
-                {provider.createdAt && (
-                  <>
-                    <span className="text-text-tertiary flex-shrink-0">&#183;</span>
-                    <span className="text-text-tertiary truncate">
-                      {t('since_date', { date: formatMonthYear(provider.createdAt, userLocale) })}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
+          )}
+
+          <div className="flex items-center gap-2">
             {canManage && (
               <button
                 type="button"
-                onClick={openEdit}
-                className="btn btn-secondary btn-icon flex-shrink-0"
-                aria-label={t('edit_provider_aria')}
+                onClick={() => orderFlows.openNewOrder(providerId)}
+                className="btn btn-primary flex-1 min-w-0"
+                style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
               >
-                <Pencil className="text-brand" style={{ width: 18, height: 18 }} />
+                <Plus style={{ width: 14, height: 14 }} />
+                <span className="truncate">
+                  {t('new_order_button')}
+                </span>
               </button>
             )}
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <ContactActionButton
-              icon={<Phone className="w-5 h-5" />}
-              label={t('action_phone')}
-              href={provider.phone ? `tel:${provider.phone}` : undefined}
-              disabled={!provider.phone}
-            />
-            <ContactActionButton
-              icon={<MessageCircle className="w-5 h-5" />}
-              label={t('action_whatsapp')}
-              href={provider.phone ? `https://wa.me/${provider.phone.replace(/\D/g, '')}` : undefined}
-              disabled={!provider.phone}
-              external
-            />
-            <ContactActionButton
-              icon={<Mail className="w-5 h-5" />}
-              label={t('action_email')}
-              href={provider.email ? `mailto:${provider.email}` : undefined}
-              disabled={!provider.email}
-            />
+            <button
+              type="button"
+              onClick={() => setContactSheetOpen(true)}
+              disabled={!provider.phone && !provider.email}
+              className="btn btn-primary flex-1 min-w-0"
+              style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
+            >
+              <Phone style={{ width: 14, height: 14 }} />
+              <span className="truncate">{t('contact_button')}</span>
+            </button>
           </div>
         </div>
 
@@ -558,19 +571,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               conditional (only shown when orders are actually overdue). */}
           <TabContainer.Tab id="summary">
               <div className="space-y-4">
-                {canManage && (
-                  <button
-                    type="button"
-                    onClick={() => orderFlows.openNewOrder(providerId)}
-                    className="btn btn-primary w-full"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="truncate">
-                      {t('new_order_button', { name: provider.name })}
-                    </span>
-                  </button>
-                )}
-
                 {/* Overdue orders banner — jumps the user to the History
                     tab so they can see which orders need attention. */}
                 {overdueCount > 0 && (
@@ -1069,6 +1069,50 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         onDelete={handleDeleteNote}
       />
 
+      {/* ============== Contact sheet ==============
+          Tapping a row fires the native handler (tel:, mailto:, wa.me) and
+          closes the sheet so returning to the app doesn't land back inside
+          an open overlay. Rows for missing contact fields are omitted. */}
+      <BottomSheet
+        isOpen={isContactSheetOpen}
+        onClose={() => setContactSheetOpen(false)}
+        title={t('contact_sheet_title', { name: provider.name })}
+      >
+        <div className="py-2">
+          {provider.phone && (
+            <ContactSheetRow
+              icon={<Phone className="w-5 h-5" />}
+              iconColorClass="text-warning"
+              label={t('action_call')}
+              value={provider.phone}
+              href={`tel:${provider.phone}`}
+              onAction={() => setContactSheetOpen(false)}
+            />
+          )}
+          {provider.phone && (
+            <ContactSheetRow
+              icon={<MessageCircle className="w-5 h-5" />}
+              iconColorClass="text-success"
+              label={t('action_whatsapp')}
+              value={provider.phone}
+              href={`https://wa.me/${provider.phone.replace(/\D/g, '')}`}
+              external
+              onAction={() => setContactSheetOpen(false)}
+            />
+          )}
+          {provider.email && (
+            <ContactSheetRow
+              icon={<Mail className="w-5 h-5" />}
+              iconColorClass="text-text-primary"
+              label={t('action_email')}
+              value={provider.email}
+              href={`mailto:${provider.email}`}
+              onAction={() => setContactSheetOpen(false)}
+            />
+          )}
+        </div>
+      </BottomSheet>
+
       {/* ============== Order flows (new order + order detail/edit/receive/delete) ============== */}
       {orderFlows.modals}
     </>
@@ -1080,46 +1124,43 @@ function formatMonthYear(date: Date | string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { month: 'short', year: '2-digit' }).format(d)
 }
 
-interface ContactActionButtonProps {
+interface ContactSheetRowProps {
   icon: ReactNode
+  iconColorClass: string
   label: string
-  href?: string
-  disabled: boolean
+  value: string
+  href: string
   external?: boolean
+  onAction: () => void
 }
 
-function ContactActionButton({
+function ContactSheetRow({
   icon,
+  iconColorClass,
   label,
+  value,
   href,
-  disabled,
   external,
-}: ContactActionButtonProps) {
-  const className =
-    'flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl bg-bg-muted text-center transition-colors'
-
-  const body = (
-    <>
-      <span className="text-brand">{icon}</span>
-      <span className="text-sm font-semibold text-text-primary">{label}</span>
-    </>
-  )
-
-  if (disabled || !href) {
-    return (
-      <div className={`${className} opacity-50 cursor-not-allowed`} aria-disabled="true">
-        {body}
-      </div>
-    )
-  }
-
+  onAction,
+}: ContactSheetRowProps) {
+  // Mirrors `.user-menu-item`: same padding, gap, text color, and hover
+  // behavior as the user avatar menu. The colored-icon span sits where
+  // the menu icon would — `.user-menu-item svg` forces a secondary color,
+  // so we avoid the class and style the wrapper directly. ChevronRight
+  // on the trailing edge matches the menu's right-pointing arrow.
   return (
     <a
       href={href}
-      className={`${className} hover:bg-brand-subtle`}
+      onClick={onAction}
+      className="flex items-center gap-3 px-4 py-3 text-text-primary no-underline transition-colors hover:bg-bg-muted hover:no-underline active:bg-bg-muted"
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
-      {body}
+      <span className={`flex-shrink-0 ${iconColorClass}`}>{icon}</span>
+      <div className="min-w-0 flex-1">
+        <div className="text-base text-text-primary">{label}</div>
+        <div className="text-xs text-text-tertiary truncate">{value}</div>
+      </div>
+      <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />
     </a>
   )
 }
