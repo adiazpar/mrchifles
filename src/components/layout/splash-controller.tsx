@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/auth-context'
 
 const SPLASH_ID = 'app-splash'
 const MAX_DURATION_MS = 2000
-const FADE_DURATION_MS = 300
 
 function isStandalone(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -37,8 +36,11 @@ export function SplashController() {
     const dismiss = () => {
       if (dismissed) return
       dismissed = true
+      // Flip the data attribute and let CSS fade + disable pointer events.
+      // Do NOT call el.remove(): the splash div is rendered by React in
+      // layout.tsx, so detaching it externally makes React's next commit
+      // fail with NotFoundError when it tries to unmount the fiber.
       el.setAttribute('data-dismissed', 'true')
-      window.setTimeout(() => el.remove(), FADE_DURATION_MS + 50)
     }
 
     // Hard cap is measured from mount, not from the current effect run, so
