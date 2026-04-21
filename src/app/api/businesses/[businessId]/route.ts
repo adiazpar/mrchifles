@@ -1,22 +1,14 @@
 import { NextRequest } from 'next/server'
-import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { requireBusinessAccess, isOwner, invalidateAccessCacheForBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, errorResponse, successResponse, validationError, type RouteParams } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { db, businesses } from '@/db'
 import { eq } from 'drizzle-orm'
-import { getLocaleConfig, BUSINESS_TYPES } from '@/lib/locale-config'
+import { getLocaleConfig } from '@/lib/locale-config'
+import { patchSchema } from './schema'
 
-const BUSINESS_TYPE_VALUES = BUSINESS_TYPES.map(t => t.value) as [string, ...string[]]
 const MAX_LOGO_BYTES = 2 * 1024 * 1024
-
-const patchSchema = z.object({
-  name: z.string().trim().min(1).max(100).optional(),
-  type: z.enum(BUSINESS_TYPE_VALUES).optional(),
-  locale: z.string().optional(),
-  removeLogo: z.literal('true').optional(),
-})
 
 /**
  * GET /api/businesses/[businessId]
