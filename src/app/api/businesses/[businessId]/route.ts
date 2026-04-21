@@ -173,7 +173,7 @@ export async function DELETE(
       .get()
 
     if (!existing) {
-      return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND_DELETE, 404)
+      return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND, 404)
     }
 
     await db.delete(businesses).where(eq(businesses.id, businessId))

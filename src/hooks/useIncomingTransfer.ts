@@ -8,7 +8,7 @@ import { useApiMessage } from './useApiMessage'
 
 export interface IncomingTransfer {
   code: string
-  status: 'pending' | 'accepted'
+  status: 'pending'
   expiresAt: string
   business: {
     id: string
@@ -31,8 +31,8 @@ export interface UseIncomingTransferReturn {
 }
 
 /**
- * User-level hook that fetches any pending / accepted incoming
- * ownership transfer for the current user.
+ * User-level hook that fetches any pending incoming ownership transfer
+ * for the current user.
  *
  * Lives outside the business context because the recipient may not yet
  * be a member of the business -- they only become one after the

@@ -13,7 +13,7 @@ export function LeaveBusinessModal({ isOpen, onClose }: Props) {
   const tCommon = useTranslations('common')
   const router = useRouter()
   const { business } = useBusiness()
-  const { leave, isSubmitting, error } = useLeaveBusiness()
+  const { leave, isSubmitting, error, reset } = useLeaveBusiness()
 
   const handleLeave = async () => {
     const ok = await leave()
@@ -21,7 +21,7 @@ export function LeaveBusinessModal({ isOpen, onClose }: Props) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} onExitComplete={reset}>
       <Modal.Step title={t('leave_business')} hideBackButton>
         <Modal.Item>
           <p className="text-sm text-text-secondary">

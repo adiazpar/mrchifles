@@ -15,7 +15,6 @@ import { useIncomingTransfer } from '@/hooks/useIncomingTransfer'
  *
  * States:
  * - pending  -> Accept / Decline buttons
- * - accepted -> informational ("waiting on owner to confirm")
  * - null     -> card not rendered
  */
 export function IncomingTransferCard() {
@@ -52,42 +51,36 @@ export function IncomingTransferCard() {
             {t('incoming_transfer_heading')}
           </h2>
           <p className="text-sm text-text-secondary">
-            {transfer.status === 'accepted'
-              ? fromName
-                ? t('incoming_transfer_accepted', { name: fromName })
-                : t('incoming_transfer_accepted_anonymous')
-              : fromName
-                ? t('incoming_transfer_description', {
-                    name: fromName,
-                    business: businessName,
-                  })
-                : t('incoming_transfer_description_anonymous', {
-                    business: businessName,
-                  })}
+            {fromName
+              ? t('incoming_transfer_description', {
+                  name: fromName,
+                  business: businessName,
+                })
+              : t('incoming_transfer_description_anonymous', {
+                  business: businessName,
+                })}
           </p>
         </div>
       </div>
 
-      {transfer.status === 'pending' && (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className="btn btn-primary flex-1"
-            onClick={handleAccept}
-            disabled={isAccepting || isDeclining}
-          >
-            {isAccepting ? <Spinner /> : t('incoming_transfer_accept')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary flex-1"
-            onClick={handleDecline}
-            disabled={isAccepting || isDeclining}
-          >
-            {isDeclining ? <Spinner /> : t('incoming_transfer_decline')}
-          </button>
-        </div>
-      )}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="btn btn-primary flex-1"
+          onClick={handleAccept}
+          disabled={isAccepting || isDeclining}
+        >
+          {isAccepting ? <Spinner /> : t('incoming_transfer_accept')}
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary flex-1"
+          onClick={handleDecline}
+          disabled={isAccepting || isDeclining}
+        >
+          {isDeclining ? <Spinner /> : t('incoming_transfer_decline')}
+        </button>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db, ownershipTransfers, users } from '@/db'
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       .where(
         and(
           eq(ownershipTransfers.code, code),
-          inArray(ownershipTransfers.status, ['pending', 'accepted']),
+          eq(ownershipTransfers.status, 'pending'),
         ),
       )
       .get()

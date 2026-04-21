@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db, ownershipTransfers, users, businesses } from '@/db'
-import { eq, and, gt, inArray } from 'drizzle-orm'
+import { eq, and, gt } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { errorResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
@@ -8,7 +8,7 @@ import { ApiMessageCode } from '@/lib/api-messages'
 /**
  * GET /api/transfer/incoming
  *
- * Fetches any pending or accepted incoming ownership transfer for the current user.
+ * Fetches any pending incoming ownership transfer for the current user.
  * User-level endpoint for displaying transfer notifications.
  *
  * Returns the transfer with sender info if one exists.
@@ -53,7 +53,7 @@ export async function GET() {
       .where(
         and(
           eq(ownershipTransfers.toEmail, currentUserData.email.toLowerCase()),
-          inArray(ownershipTransfers.status, ['pending', 'accepted']),
+          eq(ownershipTransfers.status, 'pending'),
           gt(ownershipTransfers.expiresAt, now)
         )
       )
