@@ -8,12 +8,14 @@ import type { BusinessRole } from './business-role'
 export type { BusinessRole }
 
 export interface BusinessAccess {
+  userId: string
   businessId: string
   businessName: string
+  businessType: 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other' | null
+  businessIcon: string | null
   businessLocale: string
   businessCurrency: string
   role: BusinessRole
-  userId: string
 }
 
 // ============================================
@@ -66,7 +68,10 @@ export async function requireBusinessAccess(
     .select({
       businessId: businessUsers.businessId,
       role: businessUsers.role,
+      status: businessUsers.status,
       businessName: businesses.name,
+      businessType: businesses.type,
+      businessIcon: businesses.icon,
       businessLocale: businesses.locale,
       businessCurrency: businesses.currency,
     })
@@ -88,12 +93,14 @@ export async function requireBusinessAccess(
   }
 
   const access: BusinessAccess = {
+    userId: session.userId,
     businessId: membership.businessId,
     businessName: membership.businessName,
+    businessType: membership.businessType,
+    businessIcon: membership.businessIcon,
     businessLocale: membership.businessLocale ?? 'en-US',
     businessCurrency: membership.businessCurrency ?? 'USD',
     role: membership.role as BusinessRole,
-    userId: session.userId,
   }
 
   // Cache the result
