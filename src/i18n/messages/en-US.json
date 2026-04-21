@@ -444,7 +444,11 @@
     "import_coming_soon": "Coming soon",
     "ordered_to_label": "Ordered to:",
     "ordered_on_label": "Ordered on:",
-    "ordered_by_label": "Ordered by:"
+    "ordered_by_label": "Ordered by:",
+    "toggle_show_completed_aria": "Show completed orders",
+    "toggle_showing_completed_aria": "Showing completed orders",
+    "empty_no_active": "No active orders",
+    "empty_no_completed": "No completed orders yet"
   },
   "navigation": {
     "home": "Home",

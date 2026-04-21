@@ -22,6 +22,7 @@ import {
   type PageTab,
   type OrderStatusFilter,
   type OrderSortOption,
+  type OrderViewMode,
   type SortOption,
   getOrderDisplayStatus,
 } from '@/lib/products'
@@ -32,6 +33,7 @@ import { useOrders } from '@/contexts/orders-context'
 import { useProviders } from '@/contexts/providers-context'
 import { useProducts } from '@/contexts/products-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
+import { scrollToTop } from '@/lib/scroll'
 import { useTranslations } from 'next-intl'
 import type { Product, SortPreference, ProductCategory } from '@/types'
 
@@ -357,6 +359,15 @@ export default function ProductosPage() {
   const [orderSearchQuery, setOrderSearchQuery] = useState('')
   const [orderStatusFilter, setOrderStatusFilter] = useState<OrderStatusFilter>('all')
   const [orderSortBy, setOrderSortBy] = useState<OrderSortOption>('date_desc')
+  const [orderViewMode, setOrderViewMode] = useState<OrderViewMode>('active')
+
+  const handleOrderViewModeChange = useCallback((mode: OrderViewMode) => {
+    setOrderViewMode(mode)
+    // Reset transient view-specific state; preserve search query.
+    setOrderSortBy('date_desc')
+    setOrderStatusFilter('all')
+    scrollToTop()
+  }, [])
 
   // Permission check
   const canDelete = canManage
@@ -419,8 +430,15 @@ export default function ProductosPage() {
 
   // Filtered orders
   const filteredOrders = useMemo(() => {
-    let result = orders
+    // Stage 1: partition by view mode (received = "completed"; anything else = "active")
+    let result = orders.filter(o => {
+      const display = getOrderDisplayStatus(o)
+      return orderViewMode === 'completed'
+        ? display === 'received'
+        : display !== 'received'
+    })
 
+    // Stage 2: status sub-filter, scoped to the current view
     if (orderStatusFilter !== 'all') {
       result = result.filter(o => getOrderDisplayStatus(o) === orderStatusFilter)
     }
@@ -466,7 +484,7 @@ export default function ProductosPage() {
     })
 
     return result
-  }, [orders, orderStatusFilter, orderSearchQuery, orderSortBy, formatDate, locale, user?.language])
+  }, [orders, orderViewMode, orderStatusFilter, orderSearchQuery, orderSortBy, formatDate, locale, user?.language])
 
   // Product handlers - now receive data from modal context
   const handleSubmitProduct = useCallback(async (
@@ -807,6 +825,8 @@ export default function ProductosPage() {
               onSortChange={setOrderSortBy}
               statusFilter={orderStatusFilter}
               onStatusFilterChange={setOrderStatusFilter}
+              viewMode={orderViewMode}
+              onViewModeChange={handleOrderViewModeChange}
               onNewOrder={() => orderFlows.openNewOrder()}
               onViewOrder={(order) => orderFlows.openOrderDetail(order)}
               onReceiveOrder={(order) => orderFlows.openOrderDetail(order, 'receive')}

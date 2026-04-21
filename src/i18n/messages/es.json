@@ -444,7 +444,11 @@
     "import_coming_soon": "Próximamente",
     "ordered_to_label": "Pedido a:",
     "ordered_on_label": "Fecha:",
-    "ordered_by_label": "Pedido por:"
+    "ordered_by_label": "Pedido por:",
+    "toggle_show_completed_aria": "Mostrar pedidos completados",
+    "toggle_showing_completed_aria": "Mostrando pedidos completados",
+    "empty_no_active": "Sin pedidos activos",
+    "empty_no_completed": "Aún no hay pedidos completados"
   },
   "navigation": {
     "home": "Inicio",

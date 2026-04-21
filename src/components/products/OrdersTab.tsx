@@ -12,6 +12,7 @@ import {
   ORDER_SORT_OPTIONS,
   type OrderSortOption,
   type OrderStatusFilter,
+  type OrderViewMode,
 } from '@/lib/products'
 import type { Product } from '@/types'
 import type { ExpandedOrder } from '@/lib/products'
@@ -38,6 +39,10 @@ export interface OrdersTabProps {
   // Filter state
   statusFilter: OrderStatusFilter
   onStatusFilterChange: (filter: OrderStatusFilter) => void
+
+  // View mode (active vs completed)
+  viewMode: OrderViewMode
+  onViewModeChange: (mode: OrderViewMode) => void
 
   // Handlers
   onNewOrder: () => void
@@ -74,6 +79,8 @@ export function OrdersTab({
   onSortChange,
   statusFilter,
   onStatusFilterChange,
+  viewMode,
+  onViewModeChange,
   onNewOrder,
   onViewOrder,
   onReceiveOrder,
@@ -167,6 +174,23 @@ export function OrdersTab({
             </div>
             <button
               type="button"
+              onClick={() => onViewModeChange(viewMode === 'completed' ? 'active' : 'completed')}
+              aria-pressed={viewMode === 'completed'}
+              aria-label={
+                viewMode === 'completed'
+                  ? t('toggle_showing_completed_aria')
+                  : t('toggle_show_completed_aria')
+              }
+              className={`btn btn-icon flex-shrink-0 ${
+                viewMode === 'completed'
+                  ? 'border-brand bg-brand-subtle text-brand'
+                  : 'btn-secondary'
+              }`}
+            >
+              <CircleCheckBig style={{ width: 18, height: 18 }} />
+            </button>
+            <button
+              type="button"
               onClick={() => setSortSheetOpen(true)}
               className="btn btn-secondary btn-icon flex-shrink-0"
               aria-label={t('sort_filter_aria')}
@@ -215,12 +239,20 @@ export function OrdersTab({
             {/* Orders List */}
             {filteredOrders.length === 0 ? (
               <div className="text-center py-8 text-text-secondary">
-                <p>{t('no_results')}</p>
+                <p>
+                  {orders.some(o => (viewMode === 'completed'
+                    ? getOrderDisplayStatus(o) === 'received'
+                    : getOrderDisplayStatus(o) !== 'received'))
+                    ? t('no_results')
+                    : viewMode === 'completed'
+                      ? t('empty_no_completed')
+                      : t('empty_no_active')}
+                </p>
               </div>
             ) : (
               <div className="list-divided">
                 {filteredOrders.map((order, i) => {
-                  const hasSwipeActions = !!(onReceiveOrder && onEditOrder && onDeleteOrder)
+                  const hasSwipeActions = viewMode !== 'completed' && !!(onReceiveOrder && onEditOrder && onDeleteOrder)
                   const alreadyReceived = getOrderDisplayStatus(order) === 'received'
                   // Mirrors the products list ordering for muscle-memory consistency:
                   // primary action leftmost (deepest swipe), secondary middle, the
@@ -318,33 +350,35 @@ export function OrdersTab({
           </div>
         </Modal.Item>
 
-        {/* Filter by Status */}
-        <Modal.Item>
-          <div className="space-y-2">
-            <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('filter_by_status_label')}</span>
-            <div className="space-y-1">
-              {(['all', 'pending', 'received', 'overdue'] as OrderStatusFilter[]).map(status => (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => onStatusFilterChange(status)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
-                >
-                  <span className={statusFilter === status ? 'font-medium text-brand' : 'text-text-primary'}>
-                    {statusFilterLabels[status]}
-                  </span>
-                  {statusFilter === status && (
-                    <span className="w-5 h-5 text-brand">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
+        {/* Filter by Status — only shown in Active view (Completed has a single status) */}
+        {viewMode === 'active' && (
+          <Modal.Item>
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('filter_by_status_label')}</span>
+              <div className="space-y-1">
+                {(['all', 'pending', 'overdue'] as OrderStatusFilter[]).map(status => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => onStatusFilterChange(status)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
+                  >
+                    <span className={statusFilter === status ? 'font-medium text-brand' : 'text-text-primary'}>
+                      {statusFilterLabels[status]}
                     </span>
-                  )}
-                </button>
-              ))}
+                    {statusFilter === status && (
+                      <span className="w-5 h-5 text-brand">
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        </Modal.Item>
+          </Modal.Item>
+        )}
 
         <Modal.Footer>
           <button
