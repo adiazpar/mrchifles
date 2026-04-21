@@ -26,7 +26,8 @@ export function UserMenu() {
       <button
         type="button"
         onClick={() => setMenuOpen(true)}
-        className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm overflow-hidden"
+        data-tap-feedback
+        className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm overflow-hidden transition-transform duration-150 data-[pressed='true']:scale-[0.94]"
         aria-label={t('open')}
         style={user.avatar ? undefined : avatarStyles}
       >

@@ -24,6 +24,10 @@ export const TAP_FEEDBACK_SELECTOR = [
   '.caja-action-btn',
   '.mobile-nav-item',
   '.swipeable-row-action',
+  '.page-header__back',
+  '.list-item-clickable',
+  '.user-menu-item',
+  '.settings-row',
   '[data-tap-feedback]',
 ].join(',')
 
