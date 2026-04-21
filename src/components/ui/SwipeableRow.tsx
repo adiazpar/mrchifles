@@ -252,19 +252,24 @@ function SwipeActionButton({ action, slotIndex, x, onTap }: SwipeActionButtonPro
   const opacity = useTransform(x, [fullyVisibleAt, startAppearingAt], [1, 0], { clamp: true })
   const scale = useTransform(x, [fullyVisibleAt, startAppearingAt], [1, 0], { clamp: true })
 
+  // The reveal scale/opacity live on a wrapper so the inner <button>'s CSS
+  // transform (scale(0.94) on [data-pressed='true'], applied by the global
+  // tap-feedback module) isn't overwritten by framer-motion's inline style.
+  // Nested transforms compose multiplicatively.
   return (
     <div className="swipeable-row-slot" style={{ width: ACTION_WIDTH }}>
-      <motion.button
-        type="button"
-        aria-label={action.label}
-        onClick={onTap}
-        disabled={action.disabled}
-        style={{ opacity, scale }}
-        className={`swipeable-row-action swipeable-row-action--${action.variant ?? 'neutral'}`}
-      >
-        <span className="swipeable-row-action__icon flex items-center justify-center w-6 h-6">{action.icon}</span>
-        <span className="swipeable-row-action__label text-[11px] font-medium">{action.label}</span>
-      </motion.button>
+      <motion.div style={{ opacity, scale }}>
+        <button
+          type="button"
+          aria-label={action.label}
+          onClick={onTap}
+          disabled={action.disabled}
+          className={`swipeable-row-action swipeable-row-action--${action.variant ?? 'neutral'}`}
+        >
+          <span className="swipeable-row-action__icon flex items-center justify-center w-6 h-6">{action.icon}</span>
+          <span className="swipeable-row-action__label text-[11px] font-medium">{action.label}</span>
+        </button>
+      </motion.div>
     </div>
   )
 }
