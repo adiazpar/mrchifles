@@ -5,7 +5,7 @@ export { BusinessHeaderCard, type BusinessHeaderCardProps } from './BusinessHead
 export { EditNameModal } from './EditNameModal'
 export { EditTypeModal } from './EditTypeModal'
 export { EditLocationModal } from './EditLocationModal'
-export function EditLogoModal(_p: ModalProps) { return null }
+export { EditLogoModal } from './EditLogoModal'
 export function PendingTransferCard() { return null }
 export function TransferOwnershipModal(_p: ModalProps) { return null }
 export function LeaveBusinessModal(_p: ModalProps) { return null }
