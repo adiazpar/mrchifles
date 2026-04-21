@@ -7,13 +7,13 @@ import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import {
-  BUSINESS_TYPES,
   REGIONS,
   getLocalesByRegion,
   getCurrencyConfig,
 } from '@/lib/locale-config'
 import type { Region } from '@/lib/locale-config'
 import type { UseCreateBusinessReturn, BusinessType } from '@/hooks'
+import { BusinessTypeGrid } from '@/components/businesses/shared'
 
 interface CreateBusinessModalProps {
   createBusiness: UseCreateBusinessReturn
@@ -199,29 +199,8 @@ const FALLBACK_EMOJIS: Record<string, string> = {
   other: '💼',
 }
 
-function getBusinessTypeIcon(typeValue: string, isSelected: boolean) {
-  const IconComponent = BUSINESS_TYPE_ICONS[typeValue]
-  if (IconComponent) {
-    return (
-      <IconComponent
-        className={`w-8 h-8 ${isSelected ? 'text-brand' : 'text-text-secondary'}`}
-      />
-    )
-  }
-  return <span className="text-2xl">{FALLBACK_EMOJIS[typeValue] || '💼'}</span>
-}
-
 function TypeContent({ type, setType }: TypeContentProps) {
   const t = useTranslations('createBusiness')
-
-  const businessTypeLabels: Record<string, string> = {
-    food: t('business_type_food'),
-    retail: t('business_type_retail'),
-    services: t('business_type_services'),
-    wholesale: t('business_type_wholesale'),
-    manufacturing: t('business_type_manufacturing'),
-    other: t('business_type_other'),
-  }
 
   return (
     <>
@@ -234,25 +213,7 @@ function TypeContent({ type, setType }: TypeContentProps) {
         </p>
       </Modal.Item>
       <Modal.Item>
-        <div className="grid grid-cols-2 gap-2">
-          {BUSINESS_TYPES.map((bt) => (
-            <button
-              key={bt.value}
-              type="button"
-              onClick={() => setType(bt.value as BusinessType)}
-              className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
-                type === bt.value
-                  ? 'border-brand bg-brand-subtle'
-                  : 'border-border hover:border-brand-300'
-              }`}
-            >
-              {getBusinessTypeIcon(bt.value, type === bt.value)}
-              <span className="text-sm font-medium text-text-primary">
-                {businessTypeLabels[bt.value] ?? bt.label}
-              </span>
-            </button>
-          ))}
-        </div>
+        <BusinessTypeGrid selected={type} onSelect={setType} />
       </Modal.Item>
     </>
   )
