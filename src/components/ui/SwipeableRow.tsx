@@ -64,9 +64,12 @@ function closeAllExcept(self: () => void) {
  * to the right edge). Each button's `opacity` and `scale` are driven per-frame by
  * `useTransform(x, ...)` over the slot's exposure range — so every button scale-fades
  * in as its slot is uncovered, tracking the finger rather than firing on a threshold.
- * That also keeps the buttons visually absent at rest (scale/opacity = 0), so the
- * transparent row + transparent `.list-item-clickable` hover highlight render without
- * the buttons bleeding through.
+ * The useTransform-driven buttons are supposed to land at scale/opacity 0 once the
+ * row is back at x=0, but the tap-feedback scale(0.94) composing with the reveal
+ * transform can leave a visible ghost on close, so the row layer carries an opaque
+ * surface-colored background (`.swipeable-row .list-item-clickable` in
+ * interactive.css) matching the enclosing `.card`, to hide any such artifact once
+ * snapped back.
  *
  * `opacity` and `scale` are both composited on modern engines, so the per-frame
  * style writes (2 per button per frame during motion) stay on the compositor and
@@ -177,15 +180,19 @@ export function SwipeableRow({ actions, children, className }: SwipeableRowProps
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-hidden ${className ?? ''}`}
+      className={`swipeable-row relative overflow-hidden ${className ?? ''}`}
       style={{ touchAction: 'pan-y' }}
     >
       {/* Action layer — sits behind the row, pinned to the right edge of the
           container. Each button's opacity/scale is driven by `useTransform(x)`
           over the range in which its slot is being exposed, so every button
-          scale-fades in as its slot emerges. At x=0 all buttons are scale 0
-          + opacity 0, which is why the row can stay transparent without any
-          button bleed-through. */}
+          scale-fades in as its slot emerges. The buttons are supposed to be
+          at scale(0)/opacity(0) when x=0, but in practice the tap-feedback
+          scale(0.94) composing with the reveal transform can leave a ghost
+          mid-close; the row layer above carries an opaque surface-colored bg
+          (see `.swipeable-row .list-item-clickable` in interactive.css, set
+          to match the enclosing `.card`) to cover any such artifact once the
+          row has snapped back. */}
       <div
         className="absolute inset-y-0 right-0 flex pointer-events-auto"
         aria-hidden={!isOpen}

@@ -267,16 +267,26 @@
   color: var(--color-error);
 }
 
+/* The list item inside a swipeable row carries an opaque page-colored
+   background so the action layer behind it is fully covered once the row
+   has snapped back. Without this, any mid-animation artifact on the
+   action buttons (scale/opacity glitches from the tap-feedback scale(0.94)
+   composing with the reveal transform) bleeds through the row at rest. */
+.swipeable-row .list-item-clickable {
+  background: var(--color-bg-surface);
+}
+
 /* Applied imperatively while a tap on an already-open row is being
    suppressed. Overrides the `:hover` / `:active` backgrounds on the
    inner list-item-clickable so there's no background flash during the
    close animation. Kept as pure CSS (higher-specificity override, no
    pointer-events manipulation) so the click-suppression event flow on
-   motion.div isn't disturbed. */
+   motion.div isn't disturbed. Keeps the opaque page bg from the
+   `.swipeable-row .list-item-clickable` rule above. */
 .swipeable-row--suppress-interactive .list-item-clickable,
 .swipeable-row--suppress-interactive .list-item-clickable:hover,
 .swipeable-row--suppress-interactive .list-item-clickable:active {
-  background: transparent;
+  background: var(--color-bg-surface);
 }
 
 .swipeable-row--suppress-interactive .list-item,
