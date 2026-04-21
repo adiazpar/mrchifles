@@ -85,7 +85,6 @@ export interface UseAccountSettingsReturn {
   handleInitiateTransfer: (e: React.FormEvent) => Promise<void>
   handleCopyTransferLink: () => Promise<void>
   handleCancelTransfer: () => Promise<void>
-  handleConfirmTransfer: (password: string) => Promise<void>
   handleShowTransferLink: () => void
   handleAcceptIncomingTransfer: () => Promise<void>
 }
@@ -273,31 +272,6 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     }
   }, [pendingTransfer, businessId, setPendingTransfer])
 
-  const handleConfirmTransfer = useCallback(async (password: string) => {
-    if (!pendingTransfer || !businessId) return
-
-    setTransferLoading(true)
-
-    try {
-      await apiPost(`/api/businesses/${businessId}/transfer/confirm`, {
-        code: pendingTransfer.code,
-        password,
-      })
-
-      // Transfer complete - reload page to reflect new role
-      window.location.reload()
-    } catch (err) {
-      if (err instanceof ApiError && err.envelope) {
-        setTransferError(translateApiMessage(err.envelope))
-      } else {
-        console.error('Confirm transfer error:', err)
-        setTransferError(tAuth('connection_error'))
-      }
-    } finally {
-      setTransferLoading(false)
-    }
-  }, [tAuth, pendingTransfer, businessId, translateApiMessage])
-
   const handleShowTransferLink = useCallback(() => {
     if (pendingTransfer) {
       setTransferLink(`${window.location.origin}/transfer?code=${pendingTransfer.code}`)
@@ -365,7 +339,6 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     handleInitiateTransfer,
     handleCopyTransferLink,
     handleCancelTransfer,
-    handleConfirmTransfer,
     handleShowTransferLink,
     handleAcceptIncomingTransfer,
   }

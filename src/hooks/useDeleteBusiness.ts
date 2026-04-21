@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { apiDelete, ApiError } from '@/lib/api-client'
 import { useApiMessage } from './useApiMessage'
 import { useBusiness } from '@/contexts/business-context'
+import { useNavbar } from '@/contexts/navbar-context'
 
 export interface UseDeleteBusinessReturn {
   deleteBusiness: () => Promise<boolean>
@@ -13,6 +14,7 @@ export interface UseDeleteBusinessReturn {
 
 export function useDeleteBusiness(): UseDeleteBusinessReturn {
   const { businessId } = useBusiness()
+  const { clearCachedBusiness } = useNavbar()
   const translateApiMessage = useApiMessage()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -23,6 +25,7 @@ export function useDeleteBusiness(): UseDeleteBusinessReturn {
     setError('')
     try {
       await apiDelete(`/api/businesses/${businessId}`)
+      clearCachedBusiness(businessId)
       return true
     } catch (err) {
       setError(
@@ -34,7 +37,7 @@ export function useDeleteBusiness(): UseDeleteBusinessReturn {
     } finally {
       setIsSubmitting(false)
     }
-  }, [businessId, translateApiMessage])
+  }, [businessId, translateApiMessage, clearCachedBusiness])
 
   return { deleteBusiness, isSubmitting, error }
 }

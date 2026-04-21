@@ -4,15 +4,18 @@ import { useState, useCallback } from 'react'
 import { apiPost, ApiError } from '@/lib/api-client'
 import { useApiMessage } from './useApiMessage'
 import { useBusiness } from '@/contexts/business-context'
+import { useNavbar } from '@/contexts/navbar-context'
 
 export interface UseLeaveBusinessReturn {
   leave: () => Promise<boolean>
   isSubmitting: boolean
   error: string
+  reset: () => void
 }
 
 export function useLeaveBusiness(): UseLeaveBusinessReturn {
   const { businessId } = useBusiness()
+  const { clearCachedBusiness } = useNavbar()
   const translateApiMessage = useApiMessage()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -23,6 +26,7 @@ export function useLeaveBusiness(): UseLeaveBusinessReturn {
     setError('')
     try {
       await apiPost(`/api/businesses/${businessId}/leave`, {})
+      clearCachedBusiness(businessId)
       return true
     } catch (err) {
       setError(
@@ -34,7 +38,9 @@ export function useLeaveBusiness(): UseLeaveBusinessReturn {
     } finally {
       setIsSubmitting(false)
     }
-  }, [businessId, translateApiMessage])
+  }, [businessId, translateApiMessage, clearCachedBusiness])
 
-  return { leave, isSubmitting, error }
+  const reset = useCallback(() => setError(''), [])
+
+  return { leave, isSubmitting, error, reset }
 }

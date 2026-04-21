@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { Camera, Sparkles, UserPlus, FileScan } from 'lucide-react'
+import { Camera, Sparkles, UserPlus, FileScan, FileSpreadsheet } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm } from '@/contexts/product-form-context'
@@ -370,13 +370,36 @@ export function AddProductModal({
               </button>
             </div>
 
-            <Modal.GoToStepButton step={5} className="caja-action-btn caja-action-btn--large">
-              <UserPlus className="caja-action-btn__icon text-text-secondary" />
-              <div className="caja-action-btn__text">
-                <span className="caja-action-btn__title">{t('add_manually_title')}</span>
-                <span className="caja-action-btn__desc">{t('add_manually_desc')}</span>
-              </div>
-            </Modal.GoToStepButton>
+            <div className="flex items-center gap-3" aria-hidden="true">
+              <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
+              <span className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
+                {tCommon('or')}
+              </span>
+              <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
+            </div>
+
+            <div className="caja-actions">
+              <Modal.GoToStepButton step={5} className="caja-action-btn caja-action-btn--large caja-action-btn--align-start">
+                <UserPlus className="caja-action-btn__icon text-text-secondary" />
+                <div className="caja-action-btn__text">
+                  <span className="caja-action-btn__title">{t('add_manually_title')}</span>
+                  <span className="caja-action-btn__desc">{t('add_manually_desc')}</span>
+                </div>
+              </Modal.GoToStepButton>
+
+              <button
+                type="button"
+                disabled
+                className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
+                title={t('import_file_desc')}
+              >
+                <FileSpreadsheet className="caja-action-btn__icon text-text-tertiary" />
+                <div className="caja-action-btn__text">
+                  <span className="caja-action-btn__title">{t('import_file_title')}</span>
+                  <span className="caja-action-btn__desc">{t('import_file_desc')}</span>
+                </div>
+              </button>
+            </div>
           </div>
         </Modal.Item>
 

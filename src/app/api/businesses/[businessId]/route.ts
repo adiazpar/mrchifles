@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { requireBusinessAccess, isOwner } from '@/lib/business-auth'
+import { requireBusinessAccess, isOwner, invalidateAccessCacheForBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, errorResponse, successResponse, validationError, type RouteParams } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { db, businesses } from '@/db'
@@ -122,6 +122,7 @@ export const PATCH = withBusinessAuth(async (request, access) => {
 
   try {
     await db.update(businesses).set(update).where(eq(businesses.id, access.businessId))
+    invalidateAccessCacheForBusiness(access.businessId)
     const [row] = await db.select().from(businesses).where(eq(businesses.id, access.businessId)).limit(1)
     if (!row) return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND, 404)
     return successResponse({

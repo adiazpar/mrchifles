@@ -49,6 +49,7 @@ interface NavbarContextValue {
   getCachedBusiness: (businessId: string) => CachedBusiness | null
   setCachedBusiness: (businessId: string, data: CachedBusiness) => void
   setCachedBusinesses: (businesses: Array<{ id: string; name: string; role: string; isOwner: boolean; locale: string; currency: string; type: string | null; icon: string | null }>) => void
+  clearCachedBusiness: (businessId: string) => void
 }
 
 const NavbarContext = createContext<NavbarContextValue | null>(null)
@@ -130,6 +131,15 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
     }
   }, [])
 
+  const clearCachedBusiness = useCallback((businessId: string) => {
+    delete businessCacheRef.current[businessId]
+    try {
+      sessionStorage.setItem(BUSINESS_CACHE_STORAGE_KEY, JSON.stringify(businessCacheRef.current))
+    } catch {
+      // Ignore storage errors
+    }
+  }, [])
+
   // Clear pendingHref immediately when pathname changes.
   // Delay clearing slideDirection so the entry animation can finish
   // before the header content reappears.
@@ -153,7 +163,7 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
       pendingHref, setPendingHref,
       pageSubtitleSuffix, setPageSubtitleSuffix,
       navOverride, setNavOverride,
-      getCachedBusiness, setCachedBusiness, setCachedBusinesses,
+      getCachedBusiness, setCachedBusiness, setCachedBusinesses, clearCachedBusiness,
     }}>
       {children}
     </NavbarContext.Provider>

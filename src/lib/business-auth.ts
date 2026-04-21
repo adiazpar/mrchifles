@@ -45,6 +45,20 @@ export function invalidateAccessCache(userId: string, businessId: string): void 
 }
 
 /**
+ * Invalidate every access-cache entry for the given businessId, across all
+ * users. Call this after a mutation on the `businesses` row so other members'
+ * next `/access` request re-fetches.
+ */
+export function invalidateAccessCacheForBusiness(businessId: string): void {
+  const suffix = `:${businessId}`
+  for (const key of accessCache.keys()) {
+    if (key.endsWith(suffix)) {
+      accessCache.delete(key)
+    }
+  }
+}
+
+/**
  * Require business access - throws if not authenticated or no access.
  * Uses a short-lived in-memory cache to avoid repeated DB queries.
  */
