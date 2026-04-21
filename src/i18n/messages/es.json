@@ -216,7 +216,9 @@
     "continue_button": "Continuar",
     "barcode_already_used": "Código de barras ya usado por \"{name}\"",
     "add_from_document_title": "Escanear un archivo",
-    "add_from_document_desc": "La IA agrega los productos por usted"
+    "add_from_document_desc": "La IA agrega los productos por usted",
+    "import_file_title": "Importar archivo",
+    "import_file_desc": "Desde un CSV o planilla"
   },
   "productSettings": {
     "title": "Configuración de Productos",
@@ -537,7 +539,44 @@
     "transfer_no_business": "Sin contexto de negocio"
   },
   "manage": {
-    "coming_soon": "Próximamente"
+    "coming_soon": "Próximamente",
+    "header_title": "Administrar",
+    "section_details": "Detalles del negocio",
+    "section_shortcuts": "Accesos directos",
+    "section_ownership": "Propiedad",
+    "section_danger": "Zona de peligro",
+    "row_name": "Nombre",
+    "row_type": "Tipo",
+    "row_location": "Ubicación",
+    "row_logo": "Logo",
+    "shortcut_team": "Equipo",
+    "shortcut_providers": "Proveedores",
+    "edit_name_title": "Editar nombre",
+    "edit_type_title": "Cambiar tipo",
+    "edit_location_title": "Cambiar ubicación",
+    "edit_logo_title": "Cambiar logo",
+    "save": "Guardar",
+    "transfer_ownership": "Transferir propiedad",
+    "transfer_pending_heading": "Transferencia pendiente",
+    "transfer_pending_waiting": "Esperando que {recipient} acepte",
+    "transfer_pending_expires_hours": "Vence en {hours}h",
+    "transfer_pending_expires_minutes": "Vence en {minutes}m",
+    "transfer_pending_expires_soon": "Por vencer",
+    "transfer_cancel": "Cancelar transferencia",
+    "transfer_pick_recipient_subtitle": "Elija un miembro del equipo para convertirse en el nuevo propietario.",
+    "transfer_enter_different_email": "Ingrese un correo diferente",
+    "transfer_recipient_must_have_account": "El destinatario debe tener una cuenta de Kasero.",
+    "transfer_confirm_warning": "Perderá la propiedad en el momento en que {recipient} acepte. Puede cancelar antes.",
+    "transfer_confirm_summary": "Transfiriendo {businessName} a {recipient}.",
+    "transfer_type_to_confirm": "Escriba {businessName} para confirmar.",
+    "transfer_send_request": "Enviar solicitud",
+    "leave_business": "Salir del negocio",
+    "leave_business_warning": "Perderá acceso a {businessName}. Necesitará una nueva invitación para volver.",
+    "leave_business_button": "Salir",
+    "delete_business": "Eliminar negocio",
+    "delete_business_warning": "Esto elimina permanentemente {businessName} y todos sus productos, pedidos, proveedores y datos del equipo. Esto no se puede deshacer.",
+    "delete_business_button": "Eliminar",
+    "error_update_failed": "No se pudieron guardar los cambios. Intente nuevamente."
   },
   "providers": {
     "count": "{count, plural, one {# proveedor} other {# proveedores}}",
@@ -830,6 +869,17 @@
     "ai_rate_limited": "Límite de solicitudes alcanzado. Intente nuevamente en unos segundos.",
     "heic_no_file": "No se proporcionó archivo",
     "heic_convert_failed": "Error al convertir imagen",
-    "business_icon_invalid": "El ícono debe ser una imagen PNG, JPEG, WebP o GIF de menos de 2MB"
+    "business_icon_invalid": "El ícono debe ser una imagen PNG, JPEG, WebP o GIF de menos de 2MB",
+    "business_update_forbidden": "No tiene permiso para actualizar este negocio.",
+    "business_update_not_found": "Negocio no encontrado.",
+    "business_update_invalid_locale": "Esa ubicación no es compatible.",
+    "business_update_invalid_type": "Ese tipo de negocio no es válido.",
+    "business_update_name_required": "El nombre es obligatorio.",
+    "business_update_logo_too_large": "El archivo del logo es demasiado grande. Máximo 2 MB.",
+    "business_update_logo_invalid_type": "El logo debe ser un archivo de imagen.",
+    "business_update_failed": "No se pudieron guardar los cambios. Intente de nuevo.",
+    "business_update_success": "Negocio actualizado.",
+    "business_fetch_failed": "No se pudieron cargar los detalles del negocio.",
+    "business_not_found": "Negocio no encontrado."
   }
 }
