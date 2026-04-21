@@ -4,7 +4,7 @@
   "description": "Multi-business management system",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFF8E7",
+  "background_color": "#F8FAFC",
   "theme_color": "#F5A623",
   "orientation": "portrait-primary",
   "icons": [

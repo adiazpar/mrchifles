@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useSyncExternalStore } from 'react'
 import { useTranslations } from 'next-intl'
+import { applyThemeColorMeta } from '@/lib/theme-color'
 
 export type Theme = 'light' | 'dark' | 'system'
 
@@ -40,14 +41,16 @@ function getServerSnapshot(): Theme {
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement
+  let resolved: 'light' | 'dark'
   if (theme === 'system') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    root.classList.toggle('dark', prefersDark)
+    resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
     localStorage.removeItem(STORAGE_KEY)
   } else {
-    root.classList.toggle('dark', theme === 'dark')
+    resolved = theme
     localStorage.setItem(STORAGE_KEY, theme)
   }
+  root.classList.toggle('dark', resolved === 'dark')
+  applyThemeColorMeta(resolved)
 }
 
 // ---------------------------------------------------------------------------
@@ -76,6 +79,7 @@ export function useTheme(): UseThemeReturn {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handler = (event: MediaQueryListEvent) => {
       document.documentElement.classList.toggle('dark', event.matches)
+      applyThemeColorMeta(event.matches ? 'dark' : 'light')
     }
 
     mediaQuery.addEventListener('change', handler)

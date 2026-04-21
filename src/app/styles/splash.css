@@ -1,0 +1,42 @@
+/*
+ * PWA splash screen.
+ *
+ * Rendered in layout.tsx as static HTML so it paints on the very first
+ * frame (before React hydrates). Only visible when the app is launched
+ * in standalone mode — in a normal browser tab, `display-mode: standalone`
+ * evaluates false and the element stays hidden.
+ *
+ * Background reads from --color-bg-surface so it matches the page header
+ * bar in both light and dark modes. The variable auto-switches when the
+ * inline theme script in <head> applies the .dark class on frame 0, so
+ * the dark-mode splash never shows a light flash.
+ */
+
+#app-splash {
+  display: none;
+}
+
+@media (display-mode: standalone) {
+  #app-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-surface);
+    transition: opacity 300ms ease-out;
+    will-change: opacity;
+  }
+
+  #app-splash[data-dismissed='true'] {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+#app-splash .splash__icon {
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+}

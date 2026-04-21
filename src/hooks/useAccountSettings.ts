@@ -8,6 +8,7 @@ import { isOwner as checkIsOwner } from '@/lib/business-role'
 import { apiPost, ApiError } from '@/lib/api-client'
 import { useTranslations } from 'next-intl'
 import { useApiMessage } from '@/hooks/useApiMessage'
+import { applyThemeColorMeta } from '@/lib/theme-color'
 
 // ============================================
 // TYPES
@@ -135,15 +136,16 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     }
 
     const root = document.documentElement
-
+    let resolved: 'light' | 'dark'
     if (theme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      root.classList.toggle('dark', prefersDark)
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
       localStorage.removeItem('theme')
     } else {
-      root.classList.toggle('dark', theme === 'dark')
+      resolved = theme
       localStorage.setItem('theme', theme)
     }
+    root.classList.toggle('dark', resolved === 'dark')
+    applyThemeColorMeta(resolved)
   }, [theme])
 
   // Listen for system theme changes when in system mode
@@ -153,6 +155,7 @@ export function useAccountSettings(): UseAccountSettingsReturn {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handler = (e: MediaQueryListEvent) => {
       document.documentElement.classList.toggle('dark', e.matches)
+      applyThemeColorMeta(e.matches ? 'dark' : 'light')
     }
 
     mediaQuery.addEventListener('change', handler)
