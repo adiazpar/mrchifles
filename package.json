@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "private": true,
   "scripts": {
-    "dev": "next dev --experimental-https",
+    "dev": "next dev --port 3000 --experimental-https --experimental-https-key ./certificates/tailscale-dev.key --experimental-https-cert ./certificates/tailscale-dev.crt",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src/",
