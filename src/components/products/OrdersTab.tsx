@@ -239,7 +239,15 @@ export function OrdersTab({
             {/* Orders List */}
             {filteredOrders.length === 0 ? (
               <div className="text-center py-8 text-text-secondary">
-                <p>{t('no_results')}</p>
+                <p>
+                  {orders.some(o => (viewMode === 'completed'
+                    ? getOrderDisplayStatus(o) === 'received'
+                    : getOrderDisplayStatus(o) !== 'received'))
+                    ? t('no_results')
+                    : viewMode === 'completed'
+                      ? t('empty_no_completed')
+                      : t('empty_no_active')}
+                </p>
               </div>
             ) : (
               <div className="list-divided">
