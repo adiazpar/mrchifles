@@ -33,6 +33,7 @@ import { useOrders } from '@/contexts/orders-context'
 import { useProviders } from '@/contexts/providers-context'
 import { useProducts } from '@/contexts/products-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
+import { scrollToTop } from '@/lib/scroll'
 import { useTranslations } from 'next-intl'
 import type { Product, SortPreference, ProductCategory } from '@/types'
 
@@ -359,6 +360,14 @@ export default function ProductosPage() {
   const [orderStatusFilter, setOrderStatusFilter] = useState<OrderStatusFilter>('all')
   const [orderSortBy, setOrderSortBy] = useState<OrderSortOption>('date_desc')
   const [orderViewMode, setOrderViewMode] = useState<OrderViewMode>('active')
+
+  const handleOrderViewModeChange = useCallback((mode: OrderViewMode) => {
+    setOrderViewMode(mode)
+    // Reset transient view-specific state; preserve search query.
+    setOrderSortBy('date_desc')
+    setOrderStatusFilter('all')
+    scrollToTop()
+  }, [])
 
   // Permission check
   const canDelete = canManage
@@ -817,7 +826,7 @@ export default function ProductosPage() {
               statusFilter={orderStatusFilter}
               onStatusFilterChange={setOrderStatusFilter}
               viewMode={orderViewMode}
-              onViewModeChange={setOrderViewMode}
+              onViewModeChange={handleOrderViewModeChange}
               onNewOrder={() => orderFlows.openNewOrder()}
               onViewOrder={(order) => orderFlows.openOrderDetail(order)}
               onReceiveOrder={(order) => orderFlows.openOrderDetail(order, 'receive')}
