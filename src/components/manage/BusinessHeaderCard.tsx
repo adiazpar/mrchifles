@@ -2,13 +2,8 @@
 
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
-import { ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
 import type { Business } from '@/contexts/business-context'
-
-const TYPE_ICONS: Partial<Record<string, React.ComponentType<{ className?: string }>>> = {
-  food: ChefHat, retail: Store, services: HandHelping,
-  wholesale: Boxes, manufacturing: Factory, other: Shapes,
-}
+import { BUSINESS_TYPE_ICONS } from '@/components/businesses/shared'
 
 export interface BusinessHeaderCardProps {
   business: Business
@@ -19,7 +14,7 @@ export function BusinessHeaderCard({ business, onTap }: BusinessHeaderCardProps)
   const t = useTranslations('createBusiness')
   const typeLabel = business.type ? t(`business_type_${business.type}`) : ''
   const isImageLogo = !!business.icon && business.icon.startsWith('data:image')
-  const TypeIcon = business.type ? TYPE_ICONS[business.type] : null
+  const TypeIcon = business.type ? BUSINESS_TYPE_ICONS[business.type] : null
 
   const content = (
     <div className="flex items-center gap-4 p-4">

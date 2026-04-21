@@ -1,34 +1,16 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
 import { BUSINESS_TYPES } from '@/lib/locale-config'
 import type { BusinessType } from '@/hooks'
-
-const ICONS: Partial<Record<string, React.ComponentType<{ className?: string }>>> = {
-  food: ChefHat,
-  retail: Store,
-  services: HandHelping,
-  wholesale: Boxes,
-  manufacturing: Factory,
-  other: Shapes,
-}
-
-const FALLBACK_EMOJIS: Record<string, string> = {
-  food: '🍽️',
-  retail: '🛍️',
-  services: '✂️',
-  wholesale: '📦',
-  manufacturing: '🏭',
-  other: '💼',
-}
+import { BUSINESS_TYPE_ICONS, BUSINESS_TYPE_FALLBACK_EMOJIS } from './businessTypeIcons'
 
 function renderIcon(typeValue: string, isSelected: boolean) {
-  const IconComponent = ICONS[typeValue]
+  const IconComponent = BUSINESS_TYPE_ICONS[typeValue]
   if (IconComponent) {
     return <IconComponent className={`w-8 h-8 ${isSelected ? 'text-brand' : 'text-text-secondary'}`} />
   }
-  return <span className="text-2xl">{FALLBACK_EMOJIS[typeValue] || '💼'}</span>
+  return <span className="text-2xl">{BUSINESS_TYPE_FALLBACK_EMOJIS[typeValue] || '💼'}</span>
 }
 
 export interface BusinessTypeGridProps {

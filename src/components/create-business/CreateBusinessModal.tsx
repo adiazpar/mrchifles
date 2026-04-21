@@ -2,12 +2,17 @@
 
 import { useCallback, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Upload, X, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import type { UseCreateBusinessReturn, BusinessType } from '@/hooks'
-import { BusinessTypeGrid, LocalePicker } from '@/components/businesses/shared'
+import {
+  BusinessTypeGrid,
+  LocalePicker,
+  BUSINESS_TYPE_ICONS,
+  BUSINESS_TYPE_FALLBACK_EMOJIS,
+} from '@/components/businesses/shared'
 
 interface CreateBusinessModalProps {
   createBusiness: UseCreateBusinessReturn
@@ -172,26 +177,6 @@ interface TypeContentProps {
   setType: (type: BusinessType) => void
 }
 
-// Custom icon components for business types (takes precedence over emojis)
-const BUSINESS_TYPE_ICONS: Partial<Record<string, React.ComponentType<{ className?: string }>>> = {
-  food: ChefHat,
-  retail: Store,
-  services: HandHelping,
-  wholesale: Boxes,
-  manufacturing: Factory,
-  other: Shapes,
-}
-
-// Fallback emojis for types without custom icons
-const FALLBACK_EMOJIS: Record<string, string> = {
-  food: '🍽️',
-  retail: '🛍️',
-  services: '✂️',
-  wholesale: '📦',
-  manufacturing: '🏭',
-  other: '💼',
-}
-
 function TypeContent({ type, setType }: TypeContentProps) {
   const t = useTranslations('createBusiness')
 
@@ -260,7 +245,7 @@ function getDefaultIconForType(businessType: BusinessType | null) {
     return <IconComponent className="w-14 h-14 text-brand" />
   }
 
-  return <span className="text-5xl">{FALLBACK_EMOJIS[businessType] || '💼'}</span>
+  return <span className="text-5xl">{BUSINESS_TYPE_FALLBACK_EMOJIS[businessType] || '💼'}</span>
 }
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024

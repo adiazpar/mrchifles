@@ -3,15 +3,11 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
-import { Upload, X, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 import { Modal, Spinner } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { useUpdateBusiness } from '@/hooks/useUpdateBusiness'
-
-const TYPE_ICONS: Partial<Record<string, React.ComponentType<{ className?: string }>>> = {
-  food: ChefHat, retail: Store, services: HandHelping,
-  wholesale: Boxes, manufacturing: Factory, other: Shapes,
-}
+import { BUSINESS_TYPE_ICONS } from '@/components/businesses/shared'
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024
 
@@ -57,7 +53,7 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
 
   const currentIcon = business?.icon ?? null
   const displayPreview = pendingPreview ?? (shouldRemove ? null : (currentIcon?.startsWith('data:image') ? currentIcon : null))
-  const TypeIcon = business?.type ? TYPE_ICONS[business.type] : null
+  const TypeIcon = business?.type ? BUSINESS_TYPE_ICONS[business.type] : null
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError(null)
