@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, ownershipTransfers, users } from '@/db'
+import { db, ownershipTransfers, users, businessUsers } from '@/db'
 import { eq, and, gt, inArray } from 'drizzle-orm'
 import { z } from 'zod'
+import { nanoid } from 'nanoid'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { validationError, errorResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
+import { invalidateAccessCache } from '@/lib/business-auth'
 
 const acceptSchema = z.object({
   code: Schemas.code(),
@@ -56,6 +58,7 @@ export async function POST(request: NextRequest) {
         toEmail: ownershipTransfers.toEmail,
         expiresAt: ownershipTransfers.expiresAt,
         businessId: ownershipTransfers.businessId,
+        fromUser: ownershipTransfers.fromUser,
       })
       .from(ownershipTransfers)
       .where(
@@ -100,15 +103,57 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Update transfer to accepted
-    await db
-      .update(ownershipTransfers)
-      .set({
-        status: 'accepted',
-        toUser: user.userId,
-        acceptedAt: now,
-      })
-      .where(eq(ownershipTransfers.id, transfer.id))
+    // Atomic: demote old owner, promote recipient, mark transfer completed
+    await db.transaction(async (tx) => {
+      // Demote old owner to partner
+      await tx
+        .update(businessUsers)
+        .set({ role: 'partner' })
+        .where(and(
+          eq(businessUsers.userId, transfer.fromUser),
+          eq(businessUsers.businessId, transfer.businessId),
+        ))
+
+      // Upsert recipient as owner
+      const [existingMembership] = await tx
+        .select()
+        .from(businessUsers)
+        .where(and(
+          eq(businessUsers.userId, user.userId),
+          eq(businessUsers.businessId, transfer.businessId),
+        ))
+        .limit(1)
+
+      if (existingMembership) {
+        await tx
+          .update(businessUsers)
+          .set({ role: 'owner', status: 'active' })
+          .where(eq(businessUsers.id, existingMembership.id))
+      } else {
+        await tx.insert(businessUsers).values({
+          id: nanoid(),
+          userId: user.userId,
+          businessId: transfer.businessId,
+          role: 'owner',
+          status: 'active',
+          createdAt: now,
+        })
+      }
+
+      await tx
+        .update(ownershipTransfers)
+        .set({
+          status: 'completed',
+          toUser: user.userId,
+          acceptedAt: now,
+          completedAt: now,
+        })
+        .where(eq(ownershipTransfers.id, transfer.id))
+    })
+
+    // Invalidate cached access
+    invalidateAccessCache(transfer.fromUser, transfer.businessId)
+    invalidateAccessCache(user.userId, transfer.businessId)
 
     return NextResponse.json({
       success: true,
