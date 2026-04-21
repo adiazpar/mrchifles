@@ -24,6 +24,8 @@ const nextConfig = {
   images: {
     localPatterns: [
       { pathname: '/media/products/**', search: '' },
+      { pathname: '/kasero-logo.png', search: '' },
+      { pathname: '/icon-source.png', search: '' },
     ],
   },
 
