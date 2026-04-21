@@ -1805,13 +1805,14 @@
 
 .user-menu-item:active,
 .user-menu-item[data-pressed='true'] {
-  background: var(--color-brand-subtle);
+  background: var(--color-bg-muted);
 }
 
 .user-menu-item svg {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+  color: var(--color-text-secondary);
 }
 
 .user-menu-item-arrow {
@@ -1819,7 +1820,8 @@
   color: var(--color-text-tertiary);
 }
 
-.user-menu-item-danger {
+.user-menu-item-danger,
+.user-menu-item-danger svg {
   color: var(--color-error);
 }
 

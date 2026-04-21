@@ -95,7 +95,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
 
         <button
           type="button"
-          className="user-menu-item"
+          className="user-menu-item user-menu-item-danger"
           onClick={handleLogout}
         >
           <LogOut />
