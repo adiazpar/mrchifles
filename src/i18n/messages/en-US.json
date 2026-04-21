@@ -215,8 +215,8 @@
     "choose_photo_desc": "We'll move on once you pick a photo",
     "continue_button": "Continue",
     "barcode_already_used": "Barcode already used by \"{name}\"",
-    "add_from_document_title": "AI from document or list",
-    "add_from_document_desc": "Coming soon"
+    "add_from_document_title": "Scan a File",
+    "add_from_document_desc": "AI adds the products for you"
   },
   "productSettings": {
     "title": "Product Settings",

@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { Camera, Sparkles, UserPlus, ImagePlus } from 'lucide-react'
+import { Camera, Sparkles, UserPlus, FileScan } from 'lucide-react'
 import { Spinner, Modal, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm } from '@/contexts/product-form-context'
@@ -338,14 +338,37 @@ export function AddProductModal({
         <AiPipelineNavigator needsCategory={needsCategory} />
 
         <Modal.Item>
+          <svg width="0" height="0" className="absolute" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="ai-icon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0EA5E9" />
+                <stop offset="100%" stopColor="#A855F7" />
+              </linearGradient>
+            </defs>
+          </svg>
           <div className="caja-actions caja-actions--stacked">
-            <Modal.GoToStepButton step={1} className="caja-action-btn caja-action-btn--large">
-              <Sparkles className="caja-action-btn__icon text-brand" />
-              <div className="caja-action-btn__text">
-                <span className="caja-action-btn__title">{t('snap_to_add_title')}</span>
-                <span className="caja-action-btn__desc">{t('snap_to_add_desc')}</span>
-              </div>
-            </Modal.GoToStepButton>
+            <div className="caja-actions">
+              <Modal.GoToStepButton step={1} className="caja-action-btn caja-action-btn--large caja-action-btn--align-start">
+                <Sparkles className="caja-action-btn__icon" color="url(#ai-icon-gradient)" />
+                <div className="caja-action-btn__text">
+                  <span className="caja-action-btn__title">{t('snap_to_add_title')}</span>
+                  <span className="caja-action-btn__desc">{t('snap_to_add_desc')}</span>
+                </div>
+              </Modal.GoToStepButton>
+
+              <button
+                type="button"
+                disabled
+                className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
+                title={t('add_from_document_desc')}
+              >
+                <FileScan className="caja-action-btn__icon" color="url(#ai-icon-gradient)" />
+                <div className="caja-action-btn__text">
+                  <span className="caja-action-btn__title">{t('add_from_document_title')}</span>
+                  <span className="caja-action-btn__desc">{t('add_from_document_desc')}</span>
+                </div>
+              </button>
+            </div>
 
             <Modal.GoToStepButton step={5} className="caja-action-btn caja-action-btn--large">
               <UserPlus className="caja-action-btn__icon text-text-secondary" />
@@ -354,19 +377,6 @@ export function AddProductModal({
                 <span className="caja-action-btn__desc">{t('add_manually_desc')}</span>
               </div>
             </Modal.GoToStepButton>
-
-            <button
-              type="button"
-              disabled
-              className="caja-action-btn caja-action-btn--large w-full"
-              title={t('add_from_document_desc')}
-            >
-              <ImagePlus className="caja-action-btn__icon text-text-tertiary" />
-              <div className="caja-action-btn__text">
-                <span className="caja-action-btn__title">{t('add_from_document_title')}</span>
-                <span className="caja-action-btn__desc">{t('add_from_document_desc')}</span>
-              </div>
-            </button>
           </div>
         </Modal.Item>
 
