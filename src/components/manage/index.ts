@@ -4,7 +4,7 @@ type ModalProps = { isOpen: boolean; onClose: () => void }
 export { BusinessHeaderCard, type BusinessHeaderCardProps } from './BusinessHeaderCard'
 export { EditNameModal } from './EditNameModal'
 export { EditTypeModal } from './EditTypeModal'
-export function EditLocationModal(_p: ModalProps) { return null }
+export { EditLocationModal } from './EditLocationModal'
 export function EditLogoModal(_p: ModalProps) { return null }
 export function PendingTransferCard() { return null }
 export function TransferOwnershipModal(_p: ModalProps) { return null }
