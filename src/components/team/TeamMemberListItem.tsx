@@ -23,7 +23,7 @@ export function TeamMemberListItem({ member, isSelf, onClick }: TeamMemberListIt
 
   return (
     <div
-      className="list-item-clickable list-item-flat"
+      className="list-item-clickable"
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -55,14 +55,14 @@ export function TeamMemberListItem({ member, isSelf, onClick }: TeamMemberListIt
       </div>
 
       {/* Status */}
-      <div className="text-right">
+      <div className="flex items-center justify-center">
         <span className={`text-xs font-medium ${member.status === 'active' ? 'text-success' : 'text-error'}`}>
           {member.status === 'active' ? t('status_active') : t('status_disabled')}
         </span>
       </div>
 
       {/* Chevron */}
-      <div className="text-text-tertiary ml-2">
+      <div className="text-text-tertiary ml-2 flex items-center">
         <ChevronRight className="w-5 h-5" />
       </div>
     </div>

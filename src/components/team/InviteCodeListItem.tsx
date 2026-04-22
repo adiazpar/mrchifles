@@ -21,7 +21,7 @@ export function InviteCodeListItem({ code, onClick }: InviteCodeListItemProps) {
 
   return (
     <div
-      className="list-item-clickable list-item-flat"
+      className="list-item-clickable"
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

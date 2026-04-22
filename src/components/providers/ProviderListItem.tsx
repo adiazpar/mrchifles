@@ -39,13 +39,14 @@ export function ProviderListItem({ provider, onClick }: ProviderListItemProps) {
         <span className="font-medium truncate block">{provider.name}</span>
         <span className="text-xs text-text-tertiary mt-0.5 block">
           {provider.phone || t('no_phone')}
-          <span className="mx-1.5">·</span>
-          <span className={provider.active ? 'text-success' : 'text-error'}>
-            {provider.active ? t('status_active') : t('status_inactive')}
-          </span>
         </span>
       </div>
-      <div className="text-text-tertiary">
+      <div className="flex items-center justify-center">
+        <span className={`text-xs font-medium ${provider.active ? 'text-success' : 'text-error'}`}>
+          {provider.active ? t('status_active') : t('status_inactive')}
+        </span>
+      </div>
+      <div className="text-text-tertiary ml-2 flex items-center">
         <ChevronRight className="w-5 h-5" />
       </div>
     </div>

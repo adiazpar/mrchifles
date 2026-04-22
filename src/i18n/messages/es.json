@@ -718,7 +718,7 @@
     "qr_alt": "Código QR para registro",
     "regenerating": "Regenerando...",
     "regenerate_code_button": "Regenerar código",
-    "generate_code_button": "Generar código",
+    "generate_code_button": "Generar",
     "invite_expires": "Vence {date}",
     "transfer_status_pending": "Pendiente",
     "transfer_status_accepted": "Aceptado",

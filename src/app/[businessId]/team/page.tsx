@@ -1,8 +1,8 @@
 'use client'
 
+import { Fragment } from 'react'
 import { Plus, Check, Copy, Trash2 } from 'lucide-react'
-import { Spinner, Modal } from '@/components/ui'
-import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
+import { Spinner, Modal, ConfirmationAnimation } from '@/components/ui'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
@@ -106,9 +106,10 @@ export default function TeamPage() {
                 <button
                   type="button"
                   onClick={handleOpenModal}
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary"
+                  style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus style={{ width: 14, height: 14 }} />
                   {t('add_member_button')}
                 </button>
               )}
@@ -116,14 +117,16 @@ export default function TeamPage() {
 
             <hr className="border-border" />
 
-            <div className="space-y-2">
-              {sortedTeamMembers.map((member) => (
-                <TeamMemberListItem
-                  key={member.id}
-                  member={member}
-                  isSelf={member.id === user?.id}
-                  onClick={() => handleOpenUserModal(member)}
-                />
+            <div className="list-divided">
+              {sortedTeamMembers.map((member, i) => (
+                <Fragment key={member.id}>
+                  {i > 0 && <hr className="list-divider" />}
+                  <TeamMemberListItem
+                    member={member}
+                    isSelf={member.id === user?.id}
+                    onClick={() => handleOpenUserModal(member)}
+                  />
+                </Fragment>
               ))}
             </div>
           </div>
@@ -139,13 +142,15 @@ export default function TeamPage() {
 
               <hr className="border-border" />
 
-              <div className="space-y-2">
-                {inviteCodes.map((code) => (
-                  <InviteCodeListItem
-                    key={code.id}
-                    code={code}
-                    onClick={() => handleOpenExistingCode(code)}
-                  />
+              <div className="list-divided">
+                {inviteCodes.map((code, i) => (
+                  <Fragment key={code.id}>
+                    {i > 0 && <hr className="list-divider" />}
+                    <InviteCodeListItem
+                      code={code}
+                      onClick={() => handleOpenExistingCode(code)}
+                    />
+                  </Fragment>
                 ))}
               </div>
             </div>
@@ -160,16 +165,14 @@ export default function TeamPage() {
         initialStep={newCode ? 1 : 0}
       >
         <Modal.Step title={t('step_add_member')}>
+          <DurationPicker
+            selected={selectedDuration}
+            onSelect={setSelectedDuration}
+          />
           <RoleSelectionContent
             selectedRole={selectedRole}
             setSelectedRole={setSelectedRole}
           />
-          <Modal.Item>
-            <DurationPicker
-              selected={selectedDuration}
-              onSelect={setSelectedDuration}
-            />
-          </Modal.Item>
           <Modal.Footer>
             <Modal.CancelBackButton />
             <GenerateCodeButton
@@ -191,19 +194,18 @@ export default function TeamPage() {
             />
           )}
           <Modal.Footer>
-            <Modal.GoToStepButton step={2} className="btn btn-secondary">
-              <Trash2 className="w-5 h-5" />
+            <Modal.GoToStepButton step={2} className="btn btn-secondary btn-icon" title={t('step_delete_code')}>
+              <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
             </Modal.GoToStepButton>
             <button
               type="button"
               onClick={() => newCode && handleCopyCode(newCode)}
-              className="btn btn-secondary"
-              title={t('step_delete_code')}
+              className="btn btn-secondary btn-icon"
             >
               {copyFeedback === newCode ? (
-                <Check className="w-5 h-5 text-success" />
+                <Check className="text-success" style={{ width: 16, height: 16 }} />
               ) : (
-                <Copy className="w-5 h-5" />
+                <Copy style={{ width: 16, height: 16 }} />
               )}
             </button>
             <button
@@ -218,14 +220,9 @@ export default function TeamPage() {
 
         <Modal.Step title={t('step_delete_code')} backStep={1}>
           <Modal.Item>
-            <div className="text-center py-4">
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                {t('delete_code_heading')}
-              </h3>
-              <p className="text-sm text-text-secondary">
-                {t('delete_code_description', { code: newCode ?? '' })}
-              </p>
-            </div>
+            <p className="text-text-secondary">
+              {t('delete_code_description', { code: newCode ?? '' })}
+            </p>
           </Modal.Item>
           <Modal.Footer>
             <Modal.GoToStepButton step={1} className="btn btn-secondary flex-1" disabled={isDeletingCode}>
@@ -240,31 +237,12 @@ export default function TeamPage() {
 
         <Modal.Step title={t('step_code_deleted')} hideBackButton>
           <Modal.Item>
-            <div className="flex flex-col items-center text-center py-4">
-              <div style={{ width: 160, height: 160 }}>
-                {codeDeleted && (
-                  <LottiePlayer
-                    src="/animations/error.json"
-                    loop={false}
-                    autoplay={true}
-                    delay={500}
-                    style={{ width: 160, height: 160 }}
-                  />
-                )}
-              </div>
-              <p
-                className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
-                style={{ opacity: codeDeleted ? 1 : 0 }}
-              >
-                {t('code_deleted_heading')}
-              </p>
-              <p
-                className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
-                style={{ opacity: codeDeleted ? 1 : 0 }}
-              >
-                {t('code_deleted_description')}
-              </p>
-            </div>
+            <ConfirmationAnimation
+              type="error"
+              triggered={codeDeleted}
+              title={t('code_deleted_heading')}
+              subtitle={t('code_deleted_description')}
+            />
           </Modal.Item>
           <Modal.Footer>
             <button

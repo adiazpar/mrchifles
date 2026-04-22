@@ -111,7 +111,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedRole, setSelectedRole] = useState<InviteRole>('employee')
-  const [selectedDuration, setSelectedDuration] = useState<InviteDuration>('7d')
+  const [selectedDuration, setSelectedDuration] = useState<InviteDuration>('24h')
   const [newCode, setNewCode] = useState<string | null>(null)
   const [newCodeExpiresAt, setNewCodeExpiresAt] = useState<Date | null>(null)
   const [generatedCodeId, setGeneratedCodeId] = useState<string | null>(null)
@@ -334,7 +334,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     setGeneratedCodeId(null)
     setQrDataUrl(null)
     setSelectedRole('employee')
-    setSelectedDuration('7d')
+    setSelectedDuration('24h')
     setError('')
     setIsModalOpen(true)
   }, [])
@@ -372,7 +372,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     setQrDataUrl(null)
     setError('')
     setSelectedRole('employee')
-    setSelectedDuration('7d')
+    setSelectedDuration('24h')
     setCodeDeleted(false)
     // Clear copy feedback timer and state
     if (copyFeedbackTimerRef.current) {

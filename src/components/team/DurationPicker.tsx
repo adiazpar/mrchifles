@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { Modal } from '@/components/ui'
 import type { InviteDuration } from '@/lib/auth'
 
 const DURATIONS: InviteDuration[] = ['24h', '7d', '30d']
@@ -19,26 +20,24 @@ export function DurationPicker({ selected, onSelect }: DurationPickerProps) {
   }
 
   return (
-    <div>
-      <label className="block text-sm font-medium text-text-primary mb-2">
-        {t('invite_duration_label')}
-      </label>
+    <Modal.Item>
+      <label className="label">{t('invite_duration_label')}</label>
       <div className="grid grid-cols-3 gap-2">
         {DURATIONS.map((d) => (
           <button
             key={d}
             type="button"
             onClick={() => onSelect(d)}
-            className={`p-3 rounded-xl border-2 text-sm font-medium transition-all ${
+            className={`p-3 rounded-xl border-2 text-sm transition-all ${
               selected === d
-                ? 'border-brand bg-brand-subtle text-brand'
-                : 'border-border text-text-secondary hover:border-brand-300'
+                ? 'border-border bg-bg-elevated text-text-primary font-semibold'
+                : 'border-transparent text-text-secondary font-medium hover:text-text-primary'
             }`}
           >
             {labels[d]}
           </button>
         ))}
       </div>
-    </div>
+    </Modal.Item>
   )
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Palette, ChevronRight, Clock } from 'lucide-react'
+import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Briefcase, ChevronRight, Clock } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
@@ -143,7 +143,7 @@ export default function ManagePage() {
           />
           <div className="settings-divider" />
           <SettingsRow
-            icon={Palette}
+            icon={Briefcase}
             label={t('row_type')}
             value={business.type ? tCreate(`business_type_${business.type}`) : '—'}
             onClick={canEdit ? () => setTypeOpen(true) : undefined}

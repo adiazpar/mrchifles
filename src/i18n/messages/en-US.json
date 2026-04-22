@@ -718,7 +718,7 @@
     "qr_alt": "QR code for registration",
     "regenerating": "Regenerating...",
     "regenerate_code_button": "Regenerate code",
-    "generate_code_button": "Generate code",
+    "generate_code_button": "Generate",
     "invite_expires": "Expires {date}",
     "transfer_status_pending": "Pending",
     "transfer_status_accepted": "Accepted",

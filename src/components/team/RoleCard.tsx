@@ -1,7 +1,5 @@
 'use client'
 
-import { Check } from 'lucide-react'
-
 export interface RoleCardProps {
   icon: React.ReactNode
   title: string
@@ -15,14 +13,23 @@ export function RoleCard({ icon, title, description, selected, onClick }: RoleCa
     <button
       type="button"
       onClick={onClick}
-      className={`role-card ${selected ? 'role-card-selected' : ''}`}
+      className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left w-full ${
+        selected
+          ? 'border-brand bg-bg-elevated'
+          : 'border-border hover:border-brand-300'
+      }`}
     >
-      <div className="role-card-icon">{icon}</div>
-      <div className="role-card-content">
-        <span className="role-card-title">{title}</span>
-        <span className="role-card-description">{description}</span>
+      <div className="product-list-image">
+        <span className={selected ? 'text-brand' : 'text-text-tertiary'}>
+          {icon}
+        </span>
       </div>
-      <Check className={`role-card-check ${selected ? '' : 'invisible'}`} />
+      <div className="flex-1 min-w-0">
+        <span className="block font-semibold text-text-primary">{title}</span>
+        <span className="block text-sm text-text-tertiary leading-tight mt-0.5">
+          {description}
+        </span>
+      </div>
     </button>
   )
 }
