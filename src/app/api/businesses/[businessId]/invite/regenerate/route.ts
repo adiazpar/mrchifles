@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
+import { isExpiryWithinBounds } from '@/lib/invite-expiry'
 import { Schemas } from '@/lib/schemas'
 
 const regenerateInviteSchema = z.object({
@@ -32,6 +33,10 @@ export const POST = withBusinessAuth(async (request, access) => {
   }
 
   const { oldCodeId, newCode, role, expiresAt } = validation.data
+
+  if (!isExpiryWithinBounds(new Date(expiresAt))) {
+    return errorResponse(ApiMessageCode.INVITE_EXPIRY_OUT_OF_RANGE, 400)
+  }
 
   // Delete old code
   await db

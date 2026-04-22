@@ -821,6 +821,7 @@
     "invite_validate_failed": "Failed to validate code",
     "invite_join_failed": "Failed to join business",
     "invite_already_member": "You are already a member of this business",
+    "invite_expiry_out_of_range": "Invite duration must be between 1 hour and 30 days.",
     "transfer_forbidden_not_owner": "Only the owner can perform this action",
     "transfer_cannot_self": "You cannot transfer the business to yourself",
     "transfer_recipient_not_found": "No one on Kasero has that email. Ask them to sign up first, then try again.",
