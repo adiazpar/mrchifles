@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
+import { useAuth } from './auth-context'
 
 const BUSINESS_CACHE_STORAGE_KEY = 'kasero_business_cache'
 
@@ -68,6 +69,7 @@ interface NavbarProviderProps {
 
 export function NavbarProvider({ children }: NavbarProviderProps) {
   const pathname = usePathname()
+  const { user } = useAuth()
   const [isVisible, setIsVisible] = useState(true)
   const [slideDirection, setSlideDirectionState] = useState<SlideDirection>(null)
   const [slideTargetPath, setSlideTargetPathState] = useState<string | null>(null)
@@ -89,6 +91,29 @@ export function NavbarProvider({ children }: NavbarProviderProps) {
       // Ignore storage errors
     }
   }, [])
+
+  // Evict the in-memory business cache whenever the authenticated user
+  // changes. The cache is keyed by businessId only (no userId), so without
+  // this, a new account logging into the same tab would inherit the prior
+  // user's cached role — an employee could then see owner/partner-only
+  // edit affordances until the access API refreshed the role.
+  const lastUserIdRef = useRef<string | null | undefined>(undefined)
+  useEffect(() => {
+    const currentUserId = user?.id ?? null
+    if (lastUserIdRef.current === undefined) {
+      lastUserIdRef.current = currentUserId
+      return
+    }
+    if (lastUserIdRef.current !== currentUserId) {
+      businessCacheRef.current = {}
+      try {
+        sessionStorage.removeItem(BUSINESS_CACHE_STORAGE_KEY)
+      } catch {
+        // Ignore storage errors
+      }
+      lastUserIdRef.current = currentUserId
+    }
+  }, [user?.id])
 
   const hide = useCallback(() => setIsVisible(false), [])
   const show = useCallback(() => setIsVisible(true), [])

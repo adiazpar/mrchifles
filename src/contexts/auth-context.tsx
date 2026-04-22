@@ -175,6 +175,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error }
       }
 
+      // Wipe any residual per-user session caches (business role cache,
+      // per-business data caches) from a prior user on this tab before
+      // seating the new identity. Without this, the business-context
+      // would hand the new user the previous user's cached role.
+      try {
+        sessionStorage.clear()
+      } catch {
+        // Ignore storage errors
+      }
+
       setUser(data.user)
       setCachedUser(data.user)
       setValidatedNow()
@@ -192,6 +202,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(null)
     setCachedUser(null)
+    // Clear all per-user session caches so the next account to sign in
+    // on this tab doesn't inherit stale role / business data.
+    try {
+      sessionStorage.clear()
+    } catch {
+      // Ignore storage errors
+    }
   }, [])
 
   const refreshUser = useCallback(async () => {
