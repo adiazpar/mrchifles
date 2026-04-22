@@ -40,7 +40,7 @@ export interface UseIncomingTransferReturn {
  *
  * On accept/decline the hook reloads the page so every context
  * (auth, business list, transfer state) picks up the new ownership
- * state. Same pattern as useAccountSettings.handleAcceptIncomingTransfer.
+ * state.
  */
 export function useIncomingTransfer(): UseIncomingTransferReturn {
   const { user } = useAuth()

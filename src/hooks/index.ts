@@ -21,9 +21,6 @@ export type { UseTeamManagementReturn } from './useTeamManagement'
 export { useProviderManagement } from './useProviderManagement'
 export type { UseProviderManagementReturn } from './useProviderManagement'
 
-export { useAccountSettings } from './useAccountSettings'
-export type { UseAccountSettingsReturn, PendingTransfer, IncomingTransfer } from './useAccountSettings'
-
 export { useApiMessage } from './useApiMessage'
 export type { TranslateApiMessage } from './useApiMessage'
 
