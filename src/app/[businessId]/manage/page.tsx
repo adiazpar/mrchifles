@@ -73,7 +73,7 @@ export default function ManagePage() {
           type="button"
           onClick={() => setCancelTransferOpen(true)}
           data-tap-feedback
-          className="card banner-semantic banner-semantic--warning w-full p-3 flex items-center gap-3 text-left"
+          className="card banner-semantic banner-semantic--warning w-full p-4 flex items-center gap-3 text-left"
         >
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -101,7 +101,7 @@ export default function ManagePage() {
           type="button"
           onClick={() => setIncomingTransferOpen(true)}
           data-tap-feedback
-          className="card banner-semantic banner-semantic--warning w-full p-3 flex items-center gap-3 text-left"
+          className="card banner-semantic banner-semantic--warning w-full p-4 flex items-center gap-3 text-left"
         >
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"

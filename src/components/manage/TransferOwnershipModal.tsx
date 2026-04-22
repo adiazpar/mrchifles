@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { TriangleAlert, Mail } from 'lucide-react'
-import { Modal, Spinner, useMorphingModal } from '@/components/ui'
+import { Modal, Spinner, useMorphingModal, ConfirmationAnimation } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useTransferOwnership } from '@/hooks/useTransferOwnership'
 import { fetchDeduped } from '@/lib/fetch'
+import { getUserInitials } from '@/lib/auth'
 
 interface TeamMember {
   id: string
@@ -22,6 +23,7 @@ interface Props { isOpen: boolean; onClose: () => void }
 export function TransferOwnershipModal({ isOpen, onClose }: Props) {
   const t = useTranslations('manage')
   const tCommon = useTranslations('common')
+  const tTeam = useTranslations('team')
   const { business, businessId } = useBusiness()
   const { submit, isSubmitting, error, reset } = useTransferOwnership()
   const { refresh: refreshPendingTransfer } = usePendingTransferContext()
@@ -31,6 +33,7 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
   const [customEmail, setCustomEmail] = useState('')
   const [mode, setMode] = useState<'picker' | 'email'>('picker')
   const [typedConfirm, setTypedConfirm] = useState('')
+  const [transferSent, setTransferSent] = useState(false)
 
   useEffect(() => {
     if (!isOpen || !businessId) return
@@ -41,7 +44,7 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
         const data = await res.json()
         if (cancelled) return
         const eligible: TeamMember[] = (data.teamMembers ?? []).filter(
-          (m: TeamMember) => m.role !== 'owner' && m.status === 'active'
+          (m: TeamMember) => m.role !== 'owner'
         )
         setMembers(eligible)
       } catch (err) { console.error('Load team error:', err) }
@@ -55,6 +58,7 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
     setCustomEmail('')
     setMode('picker')
     setTypedConfirm('')
+    setTransferSent(false)
     reset()
   }
 
@@ -67,15 +71,16 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
     : /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customEmail.trim())
   const isStep2Valid = typedConfirm === business?.name
 
-  const handleSubmit = async () => {
-    if (!recipientEmail) return
+  const handleSubmit = async (): Promise<boolean> => {
+    if (!recipientEmail) return false
     const ok = await submit(recipientEmail)
     if (ok) {
-      // Refresh the shared pending-transfer state so the manage-page banner
-      // and the mobile-nav badge re-render without a page reload.
+      // Refresh the shared pending-transfer state before the success step
+      // is dismissed, so the manage-page banner and nav badge are ready.
       await refreshPendingTransfer()
-      onClose()
+      setTransferSent(true)
     }
+    return ok
   }
 
   return (
@@ -91,33 +96,51 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
           <>
             <Modal.Item>
               <div className="flex flex-col gap-2">
-                {members.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setSelectedEmail(m.email)}
-                    className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
-                      selectedEmail === m.email
-                        ? 'border-brand bg-brand-subtle'
-                        : 'border-border hover:border-brand-300'
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded-full bg-bg-muted flex items-center justify-center text-sm font-semibold text-text-secondary flex-shrink-0">
-                      {m.name.slice(0, 1).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary truncate">{m.name}</p>
-                      <p className="text-xs text-text-tertiary truncate">{m.email}</p>
-                    </div>
-                  </button>
-                ))}
+                {members.map((m) => {
+                  const isActive = m.status === 'active'
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setSelectedEmail(m.email)}
+                      disabled={!isActive}
+                      className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left w-full disabled:opacity-60 disabled:cursor-not-allowed ${
+                        selectedEmail === m.email
+                          ? 'border-brand bg-bg-elevated'
+                          : 'border-border enabled:hover:border-brand-300'
+                      }`}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm font-bold text-brand">
+                          {getUserInitials(m.name)}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate">{m.name}</p>
+                        <p className="text-xs text-text-tertiary truncate">{m.email}</p>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <span className={`text-xs font-medium ${isActive ? 'text-success' : 'text-error'}`}>
+                          {isActive ? tTeam('status_active') : tTeam('status_disabled')}
+                        </span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </Modal.Item>
+            <Modal.Item>
+              <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-text-tertiary">
+                <div className="flex-1 h-px bg-border" />
+                <span>{tCommon('or')}</span>
+                <div className="flex-1 h-px bg-border" />
               </div>
             </Modal.Item>
             <Modal.Item>
               <button
                 type="button"
                 onClick={() => { setMode('email'); setSelectedEmail(null) }}
-                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-border text-sm text-text-secondary hover:border-brand hover:text-brand transition-all"
+                className="w-full flex items-center justify-center gap-2 text-sm text-brand hover:text-brand-hover transition-colors"
               >
                 <Mail className="w-4 h-4" />
                 {t('transfer_enter_different_email')}
@@ -169,22 +192,16 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
           </div>
         </Modal.Item>
         <Modal.Item>
-          <p className="text-sm text-text-primary text-center">
-            {t('transfer_confirm_summary', {
-              businessName: business?.name ?? '',
-              recipient: recipient?.name ?? recipientEmail ?? '',
-            })}
-          </p>
-        </Modal.Item>
-        <Modal.Item>
-          <label className="block text-sm font-medium text-text-primary mb-2">
+          <label htmlFor="transfer-confirm" className="label">
             {t('transfer_type_to_confirm', { businessName: business?.name ?? '' })}
           </label>
           <input
+            id="transfer-confirm"
             type="text"
             value={typedConfirm}
             onChange={(e) => setTypedConfirm(e.target.value)}
             className="input"
+            placeholder={business?.name ?? ''}
             autoComplete="off"
           />
         </Modal.Item>
@@ -195,17 +212,65 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
         )}
         <Modal.Footer>
           <Modal.BackButton className="btn btn-secondary flex-1" />
-          <button
-            type="button"
-            onClick={handleSubmit}
+          <SendTransferButton
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
             disabled={isSubmitting || !isStep2Valid}
-            className="btn btn-primary flex-1"
-          >
-            {isSubmitting ? <Spinner size="sm" /> : t('transfer_send_request')}
+          />
+        </Modal.Footer>
+      </Modal.Step>
+
+      {/* Step 2: success — plane lottie plays once the API confirms */}
+      <Modal.Step title={t('transfer_sent_title')} hideBackButton>
+        <Modal.Item>
+          <ConfirmationAnimation
+            type="success"
+            src="/animations/plane.json"
+            triggered={transferSent}
+            title={t('transfer_sent_heading')}
+            subtitle={t('transfer_sent_subtitle', {
+              recipient: recipient?.name ?? recipientEmail ?? '',
+            })}
+          />
+        </Modal.Item>
+        <Modal.Footer>
+          <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+            {tCommon('done')}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
+  )
+}
+
+function SendTransferButton({
+  onSubmit,
+  isSubmitting,
+  disabled,
+}: {
+  onSubmit: () => Promise<boolean>
+  isSubmitting: boolean
+  disabled: boolean
+}) {
+  const { goToStep } = useMorphingModal()
+  const t = useTranslations('manage')
+
+  // Wait for the API result: success navigates to the animation step;
+  // failure leaves the user on the confirm step with the error visible.
+  const handleClick = async () => {
+    const ok = await onSubmit()
+    if (ok) goToStep(2)
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled}
+      className="btn btn-primary flex-1"
+    >
+      {isSubmitting ? <Spinner size="sm" /> : t('transfer_send_request')}
+    </button>
   )
 }
 

@@ -7,6 +7,8 @@ interface ConfirmationAnimationProps {
   triggered: boolean
   title: string
   subtitle?: string
+  /** Override the default success/error Lottie — pass any `/animations/*.json` path. */
+  src?: string
 }
 
 /**
@@ -30,10 +32,11 @@ export function ConfirmationAnimation({
   triggered,
   title,
   subtitle,
+  src,
 }: ConfirmationAnimationProps) {
-  const animationSrc = type === 'success'
+  const animationSrc = src ?? (type === 'success'
     ? '/animations/success.json'
-    : '/animations/error.json'
+    : '/animations/error.json')
 
   return (
     <div className="flex flex-col items-center text-center py-4">

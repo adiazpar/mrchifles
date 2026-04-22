@@ -572,7 +572,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     type="button"
                     onClick={() => handleTabChange('history')}
                     data-tap-feedback
-                    className="card banner-semantic banner-semantic--error w-full p-3 flex items-center gap-3 text-left"
+                    className="card banner-semantic banner-semantic--error w-full p-4 flex items-center gap-3 text-left"
                   >
                     {/* Icon chip — uses color-mix on the error token so it
                         reads as a darker red against the error-subtle
