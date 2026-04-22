@@ -96,11 +96,8 @@ export function PageHeader() {
   const handleBack = () => {
     if (isHubPageWithBackButton) {
       setSlideDirection('back')
-      setPendingHref('/')
-      setTimeout(() => {
-        setPendingHref(null)
-        router.back()
-      }, 280)
+      setSlideTargetPath(pathname)
+      setTimeout(() => router.back(), 280)
     } else if (backTo && businessId) {
       // Drill-down page — return to wherever the user came from via browser
       // history. backTo is a logical fallback but we prefer history so the

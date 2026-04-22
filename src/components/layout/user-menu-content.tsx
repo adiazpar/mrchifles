@@ -22,7 +22,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
   const t = useTranslations('ui.user_menu')
   const router = useRouter()
   const { user, logout } = useAuth()
-  const { setPendingHref, setSlideDirection } = useNavbar()
+  const { setPendingHref, setSlideDirection, setSlideTargetPath } = useNavbar()
 
   const handleLogout = useCallback(() => {
     onAction?.()
@@ -38,10 +38,13 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
       onAction?.()
       return
     }
+    if (href === '/account') {
+      setSlideTargetPath(href)
+      setSlideDirection('forward')
+    }
     setPendingHref(href)
-    if (href === '/account') setSlideDirection('forward')
     onAction?.()
-  }, [setPendingHref, setSlideDirection, onAction, pathname])
+  }, [setPendingHref, setSlideDirection, setSlideTargetPath, onAction, pathname])
 
   if (!user) return null
 
