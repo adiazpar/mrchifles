@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Building2, MapPin, Users, Truck, Crown, LogOut, Trash2, Palette } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
+import { useNavbar } from '@/contexts/navbar-context'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 import {
@@ -24,6 +25,7 @@ export default function ManagePage() {
   const tCreate = useTranslations('createBusiness')
   const router = useRouter()
   const { business, businessId, role, isOwner } = useBusiness()
+  const { setSlideDirection, setSlideTargetPath, setPendingHref } = useNavbar()
 
   const [nameOpen, setNameOpen] = useState(false)
   const [typeOpen, setTypeOpen] = useState(false)
@@ -34,6 +36,13 @@ export default function ManagePage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const canEdit = role === 'owner' || role === 'partner'
+
+  const slideTo = (href: string) => {
+    setSlideTargetPath(href)
+    setSlideDirection('forward')
+    setPendingHref(href)
+    router.push(href)
+  }
 
   if (!business || !businessId) return null
 
@@ -71,12 +80,12 @@ export default function ManagePage() {
       <SettingsRow
         icon={Users}
         label={t('shortcut_team')}
-        onClick={() => router.push(`/${businessId}/team`)}
+        onClick={() => slideTo(`/${businessId}/team`)}
       />
       <SettingsRow
         icon={Truck}
         label={t('shortcut_providers')}
-        onClick={() => router.push(`/${businessId}/providers`)}
+        onClick={() => slideTo(`/${businessId}/providers`)}
       />
 
       {isOwner && (
