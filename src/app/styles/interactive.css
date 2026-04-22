@@ -1860,6 +1860,28 @@
   color: var(--color-text-tertiary);
 }
 
+/* Override the generic 20px icon size for the trailing chevron so it
+   renders at size-4 (16px) to match the rest of the app. The compound
+   `.user-menu-item svg` selector outranks a plain `.user-menu-item-arrow`
+   rule, so we qualify the selector here. */
+.user-menu-item svg.user-menu-item-arrow {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* The badge + chevron group on the right of a user-menu item. Takes
+   over the `margin-left: auto` slot so the chevron itself can stay
+   neutral, and keeps the badge adjacent to the chevron. */
+.user-menu-item-trailing {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.user-menu-item-trailing .user-menu-item-arrow {
+  margin-left: 0;
+}
+
 .user-menu-item-danger,
 .user-menu-item-danger svg {
   color: var(--color-error);

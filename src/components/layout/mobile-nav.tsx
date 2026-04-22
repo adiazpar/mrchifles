@@ -11,6 +11,7 @@ import { useOptionalBusiness } from '@/contexts/business-context'
 import { useJoinBusinessModal } from '@/contexts/join-business-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
+import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 
 export function MobileNav() {
   const t = useTranslations('ui.nav')
@@ -28,6 +29,7 @@ export function MobileNav() {
   const { openJoinModal, isJoinModalOpen } = useJoinBusinessModal()
   const { openCreateModal, isCreateModalOpen } = useCreateBusinessModal()
   const { transfer: pendingTransfer } = usePendingTransferContext()
+  const { transfer: incomingTransfer } = useIncomingTransferContext()
   const navRef = useRef<HTMLElement>(null)
 
   // Live route state (used for prefetch and for releasing the snapshot below
@@ -210,10 +212,20 @@ export function MobileNav() {
           const pathSegment = item.href.split('/').pop() ?? ''
           const label = NAV_LABEL_MAP[pathSegment] ?? item.label
 
+          // Show the Manage badge in two cases:
+          //   1. Owner has initiated a pending outgoing transfer for this
+          //      business (waiting for the recipient to accept).
+          //   2. Current user is the recipient of an incoming transfer
+          //      targeting THIS business (they're already a member and can
+          //      accept from the Manage page). If the incoming transfer
+          //      targets a different business, the badge doesn't apply here.
+          const isIncomingTransferForThisBusiness =
+            Boolean(incomingTransfer) &&
+            incomingTransfer?.business.id === businessId
           const showTransferBadge =
             pathSegment === 'manage' &&
-            businessContext?.isOwner === true &&
-            Boolean(pendingTransfer)
+            ((businessContext?.isOwner === true && Boolean(pendingTransfer)) ||
+              isIncomingTransferForThisBusiness)
 
           return (
             <Link

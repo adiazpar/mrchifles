@@ -11,9 +11,11 @@ import {
   ChevronRight,
   CircleHelp,
   LogOut,
+  ArrowRightLeft,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
+import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { Spinner } from '@/components/ui'
 import { useTheme } from '@/hooks/useTheme'
 import { getUserInitials } from '@/lib/auth'
@@ -26,6 +28,7 @@ import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
 import { AboutModal } from '@/components/account/AboutModal'
 import { ContactSupportModal } from '@/components/account/ContactSupportModal'
 import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
+import { IncomingTransferModal } from '@/components/transfer'
 
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth()
@@ -39,6 +42,8 @@ export default function AccountPage() {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false)
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
+  const { transfer: incomingTransfer } = useIncomingTransferContext()
 
   // Hide the mobile nav while viewing account settings
   useEffect(() => {
@@ -102,6 +107,41 @@ export default function AccountPage() {
         </div>
         <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
       </button>
+
+      {incomingTransfer && (
+        <button
+          type="button"
+          onClick={() => setIsTransferModalOpen(true)}
+          data-tap-feedback
+          className="card banner-semantic banner-semantic--warning w-full p-3 flex items-center gap-3 text-left"
+        >
+          <div
+            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{
+              backgroundColor:
+                'color-mix(in oklab, var(--color-warning) 22%, transparent)',
+            }}
+          >
+            <ArrowRightLeft className="w-5 h-5 text-warning" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-warning">
+              {t('incoming_transfer_heading')}
+            </div>
+            <div className="text-xs text-text-secondary mt-0.5 truncate">
+              {incomingTransfer.fromUser
+                ? t('incoming_transfer_description', {
+                    name: incomingTransfer.fromUser.name,
+                    business: incomingTransfer.business.name,
+                  })
+                : t('incoming_transfer_description_anonymous', {
+                    business: incomingTransfer.business.name,
+                  })}
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+        </button>
+      )}
 
       {/* Preferences */}
       <div>
@@ -191,6 +231,10 @@ export default function AccountPage() {
       <DeleteAccountModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
+      />
+      <IncomingTransferModal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
       />
     </main>
   )

@@ -7,6 +7,7 @@ import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Pa
 import { useBusiness } from '@/contexts/business-context'
 import { useNavbar } from '@/contexts/navbar-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
+import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 import {
@@ -20,14 +21,17 @@ import {
   LeaveBusinessModal,
   DeleteBusinessModal,
 } from '@/components/manage'
+import { IncomingTransferModal } from '@/components/transfer'
 
 export default function ManagePage() {
   const t = useTranslations('manage')
   const tCreate = useTranslations('createBusiness')
+  const tAccount = useTranslations('account')
   const router = useRouter()
   const { business, businessId, role, isOwner } = useBusiness()
   const { setSlideDirection, setSlideTargetPath, setPendingHref } = useNavbar()
   const { transfer: pendingTransfer } = usePendingTransferContext()
+  const { transfer: incomingTransfer } = useIncomingTransferContext()
 
   const [nameOpen, setNameOpen] = useState(false)
   const [typeOpen, setTypeOpen] = useState(false)
@@ -37,6 +41,14 @@ export default function ManagePage() {
   const [cancelTransferOpen, setCancelTransferOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [incomingTransferOpen, setIncomingTransferOpen] = useState(false)
+
+  // Only show the incoming-transfer banner on the Manage page of the
+  // target business. On any other business's Manage page the banner is
+  // irrelevant (the transfer doesn't concern this business).
+  const showIncomingTransferBanner =
+    Boolean(incomingTransfer) &&
+    incomingTransfer?.business.id === businessId
 
   const canEdit = role === 'owner' || role === 'partner'
 
@@ -78,6 +90,41 @@ export default function ManagePage() {
             </div>
             <div className="text-xs text-text-secondary mt-0.5 truncate">
               {t('transfer_pending_waiting', { recipient: pendingTransfer.toEmail })}
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+        </button>
+      )}
+
+      {showIncomingTransferBanner && incomingTransfer && (
+        <button
+          type="button"
+          onClick={() => setIncomingTransferOpen(true)}
+          data-tap-feedback
+          className="card banner-semantic banner-semantic--warning w-full p-3 flex items-center gap-3 text-left"
+        >
+          <div
+            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{
+              backgroundColor:
+                'color-mix(in oklab, var(--color-warning) 22%, transparent)',
+            }}
+          >
+            <ArrowRightLeft className="w-5 h-5 text-warning" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-warning">
+              {tAccount('incoming_transfer_heading')}
+            </div>
+            <div className="text-xs text-text-secondary mt-0.5 truncate">
+              {incomingTransfer.fromUser
+                ? tAccount('incoming_transfer_description', {
+                    name: incomingTransfer.fromUser.name,
+                    business: incomingTransfer.business.name,
+                  })
+                : tAccount('incoming_transfer_description_anonymous', {
+                    business: incomingTransfer.business.name,
+                  })}
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
@@ -187,6 +234,10 @@ export default function ManagePage() {
       <CancelTransferModal isOpen={cancelTransferOpen} onClose={() => setCancelTransferOpen(false)} />
       <LeaveBusinessModal isOpen={leaveOpen} onClose={() => setLeaveOpen(false)} />
       <DeleteBusinessModal isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} />
+      <IncomingTransferModal
+        isOpen={incomingTransferOpen}
+        onClose={() => setIncomingTransferOpen(false)}
+      />
     </main>
   )
 }

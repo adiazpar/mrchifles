@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useNavbar } from '@/contexts/navbar-context'
+import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { getUserInitials } from '@/lib/auth'
 import { ChevronRight, Settings, CircleHelp, LogOut } from 'lucide-react'
 
@@ -23,6 +24,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
   const router = useRouter()
   const { user, logout } = useAuth()
   const { setPendingHref, setSlideDirection, setSlideTargetPath } = useNavbar()
+  const { transfer: incomingTransfer } = useIncomingTransferContext()
 
   const handleLogout = useCallback(() => {
     onAction?.()
@@ -83,7 +85,15 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
         >
           <Settings />
           <span>{t('account_settings')}</span>
-          <ChevronRight size={16} className="user-menu-item-arrow" />
+          <span className="user-menu-item-trailing">
+            {incomingTransfer && (
+              <span
+                className="w-2.5 h-2.5 rounded-full bg-warning badge-pop-in flex-shrink-0"
+                aria-hidden="true"
+              />
+            )}
+            <ChevronRight className="user-menu-item-arrow" />
+          </span>
         </Link>
 
         <Link
@@ -93,7 +103,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
         >
           <CircleHelp />
           <span>{t('support')}</span>
-          <ChevronRight size={16} className="user-menu-item-arrow" />
+          <ChevronRight className="user-menu-item-arrow" />
         </Link>
 
         <button
