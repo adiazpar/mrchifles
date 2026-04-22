@@ -2,14 +2,14 @@
 
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { useNavbar } from '@/contexts/navbar-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 
 const SLIDE_TRANSITION = { type: 'tween' as const, duration: 0.28, ease: [0.32, 0.72, 0, 1] as const }
 const FADE_TRANSITION = { duration: 0.15 }
 
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { pendingHref, slideDirection, slideTargetPath } = useNavbar()
+  const { pendingHref, slideDirection, slideTargetPath } = usePageTransition()
 
   // Back-compat fallback: the existing Account flow sets only slideDirection
   // without slideTargetPath. Treat /account as the default target in that case.

@@ -155,14 +155,7 @@
   display: flex;
   z-index: var(--z-sticky);
   padding-bottom: env(safe-area-inset-bottom, 0);
-  /* Animation properties for hide/show */
-  transition: transform var(--duration-slow) var(--ease-out-expo);
 }
-
-.mobile-nav--hidden {
-  transform: translateX(-50%) translateY(100%);
-}
-
 
 .mobile-nav-item {
   flex: 1;
@@ -567,11 +560,6 @@
   /* Account for fixed header at top and mobile nav at bottom */
   padding-top: calc(var(--header-height) + var(--page-padding) + env(safe-area-inset-top, 0));
   padding-bottom: calc(var(--mobile-nav-height) + var(--space-6) + env(safe-area-inset-bottom, 0));
-}
-
-/* When navbar is hidden, reduce bottom padding */
-.page-content--no-navbar {
-  padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0));
 }
 
 

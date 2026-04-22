@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { ChevronRight, X, Building2, ListFilter, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
-import { useNavbar } from '@/contexts/navbar-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
 import { Spinner } from '@/components/ui'
 import { fetchDeduped } from '@/lib/fetch'
@@ -63,7 +63,7 @@ function getCachedBusinessList(): Business[] {
 export default function HubPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
-  const { setPendingHref, setSlideDirection, setSlideTargetPath, setCachedBusinesses } = useNavbar()
+  const { setPendingHref, setSlideDirection, setSlideTargetPath, setCachedBusinesses } = usePageTransition()
   const { createdBusiness } = useCreateBusinessModal()
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
   const [isLoading, setIsLoading] = useState(() => getCachedBusinessList().length === 0)

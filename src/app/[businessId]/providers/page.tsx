@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useEffect } from 'react'
+import { Fragment } from 'react'
 import { Plus, Handshake, ShoppingCart, Pencil, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Spinner, SwipeableRow } from '@/components/ui'
@@ -10,21 +10,13 @@ import { useBusiness } from '@/contexts/business-context'
 import { useOrders } from '@/contexts/orders-context'
 import { ProviderListItem, ProviderModal } from '@/components/providers'
 import { useTranslations } from 'next-intl'
-import { useNavbar } from '@/contexts/navbar-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 
 export default function ProveedoresPage() {
   const { businessId } = useBusiness()
   const router = useRouter()
-  const { setPendingHref, setSlideDirection, setSlideTargetPath, hide, show } = useNavbar()
+  const { setPendingHref, setSlideDirection, setSlideTargetPath } = usePageTransition()
   const t = useTranslations('providers')
-
-  // Providers is a drill-down page (not in bottom nav). Hide the bottom nav
-  // while viewing so it feels like a focused detail flow, matching Account
-  // settings and the provider detail page.
-  useEffect(() => {
-    hide()
-    return () => show()
-  }, [hide, show])
 
   const { setOrders } = useOrders()
 
@@ -89,7 +81,7 @@ export default function ProveedoresPage() {
 
   return (
     <>
-      <main className="page-content page-content--no-navbar space-y-6">
+      <main className="page-content space-y-6">
         {error && !isModalOpen && (
             <div className="p-4 bg-error-subtle text-error rounded-lg">
               {error}

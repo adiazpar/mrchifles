@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
-import { useNavbar } from '@/contexts/navbar-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
 import { Trash2, Pencil, ImagePlus } from 'lucide-react'
 
@@ -265,7 +265,7 @@ export function OrderDetailModal({
   const { formatCurrency, formatDate } = useBusinessFormat()
   const router = useRouter()
   const params = useParams<{ businessId: string }>()
-  const { setSlideDirection, setSlideTargetPath, setPendingHref } = useNavbar()
+  const { setSlideDirection, setSlideTargetPath, setPendingHref } = usePageTransition()
   const editReceiptInputRef = useRef<HTMLInputElement>(null)
   const [editReceiptError, setEditReceiptError] = useState('')
   const productsById = useMemo(() => new Map(products.map(p => [p.id, p])), [products])

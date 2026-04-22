@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Palette, ChevronRight, Clock } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
-import { useNavbar } from '@/contexts/navbar-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { SettingsRow } from '@/components/account/SettingsRow'
@@ -29,7 +29,7 @@ export default function ManagePage() {
   const tAccount = useTranslations('account')
   const router = useRouter()
   const { business, businessId, role, isOwner } = useBusiness()
-  const { setSlideDirection, setSlideTargetPath, setPendingHref } = useNavbar()
+  const { setSlideDirection, setSlideTargetPath, setPendingHref } = usePageTransition()
   const { transfer: pendingTransfer } = usePendingTransferContext()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
 

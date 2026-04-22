@@ -29,7 +29,7 @@ import { apiRequest, apiPost, apiPatch, apiDelete, ApiError } from '@/lib/api-cl
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useBusiness } from '@/contexts/business-context'
-import { useNavbar } from '@/contexts/navbar-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 import { canManageBusiness } from '@/lib/business-role'
 import { formatRelative } from '@/lib/formatRelative'
 import { getOrderDisplayStatus } from '@/lib/products'
@@ -68,7 +68,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const userLocale = useLocale()
   const translateApiMessage = useApiMessage()
   const { role } = useBusiness()
-  const { setSlideDirection, setSlideTargetPath, setPendingHref, setPageSubtitleSuffix, hide, show } = useNavbar()
+  const { setSlideDirection, setSlideTargetPath, setPendingHref, setPageSubtitleSuffix } = usePageTransition()
   const canManage = canManageBusiness(role)
 
   // Tab state — initialized from the URL so browser back/forward and
@@ -100,13 +100,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   useEffect(() => {
     return () => setPageSubtitleSuffix(null)
   }, [setPageSubtitleSuffix])
-
-  // Keep the bottom navbar hidden while on this page; the primary action
-  // (New order) lives in the Summary tab instead.
-  useEffect(() => {
-    hide()
-    return () => show()
-  }, [hide, show])
 
   const [provider, setProvider] = useState<Provider | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -488,7 +481,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   return (
     <>
-      <main className="page-content page-content--no-navbar space-y-4">
+      <main className="page-content space-y-4">
         {/* ============== Identity Header ==============
             Top row: avatar + name/status. Tappable for managers — opens
             the edit modal, mirroring the account-page profile card. For

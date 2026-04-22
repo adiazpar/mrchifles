@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
@@ -14,7 +14,6 @@ import {
   ArrowRightLeft,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
-import { useNavbar } from '@/contexts/navbar-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { Spinner } from '@/components/ui'
 import { useTheme } from '@/hooks/useTheme'
@@ -33,7 +32,6 @@ import { IncomingTransferModal } from '@/components/transfer'
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth()
   const router = useRouter()
-  const { hide, show } = useNavbar()
   const t = useTranslations('account')
   const { theme } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
@@ -44,12 +42,6 @@ export default function AccountPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
   const { transfer: incomingTransfer } = useIncomingTransferContext()
-
-  // Hide the mobile nav while viewing account settings
-  useEffect(() => {
-    hide()
-    return () => show()
-  }, [hide, show])
 
   if (isLoading) {
     return (
@@ -72,7 +64,7 @@ export default function AccountPage() {
   }
 
   return (
-    <main className="page-content page-content--no-navbar space-y-4">
+    <main className="page-content space-y-4">
       {/* Profile header card — tappable, opens the edit profile modal */}
       <button
         type="button"

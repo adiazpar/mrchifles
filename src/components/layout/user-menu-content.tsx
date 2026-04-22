@@ -5,7 +5,7 @@ import { useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
-import { useNavbar } from '@/contexts/navbar-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { getUserInitials } from '@/lib/auth'
 import { ChevronRight, Settings, CircleHelp, LogOut } from 'lucide-react'
@@ -23,7 +23,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
   const t = useTranslations('ui.user_menu')
   const router = useRouter()
   const { user, logout } = useAuth()
-  const { setPendingHref, setSlideDirection, setSlideTargetPath } = useNavbar()
+  const { setPendingHref, setSlideDirection, setSlideTargetPath } = usePageTransition()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
 
   const handleLogout = useCallback(() => {

@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAuth } from './auth-context'
-import { useNavbar } from './navbar-context'
+import { usePageTransition } from './page-transition-context'
 import type { BusinessRole } from '@/lib/business-role'
 
 // Re-export for backwards compatibility
@@ -62,7 +62,7 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
   const router = useRouter()
   const t = useTranslations('business')
   const { user, isLoading: authLoading } = useAuth()
-  const { getCachedBusiness, setCachedBusiness } = useNavbar()
+  const { getCachedBusiness, setCachedBusiness } = usePageTransition()
   const [business, setBusiness] = useState<Business | null>(null)
   const [role, setRole] = useState<BusinessRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)

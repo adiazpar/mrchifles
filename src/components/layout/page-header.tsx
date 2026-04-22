@@ -7,7 +7,7 @@ import { ChevronLeft } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { getRouteConfig, getBusinessIdFromPath } from '@/lib/navigation'
 import { UserMenu } from './user-menu'
-import { useNavbar } from '@/contexts/navbar-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 import { useOptionalBusiness } from '@/contexts/business-context'
 
 /**
@@ -28,7 +28,7 @@ export function PageHeader() {
   const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
-  const { pendingHref, setPendingHref, slideDirection, setSlideDirection, setSlideTargetPath, pageSubtitleSuffix } = useNavbar()
+  const { pendingHref, setPendingHref, slideDirection, setSlideDirection, setSlideTargetPath, pageSubtitleSuffix } = usePageTransition()
   const businessContext = useOptionalBusiness()
   const [isScrolled, setIsScrolled] = useState(false)
 

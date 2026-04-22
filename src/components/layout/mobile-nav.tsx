@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Plus, UserPlus } from 'lucide-react'
 import { getNavItems, getPrefetchRoutes, getBusinessIdFromPath } from '@/lib/navigation'
-import { useNavbar } from '@/contexts/navbar-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 import { useOptionalBusiness } from '@/contexts/business-context'
 import { useJoinBusinessModal } from '@/contexts/join-business-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
@@ -16,65 +16,19 @@ import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context
 export function MobileNav() {
   const t = useTranslations('ui.nav')
   const tNav = useTranslations('navigation')
-  const livePathname = usePathname()
+  const pathname = usePathname()
   const router = useRouter()
-  const {
-    isVisible,
-    pendingHref: livePendingHref,
-    setPendingHref,
-    slideDirection,
-    navOverride: liveNavOverride,
-  } = useNavbar()
+  const { pendingHref, setPendingHref, slideDirection } = usePageTransition()
   const businessContext = useOptionalBusiness()
   const { openJoinModal, isJoinModalOpen } = useJoinBusinessModal()
   const { openCreateModal, isCreateModalOpen } = useCreateBusinessModal()
   const { transfer: pendingTransfer } = usePendingTransferContext()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
-  const navRef = useRef<HTMLElement>(null)
 
-  // Live route state (used for prefetch and for releasing the snapshot below
-  // once a slide ends). Everything the nav actually RENDERS reads from the
-  // frozen display state a few lines down.
-  const liveBusinessIdFromPath = getBusinessIdFromPath(livePathname)
-  const liveBusinessId = businessContext?.businessId ?? liveBusinessIdFromPath
+  const businessIdFromPath = getBusinessIdFromPath(pathname)
+  const businessId = businessContext?.businessId ?? businessIdFromPath
+  const isHubContext = !businessIdFromPath
 
-  // Local state to control the hidden class
-  const [isHidden, setIsHidden] = useState(false)
-
-  // Snapshot of everything the nav renders, frozen during slide transitions so
-  // the nav slides out with the previous page's content and slides back in
-  // with the new page's content. Without this freeze the nav flickers mid
-  // slide: the active item loses its brand color the moment pendingHref is
-  // set, hub/business icons swap the moment pathname changes, and any late
-  // navOverride (e.g. provider detail's "New order" button, which depends on
-  // an async fetch) replaces the standard tab icons after the slide has
-  // already started coming back up. Capturing a snapshot and only refreshing
-  // it when slideDirection === null keeps every visible change outside the
-  // hidden/slid-down window.
-  const [display, setDisplay] = useState(() => ({
-    pathname: livePathname,
-    pendingHref: livePendingHref,
-    businessId: liveBusinessId,
-    navOverride: liveNavOverride,
-  }))
-  useEffect(() => {
-    if (slideDirection === null) {
-      setDisplay({
-        pathname: livePathname,
-        pendingHref: livePendingHref,
-        businessId: liveBusinessId,
-        navOverride: liveNavOverride,
-      })
-    }
-  }, [slideDirection, livePathname, livePendingHref, liveBusinessId, liveNavOverride])
-
-  const pathname = display.pathname
-  const pendingHref = display.pendingHref
-  const businessId = display.businessId
-  const displayNavOverride = display.navOverride
-  const isHubContext = !getBusinessIdFromPath(pathname)
-
-  // Map nav path segments to translation keys
   const NAV_LABEL_MAP: Record<string, string> = {
     home: tNav('home'),
     sales: tNav('sales'),
@@ -84,42 +38,20 @@ export function MobileNav() {
     providers: tNav('providers'),
   }
 
-  // Get nav items for current business
   const navItems = useMemo(() => {
     if (!businessId) return []
     return getNavItems(businessId)
   }, [businessId])
 
-  // Prefetch all routes on mount for instant navigation. Uses the LIVE
-  // businessId (not the frozen snapshot) so prefetching kicks in as soon as
-  // we enter a new business context, not after the slide completes.
   useEffect(() => {
-    if (!liveBusinessId) return
-    getNavItems(liveBusinessId).forEach((item) => {
+    if (!businessId) return
+    getNavItems(businessId).forEach((item) => {
       router.prefetch(item.href)
     })
-    getPrefetchRoutes(liveBusinessId).forEach((route) => {
+    getPrefetchRoutes(businessId).forEach((route) => {
       router.prefetch(route)
     })
-  }, [router, liveBusinessId])
-
-  // Hide the nav when:
-  //   • isVisible is false (explicit hide() from drill-down pages like
-  //     account / providers / team / provider detail)
-  //   • slideDirection is set — any active slide transition (hub<->business,
-  //     etc.). The nav slides down during the transition and back up once
-  //     the new page mounts with its correct items and slideDirection clears.
-  const shouldHide = !isVisible || slideDirection !== null
-  useEffect(() => {
-    if (shouldHide) {
-      const timeout = setTimeout(() => {
-        setIsHidden(true)
-      }, 0)
-      return () => clearTimeout(timeout)
-    } else {
-      setIsHidden(false)
-    }
-  }, [shouldHide])
+  }, [router, businessId])
 
   const handleClick = (href: string) => {
     if (href !== pathname) {
@@ -127,126 +59,88 @@ export function MobileNav() {
     }
   }
 
-  const handleCreateBusiness = () => {
-    openCreateModal()
-  }
-
-  const handleJoinBusiness = () => {
-    openJoinModal()
-  }
-
-  // Fade out during cross-context navigation (hub <-> business)
+  // Mirror PageHeader's fade: instant hide while a cross-context pending nav
+  // or a slide transition is in flight, then fade back in over 100ms when the
+  // new context has settled. Keeps the navbar content in sync with the
+  // header content fade.
   const isCrossContextNav = pendingHref && (
     (isHubContext && !pendingHref.startsWith('/account') && !pendingHref.startsWith('/join')) ||
     (!isHubContext && (pendingHref === '/' || pendingHref.startsWith('/account') || pendingHref.startsWith('/join')))
   )
-
-  // Style for fading inner content during cross-context navigation
+  const shouldHide = isCrossContextNav || slideDirection !== null
   const contentFadeStyle = {
-    opacity: isCrossContextNav ? 0 : 1,
-    transition: 'opacity 150ms ease-out',
-  }
-
-  // Hub context: render action items styled like the business navbar
-  if (isHubContext) {
-    return (
-      <nav
-        ref={navRef}
-        className={`mobile-nav ${isHidden ? 'mobile-nav--hidden' : ''}`}
-      >
-        <div className="flex w-full" style={contentFadeStyle}>
-          <button
-            type="button"
-            onClick={handleCreateBusiness}
-            className={`mobile-nav-item ${isCreateModalOpen ? 'active' : ''}`}
-          >
-            <Plus className="mobile-nav-icon" />
-            <span>{t('create_business')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleJoinBusiness}
-            className={`mobile-nav-item ${isJoinModalOpen ? 'active' : ''}`}
-          >
-            <UserPlus className="mobile-nav-icon" />
-            <span>{t('join_a_business')}</span>
-          </button>
-        </div>
-      </nav>
-    )
-  }
-
-  // Business context: render nav items
-  if (!businessId) return null
-
-  // A page can replace the standard nav items with a custom action
-  // (e.g. the provider detail page's "New order" CTA) via useNavbar().
-  // Using the frozen displayNavOverride (not the live one) ensures the
-  // nav slides out with the old content and slides back in with the new.
-  if (displayNavOverride !== null) {
-    return (
-      <nav
-        ref={navRef}
-        className={`mobile-nav ${isHidden ? 'mobile-nav--hidden' : ''}`}
-      >
-        <div className="flex w-full items-center px-4" style={contentFadeStyle}>
-          {displayNavOverride}
-        </div>
-      </nav>
-    )
+    opacity: shouldHide ? 0 : 1,
+    transition: shouldHide ? 'none' : 'opacity 100ms ease-out',
   }
 
   return (
-    <nav
-      ref={navRef}
-      className={`mobile-nav ${isHidden ? 'mobile-nav--hidden' : ''}`}
-    >
+    <nav className="mobile-nav">
       <div className="flex w-full" style={contentFadeStyle}>
-        {navItems.map((item) => {
-          const isCurrentPath = pathname === item.href || pathname.startsWith(`${item.href}/`)
-          const isPending = pendingHref === item.href
-          // Only show current path as active if there's no pending navigation
-          const isActive = isPending || (isCurrentPath && !pendingHref)
-          const Icon = item.icon
-
-          const pathSegment = item.href.split('/').pop() ?? ''
-          const label = NAV_LABEL_MAP[pathSegment] ?? item.label
-
-          // Show the Manage badge in two cases:
-          //   1. Owner has initiated a pending outgoing transfer for this
-          //      business (waiting for the recipient to accept).
-          //   2. Current user is the recipient of an incoming transfer
-          //      targeting THIS business (they're already a member and can
-          //      accept from the Manage page). If the incoming transfer
-          //      targets a different business, the badge doesn't apply here.
-          const isIncomingTransferForThisBusiness =
-            Boolean(incomingTransfer) &&
-            incomingTransfer?.business.id === businessId
-          const showTransferBadge =
-            pathSegment === 'manage' &&
-            ((businessContext?.isOwner === true && Boolean(pendingTransfer)) ||
-              isIncomingTransferForThisBusiness)
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => handleClick(item.href)}
-              className={`mobile-nav-item ${isActive ? 'active' : ''}`}
+        {isHubContext ? (
+          <>
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className={`mobile-nav-item ${isCreateModalOpen ? 'active' : ''}`}
             >
-              <span className="relative inline-flex">
-                <Icon className="mobile-nav-icon" />
-                {showTransferBadge && (
-                  <span
-                    className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-warning badge-pop-in"
-                    aria-hidden="true"
-                  />
-                )}
-              </span>
-              <span>{label}</span>
-            </Link>
-          )
-        })}
+              <Plus className="mobile-nav-icon" />
+              <span>{t('create_business')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={openJoinModal}
+              className={`mobile-nav-item ${isJoinModalOpen ? 'active' : ''}`}
+            >
+              <UserPlus className="mobile-nav-icon" />
+              <span>{t('join_a_business')}</span>
+            </button>
+          </>
+        ) : (
+          navItems.map((item) => {
+            const isCurrentPath = pathname === item.href || pathname.startsWith(`${item.href}/`)
+            const isPending = pendingHref === item.href
+            const isActive = isPending || (isCurrentPath && !pendingHref)
+            const Icon = item.icon
+
+            const pathSegment = item.href.split('/').pop() ?? ''
+            const label = NAV_LABEL_MAP[pathSegment] ?? item.label
+
+            // Show the Manage badge in two cases:
+            //   1. Owner has initiated a pending outgoing transfer for this
+            //      business (waiting for the recipient to accept).
+            //   2. Current user is the recipient of an incoming transfer
+            //      targeting THIS business (they're already a member and can
+            //      accept from the Manage page). If the incoming transfer
+            //      targets a different business, the badge doesn't apply here.
+            const isIncomingTransferForThisBusiness =
+              Boolean(incomingTransfer) &&
+              incomingTransfer?.business.id === businessId
+            const showTransferBadge =
+              pathSegment === 'manage' &&
+              ((businessContext?.isOwner === true && Boolean(pendingTransfer)) ||
+                isIncomingTransferForThisBusiness)
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => handleClick(item.href)}
+                className={`mobile-nav-item ${isActive ? 'active' : ''}`}
+              >
+                <span className="relative inline-flex">
+                  <Icon className="mobile-nav-icon" />
+                  {showTransferBadge && (
+                    <span
+                      className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-warning badge-pop-in"
+                      aria-hidden="true"
+                    />
+                  )}
+                </span>
+                <span>{label}</span>
+              </Link>
+            )
+          })
+        )}
       </div>
     </nav>
   )

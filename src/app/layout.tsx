@@ -3,7 +3,7 @@ import { DM_Sans, IBM_Plex_Sans } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 import { AuthProvider } from '@/contexts/auth-context'
-import { NavbarProvider } from '@/contexts/navbar-context'
+import { PageTransitionProvider } from '@/contexts/page-transition-context'
 import { AppShell, SplashController, TapFeedbackProvider } from '@/components/layout'
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-color'
 import './globals.css'
@@ -132,11 +132,11 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
             <SplashController />
-            <NavbarProvider>
+            <PageTransitionProvider>
               <AppShell>
                 {children}
               </AppShell>
-            </NavbarProvider>
+            </PageTransitionProvider>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

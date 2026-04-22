@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig, Pencil, Trash2 } from 'lucide-react'
 import { Modal, SwipeableRow } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'
-import { useNavbar } from '@/contexts/navbar-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 import { useTranslations } from 'next-intl'
 import { scrollToTop } from '@/lib/scroll'
 import {
@@ -95,7 +95,7 @@ export function OrdersTab({
   const tCommon = useTranslations('common')
   const router = useRouter()
   const params = useParams<{ businessId: string }>()
-  const { setSlideDirection, setSlideTargetPath, setPendingHref } = useNavbar()
+  const { setSlideDirection, setSlideTargetPath, setPendingHref } = usePageTransition()
   const [isSortSheetOpen, setSortSheetOpen] = useState(false)
 
   const sortLabels: Record<OrderSortOption, string> = {
