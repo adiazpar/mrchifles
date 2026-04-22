@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Building2, MapPin, Users, Handshake, Crown, LogOut, Trash2, Palette, ChevronRight } from 'lucide-react'
+import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Palette, ChevronRight, Clock } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { useNavbar } from '@/contexts/navbar-context'
+import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 import {
@@ -14,8 +15,8 @@ import {
   EditTypeModal,
   EditLocationModal,
   EditLogoModal,
-  PendingTransferCard,
   TransferOwnershipModal,
+  CancelTransferModal,
   LeaveBusinessModal,
   DeleteBusinessModal,
 } from '@/components/manage'
@@ -26,12 +27,14 @@ export default function ManagePage() {
   const router = useRouter()
   const { business, businessId, role, isOwner } = useBusiness()
   const { setSlideDirection, setSlideTargetPath, setPendingHref } = useNavbar()
+  const { transfer: pendingTransfer } = usePendingTransferContext()
 
   const [nameOpen, setNameOpen] = useState(false)
   const [typeOpen, setTypeOpen] = useState(false)
   const [locationOpen, setLocationOpen] = useState(false)
   const [logoOpen, setLogoOpen] = useState(false)
   const [transferOpen, setTransferOpen] = useState(false)
+  const [cancelTransferOpen, setCancelTransferOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
@@ -52,6 +55,34 @@ export default function ManagePage() {
         business={business}
         onTap={canEdit ? () => setLogoOpen(true) : undefined}
       />
+
+      {isOwner && pendingTransfer && (
+        <button
+          type="button"
+          onClick={() => setCancelTransferOpen(true)}
+          data-tap-feedback
+          className="card banner-semantic banner-semantic--warning w-full p-3 flex items-center gap-3 text-left"
+        >
+          <div
+            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{
+              backgroundColor:
+                'color-mix(in oklab, var(--color-warning) 22%, transparent)',
+            }}
+          >
+            <Clock className="w-5 h-5 text-warning" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-warning">
+              {t('transfer_pending_heading')}
+            </div>
+            <div className="text-xs text-text-secondary mt-0.5 truncate">
+              {t('transfer_pending_waiting', { recipient: pendingTransfer.toEmail })}
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+        </button>
+      )}
 
       <div>
         <SettingsSectionHeader label={t('section_details')} />
@@ -116,20 +147,6 @@ export default function ManagePage() {
         </div>
       </div>
 
-      {isOwner && (
-        <div>
-          <SettingsSectionHeader label={t('section_ownership')} />
-          <PendingTransferCard />
-          <div className="bg-bg-surface rounded-xl overflow-hidden">
-            <SettingsRow
-              icon={Crown}
-              label={t('transfer_ownership')}
-              onClick={() => setTransferOpen(true)}
-            />
-          </div>
-        </div>
-      )}
-
       <div>
         <SettingsSectionHeader label={t('section_danger')} danger />
         <div className="bg-bg-surface rounded-xl overflow-hidden">
@@ -142,12 +159,22 @@ export default function ManagePage() {
             />
           )}
           {isOwner && (
-            <SettingsRow
-              icon={Trash2}
-              label={t('delete_business')}
-              danger
-              onClick={() => setDeleteOpen(true)}
-            />
+            <>
+              <SettingsRow
+                icon={ArrowRightLeft}
+                label={t('transfer_ownership')}
+                danger
+                disabled={Boolean(pendingTransfer)}
+                onClick={() => setTransferOpen(true)}
+              />
+              <div className="settings-divider" />
+              <SettingsRow
+                icon={Trash2}
+                label={t('delete_business')}
+                danger
+                onClick={() => setDeleteOpen(true)}
+              />
+            </>
           )}
         </div>
       </div>
@@ -157,6 +184,7 @@ export default function ManagePage() {
       <EditLocationModal isOpen={locationOpen} onClose={() => setLocationOpen(false)} />
       <EditLogoModal isOpen={logoOpen} onClose={() => setLogoOpen(false)} />
       <TransferOwnershipModal isOpen={transferOpen} onClose={() => setTransferOpen(false)} />
+      <CancelTransferModal isOpen={cancelTransferOpen} onClose={() => setCancelTransferOpen(false)} />
       <LeaveBusinessModal isOpen={leaveOpen} onClose={() => setLeaveOpen(false)} />
       <DeleteBusinessModal isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} />
     </main>

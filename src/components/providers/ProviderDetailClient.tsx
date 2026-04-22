@@ -577,7 +577,8 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   <button
                     type="button"
                     onClick={() => handleTabChange('history')}
-                    className="card card-interactive w-full p-3 flex items-center gap-3 text-left bg-error-subtle"
+                    data-tap-feedback
+                    className="card banner-semantic banner-semantic--error w-full p-3 flex items-center gap-3 text-left"
                   >
                     {/* Icon chip — uses color-mix on the error token so it
                         reads as a darker red against the error-subtle
@@ -600,7 +601,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                         {t('overdue_banner_subtitle')}
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
                   </button>
                 )}
 

@@ -6,6 +6,7 @@ import { MobileNav } from './mobile-nav'
 import { JoinBusinessProvider } from '@/contexts/join-business-context'
 import { CreateBusinessProvider } from '@/contexts/create-business-context'
 import { BusinessProvider } from '@/contexts/business-context'
+import { PendingTransferProvider } from '@/contexts/pending-transfer-context'
 import { getBusinessIdFromPath } from '@/lib/navigation'
 
 /**
@@ -39,13 +40,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <JoinBusinessProvider>
       <CreateBusinessProvider>
         <BusinessProvider businessId={businessId}>
-          <div className="h-full">
-            <PageHeader />
-            <div className="main-scroll-container flex flex-col h-full overflow-y-auto overflow-x-hidden">
-              {children}
+          <PendingTransferProvider>
+            <div className="h-full">
+              <PageHeader />
+              <div className="main-scroll-container flex flex-col h-full overflow-y-auto overflow-x-hidden">
+                {children}
+              </div>
+              <MobileNav />
             </div>
-            <MobileNav />
-          </div>
+          </PendingTransferProvider>
         </BusinessProvider>
       </CreateBusinessProvider>
     </JoinBusinessProvider>

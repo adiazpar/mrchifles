@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { TriangleAlert, Mail } from 'lucide-react'
 import { Modal, Spinner, useMorphingModal } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
+import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useTransferOwnership } from '@/hooks/useTransferOwnership'
 import { fetchDeduped } from '@/lib/fetch'
 
@@ -23,6 +24,7 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
   const tCommon = useTranslations('common')
   const { business, businessId } = useBusiness()
   const { submit, isSubmitting, error, reset } = useTransferOwnership()
+  const { refresh: refreshPendingTransfer } = usePendingTransferContext()
 
   const [members, setMembers] = useState<TeamMember[]>([])
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null)
@@ -68,7 +70,12 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
   const handleSubmit = async () => {
     if (!recipientEmail) return
     const ok = await submit(recipientEmail)
-    if (ok) onClose()
+    if (ok) {
+      // Refresh the shared pending-transfer state so the manage-page banner
+      // and the mobile-nav badge re-render without a page reload.
+      await refreshPendingTransfer()
+      onClose()
+    }
   }
 
   return (

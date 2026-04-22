@@ -10,6 +10,7 @@ import { useNavbar } from '@/contexts/navbar-context'
 import { useOptionalBusiness } from '@/contexts/business-context'
 import { useJoinBusinessModal } from '@/contexts/join-business-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
+import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 
 export function MobileNav() {
   const t = useTranslations('ui.nav')
@@ -26,6 +27,7 @@ export function MobileNav() {
   const businessContext = useOptionalBusiness()
   const { openJoinModal, isJoinModalOpen } = useJoinBusinessModal()
   const { openCreateModal, isCreateModalOpen } = useCreateBusinessModal()
+  const { transfer: pendingTransfer } = usePendingTransferContext()
   const navRef = useRef<HTMLElement>(null)
 
   // Live route state (used for prefetch and for releasing the snapshot below
@@ -208,6 +210,11 @@ export function MobileNav() {
           const pathSegment = item.href.split('/').pop() ?? ''
           const label = NAV_LABEL_MAP[pathSegment] ?? item.label
 
+          const showTransferBadge =
+            pathSegment === 'manage' &&
+            businessContext?.isOwner === true &&
+            Boolean(pendingTransfer)
+
           return (
             <Link
               key={item.href}
@@ -215,7 +222,15 @@ export function MobileNav() {
               onClick={() => handleClick(item.href)}
               className={`mobile-nav-item ${isActive ? 'active' : ''}`}
             >
-              <Icon className="mobile-nav-icon" />
+              <span className="relative inline-flex">
+                <Icon className="mobile-nav-icon" />
+                {showTransferBadge && (
+                  <span
+                    className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-warning badge-pop-in"
+                    aria-hidden="true"
+                  />
+                )}
+              </span>
               <span>{label}</span>
             </Link>
           )

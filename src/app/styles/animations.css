@@ -24,6 +24,17 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+/* Pop-in with slight overshoot, used for nav notification badges. */
+@keyframes badge-pop-in {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.badge-pop-in {
+  transform-origin: center;
+  animation: badge-pop-in var(--duration-normal) var(--ease-out-back);
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

@@ -36,8 +36,7 @@ export interface UseIncomingTransferReturn {
  *
  * Lives outside the business context because the recipient may not yet
  * be a member of the business -- they only become one after the
- * transfer is completed. Used exclusively by the account page's
- * IncomingTransferCard.
+ * transfer is completed.
  *
  * On accept/decline the hook reloads the page so every context
  * (auth, business list, transfer state) picks up the new ownership

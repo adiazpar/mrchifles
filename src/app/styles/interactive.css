@@ -43,6 +43,36 @@
   padding: var(--space-4);
 }
 
+/* ===== Semantic Banners =====
+   Tappable card-style alerts whose bg is a tint of a semantic color.
+   On hover / held (via [data-pressed='true'] from data-tap-feedback)
+   the tint drops from 10% → 6% and the banner scales to 0.94, matching
+   the .btn tap-feedback signature. No border — the tint is the surface.
+   Modifier classes (`--warning`, `--error`, etc.) set --banner-color. */
+.banner-semantic {
+  background: color-mix(in oklab, var(--banner-color) 10%, transparent);
+  border: none;
+  transition: background var(--duration-fast) ease-out,
+              transform var(--duration-instant) ease-out;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .banner-semantic:hover {
+    background: color-mix(in oklab, var(--banner-color) 6%, transparent);
+  }
+}
+
+.banner-semantic:active,
+.banner-semantic[data-pressed='true'] {
+  background: color-mix(in oklab, var(--banner-color) 6%, transparent);
+  transform: scale(0.94);
+}
+
+.banner-semantic--warning { --banner-color: var(--color-warning); }
+.banner-semantic--error { --banner-color: var(--color-error); }
+
 .card-footer {
   padding: var(--space-4);
   border-top: 1px solid var(--color-border);
