@@ -18,7 +18,7 @@ export function MobileNav() {
   const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
-  const { pendingHref, setPendingHref, slideDirection } = usePageTransition()
+  const { pendingHref, setPendingHref } = usePageTransition()
   const businessContext = useOptionalBusiness()
   const { openJoinModal, isJoinModalOpen } = useJoinBusinessModal()
   const { openCreateModal, isCreateModalOpen } = useCreateBusinessModal()
@@ -59,18 +59,16 @@ export function MobileNav() {
     }
   }
 
-  // Mirror PageHeader's fade: instant hide while a cross-context pending nav
-  // or a slide transition is in flight, then fade back in over 100ms when the
-  // new context has settled. Keeps the navbar content in sync with the
-  // header content fade.
-  const isCrossContextNav = pendingHref && (
-    (isHubContext && !pendingHref.startsWith('/account') && !pendingHref.startsWith('/join')) ||
-    (!isHubContext && (pendingHref === '/' || pendingHref.startsWith('/account') || pendingHref.startsWith('/join')))
+  // Fade only when the icon group is about to change, i.e. cross-context
+  // transitions (hub <-> business). Within-context drill-downs keep the same
+  // icon set, so fading there would be motion without a reason.
+  const isCrossContextNav = Boolean(pendingHref) && (
+    (isHubContext && !pendingHref!.startsWith('/account') && !pendingHref!.startsWith('/join')) ||
+    (!isHubContext && (pendingHref === '/' || pendingHref!.startsWith('/account') || pendingHref!.startsWith('/join')))
   )
-  const shouldHide = isCrossContextNav || slideDirection !== null
   const contentFadeStyle = {
-    opacity: shouldHide ? 0 : 1,
-    transition: shouldHide ? 'none' : 'opacity 100ms ease-out',
+    opacity: isCrossContextNav ? 0 : 1,
+    transition: isCrossContextNav ? 'none' : 'opacity 100ms ease-out',
   }
 
   return (
