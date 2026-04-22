@@ -7,10 +7,15 @@ import { BUSINESS_TYPE_ICONS, BUSINESS_TYPE_FALLBACK_EMOJIS } from './businessTy
 
 function renderIcon(typeValue: string, isSelected: boolean) {
   const IconComponent = BUSINESS_TYPE_ICONS[typeValue]
-  if (IconComponent) {
-    return <IconComponent className={`w-8 h-8 ${isSelected ? 'text-brand' : 'text-text-secondary'}`} />
-  }
-  return <span className="text-2xl">{BUSINESS_TYPE_FALLBACK_EMOJIS[typeValue] || '💼'}</span>
+  return (
+    <div className="product-list-image">
+      {IconComponent ? (
+        <IconComponent className={`w-6 h-6 ${isSelected ? 'text-brand' : 'text-text-secondary'}`} />
+      ) : (
+        <span className="text-2xl">{BUSINESS_TYPE_FALLBACK_EMOJIS[typeValue] || '💼'}</span>
+      )}
+    </div>
+  )
 }
 
 export interface BusinessTypeGridProps {
@@ -38,7 +43,7 @@ export function BusinessTypeGrid({ selected, onSelect }: BusinessTypeGridProps) 
           onClick={() => onSelect(bt.value as BusinessType)}
           className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
             selected === bt.value
-              ? 'border-brand bg-brand-subtle'
+              ? 'border-brand bg-bg-elevated'
               : 'border-border hover:border-brand-300'
           }`}
         >

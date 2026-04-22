@@ -503,7 +503,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left data-[pressed='true']:bg-bg-muted"
             >
               {identityContent}
-              <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
+              <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
             </button>
           ) : (
             <div className="flex items-center gap-4">

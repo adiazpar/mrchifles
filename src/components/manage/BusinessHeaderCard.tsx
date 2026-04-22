@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
+import { ChevronRight } from 'lucide-react'
 import type { Business } from '@/contexts/business-context'
 import { BUSINESS_TYPE_ICONS } from '@/components/businesses/shared'
 
@@ -18,7 +19,7 @@ export function BusinessHeaderCard({ business, onTap }: BusinessHeaderCardProps)
 
   const content = (
     <div className="flex items-center gap-4 p-4">
-      <div className="w-14 h-14 rounded-2xl bg-brand-subtle flex items-center justify-center overflow-hidden flex-shrink-0">
+      <div className="w-14 h-14 rounded-2xl bg-bg-base flex items-center justify-center overflow-hidden flex-shrink-0">
         {isImageLogo ? (
           <Image
             src={business.icon!}
@@ -41,6 +42,9 @@ export function BusinessHeaderCard({ business, onTap }: BusinessHeaderCardProps)
           {business.locale} · {business.currency}
         </p>
       </div>
+      {onTap && (
+        <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+      )}
     </div>
   )
 

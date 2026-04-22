@@ -101,7 +101,7 @@ export default function AccountPage() {
             {user.email}
           </div>
         </div>
-        <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
+        <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
       </button>
 
       {/* Notifications: pending incoming ownership transfers (hides when none) */}

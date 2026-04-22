@@ -1,7 +1,7 @@
 'use client'
 
 import { Fragment, useEffect } from 'react'
-import { Plus, Truck, ShoppingCart, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Handshake, ShoppingCart, Pencil, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Spinner, SwipeableRow } from '@/components/ui'
 import { useProviderManagement } from '@/hooks'
@@ -184,7 +184,7 @@ export default function ProveedoresPage() {
           {/* Empty state - no providers at all */}
           {providers.length === 0 && (
             <div className="empty-state-fill">
-              <Truck className="empty-state-icon" />
+              <Handshake className="empty-state-icon" />
               <h3 className="empty-state-title">{t('empty_title')}</h3>
               <p className="empty-state-description">
                 {t('empty_description')}
