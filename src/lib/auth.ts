@@ -44,12 +44,21 @@ export function isValidTransferCode(code: string): boolean {
   return /^[A-Z0-9]{8}$/.test(code)
 }
 
+export type InviteDuration = '24h' | '7d' | '30d'
+
+const DURATION_MS: Record<InviteDuration, number> = {
+  '24h': 24 * 60 * 60 * 1000,
+  '7d': 7 * 24 * 60 * 60 * 1000,
+  '30d': 30 * 24 * 60 * 60 * 1000,
+}
+
 /**
- * Calculate invite code expiration (7 days from now)
+ * Calculate invite code expiration based on the chosen duration.
+ * Must stay aligned with the server's INVITE_EXPIRY_MIN_MS/MAX_MS bounds.
  */
-export function getInviteCodeExpiration(): Date {
+export function getInviteCodeExpiration(duration: InviteDuration = '7d'): Date {
   const date = new Date()
-  date.setDate(date.getDate() + 7)
+  date.setTime(date.getTime() + DURATION_MS[duration])
   return date
 }
 

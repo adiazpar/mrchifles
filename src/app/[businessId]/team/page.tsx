@@ -11,6 +11,7 @@ import { useNavbar } from '@/contexts/navbar-context'
 import { useTeamManagement } from '@/hooks'
 import {
   RoleSelectionContent,
+  DurationPicker,
   CodeGeneratedContent,
   UserDetailsStep,
   RoleChangeContent,
@@ -50,7 +51,10 @@ export default function TeamPage() {
     // Invite code state
     selectedRole,
     setSelectedRole,
+    selectedDuration,
+    setSelectedDuration,
     newCode,
+    newCodeExpiresAt,
     qrDataUrl,
     isGenerating,
     copyFeedback,
@@ -170,6 +174,12 @@ export default function TeamPage() {
             selectedRole={selectedRole}
             setSelectedRole={setSelectedRole}
           />
+          <Modal.Item>
+            <DurationPicker
+              selected={selectedDuration}
+              onSelect={setSelectedDuration}
+            />
+          </Modal.Item>
           <Modal.Footer>
             <Modal.CancelBackButton />
             <GenerateCodeButton
@@ -184,6 +194,7 @@ export default function TeamPage() {
             <CodeGeneratedContent
               selectedRole={selectedRole}
               newCode={newCode}
+              expiresAt={newCodeExpiresAt!}
               qrDataUrl={qrDataUrl}
               isGenerating={isGenerating}
               onRegenerate={handleRegenerateCode}

@@ -7,6 +7,9 @@ export type { RoleCardProps } from './RoleCard'
 export { RoleSelectionContent } from './RoleSelectionContent'
 export type { RoleSelectionContentProps } from './RoleSelectionContent'
 
+export { DurationPicker } from './DurationPicker'
+export type { DurationPickerProps } from './DurationPicker'
+
 export { CodeGeneratedContent } from './CodeGeneratedContent'
 export type { CodeGeneratedContentProps } from './CodeGeneratedContent'
 

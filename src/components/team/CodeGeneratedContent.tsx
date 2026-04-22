@@ -8,6 +8,7 @@ import type { InviteRole } from '@/types'
 export interface CodeGeneratedContentProps {
   selectedRole: InviteRole
   newCode: string
+  expiresAt: Date
   qrDataUrl: string | null
   isGenerating: boolean
   onRegenerate: () => Promise<void>
@@ -16,6 +17,7 @@ export interface CodeGeneratedContentProps {
 export function CodeGeneratedContent({
   selectedRole,
   newCode,
+  expiresAt,
   qrDataUrl,
   isGenerating,
   onRegenerate,
@@ -27,13 +29,20 @@ export function CodeGeneratedContent({
     employee: t('role_employee'),
   }
 
+  const msRemaining = expiresAt.getTime() - Date.now()
+  const hours = Math.max(0, Math.round(msRemaining / (60 * 60 * 1000)))
+  const days = Math.round(msRemaining / (24 * 60 * 60 * 1000))
+  const label = hours < 24
+    ? t('code_valid_hours', { hours })
+    : t('code_valid_days_n', { days })
+
   return (
     <Modal.Item>
       <div className="invite-success-compact">
         {/* Role badge and expiry */}
         <div className="flex items-center justify-center gap-3 mb-3">
           <Badge variant="brand">{roleLabels[selectedRole]}</Badge>
-          <span className="text-xs text-text-tertiary">{t('code_valid_days')}</span>
+          <span className="text-xs text-text-tertiary">{label}</span>
         </div>
 
         {/* QR Code */}

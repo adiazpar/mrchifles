@@ -9,6 +9,7 @@ import { useApiMessage } from '@/hooks/useApiMessage'
 import {
   generateInviteCode,
   getInviteCodeExpiration,
+  type InviteDuration,
 } from '@/lib/auth'
 import { generateInviteQRCode } from '@/lib/qr'
 import { isOwner } from '@/lib/business-role'
@@ -39,7 +40,10 @@ export interface UseTeamManagementReturn {
   // Invite code state
   selectedRole: InviteRole
   setSelectedRole: (role: InviteRole) => void
+  selectedDuration: InviteDuration
+  setSelectedDuration: (duration: InviteDuration) => void
   newCode: string | null
+  newCodeExpiresAt: Date | null
   generatedCodeId: string | null
   qrDataUrl: string | null
   isGenerating: boolean
@@ -107,7 +111,9 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedRole, setSelectedRole] = useState<InviteRole>('employee')
+  const [selectedDuration, setSelectedDuration] = useState<InviteDuration>('7d')
   const [newCode, setNewCode] = useState<string | null>(null)
+  const [newCodeExpiresAt, setNewCodeExpiresAt] = useState<Date | null>(null)
   const [generatedCodeId, setGeneratedCodeId] = useState<string | null>(null)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [error, setError] = useState('')
@@ -172,10 +178,11 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     setIsGenerating(true)
     setError('')
     setNewCode(null)
+    setNewCodeExpiresAt(null)
 
     try {
       const code = generateInviteCode()
-      const expiresAt = getInviteCodeExpiration()
+      const expiresAt = getInviteCodeExpiration(selectedDuration)
 
       const data = await apiPost<InviteCodeResponse>(
         `/api/businesses/${businessId}/invite/create`,
@@ -188,6 +195,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
 
       setGeneratedCodeId(data.id)
       setNewCode(code)
+      setNewCodeExpiresAt(expiresAt)
 
       // Generate QR code
       const qr = await generateInviteQRCode(code)
@@ -212,7 +220,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     } finally {
       setIsGenerating(false)
     }
-  }, [user, selectedRole, businessId, t, translateApiMessage])
+  }, [user, selectedRole, selectedDuration, businessId, t, translateApiMessage])
 
   const handleCopyCode = useCallback(async (code: string) => {
     try {
@@ -253,7 +261,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     try {
       // Delete old code and create new one
       const code = generateInviteCode()
-      const expiresAt = getInviteCodeExpiration()
+      const expiresAt = getInviteCodeExpiration(selectedDuration)
 
       const data = await apiPost<InviteCodeResponse>(
         `/api/businesses/${businessId}/invite/regenerate`,
@@ -268,6 +276,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       const oldCodeId = generatedCodeId
       setGeneratedCodeId(data.id)
       setNewCode(code)
+      setNewCodeExpiresAt(expiresAt)
 
       // Generate new QR
       const qr = await generateInviteQRCode(code)
@@ -292,7 +301,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     } finally {
       setIsGenerating(false)
     }
-  }, [user, generatedCodeId, selectedRole, businessId, t, translateApiMessage])
+  }, [user, generatedCodeId, selectedRole, selectedDuration, businessId, t, translateApiMessage])
 
   const handleDeleteCode = useCallback(async (): Promise<boolean> => {
     if (!generatedCodeId) return false
@@ -321,9 +330,11 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     setIsUserModalOpen(false)
     // Reset and open add member modal
     setNewCode(null)
+    setNewCodeExpiresAt(null)
     setGeneratedCodeId(null)
     setQrDataUrl(null)
     setSelectedRole('employee')
+    setSelectedDuration('7d')
     setError('')
     setIsModalOpen(true)
   }, [])
@@ -335,6 +346,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     setSelectedRole(code.role)
     setGeneratedCodeId(code.id)
     setNewCode(code.code)
+    setNewCodeExpiresAt(new Date(code.expiresAt))
     setError('')
     setIsModalOpen(true)
 
@@ -355,10 +367,12 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
   // Called after modal close animation completes
   const handleModalExitComplete = useCallback(() => {
     setNewCode(null)
+    setNewCodeExpiresAt(null)
     setGeneratedCodeId(null)
     setQrDataUrl(null)
     setError('')
     setSelectedRole('employee')
+    setSelectedDuration('7d')
     setCodeDeleted(false)
     // Clear copy feedback timer and state
     if (copyFeedbackTimerRef.current) {
@@ -449,7 +463,10 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     // Invite code state
     selectedRole,
     setSelectedRole,
+    selectedDuration,
+    setSelectedDuration,
     newCode,
+    newCodeExpiresAt,
     generatedCodeId,
     qrDataUrl,
     isGenerating,
