@@ -560,7 +560,7 @@
     "transfer_pending_expires_hours": "Expires in {hours}h",
     "transfer_pending_expires_minutes": "Expires in {minutes}m",
     "transfer_pending_expires_soon": "Expiring soon",
-    "transfer_cancel": "Cancel transfer",
+    "transfer_withdraw": "Withdraw",
     "transfer_pick_recipient_subtitle": "Choose a team member to become the new owner.",
     "transfer_enter_different_email": "Enter a different email",
     "transfer_recipient_must_have_account": "Recipient must already have a Kasero account.",

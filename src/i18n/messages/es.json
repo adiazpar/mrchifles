@@ -560,7 +560,7 @@
     "transfer_pending_expires_hours": "Vence en {hours}h",
     "transfer_pending_expires_minutes": "Vence en {minutes}m",
     "transfer_pending_expires_soon": "Por vencer",
-    "transfer_cancel": "Cancelar transferencia",
+    "transfer_withdraw": "Retirar",
     "transfer_pick_recipient_subtitle": "Elija un miembro del equipo para convertirse en el nuevo propietario.",
     "transfer_enter_different_email": "Ingrese un correo diferente",
     "transfer_recipient_must_have_account": "El destinatario debe tener una cuenta de Kasero.",

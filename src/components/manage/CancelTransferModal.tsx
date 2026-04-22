@@ -118,7 +118,7 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
             disabled={isCancelling}
             className="btn btn-secondary flex-1"
           >
-            {tCommon('close')}
+            {tCommon('cancel')}
           </button>
           <button
             type="button"
@@ -127,7 +127,7 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
             className="btn btn-primary flex-1"
             style={{ background: 'var(--color-error)' }}
           >
-            {isCancelling ? <Spinner size="sm" /> : t('transfer_cancel')}
+            {isCancelling ? <Spinner size="sm" /> : t('transfer_withdraw')}
           </button>
         </Modal.Footer>
       </Modal.Step>
