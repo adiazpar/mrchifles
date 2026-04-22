@@ -152,7 +152,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     setProviders,
     ensureLoaded: ensureProvidersLoaded,
   } = useProviders()
-  const { products } = useProducts()
+  const { products, ensureLoaded: ensureProductsLoaded } = useProducts()
   const allProviders = useMemo(
     () => allProvidersAll.filter(p => p.active),
     [allProvidersAll],
@@ -189,6 +189,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         apiRequest<ProviderDetailResponse>(`/api/businesses/${businessId}/providers/${providerId}`),
         ensureOrdersLoaded(),
         ensureProvidersLoaded(),
+        ensureProductsLoaded(),
       ])
       setProvider(detail.provider)
     } catch (err) {
@@ -200,7 +201,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsLoading(false)
     }
-  }, [businessId, providerId, ensureOrdersLoaded, ensureProvidersLoaded, t, translateApiMessage])
+  }, [businessId, providerId, ensureOrdersLoaded, ensureProvidersLoaded, ensureProductsLoaded, t, translateApiMessage])
 
   useEffect(() => { loadAll() }, [loadAll])
 

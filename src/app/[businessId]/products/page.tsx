@@ -279,7 +279,13 @@ export default function ProductosPage() {
   // mutation anywhere in the app updates these single sources of truth, so
   // e.g. the Orders tab automatically stays in sync with a provider
   // deletion from the provider detail page.
-  const { products, setProducts, isLoaded: productsLoaded, error: productsError } = useProducts()
+  const {
+    products,
+    setProducts,
+    isLoaded: productsLoaded,
+    error: productsError,
+    ensureLoaded: ensureProductsLoaded,
+  } = useProducts()
   const [isLoading, setIsLoading] = useState(() => !productsLoaded)
   const [error, setError] = useState('')
 
@@ -381,13 +387,15 @@ export default function ProductosPage() {
     canDelete,
   })
 
-  // Providers live in the shared context; ensureLoaded is idempotent so a
-  // previously-hydrated context is a no-op. Products are loaded by the
-  // ProductsProvider itself — nothing for this page to kick off.
+  // Products and providers both come from shared contexts. ensureLoaded is
+  // idempotent and lazy — no-ops after the first call per mount and a no-op
+  // across pages that already primed the cache. Orders load when the user
+  // switches to the Orders tab below.
   useEffect(() => {
     if (!businessId) return
+    ensureProductsLoaded()
     ensureProvidersLoaded()
-  }, [businessId, ensureProvidersLoaded])
+  }, [businessId, ensureProductsLoaded, ensureProvidersLoaded])
 
   // Lazy load orders when switching to orders tab (idempotent via context).
   useEffect(() => {

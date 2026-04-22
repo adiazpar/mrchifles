@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -59,6 +58,10 @@ export function ProvidersProvider({ businessId, children }: ProvidersProviderPro
   const [isLoaded, setIsLoaded] = useState(() => !!cache.current.get())
   const [error, setError] = useState('')
   const inFlight = useRef<Promise<void> | null>(null)
+  // Whether the first consumer on this mount has already triggered the
+  // SWR revalidation. Flips once and stays true for the life of the
+  // provider (a business switch remounts via key={businessId}).
+  const hasRevalidated = useRef(false)
 
   const setProviders = useCallback((updater: ProvidersUpdater) => {
     setProvidersState(prev => {
@@ -91,27 +94,25 @@ export function ProvidersProvider({ businessId, children }: ProvidersProviderPro
     }
   }, [businessId])
 
+  // Lazy load + stale-while-revalidate. The first consumer to call this per
+  // mount kicks off the fetch; subsequent callers either await the in-flight
+  // promise or no-op. When a sessionStorage cache hydrated the initial state
+  // we return immediately so consumers paint instantly, and revalidate in
+  // the background so a stale cache can't serve as ground truth.
   const ensureLoaded = useCallback((): Promise<void> => {
-    if (isLoaded) return Promise.resolve()
     if (inFlight.current) return inFlight.current
+    if (hasRevalidated.current) return Promise.resolve()
+    hasRevalidated.current = true
     inFlight.current = fetchProviders()
-    return inFlight.current
+    return isLoaded ? Promise.resolve() : inFlight.current
   }, [isLoaded, fetchProviders])
 
   const refetch = useCallback((): Promise<void> => {
     if (inFlight.current) return inFlight.current
+    hasRevalidated.current = true
     inFlight.current = fetchProviders()
     return inFlight.current
   }, [fetchProviders])
-
-  // Stale-while-revalidate: always refetch on mount. If sessionStorage
-  // hydrated us with a stale list (e.g. from a prior session where a
-  // mutation bypassed the cache), this overwrites it with ground truth.
-  // Cache is kept for instant first paint; it is not a source of truth.
-  useEffect(() => {
-    refetch()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   return (
     <ProvidersContext.Provider

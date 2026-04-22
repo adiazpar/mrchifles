@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { fetchDeduped } from '@/lib/fetch'
 import { useAuth } from '@/contexts/auth-context'
@@ -102,7 +102,18 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
   // the provider's in-memory state + session cache in sync, so every page
   // that reads useProducts() sees stock changes from the receive flow
   // without any caller-level plumbing.
-  const { products, refetch: refetchProducts } = useProducts()
+  const {
+    products,
+    ensureLoaded: ensureProductsLoaded,
+    refetch: refetchProducts,
+  } = useProducts()
+
+  // Every page using this hook (products, providers, provider detail) opens
+  // the new-order / order-detail modals that drive a product picker, so make
+  // sure products are loaded. ensureLoaded is idempotent across callers.
+  useEffect(() => {
+    ensureProductsLoaded()
+  }, [ensureProductsLoaded])
   // The new-order picker respects the user's Products-tab sort preference
   // (saved on the businesses row via useProductSettings). That way
   // whatever ordering the user curated on the Products page applies
