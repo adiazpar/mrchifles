@@ -8,8 +8,7 @@ import { Modal, Spinner } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { useUpdateBusiness } from '@/hooks/useUpdateBusiness'
 import { BUSINESS_TYPE_ICONS } from '@/components/businesses/shared'
-
-const MAX_LOGO_BYTES = 2 * 1024 * 1024
+import { MAX_UPLOAD_SIZE } from '@/lib/storage-client'
 
 interface Props { isOpen: boolean; onClose: () => void }
 
@@ -64,7 +63,7 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
       setUploadError(tCreate('logo_invalid_type'))
       return
     }
-    if (file.size > MAX_LOGO_BYTES) {
+    if (file.size > MAX_UPLOAD_SIZE) {
       setUploadError(tCreate('logo_too_large'))
       return
     }
@@ -96,7 +95,7 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
         <Modal.Item>
           <div className="flex justify-center">
             <div className="relative">
-              <div className="w-24 h-24 rounded-2xl bg-brand-subtle flex items-center justify-center overflow-hidden">
+              <div className="w-24 h-24 rounded-2xl bg-bg-base flex items-center justify-center overflow-hidden">
                 {displayPreview ? (
                   <Image
                     src={displayPreview}

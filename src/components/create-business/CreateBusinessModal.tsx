@@ -13,6 +13,7 @@ import {
   BUSINESS_TYPE_ICONS,
   BUSINESS_TYPE_FALLBACK_EMOJIS,
 } from '@/components/businesses/shared'
+import { MAX_UPLOAD_SIZE } from '@/lib/storage-client'
 
 interface CreateBusinessModalProps {
   createBusiness: UseCreateBusinessReturn
@@ -248,8 +249,6 @@ function getDefaultIconForType(businessType: BusinessType | null) {
   return <span className="text-5xl">{BUSINESS_TYPE_FALLBACK_EMOJIS[businessType] || '💼'}</span>
 }
 
-const MAX_LOGO_BYTES = 2 * 1024 * 1024
-
 function LogoUploadContent({
   businessType,
   logoPreview,
@@ -271,7 +270,7 @@ function LogoUploadContent({
       setUploadError(t('logo_invalid_type'))
       return
     }
-    if (file.size > MAX_LOGO_BYTES) {
+    if (file.size > MAX_UPLOAD_SIZE) {
       setUploadError(t('logo_too_large'))
       return
     }

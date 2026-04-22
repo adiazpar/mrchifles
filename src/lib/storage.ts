@@ -21,6 +21,7 @@ import {
   getBase64Size,
   validateIconSize,
   MAX_ICON_SIZE,
+  MAX_UPLOAD_SIZE,
 } from './storage-client'
 
 // Re-export the client-safe helpers so existing server consumers keep
@@ -31,6 +32,7 @@ export {
   getBase64Size,
   validateIconSize,
   MAX_ICON_SIZE,
+  MAX_UPLOAD_SIZE,
 }
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'

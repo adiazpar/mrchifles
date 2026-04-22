@@ -42,9 +42,17 @@ export function getBase64Size(base64: string): number {
 
 /**
  * Maximum icon size in bytes (100KB).
+ * Used for product icons (many small tiles stored as base64 data URLs).
  * Base64 adds ~33% overhead, so this allows ~75KB original images.
  */
 export const MAX_ICON_SIZE = 100 * 1024
+
+/**
+ * Maximum image upload size in bytes (2MB).
+ * Used for user avatars and business logos — single hero images per row,
+ * so the larger cap gives a more forgiving UX for phone-captured photos.
+ */
+export const MAX_UPLOAD_SIZE = 2 * 1024 * 1024
 
 /**
  * Validate that an icon is within size limits

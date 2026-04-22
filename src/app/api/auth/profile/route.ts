@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/lib/simple-auth'
 import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
-import { getBase64Size, MAX_ICON_SIZE } from '@/lib/storage'
+import { getBase64Size, MAX_UPLOAD_SIZE } from '@/lib/storage'
 
 const DATA_URL_IMAGE_REGEX = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/
 
@@ -22,8 +22,8 @@ const profileUpdateSchema = z.object({
  * PATCH /api/auth/profile
  *
  * Update the current user's profile. Accepts partial updates: name,
- * avatar, or both. Avatar is a base64 data URL (same pattern as product
- * icons) capped at 100KB decoded size.
+ * avatar, or both. Avatar is a base64 data URL capped at the shared
+ * MAX_UPLOAD_SIZE (2MB), matching the business logo upload limit.
  */
 export async function PATCH(request: NextRequest) {
   try {
@@ -46,7 +46,7 @@ export async function PATCH(request: NextRequest) {
       if (!DATA_URL_IMAGE_REGEX.test(avatar)) {
         return errorResponse(ApiMessageCode.USER_AVATAR_INVALID, 400)
       }
-      if (getBase64Size(avatar) > MAX_ICON_SIZE) {
+      if (getBase64Size(avatar) > MAX_UPLOAD_SIZE) {
         return errorResponse(ApiMessageCode.USER_AVATAR_TOO_LARGE, 400)
       }
     }

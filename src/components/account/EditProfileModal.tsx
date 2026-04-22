@@ -2,13 +2,13 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { Upload, Trash2 } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 import { Modal, Input, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { hasMessageEnvelope } from '@/lib/api-messages'
-import { fileToBase64, validateIconSize } from '@/lib/storage-client'
+import { fileToBase64, MAX_UPLOAD_SIZE } from '@/lib/storage-client'
 import { getUserInitials } from '@/lib/auth'
 
 export interface EditProfileModalProps {
@@ -55,13 +55,12 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
         setError(t('profile_avatar_invalid_type'))
         return
       }
+      if (file.size > MAX_UPLOAD_SIZE) {
+        setError(t('profile_avatar_too_large'))
+        return
+      }
       try {
         const dataUrl = await fileToBase64(file)
-        const { valid } = validateIconSize(dataUrl)
-        if (!valid) {
-          setError(t('profile_avatar_too_large'))
-          return
-        }
         setAvatar(dataUrl)
         setError('')
       } catch (err) {
@@ -133,41 +132,34 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
           )}
 
           {/* Avatar preview + actions */}
-          <div className="flex flex-col items-center gap-4 mb-6">
-            <div
-              className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden"
-              style={{ backgroundColor: 'var(--brand-100)', color: 'var(--brand-700)' }}
-            >
-              {avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatar} alt="" className="w-24 h-24 object-cover" />
-              ) : (
-                <span className="text-3xl font-semibold">
-                  {getUserInitials(name || user?.name || '')}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="btn btn-secondary btn-sm"
-              >
-                <Upload className="w-4 h-4" />
-                {avatar ? t('profile_avatar_change') : t('profile_avatar_upload')}
-              </button>
-              {avatar && (
-                <button
-                  type="button"
-                  onClick={handleRemoveAvatar}
-                  className="btn btn-ghost btn-sm text-error"
+          <div className="mb-6">
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <div
+                  className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden"
+                  style={{ backgroundColor: 'var(--brand-100)', color: 'var(--brand-700)' }}
                 >
-                  <Trash2 className="w-4 h-4" />
-                  {t('profile_avatar_remove')}
-                </button>
-              )}
+                  {avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatar} alt="" className="w-24 h-24 object-cover" />
+                  ) : (
+                    <span className="text-3xl font-semibold">
+                      {getUserInitials(name || user?.name || '')}
+                    </span>
+                  )}
+                </div>
+                {avatar && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center shadow-md hover:bg-error-hover transition-colors"
+                    aria-label={t('profile_avatar_remove')}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
-            <p className="text-xs text-text-tertiary">{t('profile_avatar_hint')}</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -175,6 +167,17 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
               className="hidden"
               onChange={handleFilePick}
             />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-border hover:border-brand hover:bg-brand-subtle transition-all text-text-secondary hover:text-brand"
+            >
+              <Upload className="w-5 h-5" />
+              <span className="text-sm font-medium">
+                {avatar ? t('profile_avatar_change') : t('profile_avatar_upload')}
+              </span>
+            </button>
+            <p className="text-xs text-text-tertiary text-center mt-2">{t('profile_avatar_hint')}</p>
           </div>
 
           {/* Name */}

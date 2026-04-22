@@ -7,8 +7,7 @@ import { db, businesses } from '@/db'
 import { eq } from 'drizzle-orm'
 import { getLocaleConfig } from '@/lib/locale-config'
 import { patchSchema } from './schema'
-
-const MAX_LOGO_BYTES = 2 * 1024 * 1024
+import { MAX_UPLOAD_SIZE } from '@/lib/storage'
 
 /**
  * GET /api/businesses/[businessId]
@@ -84,7 +83,7 @@ export const PATCH = withBusinessAuth(async (request, access) => {
     if (!logoFile.type.startsWith('image/')) {
       return errorResponse(ApiMessageCode.BUSINESS_UPDATE_LOGO_INVALID_TYPE, 400)
     }
-    if (logoFile.size > MAX_LOGO_BYTES) {
+    if (logoFile.size > MAX_UPLOAD_SIZE) {
       return errorResponse(ApiMessageCode.BUSINESS_UPDATE_LOGO_TOO_LARGE, 400)
     }
   }
