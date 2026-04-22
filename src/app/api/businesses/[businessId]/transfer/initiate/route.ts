@@ -1,5 +1,5 @@
 import { db, ownershipTransfers, users } from '@/db'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
@@ -51,6 +51,20 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   if (currentUser?.email === toEmail) {
     return errorResponse(ApiMessageCode.TRANSFER_CANNOT_SELF, 400)
+  }
+
+  // Verify a Kasero user with this email actually exists.
+  // We block "invite-via-transfer" because silent dead-ends (owner types the wrong
+  // email, transfer expires 24h later with nothing happening) are a worse UX than
+  // telling them up front to invite the person to the team first.
+  const [recipientUser] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(sql`LOWER(${users.email})`, toEmail.toLowerCase()))
+    .limit(1)
+
+  if (!recipientUser) {
+    return errorResponse(ApiMessageCode.TRANSFER_RECIPIENT_NOT_FOUND, 400)
   }
 
   // Check for existing pending transfer

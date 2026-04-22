@@ -823,6 +823,7 @@
     "invite_already_member": "You are already a member of this business",
     "transfer_forbidden_not_owner": "Only the owner can perform this action",
     "transfer_cannot_self": "You cannot transfer the business to yourself",
+    "transfer_recipient_not_found": "No one on Kasero has that email. Ask them to sign up first, then try again.",
     "transfer_pending_exists": "You already have a pending transfer. Cancel it first.",
     "transfer_not_found": "Transfer not found",
     "transfer_incorrect_password": "Incorrect password",

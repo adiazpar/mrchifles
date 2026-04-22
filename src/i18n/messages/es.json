@@ -823,6 +823,7 @@
     "invite_already_member": "Ya es miembro de este negocio",
     "transfer_forbidden_not_owner": "Solo el dueño puede realizar esta acción",
     "transfer_cannot_self": "No puede transferir el negocio a usted mismo",
+    "transfer_recipient_not_found": "Nadie en Kasero tiene ese correo. Pídele que se registre primero y vuelve a intentarlo.",
     "transfer_pending_exists": "Ya tiene una transferencia pendiente. Cancélela primero.",
     "transfer_not_found": "Transferencia no encontrada",
     "transfer_incorrect_password": "Contraseña incorrecta",
