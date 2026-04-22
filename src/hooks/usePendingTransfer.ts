@@ -5,12 +5,39 @@ import { useBusiness } from '@/contexts/business-context'
 import { fetchDeduped } from '@/lib/fetch'
 import { apiPost, ApiError } from '@/lib/api-client'
 import { useApiMessage } from './useApiMessage'
+import { scopedCache } from './useSessionCache'
 
 export interface PendingTransfer {
   code: string
   toEmail: string
   status: 'pending'
   expiresAt: string
+}
+
+const CACHE_KEY = 'pending_transfer'
+
+/**
+ * Reads the cached pending transfer for this business, filtering out
+ * entries whose expiry has already passed. Used to seed the hook's
+ * initial state so the banner and nav badge paint instantly on refresh
+ * instead of waiting for the network round trip.
+ */
+function readCachedTransfer(businessId: string | null): PendingTransfer | null {
+  if (!businessId) return null
+  const cached = scopedCache<PendingTransfer | null>(CACHE_KEY, businessId).get()
+  if (!cached) return null
+  if (new Date(cached.expiresAt).getTime() <= Date.now()) return null
+  return cached
+}
+
+function writeCachedTransfer(
+  businessId: string | null,
+  transfer: PendingTransfer | null,
+): void {
+  if (!businessId) return
+  const cache = scopedCache<PendingTransfer | null>(CACHE_KEY, businessId)
+  if (transfer) cache.set(transfer)
+  else cache.clear()
 }
 
 export interface UsePendingTransferReturn {
@@ -25,7 +52,11 @@ export interface UsePendingTransferReturn {
 export function usePendingTransfer(): UsePendingTransferReturn {
   const { businessId, isOwner } = useBusiness()
   const translateApiMessage = useApiMessage()
-  const [transfer, setTransfer] = useState<PendingTransfer | null>(null)
+  // Seed from sessionStorage so a refresh paints the banner/badge
+  // immediately; the useEffect below still revalidates over the network.
+  const [transfer, setTransfer] = useState<PendingTransfer | null>(() =>
+    readCachedTransfer(businessId),
+  )
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [isCancelling, setIsCancelling] = useState(false)
@@ -33,6 +64,7 @@ export function usePendingTransfer(): UsePendingTransferReturn {
   const refresh = useCallback(async () => {
     if (!businessId || !isOwner) {
       setTransfer(null)
+      writeCachedTransfer(businessId, null)
       setIsLoading(false)
       return
     }
@@ -40,10 +72,13 @@ export function usePendingTransfer(): UsePendingTransferReturn {
     try {
       const res = await fetchDeduped(`/api/businesses/${businessId}/transfer/pending`)
       const data = await res.json()
-      setTransfer(res.ok ? (data.transfer ?? null) : null)
+      const next: PendingTransfer | null = res.ok ? (data.transfer ?? null) : null
+      setTransfer(next)
+      writeCachedTransfer(businessId, next)
     } catch (err) {
       console.error('Fetch pending transfer error:', err)
       setTransfer(null)
+      writeCachedTransfer(businessId, null)
     } finally {
       setIsLoading(false)
     }
@@ -60,6 +95,7 @@ export function usePendingTransfer(): UsePendingTransferReturn {
     try {
       await apiPost(`/api/businesses/${businessId}/transfer/cancel`, { code: transfer.code })
       setTransfer(null)
+      writeCachedTransfer(businessId, null)
     } catch (err) {
       console.error('Cancel transfer error:', err)
       setError(
