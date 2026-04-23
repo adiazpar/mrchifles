@@ -94,41 +94,51 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     updateData.providerId = providerId || null
   }
 
-  await db
-    .update(orders)
-    .set(updateData)
-    .where(eq(orders.id, id))
-
-  // Update items if provided
+  // Parse + validate the optional items array BEFORE opening the batch
+  // so validation errors can still short-circuit with a 400.
+  let itemRowsToInsert: Array<{
+    id: string
+    orderId: string
+    productId: string
+    productName: string
+    quantity: number
+    unitCost: number | null
+    subtotal: number | null
+  }> | null = null
   if (itemsJson) {
-    let items: Array<{ productId: string; productName: string; quantity: number; unitCost?: number | null }>
+    let parsed: Array<{ productId: string; productName: string; quantity: number; unitCost?: number | null }>
     try {
-      items = JSON.parse(itemsJson)
-      const validation = z.array(orderItemSchema).safeParse(items)
+      parsed = JSON.parse(itemsJson)
+      const validation = z.array(orderItemSchema).safeParse(parsed)
       if (!validation.success) {
         return errorResponse(ApiMessageCode.ORDER_INVALID_ITEMS, 400)
       }
     } catch {
       return errorResponse(ApiMessageCode.ORDER_INVALID_ITEMS, 400)
     }
-
-    // Delete existing items and insert new ones
-    await db.delete(orderItems).where(eq(orderItems.orderId, id))
-
-    if (items.length > 0) {
-      await db.insert(orderItems).values(
-        items.map(item => ({
-          id: nanoid(),
-          orderId: id,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          unitCost: item.unitCost ?? null,
-          subtotal: item.unitCost != null ? Number((item.unitCost * item.quantity).toFixed(2)) : null,
-        }))
-      )
-    }
+    itemRowsToInsert = parsed.map(item => ({
+      id: nanoid(),
+      orderId: id,
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitCost: item.unitCost ?? null,
+      subtotal: item.unitCost != null ? Number((item.unitCost * item.quantity).toFixed(2)) : null,
+    }))
   }
+
+  // Run the order UPDATE and any items rewrite atomically, so a failure
+  // after the order changes can't leave the row pointing at stale items.
+  // Literal array + spread lets TS infer the mixed-statement tuple type.
+  await db.batch([
+    db.update(orders).set(updateData).where(eq(orders.id, id)),
+    ...(itemRowsToInsert !== null
+      ? [db.delete(orderItems).where(eq(orderItems.orderId, id))]
+      : []),
+    ...(itemRowsToInsert !== null && itemRowsToInsert.length > 0
+      ? [db.insert(orderItems).values(itemRowsToInsert)]
+      : []),
+  ])
 
   return successResponse({})
 })

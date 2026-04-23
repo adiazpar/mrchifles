@@ -151,12 +151,16 @@ export const DELETE = withBusinessAuth(async (_request, access, routeParams) => 
     return errorResponse(ApiMessageCode.PROVIDER_NOT_FOUND, 404)
   }
 
-  await db
-    .update(orders)
-    .set({ providerId: null })
-    .where(and(eq(orders.providerId, id), eq(orders.businessId, access.businessId)))
-
-  await db.delete(providers).where(eq(providers.id, id))
+  // Atomic: null out any orders pointing at this provider, then delete
+  // the provider. Previously sequential, so a failure between the two
+  // steps could orphan orders referencing a non-existent provider.
+  await db.batch([
+    db
+      .update(orders)
+      .set({ providerId: null })
+      .where(and(eq(orders.providerId, id), eq(orders.businessId, access.businessId))),
+    db.delete(providers).where(eq(providers.id, id)),
+  ])
 
   return successResponse({})
 })

@@ -56,34 +56,46 @@ export const POST = withBusinessAuth(async (request, access, routeParams) => {
 
   const now = new Date()
 
-  // Update product stock AND persist receivedQuantity for each item
+  // Build every write up front, then run as a single atomic batch.
+  // This collapses (2N+1) round trips (per-item item UPDATE + stock
+  // UPDATE + final order UPDATE) into 1, and eliminates the
+  // mid-loop failure mode where stock was bumped but the order's
+  // status was never flipped.
+  const statements = []
   for (const item of items) {
     const receivedQty = receivedQuantities[item.id] ?? item.quantity
 
-    await db
-      .update(orderItems)
-      .set({ receivedQuantity: receivedQty })
-      .where(eq(orderItems.id, item.id))
+    statements.push(
+      db
+        .update(orderItems)
+        .set({ receivedQuantity: receivedQty })
+        .where(eq(orderItems.id, item.id)),
+    )
 
     if (receivedQty > 0 && item.productId) {
-      await db
-        .update(products)
-        .set({
-          stock: sql`${products.stock} + ${receivedQty}`,
-        })
-        .where(eq(products.id, item.productId))
+      statements.push(
+        db
+          .update(products)
+          .set({
+            stock: sql`${products.stock} + ${receivedQty}`,
+          })
+          .where(eq(products.id, item.productId)),
+      )
     }
   }
 
-  // Update order status + stamp who did the receiving.
-  await db
-    .update(orders)
-    .set({
-      status: 'received',
-      receivedDate: now,
-      receivedByUserId: access.userId,
-    })
-    .where(eq(orders.id, id))
+  statements.push(
+    db
+      .update(orders)
+      .set({
+        status: 'received',
+        receivedDate: now,
+        receivedByUserId: access.userId,
+      })
+      .where(eq(orders.id, id)),
+  )
+
+  await db.batch(statements as [typeof statements[0], ...typeof statements[0][]])
 
   return successResponse({})
 })

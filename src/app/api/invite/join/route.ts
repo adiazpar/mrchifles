@@ -84,25 +84,28 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Create business_users membership
+    // Create membership + mark invite as used atomically. Previously two
+    // sequential writes — if the membership insert succeeded but the
+    // invite update failed, the code would stay usable and the same
+    // person (or a friend with the code) could join again.
     const membershipId = nanoid()
-    await db.insert(businessUsers).values({
-      id: membershipId,
-      userId: user.userId,
-      businessId: invite.businessId,
-      role: invite.role,
-      status: 'active',
-      createdAt: now,
-    })
-
-    // Mark invite code as used
-    await db
-      .update(inviteCodes)
-      .set({
-        usedBy: user.userId,
-        usedAt: now,
-      })
-      .where(eq(inviteCodes.id, invite.id))
+    await db.batch([
+      db.insert(businessUsers).values({
+        id: membershipId,
+        userId: user.userId,
+        businessId: invite.businessId,
+        role: invite.role,
+        status: 'active',
+        createdAt: now,
+      }),
+      db
+        .update(inviteCodes)
+        .set({
+          usedBy: user.userId,
+          usedAt: now,
+        })
+        .where(eq(inviteCodes.id, invite.id)),
+    ])
 
     return NextResponse.json({
       success: true,

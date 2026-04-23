@@ -1,5 +1,5 @@
 import { db, productCategories, products, businesses } from '@/db'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
@@ -96,28 +96,24 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
     return errorResponse(ApiMessageCode.CATEGORY_NOT_FOUND, 404)
   }
 
-  // Get count of products using this category for the response
-  const productsWithCategory = await db
-    .select()
+  // Narrow count aggregate instead of pulling every product row (which
+  // includes the base64 icon column — MBs of bandwidth per call on
+  // larger catalogs).
+  const [countRow] = await db
+    .select({ count: sql<number>`count(*)` })
     .from(products)
     .where(eq(products.categoryId, id))
+  const affectedProducts = Number(countRow?.count ?? 0)
 
-  // Clear categoryId from products
-  await db
-    .update(products)
-    .set({ categoryId: null })
-    .where(eq(products.categoryId, id))
+  // Atomic batch: null out the categoryId on products, null out the
+  // defaultCategoryId on the business if set, then delete the category
+  // itself. Non-atomic sequential writes could previously leave the
+  // business pointing at a soon-to-be-deleted category.
+  await db.batch([
+    db.update(products).set({ categoryId: null }).where(eq(products.categoryId, id)),
+    db.update(businesses).set({ defaultCategoryId: null }).where(eq(businesses.defaultCategoryId, id)),
+    db.delete(productCategories).where(eq(productCategories.id, id)),
+  ])
 
-  // Clear defaultCategoryId from business if this was the default
-  await db
-    .update(businesses)
-    .set({ defaultCategoryId: null })
-    .where(eq(businesses.defaultCategoryId, id))
-
-  // Delete the category
-  await db
-    .delete(productCategories)
-    .where(eq(productCategories.id, id))
-
-  return successResponse({ affectedProducts: productsWithCategory.length })
+  return successResponse({ affectedProducts })
 })

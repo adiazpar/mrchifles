@@ -123,23 +123,25 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Clean up FK references that don't cascade
-    await db
-      .update(inviteCodes)
-      .set({ usedBy: null })
-      .where(eq(inviteCodes.usedBy, session.userId))
-
-    await db
-      .delete(ownershipTransfers)
-      .where(eq(ownershipTransfers.fromUser, session.userId))
-
-    await db
-      .update(ownershipTransfers)
-      .set({ toUser: null })
-      .where(eq(ownershipTransfers.toUser, session.userId))
-
-    // Delete user (business_users entries cascade automatically)
-    await db.delete(users).where(eq(users.id, session.userId))
+    // All FK cleanup + the final users delete run atomically.
+    // Previously four sequential writes; a mid-flight failure left the
+    // user half-deleted (memberships cascaded but invite/transfer
+    // references still pointed at a now-missing row).
+    await db.batch([
+      db
+        .update(inviteCodes)
+        .set({ usedBy: null })
+        .where(eq(inviteCodes.usedBy, session.userId)),
+      db
+        .delete(ownershipTransfers)
+        .where(eq(ownershipTransfers.fromUser, session.userId)),
+      db
+        .update(ownershipTransfers)
+        .set({ toUser: null })
+        .where(eq(ownershipTransfers.toUser, session.userId)),
+      // business_users entries cascade via FK when the user row is deleted.
+      db.delete(users).where(eq(users.id, session.userId)),
+    ])
 
     // Drop every cached BusinessAccess that referenced this user. Even
     // though the JWT is cleared below, a lingering or leaked token could

@@ -1,5 +1,5 @@
 import { db, productCategories } from '@/db'
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, and, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
@@ -30,30 +30,31 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   const { categoryIds } = validation.data
 
-  // Verify all categories belong to this business
-  const existingCategories = await db
-    .select({ id: productCategories.id })
-    .from(productCategories)
+  // Verify all categories belong to this business, then apply every
+  // reorder in a single UPDATE ... CASE. The CASE form is one atomic
+  // round trip regardless of list length, replacing the old
+  // Promise.all of N individual UPDATEs that each cost a round trip
+  // and left the list half-reordered on mid-sequence failure.
+  const cases = sql.join(
+    categoryIds.map((id, idx) => sql`WHEN ${id} THEN ${idx + 1}`),
+    sql` `,
+  )
+
+  const result = await db
+    .update(productCategories)
+    .set({ sortOrder: sql`CASE ${productCategories.id} ${cases} END` })
     .where(and(
       inArray(productCategories.id, categoryIds),
-      eq(productCategories.businessId, access.businessId)
+      eq(productCategories.businessId, access.businessId),
     ))
+    .returning({ id: productCategories.id })
 
-  if (existingCategories.length !== categoryIds.length) {
+  // If fewer rows updated than IDs passed, at least one category was
+  // either missing or belonged to another business — reject the whole
+  // reorder.
+  if (result.length !== categoryIds.length) {
     return errorResponse(ApiMessageCode.CATEGORIES_NOT_FOUND_IN_BUSINESS, 400)
   }
-
-  // Update sort order for each category
-  await Promise.all(
-    categoryIds.map((id, index) =>
-      db
-        .update(productCategories)
-        .set({
-          sortOrder: index + 1,
-        })
-        .where(eq(productCategories.id, id))
-    )
-  )
 
   return successResponse({})
 })
