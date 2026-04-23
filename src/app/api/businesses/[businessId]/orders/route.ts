@@ -26,12 +26,16 @@ export const GET = withBusinessAuth(async (request, access) => {
     ? and(eq(orders.businessId, access.businessId), eq(orders.providerId, providerIdFilter))
     : eq(orders.businessId, access.businessId)
 
-  // Get all orders for this business
+  // Get orders for this business. 500 is the defensive cap — a small
+  // business rarely accumulates more pending/recent orders than the UI
+  // can meaningfully render at once. The downstream items/products/users
+  // hydrations are then bounded by this slice.
   const ordersList = await db
     .select()
     .from(orders)
     .where(whereClause)
     .orderBy(desc(orders.date))
+    .limit(500)
 
   const orderIds = ordersList.map(o => o.id)
 

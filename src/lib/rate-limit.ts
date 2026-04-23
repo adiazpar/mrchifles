@@ -128,4 +128,17 @@ export const RateLimits = {
    * account enumeration via the recipient-email lookup.
    */
   transferInitiate: { limit: 5, windowSeconds: 15 * 60 },
+  /**
+   * Business-scoped mutations (POST/PATCH/DELETE under
+   * /api/businesses/[businessId]/**): 200 per minute per (user, business).
+   * Generous for real workloads — bulk product onboarding from AI snap is
+   * well under this — but tight enough to cap malicious delete loops.
+   */
+  businessMutation: { limit: 200, windowSeconds: 60 },
+  /**
+   * User-scoped mutations that aren't business-scoped (invite/join,
+   * transfer/decline): 30 per minute per user. Legit paths are called
+   * interactively and never in bulk.
+   */
+  userMutation: { limit: 30, windowSeconds: 60 },
 } as const

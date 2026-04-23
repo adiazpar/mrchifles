@@ -3,9 +3,10 @@ import { db, ownershipTransfers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { validationError, errorResponse, successResponse, applyRateLimit } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
+import { RateLimits } from '@/lib/rate-limit'
 
 const declineSchema = z.object({
   code: Schemas.code(),
@@ -28,6 +29,15 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
+
+    // Transfer codes are 6 chars; /accept is already rate-limited, and
+    // /decline is too — without this cap an attacker with a valid code
+    // could flip pending transfers to cancelled at will.
+    const rateLimited = applyRateLimit(
+      `transfer-decline:${user.userId}`,
+      RateLimits.userMutation,
+    )
+    if (rateLimited) return rateLimited
 
     const body = await request.json()
     const validation = declineSchema.safeParse(body)

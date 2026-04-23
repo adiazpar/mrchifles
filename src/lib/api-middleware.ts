@@ -11,7 +11,7 @@ import { z } from 'zod'
 import { requireBusinessAccess, type BusinessAccess } from './business-auth'
 import { ApiMessageCode, type ApiMessageEnvelope } from './api-messages'
 import { getCurrentUser, type JWTPayload } from './simple-auth'
-import { checkRateLimit, type RateLimitConfig } from './rate-limit'
+import { checkRateLimit, RateLimits, type RateLimitConfig } from './rate-limit'
 
 // ============================================
 // ROUTE PARAMETER TYPES
@@ -148,6 +148,19 @@ export function withBusinessAuth(handler: BusinessRouteHandler) {
       const resolvedParams = await params
       const { businessId, ...restParams } = resolvedParams
       const access = await requireBusinessAccess(businessId)
+
+      // Rate-limit writes per (user, business). Reads are unbounded so
+      // legit polling / navigation never hits 429, but POST/PATCH/DELETE
+      // caps out at RateLimits.businessMutation. Keyed per-business so a
+      // partner in two businesses doesn't contend with themselves.
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        const rateLimited = applyRateLimit(
+          `mutate:${access.userId}:${access.businessId}`,
+          RateLimits.businessMutation,
+        )
+        if (rateLimited) return rateLimited
+      }
+
       return await handler(request, access, restParams)
     } catch (error) {
       if (error instanceof Error && error.message.includes('Unauthorized')) {

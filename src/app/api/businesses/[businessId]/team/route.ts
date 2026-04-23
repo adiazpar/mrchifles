@@ -9,7 +9,8 @@ import { withBusinessAuth, successResponse } from '@/lib/api-middleware'
  * Get team members and active invite codes for the business.
  */
 export const GET = withBusinessAuth(async (_request, access) => {
-  // Get all team members for this business via business_users join
+  // Team members via business_users join. 100 is a defensive cap; the
+  // target audience has <10 teammates per business.
   const teamMembers = await db
     .select({
       id: users.id,
@@ -22,6 +23,7 @@ export const GET = withBusinessAuth(async (_request, access) => {
     .from(businessUsers)
     .innerJoin(users, eq(businessUsers.userId, users.id))
     .where(eq(businessUsers.businessId, access.businessId))
+    .limit(100)
 
   // Get active (unused, non-expired) invite codes if user is owner
   let activeInviteCodes: Array<{
@@ -48,6 +50,7 @@ export const GET = withBusinessAuth(async (_request, access) => {
           gt(inviteCodes.expiresAt, now)
         )
       )
+      .limit(100)
   }
 
   return successResponse({

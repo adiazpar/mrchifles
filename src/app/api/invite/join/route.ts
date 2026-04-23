@@ -4,9 +4,10 @@ import { eq, and, gt, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError, errorResponse } from '@/lib/api-middleware'
+import { validationError, errorResponse, applyRateLimit } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
+import { RateLimits } from '@/lib/rate-limit'
 
 const joinSchema = z.object({
   code: Schemas.code(),
@@ -25,6 +26,14 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
+
+    // Cap join attempts — a 6-char invite code is a brute-force surface
+    // even with /validate limited, so the join itself needs its own gate.
+    const rateLimited = applyRateLimit(
+      `join:${user.userId}`,
+      RateLimits.userMutation,
+    )
+    if (rateLimited) return rateLimited
 
     const body = await request.json()
     const validation = joinSchema.safeParse(body)

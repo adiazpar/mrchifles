@@ -23,10 +23,13 @@ export const GET = withBusinessAuth(async (request, access) => {
   const { searchParams } = new URL(request.url)
   const activeOnly = searchParams.get('active') === 'true'
 
+  // Defensive cap. Real businesses maintain tens of providers; 500 gives
+  // ample headroom while bounding the response shape.
   const providersList = await db
     .select()
     .from(providers)
     .where(eq(providers.businessId, access.businessId))
+    .limit(500)
 
   const filtered = activeOnly
     ? providersList.filter(p => p.active)

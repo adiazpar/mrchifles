@@ -17,11 +17,13 @@ const createCategorySchema = z.object({
  * List all product categories for the business.
  */
 export const GET = withBusinessAuth(async (_request, access) => {
+  // Defensive cap. Real businesses use ~5-20 categories; 200 is 10× that.
   const categories = await db
     .select()
     .from(productCategories)
     .where(eq(productCategories.businessId, access.businessId))
     .orderBy(asc(productCategories.sortOrder), asc(productCategories.name))
+    .limit(200)
 
   return successResponse({ categories })
 })

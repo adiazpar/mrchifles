@@ -46,7 +46,9 @@ export const GET = withBusinessAuth(async (_request, access, routeParams) => {
 
   // Notes list is embedded in the provider-detail response so a single
   // fetch hydrates everything the detail page renders. Newest-first by
-  // createdAt — list order is stable across edits.
+  // createdAt — list order is stable across edits. The POST route caps
+  // at MAX_PROVIDER_NOTES (5); the 50 limit here is belt-and-braces in
+  // case the cap was ever bypassed.
   const notes = await db
     .select()
     .from(providerNotes)
@@ -55,6 +57,7 @@ export const GET = withBusinessAuth(async (_request, access, routeParams) => {
       eq(providerNotes.businessId, access.businessId),
     ))
     .orderBy(desc(providerNotes.createdAt))
+    .limit(50)
 
   return successResponse({
     provider: { ...provider, notes },
@@ -120,6 +123,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
       eq(providerNotes.businessId, access.businessId),
     ))
     .orderBy(desc(providerNotes.createdAt))
+    .limit(50)
 
   return successResponse({ provider: { ...updated, notes } })
 })

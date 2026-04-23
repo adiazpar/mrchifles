@@ -43,10 +43,14 @@ export const GET = withBusinessAuth(async (request, access) => {
     conditions.push(eq(products.barcode, barcodeParam))
   }
 
+  // Defensive cap — a small business never legitimately exposes 500+
+  // products on one list call; pathological inserts (malicious or bugged)
+  // can't drag the bandwidth / parse cost past this ceiling.
   const productsList = await db
     .select()
     .from(products)
     .where(and(...conditions))
+    .limit(500)
 
   return successResponse({ products: productsList })
 })
