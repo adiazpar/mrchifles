@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useRef, ReactNode, Suspense } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, ReactNode, Suspense } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useJoinBusiness } from '@/hooks'
 import { JoinBusinessModal } from '@/components/join'
@@ -66,10 +66,15 @@ function JoinBusinessProviderInner({ children }: JoinBusinessProviderProps) {
     }
   }, [joinBusiness.isOpen])
 
-  const value: JoinBusinessContextValue = {
-    openJoinModal: joinBusiness.handleOpen,
-    isJoinModalOpen: joinBusiness.isOpen,
-  }
+  // Memoize so consumers (MobileNav, hub header) don't re-render on
+  // every joinBusiness state tick.
+  const value = useMemo<JoinBusinessContextValue>(
+    () => ({
+      openJoinModal: joinBusiness.handleOpen,
+      isJoinModalOpen: joinBusiness.isOpen,
+    }),
+    [joinBusiness.handleOpen, joinBusiness.isOpen],
+  )
 
   return (
     <JoinBusinessContext.Provider value={value}>

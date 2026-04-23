@@ -1,7 +1,7 @@
 // src/components/ui/modal/ModalContext.tsx
 'use client'
 
-import { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo, ReactNode } from 'react'
 import type { ModalContextValue, Phase, Direction } from './types'
 import { TIMING } from './types'
 
@@ -144,32 +144,60 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
     onClose()
   }, [isLocked, phase, onClose])
 
-  const value: ModalContextValue = {
-    currentStep,
-    targetStep,
-    stepCount,
-    isFirstStep: currentStep === initialStep,
-    isLastStep: currentStep === stepCount - 1,
-    isLocked,
-    isTransitioning: phase !== 'idle',
-    phase,
-    direction,
-    goNext,
-    goBack,
-    goToStep,
-    lock,
-    unlock,
-    _registerStep,
-    _unregisterStep,
-    _onClose,
-    _initialStep: initialStep,
-    _currentStepHideBackButton: currentStepHideBackButton,
-    _setCurrentStepHideBackButton: setCurrentStepHideBackButton,
-    _currentStepBackStep: currentStepBackStep,
-    _setCurrentStepBackStep: setCurrentStepBackStep,
-    _currentStepOnBackStep: currentStepOnBackStep,
-    _setCurrentStepOnBackStep: setCurrentStepOnBackStep,
-  }
+  // Memoize — this was the worst offender identified by the audit: a
+  // 20-field value rebuilt on every phase tick during transitions, with
+  // high fan-out (every Modal.Step / Modal.Item / header / footer
+  // subscribes). The dep list mirrors the object exactly; setCurrentStep*
+  // setters from useState are stable references.
+  const value = useMemo<ModalContextValue>(
+    () => ({
+      currentStep,
+      targetStep,
+      stepCount,
+      isFirstStep: currentStep === initialStep,
+      isLastStep: currentStep === stepCount - 1,
+      isLocked,
+      isTransitioning: phase !== 'idle',
+      phase,
+      direction,
+      goNext,
+      goBack,
+      goToStep,
+      lock,
+      unlock,
+      _registerStep,
+      _unregisterStep,
+      _onClose,
+      _initialStep: initialStep,
+      _currentStepHideBackButton: currentStepHideBackButton,
+      _setCurrentStepHideBackButton: setCurrentStepHideBackButton,
+      _currentStepBackStep: currentStepBackStep,
+      _setCurrentStepBackStep: setCurrentStepBackStep,
+      _currentStepOnBackStep: currentStepOnBackStep,
+      _setCurrentStepOnBackStep: setCurrentStepOnBackStep,
+    }),
+    [
+      currentStep,
+      targetStep,
+      stepCount,
+      initialStep,
+      isLocked,
+      phase,
+      direction,
+      goNext,
+      goBack,
+      goToStep,
+      lock,
+      unlock,
+      _registerStep,
+      _unregisterStep,
+      _onClose,
+      currentStepHideBackButton,
+      currentStepBackStep,
+      currentStepOnBackStep,
+      setCurrentStepOnBackStep,
+    ],
+  )
 
   return (
     <ModalContext.Provider value={value}>

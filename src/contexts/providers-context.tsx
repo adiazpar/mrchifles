@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -114,10 +115,15 @@ export function ProvidersProvider({ businessId, children }: ProvidersProviderPro
     return inFlight.current
   }, [fetchProviders])
 
+  // Memoize so consumers only re-render on meaningful changes. Mirrors
+  // the OrdersContext / ProductsContext pattern; same fan-out concern.
+  const value = useMemo<ProvidersContextValue>(
+    () => ({ providers, setProviders, isLoading, isLoaded, error, ensureLoaded, refetch }),
+    [providers, setProviders, isLoading, isLoaded, error, ensureLoaded, refetch],
+  )
+
   return (
-    <ProvidersContext.Provider
-      value={{ providers, setProviders, isLoading, isLoaded, error, ensureLoaded, refetch }}
-    >
+    <ProvidersContext.Provider value={value}>
       {children}
     </ProvidersContext.Provider>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { usePendingTransfer, type UsePendingTransferReturn } from '@/hooks/usePendingTransfer'
 
 const PendingTransferContext = createContext<UsePendingTransferReturn | null>(null)
@@ -17,7 +17,15 @@ const PendingTransferContext = createContext<UsePendingTransferReturn | null>(nu
  * mounting this provider broadly is cheap.
  */
 export function PendingTransferProvider({ children }: { children: ReactNode }) {
-  const value = usePendingTransfer()
+  // The hook returns a fresh object literal on every render, so the
+  // provider value would be a new reference each tick without this
+  // memo. Destructuring + field deps yields a stable value when the
+  // underlying fields (all useCallback / useState) haven't changed.
+  const { transfer, isLoading, error, isCancelling, cancel, refresh } = usePendingTransfer()
+  const value = useMemo<UsePendingTransferReturn>(
+    () => ({ transfer, isLoading, error, isCancelling, cancel, refresh }),
+    [transfer, isLoading, error, isCancelling, cancel, refresh],
+  )
   return (
     <PendingTransferContext.Provider value={value}>
       {children}

@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -116,10 +117,18 @@ export function OrdersProvider({ businessId, children }: OrdersProviderProps) {
     return inFlight.current
   }, [fetchOrders])
 
+  // Memoize the context value so consumers only re-render when one of
+  // these fields actually changes. Without this, every provider render
+  // rebuilds the object and fans out a re-render to every useOrders()
+  // consumer — meaningful because the Products page, provider detail
+  // page, and Orders tab all subscribe.
+  const value = useMemo<OrdersContextValue>(
+    () => ({ orders, setOrders, isLoading, isLoaded, error, ensureLoaded, refetch }),
+    [orders, setOrders, isLoading, isLoaded, error, ensureLoaded, refetch],
+  )
+
   return (
-    <OrdersContext.Provider
-      value={{ orders, setOrders, isLoading, isLoaded, error, ensureLoaded, refetch }}
-    >
+    <OrdersContext.Provider value={value}>
       {children}
     </OrdersContext.Provider>
   )

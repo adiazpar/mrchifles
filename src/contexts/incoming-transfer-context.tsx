@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import {
   useIncomingTransfer,
   type UseIncomingTransferReturn,
@@ -19,7 +19,23 @@ const IncomingTransferContext = createContext<UseIncomingTransferReturn | null>(
  * above BusinessProvider.
  */
 export function IncomingTransferProvider({ children }: { children: ReactNode }) {
-  const value = useIncomingTransfer()
+  // Stabilize the value against the hook returning a fresh literal each
+  // render. This context's consumers are numerous — avatar badge,
+  // menu badge, nav badge, two different banner positions — so a
+  // per-render reference change is visibly expensive.
+  const {
+    transfer,
+    isLoading,
+    error,
+    isAccepting,
+    isDeclining,
+    handleAccept,
+    handleDecline,
+  } = useIncomingTransfer()
+  const value = useMemo<UseIncomingTransferReturn>(
+    () => ({ transfer, isLoading, error, isAccepting, isDeclining, handleAccept, handleDecline }),
+    [transfer, isLoading, error, isAccepting, isDeclining, handleAccept, handleDecline],
+  )
   return (
     <IncomingTransferContext.Provider value={value}>
       {children}

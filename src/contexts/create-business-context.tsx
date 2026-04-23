@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, ReactNode } from 'react'
+import { createContext, useContext, useMemo, ReactNode } from 'react'
 import { useCreateBusiness } from '@/hooks'
 import { CreateBusinessModal } from '@/components/create-business'
 
@@ -32,11 +32,16 @@ interface CreateBusinessProviderProps {
 export function CreateBusinessProvider({ children }: CreateBusinessProviderProps) {
   const createBusiness = useCreateBusiness()
 
-  const value: CreateBusinessContextValue = {
-    openCreateModal: createBusiness.handleOpen,
-    isCreateModalOpen: createBusiness.isOpen,
-    createdBusiness: createBusiness.createdBusiness,
-  }
+  // Memoize so consumers (MobileNav, hub header) don't re-render on
+  // every createBusiness state tick.
+  const value = useMemo<CreateBusinessContextValue>(
+    () => ({
+      openCreateModal: createBusiness.handleOpen,
+      isCreateModalOpen: createBusiness.isOpen,
+      createdBusiness: createBusiness.createdBusiness,
+    }),
+    [createBusiness.handleOpen, createBusiness.isOpen, createBusiness.createdBusiness],
+  )
 
   return (
     <CreateBusinessContext.Provider value={value}>

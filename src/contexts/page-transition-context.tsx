@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from './auth-context'
 
@@ -165,14 +165,30 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
 
-  return (
-    <PageTransitionContext.Provider value={{
+  // Memoize to avoid re-rendering the entire business-scoped tree every
+  // time this provider re-renders. PageTransition lives in the root
+  // layout and is consumed by PageHeader, MobileNav, PageTransition, and
+  // every page — the blast radius of an unmemoized value is the whole
+  // app shell on every auth/pathname tick.
+  const value = useMemo<PageTransitionContextValue>(
+    () => ({
       slideDirection, setSlideDirection,
       slideTargetPath, setSlideTargetPath,
       pendingHref, setPendingHref,
       pageSubtitleSuffix, setPageSubtitleSuffix,
       getCachedBusiness, setCachedBusiness, setCachedBusinesses, clearCachedBusiness,
-    }}>
+    }),
+    [
+      slideDirection, setSlideDirection,
+      slideTargetPath, setSlideTargetPath,
+      pendingHref, setPendingHref,
+      pageSubtitleSuffix, setPageSubtitleSuffix,
+      getCachedBusiness, setCachedBusiness, setCachedBusinesses, clearCachedBusiness,
+    ],
+  )
+
+  return (
+    <PageTransitionContext.Provider value={value}>
       {children}
     </PageTransitionContext.Provider>
   )

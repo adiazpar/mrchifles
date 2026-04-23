@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -117,10 +118,17 @@ export function ProductsProvider({ businessId, children }: ProductsProviderProps
     return inFlight.current
   }, [fetchProducts])
 
+  // Memoize so consumers don't re-render on every parent tick. Multiple
+  // pages (products list, new-order picker, provider detail, providers
+  // list) all subscribe; the blast radius of an unmemoized value is the
+  // entire business-scoped page tree.
+  const value = useMemo<ProductsContextValue>(
+    () => ({ products, setProducts, isLoading, isLoaded, error, ensureLoaded, refetch }),
+    [products, setProducts, isLoading, isLoaded, error, ensureLoaded, refetch],
+  )
+
   return (
-    <ProductsContext.Provider
-      value={{ products, setProducts, isLoading, isLoaded, error, ensureLoaded, refetch }}
-    >
+    <ProductsContext.Provider value={value}>
       {children}
     </ProductsContext.Provider>
   )
