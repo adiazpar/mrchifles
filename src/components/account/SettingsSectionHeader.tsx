@@ -1,5 +1,3 @@
-'use client'
-
 export interface SettingsSectionHeaderProps {
   label: string
   danger?: boolean
