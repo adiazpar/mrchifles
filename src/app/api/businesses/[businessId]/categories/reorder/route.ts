@@ -30,31 +30,44 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   const { categoryIds } = validation.data
 
-  // Verify all categories belong to this business, then apply every
-  // reorder in a single UPDATE ... CASE. The CASE form is one atomic
-  // round trip regardless of list length, replacing the old
-  // Promise.all of N individual UPDATEs that each cost a round trip
-  // and left the list half-reordered on mid-sequence failure.
+  // Reject duplicates outright — the CASE expression would otherwise map
+  // the same id to two different sortOrder values (first WHEN wins in
+  // SQLite, making the outcome silently order-dependent on input order).
+  const uniqueIds = new Set(categoryIds)
+  if (uniqueIds.size !== categoryIds.length) {
+    return errorResponse(ApiMessageCode.CATEGORIES_NOT_FOUND_IN_BUSINESS, 400)
+  }
+
+  // Pre-flight existence check. If we skipped this and ran the UPDATE
+  // first, a bad input (missing id, cross-business id) would partially
+  // reorder the rows that DID match before we returned 400.
+  const existing = await db
+    .select({ id: productCategories.id })
+    .from(productCategories)
+    .where(and(
+      inArray(productCategories.id, categoryIds),
+      eq(productCategories.businessId, access.businessId),
+    ))
+
+  if (existing.length !== categoryIds.length) {
+    return errorResponse(ApiMessageCode.CATEGORIES_NOT_FOUND_IN_BUSINESS, 400)
+  }
+
+  // All ids verified — apply every reorder in a single UPDATE ... CASE.
+  // One atomic round trip regardless of list length, replacing the old
+  // Promise.all of N individual UPDATEs.
   const cases = sql.join(
     categoryIds.map((id, idx) => sql`WHEN ${id} THEN ${idx + 1}`),
     sql` `,
   )
 
-  const result = await db
+  await db
     .update(productCategories)
     .set({ sortOrder: sql`CASE ${productCategories.id} ${cases} END` })
     .where(and(
       inArray(productCategories.id, categoryIds),
       eq(productCategories.businessId, access.businessId),
     ))
-    .returning({ id: productCategories.id })
-
-  // If fewer rows updated than IDs passed, at least one category was
-  // either missing or belonged to another business — reject the whole
-  // reorder.
-  if (result.length !== categoryIds.length) {
-    return errorResponse(ApiMessageCode.CATEGORIES_NOT_FOUND_IN_BUSINESS, 400)
-  }
 
   return successResponse({})
 })
