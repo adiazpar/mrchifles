@@ -15,7 +15,7 @@ import type { User } from '@/types'
 import { fetchDeduped } from '@/lib/fetch'
 import type { SupportedLocale } from '@/i18n/config'
 import { useApiMessage } from '@/hooks/useApiMessage'
-import { hasMessageEnvelope } from '@/lib/api-messages'
+import { ApiError, apiPost, apiPatch } from '@/lib/api-client'
 
 // ============================================
 // TYPES
@@ -160,20 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        const error = hasMessageEnvelope(data)
-          ? translateApiMessage(data)
-          : translateApiMessage({ messageCode: 'AUTH_LOGIN_FAILED' })
-        return { success: false, error }
-      }
+      const data = await apiPost<{ user: User }>('/api/auth/login', { email, password })
 
       // Wipe any residual per-user session caches (business role cache,
       // per-business data caches) from a prior user on this tab before
@@ -189,7 +176,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCachedUser(data.user)
       setValidatedNow()
       return { success: true }
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const error = err.envelope
+          ? translateApiMessage(err.envelope)
+          : translateApiMessage({ messageCode: 'AUTH_LOGIN_FAILED' })
+        return { success: false, error }
+      }
       return { success: false, error: tAuth('connection_error') }
     }
   }, [tAuth, translateApiMessage])
@@ -230,18 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const changeLanguage = useCallback(
     async (language: SupportedLocale): Promise<{ success: boolean; error?: string }> => {
       try {
-        const response = await fetch('/api/user/language', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ language }),
-        })
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}))
-          const error = hasMessageEnvelope(data)
-            ? translateApiMessage(data)
-            : translateApiMessage({ messageCode: 'USER_LANGUAGE_UPDATE_FAILED' })
-          return { success: false, error }
-        }
+        await apiPatch('/api/user/language', { language })
         setUser((prev) => {
           if (!prev) return prev
           const next = { ...prev, language }
@@ -251,7 +233,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Force RSC re-render so next-intl picks up the new cookie-bound bundle.
         router.refresh()
         return { success: true }
-      } catch {
+      } catch (err) {
+        if (err instanceof ApiError) {
+          const error = err.envelope
+            ? translateApiMessage(err.envelope)
+            : translateApiMessage({ messageCode: 'USER_LANGUAGE_UPDATE_FAILED' })
+          return { success: false, error }
+        }
         return { success: false, error: tAuth('connection_error') }
       }
     },

@@ -12,6 +12,7 @@ import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { Product, Provider } from '@/types'
 import type { OrderFormItem } from '@/lib/products'
+import { apiPostForm } from '@/lib/api-client'
 
 const MAX_RECEIPT_BYTES = 5 * 1024 * 1024 // 5 MB
 const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
@@ -489,9 +490,8 @@ export function NewOrderModal({
                 try {
                   const fd = new FormData()
                   fd.append('file', file)
-                  const res = await fetch('/api/convert-heic', { method: 'POST', body: fd })
-                  const data = await res.json()
-                  if (data.success && data.data?.image) {
+                  const data = await apiPostForm<{ data?: { image?: string } }>('/api/convert-heic', fd)
+                  if (data.data?.image) {
                     onOrderReceiptPreviewChange(data.data.image)
                   } else {
                     onOrderReceiptPreviewChange(null)

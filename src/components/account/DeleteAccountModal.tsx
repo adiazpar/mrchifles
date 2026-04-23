@@ -7,7 +7,7 @@ import { AlertTriangle } from 'lucide-react'
 import { Modal, Input, Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
-import { hasMessageEnvelope } from '@/lib/api-messages'
+import { ApiError, apiRequest } from '@/lib/api-client'
 import { fetchDeduped } from '@/lib/fetch'
 
 export interface DeleteAccountModalProps {
@@ -96,30 +96,30 @@ export function DeleteAccountModal({
     setIsDeleting(true)
     setError('')
     try {
-      const response = await fetch('/api/auth/me', {
+      await apiRequest('/api/auth/me', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ confirmEmail: confirmEmail.trim() }),
       })
-      const data = await response.json()
-      if (!response.ok) {
+      // Success: clear local auth cache and redirect to register.
+      await logout()
+      router.push('/register')
+    } catch (err) {
+      if (err instanceof ApiError) {
         setError(
-          hasMessageEnvelope(data)
-            ? translateApiMessage(data)
+          err.envelope
+            ? translateApiMessage(err.envelope)
             : tCommon('error'),
         )
         // 409 means the server-side check found owned businesses we missed
         // (race condition: a transfer landed between pre-flight and submit).
         // Reload the owned list so the UI can show the blocked state.
-        if (response.status === 409 && Array.isArray(data.ownedBusinesses)) {
+        const data = err.data as { ownedBusinesses?: OwnedBusiness[] }
+        if (err.statusCode === 409 && Array.isArray(data.ownedBusinesses)) {
           setOwnedBusinesses(data.ownedBusinesses)
         }
         return
       }
-      // Success: clear local auth cache and redirect to register.
-      await logout()
-      router.push('/register')
-    } catch (err) {
       console.error('Delete account error:', err)
       setError(tCommon('error'))
     } finally {

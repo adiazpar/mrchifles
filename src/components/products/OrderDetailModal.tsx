@@ -37,6 +37,7 @@ import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { Product, Provider } from '@/types'
 import { getOrderDisplayStatus } from '@/lib/products'
 import type { ExpandedOrder, OrderFormItem } from '@/lib/products'
+import { apiPostForm } from '@/lib/api-client'
 
 const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
 const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
@@ -633,7 +634,7 @@ export function OrderDetailModal({
             if (file.size > MAX_RECEIPT_BYTES) { setEditReceiptError(t('receipt_too_large')); return }
             onOrderReceiptFileChange(file)
             if (isHeic) {
-              try { const fd = new FormData(); fd.append('file', file); const res = await fetch('/api/convert-heic', { method: 'POST', body: fd }); const data = await res.json(); if (data.success && data.data?.image) { onOrderReceiptPreviewChange(data.data.image) } else { onOrderReceiptPreviewChange(null) } } catch { onOrderReceiptPreviewChange(null) }
+              try { const fd = new FormData(); fd.append('file', file); const data = await apiPostForm<{ data?: { image?: string } }>('/api/convert-heic', fd); if (data.data?.image) { onOrderReceiptPreviewChange(data.data.image) } else { onOrderReceiptPreviewChange(null) } } catch { onOrderReceiptPreviewChange(null) }
             } else if (file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = () => onOrderReceiptPreviewChange(reader.result as string); reader.readAsDataURL(file) } else { onOrderReceiptPreviewChange(null) }
           }} className="hidden" />
           {orderReceiptFile ? (

@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useProducts } from '@/contexts/products-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useProductSettings } from '@/contexts/product-settings-context'
-import { hasMessageEnvelope } from '@/lib/api-messages'
+import { ApiError, apiDelete, apiPost, apiPatchForm, apiPostForm } from '@/lib/api-client'
 import { NewOrderModal, OrderDetailModal } from '@/components/products'
 import { sortProducts } from '@/lib/products'
 import type { Product, Provider } from '@/types'
@@ -225,13 +225,12 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     }))))
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/orders`, {
-        method: 'POST',
-        body: formData,
-      })
-      const data = await response.json()
+      const data = await apiPostForm<{ order: ExpandedOrder }>(
+        `/api/businesses/${businessId}/orders`,
+        formData,
+      )
 
-      if (response.ok && data.success && data.order) {
+      if (data.order) {
         setOrders(prev => [data.order, ...prev])
         setOrderSaved(true)
         return true
@@ -277,19 +276,18 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
         quantity: item.quantity,
       }))))
 
-      const response = await fetch(`/api/businesses/${businessId}/orders/${viewingOrder.id}`, {
-        method: 'PATCH',
-        body: formData,
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(
-          hasMessageEnvelope(data)
-            ? translateApiMessage(data)
-            : tOrders('error_failed_to_save_order')
-        )
-        return false
+      try {
+        await apiPatchForm(`/api/businesses/${businessId}/orders/${viewingOrder.id}`, formData)
+      } catch (err) {
+        if (err instanceof ApiError) {
+          setError(
+            err.envelope
+              ? translateApiMessage(err.envelope)
+              : tOrders('error_failed_to_save_order')
+          )
+          return false
+        }
+        throw err
       }
 
       // Refetch all orders so the list (and any consumer-provided filter) reflect the edit
@@ -317,20 +315,20 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/orders/${viewingOrder.id}/receive`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receivedQuantities }),
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(
-          hasMessageEnvelope(data)
-            ? translateApiMessage(data)
-            : tOrders('error_failed_to_receive_order')
-        )
-        return false
+      try {
+        await apiPost(`/api/businesses/${businessId}/orders/${viewingOrder.id}/receive`, {
+          receivedQuantities,
+        })
+      } catch (err) {
+        if (err instanceof ApiError) {
+          setError(
+            err.envelope
+              ? translateApiMessage(err.envelope)
+              : tOrders('error_failed_to_receive_order')
+          )
+          return false
+        }
+        throw err
       }
 
       // Orders: always refetch so any server-side computed fields (status,
@@ -364,24 +362,20 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     setError('')
 
     try {
-      const response = await fetch(`/api/businesses/${businessId}/orders/${viewingOrder.id}`, {
-        method: 'DELETE',
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(
-          hasMessageEnvelope(data)
-            ? translateApiMessage(data)
-            : tOrders('error_failed_to_delete_order')
-        )
-        return false
-      }
+      await apiDelete(`/api/businesses/${businessId}/orders/${viewingOrder.id}`)
 
       setOrders(prev => prev.filter(o => o.id !== viewingOrder.id))
       setOrderDeleted(true)
       return true
     } catch (err) {
+      if (err instanceof ApiError) {
+        setError(
+          err.envelope
+            ? translateApiMessage(err.envelope)
+            : tOrders('error_failed_to_delete_order')
+        )
+        return false
+      }
       console.error('Error deleting order:', err)
       setError(tOrders('error_failed_to_delete_order'))
       return false

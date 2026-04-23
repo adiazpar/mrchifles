@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Input, Card, Spinner } from '@/components/ui'
 import { useApiMessage } from '@/hooks/useApiMessage'
-import { hasMessageEnvelope } from '@/lib/api-messages'
+import { ApiError, apiPost } from '@/lib/api-client'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -40,31 +40,24 @@ export default function RegisterPage() {
       setIsLoading(true)
 
       try {
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            password,
-            name,
-          }),
+        await apiPost('/api/auth/register', {
+          email,
+          password,
+          name,
         })
-
-        const data = await response.json()
-
-        if (!response.ok) {
-          const translated = hasMessageEnvelope(data)
-            ? translateApiMessage(data)
-            : translateApiMessage({ messageCode: 'AUTH_REGISTER_FAILED' })
-          setError(translated)
-          return
-        }
 
         // Success - redirect to dashboard
         router.push('/')
         router.refresh()
-      } catch {
-        setError(t('connection_error'))
+      } catch (err) {
+        if (err instanceof ApiError) {
+          const translated = err.envelope
+            ? translateApiMessage(err.envelope)
+            : translateApiMessage({ messageCode: 'AUTH_REGISTER_FAILED' })
+          setError(translated)
+        } else {
+          setError(t('connection_error'))
+        }
       } finally {
         setIsLoading(false)
       }

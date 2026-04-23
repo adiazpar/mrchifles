@@ -7,6 +7,7 @@ import { isBarcodeFormat } from '@/lib/barcodes'
 import type { BarcodeFormat } from '@/types'
 import type { LiveBarcodeScanResult } from '@/components/products/LiveBarcodeScanner'
 import { useIsMobile } from './useIsMobile'
+import { ApiError, apiPostForm } from '@/lib/api-client'
 
 // html5-qrcode (~100KB gzipped) + LiveBarcodeScanner are only needed once
 // the user actually opens the scanner. Loading the component dynamically
@@ -57,12 +58,16 @@ async function rasterizePdfFirstPage(file: File): Promise<File> {
 async function convertHeicToJpeg(file: File): Promise<File> {
   const formData = new FormData()
   formData.append('file', file)
-  const res = await fetch('/api/convert-heic', { method: 'POST', body: formData })
-  if (!res.ok) {
-    throw new Error(`HEIC conversion failed with status ${res.status}`)
+  let json: { data?: { image?: string } }
+  try {
+    json = await apiPostForm<{ data?: { image?: string } }>('/api/convert-heic', formData)
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw new Error(`HEIC conversion failed with status ${err.statusCode}`)
+    }
+    throw err
   }
-  const json = await res.json()
-  if (!json?.success || !json?.data?.image) {
+  if (!json?.data?.image) {
     throw new Error('HEIC conversion returned no image')
   }
   // data.image is a base64 data URL like "data:image/jpeg;base64,..."

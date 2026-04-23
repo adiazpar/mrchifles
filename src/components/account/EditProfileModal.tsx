@@ -7,7 +7,7 @@ import { Modal, Input, Spinner, useMorphingModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
-import { hasMessageEnvelope } from '@/lib/api-messages'
+import { ApiError, apiPatch } from '@/lib/api-client'
 import { fileToBase64, MAX_UPLOAD_SIZE } from '@/lib/storage-client'
 import { getUserInitials } from '@/lib/auth'
 
@@ -81,23 +81,18 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
     setIsSaving(true)
     setError('')
     try {
-      const response = await fetch('/api/auth/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), avatar }),
-      })
-      const data = await response.json()
-      if (!response.ok) {
+      await apiPatch('/api/auth/profile', { name: name.trim(), avatar })
+      await refreshUser()
+      return true
+    } catch (err) {
+      if (err instanceof ApiError) {
         setError(
-          hasMessageEnvelope(data)
-            ? translateApiMessage(data)
+          err.envelope
+            ? translateApiMessage(err.envelope)
             : tCommon('error'),
         )
         return false
       }
-      await refreshUser()
-      return true
-    } catch (err) {
       console.error('Profile save error:', err)
       setError(tCommon('error'))
       return false

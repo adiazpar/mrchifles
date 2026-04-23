@@ -14,6 +14,7 @@ import { useTranslations } from 'next-intl'
 import { useAuth } from './auth-context'
 import { usePageTransition } from './page-transition-context'
 import type { BusinessRole } from '@/lib/business-role'
+import { ApiError, apiRequest } from '@/lib/api-client'
 
 // Re-export for backwards compatibility
 export type { BusinessRole }
@@ -73,13 +74,15 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
     try {
       setIsLoading(true)
       setError(null)
-      const response = await fetch(`/api/businesses/${businessId}/access`)
-      if (!response.ok) {
-        if (response.status === 404) { setError(t('error_not_found')); router.replace('/'); return }
-        if (response.status === 403) { setError(t('error_no_access')); router.replace('/'); return }
-        throw new Error('Failed to validate access')
-      }
-      const data = await response.json()
+      const data = await apiRequest<{
+        businessId: string
+        businessName: string
+        businessType?: Business['type']
+        businessIcon?: string | null
+        businessLocale?: string
+        businessCurrency?: string
+        role: BusinessRole
+      }>(`/api/businesses/${businessId}/access`)
       setBusiness({
         id: data.businessId,
         name: data.businessName,
@@ -99,6 +102,10 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
         isOwner: data.role === 'owner',
       })
     } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.statusCode === 404) { setError(t('error_not_found')); router.replace('/'); return }
+        if (err.statusCode === 403) { setError(t('error_no_access')); router.replace('/'); return }
+      }
       console.error('Business access validation error:', err)
       setError(t('error_failed_to_validate'))
     } finally {

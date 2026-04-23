@@ -35,6 +35,14 @@ import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { scrollToTop } from '@/lib/scroll'
 import { useTranslations } from 'next-intl'
 import type { Product, SortPreference, ProductCategory } from '@/types'
+import {
+  ApiError,
+  apiDelete,
+  apiPatch,
+  apiPatchForm,
+  apiPostForm,
+  apiRequest,
+} from '@/lib/api-client'
 
 // ============================================
 // PRODUCT MODAL WRAPPER
@@ -528,14 +536,10 @@ export default function ProductosPage() {
       const url = editingProductId
         ? `/api/businesses/${businessId}/products/${editingProductId}`
         : `/api/businesses/${businessId}/products`
-      const method = editingProductId ? 'PATCH' : 'POST'
 
-      const response = await fetch(url, { method, body: data })
-      const result = await response.json()
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to save product')
-      }
+      const result = editingProductId
+        ? await apiPatchForm<{ product: Product }>(url, data)
+        : await apiPostForm<{ product: Product }>(url, data)
 
       const record: Product = result.product
       if (editingProductId) {
@@ -547,6 +551,9 @@ export default function ProductosPage() {
       return true
     } catch (err) {
       console.warn('Error saving product:', err)
+      if (err instanceof ApiError) {
+        throw new Error(err.message || 'Failed to save product')
+      }
       if (err instanceof Error) {
         throw err
       }
@@ -556,15 +563,7 @@ export default function ProductosPage() {
 
   const handleDeleteProduct = useCallback(async (productId: string): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/businesses/${businessId}/products/${productId}`, {
-        method: 'DELETE',
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        return false
-      }
-
+      await apiDelete(`/api/businesses/${businessId}/products/${productId}`)
       setProducts(prev => prev.filter(p => p.id !== productId))
       return true
     } catch (err) {
@@ -575,17 +574,9 @@ export default function ProductosPage() {
 
   const handleSaveAdjustment = useCallback(async (data: StockAdjustmentData) => {
     try {
-      const response = await fetch(`/api/businesses/${businessId}/products/${data.productId}/stock`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stock: data.newStockValue }),
+      await apiPatch(`/api/businesses/${businessId}/products/${data.productId}/stock`, {
+        stock: data.newStockValue,
       })
-      const result = await response.json()
-
-      if (!response.ok || !result.success) {
-        return
-      }
-
       setProducts(prev => prev.map(p => p.id === data.productId ? { ...p, stock: data.newStockValue } : p))
       setIsModalOpen(false)
     } catch (err) {
@@ -650,11 +641,7 @@ export default function ProductosPage() {
     try {
       const fd = new FormData()
       fd.set('active', nextActive ? 'true' : 'false')
-      const response = await fetch(`/api/businesses/${businessId}/products/${product.id}`, {
-        method: 'PATCH',
-        body: fd,
-      })
-      if (!response.ok) throw new Error('PATCH failed')
+      await apiPatchForm(`/api/businesses/${businessId}/products/${product.id}`, fd)
     } catch (err) {
       console.error('Error toggling product status:', err)
       // Revert
@@ -667,15 +654,9 @@ export default function ProductosPage() {
   const handleBarcodeScanResult = useCallback(async ({ value }: { value: string }) => {
     setError('')
     try {
-      const response = await fetch(
+      const data = await apiRequest<{ products?: Product[] }>(
         `/api/businesses/${businessId}/products?barcode=${encodeURIComponent(value)}`
       )
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        setError(tOrders('error_unable_to_lookup_barcode'))
-        return
-      }
 
       const matched: Product[] = data.products || []
       if (matched.length > 0) {
@@ -732,11 +713,9 @@ export default function ProductosPage() {
 
   const checkBarcodeExists = useCallback(async (value: string): Promise<string | null> => {
     try {
-      const response = await fetch(
+      const data = await apiRequest<{ products?: Product[] }>(
         `/api/businesses/${businessId}/products?barcode=${encodeURIComponent(value)}`
       )
-      const data = await response.json()
-      if (!response.ok || !data.success) return null
       const matched: Product[] = data.products || []
       return matched.length > 0 ? matched[0].name : null
     } catch {
