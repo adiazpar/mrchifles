@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
@@ -21,13 +22,39 @@ import { getUserInitials } from '@/lib/auth'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 import { LanguageRow } from '@/components/account/LanguageRow'
-import { ThemeModal } from '@/components/account/ThemeModal'
-import { EditProfileModal } from '@/components/account/EditProfileModal'
-import { ChangePasswordModal } from '@/components/account/ChangePasswordModal'
-import { AboutModal } from '@/components/account/AboutModal'
-import { ContactSupportModal } from '@/components/account/ContactSupportModal'
-import { DeleteAccountModal } from '@/components/account/DeleteAccountModal'
-import { IncomingTransferModal } from '@/components/transfer'
+
+// Every modal on this page is closed by default and only needed on user
+// action. Dynamic import with `ssr: false` keeps the modal code (plus
+// framer-motion transitively via the Modal compound) out of the initial
+// account-page chunk.
+const ThemeModal = dynamic(
+  () => import('@/components/account/ThemeModal').then(m => m.ThemeModal),
+  { ssr: false },
+)
+const EditProfileModal = dynamic(
+  () => import('@/components/account/EditProfileModal').then(m => m.EditProfileModal),
+  { ssr: false },
+)
+const ChangePasswordModal = dynamic(
+  () => import('@/components/account/ChangePasswordModal').then(m => m.ChangePasswordModal),
+  { ssr: false },
+)
+const AboutModal = dynamic(
+  () => import('@/components/account/AboutModal').then(m => m.AboutModal),
+  { ssr: false },
+)
+const ContactSupportModal = dynamic(
+  () => import('@/components/account/ContactSupportModal').then(m => m.ContactSupportModal),
+  { ssr: false },
+)
+const DeleteAccountModal = dynamic(
+  () => import('@/components/account/DeleteAccountModal').then(m => m.DeleteAccountModal),
+  { ssr: false },
+)
+const IncomingTransferModal = dynamic(
+  () => import('@/components/transfer/IncomingTransferModal').then(m => m.IncomingTransferModal),
+  { ssr: false },
+)
 
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth()

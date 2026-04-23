@@ -1,6 +1,5 @@
 'use client'
 
-import { renderBarcodeSvg } from './barcode-render'
 import { getBarcodeFormatLabel } from './barcodes'
 import type { BarcodeFormat } from '@/types'
 
@@ -16,14 +15,21 @@ interface PrintBarcodeLabelOptions {
  * SVG fails to render. Shared between the edit form and the products-list
  * swipe action.
  *
+ * The renderer pulls bwip-js (~70 KB) transitively; we dynamically import
+ * it on first call so the products-page initial chunk stays lean. Print
+ * is always a deliberate user action, so the one-time load cost is
+ * acceptable. Callers are already fire-and-forget void consumers; the
+ * async signature is a superset that still compiles under those sites.
+ *
  * We write the label HTML into the iframe and wait for `load` before
  * calling `print()` — calling it too early (e.g. on a bare setTimeout)
  * can show an empty preview on slow frames. A single rAF after load
  * gives the SVG one more layout pass before the print snapshot.
  */
-export function printBarcodeLabel({ barcode, barcodeFormat, name }: PrintBarcodeLabelOptions): void {
+export async function printBarcodeLabel({ barcode, barcodeFormat, name }: PrintBarcodeLabelOptions): Promise<void> {
   if (!barcode) return
 
+  const { renderBarcodeSvg } = await import('./barcode-render')
   const result = renderBarcodeSvg(barcode, barcodeFormat, {
     scale: 3,
     height: 18,

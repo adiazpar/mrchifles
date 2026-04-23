@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Briefcase, ChevronRight, Clock } from 'lucide-react'
@@ -10,18 +11,47 @@ import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
-import {
-  BusinessHeaderCard,
-  EditNameModal,
-  EditTypeModal,
-  EditLocationModal,
-  EditLogoModal,
-  TransferOwnershipModal,
-  CancelTransferModal,
-  LeaveBusinessModal,
-  DeleteBusinessModal,
-} from '@/components/manage'
-import { IncomingTransferModal } from '@/components/transfer'
+// BusinessHeaderCard renders inline on mount, so it stays static. Every
+// modal below is closed by default; dynamic imports keep the modal code
+// out of the initial manage-page chunk until the user opens one.
+import { BusinessHeaderCard } from '@/components/manage'
+
+const EditNameModal = dynamic(
+  () => import('@/components/manage/EditNameModal').then(m => m.EditNameModal),
+  { ssr: false },
+)
+const EditTypeModal = dynamic(
+  () => import('@/components/manage/EditTypeModal').then(m => m.EditTypeModal),
+  { ssr: false },
+)
+const EditLocationModal = dynamic(
+  () => import('@/components/manage/EditLocationModal').then(m => m.EditLocationModal),
+  { ssr: false },
+)
+const EditLogoModal = dynamic(
+  () => import('@/components/manage/EditLogoModal').then(m => m.EditLogoModal),
+  { ssr: false },
+)
+const TransferOwnershipModal = dynamic(
+  () => import('@/components/manage/TransferOwnershipModal').then(m => m.TransferOwnershipModal),
+  { ssr: false },
+)
+const CancelTransferModal = dynamic(
+  () => import('@/components/manage/CancelTransferModal').then(m => m.CancelTransferModal),
+  { ssr: false },
+)
+const LeaveBusinessModal = dynamic(
+  () => import('@/components/manage/LeaveBusinessModal').then(m => m.LeaveBusinessModal),
+  { ssr: false },
+)
+const DeleteBusinessModal = dynamic(
+  () => import('@/components/manage/DeleteBusinessModal').then(m => m.DeleteBusinessModal),
+  { ssr: false },
+)
+const IncomingTransferModal = dynamic(
+  () => import('@/components/transfer/IncomingTransferModal').then(m => m.IncomingTransferModal),
+  { ssr: false },
+)
 
 export default function ManagePage() {
   const t = useTranslations('manage')

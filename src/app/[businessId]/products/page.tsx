@@ -1,20 +1,35 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
 import { useProductFilters, useProductSettings } from '@/hooks'
 import { Spinner, TabContainer } from '@/components/ui'
+// Tabs render on mount so they stay static. Add/edit/settings modals are
+// closed by default and open on user action; dynamic import keeps their
+// bundle (plus framer-motion's Reorder in ProductSettingsModal) out of
+// the initial products-page chunk.
 import {
   ProductsTab,
   OrdersTab,
-  AddProductModal,
-  EditProductModal,
-  ProductSettingsModal,
   type ProductFormData,
   type StockAdjustmentData,
 } from '@/components/products'
+
+const AddProductModal = dynamic(
+  () => import('@/components/products/AddProductModal').then(m => m.AddProductModal),
+  { ssr: false },
+)
+const EditProductModal = dynamic(
+  () => import('@/components/products/EditProductModal').then(m => m.EditProductModal),
+  { ssr: false },
+)
+const ProductSettingsModal = dynamic(
+  () => import('@/components/products/ProductSettingsModal').then(m => m.ProductSettingsModal),
+  { ssr: false },
+)
 import { ProductFormProvider, useProductForm } from '@/contexts/product-form-context'
 import type { PipelineStep } from '@/hooks'
 import {
