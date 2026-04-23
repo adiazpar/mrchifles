@@ -6,7 +6,7 @@ import { fetchDeduped } from '@/lib/fetch'
 import { useAuth } from '@/contexts/auth-context'
 import { useProducts } from '@/contexts/products-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
-import { useProductSettings } from '@/hooks/useProductSettings'
+import { useProductSettings } from '@/contexts/product-settings-context'
 import { hasMessageEnvelope } from '@/lib/api-messages'
 import { NewOrderModal, OrderDetailModal } from '@/components/products'
 import { sortProducts } from '@/lib/products'
@@ -119,7 +119,7 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
   // whatever ordering the user curated on the Products page applies
   // everywhere they pick products — consistent muscle memory on the
   // Products page Orders tab, provider detail, and providers list swipe.
-  const { settings: productSettings, categories: productCategories } = useProductSettings({ businessId })
+  const { settings: productSettings, categories: productCategories } = useProductSettings()
 
   // ===== Modal state =====
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false)

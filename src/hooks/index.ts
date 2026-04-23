@@ -7,7 +7,7 @@ export { useImageCompression } from './useImageCompression'
 
 export { useProductFilters } from './useProductFilters'
 
-export { useProductSettings } from './useProductSettings'
+export { useProductSettings } from '@/contexts/product-settings-context'
 
 export { useTeamManagement } from './useTeamManagement'
 

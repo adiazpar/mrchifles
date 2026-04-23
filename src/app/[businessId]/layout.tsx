@@ -6,6 +6,7 @@ import { ContentGuard } from '@/components/auth'
 import { OrdersProvider } from '@/contexts/orders-context'
 import { ProvidersProvider } from '@/contexts/providers-context'
 import { ProductsProvider } from '@/contexts/products-context'
+import { ProductSettingsProvider } from '@/contexts/product-settings-context'
 
 /**
  * Business layout.
@@ -28,7 +29,9 @@ export default function BusinessLayout({
         <OrdersProvider key={`orders-${businessId}`} businessId={businessId}>
           <ProvidersProvider key={`providers-${businessId}`} businessId={businessId}>
             <ProductsProvider key={`products-${businessId}`} businessId={businessId}>
-              {children}
+              <ProductSettingsProvider key={`product-settings-${businessId}`} businessId={businessId}>
+                {children}
+              </ProductSettingsProvider>
             </ProductsProvider>
           </ProvidersProvider>
         </OrdersProvider>

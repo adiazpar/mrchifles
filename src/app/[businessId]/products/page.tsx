@@ -307,8 +307,8 @@ export default function ProductosPage() {
     if (productsLoaded) setIsLoading(false)
   }, [productsLoaded])
 
-  // Product settings
-  const productSettings = useProductSettings({ businessId: businessId || '' })
+  // Product settings (shared across all pages via ProductSettingsProvider)
+  const productSettings = useProductSettings()
   const {
     categories,
     settings,
