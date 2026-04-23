@@ -12,6 +12,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { apiPost, ApiError, type ApiResponse } from '@/lib/api-client'
+import { useApiMessage } from './useApiMessage'
 
 // API response types
 type IdentifyProductResponse = ApiResponse & {
@@ -238,6 +239,8 @@ async function compressIconBlob(blob: Blob, maxSize = 70000, targetDimension = 5
 }
 
 export function useAiProductPipeline(): UseAiProductPipelineReturn {
+  const translateApiMessage = useApiMessage()
+
   const [state, setState] = useState<PipelineState>({
     step: 'idle',
     error: null,
@@ -416,11 +419,17 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       }
 
       // Handle ApiError or generic errors
-      const errorMessage = err instanceof ApiError
-        ? err.message
-        : err instanceof Error
-          ? err.message
-          : 'Failed to process image'
+      // Prefer the server-emitted envelope (translated) over the raw
+      // code string. Falls back to err.message for legacy string-only
+      // responses and to the generic English message for non-API errors.
+      const errorMessage =
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : err instanceof ApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : 'Failed to process image'
 
       setState({
         step: 'error',
@@ -428,7 +437,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         result: null,
       })
     }
-  }, [cancel, isRunActive, safeSetState])
+  }, [cancel, isRunActive, safeSetState, translateApiMessage])
 
   /**
    * Regenerate just the icon using cached background-removed image.
@@ -537,12 +546,15 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
 
       if (!isRunActive(runId)) return null
 
-      // Handle ApiError or generic errors
-      const errorMessage = err instanceof ApiError
-        ? err.message
-        : err instanceof Error
-          ? err.message
-          : 'Failed to regenerate icon'
+      // Handle ApiError or generic errors (envelope-aware, see startPipeline).
+      const errorMessage =
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : err instanceof ApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : 'Failed to regenerate icon'
 
       setState(prev => ({
         ...prev,
@@ -551,7 +563,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       }))
       return null
     }
-  }, [cancel, isRunActive, safeSetState, state.result?.categoryId, state.result?.name, state.result?.suggestedNewCategoryName])
+  }, [cancel, isRunActive, safeSetState, state.result?.categoryId, state.result?.name, state.result?.suggestedNewCategoryName, translateApiMessage])
 
   return {
     state,

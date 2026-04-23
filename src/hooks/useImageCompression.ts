@@ -10,6 +10,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { apiPostForm, ApiError, ApiResponse } from '@/lib/api-client'
+import { useApiMessage } from './useApiMessage'
 
 interface CompressionState {
   isProcessing: boolean
@@ -38,6 +39,8 @@ const MAX_DIMENSION = 768
 const JPEG_QUALITY = 0.7
 
 export function useImageCompression(): UseImageCompressionReturn {
+  const translateApiMessage = useApiMessage()
+
   const [state, setState] = useState<CompressionState>({
     isProcessing: false,
     error: null,
@@ -184,10 +187,15 @@ export function useImageCompression(): UseImageCompressionReturn {
 
       if (cancelledRef.current) return null
 
-      // Use ApiError message if available, otherwise generic message
-      const errorMessage = err instanceof ApiError
-        ? err.message
-        : 'Failed to process image'
+      // Prefer the translated envelope (401/413/429 now emit envelopes),
+      // fall back to the raw ApiError message for legacy string-only
+      // responses, and a generic English message for non-API errors.
+      const errorMessage =
+        err instanceof ApiError && err.envelope
+          ? translateApiMessage(err.envelope)
+          : err instanceof ApiError
+            ? err.message
+            : 'Failed to process image'
 
       setState({
         isProcessing: false,
@@ -195,7 +203,7 @@ export function useImageCompression(): UseImageCompressionReturn {
       })
       return null
     }
-  }, [])
+  }, [translateApiMessage])
 
   return {
     state,
