@@ -552,7 +552,11 @@ export default function ProductosPage() {
     } catch (err) {
       console.warn('Error saving product:', err)
       if (err instanceof ApiError) {
-        throw new Error(err.message || 'Failed to save product')
+        // Prefer the legacy `error` string when the server sent one; otherwise
+        // keep the old hardcoded fallback. We don't have translateApiMessage
+        // in this callsite, so envelope-only errors fall back to the generic
+        // message (matching pre-migration behavior).
+        throw new Error(err.data.error || 'Failed to save product')
       }
       if (err instanceof Error) {
         throw err
