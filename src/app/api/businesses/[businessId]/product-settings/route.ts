@@ -1,5 +1,5 @@
-import { db, businesses } from '@/db'
-import { eq } from 'drizzle-orm'
+import { db, businesses, productCategories } from '@/db'
+import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
@@ -53,6 +53,27 @@ export const PATCH = withBusinessAuth(async (request, access) => {
   }
 
   const { defaultCategoryId, sortPreference } = validation.data
+
+  // If the caller is setting a defaultCategoryId to a concrete value,
+  // verify it belongs to THIS business. Otherwise a partner could point
+  // their default at a category owned by another business they happen
+  // to know the id of.
+  if (typeof defaultCategoryId === 'string' && defaultCategoryId.length > 0) {
+    const [category] = await db
+      .select({ id: productCategories.id })
+      .from(productCategories)
+      .where(
+        and(
+          eq(productCategories.id, defaultCategoryId),
+          eq(productCategories.businessId, access.businessId),
+        ),
+      )
+      .limit(1)
+
+    if (!category) {
+      return errorResponse(ApiMessageCode.CATEGORY_NOT_FOUND, 404)
+    }
+  }
 
   const updateData: Record<string, unknown> = {}
   if (defaultCategoryId !== undefined) {

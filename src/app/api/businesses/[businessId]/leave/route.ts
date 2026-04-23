@@ -1,4 +1,4 @@
-import { isOwner } from '@/lib/business-auth'
+import { isOwner, invalidateAccessCache } from '@/lib/business-auth'
 import { db, businessUsers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { withBusinessAuth, errorResponse, successResponse } from '@/lib/api-middleware'
@@ -24,6 +24,10 @@ export const POST = withBusinessAuth(async (_request, access) => {
         eq(businessUsers.businessId, access.businessId)
       )
     )
+
+  // Clear the cached BusinessAccess so the next request from this user
+  // against this business can't ride the 60-second TTL window.
+  invalidateAccessCache(access.userId, access.businessId)
 
   return successResponse({}, ApiMessageCode.BUSINESS_LEAVE_SUCCESS)
 })

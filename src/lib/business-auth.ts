@@ -59,6 +59,20 @@ export function invalidateAccessCacheForBusiness(businessId: string): void {
 }
 
 /**
+ * Invalidate every access-cache entry owned by the given user, across all
+ * businesses. Call this when the user itself is being deleted or logged out
+ * of every business in one operation.
+ */
+export function invalidateAccessCacheForUser(userId: string): void {
+  const prefix = `${userId}:`
+  for (const key of accessCache.keys()) {
+    if (key.startsWith(prefix)) {
+      accessCache.delete(key)
+    }
+  }
+}
+
+/**
  * Require business access - throws if not authenticated or no access.
  * Uses a short-lived in-memory cache to avoid repeated DB queries.
  */

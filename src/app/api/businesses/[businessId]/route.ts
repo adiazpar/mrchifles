@@ -176,6 +176,10 @@ export async function DELETE(
 
     await db.delete(businesses).where(eq(businesses.id, businessId))
 
+    // Business is gone — every cached BusinessAccess that references it
+    // is now invalid (every member, not just the deleting owner).
+    invalidateAccessCacheForBusiness(businessId)
+
     return successResponse({}, ApiMessageCode.BUSINESS_DELETE_SUCCESS)
   } catch (error) {
     console.error('Business deletion error:', error)

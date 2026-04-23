@@ -3,6 +3,7 @@ import { db, users, businessUsers, businesses, inviteCodes, ownershipTransfers }
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser, clearAuthCookie } from '@/lib/simple-auth'
+import { invalidateAccessCacheForUser } from '@/lib/business-auth'
 import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 
@@ -139,6 +140,11 @@ export async function DELETE(request: NextRequest) {
 
     // Delete user (business_users entries cascade automatically)
     await db.delete(users).where(eq(users.id, session.userId))
+
+    // Drop every cached BusinessAccess that referenced this user. Even
+    // though the JWT is cleared below, a lingering or leaked token could
+    // otherwise ride the 60-second TTL window.
+    invalidateAccessCacheForUser(session.userId)
 
     // Clear the auth cookie
     await clearAuthCookie()
