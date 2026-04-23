@@ -5,7 +5,7 @@ import { useBusiness } from '@/contexts/business-context'
 import { fetchDeduped } from '@/lib/fetch'
 import { apiPost, ApiError } from '@/lib/api-client'
 import { useApiMessage } from './useApiMessage'
-import { scopedCache } from './useSessionCache'
+import { scopedCache, CACHE_KEYS } from './useSessionCache'
 
 interface PendingTransfer {
   code: string
@@ -13,8 +13,6 @@ interface PendingTransfer {
   status: 'pending'
   expiresAt: string
 }
-
-const CACHE_KEY = 'pending_transfer'
 
 /**
  * Reads the cached pending transfer for this business, filtering out
@@ -24,7 +22,7 @@ const CACHE_KEY = 'pending_transfer'
  */
 function readCachedTransfer(businessId: string | null): PendingTransfer | null {
   if (!businessId) return null
-  const cached = scopedCache<PendingTransfer | null>(CACHE_KEY, businessId).get()
+  const cached = scopedCache<PendingTransfer | null>(CACHE_KEYS.PENDING_TRANSFER, businessId).get()
   if (!cached) return null
   if (new Date(cached.expiresAt).getTime() <= Date.now()) return null
   return cached
@@ -35,7 +33,7 @@ function writeCachedTransfer(
   transfer: PendingTransfer | null,
 ): void {
   if (!businessId) return
-  const cache = scopedCache<PendingTransfer | null>(CACHE_KEY, businessId)
+  const cache = scopedCache<PendingTransfer | null>(CACHE_KEYS.PENDING_TRANSFER, businessId)
   if (transfer) cache.set(transfer)
   else cache.clear()
 }

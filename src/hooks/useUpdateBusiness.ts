@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { apiPatchForm, ApiError } from '@/lib/api-client'
 import { useApiMessage } from './useApiMessage'
 import { useBusiness } from '@/contexts/business-context'
+import { clearHubBusinessesCache } from './useSessionCache'
 
 interface UpdateBusinessPayload {
   name?: string
@@ -42,6 +43,11 @@ export function useUpdateBusiness(): UseUpdateBusinessReturn {
 
       await apiPatchForm(`/api/businesses/${businessId}`, fd)
       await refreshBusiness()
+      // The hub list caches name/icon/locale/type for every business;
+      // any of those could have just changed. Drop the hub cache so
+      // the next hub render refetches fresh data instead of showing
+      // the stale pre-edit values until the session ends.
+      clearHubBusinessesCache()
       return true
     } catch (err) {
       console.error('Update business error:', err)

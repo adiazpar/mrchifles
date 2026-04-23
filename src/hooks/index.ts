@@ -18,7 +18,7 @@ export { useApiMessage } from './useApiMessage'
 export { useTheme } from './useTheme'
 export type { Theme } from './useTheme'
 
-export { createSessionCache, scopedCache, CACHE_KEYS } from './useSessionCache'
+export { createSessionCache, scopedCache, CACHE_KEYS, clearPerBusinessCaches, clearHubBusinessesCache } from './useSessionCache'
 
 export { useJoinBusiness } from './useJoinBusiness'
 export type { UseJoinBusinessReturn, CodeType } from './useJoinBusiness'

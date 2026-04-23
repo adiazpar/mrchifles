@@ -10,6 +10,7 @@ import { usePageTransition } from '@/contexts/page-transition-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
 import { Spinner } from '@/components/ui'
 import { fetchDeduped } from '@/lib/fetch'
+import { createSessionCache, CACHE_KEYS } from '@/hooks'
 
 type BusinessType = 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other'
 
@@ -50,14 +51,10 @@ const BUSINESS_TYPE_ICONS: Partial<Record<BusinessType, React.ComponentType<{ cl
  * Shows user's businesses or empty state
  * Action buttons are rendered by MobileNav in hub mode
  */
-const HUB_BUSINESSES_CACHE_KEY = 'kasero_hub_businesses'
+const hubBusinessesCache = createSessionCache<Business[]>(CACHE_KEYS.HUB_BUSINESSES)
 
 function getCachedBusinessList(): Business[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const cached = sessionStorage.getItem(HUB_BUSINESSES_CACHE_KEY)
-    return cached ? JSON.parse(cached) : []
-  } catch { return [] }
+  return hubBusinessesCache.get() ?? []
 }
 
 export default function HubPage() {
@@ -78,9 +75,7 @@ export default function HubPage() {
         const fetchedBusinesses = data.businesses || []
         setBusinesses(fetchedBusinesses)
         setCachedBusinesses(fetchedBusinesses)
-        try {
-          sessionStorage.setItem(HUB_BUSINESSES_CACHE_KEY, JSON.stringify(fetchedBusinesses))
-        } catch { /* ignore storage errors */ }
+        hubBusinessesCache.set(fetchedBusinesses)
       }
     } catch (error) {
       console.error('Failed to fetch businesses:', error)

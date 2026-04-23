@@ -3,8 +3,9 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from './auth-context'
+import { CACHE_KEYS } from '@/hooks/useSessionCache'
 
-const BUSINESS_CACHE_STORAGE_KEY = 'kasero_business_cache'
+const BUSINESS_CACHE_STORAGE_KEY = CACHE_KEYS.BUSINESS_SHELL
 
 interface CachedBusiness {
   name: string

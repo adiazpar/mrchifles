@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
-import { fetchDeduped } from '@/lib/fetch'
 import { useAuth } from '@/contexts/auth-context'
 import { useProducts } from '@/contexts/products-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useProductSettings } from '@/contexts/product-settings-context'
-import { ApiError, apiDelete, apiPost, apiPatchForm, apiPostForm } from '@/lib/api-client'
+import { ApiError, apiDelete, apiPost, apiPatchForm, apiPostForm, apiRequest, type ApiResponse } from '@/lib/api-client'
 import { NewOrderModal, OrderDetailModal } from '@/components/products'
 import { sortProducts } from '@/lib/products'
 import type { Product, Provider } from '@/types'
@@ -291,10 +290,13 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       }
 
       // Refetch all orders so the list (and any consumer-provided filter) reflect the edit
-      const ordersResponse = await fetchDeduped(`/api/businesses/${businessId}/orders`)
-      const ordersData = await ordersResponse.json()
-      if (ordersResponse.ok && ordersData.success) {
+      try {
+        const ordersData = await apiRequest<ApiResponse & { orders: ExpandedOrder[] }>(
+          `/api/businesses/${businessId}/orders`,
+        )
         setOrders(ordersData.orders)
+      } catch {
+        // Non-fatal: the edit already landed; a stale list self-heals on next navigation.
       }
 
       setEditOrderSaved(true)
@@ -335,14 +337,17 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       // totals) are fresh. Products: receiving increments stock in the DB,
       // so we refetch via the shared provider — every page reading from
       // useProducts() sees the new stock without any page-local plumbing.
-      const [ordersResponse] = await Promise.all([
-        fetchDeduped(`/api/businesses/${businessId}/orders`),
+      const [ordersResult] = await Promise.allSettled([
+        apiRequest<ApiResponse & { orders: ExpandedOrder[] }>(
+          `/api/businesses/${businessId}/orders`,
+        ),
         refetchProducts(),
       ])
-      const ordersData = await ordersResponse.json()
-      if (ordersResponse.ok && ordersData.success) {
-        setOrders(ordersData.orders)
+      if (ordersResult.status === 'fulfilled') {
+        setOrders(ordersResult.value.orders)
       }
+      // If either side fails we still consider the receive a success (the
+      // server already committed); stale-list self-heals on next nav.
 
       setOrderReceived(true)
       return true

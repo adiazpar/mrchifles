@@ -5,6 +5,7 @@ import { apiDelete, ApiError } from '@/lib/api-client'
 import { useApiMessage } from './useApiMessage'
 import { useBusiness } from '@/contexts/business-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
+import { clearHubBusinessesCache, clearPerBusinessCaches } from './useSessionCache'
 
 interface UseDeleteBusinessReturn {
   deleteBusiness: () => Promise<boolean>
@@ -25,7 +26,15 @@ export function useDeleteBusiness(): UseDeleteBusinessReturn {
     setError('')
     try {
       await apiDelete(`/api/businesses/${businessId}`)
+      // Drop every client-side cache that referenced this business:
+      // the page-transition role cache (already cleared), the hub
+      // businesses list, and every per-business sessionStorage entry
+      // (products, providers, orders, categories, settings, pending
+      // transfer). Otherwise the next hub render or a later business
+      // switch would show ghost data from the now-deleted record.
       clearCachedBusiness(businessId)
+      clearHubBusinessesCache()
+      clearPerBusinessCaches(businessId)
       return true
     } catch (err) {
       setError(

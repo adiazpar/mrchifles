@@ -31,56 +31,31 @@ import {
   type ApiResponse,
 } from '@/lib/api-client'
 import { useApiMessage } from '@/hooks/useApiMessage'
+import { CACHE_KEYS, scopedCache } from '@/hooks/useSessionCache'
 import type { ProductCategory, ProductSettings, SortPreference } from '@/types'
 
 // ============================================
 // SESSION CACHE
 // ============================================
-
-function categoriesCacheKey(businessId: string) {
-  return `product_categories_cache_${businessId}`
-}
-
-function settingsCacheKey(businessId: string) {
-  return `product_settings_cache_${businessId}`
-}
+// Both caches go through the shared scopedCache primitive + the central
+// CACHE_KEYS registry so `clearPerBusinessCaches(businessId)` (called from
+// leave / delete-business / delete-account paths) drops them alongside
+// PRODUCTS / PROVIDERS / ORDERS in one sweep.
 
 function getCachedCategories(businessId: string): ProductCategory[] | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const cached = sessionStorage.getItem(categoriesCacheKey(businessId))
-    return cached ? JSON.parse(cached) : null
-  } catch {
-    return null
-  }
+  return scopedCache<ProductCategory[]>(CACHE_KEYS.CATEGORIES, businessId).get()
 }
 
 function setCachedCategories(businessId: string, categories: ProductCategory[]): void {
-  if (typeof window === 'undefined') return
-  try {
-    sessionStorage.setItem(categoriesCacheKey(businessId), JSON.stringify(categories))
-  } catch {
-    // Storage error, ignore
-  }
+  scopedCache<ProductCategory[]>(CACHE_KEYS.CATEGORIES, businessId).set(categories)
 }
 
 function getCachedSettings(businessId: string): ProductSettings | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const cached = sessionStorage.getItem(settingsCacheKey(businessId))
-    return cached ? JSON.parse(cached) : null
-  } catch {
-    return null
-  }
+  return scopedCache<ProductSettings>(CACHE_KEYS.PRODUCT_SETTINGS, businessId).get()
 }
 
 function setCachedSettings(businessId: string, settings: ProductSettings): void {
-  if (typeof window === 'undefined') return
-  try {
-    sessionStorage.setItem(settingsCacheKey(businessId), JSON.stringify(settings))
-  } catch {
-    // Storage error, ignore
-  }
+  scopedCache<ProductSettings>(CACHE_KEYS.PRODUCT_SETTINGS, businessId).set(settings)
 }
 
 // ============================================
