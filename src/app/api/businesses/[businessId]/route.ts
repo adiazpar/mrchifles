@@ -119,10 +119,13 @@ export const PATCH = withBusinessAuth(async (request, access) => {
   }
 
   try {
-    await db.update(businesses).set(update).where(eq(businesses.id, access.businessId))
-    invalidateAccessCacheForBusiness(access.businessId)
-    const [row] = await db.select().from(businesses).where(eq(businesses.id, access.businessId)).limit(1)
+    const [row] = await db
+      .update(businesses)
+      .set(update)
+      .where(eq(businesses.id, access.businessId))
+      .returning()
     if (!row) return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND, 404)
+    invalidateAccessCacheForBusiness(access.businessId)
     return successResponse({
       business: {
         id: row.id, name: row.name, type: row.type, icon: row.icon,

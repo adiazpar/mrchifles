@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db, ownershipTransfers, users, businesses } from '@/db'
+// `users` is kept because the fromUser name fetch below still needs it.
 import { eq, and, gt } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { errorResponse } from '@/lib/api-middleware'
@@ -21,23 +22,11 @@ export async function GET() {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
-    // Get current user's email
-    const currentUserData = await db
-      .select({ email: users.email })
-      .from(users)
-      .where(eq(users.id, user.userId))
-      .get()
-
-    if (!currentUserData) {
-      return NextResponse.json({
-        success: true,
-        transfer: null,
-      })
-    }
-
     const now = new Date()
 
-    // Find incoming transfer for this user's email
+    // Find incoming transfer for this user's email. The JWT already
+    // carries user.email, so we skip the pre-flight DB lookup the old
+    // code did — one round trip saved per hub-home render.
     const transfer = await db
       .select({
         id: ownershipTransfers.id,
@@ -52,7 +41,7 @@ export async function GET() {
       .innerJoin(businesses, eq(ownershipTransfers.businessId, businesses.id))
       .where(
         and(
-          eq(ownershipTransfers.toEmail, currentUserData.email.toLowerCase()),
+          eq(ownershipTransfers.toEmail, user.email.toLowerCase()),
           eq(ownershipTransfers.status, 'pending'),
           gt(ownershipTransfers.expiresAt, now)
         )

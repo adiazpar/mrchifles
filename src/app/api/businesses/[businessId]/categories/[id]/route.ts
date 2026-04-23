@@ -49,18 +49,15 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
 
   const { name } = validation.data
 
-  await db
+  // Returning hands us the updated row in the same round trip as the
+  // UPDATE. No follow-up SELECT needed.
+  const [updatedCategory] = await db
     .update(productCategories)
     .set({
       name: name.trim(),
     })
     .where(eq(productCategories.id, id))
-
-  const [updatedCategory] = await db
-    .select()
-    .from(productCategories)
-    .where(eq(productCategories.id, id))
-    .limit(1)
+    .returning()
 
   return successResponse({ category: updatedCategory })
 })

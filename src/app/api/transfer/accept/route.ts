@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, ownershipTransfers, users, businessUsers } from '@/db'
+import { db, ownershipTransfers, businessUsers } from '@/db'
 import { eq, and, gt, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
@@ -79,22 +79,10 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Get current user's email
-    const currentUserData = await db
-      .select({ email: users.email })
-      .from(users)
-      .where(eq(users.id, user.userId))
-      .get()
-
-    if (!currentUserData) {
-      return NextResponse.json({
-        success: false,
-        messageCode: ApiMessageCode.TRANSFER_USER_NOT_FOUND,
-      })
-    }
-
-    // Verify email matches
-    const isRecipient = currentUserData.email.toLowerCase() === transfer.toEmail.toLowerCase()
+    // The JWT already carries the user's email — trust it and skip the DB
+    // round trip. If the token is stale (user deleted mid-session) the
+    // transaction below would fail on the FK insert anyway.
+    const isRecipient = user.email.toLowerCase() === transfer.toEmail.toLowerCase()
 
     if (!isRecipient) {
       return NextResponse.json({

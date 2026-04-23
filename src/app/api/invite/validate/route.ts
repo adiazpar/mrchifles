@@ -114,21 +114,15 @@ export async function POST(request: NextRequest) {
       .get()
 
     if (transfer) {
-      // Get the from user's name
+      // Get the from user's name. The current user's email comes from
+      // the JWT; no need to re-query the DB just to read it.
       const fromUser = await db
         .select({ name: users.name })
         .from(users)
         .where(eq(users.id, transfer.fromUserId))
         .get()
 
-      // Check if the current user's email matches the transfer recipient
-      const currentUserData = await db
-        .select({ email: users.email })
-        .from(users)
-        .where(eq(users.id, user.userId))
-        .get()
-
-      const isRecipient = currentUserData?.email.toLowerCase() === transfer.toEmail.toLowerCase()
+      const isRecipient = user.email.toLowerCase() === transfer.toEmail.toLowerCase()
 
       if (!isRecipient) {
         return NextResponse.json({

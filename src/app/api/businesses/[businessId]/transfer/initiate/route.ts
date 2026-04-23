@@ -52,21 +52,10 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   const { toEmail } = validation.data
 
-  // Can't transfer to yourself
-  const [currentUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, access.userId))
-    .limit(1)
-
-  if (currentUser?.email === toEmail) {
-    return errorResponse(ApiMessageCode.TRANSFER_CANNOT_SELF, 400)
-  }
-
-  // Verify a Kasero user with this email actually exists.
-  // We block "invite-via-transfer" because silent dead-ends (owner types the wrong
-  // email, transfer expires 24h later with nothing happening) are a worse UX than
-  // telling them up front to invite the person to the team first.
+  // Verify a Kasero user with this email actually exists, then compare
+  // their id against the caller's to catch the self-transfer case in the
+  // same round trip. The old code fetched the caller separately to read
+  // their email; access.userId is enough here.
   const [recipientUser] = await db
     .select({ id: users.id })
     .from(users)
@@ -74,7 +63,14 @@ export const POST = withBusinessAuth(async (request, access) => {
     .limit(1)
 
   if (!recipientUser) {
+    // We block "invite-via-transfer" because silent dead-ends (owner types
+    // the wrong email, transfer expires 24h later with nothing happening)
+    // are a worse UX than telling them up front to invite the person first.
     return errorResponse(ApiMessageCode.TRANSFER_RECIPIENT_NOT_FOUND, 400)
+  }
+
+  if (recipientUser.id === access.userId) {
+    return errorResponse(ApiMessageCode.TRANSFER_CANNOT_SELF, 400)
   }
 
   // Check for existing pending transfer

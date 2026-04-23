@@ -34,7 +34,12 @@ export const users = sqliteTable('users', {
   name: text('name').notNull(),
   avatar: text('avatar'), // Base64 or URL
   language: text('language').default('en-US').notNull(), // UI language (next-intl bundle); distinct from per-business locale/currency
-})
+}, (table) => ({
+  // Expression index for case-insensitive email lookup (invite-validate,
+  // transfer-initiate). The built-in unique index on `email` is case-
+  // sensitive and is bypassed when queries wrap the column in LOWER().
+  emailLowerIdx: index('idx_users_email_lower').on(sql`lower(${table.email})`),
+}))
 
 // ===========================================
 // BUSINESS USERS (Multi-business membership)
@@ -51,6 +56,13 @@ export const businessUsers = sqliteTable('business_users', {
   userIdIdx: index('idx_business_users_user_id').on(table.userId),
   businessIdIdx: index('idx_business_users_business_id').on(table.businessId),
   statusIdx: index('idx_business_users_status').on(table.status),
+  // Composite index for the hottest query in the app: requireBusinessAccess,
+  // role/status mutations, leave, accept-transfer, invite-join — every
+  // business-scoped request runs `WHERE userId = ? AND businessId = ?`.
+  // Non-unique today: the one-row-per-(user, business) constraint is the
+  // right invariant, but enforcing it atomically would fail a prod push if
+  // any duplicate rows exist. Keeping this as a performance index only.
+  userBusinessIdx: index('idx_business_users_user_business').on(table.userId, table.businessId),
 }))
 
 // ===========================================
@@ -184,6 +196,10 @@ export const orderItems = sqliteTable('order_items', {
   receivedQuantity: integer('received_quantity'),
 }, (table) => ({
   orderIdIdx: index('idx_order_items_order_id').on(table.orderId),
+  // Used by the product-delete blocking-order check (join on productId to
+  // find pending orders referencing this product). Without this index that
+  // query scans order_items.
+  productIdIdx: index('idx_order_items_product_id').on(table.productId),
 }))
 
 // ===========================================

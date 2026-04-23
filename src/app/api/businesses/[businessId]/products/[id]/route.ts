@@ -179,18 +179,15 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     return errorResponse(ApiMessageCode.PRODUCT_NO_DATA_TO_UPDATE, 400)
   }
 
-  // Update with ownership check in WHERE (no separate verify query needed)
-  await db
+  // One round trip: the ownership check lives in the WHERE clause and
+  // .returning() hands back the updated row directly. If the row didn't
+  // match (wrong id or wrong businessId) the returning array is empty,
+  // which collapses to a 404.
+  const [updatedProduct] = await db
     .update(products)
     .set(updateData)
     .where(and(eq(products.id, id), eq(products.businessId, access.businessId)))
-
-  // Re-fetch full product for consistent response
-  const [updatedProduct] = await db
-    .select()
-    .from(products)
-    .where(eq(products.id, id))
-    .limit(1)
+    .returning()
 
   if (!updatedProduct) {
     return errorResponse(ApiMessageCode.PRODUCT_NOT_FOUND, 404)

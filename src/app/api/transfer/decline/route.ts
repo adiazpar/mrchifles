@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { db, ownershipTransfers, users } from '@/db'
+import { db, ownershipTransfers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
@@ -55,16 +55,8 @@ export async function POST(request: NextRequest) {
       return errorResponse(ApiMessageCode.TRANSFER_INVALID_OR_EXPIRED, 400)
     }
 
-    const currentUserData = await db
-      .select({ email: users.email })
-      .from(users)
-      .where(eq(users.id, user.userId))
-      .get()
-
-    if (
-      !currentUserData ||
-      currentUserData.email.toLowerCase() !== transfer.toEmail.toLowerCase()
-    ) {
+    // JWT already has the email — no DB round trip needed for this check.
+    if (user.email.toLowerCase() !== transfer.toEmail.toLowerCase()) {
       return errorResponse(ApiMessageCode.TRANSFER_WRONG_RECIPIENT, 403)
     }
 
