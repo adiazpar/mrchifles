@@ -101,23 +101,6 @@
   justify-content: center;
 }
 
-/* Payment buttons */
-.btn-yape {
-  background: var(--color-yape);
-  color: white;
-}
-
-.btn-pos {
-  background: var(--color-pos);
-  color: white;
-}
-
-.btn-sm {
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--text-sm);
-  min-height: 40px;
-}
-
 .btn-lg {
   padding: var(--space-4) var(--space-6);
   font-size: var(--text-lg);

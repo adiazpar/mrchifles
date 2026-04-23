@@ -9,21 +9,6 @@
   to { opacity: 1; }
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-
 /* Pop-in with slight overshoot, used for nav notification badges. */
 @keyframes badge-pop-in {
   from { opacity: 0; transform: scale(0); }
@@ -39,59 +24,11 @@
   to { transform: rotate(360deg); }
 }
 
-/* ===== PIN Animations ===== */
-@keyframes pinShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-8px); }
-  50% { transform: translateX(8px); }
-  75% { transform: translateX(-8px); }
-}
-
-@keyframes pinShakeError {
-  0% {
-    transform: translateX(0);
-    background: var(--color-error);
-  }
-  20% { transform: translateX(-8px); }
-  40% { transform: translateX(8px); }
-  60% {
-    transform: translateX(-8px);
-    background: var(--color-error);
-  }
-  80% { transform: translateX(0); }
-  100% {
-    transform: translateX(0);
-    background: var(--color-border);
-  }
-}
-
 /* ===== Page Header Animations ===== */
 @keyframes page-header-back-enter {
   from {
     opacity: 0;
     transform: translateX(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes page-header-titles-shift {
-  from {
-    opacity: 0;
-    transform: translateX(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes page-header-titles-return {
-  from {
-    opacity: 0;
-    transform: translateX(8px);
   }
   to {
     opacity: 1;
@@ -113,55 +50,6 @@
 @keyframes fadeOut {
   from { opacity: 1; }
   to { opacity: 0; }
-}
-
-/* ===== Balance Hero Animations ===== */
-.balance-hero {
-  font-size: var(--text-hero);
-  font-weight: 700;
-  letter-spacing: var(--tracking-tighter);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  position: relative;
-}
-
-.balance-hero.updating {
-  animation: balance-bump var(--duration-normal) var(--ease-out-back);
-}
-
-@keyframes balance-bump {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.04); }
-  100% { transform: scale(1); }
-}
-
-/* Balance pulse effect for ingresos/retiros */
-.balance-pulse {
-  position: relative;
-}
-
-.balance-pulse::after {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: var(--radius-lg);
-  pointer-events: none;
-  opacity: 0;
-}
-
-.balance-pulse.ingreso::after {
-  background: hsla(145, 63%, 42%, 0.15);
-  animation: pulse-fade var(--duration-slow) var(--ease-out-expo) forwards;
-}
-
-.balance-pulse.retiro::after {
-  background: hsla(0, 72%, 51%, 0.08);
-  animation: pulse-fade var(--duration-slow) var(--ease-out-expo) forwards;
-}
-
-@keyframes pulse-fade {
-  0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.2); }
 }
 
 /* ===== Modal Animations ===== */

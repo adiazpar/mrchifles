@@ -30,11 +30,6 @@
 
   /* Hero Typography - for balance displays and key numbers */
   --text-hero: clamp(2.5rem, 8vw, 4rem);
-  --text-display: clamp(1.75rem, 5vw, 2.5rem);
-
-  /* Letter spacing for large numbers */
-  --tracking-tight: -0.02em;
-  --tracking-tighter: -0.03em;
 
   /* ===== Brand: Sky Blue (Professional) ===== */
   --brand-50: #F0F9FF;
@@ -83,15 +78,12 @@
   /* Borders */
   --color-border: var(--neutral-200);
   --color-border-hover: var(--neutral-300);
-  --color-border-focus: var(--brand-500);
 
   /* Payment Methods */
   --color-yape: #6B21A8;
-  --color-yape-hover: #581C87;
   --color-yape-subtle: #F3E8FF;
 
   --color-pos: #EA580C;
-  --color-pos-hover: #C2410C;
   --color-pos-subtle: #FFF7ED;
 
   /* Semantic Colors */
@@ -137,19 +129,10 @@
     0 8px 10px rgba(0, 0, 0, 0.08),
     0 20px 40px rgba(0, 0, 0, 0.12);
 
-  /* Colored shadows for brand emphasis */
-  --shadow-brand:
-    0 4px 12px hsla(199, 89%, 48%, 0.15),
-    0 8px 24px hsla(199, 89%, 48%, 0.1);
-  --shadow-success:
-    0 4px 12px hsla(145, 63%, 32%, 0.15),
-    0 8px 24px hsla(145, 63%, 32%, 0.1);
-
   /* ===== Animation Tokens ===== */
   /* Easing curves */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
 
   /* Durations - consolidated animation timing */
@@ -158,14 +141,8 @@
   --duration-normal: 200ms;   /* Modal/sheet animations */
   --duration-medium: 350ms;   /* Content transitions (images, progress) */
   --duration-slow: 600ms;     /* Page-level transitions (navbar, headers) */
-  --duration-slower: 800ms;   /* Celebrations */
-
-  /* Composite timing */
-  --spring: var(--duration-normal) var(--ease-out-back);
-  --smooth: var(--duration-normal) var(--ease-out-expo);
 
   /* ===== Z-Index ===== */
-  --z-base: 0;
   --z-dropdown: 50;
   --z-sticky: 100;
   --z-modal-backdrop: 200;
@@ -222,13 +199,6 @@
   --shadow-xl:
     0 8px 10px rgba(0, 0, 0, 0.35),
     0 20px 40px rgba(0, 0, 0, 0.4);
-
-  --shadow-brand:
-    0 4px 12px hsla(199, 89%, 60%, 0.2),
-    0 8px 24px hsla(199, 89%, 60%, 0.15);
-  --shadow-success:
-    0 4px 12px hsla(145, 63%, 50%, 0.2),
-    0 8px 24px hsla(145, 63%, 50%, 0.15);
 }
 
 /* ==========================================================================

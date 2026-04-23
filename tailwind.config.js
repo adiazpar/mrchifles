@@ -57,7 +57,6 @@ module.exports = {
         border: {
           DEFAULT: 'var(--color-border)',
           hover: 'var(--color-border-hover)',
-          focus: 'var(--color-border-focus)',
         },
         // Payment methods
         cash: {
@@ -67,7 +66,6 @@ module.exports = {
         },
         yape: {
           DEFAULT: 'var(--color-yape)',
-          hover: 'var(--color-yape-hover)',
           subtle: 'var(--color-yape-subtle)',
         },
         plin: {
@@ -147,30 +145,6 @@ module.exports = {
         modal: 'var(--z-modal)',
         toast: 'var(--z-toast)',
         tooltip: 'var(--z-tooltip)',
-      },
-      animation: {
-        'fade-in': 'fadeIn 0.2s ease-out',
-        'fade-in-up': 'fadeInUp 0.25s ease-out',
-        'fade-in-down': 'fadeInDown 0.25s ease-out',
-        'scale-in': 'scaleIn 0.2s ease-out',
-      },
-      keyframes: {
-        fadeIn: {
-          from: { opacity: '0' },
-          to: { opacity: '1' },
-        },
-        fadeInUp: {
-          from: { opacity: '0', transform: 'translateY(8px)' },
-          to: { opacity: '1', transform: 'translateY(0)' },
-        },
-        fadeInDown: {
-          from: { opacity: '0', transform: 'translateY(-8px)' },
-          to: { opacity: '1', transform: 'translateY(0)' },
-        },
-        scaleIn: {
-          from: { opacity: '0', transform: 'scale(0.96)' },
-          to: { opacity: '1', transform: 'scale(1)' },
-        },
       },
     },
   },
