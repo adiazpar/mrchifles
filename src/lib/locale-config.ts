@@ -14,7 +14,7 @@ export type Region =
   | 'Caribbean'
   | 'Europe'
 
-export interface LocaleConfig {
+interface LocaleConfig {
   code: string // Locale code (e.g., 'en-US')
   name: string // Display name
   country: string // Country name for grouping
@@ -24,7 +24,7 @@ export interface LocaleConfig {
   region: Region
 }
 
-export interface CurrencyConfig {
+interface CurrencyConfig {
   code: string // ISO 4217 code
   symbol: string // Currency symbol
   name: string // Display name
@@ -32,7 +32,7 @@ export interface CurrencyConfig {
   symbolPosition: 'before' | 'after' // Symbol position relative to amount
 }
 
-export interface BusinessTypeConfig {
+interface BusinessTypeConfig {
   value: string
   label: string
 }
@@ -48,7 +48,7 @@ export const BUSINESS_TYPES: BusinessTypeConfig[] = [
 ]
 
 // Supported locales with their defaults
-export const LOCALES: LocaleConfig[] = [
+const LOCALES: LocaleConfig[] = [
   // North America
   { code: 'en-US', name: 'English (US)', country: 'United States', isoCountry: 'US', currency: 'USD', flag: '🇺🇸', region: 'North America' },
   { code: 'en-CA', name: 'English (Canada)', country: 'Canada', isoCountry: 'CA', currency: 'CAD', flag: '🇨🇦', region: 'North America' },
@@ -100,7 +100,7 @@ export const REGIONS: Region[] = [
 ]
 
 // Currency configurations
-export const CURRENCIES: Record<string, CurrencyConfig> = {
+const CURRENCIES: Record<string, CurrencyConfig> = {
   USD: { code: 'USD', symbol: '$', name: 'US Dollar', decimals: 2, symbolPosition: 'before' },
   CAD: { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', decimals: 2, symbolPosition: 'before' },
   MXN: { code: 'MXN', symbol: '$', name: 'Mexican Peso', decimals: 2, symbolPosition: 'before' },
@@ -137,10 +137,6 @@ export function getCurrencyConfig(currencyCode: string): CurrencyConfig | undefi
  */
 export function getCurrencyForLocale(localeCode: string): string {
   return getLocaleConfig(localeCode)?.currency ?? 'USD'
-}
-
-export function getBusinessTypeConfig(typeValue: string): BusinessTypeConfig | undefined {
-  return BUSINESS_TYPES.find(t => t.value === typeValue)
 }
 
 // Group locales by region for a grouped <select>.

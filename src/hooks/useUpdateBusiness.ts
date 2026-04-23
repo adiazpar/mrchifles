@@ -5,7 +5,7 @@ import { apiPatchForm, ApiError } from '@/lib/api-client'
 import { useApiMessage } from './useApiMessage'
 import { useBusiness } from '@/contexts/business-context'
 
-export interface UpdateBusinessPayload {
+interface UpdateBusinessPayload {
   name?: string
   type?: string
   locale?: string
@@ -13,7 +13,7 @@ export interface UpdateBusinessPayload {
   removeLogo?: boolean
 }
 
-export interface UseUpdateBusinessReturn {
+interface UseUpdateBusinessReturn {
   update: (payload: UpdateBusinessPayload) => Promise<boolean>
   isSubmitting: boolean
   error: string

@@ -30,11 +30,6 @@ export const Schemas = {
   id: () => z.string().min(1),
 
   /**
-   * Nanoid format ID (21 characters).
-   */
-  nanoid: () => z.string().length(21),
-
-  /**
    * Boolean from string or boolean input (for FormData).
    * Defaults to true if not provided.
    */
@@ -47,11 +42,6 @@ export const Schemas = {
    * Optional phone number field.
    */
   phone: () => z.string().nullable().optional(),
-
-  /**
-   * Optional notes/description field.
-   */
-  notes: () => z.string().nullable().optional(),
 
   /**
    * Password with security requirements:

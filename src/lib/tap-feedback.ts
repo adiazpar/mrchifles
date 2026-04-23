@@ -15,9 +15,9 @@
  * `pointerup`, `pointercancel`, and window `blur`.
  */
 
-export const MIN_PRESS_MS = 120
+const MIN_PRESS_MS = 120
 
-export const TAP_FEEDBACK_SELECTOR = [
+const TAP_FEEDBACK_SELECTOR = [
   '.btn',
   '.fab',
   '.payment-btn',

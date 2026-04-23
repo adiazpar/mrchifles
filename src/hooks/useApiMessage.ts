@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useCallback } from 'react'
-import type { ApiMessageCode, ApiMessageEnvelope } from '@/lib/api-messages'
+import type { ApiMessageEnvelope } from '@/lib/api-messages'
 
 /**
  * Translate a server-emitted API message envelope into a localized string.
@@ -44,5 +44,3 @@ export function useApiMessage() {
   )
 }
 
-export type TranslateApiMessage = (envelope: ApiMessageEnvelope) => string
-export type { ApiMessageCode }

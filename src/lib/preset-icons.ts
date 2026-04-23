@@ -1,7 +1,7 @@
 import { ShoppingBag, ShoppingBasket, Briefcase, Backpack, Wallet } from 'lucide-react'
 import type { ComponentType } from 'react'
 
-export interface PresetIcon {
+interface PresetIcon {
   id: string
   label: string
   icon: ComponentType<{ size?: number; className?: string }>

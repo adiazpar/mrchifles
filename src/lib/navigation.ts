@@ -1,7 +1,7 @@
 import { Home, ShoppingCart, Tags, Settings } from 'lucide-react'
 import type { ComponentType } from 'react'
 
-export interface NavItem {
+interface NavItem {
   href: string
   label: string
   icon: ComponentType<{ className?: string }>
@@ -63,7 +63,7 @@ export function getPrefetchRoutes(businessId: string): string[] {
  * - Header subtitle = Page name (from this config)
  * - backTo = Parent route for nested pages (relative path, businessId added dynamically)
  */
-export interface RouteConfig {
+interface RouteConfig {
   title?: string    // Main title (used for hub pages like Account)
   pageTitle: string // Displays as subtitle under business name or title
   backTo?: string   // Relative path (e.g., '/products'), businessId prefix added dynamically
@@ -129,11 +129,3 @@ export function getRouteConfig(pathname: string): RouteConfig & { businessId?: s
   return { pageTitle: '', businessId }
 }
 
-/**
- * Build a full URL with businessId prefix
- */
-export function buildBusinessUrl(businessId: string, path: string): string {
-  // Handle paths that already start with /
-  const cleanPath = path.startsWith('/') ? path : `/${path}`
-  return `/${businessId}${cleanPath}`
-}

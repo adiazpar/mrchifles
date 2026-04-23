@@ -13,7 +13,7 @@ import type { NextRequest } from 'next/server'
 
 const AUTH_COOKIE_NAME = 'auth-token'
 
-export interface JWTPayload {
+interface JWTPayload {
   userId: string
   email: string
   [key: string]: unknown

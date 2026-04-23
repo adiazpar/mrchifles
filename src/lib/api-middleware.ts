@@ -24,16 +24,6 @@ export interface RouteParams {
   }>
 }
 
-/**
- * Route params for routes with an additional ID parameter.
- */
-export interface RouteParamsWithId {
-  params: Promise<{
-    businessId: string
-    id: string
-  }>
-}
-
 // ============================================
 // BUSINESS AUTH WRAPPER
 // ============================================
@@ -235,27 +225,3 @@ export function validationError(
   return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
 }
 
-// ============================================
-// PAGINATION HELPERS
-// ============================================
-
-export interface PaginationParams {
-  limit: number
-  offset: number
-}
-
-/**
- * Extract pagination parameters from URL search params.
- */
-export function getPaginationParams(
-  searchParams: URLSearchParams,
-  defaultLimit = 50,
-  maxLimit = 500
-): PaginationParams {
-  const limit = Math.min(
-    parseInt(searchParams.get('limit') || String(defaultLimit)),
-    maxLimit
-  )
-  const offset = parseInt(searchParams.get('offset') || '0')
-  return { limit: isNaN(limit) ? defaultLimit : limit, offset: isNaN(offset) ? 0 : offset }
-}

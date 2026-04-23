@@ -40,7 +40,7 @@ export type PipelineStep =
   | 'complete'       // Done successfully
   | 'error'          // Failed
 
-export interface PipelineResult {
+interface PipelineResult {
   name: string
   categoryId: string | null
   suggestedNewCategoryName: string | null
@@ -49,7 +49,7 @@ export interface PipelineResult {
   cachedBgRemoved: string  // For regeneration
 }
 
-export interface PipelineState {
+interface PipelineState {
   step: PipelineStep
   error: string | null
   result: PipelineResult | null

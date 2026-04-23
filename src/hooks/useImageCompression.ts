@@ -11,7 +11,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { apiPostForm, ApiError, ApiResponse } from '@/lib/api-client'
 
-export interface CompressionState {
+interface CompressionState {
   isProcessing: boolean
   error: string | null
 }

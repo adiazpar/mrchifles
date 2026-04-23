@@ -6,7 +6,7 @@ import { useApiMessage } from './useApiMessage'
 import { useBusiness } from '@/contexts/business-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 
-export interface UseDeleteBusinessReturn {
+interface UseDeleteBusinessReturn {
   deleteBusiness: () => Promise<boolean>
   isSubmitting: boolean
   error: string

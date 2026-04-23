@@ -22,11 +22,11 @@ export interface TeamMember extends User {
   createdAt: Date | string
 }
 
-export interface UseTeamManagementOptions {
+interface UseTeamManagementOptions {
   businessId: string
 }
 
-export interface UseTeamManagementReturn {
+interface UseTeamManagementReturn {
   // Data
   teamMembers: TeamMember[]
   sortedTeamMembers: TeamMember[]

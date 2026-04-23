@@ -17,10 +17,8 @@ import { isBase64DataUrl } from './utils'
 // for the re-export below.
 import {
   fileToBase64,
-  blobToBase64,
   getBase64Size,
   validateIconSize,
-  MAX_ICON_SIZE,
   MAX_UPLOAD_SIZE,
 } from './storage-client'
 
@@ -28,10 +26,8 @@ import {
 // working without changing their import paths.
 export {
   fileToBase64,
-  blobToBase64,
   getBase64Size,
   validateIconSize,
-  MAX_ICON_SIZE,
   MAX_UPLOAD_SIZE,
 }
 

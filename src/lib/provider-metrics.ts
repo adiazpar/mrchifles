@@ -7,7 +7,7 @@ const RELIABILITY_MIN_RESOLVED = 3
 const TYPICAL_ITEMS_LIMIT = 5
 const MONTHLY_SPEND_WINDOW = 6
 
-export interface ProviderMetrics {
+interface ProviderMetrics {
   totalSpent: number
   orderCount: number
   /** Average days between placed orders. Null when fewer than 2 orders. */
@@ -88,14 +88,7 @@ function computeReliability(orders: Order[]): ProviderMetrics['reliability'] {
   return { percent, onTime, resolved, windowSize }
 }
 
-export {
-  RELIABILITY_WINDOW,
-  RELIABILITY_MIN_RESOLVED,
-  TYPICAL_ITEMS_LIMIT,
-  MONTHLY_SPEND_WINDOW,
-}
-
-export interface MonthlySpendBucket {
+interface MonthlySpendBucket {
   /** Start of the month (local time, day 1, 00:00). Use this for the label. */
   start: Date
   total: number
@@ -143,7 +136,7 @@ function addMonths(d: Date, months: number): Date {
   return new Date(d.getFullYear(), d.getMonth() + months, 1, 0, 0, 0, 0)
 }
 
-export interface TypicalItem {
+interface TypicalItem {
   /** Stable key for React — productId when available, else productName. */
   key: string
   name: string

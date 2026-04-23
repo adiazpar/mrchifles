@@ -6,7 +6,7 @@ import { fetchDeduped } from '@/lib/fetch'
 import { apiPost, ApiError } from '@/lib/api-client'
 import { useApiMessage } from './useApiMessage'
 
-export interface IncomingTransfer {
+interface IncomingTransfer {
   code: string
   status: 'pending'
   expiresAt: string

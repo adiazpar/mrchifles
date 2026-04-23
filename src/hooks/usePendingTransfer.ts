@@ -7,7 +7,7 @@ import { apiPost, ApiError } from '@/lib/api-client'
 import { useApiMessage } from './useApiMessage'
 import { scopedCache } from './useSessionCache'
 
-export interface PendingTransfer {
+interface PendingTransfer {
   code: string
   toEmail: string
   status: 'pending'

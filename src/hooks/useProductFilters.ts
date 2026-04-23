@@ -14,7 +14,7 @@ import type { Product, ProductCategory as IProductCategory, SortPreference } fro
 // HOOK INTERFACE
 // ============================================
 
-export interface UseProductFiltersOptions {
+interface UseProductFiltersOptions {
   products: Product[]
   categories: IProductCategory[]
   /** Initial sort preference from settings */
@@ -23,7 +23,7 @@ export interface UseProductFiltersOptions {
   onSortChange?: (sort: SortOption) => void
 }
 
-export interface UseProductFiltersReturn {
+interface UseProductFiltersReturn {
   // Search state
   searchQuery: string
   setSearchQuery: (query: string) => void

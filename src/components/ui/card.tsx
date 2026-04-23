@@ -41,39 +41,3 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 )
 
 Card.displayName = 'Card'
-
-export function CardHeader({
-  className = '',
-  children,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={`card-header ${className}`} {...props}>
-      {children}
-    </div>
-  )
-}
-
-export function CardBody({
-  className = '',
-  children,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={`card-body ${className}`} {...props}>
-      {children}
-    </div>
-  )
-}
-
-export function CardFooter({
-  className = '',
-  children,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={`card-footer ${className}`} {...props}>
-      {children}
-    </div>
-  )
-}

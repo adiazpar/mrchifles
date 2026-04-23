@@ -15,7 +15,7 @@ interface CreateBusinessResponse extends ApiResponse {
 
 export type BusinessType = 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other'
 
-export interface BusinessFormData {
+interface BusinessFormData {
   name: string
   type: BusinessType | null
   locale: string

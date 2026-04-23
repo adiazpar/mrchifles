@@ -13,7 +13,7 @@ import { sortProducts } from '@/lib/products'
 import type { Product, Provider } from '@/types'
 import type { ExpandedOrder, OrderFormItem } from '@/lib/products'
 
-export interface UseOrderFlowsOptions {
+interface UseOrderFlowsOptions {
   businessId: string
   /**
    * Active providers used by the new-order modal's provider dropdown. The
@@ -28,7 +28,7 @@ export interface UseOrderFlowsOptions {
   canDelete: boolean
 }
 
-export interface UseOrderFlowsReturn {
+interface UseOrderFlowsReturn {
   // Modal open state
   isNewOrderOpen: boolean
   isOrderDetailOpen: boolean

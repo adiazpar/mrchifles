@@ -41,7 +41,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 // JWT TOKENS
 // ============================================
 
-export interface JWTPayload {
+interface JWTPayload {
   userId: string
   email: string
   [key: string]: unknown // Required for jose compatibility
@@ -96,10 +96,7 @@ export async function setAuthCookie(token: string): Promise<void> {
   })
 }
 
-/**
- * Get the auth cookie (server-side)
- */
-export async function getAuthCookie(): Promise<string | null> {
+async function getAuthCookie(): Promise<string | null> {
   const cookieStore = await cookies()
   return cookieStore.get(AUTH_COOKIE_NAME)?.value ?? null
 }

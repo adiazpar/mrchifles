@@ -12,7 +12,7 @@
 export const THEME_COLOR_LIGHT = '#F8FAFC'
 export const THEME_COLOR_DARK = '#171717'
 
-export type ResolvedTheme = 'light' | 'dark'
+type ResolvedTheme = 'light' | 'dark'
 
 /**
  * Update the single `<meta name="theme-color">` tag to match the resolved

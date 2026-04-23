@@ -1,7 +1,7 @@
 import { customAlphabet } from 'nanoid'
 import type { BarcodeFormat } from '@/types'
 
-export const BARCODE_FORMATS: BarcodeFormat[] = [
+const BARCODE_FORMATS: BarcodeFormat[] = [
   'UPC_A',
   'UPC_E',
   'EAN_13',

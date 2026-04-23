@@ -1,5 +1,5 @@
 /**
- * Product-related constants and types for the productos page
+ * Product-related constants and types for the products page.
  */
 
 import type { ProductCategory, Product, Order, OrderItem, Provider } from '@/types'
@@ -94,20 +94,6 @@ export function sortProducts(
 // ============================================
 
 export type PageTab = 'products' | 'orders'
-
-export const TAB_SUBTITLES: Record<PageTab, string> = {
-  products: 'Manage your catalog',
-  orders: 'Supplier orders',
-}
-
-// ============================================
-// PRODUCT FILTER STATE
-// ============================================
-
-export interface ProductFilters {
-  selectedFilter: FilterCategory
-  sortBy: SortOption
-}
 
 // ============================================
 // EXPANDED ORDER TYPE

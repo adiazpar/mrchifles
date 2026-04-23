@@ -5,7 +5,7 @@ import { apiPost, ApiError } from '@/lib/api-client'
 import { useApiMessage } from './useApiMessage'
 import { useBusiness } from '@/contexts/business-context'
 
-export interface UseTransferOwnershipReturn {
+interface UseTransferOwnershipReturn {
   submit: (toEmail: string) => Promise<boolean>
   isSubmitting: boolean
   error: string

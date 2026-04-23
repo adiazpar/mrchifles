@@ -23,16 +23,6 @@ export async function fileToBase64(file: File): Promise<string> {
 }
 
 /**
- * Convert a Blob to a base64 data URL string
- */
-export async function blobToBase64(blob: Blob): Promise<string> {
-  const buffer = Buffer.from(await blob.arrayBuffer())
-  const base64 = buffer.toString('base64')
-  const mimeType = blob.type || 'image/png'
-  return `data:${mimeType};base64,${base64}`
-}
-
-/**
  * Get the approximate size in bytes of a base64 string
  */
 export function getBase64Size(base64: string): number {
@@ -45,7 +35,7 @@ export function getBase64Size(base64: string): number {
  * Used for product icons (many small tiles stored as base64 data URLs).
  * Base64 adds ~33% overhead, so this allows ~75KB original images.
  */
-export const MAX_ICON_SIZE = 100 * 1024
+const MAX_ICON_SIZE = 100 * 1024
 
 /**
  * Maximum image upload size in bytes (2MB).

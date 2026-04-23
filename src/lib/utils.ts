@@ -100,13 +100,6 @@ export function formatTime(
   }).format(d)
 }
 
-/**
- * Combine CSS class names
- */
-export function cn(...classes: (string | undefined | false)[]): string {
-  return classes.filter(Boolean).join(' ')
-}
-
 // ============================================
 // PRODUCT UTILITIES
 // ============================================
@@ -123,13 +116,6 @@ export function getProductIconUrl(
 ): string | null {
   if (!product.icon) return null
   return product.icon
-}
-
-/**
- * Check if a string is an emoji (not a URL or path)
- */
-export function isEmoji(str: string): boolean {
-  return !str.startsWith('/') && !str.startsWith('data:') && !str.startsWith('http') && !str.startsWith('preset:')
 }
 
 /**

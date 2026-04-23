@@ -13,13 +13,3 @@ export function scrollToTop() {
   container?.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-/**
- * Creates a scroll function for a specific container selector.
- * @param selector - CSS selector for the scroll container
- */
-export function createScrollToTop(selector: string) {
-  return () => {
-    const container = document.querySelector(selector)
-    container?.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-}

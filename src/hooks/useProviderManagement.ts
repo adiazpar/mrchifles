@@ -10,7 +10,7 @@ import { useApiMessage } from '@/hooks/useApiMessage'
 import type { Provider } from '@/types'
 import type { ExpandedOrder } from '@/lib/products'
 
-export interface UseProviderManagementOptions {
+interface UseProviderManagementOptions {
   businessId: string
   /**
    * Optional setter from `useOrders()`. When provided, the delete handler
@@ -25,7 +25,7 @@ interface ProviderResponse extends ApiResponse {
   provider: Provider
 }
 
-export interface UseProviderManagementReturn {
+interface UseProviderManagementReturn {
   // Data
   providers: Provider[]
   sortedProviders: Provider[]

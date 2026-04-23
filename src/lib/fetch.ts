@@ -44,11 +44,3 @@ export async function fetchDeduped(
   inFlightRequests.set(url, request)
   return request.then(res => res.clone())
 }
-
-/**
- * Clear all in-flight request tracking.
- * Useful for testing or when user logs out.
- */
-export function clearInFlightRequests(): void {
-  inFlightRequests.clear()
-}

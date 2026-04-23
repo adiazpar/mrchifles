@@ -98,7 +98,7 @@ const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024
 // Distinct error kinds the hook can surface. Callers receive a human-readable
 // message via onError; the kind is exported for callers that want to branch
 // on a specific failure mode.
-export const ScanErrorKind = {
+const ScanErrorKind = {
   NoBarcodeInImage: 'no_barcode_in_image',
   PdfUnreadable: 'pdf_unreadable',
   HeicConversionFailed: 'heic_conversion_failed',
@@ -107,7 +107,7 @@ export const ScanErrorKind = {
   DecoderError: 'decoder_error',
 } as const
 
-export type ScanErrorKind = typeof ScanErrorKind[keyof typeof ScanErrorKind]
+type ScanErrorKind = typeof ScanErrorKind[keyof typeof ScanErrorKind]
 
 const ERROR_MESSAGES: Record<ScanErrorKind, string> = {
   [ScanErrorKind.NoBarcodeInImage]: 'No barcode detected in that image. Try a clearer photo.',
@@ -122,17 +122,17 @@ const ERROR_MESSAGES: Record<ScanErrorKind, string> = {
 // Public types
 // ---------------------------------------------------------------------------
 
-export interface BarcodeScanResult {
+interface BarcodeScanResult {
   value: string
   format: BarcodeFormat | null
 }
 
-export interface UseBarcodeScanOptions {
+interface UseBarcodeScanOptions {
   onResult: (result: BarcodeScanResult) => void | Promise<void>
   onError: (message: string, kind?: ScanErrorKind) => void
 }
 
-export interface UseBarcodeScanReturn {
+interface UseBarcodeScanReturn {
   open: () => void
   busy: boolean
   hiddenInput: ReactNode

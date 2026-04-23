@@ -55,7 +55,7 @@ function applyTheme(theme: Theme) {
 
 // ---------------------------------------------------------------------------
 
-export interface UseThemeReturn {
+interface UseThemeReturn {
   theme: Theme
   setTheme: (theme: Theme) => void
   themeDescription: string

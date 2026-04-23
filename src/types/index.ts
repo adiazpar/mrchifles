@@ -3,7 +3,6 @@
 // ============================================
 
 export type UserRole = 'owner' | 'partner' | 'employee'
-export type MembershipStatus = 'active' | 'pending' | 'disabled'
 
 export interface User {
   id: string
@@ -123,7 +122,7 @@ export interface Provider {
 // ORDER TYPES (purchases from suppliers)
 // ============================================
 
-export type OrderStatus = 'pending' | 'received'
+type OrderStatus = 'pending' | 'received'
 
 export interface Order {
   id: string
@@ -156,25 +155,4 @@ export interface OrderItem {
   receivedQuantity?: number | null
 }
 
-// ============================================
-// OWNERSHIP TRANSFER TYPES
-// ============================================
-
-export type TransferStatus = 'pending' | 'accepted' | 'completed' | 'expired' | 'cancelled'
-
-export interface OwnershipTransfer {
-  id: string
-  code: string
-  fromUser: string
-  toEmail: string
-  toUser?: string
-  status: TransferStatus
-  expiresAt: Date | string
-  acceptedAt?: Date | string
-  completedAt?: Date | string
-  expand?: {
-    fromUser?: User
-    toUser?: User
-  }
-}
 

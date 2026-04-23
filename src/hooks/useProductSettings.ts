@@ -84,11 +84,11 @@ type ReorderResponse = ApiResponse
 // HOOK INTERFACE
 // ============================================
 
-export interface UseProductSettingsOptions {
+interface UseProductSettingsOptions {
   businessId: string
 }
 
-export interface UseProductSettingsReturn {
+interface UseProductSettingsReturn {
   // Categories
   categories: ProductCategory[]
   isLoadingCategories: boolean
