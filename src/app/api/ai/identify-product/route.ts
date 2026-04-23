@@ -1,6 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { errorResponse } from '@/lib/api-middleware'
+import { NextResponse } from 'next/server'
+import { errorResponse, withAuth, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
+import { RateLimits } from '@/lib/rate-limit'
+
+const MAX_BODY_BYTES = 2 * 1024 * 1024
 
 interface CategoryInput {
   id: string
@@ -81,7 +84,13 @@ function validateResult(parsed: unknown, categories: CategoryInput[]): IdentifyR
   }
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, user) => {
+  const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+  if (oversize) return oversize
+
+  const rateLimited = applyRateLimit(`ai:${user.userId}`, RateLimits.ai)
+  if (rateLimited) return rateLimited
+
   try {
     const body = (await request.json()) as IdentifyRequestBody
     const image = body.image
@@ -160,4 +169,4 @@ export async function POST(request: NextRequest) {
     console.error('Error in identify-product:', error)
     return errorResponse(ApiMessageCode.INTERNAL_ERROR, 500)
   }
-}
+})

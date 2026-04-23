@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { requireBusinessAccess, isOwner, invalidateAccessCacheForBusiness } from '@/lib/business-auth'
-import { withBusinessAuth, errorResponse, successResponse, validationError, type RouteParams } from '@/lib/api-middleware'
+import { withBusinessAuth, errorResponse, successResponse, validationError, enforceMaxContentLength, type RouteParams } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { db, businesses } from '@/db'
 import { eq } from 'drizzle-orm'
@@ -43,10 +43,17 @@ export const GET = withBusinessAuth(async (_request, access) => {
  * Accepts FormData with any subset of: name, type, locale, logo (File), removeLogo=true.
  * Currency is derived server-side from locale.
  */
+// Business logo is capped at MAX_UPLOAD_SIZE (2 MB decoded); 5 MB Content-Length
+// allows for multipart boundary, the logo, and the handful of metadata fields.
+const PATCH_MAX_BODY_BYTES = 5 * 1024 * 1024
+
 export const PATCH = withBusinessAuth(async (request, access) => {
   if (access.role !== 'owner' && access.role !== 'partner') {
     return errorResponse(ApiMessageCode.BUSINESS_UPDATE_FORBIDDEN, 403)
   }
+
+  const oversize = enforceMaxContentLength(request, PATCH_MAX_BODY_BYTES)
+  if (oversize) return oversize
 
   const formData = await request.formData()
 

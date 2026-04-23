@@ -2,7 +2,7 @@ import { db, orders, orderItems } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { canManageBusiness } from '@/lib/business-auth'
 import { Schemas } from '@/lib/schemas'
@@ -19,6 +19,9 @@ const orderItemSchema = z.object({
  *
  * Update an order and its items.
  */
+// Mirrors the create-route cap (15 MB) — receipt upload is the only large field.
+const PATCH_MAX_BODY_BYTES = 15 * 1024 * 1024
+
 export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   // Only partners and owners can modify orders
   if (!canManageBusiness(access.role)) {
@@ -29,6 +32,9 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   if (!id) {
     return errorResponse(ApiMessageCode.ORDER_ID_REQUIRED, 400)
   }
+
+  const oversize = enforceMaxContentLength(request, PATCH_MAX_BODY_BYTES)
+  if (oversize) return oversize
 
   // Verify order exists and belongs to business
   const [existingOrder] = await db

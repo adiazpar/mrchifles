@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { db, products, orderItems, orders } from '@/db'
 import { eq, and, ne } from 'drizzle-orm'
 import { uploadProductIcon, deleteProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
-import { withBusinessAuth, errorResponse, successResponse, validationError } from '@/lib/api-middleware'
+import { withBusinessAuth, errorResponse, successResponse, validationError, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { canManageBusiness } from '@/lib/business-auth'
 import {
@@ -18,6 +18,9 @@ import { Schemas } from '@/lib/schemas'
  *
  * Update a product. Accepts FormData with optional icon file.
  */
+// Mirrors the POST cap — icons are small but the multipart envelope is generous.
+const PATCH_MAX_BODY_BYTES = 5 * 1024 * 1024
+
 export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   // Only partners and owners can modify products
   if (!canManageBusiness(access.role)) {
@@ -28,6 +31,9 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   if (!id) {
     return errorResponse(ApiMessageCode.PRODUCT_ID_REQUIRED, 400)
   }
+
+  const oversize = enforceMaxContentLength(request, PATCH_MAX_BODY_BYTES)
+  if (oversize) return oversize
 
   const formData = await request.formData()
   const name = formData.get('name') as string | null

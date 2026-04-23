@@ -1,8 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { errorResponse } from '@/lib/api-middleware'
+import { NextResponse } from 'next/server'
+import { errorResponse, withAuth, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
+import { RateLimits } from '@/lib/rate-limit'
 
-export async function POST(request: NextRequest) {
+// iPhone HEIC captures top out around 10-15 MB; cap at 30 MB for headroom.
+const MAX_BODY_BYTES = 30 * 1024 * 1024
+
+export const POST = withAuth(async (request, user) => {
+  const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+  if (oversize) return oversize
+
+  const rateLimited = applyRateLimit(`heic:${user.userId}`, RateLimits.heic)
+  if (rateLimited) return rateLimited
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
@@ -81,4 +91,4 @@ export async function POST(request: NextRequest) {
     console.error('[convert-heic] Error:', error)
     return errorResponse(ApiMessageCode.HEIC_CONVERT_FAILED, 500)
   }
-}
+})

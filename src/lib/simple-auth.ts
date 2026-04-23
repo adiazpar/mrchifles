@@ -41,7 +41,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 // JWT TOKENS
 // ============================================
 
-interface JWTPayload {
+export interface JWTPayload {
   userId: string
   email: string
   [key: string]: unknown // Required for jose compatibility

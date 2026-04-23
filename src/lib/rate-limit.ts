@@ -23,7 +23,7 @@ setInterval(() => {
   }
 }, CLEANUP_INTERVAL)
 
-interface RateLimitConfig {
+export interface RateLimitConfig {
   /** Maximum number of requests allowed in the window */
   limit: number
   /** Window size in seconds */
@@ -111,4 +111,21 @@ export const RateLimits = {
   register: { limit: 3, windowSeconds: 60 * 60 },
   /** Code validation (invite, transfer): 10 per 15 minutes */
   codeValidation: { limit: 10, windowSeconds: 15 * 60 },
+  /**
+   * AI endpoints (generate-icon, identify-product, remove-background):
+   * 20 per minute per user. Shared budget across the three routes, so a
+   * user can't spread-then-burst. Each call is billable to fal.ai/OpenAI,
+   * so the limit is intentionally tight.
+   */
+  ai: { limit: 20, windowSeconds: 60 },
+  /**
+   * HEIC conversion: 30 per minute per user. Not billable externally, but
+   * each call can buffer up to 30 MB into Lambda memory.
+   */
+  heic: { limit: 30, windowSeconds: 60 },
+  /**
+   * Ownership-transfer initiation: 5 per 15 minutes per user. Mitigates
+   * account enumeration via the recipient-email lookup.
+   */
+  transferInitiate: { limit: 5, windowSeconds: 15 * 60 },
 } as const

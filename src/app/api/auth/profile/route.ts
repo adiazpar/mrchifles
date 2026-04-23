@@ -3,10 +3,14 @@ import { db, users } from '@/db'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { getBase64Size, MAX_UPLOAD_SIZE } from '@/lib/storage'
+
+// 2 MB decoded cap (MAX_UPLOAD_SIZE) plus base64 overhead and JSON padding
+// → 5 MB is a comfortable Content-Length ceiling.
+const MAX_BODY_BYTES = 5 * 1024 * 1024
 
 const DATA_URL_IMAGE_REGEX = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/
 
@@ -27,6 +31,9 @@ const profileUpdateSchema = z.object({
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+    if (oversize) return oversize
+
     const session = await getCurrentUser()
     if (!session) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)

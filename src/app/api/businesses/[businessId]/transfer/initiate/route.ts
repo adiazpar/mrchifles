@@ -3,9 +3,10 @@ import { eq, and, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { isOwner } from '@/lib/business-auth'
-import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse, applyRateLimit } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
+import { RateLimits } from '@/lib/rate-limit'
 
 const initiateSchema = z.object({
   toEmail: Schemas.email(),
@@ -32,6 +33,15 @@ export const POST = withBusinessAuth(async (request, access) => {
   if (!isOwner(access.role)) {
     return errorResponse(ApiMessageCode.TRANSFER_FORBIDDEN_NOT_OWNER, 403)
   }
+
+  // Tight rate limit to mitigate the recipient-lookup enumeration surface.
+  // An owner legitimately initiates this a handful of times; anything more
+  // is almost certainly probing.
+  const rateLimited = applyRateLimit(
+    `transfer-initiate:${access.userId}`,
+    RateLimits.transferInitiate,
+  )
+  if (rateLimited) return rateLimited
 
   const body = await request.json()
   const validation = initiateSchema.safeParse(body)

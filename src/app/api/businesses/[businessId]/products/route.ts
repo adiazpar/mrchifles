@@ -3,7 +3,7 @@ import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { uploadProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
-import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import {
   computeCanonicalGtin,
@@ -56,7 +56,14 @@ export const GET = withBusinessAuth(async (request, access) => {
  *
  * Create a new product. Accepts FormData with optional icon file.
  */
+// Product icon is capped at MAX_ICON_SIZE (100 KB); 5 MB Content-Length is
+// generous headroom for the multipart envelope plus the other fields.
+const POST_MAX_BODY_BYTES = 5 * 1024 * 1024
+
 export const POST = withBusinessAuth(async (request, access) => {
+  const oversize = enforceMaxContentLength(request, POST_MAX_BODY_BYTES)
+  if (oversize) return oversize
+
   const formData = await request.formData()
   const name = formData.get('name') as string
   const price = formData.get('price') as string

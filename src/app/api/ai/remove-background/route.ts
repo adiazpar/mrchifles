@@ -1,8 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
 import sharp from 'sharp'
-import { errorResponse } from '@/lib/api-middleware'
+import { errorResponse, withAuth, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
+import { RateLimits } from '@/lib/rate-limit'
+
+const MAX_BODY_BYTES = 2 * 1024 * 1024
 
 const ICON_SIZE = 256
 const ICON_PADDING = 24 // pixels of transparent padding around the subject
@@ -24,7 +27,13 @@ const ICON_PADDING = 24 // pixels of transparent padding around the subject
  * { success: false, error: string }
  */
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, user) => {
+  const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+  if (oversize) return oversize
+
+  const rateLimited = applyRateLimit(`ai:${user.userId}`, RateLimits.ai)
+  if (rateLimited) return rateLimited
+
   try {
     const { image } = await request.json()
 
@@ -122,4 +131,4 @@ export async function POST(request: NextRequest) {
     console.error('[remove-background] Error:', error)
     return errorResponse(ApiMessageCode.AI_BACKGROUND_FAILED, 500)
   }
-}
+})

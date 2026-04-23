@@ -812,6 +812,9 @@
     "business_update_logo_invalid_type": "Logo must be an image file.",
     "business_update_failed": "Couldn't save changes. Try again.",
     "business_update_success": "Business updated.",
-    "business_not_found": "Business not found."
+    "business_not_found": "Business not found.",
+    "rate_limited": "Too many requests. Please wait a moment and try again.",
+    "request_too_large": "That file is too large. Please choose a smaller one.",
+    "request_length_required": "Request was missing a Content-Length header. Please try again."
   }
 }

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
-import { errorResponse } from '@/lib/api-middleware'
+import { errorResponse, withAuth, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
+import { RateLimits } from '@/lib/rate-limit'
 
 /**
  * POST /api/ai/generate-icon
@@ -15,12 +16,19 @@ import { ApiMessageCode } from '@/lib/api-messages'
  * Request body:
  * { image: string } // base64 encoded image (data URL)
  *
- * Response:
- * { success: true, data: { icon: string } } // base64 PNG image
- * { success: false, error: string }
+ * Auth: required. Rate limit: shared AI budget (see RateLimits.ai).
+ * Content-Length cap: 2 MB (accommodates base64-encoded pre-compressed images).
  */
 
-export async function POST(request: NextRequest) {
+const MAX_BODY_BYTES = 2 * 1024 * 1024
+
+export const POST = withAuth(async (request, user) => {
+  const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+  if (oversize) return oversize
+
+  const rateLimited = applyRateLimit(`ai:${user.userId}`, RateLimits.ai)
+  if (rateLimited) return rateLimited
+
   try {
     const { image } = await request.json()
 
@@ -92,4 +100,4 @@ export async function POST(request: NextRequest) {
 
     return errorResponse(ApiMessageCode.AI_ICON_FAILED, 500)
   }
-}
+})

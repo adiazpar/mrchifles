@@ -2,7 +2,7 @@ import { db, orders, orderItems, providers, products, businesses, users } from '
 import { eq, desc, inArray, and, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
@@ -138,7 +138,13 @@ export const GET = withBusinessAuth(async (request, access) => {
  *
  * Create a new order with items.
  */
+// Orders may include a receipt (image or PDF); 15 MB covers multi-page PDFs.
+const POST_MAX_BODY_BYTES = 15 * 1024 * 1024
+
 export const POST = withBusinessAuth(async (request, access) => {
+  const oversize = enforceMaxContentLength(request, POST_MAX_BODY_BYTES)
+  if (oversize) return oversize
+
   const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
   const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
 

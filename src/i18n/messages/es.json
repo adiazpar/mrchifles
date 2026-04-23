@@ -812,6 +812,9 @@
     "business_update_logo_invalid_type": "El logo debe ser un archivo de imagen.",
     "business_update_failed": "No se pudieron guardar los cambios. Intente de nuevo.",
     "business_update_success": "Negocio actualizado.",
-    "business_not_found": "Negocio no encontrado."
+    "business_not_found": "Negocio no encontrado.",
+    "rate_limited": "Demasiadas solicitudes. Espera un momento e intenta de nuevo.",
+    "request_too_large": "El archivo es demasiado grande. Elige uno más pequeño.",
+    "request_length_required": "A la solicitud le faltó un encabezado Content-Length. Intenta de nuevo."
   }
 }

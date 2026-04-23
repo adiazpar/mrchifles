@@ -10,6 +10,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireBusinessAccess, type BusinessAccess } from './business-auth'
 import { ApiMessageCode, type ApiMessageEnvelope } from './api-messages'
+import { getCurrentUser, type JWTPayload } from './simple-auth'
+import { checkRateLimit, type RateLimitConfig } from './rate-limit'
 
 // ============================================
 // ROUTE PARAMETER TYPES
@@ -22,6 +24,101 @@ export interface RouteParams {
   params: Promise<{
     businessId: string
   }>
+}
+
+// ============================================
+// USER AUTH WRAPPER
+// ============================================
+
+type UserRouteHandler = (
+  request: NextRequest,
+  user: JWTPayload,
+) => Promise<NextResponse>
+
+/**
+ * Wraps a route handler with user-level authentication (no business scope).
+ *
+ * Use for routes that need a logged-in user but aren't tied to a specific
+ * business — e.g. AI / HEIC pipelines, account-level operations that don't
+ * fit under `/businesses/[businessId]/*`.
+ *
+ * On failure returns UNAUTHORIZED 401. Rare framework errors return
+ * INTERNAL_ERROR 500.
+ */
+export function withAuth(handler: UserRouteHandler) {
+  return async (request: NextRequest): Promise<NextResponse> => {
+    try {
+      const user = await getCurrentUser()
+      if (!user) return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+      return await handler(request, user)
+    } catch (error) {
+      console.error('API Error:', error)
+      return errorResponse(ApiMessageCode.INTERNAL_ERROR, 500)
+    }
+  }
+}
+
+// ============================================
+// RATE LIMITING HELPER
+// ============================================
+
+/**
+ * Apply a rate limit check to a request. Returns a 429 NextResponse if the
+ * caller is over their budget, or `null` if the request may proceed.
+ *
+ * The `Retry-After` header is populated so well-behaved clients back off
+ * at the correct interval.
+ *
+ * @example
+ *   const rl = applyRateLimit(`ai:${user.userId}`, RateLimits.ai)
+ *   if (rl) return rl
+ */
+export function applyRateLimit(
+  identifier: string,
+  config: RateLimitConfig,
+): NextResponse | null {
+  const result = checkRateLimit(identifier, config)
+  if (result.success) return null
+  const retryAfter = Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000))
+  const response = errorResponse(ApiMessageCode.RATE_LIMITED, 429)
+  response.headers.set('Retry-After', String(retryAfter))
+  return response
+}
+
+// ============================================
+// BODY SIZE GUARD
+// ============================================
+
+/**
+ * Reject the request before reading the body if the declared
+ * Content-Length exceeds `maxBytes`. Returns a 413 NextResponse to send,
+ * or `null` if the request is within the limit.
+ *
+ * This runs BEFORE `request.formData()` / `request.arrayBuffer()` /
+ * `request.json()` so the Lambda never buffers an oversized body into
+ * memory. A missing Content-Length is rejected with 411 — we require a
+ * declared length to be able to cap it up front.
+ *
+ * @example
+ *   const oversize = enforceMaxContentLength(request, 5 * 1024 * 1024)
+ *   if (oversize) return oversize
+ */
+export function enforceMaxContentLength(
+  request: NextRequest,
+  maxBytes: number,
+): NextResponse | null {
+  const header = request.headers.get('content-length')
+  if (header === null) {
+    return errorResponse(ApiMessageCode.REQUEST_LENGTH_REQUIRED, 411)
+  }
+  const length = Number(header)
+  if (!Number.isFinite(length) || length < 0) {
+    return errorResponse(ApiMessageCode.REQUEST_LENGTH_REQUIRED, 411)
+  }
+  if (length > maxBytes) {
+    return errorResponse(ApiMessageCode.REQUEST_TOO_LARGE, 413)
+  }
+  return null
 }
 
 // ============================================
