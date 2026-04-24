@@ -1,17 +1,17 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Input, Card, Spinner } from '@/components/ui'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError, apiPost } from '@/lib/api-client'
+import { useAuthGate } from '@/contexts/auth-gate-context'
 
 export default function RegisterPage() {
-  const router = useRouter()
   const t = useTranslations('auth')
   const translateApiMessage = useApiMessage()
+  const { playEntry } = useAuthGate()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -46,9 +46,10 @@ export default function RegisterPage() {
           name,
         })
 
-        // Success - redirect to dashboard
-        router.push('/')
-        router.refresh()
+        // Play entry animation; playEntry handles router navigation and
+        // resolves when the overlay has fully faded out. Don't clear
+        // isLoading on success — see login page for reasoning.
+        await playEntry('/')
       } catch (err) {
         if (err instanceof ApiError) {
           const translated = err.envelope
@@ -58,11 +59,10 @@ export default function RegisterPage() {
         } else {
           setError(t('connection_error'))
         }
-      } finally {
         setIsLoading(false)
       }
     },
-    [email, password, passwordConfirm, name, router, t, translateApiMessage]
+    [email, password, passwordConfirm, name, playEntry, t, translateApiMessage]
   )
 
   return (
