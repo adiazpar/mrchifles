@@ -6,6 +6,7 @@ import {
   getCurrentUser,
   verifyPassword,
   hashPassword,
+  invalidateUserSession,
 } from '@/lib/simple-auth'
 import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
@@ -71,10 +72,21 @@ export async function POST(request: NextRequest) {
 
     const newHash = await hashPassword(newPassword)
 
+    // Stamp passwordChangedAt so any JWT issued before now is rejected
+    // on its next server-side verify. The old cookie is still in the
+    // caller's browser — they stay logged in on this tab because the
+    // response doesn't re-issue, so we also let them ride the existing
+    // session. Tokens on OTHER devices / tabs (same account, stale
+    // cookie) will fail their next getCurrentUser().
+    const now = new Date()
     await db
       .update(users)
-      .set({ password: newHash })
+      .set({ password: newHash, passwordChangedAt: now })
       .where(eq(users.id, session.userId))
+
+    // Drop the cached passwordChangedAt so the invalidation takes
+    // effect on the next request instead of up to 60 seconds later.
+    invalidateUserSession(session.userId)
 
     return successResponse({}, ApiMessageCode.USER_PASSWORD_CHANGED)
   } catch (error) {

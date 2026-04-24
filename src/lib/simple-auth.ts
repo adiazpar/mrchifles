@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs'
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
+import { db, users } from '@/db'
+import { eq } from 'drizzle-orm'
 
 // ============================================
 // CONFIGURATION
@@ -117,16 +119,80 @@ export function getTokenFromRequest(request: NextRequest): string | null {
 }
 
 // ============================================
+// SESSION INVALIDATION
+// ============================================
+//
+// Stateless JWTs can't be revoked, but we can record the moment a
+// user's password last changed and reject any token whose iat (issued
+// at) is older. The check runs once per cache miss per user — 60-second
+// in-memory cache amortizes the DB cost to ~1 round trip per user per
+// minute. On password change we call invalidateUserSession() so the
+// next request re-reads passwordChangedAt and rejects old tokens.
+
+const SESSION_CACHE_TTL_MS = 60_000
+
+interface SessionCacheEntry {
+  passwordChangedAtMs: number | null
+  expiresAt: number
+}
+
+const sessionCache = new Map<string, SessionCacheEntry>()
+
+async function getPasswordChangedAtMs(userId: string): Promise<number | null> {
+  const now = Date.now()
+  const cached = sessionCache.get(userId)
+  if (cached && cached.expiresAt > now) {
+    return cached.passwordChangedAtMs
+  }
+  const [row] = await db
+    .select({ passwordChangedAt: users.passwordChangedAt })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+  const passwordChangedAtMs = row?.passwordChangedAt
+    ? new Date(row.passwordChangedAt).getTime()
+    : null
+  sessionCache.set(userId, {
+    passwordChangedAtMs,
+    expiresAt: now + SESSION_CACHE_TTL_MS,
+  })
+  return passwordChangedAtMs
+}
+
+/**
+ * Drop the session-cache entry for a user so the next getCurrentUser
+ * call re-fetches passwordChangedAt. Call from change-password (or any
+ * future "log me out everywhere" path).
+ */
+export function invalidateUserSession(userId: string): void {
+  sessionCache.delete(userId)
+}
+
+// ============================================
 // SESSION HELPERS
 // ============================================
 
 /**
- * Get the current user from the auth cookie (server-side)
+ * Get the current user from the auth cookie (server-side).
+ * Also enforces post-password-change JWT invalidation: any token whose
+ * iat predates the user's stored passwordChangedAt is treated as
+ * logged out.
  */
 export async function getCurrentUser(): Promise<JWTPayload | null> {
   const token = await getAuthCookie()
   if (!token) return null
-  return verifyToken(token)
+  const payload = await verifyToken(token)
+  if (!payload) return null
+
+  // Standard JWT iat claim is seconds-since-epoch. If the user changed
+  // their password after this token was issued, treat it as revoked.
+  const iat = typeof payload.iat === 'number' ? payload.iat : null
+  if (iat === null) return payload
+  const passwordChangedAtMs = await getPasswordChangedAtMs(payload.userId)
+  if (passwordChangedAtMs !== null && passwordChangedAtMs > iat * 1000) {
+    return null
+  }
+  return payload
 }
 
 /**

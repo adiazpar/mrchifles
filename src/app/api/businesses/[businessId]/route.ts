@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm'
 import { getLocaleConfig } from '@/lib/locale-config'
 import { patchSchema } from './schema'
 import { MAX_UPLOAD_SIZE } from '@/lib/storage'
+import { sniffImageMimeType } from '@/lib/file-sniff'
 
 /**
  * GET /api/businesses/[businessId]
@@ -90,12 +91,24 @@ export const PATCH = withBusinessAuth(async (request, access) => {
   // converted to JPEG client-side before upload, so they shouldn't
   // arrive here either.
   const ACCEPTED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+  let logoBuffer: Buffer | null = null
+  let sniffedLogoType: 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif' | null = null
   if (logoFile) {
     if (!ACCEPTED_LOGO_TYPES.includes(logoFile.type)) {
       return errorResponse(ApiMessageCode.BUSINESS_UPDATE_LOGO_INVALID_TYPE, 400)
     }
     if (logoFile.size > MAX_UPLOAD_SIZE) {
       return errorResponse(ApiMessageCode.BUSINESS_UPDATE_LOGO_TOO_LARGE, 400)
+    }
+    // Content-sniff the decoded bytes. File.type is client-declared
+    // and spoofable; without this, an attacker could send an SVG (or
+    // anything else) with Content-Type: image/png and have it stored
+    // under a <img> surface. Store the data URL using the SNIFFED
+    // type so the prefix can never disagree with the payload.
+    logoBuffer = Buffer.from(await logoFile.arrayBuffer())
+    sniffedLogoType = sniffImageMimeType(logoBuffer)
+    if (!sniffedLogoType || !ACCEPTED_LOGO_TYPES.includes(sniffedLogoType)) {
+      return errorResponse(ApiMessageCode.BUSINESS_UPDATE_LOGO_INVALID_TYPE, 400)
     }
   }
 
@@ -105,9 +118,8 @@ export const PATCH = withBusinessAuth(async (request, access) => {
   if (type !== undefined) update.type = type as typeof update.type
   if (locale !== undefined) { update.locale = locale; update.currency = currency }
   if (removeLogo === 'true') update.icon = null
-  if (logoFile) {
-    const buffer = Buffer.from(await logoFile.arrayBuffer())
-    update.icon = `data:${logoFile.type};base64,${buffer.toString('base64')}`
+  if (logoFile && logoBuffer && sniffedLogoType) {
+    update.icon = `data:${sniffedLogoType};base64,${logoBuffer.toString('base64')}`
   }
 
   if (Object.keys(update).length === 0) {

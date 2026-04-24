@@ -163,11 +163,19 @@ export function withBusinessAuth(handler: BusinessRouteHandler) {
 
       return await handler(request, access, restParams)
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Unauthorized')) {
-        return errorResponse(ApiMessageCode.FORBIDDEN, 403)
-      }
-      if (error instanceof Error && error.message.includes('Not found')) {
-        return errorResponse(ApiMessageCode.NOT_FOUND, 404)
+      if (error instanceof Error) {
+        // Split 401 "not authenticated" from 403 "no membership" so
+        // clients can distinguish re-login-required from permission-
+        // denied. requireBusinessAccess throws distinct messages.
+        if (error.message.includes('Not authenticated')) {
+          return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+        }
+        if (error.message.includes('No access')) {
+          return errorResponse(ApiMessageCode.FORBIDDEN, 403)
+        }
+        if (error.message.includes('Not found')) {
+          return errorResponse(ApiMessageCode.NOT_FOUND, 404)
+        }
       }
       console.error('API Error:', error)
       return errorResponse(ApiMessageCode.INTERNAL_ERROR, 500)
