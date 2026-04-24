@@ -6,11 +6,13 @@ import { useTranslations } from 'next-intl'
 import { Input, Card, Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
+import { usePageTransition } from '@/contexts/page-transition-context'
 
 export default function RegisterPage() {
   const t = useTranslations('auth')
   const { register } = useAuth()
   const { playEntry } = useAuthGate()
+  const { setPendingHref } = usePageTransition()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -140,7 +142,11 @@ export default function RegisterPage() {
       <div className="auth-footer">
         <p className="auth-footer-link">
           <span className="text-text-tertiary">{t('have_account_prefix')} </span>
-          <Link href="/login" className="text-brand hover:underline">
+          <Link
+            href="/login"
+            onClick={() => setPendingHref('/login')}
+            className="text-brand hover:underline"
+          >
             {t('login_link')}
           </Link>
         </p>
