@@ -28,6 +28,7 @@ interface AuthContextType {
 
   // Auth methods
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
   changeLanguage: (language: SupportedLocale) => Promise<{ success: boolean; error?: string }>
@@ -196,6 +197,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [tAuth, translateApiMessage])
 
+  const register = useCallback(async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const data = await apiPost<{ user: User }>('/api/auth/register', { email, password, name })
+
+      // Wipe residual per-user session caches from a prior user on this
+      // tab (e.g. someone logged out and then registered a fresh account
+      // in the same tab). Same defensive clear as login().
+      try {
+        sessionStorage.clear()
+      } catch {
+        // Ignore storage errors
+      }
+
+      setUser(data.user)
+      setCachedUser(data.user)
+      setValidatedNow()
+
+      // Intentionally no /api/businesses/list prefetch — a freshly
+      // registered user has no businesses yet, and the hub's empty
+      // state renders without a network round-trip.
+
+      return { success: true }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const error = err.envelope
+          ? translateApiMessage(err.envelope)
+          : translateApiMessage({ messageCode: 'AUTH_REGISTER_FAILED' })
+        return { success: false, error }
+      }
+      return { success: false, error: tAuth('connection_error') }
+    }
+  }, [tAuth, translateApiMessage])
+
   const logout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
@@ -264,10 +298,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     isLoading,
     login,
+    register,
     logout,
     refreshUser,
     changeLanguage,
-  }), [user, isLoading, login, logout, refreshUser, changeLanguage])
+  }), [user, isLoading, login, register, logout, refreshUser, changeLanguage])
 
   return (
     <AuthContext.Provider value={value}>

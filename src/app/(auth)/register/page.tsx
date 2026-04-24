@@ -4,13 +4,12 @@ import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Input, Card, Spinner } from '@/components/ui'
-import { useApiMessage } from '@/hooks/useApiMessage'
-import { ApiError, apiPost } from '@/lib/api-client'
+import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 
 export default function RegisterPage() {
   const t = useTranslations('auth')
-  const translateApiMessage = useApiMessage()
+  const { register } = useAuth()
   const { playEntry } = useAuthGate()
 
   const [email, setEmail] = useState('')
@@ -40,29 +39,24 @@ export default function RegisterPage() {
       setIsLoading(true)
 
       try {
-        await apiPost('/api/auth/register', {
-          email,
-          password,
-          name,
-        })
+        const result = await register(email, password, name)
+
+        if (!result.success) {
+          setError(result.error ?? '')
+          setIsLoading(false)
+          return
+        }
 
         // Play entry animation; playEntry handles router navigation and
         // resolves when the overlay has fully faded out. Don't clear
         // isLoading on success — see login page for reasoning.
         await playEntry('/')
-      } catch (err) {
-        if (err instanceof ApiError) {
-          const translated = err.envelope
-            ? translateApiMessage(err.envelope)
-            : translateApiMessage({ messageCode: 'AUTH_REGISTER_FAILED' })
-          setError(translated)
-        } else {
-          setError(t('connection_error'))
-        }
+      } catch {
+        setError(t('connection_error'))
         setIsLoading(false)
       }
     },
-    [email, password, passwordConfirm, name, playEntry, t, translateApiMessage]
+    [email, password, passwordConfirm, name, register, playEntry, t]
   )
 
   return (
