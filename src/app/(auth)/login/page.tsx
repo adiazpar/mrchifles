@@ -1,17 +1,18 @@
 'use client'
 
 import { Suspense, useState, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Input, Card, Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
+import { useAuthGate } from '@/contexts/auth-gate-context'
 
 function LoginPageContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/home'
   const { login } = useAuth()
+  const { playEntry } = useAuthGate()
   const t = useTranslations('auth')
 
   const [email, setEmail] = useState('')
@@ -30,19 +31,21 @@ function LoginPageContent() {
 
         if (!result.success) {
           setError(result.error ?? '')
+          setIsLoading(false)
           return
         }
 
-        // Redirect to intended page or dashboard
-        router.push(redirect)
-        router.refresh()
+        // playEntry handles router.push + router.refresh internally and
+        // resolves when the overlay has fully faded out. We intentionally
+        // do NOT clear isLoading on success — the form is covered by the
+        // overlay during the transition and unmounted afterward.
+        await playEntry(redirect)
       } catch {
         setError(t('connection_error'))
-      } finally {
         setIsLoading(false)
       }
     },
-    [email, password, redirect, router, login, t]
+    [email, password, redirect, login, playEntry, t]
   )
 
   return (
