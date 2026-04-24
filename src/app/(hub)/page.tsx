@@ -86,9 +86,9 @@ export default function HubPage() {
     setGreetingKey(computeGreetingKey())
   }, [])
 
-  // Release the auth-gate's entering-hold phase as soon as the hub has its
-  // data. Safe to call repeatedly — markHubReady clears its resolver after
-  // the first call, so re-renders during warm navigation are no-ops.
+  // Release the auth-gate's hold phase as soon as the hub has its data.
+  // Safe to call repeatedly — markHubReady clears its resolver after the
+  // first call, so re-renders during warm navigation are no-ops.
   useEffect(() => {
     if (!authLoading && !isLoading) markHubReady()
   }, [authLoading, isLoading, markHubReady])

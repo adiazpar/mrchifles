@@ -7,15 +7,13 @@ const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const
 const EASE_OUT_BACK = [0.34, 1.56, 0.64, 1] as const
 
 // Phases where the overlay surface is (or is becoming) fully opaque.
-// Everything between fade-in and fade-out inclusive — so the icon's
-// breath gaps and animations all render on a solid surface.
+// Everything between overlay-in and overlay-out inclusive — so the
+// icon's breath gaps and animations all render on a solid surface.
 const OPAQUE_PHASES: ReadonlySet<AuthGatePhase> = new Set([
-  'entering-overlay-in',
-  'entering-icon-in',
-  'entering-hold',
-  'entering-icon-out',
-  'exiting-fade-in',
-  'exiting-hold',
+  'overlay-in',
+  'icon-in',
+  'hold',
+  'icon-out',
 ])
 
 // Only the two overlay phases actually animate surface opacity; the middle
@@ -23,15 +21,12 @@ const OPAQUE_PHASES: ReadonlySet<AuthGatePhase> = new Set([
 // the icon is doing its thing.
 function overlayFadeDuration(phase: AuthGatePhase, reducedMotion: boolean): number {
   if (reducedMotion) {
-    if (phase === 'entering-overlay-in' || phase === 'exiting-fade-in') return 0.2
-    if (phase === 'entering-overlay-out' || phase === 'exiting-fade-out') return 0.2
+    if (phase === 'overlay-in' || phase === 'overlay-out') return 0.2
     return 0
   }
   switch (phase) {
-    case 'entering-overlay-in': return 0.25
-    case 'entering-overlay-out': return 0.3
-    case 'exiting-fade-in': return 0.2
-    case 'exiting-fade-out': return 0.2
+    case 'overlay-in': return 0.25
+    case 'overlay-out': return 0.3
     default:
       return 0
   }
@@ -73,12 +68,11 @@ const ICON_HIDDEN_POST = {
 function iconAnimateForPhase(phase: AuthGatePhase, reducedMotion: boolean) {
   if (reducedMotion) return ICON_REST
   switch (phase) {
-    case 'entering-overlay-in': return ICON_HIDDEN_PRE
-    case 'entering-icon-in': return ICON_POP_IN
-    case 'entering-hold': return ICON_REST
-    case 'entering-icon-out': return ICON_POP_OUT
-    case 'entering-overlay-out': return ICON_HIDDEN_POST
-    // Exit/logout: keep legacy minimalist behavior (icon visible at rest).
+    case 'overlay-in': return ICON_HIDDEN_PRE
+    case 'icon-in': return ICON_POP_IN
+    case 'hold': return ICON_REST
+    case 'icon-out': return ICON_POP_OUT
+    case 'overlay-out': return ICON_HIDDEN_POST
     default: return ICON_REST
   }
 }
