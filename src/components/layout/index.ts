@@ -1,4 +1,5 @@
 export { AppShell } from './app-shell'
+export { AuthGateOverlay } from './auth-gate-overlay'
 export { MobileNav } from './mobile-nav'
 export { PageHeader } from './page-header'
 export { PageTransition } from './page-transition'

@@ -1,0 +1,26 @@
+/*
+ * AuthGateOverlay — branded full-viewport crossfade for auth-boundary
+ * transitions (login -> hub, logout -> login).
+ *
+ * Matches the PWA splash visual language: surface color background, 128px
+ * icon-source logo, centered. Sits above modals and below toasts so a
+ * logout from a page with an open modal covers cleanly.
+ */
+
+.auth-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-auth-gate);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-surface);
+  will-change: opacity;
+}
+
+.auth-gate-overlay__icon {
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+  will-change: transform;
+}
