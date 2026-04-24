@@ -61,30 +61,35 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   const playEntry = useCallback(async (redirectTo: string): Promise<void> => {
     if (inFlightRef.current) return inFlightRef.current
 
+    // The try/finally around the whole phase progression guarantees the
+    // overlay returns to 'idle' even if router.push or anything else
+    // throws mid-animation. Without this guard, a thrown navigation error
+    // would leave the overlay stuck on the screen until a page reload.
     const run = (async () => {
-      if (reducedMotion) {
+      try {
+        if (reducedMotion) {
+          setPhase('entering-fade-in')
+          router.push(redirectTo)
+          router.refresh()
+          await wait(REDUCED_MOTION_FADE_MS)
+          setPhase('entering-fade-out')
+          await wait(REDUCED_MOTION_FADE_MS)
+          return
+        }
+
         setPhase('entering-fade-in')
         router.push(redirectTo)
         router.refresh()
-        await wait(REDUCED_MOTION_FADE_MS)
+        await wait(ENTRY_FADE_IN_MS)
+
+        setPhase('entering-hold')
+        await wait(ENTRY_HOLD_MS)
+
         setPhase('entering-fade-out')
-        await wait(REDUCED_MOTION_FADE_MS)
+        await wait(ENTRY_FADE_OUT_MS)
+      } finally {
         setPhase('idle')
-        return
       }
-
-      setPhase('entering-fade-in')
-      router.push(redirectTo)
-      router.refresh()
-      await wait(ENTRY_FADE_IN_MS)
-
-      setPhase('entering-hold')
-      await wait(ENTRY_HOLD_MS)
-
-      setPhase('entering-fade-out')
-      await wait(ENTRY_FADE_OUT_MS)
-
-      setPhase('idle')
     })()
 
     inFlightRef.current = run.finally(() => {
@@ -97,33 +102,34 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     if (inFlightRef.current) return inFlightRef.current
 
     const run = (async () => {
-      if (reducedMotion) {
+      try {
+        if (reducedMotion) {
+          setPhase('exiting-fade-in')
+          await wait(REDUCED_MOTION_FADE_MS)
+          await logout()
+          router.push(redirectTo)
+          setPhase('exiting-fade-out')
+          await wait(REDUCED_MOTION_FADE_MS)
+          return
+        }
+
         setPhase('exiting-fade-in')
-        await wait(REDUCED_MOTION_FADE_MS)
+        await wait(EXIT_FADE_IN_MS)
+
+        // Overlay is now fully opaque. Safe to clear auth state and navigate.
+        // Anything behind the overlay that re-renders on logout (user menu,
+        // page header) is hidden — no visible state flash.
         await logout()
         router.push(redirectTo)
+
+        setPhase('exiting-hold')
+        await wait(EXIT_HOLD_MS)
+
         setPhase('exiting-fade-out')
-        await wait(REDUCED_MOTION_FADE_MS)
+        await wait(EXIT_FADE_OUT_MS)
+      } finally {
         setPhase('idle')
-        return
       }
-
-      setPhase('exiting-fade-in')
-      await wait(EXIT_FADE_IN_MS)
-
-      // Overlay is now fully opaque. Safe to clear auth state and navigate.
-      // Anything behind the overlay that re-renders on logout (user menu,
-      // page header) is hidden — no visible state flash.
-      await logout()
-      router.push(redirectTo)
-
-      setPhase('exiting-hold')
-      await wait(EXIT_HOLD_MS)
-
-      setPhase('exiting-fade-out')
-      await wait(EXIT_FADE_OUT_MS)
-
-      setPhase('idle')
     })()
 
     inFlightRef.current = run.finally(() => {
