@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { ChevronRight, X, Building2, ListFilter, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
+import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
 import { Spinner } from '@/components/ui'
@@ -69,6 +70,7 @@ function computeGreetingKey(): GreetingKey {
 export default function HubPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
+  const { markHubReady } = useAuthGate()
   const { setPendingHref, setSlideDirection, setSlideTargetPath, setCachedBusinesses } = usePageTransition()
   const { createdBusiness } = useCreateBusinessModal()
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
@@ -83,6 +85,13 @@ export default function HubPage() {
   useEffect(() => {
     setGreetingKey(computeGreetingKey())
   }, [])
+
+  // Release the auth-gate's entering-hold phase as soon as the hub has its
+  // data. Safe to call repeatedly — markHubReady clears its resolver after
+  // the first call, so re-renders during warm navigation are no-ops.
+  useEffect(() => {
+    if (!authLoading && !isLoading) markHubReady()
+  }, [authLoading, isLoading, markHubReady])
 
   const fetchBusinesses = useCallback(async () => {
     try {
