@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit by IP
     const clientIp = getClientIp(request)
-    const rateLimitResult = checkRateLimit(`transfer:${clientIp}`, RateLimits.codeValidation)
+    const rateLimitResult = await checkRateLimit(`transfer:${clientIp}`, RateLimits.codeValidation)
     if (!rateLimitResult.success) {
       const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
       const response = errorResponse(ApiMessageCode.TRANSFER_RATE_LIMITED, 429)

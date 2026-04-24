@@ -10,7 +10,7 @@ export const POST = withAuth(async (request, user) => {
   const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
   if (oversize) return oversize
 
-  const rateLimited = applyRateLimit(`heic:${user.userId}`, RateLimits.heic)
+  const rateLimited = await applyRateLimit(`heic:${user.userId}`, RateLimits.heic)
   if (rateLimited) return rateLimited
 
   try {

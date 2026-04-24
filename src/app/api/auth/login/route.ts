@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit by IP
     const clientIp = getClientIp(request)
-    const rateLimitResult = checkRateLimit(`login:${clientIp}`, RateLimits.login)
+    const rateLimitResult = await checkRateLimit(`login:${clientIp}`, RateLimits.login)
     if (!rateLimitResult.success) {
       const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
       const response = errorResponse(ApiMessageCode.AUTH_LOGIN_RATE_LIMITED, 429)

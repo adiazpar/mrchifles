@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit by IP
     const clientIp = getClientIp(request)
-    const rateLimitResult = checkRateLimit(`validate:${clientIp}`, RateLimits.codeValidation)
+    const rateLimitResult = await checkRateLimit(`validate:${clientIp}`, RateLimits.codeValidation)
     if (!rateLimitResult.success) {
       const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
       const response = NextResponse.json(

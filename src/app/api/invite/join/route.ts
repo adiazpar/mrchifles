@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Cap join attempts — a 6-char invite code is a brute-force surface
     // even with /validate limited, so the join itself needs its own gate.
-    const rateLimited = applyRateLimit(
+    const rateLimited = await applyRateLimit(
       `join:${user.userId}`,
       RateLimits.userMutation,
     )

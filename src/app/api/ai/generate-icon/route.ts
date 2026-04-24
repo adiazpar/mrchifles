@@ -26,7 +26,7 @@ export const POST = withAuth(async (request, user) => {
   const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
   if (oversize) return oversize
 
-  const rateLimited = applyRateLimit(`ai:${user.userId}`, RateLimits.ai)
+  const rateLimited = await applyRateLimit(`ai:${user.userId}`, RateLimits.ai)
   if (rateLimited) return rateLimited
 
   try {

@@ -37,7 +37,7 @@ export const POST = withBusinessAuth(async (request, access) => {
   // Tight rate limit to mitigate the recipient-lookup enumeration surface.
   // An owner legitimately initiates this a handful of times; anything more
   // is almost certainly probing.
-  const rateLimited = applyRateLimit(
+  const rateLimited = await applyRateLimit(
     `transfer-initiate:${access.userId}`,
     RateLimits.transferInitiate,
   )

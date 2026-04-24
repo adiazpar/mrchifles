@@ -69,15 +69,19 @@ export function withAuth(handler: UserRouteHandler) {
  * The `Retry-After` header is populated so well-behaved clients back off
  * at the correct interval.
  *
+ * Async because `checkRateLimit` may call Upstash over the network when
+ * Redis credentials are configured. In-memory fallback resolves
+ * synchronously; the await is effectively a no-op in that case.
+ *
  * @example
- *   const rl = applyRateLimit(`ai:${user.userId}`, RateLimits.ai)
+ *   const rl = await applyRateLimit(`ai:${user.userId}`, RateLimits.ai)
  *   if (rl) return rl
  */
-export function applyRateLimit(
+export async function applyRateLimit(
   identifier: string,
   config: RateLimitConfig,
-): NextResponse | null {
-  const result = checkRateLimit(identifier, config)
+): Promise<NextResponse | null> {
+  const result = await checkRateLimit(identifier, config)
   if (result.success) return null
   const retryAfter = Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000))
   const response = errorResponse(ApiMessageCode.RATE_LIMITED, 429)
@@ -154,7 +158,7 @@ export function withBusinessAuth(handler: BusinessRouteHandler) {
       // caps out at RateLimits.businessMutation. Keyed per-business so a
       // partner in two businesses doesn't contend with themselves.
       if (request.method !== 'GET' && request.method !== 'HEAD') {
-        const rateLimited = applyRateLimit(
+        const rateLimited = await applyRateLimit(
           `mutate:${access.userId}:${access.businessId}`,
           RateLimits.businessMutation,
         )

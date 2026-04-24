@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Transfer codes are 6 chars; /accept is already rate-limited, and
     // /decline is too — without this cap an attacker with a valid code
     // could flip pending transfers to cancelled at will.
-    const rateLimited = applyRateLimit(
+    const rateLimited = await applyRateLimit(
       `transfer-decline:${user.userId}`,
       RateLimits.userMutation,
     )

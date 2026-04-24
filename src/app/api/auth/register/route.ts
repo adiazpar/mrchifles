@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit by IP
     const clientIp = getClientIp(request)
-    const rateLimitResult = checkRateLimit(`register:${clientIp}`, RateLimits.register)
+    const rateLimitResult = await checkRateLimit(`register:${clientIp}`, RateLimits.register)
     if (!rateLimitResult.success) {
       const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
       const response = errorResponse(ApiMessageCode.AUTH_REGISTER_RATE_LIMITED, 429)
