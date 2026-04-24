@@ -10,8 +10,10 @@ import { Schemas } from '@/lib/schemas'
 const orderItemSchema = z.object({
   productId: Schemas.id(),
   productName: Schemas.name(),
-  quantity: z.number().int().positive(),
-  unitCost: z.number().nonnegative().optional().nullable(),
+  // Mirrors the cap on order create. 1M units of a single line is far
+  // beyond any legit purchase order from a small business.
+  quantity: z.number().int().positive().max(1_000_000),
+  unitCost: z.number().nonnegative().max(1_000_000_000).optional().nullable(),
 })
 
 /**

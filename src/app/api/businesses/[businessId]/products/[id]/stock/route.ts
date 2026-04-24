@@ -6,7 +6,10 @@ import { canManageBusiness } from '@/lib/business-auth'
 import { ApiMessageCode } from '@/lib/api-messages'
 
 const stockSchema = z.object({
-  stock: z.number().int().min(0),
+  // 1M units is orders-of-magnitude beyond any small-business count;
+  // blocks a client sending Number.MAX_SAFE_INTEGER from writing
+  // nonsense.
+  stock: z.number().int().min(0).max(1_000_000),
 })
 
 /**

@@ -6,7 +6,10 @@ import { canManageBusiness } from '@/lib/business-auth'
 import { ApiMessageCode } from '@/lib/api-messages'
 
 const receiveOrderSchema = z.object({
-  receivedQuantities: z.record(z.string(), z.number().int().min(0)),
+  // Per-line received quantities. Capped at 1M to match the create-
+  // and edit-order schemas and block pathological MAX_SAFE_INTEGER
+  // writes to products.stock.
+  receivedQuantities: z.record(z.string(), z.number().int().min(0).max(1_000_000)),
 })
 
 /**

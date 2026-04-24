@@ -17,9 +17,12 @@ export async function GET() {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
-    // Query business_users joined with businesses for this user. LIMIT 100
-    // is a defensive ceiling — real users have single-digit memberships.
-    const memberships = await db
+    // Query business_users joined with businesses for this user.
+    // Status filter lives in SQL (indexed) so we don't pull disabled
+    // / pending rows across the wire just to drop them client-side.
+    // LIMIT 100 is a defensive ceiling — real users have single-digit
+    // memberships.
+    const activeMemberships = await db
       .select({
         businessId: businessUsers.businessId,
         role: businessUsers.role,
@@ -32,11 +35,13 @@ export async function GET() {
       })
       .from(businessUsers)
       .innerJoin(businesses, eq(businessUsers.businessId, businesses.id))
-      .where(eq(businessUsers.userId, session.userId))
+      .where(
+        and(
+          eq(businessUsers.userId, session.userId),
+          eq(businessUsers.status, 'active'),
+        ),
+      )
       .limit(100)
-
-    // Get active memberships
-    const activeMemberships = memberships.filter(m => m.status === 'active')
 
     // Get member counts for each business
     const businessIds = activeMemberships.map(m => m.businessId)

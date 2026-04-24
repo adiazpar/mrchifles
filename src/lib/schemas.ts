@@ -58,13 +58,17 @@ export const Schemas = {
 
   /**
    * Non-negative numeric amount (for prices, costs, etc).
+   * Upper bound caps the field at ~1B in the smallest currency unit —
+   * well above any legit single-item price, but low enough that a
+   * client sending Number.MAX_SAFE_INTEGER gets rejected at the edge
+   * instead of writing a nonsense value to the DB.
    */
-  amount: () => z.coerce.number().min(0),
+  amount: () => z.coerce.number().min(0).max(1_000_000_000),
 
   /**
-   * Positive numeric amount (must be > 0).
+   * Positive numeric amount (must be > 0). Same upper bound as amount.
    */
-  positiveAmount: () => z.coerce.number().positive(),
+  positiveAmount: () => z.coerce.number().positive().max(1_000_000_000),
 
   /**
    * Required code field (invite codes, transfer codes).
