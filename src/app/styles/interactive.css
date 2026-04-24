@@ -252,6 +252,43 @@
   transform: none;
 }
 
+/* Variant classes are composed dynamically in SwipeableRow.tsx as
+   `swipeable-row-action--${variant}`, so grep for literal class names
+   won't find them — do NOT remove these in a "dead CSS" audit. Every
+   variant keeps the same muted background; semantic color is carried
+   only by the icon. */
+.swipeable-row-action--neutral {
+  background: var(--color-bg-muted);
+}
+
+.swipeable-row-action--neutral .swipeable-row-action__icon {
+  color: var(--color-text-primary);
+}
+
+.swipeable-row-action--info {
+  background: var(--color-bg-muted);
+}
+
+.swipeable-row-action--info .swipeable-row-action__icon {
+  color: var(--color-brand);
+}
+
+.swipeable-row-action--pos {
+  background: var(--color-bg-muted);
+}
+
+.swipeable-row-action--pos .swipeable-row-action__icon {
+  color: var(--color-pos);
+}
+
+.swipeable-row-action--danger {
+  background: var(--color-bg-muted);
+}
+
+.swipeable-row-action--danger .swipeable-row-action__icon {
+  color: var(--color-error);
+}
+
 /* The list item inside a swipeable row carries an opaque page-colored
    background so the action layer behind it is fully covered once the row
    has snapped back. Without this, any mid-animation artifact on the
