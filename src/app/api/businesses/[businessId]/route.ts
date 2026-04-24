@@ -83,9 +83,15 @@ export const PATCH = withBusinessAuth(async (request, access) => {
     currency = localeConfig.currency
   }
 
-  // Validate logo file
+  // Validate logo file. Allowlist raster formats only — SVG is
+  // intentionally rejected because the logo is stored as a base64 data
+  // URL and rendered via <img src=...>; permitting SVG would open a
+  // stored-XSS surface through embedded <script> tags. HEIC/HEIF are
+  // converted to JPEG client-side before upload, so they shouldn't
+  // arrive here either.
+  const ACCEPTED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp']
   if (logoFile) {
-    if (!logoFile.type.startsWith('image/')) {
+    if (!ACCEPTED_LOGO_TYPES.includes(logoFile.type)) {
       return errorResponse(ApiMessageCode.BUSINESS_UPDATE_LOGO_INVALID_TYPE, 400)
     }
     if (logoFile.size > MAX_UPLOAD_SIZE) {

@@ -2,6 +2,7 @@ import { db, products } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { canManageBusiness } from '@/lib/business-auth'
 import { ApiMessageCode } from '@/lib/api-messages'
 
 const stockSchema = z.object({
@@ -14,6 +15,11 @@ const stockSchema = z.object({
  * Adjust product stock.
  */
 export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
+  // Only partners and owners can adjust stock — employees are read-only.
+  if (!canManageBusiness(access.role)) {
+    return errorResponse(ApiMessageCode.PRODUCT_FORBIDDEN_NOT_MANAGER, 403)
+  }
+
   const id = routeParams?.id
   if (!id) {
     return errorResponse(ApiMessageCode.PRODUCT_ID_REQUIRED, 400)

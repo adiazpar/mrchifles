@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { uploadProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
 import { withBusinessAuth, validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
+import { canManageBusiness } from '@/lib/business-auth'
 import { ApiMessageCode } from '@/lib/api-messages'
 import {
   computeCanonicalGtin,
@@ -65,6 +66,13 @@ export const GET = withBusinessAuth(async (request, access) => {
 const POST_MAX_BODY_BYTES = 5 * 1024 * 1024
 
 export const POST = withBusinessAuth(async (request, access) => {
+  // Only partners and owners can create products. PATCH/DELETE on
+  // products already required canManageBusiness; POST was the last
+  // mutation employees could still perform.
+  if (!canManageBusiness(access.role)) {
+    return errorResponse(ApiMessageCode.PRODUCT_FORBIDDEN_NOT_MANAGER, 403)
+  }
+
   const oversize = enforceMaxContentLength(request, POST_MAX_BODY_BYTES)
   if (oversize) return oversize
 

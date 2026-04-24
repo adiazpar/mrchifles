@@ -3,6 +3,7 @@ import { eq, desc, inArray, and, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { withBusinessAuth, validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
+import { canManageBusiness } from '@/lib/business-auth'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
@@ -146,6 +147,11 @@ export const GET = withBusinessAuth(async (request, access) => {
 const POST_MAX_BODY_BYTES = 15 * 1024 * 1024
 
 export const POST = withBusinessAuth(async (request, access) => {
+  // Only partners and owners can create orders.
+  if (!canManageBusiness(access.role)) {
+    return errorResponse(ApiMessageCode.ORDER_FORBIDDEN_NOT_MANAGER, 403)
+  }
+
   const oversize = enforceMaxContentLength(request, POST_MAX_BODY_BYTES)
   if (oversize) return oversize
 
