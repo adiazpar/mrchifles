@@ -15,6 +15,7 @@
   align-items: center;
   justify-content: center;
   background: var(--color-bg-surface);
+  pointer-events: none;
   will-change: opacity;
 }
 
