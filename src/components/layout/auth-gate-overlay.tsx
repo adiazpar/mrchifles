@@ -40,7 +40,7 @@ export function AuthGateOverlay() {
   const isPulsing = phase === 'entering-hold' && !reducedMotion
 
   return (
-    <AnimatePresence initial={false}>
+    <AnimatePresence>
       {visible && (
         <motion.div
           className="auth-gate-overlay"
