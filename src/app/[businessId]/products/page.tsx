@@ -49,6 +49,7 @@ import { useProducts } from '@/contexts/products-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { scrollToTop } from '@/lib/scroll'
 import { useTranslations } from 'next-intl'
+import { useApiMessage } from '@/hooks/useApiMessage'
 import type { Product, SortPreference, ProductCategory } from '@/types'
 import {
   ApiError,
@@ -276,6 +277,8 @@ function EditProductModalWrapper({
 export default function ProductosPage() {
   const t = useTranslations('products')
   const tOrders = useTranslations('orders')
+  const tProductForm = useTranslations('productForm')
+  const translateApiMessage = useApiMessage()
   const { user } = useAuth()
   const { canManage, businessId } = useBusiness()
   const { formatDate, locale } = useBusinessFormat()
@@ -587,9 +590,12 @@ export default function ProductosPage() {
       return true
     } catch (err) {
       console.error('Error deleting product:', err)
-      return false
+      if (err instanceof ApiError && err.envelope) {
+        throw new Error(translateApiMessage(err.envelope))
+      }
+      throw new Error(tProductForm('failed_to_delete'))
     }
-  }, [businessId, setProducts])
+  }, [businessId, setProducts, translateApiMessage, tProductForm])
 
   const handleSaveAdjustment = useCallback(async (data: StockAdjustmentData) => {
     try {

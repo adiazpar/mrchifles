@@ -37,19 +37,27 @@ export interface EditProductModalProps {
 // ============================================
 
 function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<boolean>; isDeleting: boolean }) {
+  const t = useTranslations('productForm')
   const tCommon = useTranslations('common')
-  const { setProductDeleted } = useProductForm()
+  const { setProductDeleted, setError } = useProductForm()
   const { goToStep } = useMorphingModal()
 
   // Delete can fail with a 409 when the product is in a pending order, so we
   // wait for the response before navigating to the success step. If it fails,
   // go back to the edit step where the error message is visible.
   const handleClick = async () => {
-    const ok = await onConfirm()
-    if (ok) {
-      setProductDeleted(true)
-      goToStep(3)
-    } else {
+    setError('')
+    try {
+      const ok = await onConfirm()
+      if (ok) {
+        setProductDeleted(true)
+        goToStep(3)
+      } else {
+        setError(t('failed_to_delete'))
+        goToStep(0)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('failed_to_delete'))
       goToStep(0)
     }
   }

@@ -204,6 +204,7 @@
     "success_deleted_description": "The product has been deleted successfully",
     "delete_confirm_text": "Are you sure you want to delete {name}? This action cannot be undone.",
     "failed_to_save": "Failed to save product",
+    "failed_to_delete": "Failed to delete product",
     "open_camera_button": "Open camera",
     "choose_photo_button": "Choose a photo",
     "open_camera_desc": "We'll move on once you snap the photo",

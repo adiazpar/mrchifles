@@ -204,6 +204,7 @@
     "success_deleted_description": "El producto ha sido eliminado exitosamente",
     "delete_confirm_text": "¿Está seguro que desea eliminar {name}? Esta acción no se puede deshacer.",
     "failed_to_save": "No se pudo guardar el producto",
+    "failed_to_delete": "No se pudo eliminar el producto",
     "open_camera_button": "Abrir cámara",
     "choose_photo_button": "Elegir una foto",
     "open_camera_desc": "Continuaremos una vez que tome la foto",
