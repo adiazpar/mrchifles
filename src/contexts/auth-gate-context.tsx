@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -42,9 +41,9 @@ export function useAuthGate(): AuthGateContextValue {
 export function AuthGateProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const { logout } = useAuth()
-  const [phase, setPhase] = useState<AuthGatePhase>('idle')
-  const [reducedMotion, setReducedMotion] = useState(false)
-  const inFlightRef = useRef<Promise<void> | null>(null)
+  const [phase, _setPhase] = useState<AuthGatePhase>('idle')
+  const [reducedMotion, _setReducedMotion] = useState(false)
+  const _inFlightRef = useRef<Promise<void> | null>(null)
 
   // Orchestration lands in Tasks 5 and 6. Stubs return immediately so the
   // provider is usable from the start.
@@ -64,15 +63,6 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     () => ({ phase, reducedMotion, playEntry, playExit }),
     [phase, reducedMotion, playEntry, playExit],
   )
-
-  // Silence unused-setter lint until Tasks 4-6 wire these up.
-  void setPhase
-  void setReducedMotion
-  void inFlightRef
-
-  useEffect(() => {
-    // Placeholder — reduced-motion detection lands in Task 4.
-  }, [])
 
   return (
     <AuthGateContext.Provider value={value}>
