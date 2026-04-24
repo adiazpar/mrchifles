@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { useCallback } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
+import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { getUserInitials } from '@/lib/auth'
@@ -21,16 +22,15 @@ interface UserMenuContentProps {
  */
 export function UserMenuContent({ onAction, showHeader = true }: UserMenuContentProps) {
   const t = useTranslations('ui.user_menu')
-  const router = useRouter()
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
+  const { playExit } = useAuthGate()
   const { setPendingHref, setSlideDirection, setSlideTargetPath } = usePageTransition()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
     onAction?.()
-    logout()
-    router.push('/login')
-  }, [logout, router, onAction])
+    await playExit('/login')
+  }, [playExit, onAction])
 
   const pathname = usePathname()
 
