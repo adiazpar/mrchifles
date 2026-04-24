@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 import { AuthProvider } from '@/contexts/auth-context'
 import { PageTransitionProvider } from '@/contexts/page-transition-context'
+import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { AppShell, SplashController, TapFeedbackProvider } from '@/components/layout'
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-color'
 import './globals.css'
@@ -132,11 +133,13 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
             <SplashController />
-            <PageTransitionProvider>
-              <AppShell>
-                {children}
-              </AppShell>
-            </PageTransitionProvider>
+            <AuthGateProvider>
+              <PageTransitionProvider>
+                <AppShell>
+                  {children}
+                </AppShell>
+              </PageTransitionProvider>
+            </AuthGateProvider>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>
