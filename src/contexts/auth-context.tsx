@@ -175,6 +175,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(data.user)
       setCachedUser(data.user)
       setValidatedNow()
+
+      // Warm the hub's business-list cache in parallel with the auth-gate
+      // overlay animation. fetchDeduped ensures the hub's own fetch on
+      // mount is a cache hit, hiding the post-login spinner flash.
+      // Fire-and-forget — any failure retries naturally on the hub mount.
+      void fetchDeduped('/api/businesses/list').catch(() => {})
+
       return { success: true }
     } catch (err) {
       if (err instanceof ApiError) {
