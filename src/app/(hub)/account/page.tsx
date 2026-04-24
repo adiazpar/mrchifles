@@ -15,6 +15,7 @@ import {
   ArrowRightLeft,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
+import { useAuthGate } from '@/contexts/auth-gate-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { Spinner } from '@/components/ui'
 import { useTheme } from '@/hooks/useTheme'
@@ -57,7 +58,8 @@ const IncomingTransferModal = dynamic(
 )
 
 export default function AccountPage() {
-  const { user, isLoading, logout } = useAuth()
+  const { user, isLoading } = useAuth()
+  const { playExit } = useAuthGate()
   const router = useRouter()
   const t = useTranslations('account')
   const { theme } = useTheme()
@@ -86,8 +88,7 @@ export default function AccountPage() {
   const themeLabel = t(`theme_${theme}`)
 
   const handleLogout = async () => {
-    await logout()
-    router.push('/login')
+    await playExit('/login')
   }
 
   return (
