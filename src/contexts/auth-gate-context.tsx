@@ -32,6 +32,9 @@ export interface AuthGateContextValue {
 const ENTRY_FADE_IN_MS = 150
 const ENTRY_HOLD_MS = 150
 const ENTRY_FADE_OUT_MS = 200
+const EXIT_FADE_IN_MS = 200
+const EXIT_HOLD_MS = 100
+const EXIT_FADE_OUT_MS = 200
 const REDUCED_MOTION_FADE_MS = 200
 
 function wait(ms: number): Promise<void> {
@@ -90,11 +93,44 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     return inFlightRef.current
   }, [reducedMotion, router])
 
-  const playExit = useCallback(async (_redirectTo?: string): Promise<void> => {
-    void _redirectTo
-    void logout
-    return
-  }, [logout])
+  const playExit = useCallback(async (redirectTo: string = '/login'): Promise<void> => {
+    if (inFlightRef.current) return inFlightRef.current
+
+    const run = (async () => {
+      if (reducedMotion) {
+        setPhase('exiting-fade-in')
+        await wait(REDUCED_MOTION_FADE_MS)
+        await logout()
+        router.push(redirectTo)
+        setPhase('exiting-fade-out')
+        await wait(REDUCED_MOTION_FADE_MS)
+        setPhase('idle')
+        return
+      }
+
+      setPhase('exiting-fade-in')
+      await wait(EXIT_FADE_IN_MS)
+
+      // Overlay is now fully opaque. Safe to clear auth state and navigate.
+      // Anything behind the overlay that re-renders on logout (user menu,
+      // page header) is hidden — no visible state flash.
+      await logout()
+      router.push(redirectTo)
+
+      setPhase('exiting-hold')
+      await wait(EXIT_HOLD_MS)
+
+      setPhase('exiting-fade-out')
+      await wait(EXIT_FADE_OUT_MS)
+
+      setPhase('idle')
+    })()
+
+    inFlightRef.current = run.finally(() => {
+      inFlightRef.current = null
+    })
+    return inFlightRef.current
+  }, [reducedMotion, logout, router])
 
   const value = useMemo<AuthGateContextValue>(
     () => ({ phase, reducedMotion, playEntry, playExit }),
