@@ -1,9 +1,9 @@
-'use client'
+import { getTranslations } from 'next-intl/server'
 
-import { useTranslations } from 'next-intl'
-
-export default function VentasPage() {
-  const t = useTranslations('sales')
+// Render as a Server Component — stub only uses translations, no client
+// state or events. Drops the client bundle for this route to zero.
+export default async function SalesPage() {
+  const t = await getTranslations('sales')
   // Header is set optimistically by nav component
 
   return (

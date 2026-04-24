@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, memo } from 'react'
+import { Fragment, memo, useMemo } from 'react'
 import Image from 'next/image'
 import { X, Plus, ChevronUp, ChevronRight, Loader2, Tags, ListFilter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff, Printer } from 'lucide-react'
 import { Modal, SwipeableRow } from '@/components/ui'
@@ -107,11 +107,19 @@ export function ProductsTab({
     stock_desc: t('sort_stock_desc'),
   }
 
-  // Helper to get category name by ID
+  // Look up category name by ID in O(1). Without this map, rendering a
+  // list of N products with M categories cost O(N*M) .find() calls per
+  // render — noticeable once a business has 100+ products with
+  // categories set.
+  const categoryNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const c of categories) map.set(c.id, c.name)
+    return map
+  }, [categories])
+
   const getCategoryName = (categoryId: string | null | undefined) => {
     if (!categoryId) return '-'
-    const category = categories.find(c => c.id === categoryId)
-    return category?.name || '-'
+    return categoryNameById.get(categoryId) ?? '-'
   }
 
   return (

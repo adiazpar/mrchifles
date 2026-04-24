@@ -1,15 +1,16 @@
-'use client'
-
 import Image from 'next/image'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 import { PageTransition } from '@/components/layout'
 
-export default function AuthLayout({
+// Server Component — only uses translations + composes a client child
+// (PageTransition). RSCs can render client components directly, so the
+// client boundary stays at PageTransition.
+export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const t = useTranslations('auth')
+  const t = await getTranslations('auth')
   return (
     <PageTransition>
       <div className="auth-container">

@@ -1,7 +1,5 @@
-import { NextRequest } from 'next/server'
-import { getCurrentUser } from '@/lib/simple-auth'
-import { requireBusinessAccess, isOwner, invalidateAccessCacheForBusiness } from '@/lib/business-auth'
-import { withBusinessAuth, errorResponse, successResponse, validationError, enforceMaxContentLength, type RouteParams } from '@/lib/api-middleware'
+import { isOwner, invalidateAccessCacheForBusiness } from '@/lib/business-auth'
+import { withBusinessAuth, errorResponse, successResponse, validationError, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { db, businesses } from '@/db'
 import { eq } from 'drizzle-orm'
@@ -144,48 +142,31 @@ export const PATCH = withBusinessAuth(async (request, access) => {
  * Delete a business. Cascades to related tables via foreign keys.
  * Only the owner can delete a business.
  */
-export async function DELETE(
-  _request: NextRequest,
-  { params }: RouteParams
-) {
+export const DELETE = withBusinessAuth(async (_request, access) => {
+  if (!isOwner(access.role)) {
+    return errorResponse(ApiMessageCode.BUSINESS_ONLY_OWNER_CAN_DELETE, 403)
+  }
+
   try {
-    const session = await getCurrentUser()
-    if (!session) {
-      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
-    }
-
-    const { businessId } = await params
-
-    let access
-    try {
-      access = await requireBusinessAccess(businessId)
-    } catch {
-      return errorResponse(ApiMessageCode.FORBIDDEN, 403)
-    }
-
-    if (!isOwner(access.role)) {
-      return errorResponse(ApiMessageCode.BUSINESS_ONLY_OWNER_CAN_DELETE, 403)
-    }
-
     const existing = await db
       .select({ id: businesses.id })
       .from(businesses)
-      .where(eq(businesses.id, businessId))
+      .where(eq(businesses.id, access.businessId))
       .get()
 
     if (!existing) {
       return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND, 404)
     }
 
-    await db.delete(businesses).where(eq(businesses.id, businessId))
+    await db.delete(businesses).where(eq(businesses.id, access.businessId))
 
     // Business is gone — every cached BusinessAccess that references it
     // is now invalid (every member, not just the deleting owner).
-    invalidateAccessCacheForBusiness(businessId)
+    invalidateAccessCacheForBusiness(access.businessId)
 
     return successResponse({}, ApiMessageCode.BUSINESS_DELETE_SUCCESS)
   } catch (error) {
     console.error('Business deletion error:', error)
     return errorResponse(ApiMessageCode.BUSINESS_DELETE_FAILED, 500)
   }
-}
+})
