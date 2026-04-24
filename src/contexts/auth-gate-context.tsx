@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -42,7 +43,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const { logout } = useAuth()
   const [phase, _setPhase] = useState<AuthGatePhase>('idle')
-  const [reducedMotion, _setReducedMotion] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(false)
   const _inFlightRef = useRef<Promise<void> | null>(null)
 
   // Orchestration lands in Tasks 5 and 6. Stubs return immediately so the
@@ -63,6 +64,15 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     () => ({ phase, reducedMotion, playEntry, playExit }),
     [phase, reducedMotion, playEntry, playExit],
   )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setReducedMotion(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   return (
     <AuthGateContext.Provider value={value}>
