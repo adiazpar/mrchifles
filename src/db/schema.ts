@@ -211,7 +211,6 @@ export const inviteCodes = sqliteTable('invite_codes', {
   code: text('code').unique().notNull(), // 6 uppercase alphanumeric
   role: text('role', { enum: ['partner', 'employee'] }).notNull(),
   usedBy: text('used_by').references(() => users.id),
-  usedAt: integer('used_at', { mode: 'timestamp' }),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   businessIdIdx: index('idx_invite_codes_business_id').on(table.businessId),
@@ -232,8 +231,6 @@ export const ownershipTransfers = sqliteTable('ownership_transfers', {
     enum: ['pending', 'accepted', 'completed', 'expired', 'cancelled']
   }).default('pending').notNull(),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-  acceptedAt: integer('accepted_at', { mode: 'timestamp' }),
-  completedAt: integer('completed_at', { mode: 'timestamp' }),
 }, (table) => ({
   businessIdIdx: index('idx_ownership_transfers_business_id').on(table.businessId),
   statusIdx: index('idx_ownership_transfers_status').on(table.status),

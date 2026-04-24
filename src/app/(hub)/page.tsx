@@ -57,6 +57,15 @@ function getCachedBusinessList(): Business[] {
   return hubBusinessesCache.get() ?? []
 }
 
+type GreetingKey = 'greeting_morning' | 'greeting_afternoon' | 'greeting_evening'
+
+function computeGreetingKey(): GreetingKey {
+  const hour = new Date().getHours()
+  if (hour >= 6 && hour < 12) return 'greeting_morning'
+  if (hour >= 12 && hour < 18) return 'greeting_afternoon'
+  return 'greeting_evening'
+}
+
 export default function HubPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
@@ -65,7 +74,15 @@ export default function HubPage() {
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
   const [isLoading, setIsLoading] = useState(() => getCachedBusinessList().length === 0)
   const [searchQuery, setSearchQuery] = useState('')
+  // Greeting key is derived from the client clock only. Set inside a
+  // useEffect so SSR + hydration don't disagree on the hour when the
+  // server is in a different timezone than the user.
+  const [greetingKey, setGreetingKey] = useState<GreetingKey | null>(null)
   const t = useTranslations('hub')
+
+  useEffect(() => {
+    setGreetingKey(computeGreetingKey())
+  }, [])
 
   const fetchBusinesses = useCallback(async () => {
     try {
@@ -223,6 +240,16 @@ export default function HubPage() {
 
   return (
     <main className="hub-content space-y-4">
+      {/* Time-of-day greeting. Renders once the client has computed the
+          hour (greetingKey is null on first render to avoid SSR mismatch).
+          Name is rendered verbatim via {user.name} — user-entered content,
+          never translated (per the project i18n rules). */}
+      {greetingKey && user?.name && (
+        <h1 className="text-2xl font-semibold text-text-primary">
+          {t(greetingKey)}, {user.name}
+        </h1>
+      )}
+
       {/* Search Bar */}
       <div className="flex gap-2 items-stretch">
         <div className="relative flex-1">

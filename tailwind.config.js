@@ -58,20 +58,13 @@ module.exports = {
           DEFAULT: 'var(--color-border)',
           hover: 'var(--color-border-hover)',
         },
-        // Payment methods
-        cash: {
-          DEFAULT: 'var(--color-cash)',
-          hover: 'var(--color-cash-hover)',
-          subtle: 'var(--color-cash-subtle)',
-        },
+        // Payment methods. cash/plin were wired to undefined CSS vars
+        // (the bg-cash / bg-plin / text-cash utilities silently resolved
+        // to nothing). Removed per the audit — yape is the only payment
+        // method with defined tokens today.
         yape: {
           DEFAULT: 'var(--color-yape)',
           subtle: 'var(--color-yape-subtle)',
-        },
-        plin: {
-          DEFAULT: 'var(--color-plin)',
-          hover: 'var(--color-plin-hover)',
-          subtle: 'var(--color-plin-subtle)',
         },
         // Semantic colors
         success: {

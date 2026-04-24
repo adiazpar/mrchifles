@@ -111,7 +111,6 @@ export async function POST(request: NextRequest) {
         .update(inviteCodes)
         .set({
           usedBy: user.userId,
-          usedAt: now,
         })
         .where(eq(inviteCodes.id, invite.id)),
     ])
