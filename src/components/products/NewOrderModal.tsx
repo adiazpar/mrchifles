@@ -158,7 +158,6 @@ export function NewOrderModal({
       onClose={onClose}
       onExitComplete={onResetForm}
       title={t('new_order_title')}
-      size="large"
     >
       {/* Step 1: Select Products */}
       <Modal.Step title={t('step_select_products')}>

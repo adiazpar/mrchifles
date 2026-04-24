@@ -265,7 +265,6 @@ function ModalRoot({
   onClose,
   onExitComplete,
   title,
-  size = 'default',
   initialStep = 0,
   children,
 }: ModalProps) {
@@ -317,7 +316,6 @@ function ModalRoot({
       >
         <ModalInner
           closing={closing}
-          size={size}
           title={isSingleStep ? title : currentTitle}
           singleStepTitle={isSingleStep ? title : undefined}
           isSingleStep={isSingleStep}
@@ -337,7 +335,6 @@ function ModalRoot({
 function ModalInner({
   children,
   closing,
-  size,
   title,
   singleStepTitle,
   isSingleStep,
@@ -347,7 +344,6 @@ function ModalInner({
 }: {
   children: React.ReactNode
   closing: boolean
-  size: 'default' | 'large'
   title?: string
   singleStepTitle?: string
   isSingleStep: boolean
@@ -381,7 +377,7 @@ function ModalInner({
         onClick={handleBackdropClick}
       />
       <div
-        className={`modal ${size === 'large' ? 'modal-lg' : ''} ${closing ? 'modal-exit' : 'modal-animated'}`}
+        className={`modal ${closing ? 'modal-exit' : 'modal-animated'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <ModalHeader title={title} singleStepTitle={singleStepTitle} />

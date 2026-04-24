@@ -11,7 +11,7 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
   const t = useTranslations('ui.spinner')
 
   const sizeClasses: Record<string, string> = {
-    sm: 'spinner-sm',
+    sm: '',
     md: '',
     lg: 'spinner-lg',
   }

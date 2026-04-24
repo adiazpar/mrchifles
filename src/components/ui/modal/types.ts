@@ -65,7 +65,6 @@ export interface ModalProps {
   onClose: () => void
   onExitComplete?: () => void
   title?: string
-  size?: 'default' | 'large'
   initialStep?: number
   children: ReactNode
 }

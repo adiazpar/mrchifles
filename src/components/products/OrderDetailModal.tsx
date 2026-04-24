@@ -292,7 +292,6 @@ export function OrderDetailModal({
       onClose={onClose}
       onExitComplete={onExitComplete}
       title={headingTitle}
-      size="large"
     >
       {/* Step 0: Order Details */}
       <Modal.Step title={headingTitle}>
