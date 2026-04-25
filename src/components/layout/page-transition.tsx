@@ -37,8 +37,15 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   } else {
     // No slide — fade path. initial=false leaves current DOM state alone so
     // we don't briefly reset to x:0 between transitions.
+    //
+    // Only stay faded out while pendingHref points somewhere OTHER than the
+    // current pathname. Once pathname catches up to pendingHref, show the
+    // page immediately — without this, rapid nav taps during a cold load
+    // can leave the destination page stuck at opacity 0 because the
+    // pendingHref-clearing useEffect hasn't committed yet.
     initial = false
-    animate = { x: 0, opacity: pendingHref ? 0 : 1 }
+    const isNavigatingAway = Boolean(pendingHref) && pendingHref !== pathname
+    animate = { x: 0, opacity: isNavigatingAway ? 0 : 1 }
   }
 
   // Always render motion.div with the same key shape. Switching element types
