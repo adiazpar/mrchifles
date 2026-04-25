@@ -371,13 +371,12 @@
   background: var(--color-bg-base);
   border-bottom: none;
   min-height: var(--header-height);
-  box-shadow: 0 1px 0 0 var(--color-border);
   transition: box-shadow var(--duration-normal) ease;
 }
 
 /* Shadow when page is scrolled */
 .page-header--scrolled {
-  box-shadow: 0 1px 0 0 var(--color-border), 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* Fixed header - always visible at top like mobile nav at bottom */
