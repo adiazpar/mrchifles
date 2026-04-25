@@ -155,6 +155,17 @@
   display: flex;
   z-index: var(--z-sticky);
   padding-bottom: env(safe-area-inset-bottom, 0);
+  transition: transform var(--duration-normal) ease-out,
+              opacity var(--duration-normal) ease-out;
+}
+
+/* Hidden on focused pages (e.g. /account). Slides off-screen + fades.
+ * Combines with the existing translateX(-50%) centering, hence the
+ * full translate() pair. */
+.mobile-nav--hidden {
+  transform: translate(-50%, 100%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .mobile-nav-item {
@@ -199,9 +210,13 @@
   height: 28px;
 }
 
-/* ===== SwipeableRow action buttons ===== */
-/* Slot wrapper — spans the full row height so the action layer fills the
-   row, but centers the actual (square, shorter) button inside. */
+/* ===== Icon-stack button =====
+   A button shaped as a circular icon over a small text label. Used in two
+   places today: SwipeableRow's revealed actions, and the Scan / Generate /
+   Print row inside the product-modal barcode tabs. The visual is identical
+   in both contexts so the CSS lives in one place; layout containers around
+   it differ (swipe rows pin to the right edge inside `.swipeable-row-slot`,
+   the barcode tabs sit in a left-aligned flex row). */
 .swipeable-row-slot {
   display: flex;
   align-items: center;
@@ -209,83 +224,89 @@
   height: 100%;
 }
 
-.swipeable-row-action {
+.icon-stack-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  width: 60px;
-  height: 60px;
-  border-radius: var(--radius-lg);
+  gap: 6px;
+  background: transparent;
   border: none;
+  padding: 0;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform var(--duration-fast) ease-out;
 }
 
-.swipeable-row-action:active,
-.swipeable-row-action[data-pressed='true'] {
+.icon-stack-btn__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+}
+
+.icon-stack-btn:active,
+.icon-stack-btn[data-pressed='true'] {
   transform: scale(0.94);
 }
 
-/* Label is decoupled from the button's tint — it always renders as secondary
-   text (matching the barcode-tab buttons in the product modal) so the color
-   semantics read from the icon, not from the whole button. */
-.swipeable-row-action__label {
+/* Label is decoupled from the icon's tint — it always renders as secondary
+   text so the color semantics read from the icon, not from the whole
+   button. */
+.icon-stack-btn__label {
+  font-size: 11px;
+  font-weight: 500;
   color: var(--color-text-secondary);
 }
 
-.swipeable-row-action:disabled {
+.icon-stack-btn:disabled {
   cursor: default;
-  background: var(--color-bg-muted);
   opacity: 0.5;
 }
 
-.swipeable-row-action:disabled .swipeable-row-action__icon,
-.swipeable-row-action:disabled .swipeable-row-action__label {
+.icon-stack-btn:disabled .icon-stack-btn__icon,
+.icon-stack-btn:disabled .icon-stack-btn__label {
   color: var(--color-text-tertiary);
 }
 
-.swipeable-row-action:disabled:active,
-.swipeable-row-action:disabled[data-pressed='true'] {
+.icon-stack-btn:disabled:active,
+.icon-stack-btn:disabled[data-pressed='true'] {
   transform: none;
 }
 
-/* Variant classes are composed dynamically in SwipeableRow.tsx as
-   `swipeable-row-action--${variant}`, so grep for literal class names
-   won't find them — do NOT remove these in a "dead CSS" audit. Every
-   variant keeps the same muted background; semantic color is carried
-   only by the icon. */
-.swipeable-row-action--neutral {
+/* Variant classes are composed dynamically (e.g. SwipeableRow.tsx builds
+   `icon-stack-btn--${variant}`), so a literal grep won't find every call
+   site — do NOT remove these in a "dead CSS" audit. Every variant keeps
+   the same muted background; semantic color is carried only by the icon. */
+.icon-stack-btn--neutral .icon-stack-btn__icon {
   background: var(--color-bg-muted);
-}
-
-.swipeable-row-action--neutral .swipeable-row-action__icon {
   color: var(--color-text-primary);
 }
 
-.swipeable-row-action--info {
+.icon-stack-btn--info .icon-stack-btn__icon {
   background: var(--color-bg-muted);
-}
-
-.swipeable-row-action--info .swipeable-row-action__icon {
   color: var(--color-brand);
 }
 
-.swipeable-row-action--pos {
+.icon-stack-btn--success .icon-stack-btn__icon {
   background: var(--color-bg-muted);
+  color: var(--color-success);
 }
 
-.swipeable-row-action--pos .swipeable-row-action__icon {
+.icon-stack-btn--pos .icon-stack-btn__icon {
+  background: var(--color-bg-muted);
   color: var(--color-pos);
 }
 
-.swipeable-row-action--danger {
+.icon-stack-btn--warning .icon-stack-btn__icon {
   background: var(--color-bg-muted);
+  color: var(--color-warning);
 }
 
-.swipeable-row-action--danger .swipeable-row-action__icon {
+.icon-stack-btn--danger .icon-stack-btn__icon {
+  background: var(--color-bg-muted);
   color: var(--color-error);
 }
 
@@ -334,7 +355,7 @@
   align-items: center;
   gap: var(--space-4);
   padding: 0 var(--page-padding);
-  background: var(--color-bg-surface);
+  background: var(--color-bg-base);
   border-bottom: none;
   min-height: var(--header-height);
   box-shadow: 0 1px 0 0 var(--color-border);
@@ -747,6 +768,14 @@
   gap: var(--space-3);
 }
 
+.auth-heading {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-primary);
+}
+
 /* Extra breathing room between the last form field and the primary CTA
  * so the submit button reads as a distinct action, not another field
  * in the list. Combined with the gap above, the total separation is
@@ -764,6 +793,24 @@
   gap: var(--space-3);
 }
 
+.auth-or-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.auth-or-divider::before,
+.auth-or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
 
 .auth-version {
   font-size: var(--text-xs);

@@ -53,6 +53,7 @@
 .btn-primary {
   background: var(--color-brand);
   color: white;
+  border-radius: var(--radius-full);
 }
 
 @media (hover: hover) {
@@ -64,6 +65,7 @@
 .btn-secondary {
   background: var(--color-bg-muted);
   color: var(--color-text-primary);
+  border-radius: var(--radius-full);
 }
 
 @media (hover: hover) {
