@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useSyncExternalStore } from 'react'
 import { useTranslations } from 'next-intl'
+import { applyThemeColorMeta } from '@/lib/theme-color'
 
 export type Theme = 'light' | 'dark' | 'system'
 
@@ -49,9 +50,7 @@ function applyTheme(theme: Theme) {
     localStorage.setItem(STORAGE_KEY, theme)
   }
   root.classList.toggle('dark', resolved === 'dark')
-  // theme-color meta is managed by AppShell's route-aware effect, which
-  // observes the `dark` class toggle above via MutationObserver and
-  // re-applies with the right variant for the current route.
+  applyThemeColorMeta(resolved)
 }
 
 // ---------------------------------------------------------------------------
@@ -80,7 +79,7 @@ export function useTheme(): UseThemeReturn {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handler = (event: MediaQueryListEvent) => {
       document.documentElement.classList.toggle('dark', event.matches)
-      // See applyTheme — theme-color is reapplied by AppShell's observer.
+      applyThemeColorMeta(event.matches ? 'dark' : 'light')
     }
 
     mediaQuery.addEventListener('change', handler)
