@@ -72,7 +72,10 @@
     "passwords_dont_match": "Las contraseñas no coinciden",
     "password_too_short": "La contraseña debe tener al menos 8 caracteres",
     "logo_alt": "Kasero - Negocios Hechos Fácil",
-    "version_label": "Kasero v{version}"
+    "version_label": "Kasero v{version}",
+    "heading_login": "¡Bienvenido de vuelta!",
+    "heading_register": "Empecemos",
+    "continue_button": "Continuar"
   },
   "hub": {
     "empty_state_title": "Aún no hay negocios",

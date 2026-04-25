@@ -17,6 +17,7 @@ function LoginPageContent() {
   const { playEntry } = useAuthGate()
   const { setPendingHref } = usePageTransition()
   const t = useTranslations('auth')
+  const tCommon = useTranslations('common')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -59,6 +60,8 @@ function LoginPageContent() {
   return (
     <>
       <form onSubmit={handleSubmit} className="auth-main">
+        <h1 className="auth-heading">{t('heading_login')}</h1>
+
         {error && (
           <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
             {error}
@@ -95,12 +98,13 @@ function LoginPageContent() {
               <span className="sr-only">{t('logging_in')}</span>
             </>
           ) : (
-            t('login_button')
+            t('continue_button')
           )}
         </button>
       </form>
 
       <div className="auth-page-footer">
+        <div className="auth-or-divider">{tCommon('or')}</div>
         <button
           type="button"
           onClick={handleGoToRegister}

@@ -11,6 +11,7 @@ import { APP_VERSION } from '@/lib/version'
 
 export default function RegisterPage() {
   const t = useTranslations('auth')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const { register } = useAuth()
   const { playEntry } = useAuthGate()
@@ -69,6 +70,8 @@ export default function RegisterPage() {
   return (
     <>
       <form onSubmit={handleSubmit} className="auth-main">
+        <h1 className="auth-heading">{t('heading_register')}</h1>
+
         {error && (
           <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
             {error}
@@ -129,6 +132,7 @@ export default function RegisterPage() {
       </form>
 
       <div className="auth-page-footer">
+        <div className="auth-or-divider">{tCommon('or')}</div>
         <button
           type="button"
           onClick={handleGoToLogin}
