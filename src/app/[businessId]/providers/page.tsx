@@ -67,7 +67,6 @@ export default function ProveedoresPage() {
   const orderFlows = useOrderFlows({
     businessId: businessId || '',
     providers,
-    setOrders,
     canDelete: canManage,
   })
 

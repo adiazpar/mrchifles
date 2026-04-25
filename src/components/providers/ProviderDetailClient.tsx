@@ -139,7 +139,16 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   // changes elsewhere fall out of this page's derived list automatically;
   // the providers + products stores power the New Order / Order Detail
   // modal dropdowns and picker without any local fetch on this page.
-  const { orders: allOrders, setOrders, ensureLoaded: ensureOrdersLoaded } = useOrders()
+  // Provider history shows every order ever placed with this provider, so
+  // we load both buckets on mount. ensureXLoaded is idempotent — if either
+  // bucket was already primed by the products page in this session, the
+  // call is a no-op.
+  const {
+    orders: allOrders,
+    setOrders,
+    ensureActiveLoaded: ensureActiveOrdersLoaded,
+    ensureCompletedLoaded: ensureCompletedOrdersLoaded,
+  } = useOrders()
   const {
     providers: allProvidersAll,
     setProviders,
@@ -167,7 +176,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const orderFlows = useOrderFlows({
     businessId,
     providers: allProviders,
-    setOrders,
     canDelete: canManage,
   })
 
@@ -180,7 +188,8 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setError('')
       const [detail] = await Promise.all([
         apiRequest<ProviderDetailResponse>(`/api/businesses/${businessId}/providers/${providerId}`),
-        ensureOrdersLoaded(),
+        ensureActiveOrdersLoaded(),
+        ensureCompletedOrdersLoaded(),
         ensureProvidersLoaded(),
         ensureProductsLoaded(),
       ])
@@ -194,7 +203,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsLoading(false)
     }
-  }, [businessId, providerId, ensureOrdersLoaded, ensureProvidersLoaded, ensureProductsLoaded, t, translateApiMessage])
+  }, [businessId, providerId, ensureActiveOrdersLoaded, ensureCompletedOrdersLoaded, ensureProvidersLoaded, ensureProductsLoaded, t, translateApiMessage])
 
   useEffect(() => { loadAll() }, [loadAll])
 

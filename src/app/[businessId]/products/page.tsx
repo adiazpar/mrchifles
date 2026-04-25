@@ -314,7 +314,13 @@ export default function ProductosPage() {
   const [isLoading, setIsLoading] = useState(() => !productsLoaded)
   const [error, setError] = useState('')
 
-  const { orders, setOrders, ensureLoaded: ensureOrdersLoaded } = useOrders()
+  const {
+    orders,
+    ensureActiveLoaded: ensureActiveOrdersLoaded,
+    ensureCompletedLoaded: ensureCompletedOrdersLoaded,
+    isActiveLoaded: isActiveOrdersLoaded,
+    isCompletedLoaded: isCompletedOrdersLoaded,
+  } = useOrders()
   const {
     providers,
     ensureLoaded: ensureProvidersLoaded,
@@ -408,25 +414,26 @@ export default function ProductosPage() {
   const orderFlows = useOrderFlows({
     businessId: businessId || '',
     providers: activeProviders,
-    setOrders,
     canDelete,
   })
 
-  // Products and providers both come from shared contexts. ensureLoaded is
-  // idempotent and lazy — no-ops after the first call per mount and a no-op
-  // across pages that already primed the cache. Orders load when the user
-  // switches to the Orders tab below.
+  // Products, providers, and active orders all prime eagerly on mount —
+  // active orders specifically so flipping to the Orders tab from a cold
+  // boot doesn't flash the empty state while the fetch resolves.
+  // ensureLoaded is idempotent and lazy. Completed orders only fetch when
+  // the user toggles to the completed view (handled below).
   useEffect(() => {
     if (!businessId) return
     ensureProductsLoaded()
     ensureProvidersLoaded()
-  }, [businessId, ensureProductsLoaded, ensureProvidersLoaded])
+    ensureActiveOrdersLoaded()
+  }, [businessId, ensureProductsLoaded, ensureProvidersLoaded, ensureActiveOrdersLoaded])
 
-  // Lazy load orders when switching to orders tab (idempotent via context).
+  // Lazy load completed orders when the user toggles to that view.
   useEffect(() => {
-    if (!businessId || activeTab !== 'orders') return
-    ensureOrdersLoaded()
-  }, [activeTab, businessId, ensureOrdersLoaded])
+    if (!businessId || orderViewMode !== 'completed') return
+    ensureCompletedOrdersLoaded()
+  }, [orderViewMode, businessId, ensureCompletedOrdersLoaded])
 
   // Open modals from query string (deep-links from provider detail page)
   useEffect(() => {
@@ -846,6 +853,9 @@ export default function ProductosPage() {
               canDelete={canDelete}
               error={error || orderFlows.error}
               isModalOpen={orderFlows.isNewOrderOpen}
+              isLoading={orderViewMode === 'completed'
+                ? !isCompletedOrdersLoaded
+                : !isActiveOrdersLoaded}
             />
           </TabContainer.Tab>
         </TabContainer>

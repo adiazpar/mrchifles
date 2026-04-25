@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useProducts } from '@/contexts/products-context'
+import { useOrders } from '@/contexts/orders-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useProductSettings } from '@/contexts/product-settings-context'
-import { ApiError, apiDelete, apiPost, apiPatchForm, apiPostForm, apiRequest, type ApiResponse } from '@/lib/api-client'
+import { ApiError, apiDelete, apiPost, apiPatchForm, apiPostForm } from '@/lib/api-client'
 import { NewOrderModal, OrderDetailModal } from '@/components/products'
 import { sortProducts } from '@/lib/products'
 import type { Product, Provider } from '@/types'
@@ -21,9 +22,6 @@ interface UseOrderFlowsOptions {
    * pre-selects the current one even if inactive).
    */
   providers: Provider[]
-  setOrders: (
-    updater: ExpandedOrder[] | ((prev: ExpandedOrder[]) => ExpandedOrder[])
-  ) => void
   canDelete: boolean
 }
 
@@ -86,13 +84,15 @@ function isoToLocalDateOnly(iso: string | Date): string {
  * receive, delete) so multiple pages can reuse them without duplicating ~250
  * lines of state and handlers.
  *
- * Consumer owns the orders list and passes in `setOrders`. After each
- * mutation the hook calls `setOrders` with the optimistic/refetched result.
- * Pages that need to filter (e.g. provider detail showing only this
- * provider's orders) can wrap `setOrders` with a filter on the way in.
+ * Reads orders state directly from the shared OrdersProvider — every page
+ * that uses this hook is already inside that tree, and centralizing the
+ * coupling here keeps consumer wiring trivial. Mutations call setOrders
+ * (which splits by status into the active/completed buckets) for
+ * optimistic local edits and refetchActive / refetchCompleted for the
+ * authoritative post-mutation refresh.
  */
 export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
-  const { businessId, providers, setOrders, canDelete } = opts
+  const { businessId, providers, canDelete } = opts
 
   const tOrders = useTranslations('orders')
   const translateApiMessage = useApiMessage()
@@ -106,6 +106,16 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     ensureLoaded: ensureProductsLoaded,
     refetch: refetchProducts,
   } = useProducts()
+  // Orders state lives in the shared OrdersProvider. The receive flow
+  // refetches active always (the order leaves that bucket) and completed
+  // only when it has already been loaded — otherwise the toggle's first
+  // open does the work.
+  const {
+    setOrders,
+    refetchActive: refetchActiveOrders,
+    refetchCompleted: refetchCompletedOrders,
+    isCompletedLoaded: isCompletedOrdersLoaded,
+  } = useOrders()
 
   // Every page using this hook (products, providers, provider detail) opens
   // the new-order / order-detail modals that drive a product picker, so make
@@ -289,12 +299,12 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
         throw err
       }
 
-      // Refetch all orders so the list (and any consumer-provided filter) reflect the edit
+      // Edits only apply to non-received orders (server rejects edits on
+      // received), so the edited order stays in the active bucket. Refetch
+      // active to pick up server-side computed fields; completed is
+      // untouched and need not be refreshed.
       try {
-        const ordersData = await apiRequest<ApiResponse & { orders: ExpandedOrder[] }>(
-          `/api/businesses/${businessId}/orders`,
-        )
-        setOrders(ordersData.orders)
+        await refetchActiveOrders()
       } catch {
         // Non-fatal: the edit already landed; a stale list self-heals on next navigation.
       }
@@ -308,7 +318,7 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     } finally {
       setIsSavingOrder(false)
     }
-  }, [businessId, orderItems, orderTotal, orderEstimatedArrival, orderReceiptFile, orderProvider, viewingOrder, setOrders, tOrders, translateApiMessage])
+  }, [businessId, orderItems, orderTotal, orderEstimatedArrival, orderReceiptFile, orderProvider, viewingOrder, refetchActiveOrders, tOrders, translateApiMessage])
 
   const handleReceiveOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder || !user) return false
@@ -333,20 +343,20 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
         throw err
       }
 
-      // Orders: always refetch so any server-side computed fields (status,
-      // totals) are fresh. Products: receiving increments stock in the DB,
-      // so we refetch via the shared provider — every page reading from
-      // useProducts() sees the new stock without any page-local plumbing.
-      const [ordersResult] = await Promise.allSettled([
-        apiRequest<ApiResponse & { orders: ExpandedOrder[] }>(
-          `/api/businesses/${businessId}/orders`,
-        ),
+      // Orders: the received order leaves the active bucket and joins
+      // completed, so refetch active always. Refetch completed only when
+      // it has already been loaded for this session — otherwise the next
+      // toggle to the completed view will fetch fresh and pick up the
+      // newly-received order naturally. Products: receiving increments
+      // stock in the DB, so we refetch via the shared provider — every
+      // page reading from useProducts() sees the new stock without any
+      // page-local plumbing.
+      await Promise.allSettled([
+        refetchActiveOrders(),
+        isCompletedOrdersLoaded ? refetchCompletedOrders() : Promise.resolve(),
         refetchProducts(),
       ])
-      if (ordersResult.status === 'fulfilled') {
-        setOrders(ordersResult.value.orders)
-      }
-      // If either side fails we still consider the receive a success (the
+      // If any side fails we still consider the receive a success (the
       // server already committed); stale-list self-heals on next nav.
 
       setOrderReceived(true)
@@ -358,7 +368,7 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     } finally {
       setIsReceiving(false)
     }
-  }, [businessId, viewingOrder, user, receivedQuantities, refetchProducts, setOrders, tOrders, translateApiMessage])
+  }, [businessId, viewingOrder, user, receivedQuantities, refetchProducts, refetchActiveOrders, refetchCompletedOrders, isCompletedOrdersLoaded, tOrders, translateApiMessage])
 
   const handleDeleteOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder) return false

@@ -1,5 +1,5 @@
 import { db, orders, orderItems, providers, products, businesses, users } from '@/db'
-import { eq, desc, inArray, and, sql } from 'drizzle-orm'
+import { eq, desc, inArray, and, ne, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { withBusinessAuth, validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
@@ -20,15 +20,31 @@ const orderItemSchema = z.object({
 /**
  * GET /api/businesses/[businessId]/orders
  *
- * List all orders for the business with their items.
+ * List orders for the business with their items.
+ *
+ * Optional `?status=active|completed` filter. "active" returns everything
+ * that is NOT received (pending + any future non-received states); the
+ * frontend further classifies these into pending vs overdue from the
+ * `estimatedArrival` field. "completed" returns received orders only.
+ * Omitting the param returns all orders, preserving the original behavior.
+ *
+ * Optional `?providerId=` filter scopes to one provider.
  */
 export const GET = withBusinessAuth(async (request, access) => {
   const { searchParams } = new URL(request.url)
   const providerIdFilter = searchParams.get('providerId')
+  const statusParam = searchParams.get('status')
 
-  const whereClause = providerIdFilter
-    ? and(eq(orders.businessId, access.businessId), eq(orders.providerId, providerIdFilter))
-    : eq(orders.businessId, access.businessId)
+  const conditions = [eq(orders.businessId, access.businessId)]
+  if (providerIdFilter) {
+    conditions.push(eq(orders.providerId, providerIdFilter))
+  }
+  if (statusParam === 'active') {
+    conditions.push(ne(orders.status, 'received'))
+  } else if (statusParam === 'completed') {
+    conditions.push(eq(orders.status, 'received'))
+  }
+  const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions)
 
   // Get orders for this business. 500 is the defensive cap — a small
   // business rarely accumulates more pending/recent orders than the UI

@@ -3,7 +3,7 @@
 import { Fragment, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig, Pencil, Trash2 } from 'lucide-react'
-import { Modal, SwipeableRow } from '@/components/ui'
+import { Modal, Spinner, SwipeableRow } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { useTranslations } from 'next-intl'
@@ -60,6 +60,13 @@ export interface OrdersTabProps {
   // Error state
   error?: string
   isModalOpen?: boolean
+  /**
+   * True while the bucket matching `viewMode` is mid-fetch and has nothing
+   * cached yet. The empty state is suppressed during this window so the
+   * user sees a spinner instead of "no completed orders" flashing for a
+   * frame on a cold toggle.
+   */
+  isLoading?: boolean
 }
 
 // Re-export the type for convenience
@@ -89,6 +96,7 @@ export function OrdersTab({
   canDelete = false,
   error,
   isModalOpen,
+  isLoading = false,
 }: OrdersTabProps) {
   const t = useTranslations('orders')
   const tProducts = useTranslations('products')
@@ -237,7 +245,11 @@ export function OrdersTab({
             <hr className="border-border" />
 
             {/* Orders List */}
-            {filteredOrders.length === 0 ? (
+            {isLoading && filteredOrders.length === 0 ? (
+              <div className="flex justify-center py-8">
+                <Spinner />
+              </div>
+            ) : filteredOrders.length === 0 ? (
               <div className="text-center py-8 text-text-secondary">
                 <p>
                   {orders.some(o => (viewMode === 'completed'
