@@ -71,7 +71,7 @@ export default function HubPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const { markHubReady } = useAuthGate()
-  const { setPendingHref, setSlideDirection, setSlideTargetPath, setCachedBusinesses } = usePageTransition()
+  const { navigate, setSlideDirection, setSlideTargetPath, setCachedBusinesses } = usePageTransition()
   const { createdBusiness } = useCreateBusinessModal()
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
   const [isLoading, setIsLoading] = useState(() => getCachedBusinessList().length === 0)
@@ -134,8 +134,7 @@ export default function HubPage() {
     const href = `/${businessId}/home`
     setSlideTargetPath(href)
     setSlideDirection('forward')
-    setPendingHref(href)
-    router.push(href)
+    navigate(href)
   }
 
   // Filter businesses based on search query (must be before early returns)

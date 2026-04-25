@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Input, Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
@@ -10,12 +10,11 @@ import { usePageTransition } from '@/contexts/page-transition-context'
 import { APP_VERSION } from '@/lib/version'
 
 function LoginPageContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/home'
   const { login } = useAuth()
   const { playEntry } = useAuthGate()
-  const { setPendingHref } = usePageTransition()
+  const { navigate } = usePageTransition()
   const t = useTranslations('auth')
   const tCommon = useTranslations('common')
 
@@ -53,9 +52,8 @@ function LoginPageContent() {
   )
 
   const handleGoToRegister = useCallback(() => {
-    setPendingHref('/register')
-    router.push('/register')
-  }, [router, setPendingHref])
+    navigate('/register')
+  }, [navigate])
 
   return (
     <>

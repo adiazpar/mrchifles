@@ -1,7 +1,7 @@
 'use client'
 
 import { Fragment, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig, Pencil, Trash2 } from 'lucide-react'
 import { Modal, Spinner, SwipeableRow } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'
@@ -101,9 +101,8 @@ export function OrdersTab({
   const t = useTranslations('orders')
   const tProducts = useTranslations('products')
   const tCommon = useTranslations('common')
-  const router = useRouter()
   const params = useParams<{ businessId: string }>()
-  const { setSlideDirection, setSlideTargetPath, setPendingHref } = usePageTransition()
+  const { setSlideDirection, setSlideTargetPath, navigate } = usePageTransition()
   const [isSortSheetOpen, setSortSheetOpen] = useState(false)
 
   const sortLabels: Record<OrderSortOption, string> = {
@@ -223,8 +222,7 @@ export function OrdersTab({
                     const href = `/${params.businessId}/providers`
                     setSlideTargetPath(href)
                     setSlideDirection('forward')
-                    setPendingHref(href)
-                    router.push(href)
+                    navigate(href)
                   }}
                   className="text-sm text-brand hover:text-brand transition-colors"
                 >

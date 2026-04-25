@@ -67,7 +67,7 @@ export function PageHeader() {
   const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
-  const { pendingHref, setPendingHref, slideDirection, setSlideDirection, setSlideTargetPath, pageSubtitleSuffix } = usePageTransition()
+  const { pendingHref, navigate, slideDirection, setSlideDirection, setSlideTargetPath, pageSubtitleSuffix } = usePageTransition()
   const businessContext = useOptionalBusiness()
   const [isScrolled, setIsScrolled] = useState(false)
 
@@ -151,8 +151,7 @@ export function PageHeader() {
       // (parallax peek), matching the Account / drill-down pattern.
       setSlideDirection('back')
       setSlideTargetPath(pathname)
-      setPendingHref('/')
-      router.push('/')
+      navigate('/')
     }
   }
 

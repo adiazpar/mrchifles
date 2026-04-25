@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Briefcase, ChevronRight, Clock, ImageIcon } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
@@ -55,9 +54,8 @@ export default function ManagePage() {
   const t = useTranslations('manage')
   const tCreate = useTranslations('createBusiness')
   const tAccount = useTranslations('account')
-  const router = useRouter()
   const { business, businessId, role, isOwner } = useBusiness()
-  const { setSlideDirection, setSlideTargetPath, setPendingHref } = usePageTransition()
+  const { setSlideDirection, setSlideTargetPath, navigate } = usePageTransition()
   const { transfer: pendingTransfer } = usePendingTransferContext()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
 
@@ -83,8 +81,7 @@ export default function ManagePage() {
   const slideTo = (href: string) => {
     setSlideTargetPath(href)
     setSlideDirection('forward')
-    setPendingHref(href)
-    router.push(href)
+    navigate(href)
   }
 
   if (!business || !businessId) return null

@@ -1,7 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react'
-import { usePathname } from 'next/navigation'
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, useTransition, type ReactNode } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from './auth-context'
 import { CACHE_KEYS } from '@/hooks/useSessionCache'
 
@@ -32,6 +32,11 @@ interface PageTransitionContextValue {
   // Optimistic navigation state - shared across nav components and header
   pendingHref: string | null
   setPendingHref: (href: string | null) => void
+  // Centralised navigation. Sets pendingHref and pushes via router inside a
+  // React transition so rapid taps coalesce. A safety timeout in the
+  // provider auto-clears pendingHref if pathname doesn't catch up, so a
+  // stalled router.push can't leave the UI stuck.
+  navigate: (href: string) => void
   // Optional suffix appended to the header's page subtitle (e.g. the
   // provider name on a provider detail page). Cleared by the detail
   // page on unmount.
@@ -60,11 +65,13 @@ interface PageTransitionProviderProps {
 
 export function PageTransitionProvider({ children }: PageTransitionProviderProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { user } = useAuth()
   const [slideDirection, setSlideDirectionState] = useState<SlideDirection>(null)
   const [slideTargetPath, setSlideTargetPathState] = useState<string | null>(null)
   const [pendingHref, setPendingHrefState] = useState<string | null>(null)
   const [pageSubtitleSuffix, setPageSubtitleSuffixState] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
 
   // Business cache - use ref to avoid re-renders, initialize from sessionStorage
   const businessCacheRef = useRef<Record<string, CachedBusiness>>({})
@@ -109,6 +116,16 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   const setPendingHref = useCallback((href: string | null) => setPendingHrefState(href), [])
   const setPageSubtitleSuffix = useCallback((suffix: string | null) => setPageSubtitleSuffixState(suffix), [])
 
+  const navigate = useCallback((href: string) => {
+    setPendingHrefState(href)
+    // startTransition lets React 18 coalesce rapid pushes into a single
+    // commit, which is what saves us from "second tap eats the first" in
+    // App Router's navigation scheduler.
+    startTransition(() => {
+      router.push(href)
+    })
+  }, [router])
+
   // Business cache functions
   const getCachedBusiness = useCallback((businessId: string): CachedBusiness | null => {
     return businessCacheRef.current[businessId] || null
@@ -151,20 +168,35 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
     }
   }, [])
 
-  // Clear pendingHref immediately when pathname changes.
-  // Delay clearing slideDirection so the entry animation can finish
-  // before the header content reappears.
+  // Slide cleanup. Delay clearing slideDirection on pathname change so the
+  // entry animation can finish before the header content reappears.
   useEffect(() => {
-    setPendingHrefState(null)
-    if (slideDirection) {
-      const timer = setTimeout(() => {
-        setSlideDirectionState(null)
-        setSlideTargetPathState(null)
-      }, 180)
-      return () => clearTimeout(timer)
-    }
+    if (!slideDirection) return
+    const timer = setTimeout(() => {
+      setSlideDirectionState(null)
+      setSlideTargetPathState(null)
+    }, 180)
+    return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
+
+  // pendingHref auto-clear with safety net.
+  // - Clears immediately once pathname catches up to pendingHref (the
+  //   navigation actually happened).
+  // - Force-clears after a watchdog timeout if pathname never catches up,
+  //   so a stalled or coalesced router.push can't leave the UI faded out
+  //   with a stuck "active" highlight on the wrong nav item.
+  useEffect(() => {
+    if (!pendingHref) return
+    if (pendingHref === pathname) {
+      setPendingHrefState(null)
+      return
+    }
+    const timeout = window.setTimeout(() => {
+      setPendingHrefState(null)
+    }, 1000)
+    return () => window.clearTimeout(timeout)
+  }, [pendingHref, pathname])
 
   // Memoize to avoid re-rendering the entire business-scoped tree every
   // time this provider re-renders. PageTransition lives in the root
@@ -176,6 +208,7 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
       slideDirection, setSlideDirection,
       slideTargetPath, setSlideTargetPath,
       pendingHref, setPendingHref,
+      navigate,
       pageSubtitleSuffix, setPageSubtitleSuffix,
       getCachedBusiness, setCachedBusiness, setCachedBusinesses, clearCachedBusiness,
     }),
@@ -183,6 +216,7 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
       slideDirection, setSlideDirection,
       slideTargetPath, setSlideTargetPath,
       pendingHref, setPendingHref,
+      navigate,
       pageSubtitleSuffix, setPageSubtitleSuffix,
       getCachedBusiness, setCachedBusiness, setCachedBusinesses, clearCachedBusiness,
     ],

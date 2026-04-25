@@ -2,7 +2,6 @@
 
 import { Fragment } from 'react'
 import { Plus, Handshake, ShoppingCart, Pencil, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { Spinner, SwipeableRow } from '@/components/ui'
 import { useProviderManagement } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
@@ -14,8 +13,7 @@ import { usePageTransition } from '@/contexts/page-transition-context'
 
 export default function ProveedoresPage() {
   const { businessId } = useBusiness()
-  const router = useRouter()
-  const { setPendingHref, setSlideDirection, setSlideTargetPath } = usePageTransition()
+  const { navigate, setSlideDirection, setSlideTargetPath } = usePageTransition()
   const t = useTranslations('providers')
 
   const { setOrders } = useOrders()
@@ -148,8 +146,7 @@ export default function ProveedoresPage() {
                               const href = `/${businessId}/providers/${provider.id}`
                               setSlideTargetPath(href)
                               setSlideDirection('forward')
-                              setPendingHref(href)
-                              router.push(href)
+                              navigate(href)
                             }}
                           />
                         </SwipeableRow>
@@ -160,8 +157,7 @@ export default function ProveedoresPage() {
                             const href = `/${businessId}/providers/${provider.id}`
                             setSlideTargetPath(href)
                             setSlideDirection('forward')
-                            setPendingHref(href)
-                            router.push(href)
+                            navigate(href)
                           }}
                         />
                       )}

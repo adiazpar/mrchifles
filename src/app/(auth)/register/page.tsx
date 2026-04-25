@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Input, Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
@@ -12,10 +11,9 @@ import { APP_VERSION } from '@/lib/version'
 export default function RegisterPage() {
   const t = useTranslations('auth')
   const tCommon = useTranslations('common')
-  const router = useRouter()
   const { register } = useAuth()
   const { playEntry } = useAuthGate()
-  const { setPendingHref } = usePageTransition()
+  const { navigate } = usePageTransition()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -63,9 +61,8 @@ export default function RegisterPage() {
   )
 
   const handleGoToLogin = useCallback(() => {
-    setPendingHref('/login')
-    router.push('/login')
-  }, [router, setPendingHref])
+    navigate('/login')
+  }, [navigate])
 
   return (
     <>

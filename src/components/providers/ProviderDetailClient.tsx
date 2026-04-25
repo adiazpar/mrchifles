@@ -68,7 +68,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const userLocale = useLocale()
   const translateApiMessage = useApiMessage()
   const { role } = useBusiness()
-  const { setSlideDirection, setSlideTargetPath, setPendingHref, setPageSubtitleSuffix } = usePageTransition()
+  const { setSlideDirection, setSlideTargetPath, navigate, setPageSubtitleSuffix } = usePageTransition()
   const canManage = canManageBusiness(role)
 
   // Tab state — initialized from the URL so browser back/forward and
@@ -996,8 +996,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             const href = `/${businessId}/providers`
             setSlideTargetPath(`/${businessId}/providers/${providerId}`)
             setSlideDirection('back')
-            setPendingHref(href)
-            router.push(href)
+            navigate(href)
             setProviderDeleted(false)
           }
         }}

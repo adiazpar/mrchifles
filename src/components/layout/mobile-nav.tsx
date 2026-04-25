@@ -18,7 +18,7 @@ export function MobileNav() {
   const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
-  const { pendingHref, setPendingHref } = usePageTransition()
+  const { pendingHref, navigate } = usePageTransition()
   const businessContext = useOptionalBusiness()
   const { openJoinModal, isJoinModalOpen } = useJoinBusinessModal()
   const { openCreateModal, isCreateModalOpen } = useCreateBusinessModal()
@@ -57,10 +57,16 @@ export function MobileNav() {
     })
   }, [router, businessId])
 
-  const handleClick = (href: string) => {
-    if (href !== pathname) {
-      setPendingHref(href)
-    }
+  const handleClick = (e: React.MouseEvent, href: string) => {
+    // Let the browser handle modifier-clicks (open in new tab, etc.).
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+    if (e.button !== 0) return
+    e.preventDefault()
+    // Same-path tap is a no-op. Calling router.push with the current path
+    // is a known stall trigger in App Router and would also leave the
+    // pendingHref watchdog as the only thing clearing the UI.
+    if (href === pathname) return
+    navigate(href)
   }
 
   // Fade only when the icon group is about to change, i.e. cross-context
@@ -126,7 +132,7 @@ export function MobileNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => handleClick(item.href)}
+                onClick={(e) => handleClick(e, item.href)}
                 className={`mobile-nav-item ${isActive ? 'active' : ''}`}
               >
                 <span className="relative inline-flex">

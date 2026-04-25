@@ -25,7 +25,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
   const t = useTranslations('ui.user_menu')
   const { user } = useAuth()
   const { playExit } = useAuthGate()
-  const { setPendingHref, setSlideDirection, setSlideTargetPath } = usePageTransition()
+  const { navigate, setSlideDirection, setSlideTargetPath } = usePageTransition()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
 
   const handleLogout = useCallback(async () => {
@@ -36,8 +36,11 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
   const pathname = usePathname()
 
   const handleLinkClick = useCallback((e: React.MouseEvent, href: string) => {
+    // Modifier clicks pass through to default anchor behavior.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+    if (e.button !== 0) return
+    e.preventDefault()
     if (href === pathname) {
-      e.preventDefault()
       onAction?.()
       return
     }
@@ -48,9 +51,9 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
       setSlideTargetPath(pathname)
       setSlideDirection('back')
     }
-    setPendingHref(href)
+    navigate(href)
     onAction?.()
-  }, [setPendingHref, setSlideDirection, setSlideTargetPath, onAction, pathname])
+  }, [navigate, setSlideDirection, setSlideTargetPath, onAction, pathname])
 
   const isBusinessContext = !!getBusinessIdFromPath(pathname)
 
