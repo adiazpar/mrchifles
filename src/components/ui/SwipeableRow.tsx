@@ -4,14 +4,14 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, useMotionValue, useTransform, animate, type MotionValue, type PanInfo } from 'framer-motion'
 import { useHorizontalSwipeIntent } from '@/hooks/useHorizontalSwipeIntent'
 
-export type SwipeActionVariant = 'neutral' | 'info' | 'pos' | 'danger'
+export type SwipeActionVariant = 'neutral' | 'info' | 'success' | 'pos' | 'warning' | 'danger'
 
 export interface SwipeAction {
   /** Icon node rendered above the label. */
   icon: ReactNode
   /** Short label rendered below the icon. Also used as the button's accessible name. */
   label: string
-  /** Visual treatment. `info` = brand/sky-blue, `danger` = red. Default: `neutral`. */
+  /** Visual treatment. `info` = brand/sky-blue, `success` = green, `pos` = sales orange, `warning` = amber, `danger` = red. Default: `neutral`. */
   variant?: SwipeActionVariant
   /** When true, the button is visually muted and non-interactive (tap does nothing). */
   disabled?: boolean
@@ -75,8 +75,9 @@ function closeAllExcept(self: () => void) {
  * style writes (2 per button per frame during motion) stay on the compositor and
  * don't trigger layout/paint.
  *
- * Buttons are square, shorter than the list row, and carry a background tinted by variant.
- * The icon is tinted by variant (brand/pos/error/text-primary); labels always render in
+ * Buttons render via the shared `.icon-stack-btn` pattern (also used by the barcode-tab
+ * Scan / Generate / Print row): a circular icon over a small label. The icon is tinted
+ * by variant (brand/success/pos/warning/error/text-primary); labels always render in
  * `--color-text-secondary` so the semantics read from the icon, not the whole button.
  *
  * Other behavior: tap-to-close, tap-outside-to-close, and one-row-open-at-a-time. See the
@@ -271,10 +272,10 @@ function SwipeActionButton({ action, slotIndex, x, onTap }: SwipeActionButtonPro
           aria-label={action.label}
           onClick={onTap}
           disabled={action.disabled}
-          className={`swipeable-row-action swipeable-row-action--${action.variant ?? 'neutral'}`}
+          className={`icon-stack-btn icon-stack-btn--${action.variant ?? 'neutral'}`}
         >
-          <span className="swipeable-row-action__icon flex items-center justify-center w-6 h-6">{action.icon}</span>
-          <span className="swipeable-row-action__label text-[11px] font-medium">{action.label}</span>
+          <span className="icon-stack-btn__icon">{action.icon}</span>
+          <span className="icon-stack-btn__label">{action.label}</span>
         </button>
       </motion.div>
     </div>

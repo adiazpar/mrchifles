@@ -201,35 +201,32 @@ export function BarcodeFields() {
 
       {scanHiddenInput}
 
-      <div className="caja-actions">
+      <div className="flex gap-4">
         <button
           type="button"
           onClick={handleScanClick}
           disabled={scanBusy}
-          className="caja-action-btn caja-action-btn--ghost"
-          style={{ border: 'none', background: 'var(--color-bg-muted)' }}
+          className="icon-stack-btn icon-stack-btn--info"
         >
-          <ScanLine className="caja-action-btn__icon text-brand" />
-          <span>{scanBusy ? t('scan_reading') : t('scan_button')}</span>
+          <span className="icon-stack-btn__icon"><ScanLine size={20} /></span>
+          <span className="icon-stack-btn__label">{scanBusy ? t('scan_reading') : t('scan_button')}</span>
         </button>
         <button
           type="button"
           onClick={handleGenerate}
-          className="caja-action-btn caja-action-btn--ghost"
-          style={{ border: 'none', background: 'var(--color-bg-muted)' }}
+          className="icon-stack-btn icon-stack-btn--success"
         >
-          <Plus className="caja-action-btn__icon text-success" />
-          <span>{t('generate_button')}</span>
+          <span className="icon-stack-btn__icon"><Plus size={20} /></span>
+          <span className="icon-stack-btn__label">{t('generate_button')}</span>
         </button>
         <button
           type="button"
-          className="caja-action-btn caja-action-btn--ghost"
-          disabled={!barcode}
-          style={{ border: 'none', background: 'var(--color-bg-muted)' }}
           onClick={handlePrint}
+          disabled={!barcode}
+          className="icon-stack-btn icon-stack-btn--warning"
         >
-          <Printer className="caja-action-btn__icon text-pos" />
-          <span>{t('print_button')}</span>
+          <span className="icon-stack-btn__icon"><Printer size={20} /></span>
+          <span className="icon-stack-btn__label">{t('print_button')}</span>
         </button>
       </div>
     </div>
