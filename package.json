@@ -12,6 +12,7 @@
     "db:push:prod": "DRIZZLE_ENV=production npx drizzle-kit push",
     "db:studio": "npx drizzle-kit studio",
     "i18n:translate": "tsx scripts/i18n-translate.ts",
+    "splash:generate": "node scripts/generate-ios-splash.mjs",
     "test": "vitest",
     "test:run": "vitest run"
   },

@@ -220,6 +220,11 @@
     overflow: clip;
     /* Background for larger screens (outside mobile viewport) */
     background-color: #000000;
+    /* Tell the engine we support both schemes so the WebView's default
+       canvas matches the active theme — prevents a white flash when the
+       iOS PWA splash dismisses in dark mode. The inline theme script in
+       layout.tsx narrows this to the resolved value via inline style. */
+    color-scheme: light dark;
   }
 
   body {

@@ -5,7 +5,7 @@ import { getLocale, getMessages } from 'next-intl/server'
 import { AuthProvider } from '@/contexts/auth-context'
 import { PageTransitionProvider } from '@/contexts/page-transition-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
-import { AppShell, SplashController, TapFeedbackProvider, AuthGateOverlay } from '@/components/layout'
+import { AppShell, TapFeedbackProvider, AuthGateOverlay, IOSStartupImages } from '@/components/layout'
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-color'
 import './globals.css'
 
@@ -36,6 +36,14 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'default',
     title: 'Kasero',
+  },
+  // Next.js 15 emits the modern `mobile-web-app-capable` meta tag instead of
+  // the deprecated `apple-mobile-web-app-capable` one. iOS Safari still
+  // requires the deprecated tag for `apple-touch-startup-image` splash
+  // screens to be honored — without it, the launch screen stays black.
+  // See vercel/next.js#74524.
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
   },
   openGraph: {
     title: 'Kasero',
@@ -100,6 +108,11 @@ export default async function RootLayout({
                       : 'light';
                   }
                   document.documentElement.classList.toggle('dark', resolved === 'dark');
+                  // Set color-scheme so WKWebView paints a matching canvas
+                  // before our CSS loads — without this, dismissing the iOS
+                  // PWA splash flashes the WebView's default white bg in dark
+                  // mode for one frame before the body bg paints.
+                  document.documentElement.style.colorScheme = resolved;
                   var meta = document.querySelector('meta[name="theme-color"]');
                   if (meta) {
                     meta.setAttribute(
@@ -112,27 +125,12 @@ export default async function RootLayout({
             `,
           }}
         />
+        <IOSStartupImages />
       </head>
       <body className="h-full antialiased bg-bg-base text-text-primary" suppressHydrationWarning>
-        {/*
-          Rendered statically so the splash paints before React hydrates.
-          CSS hides it outside of display-mode: standalone; SplashController
-          fades it out once auth + fonts are ready (or after a 2s hard cap).
-        */}
-        <div id="app-splash" aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element -- raw <img> so the splash paints before React/next-image hydrate */}
-          <img
-            className="splash__icon"
-            src="/icon-source.png"
-            alt=""
-            width={128}
-            height={128}
-          />
-        </div>
         <TapFeedbackProvider />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
-            <SplashController />
             <AuthGateProvider>
               <PageTransitionProvider>
                 <AppShell>
