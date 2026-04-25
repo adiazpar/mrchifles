@@ -49,9 +49,9 @@
   },
   "auth": {
     "email_label": "Correo",
-    "email_placeholder": "su@correo.com",
+    "email_placeholder": "Correo",
     "password_label": "Contraseña",
-    "password_placeholder": "Su contraseña",
+    "password_placeholder": "Contraseña",
     "connection_error": "Error de conexión",
     "login_button": "Iniciar sesión",
     "logging_in": "Iniciando sesión...",
