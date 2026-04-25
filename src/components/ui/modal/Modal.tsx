@@ -36,7 +36,7 @@
 
 import React, { useState, useEffect, useRef, Children, isValidElement, ReactElement } from 'react'
 import { createPortal } from 'react-dom'
-import { X, ArrowLeft } from 'lucide-react'
+import { X, ChevronLeft } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { ModalProvider, useModalContext } from './ModalContext'
 import { ModalStep } from './ModalStep'
@@ -115,7 +115,7 @@ function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTit
           disabled={isLocked || isTransitioning || !showBackIcon}
           tabIndex={showBackIcon ? 0 : -1}
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5" />
         </button>
       </div>
       <h2 className="modal-title">{displayTitle}</h2>

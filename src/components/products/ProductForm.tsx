@@ -82,7 +82,7 @@ export function ProductForm({
             <div>
               <label className="label">{t('icon_label')}</label>
               <div className="flex items-center gap-3">
-                <div className="input-height aspect-square rounded-lg overflow-hidden bg-bg-muted flex items-center justify-center flex-shrink-0">
+                <div className="input-height aspect-square rounded-lg overflow-hidden bg-bg-base flex items-center justify-center flex-shrink-0">
                   {iconPreview && isPresetIcon(iconPreview) ? (
                     (() => {
                       const p = getPresetIcon(iconPreview)
@@ -101,32 +101,29 @@ export function ProductForm({
                     <ImagePlus size={28} className="text-text-tertiary" />
                   )}
                 </div>
-                <div className="w-px self-stretch bg-border flex-shrink-0" />
-                <div className="input-height flex-1 min-w-0 rounded-lg bg-bg-muted overflow-hidden flex items-center">
-                  <div className="h-full flex items-center gap-3 px-3 overflow-x-auto scrollbar-hidden">
-                    {PRESET_ICONS.map((preset) => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => {
-                          if (presetEmoji === preset.id) {
-                            clearIcon()
-                            return
-                          }
-                          setIconPreview(preset.id)
-                          setGeneratedIconBlob(null)
-                          setIconType('preset')
-                          setPresetEmoji(preset.id)
-                        }}
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${presetEmoji === preset.id ? 'bg-brand-subtle ring-2 ring-brand' : 'hover:bg-brand-subtle'}`}
-                      >
-                        <preset.icon
-                          size={28}
-                          className={presetEmoji === preset.id ? 'text-text-primary' : 'text-text-tertiary'}
-                        />
-                      </button>
-                    ))}
-                  </div>
+                <div className="input-height flex-1 min-w-0 rounded-lg bg-bg-muted flex items-center justify-evenly">
+                  {PRESET_ICONS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        if (presetEmoji === preset.id) {
+                          clearIcon()
+                          return
+                        }
+                        setIconPreview(preset.id)
+                        setGeneratedIconBlob(null)
+                        setIconType('preset')
+                        setPresetEmoji(preset.id)
+                      }}
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${presetEmoji === preset.id ? 'bg-brand-subtle ring-2 ring-brand' : 'hover:bg-brand-subtle'}`}
+                    >
+                      <preset.icon
+                        size={28}
+                        className={presetEmoji === preset.id ? 'text-text-primary' : 'text-text-tertiary'}
+                      />
+                    </button>
+                  ))}
                 </div>
               </div>
               <div className="flex items-center justify-between mt-2">

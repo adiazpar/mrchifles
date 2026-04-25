@@ -511,9 +511,8 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                 type="button"
                 onClick={() => orderFlows.openNewOrder(providerId)}
                 className="btn btn-primary flex-1 min-w-0"
-                style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
               >
-                <Plus style={{ width: 14, height: 14 }} />
+                <Plus />
                 <span className="truncate">
                   {t('new_order_button')}
                 </span>
@@ -524,9 +523,8 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               onClick={() => setContactSheetOpen(true)}
               disabled={!provider.phone && !provider.email}
               className="btn btn-primary flex-1 min-w-0"
-              style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
             >
-              <Phone style={{ width: 14, height: 14 }} />
+              <Phone />
               <span className="truncate">{t('contact_button')}</span>
             </button>
           </div>
@@ -959,7 +957,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                         padding: 'var(--space-2) var(--space-4)',
                         minHeight: 'unset',
                         gap: 'var(--space-2)',
-                        borderRadius: 'var(--radius-md)',
+                        borderRadius: 'var(--radius-full)',
                       }}
                     >
                       <Plus style={{ width: 14, height: 14 }} />

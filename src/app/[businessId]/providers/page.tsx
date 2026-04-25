@@ -100,7 +100,7 @@ export default function ProveedoresPage() {
                     type="button"
                     onClick={() => handleOpenModal()}
                     className="btn btn-primary"
-                    style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
+                    style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
                   >
                     <Plus style={{ width: 14, height: 14 }} />
                     {t('add_button')}

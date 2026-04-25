@@ -1,4 +1,4 @@
-import { ShoppingBag, ShoppingBasket, Briefcase, Backpack, Wallet } from 'lucide-react'
+import { ShoppingBag, ShoppingBasket, Briefcase, Wallet } from 'lucide-react'
 import type { ComponentType } from 'react'
 
 interface PresetIcon {
@@ -11,7 +11,6 @@ export const PRESET_ICONS: PresetIcon[] = [
   { id: 'preset:bag-side', label: 'Bag', icon: ShoppingBag },
   { id: 'preset:shopping-bags', label: 'Shopping', icon: ShoppingBasket },
   { id: 'preset:purse', label: 'Purse', icon: Briefcase },
-  { id: 'preset:purse-2', label: 'Handbag', icon: Backpack },
   { id: 'preset:money-bag', label: 'Money', icon: Wallet },
 ]
 

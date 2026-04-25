@@ -35,29 +35,25 @@ export function LocalePicker({ value, onChange, showCurrency = true }: LocalePic
   }
 
   return (
-    <div className="space-y-3">
-      <div>
-        <label className="block text-sm font-medium text-text-primary mb-2">
-          {t('location_label')}
-        </label>
-        <select value={value} onChange={(e) => onChange(e.target.value)} className="input">
-          {REGIONS.map((region) => (
-            <optgroup key={region} label={regionLabels[region]}>
-              {localesByRegion[region].map((loc) => (
-                <option key={loc.code} value={loc.code}>
-                  {loc.flag} {loc.country} ({loc.name})
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </div>
+    <div>
+      <label className="block text-sm font-medium text-text-primary mb-2">
+        {t('location_label')}
+      </label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="input">
+        {REGIONS.map((region) => (
+          <optgroup key={region} label={regionLabels[region]}>
+            {localesByRegion[region].map((loc) => (
+              <option key={loc.code} value={loc.code}>
+                {loc.flag} {loc.country} ({loc.name})
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
       {showCurrency && currencyConfig && (
-        <div className="flex items-center justify-between rounded-lg bg-bg-muted px-3 py-2">
-          <span className="text-sm text-text-secondary">{t('currency_label')}</span>
-          <span className="text-sm font-medium text-text-primary">
-            {currencyConfig.symbol} {currencyConfig.name} ({currencyConfig.code})
-          </span>
+        <div className="flex items-center justify-between text-sm text-text-tertiary mt-2">
+          <span>{t('currency_label')}</span>
+          <span>{currencyConfig.symbol} {currencyConfig.name} ({currencyConfig.code})</span>
         </div>
       )}
     </div>

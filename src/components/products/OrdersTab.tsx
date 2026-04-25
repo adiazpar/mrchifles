@@ -181,7 +181,7 @@ export function OrdersTab({
                   ? t('toggle_showing_completed_aria')
                   : t('toggle_show_completed_aria')
               }
-              className={`btn btn-icon flex-shrink-0 ${
+              className={`btn btn-icon !rounded-full flex-shrink-0 ${
                 viewMode === 'completed'
                   ? 'border-brand bg-brand-subtle text-brand'
                   : 'btn-secondary'
@@ -227,7 +227,7 @@ export function OrdersTab({
                 type="button"
                 onClick={onNewOrder}
                 className="btn btn-primary"
-                style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-md)' }}
+                style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
               >
                 <Plus style={{ width: 14, height: 14 }} />
                 {tCommon('add')}

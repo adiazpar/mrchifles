@@ -92,6 +92,7 @@
 .btn-danger {
   background: var(--color-error);
   color: white;
+  border-radius: var(--radius-full);
 }
 
 /* Icon-only button (square) */
