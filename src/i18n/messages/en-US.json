@@ -71,7 +71,8 @@
     "login_link": "Log in",
     "passwords_dont_match": "Passwords do not match",
     "password_too_short": "Password must be at least 8 characters",
-    "logo_alt": "Kasero - Business Made Easy"
+    "logo_alt": "Kasero - Business Made Easy",
+    "version_label": "Kasero v{version}"
   },
   "hub": {
     "empty_state_title": "No businesses yet",

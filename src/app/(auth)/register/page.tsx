@@ -1,15 +1,17 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Input, Card, Spinner } from '@/components/ui'
+import { Input, Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
+import { APP_VERSION } from '@/lib/version'
 
 export default function RegisterPage() {
   const t = useTranslations('auth')
+  const router = useRouter()
   const { register } = useAuth()
   const { playEntry } = useAuthGate()
   const { setPendingHref } = usePageTransition()
@@ -26,13 +28,11 @@ export default function RegisterPage() {
       e.preventDefault()
       setError('')
 
-      // Validate passwords match
       if (password !== passwordConfirm) {
         setError(t('passwords_dont_match'))
         return
       }
 
-      // Validate password length
       if (password.length < 8) {
         setError(t('password_too_short'))
         return
@@ -61,94 +61,83 @@ export default function RegisterPage() {
     [email, password, passwordConfirm, name, register, playEntry, t]
   )
 
+  const handleGoToLogin = useCallback(() => {
+    setPendingHref('/login')
+    router.push('/login')
+  }, [router, setPendingHref])
+
   return (
     <>
-      <Card padding="lg">
-        <h2 className="text-xl font-display font-bold mb-1">{t('register_title')}</h2>
-        <p className="text-sm text-text-tertiary mb-6">
-          {t('register_subtitle')}
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
-          )}
-
-          <Input
-            label={t('name_label')}
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t('name_placeholder')}
-            autoComplete="name"
-            autoFocus
-            required
-          />
-
-          <Input
-            label={t('email_label')}
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t('email_placeholder')}
-            autoComplete="email"
-            required
-          />
-
-          <div>
-            <Input
-              label={t('password_label')}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t('password_new_placeholder')}
-              autoComplete="new-password"
-              required
-            />
-            <p className="text-xs text-text-tertiary mt-1">
-              {t('password_hint')}
-            </p>
+      <form onSubmit={handleSubmit} className="auth-main">
+        {error && (
+          <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+            {error}
           </div>
+        )}
 
-          <Input
-            label={t('password_confirm_label')}
-            type="password"
-            value={passwordConfirm}
-            onChange={(e) => setPasswordConfirm(e.target.value)}
-            placeholder={t('password_confirm_placeholder')}
-            autoComplete="new-password"
-            required
-          />
+        <Input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t('name_placeholder')}
+          autoComplete="name"
+          autoFocus
+          required
+        />
 
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Spinner />
-                <span className="sr-only">{t('creating_account')}</span>
-              </>
-            ) : (
-              t('register_button')
-            )}
-          </button>
-        </form>
-      </Card>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={t('email_placeholder')}
+          autoComplete="email"
+          required
+        />
 
-      <div className="auth-footer">
-        <p className="auth-footer-link">
-          <span className="text-text-tertiary">{t('have_account_prefix')} </span>
-          <Link
-            href="/login"
-            onClick={() => setPendingHref('/login')}
-            className="text-brand hover:underline"
-          >
-            {t('login_link')}
-          </Link>
+        <Input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={t('password_new_placeholder')}
+          autoComplete="new-password"
+          required
+        />
+
+        <Input
+          type="password"
+          value={passwordConfirm}
+          onChange={(e) => setPasswordConfirm(e.target.value)}
+          placeholder={t('password_confirm_placeholder')}
+          autoComplete="new-password"
+          required
+        />
+
+        <button
+          type="submit"
+          className="btn btn-primary btn-lg w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Spinner />
+              <span className="sr-only">{t('creating_account')}</span>
+            </>
+          ) : (
+            t('register_button')
+          )}
+        </button>
+      </form>
+
+      <div className="auth-page-footer">
+        <button
+          type="button"
+          onClick={handleGoToLogin}
+          className="btn btn-secondary btn-lg w-full"
+        >
+          {t('login_button')}
+        </button>
+        <p className="auth-version">
+          {t('version_label', { version: APP_VERSION })}
         </p>
       </div>
     </>

@@ -1,15 +1,16 @@
 'use client'
 
 import { Suspense, useState, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
-import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Input, Card, Spinner } from '@/components/ui'
+import { Input, Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
+import { APP_VERSION } from '@/lib/version'
 
 function LoginPageContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/home'
   const { login } = useAuth()
@@ -50,64 +51,65 @@ function LoginPageContent() {
     [email, password, redirect, login, playEntry, t]
   )
 
+  const handleGoToRegister = useCallback(() => {
+    setPendingHref('/register')
+    router.push('/register')
+  }, [router, setPendingHref])
+
   return (
     <>
-      <Card padding="lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
+      <form onSubmit={handleSubmit} className="auth-main">
+        {error && (
+          <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={t('email_placeholder')}
+          autoComplete="email"
+          autoFocus
+          required
+        />
+
+        <Input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={t('password_placeholder')}
+          autoComplete="current-password"
+          required
+        />
+
+        <button
+          type="submit"
+          className="btn btn-primary btn-lg w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Spinner />
+              <span className="sr-only">{t('logging_in')}</span>
+            </>
+          ) : (
+            t('login_button')
           )}
+        </button>
+      </form>
 
-          <Input
-            label={t('email_label')}
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t('email_placeholder')}
-            autoComplete="email"
-            autoFocus
-            required
-          />
-
-          <Input
-            label={t('password_label')}
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={t('password_placeholder')}
-            autoComplete="current-password"
-            required
-          />
-
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Spinner />
-                <span className="sr-only">{t('logging_in')}</span>
-              </>
-            ) : (
-              t('login_button')
-            )}
-          </button>
-        </form>
-      </Card>
-
-      <div className="auth-footer">
-        <p className="auth-footer-link">
-          <span className="text-text-tertiary">{t('no_account_prefix')} </span>
-          <Link
-            href="/register"
-            onClick={() => setPendingHref('/register')}
-            className="text-brand hover:underline"
-          >
-            {t('sign_up_link')}
-          </Link>
+      <div className="auth-page-footer">
+        <button
+          type="button"
+          onClick={handleGoToRegister}
+          className="btn btn-secondary btn-lg w-full"
+        >
+          {t('register_button')}
+        </button>
+        <p className="auth-version">
+          {t('version_label', { version: APP_VERSION })}
         </p>
       </div>
     </>
@@ -118,12 +120,15 @@ function LoginPageFallback() {
   const tCommon = useTranslations('common')
 
   return (
-    <Card padding="lg">
-      <div className="flex flex-col items-center py-8">
-        <Spinner className="spinner-lg" />
-        <p className="text-text-secondary mt-4">{tCommon('loading')}</p>
+    <>
+      <div className="auth-main">
+        <div className="flex flex-col items-center py-8">
+          <Spinner className="spinner-lg" />
+          <p className="text-text-secondary mt-4">{tCommon('loading')}</p>
+        </div>
       </div>
-    </Card>
+      <div className="auth-page-footer" />
+    </>
   )
 }
 

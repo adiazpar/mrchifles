@@ -14,20 +14,16 @@ export default async function AuthLayout({
   return (
     <PageTransition>
       <div className="auth-container">
-        <div className="auth-card">
-          {/* Logo */}
-          <div className="auth-logo">
-            <Image
-              src="/kasero-logo.png"
-              alt={t('logo_alt')}
-              width={320}
-              height={107}
-              priority
-            />
-          </div>
-
-          {children}
+        <div className="auth-logo">
+          <Image
+            src="/icon-source.png"
+            alt={t('logo_alt')}
+            width={96}
+            height={96}
+            priority
+          />
         </div>
+        {children}
       </div>
     </PageTransition>
   )
