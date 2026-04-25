@@ -9,7 +9,8 @@ import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { getUserInitials } from '@/lib/auth'
-import { ChevronRight, Settings, CircleHelp, LogOut } from 'lucide-react'
+import { getBusinessIdFromPath } from '@/lib/navigation'
+import { Building2, ChevronRight, Settings, CircleHelp, LogOut } from 'lucide-react'
 
 interface UserMenuContentProps {
   onAction?: () => void
@@ -43,10 +44,15 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
     if (href === '/account') {
       setSlideTargetPath(href)
       setSlideDirection('forward')
+    } else if (href === '/') {
+      setSlideTargetPath(pathname)
+      setSlideDirection('back')
     }
     setPendingHref(href)
     onAction?.()
   }, [setPendingHref, setSlideDirection, setSlideTargetPath, onAction, pathname])
+
+  const isBusinessContext = !!getBusinessIdFromPath(pathname)
 
   if (!user) return null
 
@@ -78,6 +84,18 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
 
       {/* Menu Items */}
       <div className="user-menu-items">
+        {isBusinessContext && (
+          <Link
+            href="/"
+            className="user-menu-item"
+            onClick={(e) => handleLinkClick(e, '/')}
+          >
+            <Building2 />
+            <span>{t('business_hub')}</span>
+            <ChevronRight className="user-menu-item-arrow" />
+          </Link>
+        )}
+
         <Link
           href="/account"
           className="user-menu-item"

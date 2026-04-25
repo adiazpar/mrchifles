@@ -32,6 +32,7 @@
       "open": "User menu",
       "title": "Account and Settings",
       "account_settings": "Account Settings",
+      "business_hub": "Business Hub",
       "support": "Support",
       "log_out": "Log Out"
     },
@@ -518,6 +519,7 @@
     "section_shortcuts": "Shortcuts",
     "section_ownership": "Ownership",
     "section_danger": "Danger zone",
+    "row_logo": "Logo",
     "row_name": "Name",
     "row_type": "Type",
     "row_location": "Location",

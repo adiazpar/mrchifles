@@ -4,17 +4,15 @@ import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Briefcase, ChevronRight, Clock } from 'lucide-react'
+import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Briefcase, ChevronRight, Clock, ImageIcon } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
-// BusinessHeaderCard renders inline on mount, so it stays static. Every
-// modal below is closed by default; dynamic imports keep the modal code
-// out of the initial manage-page chunk until the user opens one.
-import { BusinessHeaderCard } from '@/components/manage'
+// Every modal below is closed by default; dynamic imports keep the modal
+// code out of the initial manage-page chunk until the user opens one.
 
 const EditNameModal = dynamic(
   () => import('@/components/manage/EditNameModal').then(m => m.EditNameModal),
@@ -93,11 +91,6 @@ export default function ManagePage() {
 
   return (
     <main className="page-content space-y-4">
-      <BusinessHeaderCard
-        business={business}
-        onTap={canEdit ? () => setLogoOpen(true) : undefined}
-      />
-
       {isOwner && pendingTransfer && (
         <button
           type="button"
@@ -162,8 +155,15 @@ export default function ManagePage() {
       )}
 
       <div>
-        <SettingsSectionHeader label={t('section_details')} />
+        <SettingsSectionHeader label={t('section_details')} noTopMargin />
         <div className="bg-bg-surface rounded-xl overflow-hidden">
+          <SettingsRow
+            icon={ImageIcon}
+            label={t('row_logo')}
+            onClick={canEdit ? () => setLogoOpen(true) : undefined}
+            hideChevron={!canEdit}
+          />
+          <div className="settings-divider" />
           <SettingsRow
             icon={Building2}
             label={t('row_name')}

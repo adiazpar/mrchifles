@@ -32,6 +32,7 @@
       "open": "Menú de usuario",
       "title": "Cuenta y Configuración",
       "account_settings": "Configuración de Cuenta",
+      "business_hub": "Inicio de Negocios",
       "support": "Soporte",
       "log_out": "Cerrar Sesión"
     },
@@ -518,6 +519,7 @@
     "section_shortcuts": "Accesos directos",
     "section_ownership": "Propiedad",
     "section_danger": "Zona de peligro",
+    "row_logo": "Logo",
     "row_name": "Nombre",
     "row_type": "Tipo",
     "row_location": "Ubicación",

@@ -1,4 +1,3 @@
-export { BusinessHeaderCard, type BusinessHeaderCardProps } from './BusinessHeaderCard'
 export { EditNameModal } from './EditNameModal'
 export { EditTypeModal } from './EditTypeModal'
 export { EditLocationModal } from './EditLocationModal'

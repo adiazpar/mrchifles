@@ -3,24 +3,63 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Building2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { getRouteConfig, getBusinessIdFromPath } from '@/lib/navigation'
 import { UserMenu } from './user-menu'
 import { usePageTransition } from '@/contexts/page-transition-context'
-import { useOptionalBusiness } from '@/contexts/business-context'
+import { useOptionalBusiness, type Business } from '@/contexts/business-context'
+import {
+  BUSINESS_TYPE_ICONS,
+  BUSINESS_TYPE_FALLBACK_EMOJIS,
+} from '@/components/businesses/shared/businessTypeIcons'
+
+function BusinessLogo({ business }: { business: Business | null }) {
+  if (!business) {
+    return <Building2 className="w-5 h-5 text-brand" />
+  }
+
+  const { icon, type } = business
+
+  if (icon && icon.startsWith('data:')) {
+    return (
+      <Image
+        src={icon}
+        alt={business.name}
+        width={48}
+        height={48}
+        className="page-header__business-logo-img"
+        unoptimized
+      />
+    )
+  }
+
+  if (icon) {
+    return <span className="text-xl leading-none">{icon}</span>
+  }
+
+  if (type && BUSINESS_TYPE_ICONS[type]) {
+    const IconComponent = BUSINESS_TYPE_ICONS[type]
+    return <IconComponent className="w-5 h-5 text-brand" />
+  }
+
+  if (type && BUSINESS_TYPE_FALLBACK_EMOJIS[type]) {
+    return <span className="text-xl leading-none">{BUSINESS_TYPE_FALLBACK_EMOJIS[type]}</span>
+  }
+
+  return <Building2 className="w-5 h-5 text-brand" />
+}
 
 /**
  * Page header that works in both hub and business contexts.
  *
  * Hub context (no BusinessProvider):
- * - Left: Empty spacer
- * - Center: App name "Kasero"
+ * - Left: Empty spacer (or back button on /account)
+ * - Center: App name "Kasero" (or page title on /account)
  * - Right: User avatar menu
  *
  * Business context:
- * - Left: Back button (to hub for top-level pages, to parent for nested pages)
- * - Center: Business name (tappable switcher) + Page name as subtitle
+ * - Left: Business logo + business name + current page label (left-aligned)
  * - Right: User avatar menu
  */
 export function PageHeader() {
@@ -132,48 +171,54 @@ export function PageHeader() {
 
   return (
     <header
-      className={`page-header page-header--fixed ${isScrolled ? 'page-header--scrolled' : ''}`}
+      className={`page-header page-header--fixed ${isScrolled ? 'page-header--scrolled' : ''} ${isHubContext ? 'page-header--three-col' : 'page-header--two-col'}`}
     >
       {/* Left column */}
       <div className="page-header__content" style={contentFadeStyle}>
-        {(!isHubContext || isHubPageWithBackButton) && (
+        {isHubPageWithBackButton ? (
           <button
             type="button"
             onClick={handleBack}
             className="page-header__back"
-            aria-label={isHubPageWithBackButton || backTo ? t('ui.page_header.go_back') : t('ui.nav.go_to_hub')}
+            aria-label={t('ui.page_header.go_back')}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-        )}
+        ) : !isHubContext ? (
+          <>
+            <div className="page-header__business-logo">
+              <BusinessLogo business={business} />
+            </div>
+            <div className="page-header__titles--inline">
+              <h1 className="page-title">{business?.name || t('common.loading')}</h1>
+              {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
+            </div>
+          </>
+        ) : null}
       </div>
 
-      {/* Center column */}
-      <div className="page-header__titles" style={contentFadeStyle}>
-        {isHubPageWithBackButton && title ? (
-          // Hub pages with back button show title instead of logo
-          <>
-            <h1 className="page-title">{title}</h1>
-            {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
-          </>
-        ) : isHubContext ? (
-          <div className="page-header__logo">
-            <Image
-              src="/kasero-logo.png"
-              alt="Kasero"
-              width={160}
-              height={56}
-              style={{ height: 'auto' }}
-              priority
-            />
-          </div>
-        ) : (
-          <>
-            <h1 className="page-title">{business?.name || t('common.loading')}</h1>
-            {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
-          </>
-        )}
-      </div>
+      {/* Center column - hub context only */}
+      {isHubContext && (
+        <div className="page-header__titles" style={contentFadeStyle}>
+          {isHubPageWithBackButton && title ? (
+            <>
+              <h1 className="page-title">{title}</h1>
+              {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
+            </>
+          ) : (
+            <div className="page-header__logo">
+              <Image
+                src="/kasero-logo.png"
+                alt="Kasero"
+                width={160}
+                height={56}
+                style={{ height: 'auto' }}
+                priority
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Right column - user menu */}
       <div className="page-header__actions" style={contentFadeStyle}>
