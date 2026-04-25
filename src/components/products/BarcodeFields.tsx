@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Copy, Plus, Printer, ScanLine } from 'lucide-react'
+import { Check, Copy, Plus, Printer, RotateCcw, ScanLine } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useProductForm } from '@/contexts/product-form-context'
 import { detectBarcodeFormat, generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
@@ -133,7 +133,7 @@ export function BarcodeFields() {
   }, [])
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 h-full">
       <div>
         <label htmlFor="product-barcode" className="label">{t('label')}</label>
         <div className="relative">
@@ -166,68 +166,56 @@ export function BarcodeFields() {
         <BarcodeDisplay value={barcode} format={barcodeFormat} />
       </div>
 
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          {barcode ? (
-            <>
-              <div className="text-sm break-all text-text-secondary">
-                {`${barcode} · ${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : t('source_na')}`}
-              </div>
-              <div className="text-sm text-text-tertiary mt-1">
-                {getBarcodeSourceLabel(barcodeSource)}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-sm text-text-tertiary">
-                {t('no_barcode')}
-              </div>
-              <div className="text-sm text-text-tertiary mt-1">
-                {t('source_na')}
-              </div>
-            </>
-          )}
+      {barcode ? (
+        <div className="text-sm text-text-secondary text-center">
+          {`${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : t('source_na')} · ${getBarcodeSourceLabel(barcodeSource)}`}
         </div>
-
-        <button
-          type="button"
-          onClick={handleClear}
-          disabled={!barcode}
-          className="text-sm text-error hover:text-error transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-        >
-          {t('reset_button')}
-        </button>
-      </div>
+      ) : (
+        <div className="text-sm text-text-tertiary text-center">
+          {t('no_barcode')}
+        </div>
+      )}
 
       {scanHiddenInput}
 
-      <div className="flex gap-4">
-        <button
-          type="button"
-          onClick={handleScanClick}
-          disabled={scanBusy}
-          className="icon-stack-btn icon-stack-btn--info"
-        >
-          <span className="icon-stack-btn__icon"><ScanLine size={20} /></span>
-          <span className="icon-stack-btn__label">{scanBusy ? t('scan_reading') : t('scan_button')}</span>
-        </button>
-        <button
-          type="button"
-          onClick={handleGenerate}
-          className="icon-stack-btn icon-stack-btn--success"
-        >
-          <span className="icon-stack-btn__icon"><Plus size={20} /></span>
-          <span className="icon-stack-btn__label">{t('generate_button')}</span>
-        </button>
-        <button
-          type="button"
-          onClick={handlePrint}
-          disabled={!barcode}
-          className="icon-stack-btn icon-stack-btn--warning"
-        >
-          <span className="icon-stack-btn__icon"><Printer size={20} /></span>
-          <span className="icon-stack-btn__label">{t('print_button')}</span>
-        </button>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={handleScanClick}
+            disabled={scanBusy}
+            className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--info"
+          >
+            <span className="icon-stack-btn__icon"><ScanLine size={28} /></span>
+            <span className="icon-stack-btn__label">{scanBusy ? t('scan_reading') : t('scan_button')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleGenerate}
+            className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--success"
+          >
+            <span className="icon-stack-btn__icon"><Plus size={28} /></span>
+            <span className="icon-stack-btn__label">{t('generate_button')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handlePrint}
+            disabled={!barcode}
+            className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--warning"
+          >
+            <span className="icon-stack-btn__icon"><Printer size={28} /></span>
+            <span className="icon-stack-btn__label">{t('print_button')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleClear}
+            disabled={!barcode}
+            className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--danger"
+          >
+            <span className="icon-stack-btn__icon"><RotateCcw size={28} /></span>
+            <span className="icon-stack-btn__label">{t('reset_button')}</span>
+          </button>
+        </div>
       </div>
     </div>
   )

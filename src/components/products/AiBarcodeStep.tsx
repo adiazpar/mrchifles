@@ -94,21 +94,13 @@ export function AiBarcodeStepBody() {
       </div>
 
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
           {barcode ? (
-            <>
-              <div className="text-sm break-all text-text-secondary">
-                {`${barcode} · ${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : t('source_na')}`}
-              </div>
-              <div className="text-sm text-text-tertiary mt-1">
-                {getBarcodeSourceLabel(barcodeSource)}
-              </div>
-            </>
+            <div className="text-sm text-text-secondary">
+              {`${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : t('source_na')} · ${getBarcodeSourceLabel(barcodeSource)}`}
+            </div>
           ) : (
-            <>
-              <div className="text-sm text-text-tertiary">{t('no_barcode')}</div>
-              <div className="text-sm text-text-tertiary mt-1">{t('source_na')}</div>
-            </>
+            <div className="text-sm text-text-tertiary">{t('no_barcode')}</div>
           )}
         </div>
 
@@ -124,25 +116,23 @@ export function AiBarcodeStepBody() {
 
       {scanHiddenInput}
 
-      <div className="caja-actions">
+      <div className="flex gap-4 justify-center">
         <button
           type="button"
           onClick={handleScanClick}
           disabled={scanBusy}
-          className="caja-action-btn caja-action-btn--ghost"
-          style={{ border: 'none', background: 'var(--color-bg-muted)' }}
+          className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--info"
         >
-          <ScanLine className="caja-action-btn__icon text-brand" />
-          <span>{scanBusy ? t('scan_reading') : t('scan_button')}</span>
+          <span className="icon-stack-btn__icon"><ScanLine size={28} /></span>
+          <span className="icon-stack-btn__label">{scanBusy ? t('scan_reading') : t('scan_button')}</span>
         </button>
         <button
           type="button"
           onClick={handleGenerate}
-          className="caja-action-btn caja-action-btn--ghost"
-          style={{ border: 'none', background: 'var(--color-bg-muted)' }}
+          className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--success"
         >
-          <Plus className="caja-action-btn__icon text-success" />
-          <span>{t('generate_button')}</span>
+          <span className="icon-stack-btn__icon"><Plus size={28} /></span>
+          <span className="icon-stack-btn__label">{t('generate_button')}</span>
         </button>
       </div>
     </div>

@@ -247,6 +247,19 @@
   border-radius: var(--radius-full);
 }
 
+/* Larger size for surfaces with more breathing room (e.g. the barcode-tab
+   row, where each button stretches to a full grid cell via `flex-1`). The
+   button can stretch to fill the cell, but the circle stays a fixed size
+   so it never deforms into a pill. */
+.icon-stack-btn--lg .icon-stack-btn__icon {
+  width: 64px;
+  height: 64px;
+}
+
+.icon-stack-btn--lg .icon-stack-btn__label {
+  font-size: 13px;
+}
+
 .icon-stack-btn:active,
 .icon-stack-btn[data-pressed='true'] {
   transform: scale(0.94);
@@ -1263,12 +1276,6 @@ transform: scale(0.94);
 .caja-action-btn__icon {
 width: 22px;
 height: 22px;
-}
-
-/* Ghost variant - no background or border */
-.caja-action-btn--ghost {
-background: transparent;
-border-color: transparent;
 }
 
 /* Large stacked variant - column layout with centered content */

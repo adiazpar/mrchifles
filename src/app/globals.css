@@ -11,7 +11,7 @@
  * Before removing any CSS rule that looks unused:
  *   1. Grep the TSX codebase for `${class-prefix}` patterns,
  *      e.g.  rg -n '\-\-\$\{' src/  to catch BEM-modifier
- *      interpolation like `swipeable-row-action--${variant}`.
+ *      interpolation like `icon-stack-btn--${variant}`.
  *   2. Grep for object/array lookups that produce class names,
  *      e.g.  rg -n 'variantClasses|sizeClasses' src/  for
  *      patterns like `variantClasses[variant]` in badge.tsx,
@@ -20,10 +20,11 @@
  *      e.g. `isActive ? 'foo-active' : ''`.
  *
  * Commit c0ef0f4 removed ~174 "dead" custom classes and
- * incorrectly swept swipeable-row-action--{neutral,info,pos,
- * danger} because they were built via ${variant} interpolation.
- * Those rules have since been restored in interactive.css with
- * a matching inline warning. Do not repeat the mistake. */
+ * incorrectly swept the icon-stack variant rules (then named
+ * swipeable-row-action--{neutral,info,pos,danger}) because they
+ * were built via ${variant} interpolation. Those rules have since
+ * been restored in interactive.css with a matching inline warning.
+ * Do not repeat the mistake. */
 
 @import './styles/base.css';
 @import './styles/buttons.css';

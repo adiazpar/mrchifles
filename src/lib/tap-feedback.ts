@@ -23,7 +23,7 @@ const TAP_FEEDBACK_SELECTOR = [
   '.payment-btn',
   '.caja-action-btn',
   '.mobile-nav-item',
-  '.swipeable-row-action',
+  '.icon-stack-btn',
   '.page-header__back',
   '.list-item-clickable',
   '.user-menu-item',
