@@ -6,7 +6,12 @@ import { AuthProvider } from '@/contexts/auth-context'
 import { PageTransitionProvider } from '@/contexts/page-transition-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { AppShell, SplashController, TapFeedbackProvider, AuthGateOverlay } from '@/components/layout'
-import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-color'
+import {
+  THEME_COLOR_DARK,
+  THEME_COLOR_LIGHT,
+  THEME_COLOR_BASE_DARK,
+  THEME_COLOR_BASE_LIGHT,
+} from '@/lib/theme-color'
 import './globals.css'
 
 const dmSans = DM_Sans({
@@ -100,12 +105,18 @@ export default async function RootLayout({
                       : 'light';
                   }
                   document.documentElement.classList.toggle('dark', resolved === 'dark');
+                  var path = window.location.pathname;
+                  var isAuth = path.indexOf('/login') === 0 || path.indexOf('/register') === 0;
+                  var surfaceDark = '${THEME_COLOR_DARK}';
+                  var surfaceLight = '${THEME_COLOR_LIGHT}';
+                  var baseDark = '${THEME_COLOR_BASE_DARK}';
+                  var baseLight = '${THEME_COLOR_BASE_LIGHT}';
+                  var color = isAuth
+                    ? (resolved === 'dark' ? baseDark : baseLight)
+                    : (resolved === 'dark' ? surfaceDark : surfaceLight);
                   var meta = document.querySelector('meta[name="theme-color"]');
                   if (meta) {
-                    meta.setAttribute(
-                      'content',
-                      resolved === 'dark' ? '${THEME_COLOR_DARK}' : '${THEME_COLOR_LIGHT}'
-                    );
+                    meta.setAttribute('content', color);
                   }
                 } catch (e) {}
               })();
