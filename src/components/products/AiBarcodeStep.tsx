@@ -3,7 +3,7 @@
 import { useCallback, useEffect } from 'react'
 import { Plus, ScanLine } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useMorphingModal } from '@/components/ui'
+import { useModal } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
@@ -42,7 +42,7 @@ export function AiBarcodeStepBody() {
     }
   }
 
-  const { currentStep } = useMorphingModal()
+  const { currentStep } = useModal()
 
   // Clear any existing barcode state when entering this step so the user
   // starts with a clean slate every time.

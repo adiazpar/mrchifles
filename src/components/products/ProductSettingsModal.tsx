@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Plus, ChevronRight, GripVertical, Trash2, Pencil } from 'lucide-react'
 import { Reorder, useDragControls } from 'framer-motion'
 import { useTranslations } from 'next-intl'
-import { Spinner, Modal, useMorphingModal } from '@/components/ui'
+import { Spinner, Modal, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { SORT_OPTIONS } from '@/lib/products'
 import type { ProductCategory, SortPreference } from '@/types'
@@ -55,7 +55,7 @@ interface SaveCategoryButtonProps {
 function SaveCategoryButton({ name, editingCategory, onSave, isSaving, onSetCompleted, onSetMessage }: SaveCategoryButtonProps) {
   const t = useTranslations('productSettings')
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
   const isValid = name.trim().length > 0
   const hasChanges = editingCategory ? name.trim() !== editingCategory.name : true
 
@@ -155,7 +155,7 @@ interface SortableCategoryListProps {
 }
 
 function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteCategory }: SortableCategoryListProps) {
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
   // Local mirror of the ordered list. framer-motion's Reorder.Group calls
   // onReorder repeatedly during the drag gesture with the intermediate
   // ordering, so we track it locally and only persist the final order once
@@ -209,7 +209,7 @@ function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteC
 function DeleteCategoryButton({ onDelete, isDeleting, onSetCompleted, onSetMessage }: DeleteCategoryButtonProps) {
   const t = useTranslations('productSettings')
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleDelete = () => {
     onSetCompleted(true)

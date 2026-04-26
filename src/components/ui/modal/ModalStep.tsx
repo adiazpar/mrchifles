@@ -70,8 +70,8 @@ export function ModalStep({ children, title, hideBackButton = false, backStep, o
   // Animation classes — direction-agnostic opacity-only fade. The drawer is a
   // fixed-height surface; old direction-aware translate animations are gone.
   const getContentClass = () => {
-    if (isExiting) return 'morph-content-exit'
-    if (isEntering) return 'morph-content-enter'
+    if (isExiting) return 'modal-step-content-exit'
+    if (isEntering) return 'modal-step-content-enter'
     return ''
   }
 
@@ -80,13 +80,13 @@ export function ModalStep({ children, title, hideBackButton = false, backStep, o
 
   return (
     <div
-      className={`morph-panel ${isVisible ? 'morph-panel-visible' : 'morph-panel-hidden'} ${className || ''}`}
+      className={`modal-step ${isVisible ? 'modal-step-visible' : 'modal-step-hidden'} ${className || ''}`}
       data-step-index={_index}
       data-step-title={title}
     >
-      <div className="morph-panel-inner">
+      <div className="modal-step-inner">
         <div
-          className={`morph-content ${getContentClass()}`}
+          className={`modal-step-content ${getContentClass()}`}
           style={{ opacity: hideContent ? 0 : undefined }}
         >
           {children}

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Trash2 } from 'lucide-react'
-import { Spinner, Modal, useMorphingModal, ConfirmationAnimation } from '@/components/ui'
+import { Spinner, Modal, useModal, ConfirmationAnimation } from '@/components/ui'
 import type { Provider } from '@/types'
 
 // ============================================
@@ -16,7 +16,7 @@ interface SaveProviderButtonProps {
 }
 
 function SaveProviderButton({ onSubmit, isSaving, disabled }: SaveProviderButtonProps) {
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
   const t = useTranslations('providers')
 
   // Optimistic navigation: jump to the success step first, fire the API
@@ -50,7 +50,7 @@ interface DeleteProviderButtonProps {
 
 function DeleteProviderButton({ onConfirm, isDeleting }: DeleteProviderButtonProps) {
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   // Wait for the API response so a failure lands the user back on the
   // form step (with the error visible) instead of on the success screen.

@@ -14,7 +14,7 @@ export function ModalItem({ children, className = '', _index = 0 }: InternalItem
 
   return (
     <div
-      className={`morph-item ${className}`}
+      className={`modal-step-item ${className}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       {children}

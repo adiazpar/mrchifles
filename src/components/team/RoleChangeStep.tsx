@@ -2,7 +2,7 @@
 
 import { User as UserIcon, UserCircle } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { Modal, useMorphingModal, Spinner } from '@/components/ui'
+import { Modal, useModal, Spinner } from '@/components/ui'
 import { RoleCard } from './RoleCard'
 
 export interface RoleChangeContentProps {
@@ -60,7 +60,7 @@ export function RoleChangeSaveButton({
   onSubmit,
 }: RoleChangeSaveButtonProps) {
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleSubmit = () => {
     goToStep(0)
@@ -86,7 +86,7 @@ export interface RoleChangeCancelButtonProps {
 
 export function RoleChangeCancelButton({ disabled }: RoleChangeCancelButtonProps) {
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   return (
     <button

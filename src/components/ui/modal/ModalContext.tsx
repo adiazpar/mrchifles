@@ -15,7 +15,7 @@ export function useModalContext(): ModalContextValue {
   return context
 }
 
-export function useMorphingModal(): Omit<ModalContextValue, '_registerStep' | '_unregisterStep' | '_onClose' | '_currentStepHideBackButton' | '_setCurrentStepHideBackButton' | '_currentStepBackStep' | '_setCurrentStepBackStep' | '_currentStepOnBackStep' | '_setCurrentStepOnBackStep'> {
+export function useModal(): Omit<ModalContextValue, '_registerStep' | '_unregisterStep' | '_onClose' | '_currentStepHideBackButton' | '_setCurrentStepHideBackButton' | '_currentStepBackStep' | '_setCurrentStepBackStep' | '_currentStepOnBackStep' | '_setCurrentStepOnBackStep'> {
   const ctx = useModalContext()
   const { _registerStep, _unregisterStep, _onClose, _currentStepHideBackButton, _setCurrentStepHideBackButton, _currentStepBackStep, _setCurrentStepBackStep, _currentStepOnBackStep, _setCurrentStepOnBackStep, ...publicApi } = ctx
   return publicApi

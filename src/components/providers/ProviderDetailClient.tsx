@@ -982,7 +982,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       </main>
 
       {/* ============== Edit modal ==============
-          Hosts the delete flow as extra morph steps (see ProviderModal).
+          Hosts the delete flow as extra modal steps (see ProviderModal).
           When the modal has finished closing after a successful delete we
           slide back to the providers list — deferring the navigation
           lets the delete-success animation play inside the modal first. */}

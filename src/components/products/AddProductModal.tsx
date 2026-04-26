@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Camera, Sparkles, UserPlus, FileScan, FileSpreadsheet } from 'lucide-react'
-import { Spinner, Modal, useMorphingModal } from '@/components/ui'
+import { Spinner, Modal, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductFormValidation } from '@/contexts/product-form-context'
@@ -24,7 +24,7 @@ function AiPipelineNavigator({
   needsCategory: boolean
 }) {
   const { pipelineStep, isCompressing } = useProductForm()
-  const { goToStep, currentStep } = useMorphingModal()
+  const { goToStep, currentStep } = useModal()
   const goToStepRef = useRef(goToStep)
 
   useLayoutEffect(() => {
@@ -115,7 +115,7 @@ function AiPhotoStepInput({
   onAiPhotoCapture: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>
   onClearPendingPhoto: () => void
 }) {
-  const { goToStep, currentStep } = useMorphingModal()
+  const { goToStep, currentStep } = useModal()
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const isMobile = useIsMobile()
 
@@ -191,7 +191,7 @@ function SuggestedCategoryStepWrapper({
   onCreateCategory: (name: string) => Promise<string | null>
 }) {
   const { setCategoryId } = useProductForm()
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
   return (
     <SuggestedCategoryStep
       suggestedName={suggestedCategoryName ?? ''}
@@ -260,7 +260,7 @@ function SaveButton({ onSubmit }: { onSubmit: AddProductModalProps['onSubmit'] }
     setProductSaved,
   } = useProductForm()
   const { isFormValid, hasChanges } = useProductFormValidation()
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleClick = async () => {
     setError('')

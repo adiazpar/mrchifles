@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { TriangleAlert, Mail } from 'lucide-react'
-import { Modal, Spinner, useMorphingModal, ConfirmationAnimation } from '@/components/ui'
+import { Modal, Spinner, useModal, ConfirmationAnimation } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useTransferOwnership } from '@/hooks/useTransferOwnership'
@@ -251,7 +251,7 @@ function SendTransferButton({
   isSubmitting: boolean
   disabled: boolean
 }) {
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
   const t = useTranslations('manage')
 
   // Wait for the API result: success navigates to the animation step;
@@ -274,7 +274,7 @@ function SendTransferButton({
 }
 
 function NextButton({ disabled }: { disabled: boolean }) {
-  const { goNext } = useMorphingModal()
+  const { goNext } = useModal()
   const tCommon = useTranslations('common')
   return (
     <button type="button" onClick={goNext} disabled={disabled} className="btn btn-primary flex-1">

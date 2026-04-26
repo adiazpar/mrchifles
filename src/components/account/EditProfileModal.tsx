@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Upload, X } from 'lucide-react'
-import { Modal, Input, Spinner, useMorphingModal } from '@/components/ui'
+import { Modal, Input, Spinner, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
@@ -236,7 +236,7 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
 }
 
 // ============================================================================
-// SAVE BUTTON (uses useMorphingModal for step navigation)
+// SAVE BUTTON (uses useModal for step navigation)
 // ============================================================================
 
 interface SaveProfileButtonProps {
@@ -248,7 +248,7 @@ interface SaveProfileButtonProps {
 
 function SaveProfileButton({ isValid, hasChanges, isSaving, onSave }: SaveProfileButtonProps) {
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleClick = async () => {
     const ok = await onSave()

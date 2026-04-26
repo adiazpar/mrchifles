@@ -3,7 +3,7 @@
 import { useCallback } from 'react'
 import { Crown, Building2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { Modal, Spinner, useMorphingModal } from '@/components/ui'
+import { Modal, Spinner, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import type { UseJoinBusinessReturn, CodeType } from '@/hooks'
 
@@ -186,7 +186,7 @@ interface ValidateButtonProps {
 }
 
 function ValidateButton({ code, isValidating, onValidate }: ValidateButtonProps) {
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
   const tCommon = useTranslations('common')
 
   const handleClick = useCallback(async () => {
@@ -296,7 +296,7 @@ interface JoinButtonProps {
 }
 
 function JoinButton({ codeType, isJoining, onJoin }: JoinButtonProps) {
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
   const t = useTranslations('joinBusiness')
 
   const handleClick = useCallback(async () => {

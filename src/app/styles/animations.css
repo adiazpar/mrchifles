@@ -58,57 +58,57 @@
 /* Step panels stack at the same position; ModalStep.tsx toggles visibility
    via the phase state machine. No height animation — the drawer is fixed
    height. */
-.morph-panel {
+.modal-step {
   display: block;
 }
 
-.morph-panel-visible {
+.modal-step-visible {
   display: block;
 }
 
-.morph-panel-hidden {
+.modal-step-hidden {
   display: none;
 }
 
-.morph-panel-inner {
+.modal-step-inner {
   /* No-op container kept for class-name compatibility with ModalStep.tsx */
 }
 
-.morph-content {
+.modal-step-content {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
 /* Content exit animation - staggered fade up */
-.morph-content-exit .morph-item {
-  animation: morph-item-exit var(--duration-instant) ease-in forwards;
+.modal-step-content-exit .modal-step-item {
+  animation: modal-step-item-exit var(--duration-instant) ease-in forwards;
 }
 
-.morph-content-exit .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-exit .morph-item:nth-child(2) { animation-delay: 25ms; }
-.morph-content-exit .morph-item:nth-child(3) { animation-delay: 50ms; }
-.morph-content-exit .morph-item:nth-child(4) { animation-delay: 75ms; }
-.morph-content-exit .morph-item:nth-child(5) { animation-delay: 100ms; }
+.modal-step-content-exit .modal-step-item:nth-child(1) { animation-delay: 0ms; }
+.modal-step-content-exit .modal-step-item:nth-child(2) { animation-delay: 25ms; }
+.modal-step-content-exit .modal-step-item:nth-child(3) { animation-delay: 50ms; }
+.modal-step-content-exit .modal-step-item:nth-child(4) { animation-delay: 75ms; }
+.modal-step-content-exit .modal-step-item:nth-child(5) { animation-delay: 100ms; }
 
 /* Content enter animation - staggered fade in from below */
-.morph-content-enter .morph-item {
-  animation: morph-item-enter var(--duration-instant) ease-out forwards;
+.modal-step-content-enter .modal-step-item {
+  animation: modal-step-item-enter var(--duration-instant) ease-out forwards;
   opacity: 0;
 }
 
-.morph-content-enter .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-enter .morph-item:nth-child(2) { animation-delay: 25ms; }
-.morph-content-enter .morph-item:nth-child(3) { animation-delay: 50ms; }
-.morph-content-enter .morph-item:nth-child(4) { animation-delay: 75ms; }
-.morph-content-enter .morph-item:nth-child(5) { animation-delay: 100ms; }
+.modal-step-content-enter .modal-step-item:nth-child(1) { animation-delay: 0ms; }
+.modal-step-content-enter .modal-step-item:nth-child(2) { animation-delay: 25ms; }
+.modal-step-content-enter .modal-step-item:nth-child(3) { animation-delay: 50ms; }
+.modal-step-content-enter .modal-step-item:nth-child(4) { animation-delay: 75ms; }
+.modal-step-content-enter .modal-step-item:nth-child(5) { animation-delay: 100ms; }
 
-@keyframes morph-item-exit {
+@keyframes modal-step-item-exit {
   from { opacity: 1; }
   to   { opacity: 0; }
 }
 
-@keyframes morph-item-enter {
+@keyframes modal-step-item-enter {
   from { opacity: 0; }
   to   { opacity: 1; }
 }

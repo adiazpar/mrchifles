@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { Spinner, useMorphingModal } from '@/components/ui'
+import { Spinner, useModal } from '@/components/ui'
 
 // Generate code button component with modal navigation
 export interface GenerateCodeButtonProps {
@@ -14,7 +14,7 @@ export function GenerateCodeButton({
   onGenerate,
 }: GenerateCodeButtonProps) {
   const t = useTranslations('team')
-  const { goNext, lock, unlock } = useMorphingModal()
+  const { goNext, lock, unlock } = useModal()
 
   const handleGenerate = async () => {
     lock()
@@ -48,7 +48,7 @@ export function ConfirmDeleteCodeButton({
   successStep = 3,
 }: ConfirmDeleteCodeButtonProps) {
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleClick = () => {
     goToStep(successStep)

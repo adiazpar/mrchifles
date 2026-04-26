@@ -3,12 +3,11 @@
  ========================================================================== */
 
 /* ===== Bottom Drawer Modal =====
-   Replaces the prior centered-card "morphing modal." Open/close, drag-to-
-   dismiss, step content fade, and footer fade are driven by framer-motion in
-   src/components/ui/modal/Modal.tsx. CSS here owns layout and static visuals
-   only — no @keyframes, no animations. The phase state machine in
-   ModalContext.tsx still ticks; ModalStep.tsx applies opacity-only classes
-   from animations.css to drive the body content fade. */
+   Open/close, drag-to-dismiss, step content fade, and footer fade are driven
+   by framer-motion in src/components/ui/modal/Modal.tsx. CSS here owns layout
+   and static visuals only — no @keyframes, no animations. The phase state
+   machine in ModalContext.tsx still ticks; ModalStep.tsx applies opacity-only
+   classes from animations.css to drive the body content fade. */
 
 .modal-backdrop {
   position: fixed;
@@ -150,7 +149,7 @@
 
 /* Footer wrapper — animated by framer-motion AnimatePresence keyed on
    currentStep. Holds positioning, padding, safe-area inset, and the divider
-   line. The flex layout lives on .morph-footer (the consumer-rendered child). */
+   line. The flex layout lives on .modal-footer-row (the consumer-rendered child). */
 .modal-footer-wrapper {
   flex-shrink: 0;
   width: 100%;
@@ -162,7 +161,7 @@
 /* Footer row — rendered by <Modal.Footer>. Buttons spread across the full
    width using their own flex-1 (per the Modal.Footer convention). No
    justify-content here — buttons with flex-1 fill the row. */
-.morph-footer {
+.modal-footer-row {
   display: flex;
   align-items: stretch;
   gap: var(--space-2);

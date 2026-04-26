@@ -1,6 +1,6 @@
 // src/components/ui/modal/index.ts
 export { Modal } from './Modal'
-export { useMorphingModal } from './ModalContext'
+export { useModal } from './ModalContext'
 export type {
   ModalProps,
   ModalStepProps,

@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Upload, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { Modal, Spinner, useMorphingModal } from '@/components/ui'
+import { Modal, Spinner, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import type { UseCreateBusinessReturn, BusinessType } from '@/hooks'
 import {
@@ -352,7 +352,7 @@ function LogoUploadContent({
 // ============================================
 
 function NextStepButton({ disabled = false }: { disabled?: boolean }) {
-  const { goNext } = useMorphingModal()
+  const { goNext } = useModal()
   const tCommon = useTranslations('common')
 
   return (
@@ -373,7 +373,7 @@ interface CreateButtonProps {
 }
 
 function CreateButton({ isCreating, onCreate }: CreateButtonProps) {
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
   const t = useTranslations('createBusiness')
 
   const handleClick = useCallback(async () => {

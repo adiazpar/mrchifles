@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Trash2 } from 'lucide-react'
-import { Spinner, Modal, useMorphingModal, ConfirmationAnimation } from '@/components/ui'
+import { Spinner, Modal, useModal, ConfirmationAnimation } from '@/components/ui'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@/lib/provider-notes'
 import type { ProviderNote } from '@/types'
 
@@ -17,7 +17,7 @@ interface SaveNoteButtonProps {
 }
 
 function SaveNoteButton({ onSubmit, isSaving, disabled }: SaveNoteButtonProps) {
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
   const tCommon = useTranslations('common')
 
   // Optimistic: navigate to the save-success step before firing the API.
@@ -49,7 +49,7 @@ interface DeleteNoteButtonProps {
 
 function DeleteNoteButton({ onConfirm, isDeleting }: DeleteNoteButtonProps) {
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   // Wait for the API to resolve so a failure lands us back on the form
   // step with the error visible instead of showing the success animation.

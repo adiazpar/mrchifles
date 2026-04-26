@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { usePageTransition } from '@/contexts/page-transition-context'
-import { Spinner, Modal, useMorphingModal, PriceInput } from '@/components/ui'
+import { Spinner, Modal, useModal, PriceInput } from '@/components/ui'
 import { Trash2, Pencil, ImagePlus } from 'lucide-react'
 
 // Inline SVG icons — keeps this modal free of lucide-react
@@ -109,7 +109,7 @@ export interface OrderDetailModalProps {
 
 function GoToReceiveStepButton({ order, onInitialize }: { order: ExpandedOrder; onInitialize: (order: ExpandedOrder) => void }) {
   const t = useTranslations('orders')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleClick = () => {
     onInitialize(order)
@@ -129,7 +129,7 @@ function GoToReceiveStepButton({ order, onInitialize }: { order: ExpandedOrder; 
 
 function GoToEditStepButton({ order, onInitialize }: { order: ExpandedOrder; onInitialize: (order: ExpandedOrder) => void }) {
   const t = useTranslations('orders')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleClick = () => {
     onInitialize(order)
@@ -150,7 +150,7 @@ function GoToEditStepButton({ order, onInitialize }: { order: ExpandedOrder; onI
 
 function ConfirmReceiveButton({ onReceive, isReceiving }: { onReceive: () => Promise<boolean>; isReceiving: boolean }) {
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleClick = async () => {
     const success = await onReceive()
@@ -174,7 +174,7 @@ function ConfirmReceiveButton({ onReceive, isReceiving }: { onReceive: () => Pro
 
 function SaveEditOrderButton({ onSave, isSaving, disabled }: { onSave: () => Promise<boolean>; isSaving: boolean; disabled: boolean }) {
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleClick = async () => {
     const success = await onSave()
@@ -197,7 +197,7 @@ function SaveEditOrderButton({ onSave, isSaving, disabled }: { onSave: () => Pro
 
 function DeleteOrderButton({ onDelete, isDeleting }: { onDelete: () => Promise<boolean>; isDeleting: boolean }) {
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleClick = async () => {
     const success = await onDelete()

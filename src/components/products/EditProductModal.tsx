@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { Trash2, SlidersHorizontal, ImagePlus } from 'lucide-react'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { Spinner, Modal, useMorphingModal, StockStepper } from '@/components/ui'
+import { Spinner, Modal, useModal, StockStepper } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
 import { ProductForm } from './ProductForm'
@@ -40,7 +40,7 @@ function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<bool
   const t = useTranslations('productForm')
   const tCommon = useTranslations('common')
   const { setProductDeleted, setError } = useProductForm()
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   // Delete can fail with a 409 when the product is in a pending order, so we
   // wait for the response before navigating to the success step. If it fails,
@@ -99,7 +99,7 @@ function SaveButton({ onSubmit }: { onSubmit: EditProductModalProps['onSubmit'] 
     setProductSaved,
   } = useProductForm()
   const { isFormValid, hasChanges } = useProductFormValidation()
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleClick = async () => {
     setError('')

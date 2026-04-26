@@ -54,7 +54,7 @@ export function ProductForm({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="section-tabs section-tabs--modal morph-item">
+      <div className="section-tabs section-tabs--modal modal-step-item">
         <button
           type="button"
           onClick={() => setActiveTab('details')}

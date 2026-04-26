@@ -2,7 +2,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useModalContext, useMorphingModal } from './ModalContext'
+import { useModalContext, useModal } from './ModalContext'
 import type { ModalButtonProps } from './types'
 
 export function ModalBackButton({ children, className = '', disabled, onClick }: ModalButtonProps) {
@@ -34,7 +34,7 @@ export function ModalBackButton({ children, className = '', disabled, onClick }:
 
 export function ModalNextButton({ children, className = '', disabled, onClick }: ModalButtonProps) {
   const t = useTranslations('common')
-  const { goNext, isLocked, isTransitioning, isLastStep } = useMorphingModal()
+  const { goNext, isLocked, isTransitioning, isLastStep } = useModal()
 
   const handleClick = () => {
     onClick?.()
@@ -59,7 +59,7 @@ interface GoToStepButtonProps extends ModalButtonProps {
 }
 
 export function ModalGoToStepButton({ children, className = '', disabled, step, onClick, title }: GoToStepButtonProps) {
-  const { goToStep, isLocked, isTransitioning } = useMorphingModal()
+  const { goToStep, isLocked, isTransitioning } = useModal()
 
   const handleClick = () => {
     onClick?.()

@@ -28,14 +28,14 @@
 //
 // When creating multi-step modals with reusable content:
 // 1. Create content-only components that return ONLY Modal.Item elements
-// 2. If footer buttons need useMorphingModal(), create separate button components
+// 2. If footer buttons need useModal(), create separate button components
 // 3. Place Modal.Footer as direct child of Modal.Step in the modal JSX
 //
 // VISUAL: this component renders as a bottom drawer (slides up from below,
 // leaves a 48px dimmed gap at the top). Open/close, drag-to-dismiss, footer
 // in/out, and step content fade are driven by framer-motion. The phase
 // state machine in ModalContext.tsx still ticks; ModalStep.tsx applies the
-// opacity-only `morph-content-exit` / `morph-content-enter` classes.
+// opacity-only `modal-step-content-exit` / `modal-step-content-enter` classes.
 //
 'use client'
 
@@ -191,9 +191,9 @@ function ModalBody({
     const { content } = separateFooter(children)
     return (
       <div className="modal-body">
-        <div className="morph-panel morph-panel-visible">
-          <div className="morph-panel-inner">
-            <div className="morph-content">
+        <div className="modal-step modal-step-visible">
+          <div className="modal-step-inner">
+            <div className="modal-step-content">
               {content}
             </div>
           </div>

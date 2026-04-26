@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { Modal, Input, Spinner, useMorphingModal } from '@/components/ui'
+import { Modal, Input, Spinner, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { hasMessageEnvelope } from '@/lib/api-messages'
@@ -197,7 +197,7 @@ interface SavePasswordButtonProps {
 
 function SavePasswordButton({ isValid, isSaving, onSave }: SavePasswordButtonProps) {
   const tCommon = useTranslations('common')
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
 
   const handleClick = async () => {
     const ok = await onSave()

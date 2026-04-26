@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { Spinner, Modal, useMorphingModal, ConfirmationAnimation } from '@/components/ui'
+import { Spinner, Modal, useModal, ConfirmationAnimation } from '@/components/ui'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@/lib/provider-notes'
 
 interface SaveNoteButtonProps {
@@ -11,7 +11,7 @@ interface SaveNoteButtonProps {
 }
 
 function SaveNoteButton({ onSubmit, isSaving, disabled }: SaveNoteButtonProps) {
-  const { goToStep } = useMorphingModal()
+  const { goToStep } = useModal()
   const tCommon = useTranslations('common')
 
   // Optimistic: jump to the success step immediately, fire the API in
