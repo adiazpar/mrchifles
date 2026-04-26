@@ -83,7 +83,6 @@ export function SuggestedCategoryStep({
             onChange={(e) => setName(e.target.value)}
             className="input"
             autoComplete="off"
-            autoFocus
           />
         </div>
 

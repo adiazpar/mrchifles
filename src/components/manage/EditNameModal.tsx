@@ -41,7 +41,6 @@ export function EditNameModal({ isOpen, onClose }: Props) {
             onChange={(e) => setName(e.target.value)}
             maxLength={100}
             className="input"
-            autoFocus
             autoComplete="off"
           />
         </Modal.Item>

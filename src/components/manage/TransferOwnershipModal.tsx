@@ -156,7 +156,6 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
               onChange={(e) => setCustomEmail(e.target.value)}
               placeholder="email@example.com"
               className="input"
-              autoFocus
               autoComplete="email"
             />
             <p className="text-xs text-text-tertiary mt-2">

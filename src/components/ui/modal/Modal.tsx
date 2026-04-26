@@ -31,6 +31,11 @@
 // 2. If footer buttons need useMorphingModal(), create separate button components
 // 3. Place Modal.Footer as direct child of Modal.Step in the modal JSX
 //
+// VISUAL: this component renders as a bottom drawer (slides up from below,
+// leaves a 48px dimmed gap at the top). Open/close, drag-to-dismiss, footer
+// in/out, and step content fade are driven by framer-motion. The phase
+// state machine in ModalContext.tsx still ticks; ModalStep.tsx applies the
+// opacity-only `morph-content-exit` / `morph-content-enter` classes.
 //
 'use client'
 
@@ -38,6 +43,7 @@ import React, { useState, useEffect, useRef, Children, isValidElement, ReactElem
 import { createPortal } from 'react-dom'
 import { X, ChevronLeft } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { motion, AnimatePresence, useDragControls, type PanInfo } from 'framer-motion'
 import { ModalProvider, useModalContext } from './ModalContext'
 import { ModalStep } from './ModalStep'
 import { ModalItem } from './ModalItem'
@@ -46,57 +52,43 @@ import { ModalBackButton, ModalNextButton, ModalCancelBackButton, ModalGoToStepB
 import type { ModalProps, ModalStepProps } from './types'
 import { hasComponentMarker } from './types'
 
-// Animated footer wrapper that syncs with step transitions
-// Uses CSS Grid for height animation when footer appears/disappears
-function AnimatedFooter({ children, hasFooter }: { children: React.ReactNode; hasFooter: boolean }) {
-  const { phase, direction } = useModalContext()
+// Drag-to-dismiss thresholds. Either condition triggers close on dragEnd.
+const DRAG_DISTANCE_RATIO = 0.30  // close if dragged > 30% of drawer height
+const DRAG_VELOCITY_PX_S = 600    // close if released with > 600 px/s downward fling
 
-  // Determine animation class based on phase and direction
-  const getAnimationClass = () => {
-    if (phase === 'exiting') {
-      return direction === 'forward' ? 'morph-footer-exit' : 'morph-footer-exit-back'
-    }
-    if (phase === 'entering') {
-      return direction === 'forward' ? 'morph-footer-enter' : 'morph-footer-enter-back'
-    }
-    // During transitioning phase, hide footer (content faded out, height animating)
-    if (phase === 'transitioning') {
-      return 'morph-footer-hidden'
-    }
-    return ''
-  }
-
-  // Use CSS Grid to animate height when footer appears/disappears
-  const heightClass = hasFooter ? 'morph-footer-expanded' : 'morph-footer-collapsed'
-
-  return (
-    <div className={`morph-footer-wrapper ${heightClass} ${getAnimationClass()}`}>
-      <div className="morph-footer-inner">
-        {children}
-      </div>
-    </div>
-  )
-}
-
-// Internal header component (needs context)
-function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTitle?: string }) {
+// Internal header component (needs context). Renders the notch row + button row.
+// The entire header is the drag surface; buttons stop pointerdown propagation.
+function ModalHeader({
+  title,
+  singleStepTitle,
+  onPointerDown,
+}: {
+  title?: string
+  singleStepTitle?: string
+  onPointerDown: (e: React.PointerEvent) => void
+}) {
   const t = useTranslations('ui.modal')
   const ctx = useModalContext()
-  const { isFirstStep, isLocked, isTransitioning, goBack, goToStep, _onClose, _currentStepHideBackButton, _currentStepBackStep, _currentStepOnBackStep } = ctx
+  const {
+    isFirstStep,
+    isLocked,
+    isTransitioning,
+    goBack,
+    goToStep,
+    _onClose,
+    _currentStepHideBackButton,
+    _currentStepBackStep,
+    _currentStepOnBackStep,
+  } = ctx
 
-  // For single-step modals, use the prop title
-  // For multi-step, find the current step's title from DOM (set via data attribute)
   const displayTitle = singleStepTitle || title || ''
 
   // Show back button if: multi-step modal, not first step, and step doesn't hide it
-  // Back button animates AFTER height transition (when currentStep updates during 'entering' phase)
   const showBackIcon = !singleStepTitle && !isFirstStep && !_currentStepHideBackButton
 
   // Handle back navigation - call onBackStep callback first, then navigate
   const handleBack = () => {
-    // Call the step's onBackStep callback before navigating (e.g., to cancel operations)
     _currentStepOnBackStep?.()
-
     if (_currentStepBackStep !== undefined) {
       goToStep(_currentStepBackStep)
     } else {
@@ -104,30 +96,42 @@ function ModalHeader({ title, singleStepTitle }: { title?: string; singleStepTit
     }
   }
 
+  // Buttons must not initiate the header drag.
+  const stopHeaderDrag = (e: React.PointerEvent) => e.stopPropagation()
+
   return (
-    <div className="modal-header">
-      <div className={`modal-back-container ${showBackIcon ? 'modal-back-visible' : 'modal-back-hidden'}`}>
+    <div className="modal-header" onPointerDown={onPointerDown}>
+      <div className="modal-notch" aria-hidden />
+      <div className="modal-header-bar">
+        {/* Back-button slot — always reserved (44px wide) so the title stays
+            perfectly centered. The button itself fades in/out via the
+            .modal-back-hidden modifier. */}
+        <div className="modal-back-slot">
+          <button
+            type="button"
+            onClick={handleBack}
+            onPointerDown={stopHeaderDrag}
+            className={`modal-back ${showBackIcon ? '' : 'modal-back-hidden'}`}
+            aria-label={t('go_back')}
+            aria-hidden={!showBackIcon}
+            tabIndex={showBackIcon ? 0 : -1}
+            disabled={isLocked || isTransitioning || !showBackIcon}
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
+        <h2 className="modal-title">{displayTitle}</h2>
         <button
           type="button"
-          onClick={handleBack}
-          className="modal-back"
-          aria-label={t('go_back')}
-          disabled={isLocked || isTransitioning || !showBackIcon}
-          tabIndex={showBackIcon ? 0 : -1}
+          onClick={_onClose}
+          onPointerDown={stopHeaderDrag}
+          className="modal-close"
+          aria-label={t('close')}
+          disabled={isLocked || isTransitioning}
         >
-          <ChevronLeft className="w-5 h-5" />
+          <X className="w-5 h-5" />
         </button>
       </div>
-      <h2 className="modal-title">{displayTitle}</h2>
-      <button
-        type="button"
-        onClick={_onClose}
-        className="modal-close"
-        aria-label={t('close')}
-        disabled={isLocked || isTransitioning}
-      >
-        <X className="w-5 h-5" />
-      </button>
     </div>
   )
 }
@@ -148,7 +152,9 @@ function separateFooter(children: React.ReactNode): { content: React.ReactNode; 
   return { content, footer }
 }
 
-// Internal body component that handles step title extraction
+// Internal body component — extracts current-step title and footer.
+// Footer extraction reads currentStep only (no targetStep switch); the visual
+// swap is owned by AnimatePresence in ModalInner.
 function ModalBody({
   children,
   isSingleStep,
@@ -160,17 +166,10 @@ function ModalBody({
   setCurrentTitle: (title: string) => void
   setCurrentFooter: (footer: React.ReactNode) => void
 }) {
-  const { currentStep, targetStep, phase } = useModalContext()
+  const { currentStep } = useModalContext()
 
-  // Determine which step to use for footer extraction
-  // During exiting: keep old footer (it's being animated out)
-  // During transitioning/entering: use new footer (it will animate in)
-  const footerStep = (phase === 'idle' || phase === 'exiting') ? currentStep : targetStep
-
-  // Extract titles and footers from Step children
   useEffect(() => {
     if (isSingleStep) {
-      // For single-step, extract footer from direct children
       const { footer } = separateFooter(children)
       setCurrentFooter(footer)
       return
@@ -181,20 +180,14 @@ function ModalBody({
         isValidElement(child) && hasComponentMarker(child.type) && child.type._isModalStep === true
     )
 
-    // Title updates with currentStep (for header animation timing)
     if (steps[currentStep]) {
       setCurrentTitle(steps[currentStep].props.title)
-    }
-
-    // Footer updates with footerStep (so it animates with content transition)
-    if (steps[footerStep]) {
-      const { footer } = separateFooter(steps[footerStep].props.children)
+      const { footer } = separateFooter(steps[currentStep].props.children)
       setCurrentFooter(footer)
     }
-  }, [children, currentStep, footerStep, isSingleStep, setCurrentTitle, setCurrentFooter])
+  }, [children, currentStep, isSingleStep, setCurrentTitle, setCurrentFooter])
 
   if (isSingleStep) {
-    // Single-step: wrap content in morph classes for consistency (without footer)
     const { content } = separateFooter(children)
     return (
       <div className="modal-body">
@@ -209,7 +202,6 @@ function ModalBody({
     )
   }
 
-  // Multi-step: children are Modal.Step components
   const steps = Children.toArray(children).filter(
     (child): child is ReactElement<ModalStepProps> =>
       isValidElement(child) && hasComponentMarker(child.type) && child.type._isModalStep === true
@@ -218,9 +210,7 @@ function ModalBody({
   return (
     <div className="modal-body">
       {steps.map((step, index) => {
-        // Separate footer from step children - footer renders outside body
         const { content } = separateFooter(step.props.children)
-        // Clone with internal _index prop, passing only non-footer content
         return (
           <ModalStep key={index} {...step.props} _index={index}>
             {injectItemIndices(content)}
@@ -237,12 +227,7 @@ function injectItemIndices(children: React.ReactNode): React.ReactNode {
 
   return Children.map(children, (child) => {
     if (isValidElement(child) && hasComponentMarker(child.type)) {
-      // Check if it's a ModalItem - use React.cloneElement for proper cloning
       if (child.type._isModalItem) {
-        // React 19 types cloneElement's prop argument against the child's own
-        // prop type. The Children.map narrowing gives us ReactElement<unknown>,
-        // which rejects our internal `_index` injection. Cast to a minimal
-        // shape that accepts it.
         const cloned = React.cloneElement(
           child as ReactElement<{ _index?: number }>,
           { _index: itemIndex },
@@ -250,13 +235,135 @@ function injectItemIndices(children: React.ReactNode): React.ReactNode {
         itemIndex++
         return cloned
       }
-      // ModalFooter passes through unchanged
       if (child.type._isModalFooter) {
         return child
       }
     }
     return child
   })
+}
+
+// Backdrop — owns the dim overlay below the safe-area-inset-top. The drawer
+// fills the remainder of the viewport, so there's no separate tap-zone.
+function ModalBackdrop({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      className="modal-backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      role="dialog"
+      aria-modal="true"
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+// Inner component that renders the drawer card itself.
+function ModalInner({
+  children,
+  title,
+  singleStepTitle,
+  isSingleStep,
+  setCurrentTitle,
+  currentFooter,
+  setCurrentFooter,
+}: {
+  children: React.ReactNode
+  title?: string
+  singleStepTitle?: string
+  isSingleStep: boolean
+  setCurrentTitle: (title: string) => void
+  currentFooter: React.ReactNode
+  setCurrentFooter: (footer: React.ReactNode) => void
+}) {
+  const ctx = useModalContext()
+  const { _onClose } = ctx
+  const dragControls = useDragControls()
+  const drawerRef = useRef<HTMLDivElement>(null)
+
+  // ESC key handler — depend on _onClose (stable per phase/lock change) instead
+  // of the whole context value to avoid re-attaching the listener on every
+  // phase tick during step transitions.
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        _onClose()
+      }
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [_onClose])
+
+  // Drag is initiated only by .modal-header onPointerDown (not the drawer body).
+  // dragListener={false} on the motion.div disables the default global pointer
+  // listener; we manually start drag with the controls when the header is touched.
+  const handleHeaderPointerDown = (e: React.PointerEvent) => {
+    if (ctx.isLocked || ctx.isTransitioning) return
+    dragControls.start(e)
+  }
+
+  const handleDragEnd = (_event: unknown, info: PanInfo) => {
+    if (ctx.isLocked || ctx.isTransitioning) return
+    const drawerHeight = drawerRef.current?.offsetHeight ?? window.innerHeight
+    const shouldClose =
+      info.offset.y > drawerHeight * DRAG_DISTANCE_RATIO ||
+      info.velocity.y > DRAG_VELOCITY_PX_S
+    if (shouldClose) {
+      ctx._onClose()
+    }
+    // Otherwise framer-motion springs y back to 0 automatically.
+  }
+
+  return (
+    <motion.div
+      className="modal"
+      ref={drawerRef}
+      initial={{ y: '100%' }}
+      animate={{ y: 0 }}
+      exit={{ y: '100%', opacity: 0 }}
+      transition={{ type: 'spring', damping: 35, stiffness: 300 }}
+      drag="y"
+      dragListener={false}
+      dragControls={dragControls}
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={{ top: 0, bottom: 0.2 }}
+      onDragEnd={handleDragEnd}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <ModalHeader
+        title={title}
+        singleStepTitle={singleStepTitle}
+        onPointerDown={handleHeaderPointerDown}
+      />
+      <ModalBody
+        isSingleStep={isSingleStep}
+        setCurrentTitle={setCurrentTitle}
+        setCurrentFooter={setCurrentFooter}
+      >
+        {children}
+      </ModalBody>
+      {/* Footer animated by AnimatePresence keyed on currentStep. When the
+          current step provides no <Modal.Footer>, currentFooter is null and
+          the AnimatePresence child is absent — exit animation runs. */}
+      <AnimatePresence mode="wait">
+        {currentFooter && (
+          <motion.div
+            key={`modal-footer-${ctx.currentStep}`}
+            className="modal-footer-wrapper"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.15 }}
+          >
+            {currentFooter}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
 }
 
 // Main Modal component
@@ -268,137 +375,44 @@ function ModalRoot({
   initialStep = 0,
   children,
 }: ModalProps) {
-  const [render, setRender] = useState(false)
-  const [closing, setClosing] = useState(false)
   const [currentTitle, setCurrentTitle] = useState('')
   const [currentFooter, setCurrentFooter] = useState<React.ReactNode>(null)
 
-  // Ref for onExitComplete to avoid restarting close animation on parent re-renders
+  // Ref for onExitComplete to avoid stale closure when parent re-renders mid-exit.
   const onExitCompleteRef = useRef(onExitComplete)
   onExitCompleteRef.current = onExitComplete
 
-  // Check if this is a single-step modal (no Modal.Step children)
   const steps = Children.toArray(children).filter(
     (child): child is ReactElement<ModalStepProps> =>
       isValidElement(child) && hasComponentMarker(child.type) && child.type._isModalStep === true
   )
   const isSingleStep = steps.length === 0
 
-  // Handle open/close animations
-  useEffect(() => {
-    if (isOpen) {
-      setRender(true)
-      setClosing(false)
-    } else if (render) {
-      setClosing(true)
-      const timer = setTimeout(() => {
-        setRender(false)
-        setClosing(false)
-        onExitCompleteRef.current?.()
-      }, 200) // Match CSS modal-exit animation duration
-      return () => clearTimeout(timer)
-    }
-  }, [isOpen, render])
+  // Portal to document.body so the backdrop + drawer are outside any
+  // scroll container or stacking context created by page layouts (e.g.
+  // main-scroll-container's overflow, PageTransition's opacity).
+  if (typeof window === 'undefined') return null
 
-  if (!render) return null
-
-  // Portal to document.body so the backdrop + modal are outside any
-  // scroll container or stacking context created by page layouts
-  // (e.g. main-scroll-container's overflow, PageTransition's opacity).
-  // Without this, position: fixed + z-index on the backdrop can't
-  // reliably cover the fixed PageHeader.
   return createPortal(
-    <ModalProvider initialStep={initialStep} onClose={onClose} isOpen={isOpen}>
-      <div
-        className={`modal-backdrop ${closing ? 'modal-backdrop-exit' : 'modal-backdrop-animated'}`}
-        role="dialog"
-        aria-modal="true"
-      >
-        <ModalInner
-          closing={closing}
-          title={isSingleStep ? title : currentTitle}
-          singleStepTitle={isSingleStep ? title : undefined}
-          isSingleStep={isSingleStep}
-          setCurrentTitle={setCurrentTitle}
-          currentFooter={currentFooter}
-          setCurrentFooter={setCurrentFooter}
-        >
-          {children}
-        </ModalInner>
-      </div>
-    </ModalProvider>,
+    <AnimatePresence onExitComplete={() => onExitCompleteRef.current?.()}>
+      {isOpen && (
+        <ModalProvider initialStep={initialStep} onClose={onClose} isOpen={isOpen}>
+          <ModalBackdrop>
+            <ModalInner
+              title={isSingleStep ? title : currentTitle}
+              singleStepTitle={isSingleStep ? title : undefined}
+              isSingleStep={isSingleStep}
+              setCurrentTitle={setCurrentTitle}
+              currentFooter={currentFooter}
+              setCurrentFooter={setCurrentFooter}
+            >
+              {children}
+            </ModalInner>
+          </ModalBackdrop>
+        </ModalProvider>
+      )}
+    </AnimatePresence>,
     document.body,
-  )
-}
-
-// Inner component that has access to context
-function ModalInner({
-  children,
-  closing,
-  title,
-  singleStepTitle,
-  isSingleStep,
-  setCurrentTitle,
-  currentFooter,
-  setCurrentFooter,
-}: {
-  children: React.ReactNode
-  closing: boolean
-  title?: string
-  singleStepTitle?: string
-  isSingleStep: boolean
-  setCurrentTitle: (title: string) => void
-  currentFooter: React.ReactNode
-  setCurrentFooter: (footer: React.ReactNode) => void
-}) {
-  const ctx = useModalContext()
-
-  // Handle backdrop click
-  const handleBackdropClick = () => {
-    ctx._onClose()
-  }
-
-  // ESC key handler
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        ctx._onClose()
-      }
-    }
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [ctx])
-
-  return (
-    <>
-      {/* Invisible backdrop click handler */}
-      <div
-        className="absolute inset-0"
-        onClick={handleBackdropClick}
-      />
-      <div
-        className={`modal ${closing ? 'modal-exit' : 'modal-animated'}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <ModalHeader title={title} singleStepTitle={singleStepTitle} />
-        <ModalBody isSingleStep={isSingleStep} setCurrentTitle={setCurrentTitle} setCurrentFooter={setCurrentFooter}>
-          {children}
-        </ModalBody>
-        {/* Footer rendered outside modal-body for sticky positioning */}
-        {/* Always render AnimatedFooter for multi-step modals to animate height changes */}
-        {isSingleStep ? (
-          currentFooter && (
-            <AnimatedFooter hasFooter={true}>
-              {currentFooter}
-            </AnimatedFooter>
-          )
-        ) : (
-          <AnimatedFooter hasFooter={currentFooter !== null}>
-            {currentFooter}
-          </AnimatedFooter>
-        )}
-      </div>
-    </>
   )
 }
 

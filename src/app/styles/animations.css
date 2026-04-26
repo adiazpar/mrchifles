@@ -52,75 +52,26 @@
   to { opacity: 0; }
 }
 
-/* ===== Modal Animations ===== */
-.modal-animated {
-  animation: modal-enter var(--duration-normal) var(--ease-out-expo);
-}
-
-.modal-exit {
-  animation: modal-exit var(--duration-normal) var(--ease-in) forwards;
-}
-
-@keyframes modal-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes modal-exit {
-  from {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.96) translateY(8px);
-  }
-}
-
-.modal-backdrop-animated {
-  animation: backdrop-enter var(--duration-fast) ease-out;
-}
-
-.modal-backdrop-exit {
-  pointer-events: none;
-  animation: backdrop-exit var(--duration-normal) ease-in forwards;
-}
-
-@keyframes backdrop-enter {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes backdrop-exit {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
 
 /* ===== Modal Content Morph ===== */
 
-/* Panel height animation using CSS Grid */
+/* Step panels stack at the same position; ModalStep.tsx toggles visibility
+   via the phase state machine. No height animation — the drawer is fixed
+   height. */
 .morph-panel {
-  display: grid;
-  transition: grid-template-rows var(--duration-normal) ease-out;
+  display: block;
 }
 
 .morph-panel-visible {
-  grid-template-rows: 1fr;
+  display: block;
 }
 
 .morph-panel-hidden {
-  grid-template-rows: 0fr;
+  display: none;
 }
 
 .morph-panel-inner {
-  overflow: hidden;
-  min-height: 0;
+  /* No-op container kept for class-name compatibility with ModalStep.tsx */
 }
 
 .morph-content {
@@ -153,129 +104,14 @@
 .morph-content-enter .morph-item:nth-child(5) { animation-delay: 100ms; }
 
 @keyframes morph-item-exit {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 @keyframes morph-item-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Backward exit animation - fade out downward */
-.morph-content-exit-back .morph-item {
-  animation: morph-item-exit-back var(--duration-instant) ease-in forwards;
-}
-
-.morph-content-exit-back .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-exit-back .morph-item:nth-child(2) { animation-delay: 25ms; }
-.morph-content-exit-back .morph-item:nth-child(3) { animation-delay: 50ms; }
-.morph-content-exit-back .morph-item:nth-child(4) { animation-delay: 75ms; }
-.morph-content-exit-back .morph-item:nth-child(5) { animation-delay: 100ms; }
-
-/* Backward enter animation - fade in from above */
-.morph-content-enter-back .morph-item {
-  animation: morph-item-enter-back var(--duration-instant) ease-out forwards;
-  opacity: 0;
-}
-
-.morph-content-enter-back .morph-item:nth-child(1) { animation-delay: 0ms; }
-.morph-content-enter-back .morph-item:nth-child(2) { animation-delay: 25ms; }
-.morph-content-enter-back .morph-item:nth-child(3) { animation-delay: 50ms; }
-.morph-content-enter-back .morph-item:nth-child(4) { animation-delay: 75ms; }
-.morph-content-enter-back .morph-item:nth-child(5) { animation-delay: 100ms; }
-
-@keyframes morph-item-exit-back {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
-@keyframes morph-item-enter-back {
-  from {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Modal footer wrapper for animations */
-/* Uses CSS Grid for height animation when footer appears/disappears */
-.morph-footer-wrapper {
-  flex-shrink: 0;
-  display: grid;
-  transition: grid-template-rows var(--duration-normal) ease-out;
-}
-
-.morph-footer-expanded {
-  grid-template-rows: 1fr;
-}
-
-.morph-footer-collapsed {
-  grid-template-rows: 0fr;
-}
-
-.morph-footer-inner {
-  overflow: hidden;
-  min-height: 0;
-}
-
-/* Modal footer for morphing modal */
-.morph-footer {
-  display: flex;
-  align-items: stretch;
-  gap: var(--space-2);
-  justify-content: flex-end;
-  width: 100%;
-  padding: var(--space-4) var(--space-5);
-  border-top: 1px solid var(--color-border);
-  background: var(--color-bg-surface);
-}
-
-/* Footer exit animations */
-.morph-footer-exit .morph-footer,
-.morph-footer-exit-back .morph-footer {
-  animation: morph-footer-fade-out var(--duration-instant) ease-in forwards;
-}
-
-/* Footer enter animations */
-.morph-footer-enter .morph-footer,
-.morph-footer-enter-back .morph-footer {
-  animation: morph-footer-fade-in var(--duration-instant) ease-out forwards;
-}
-
-/* Hidden during height transition */
-.morph-footer-hidden .morph-footer {
-  opacity: 0;
-}
-
-@keyframes morph-footer-fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-@keyframes morph-footer-fade-in {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
+
+
 

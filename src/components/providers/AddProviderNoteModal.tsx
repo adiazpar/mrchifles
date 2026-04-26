@@ -95,7 +95,6 @@ export function AddProviderNoteModal({
             placeholder={t('note_title_placeholder')}
             autoComplete="off"
             maxLength={NOTE_TITLE_MAX}
-            autoFocus
           />
         </Modal.Item>
 

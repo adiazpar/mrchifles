@@ -144,7 +144,6 @@ function CodeInputContent({
           placeholder={t('code_placeholder')}
           maxLength={6}
           className="input text-center text-2xl tracking-widest font-mono"
-          autoFocus
           autoComplete="off"
           autoCapitalize="characters"
           disabled={isValidating}

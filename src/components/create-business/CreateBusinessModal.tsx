@@ -161,7 +161,6 @@ function NameContent({ name, setName }: NameContentProps) {
           placeholder={t('name_placeholder')}
           maxLength={100}
           className="input"
-          autoFocus
           autoComplete="off"
         />
       </Modal.Item>

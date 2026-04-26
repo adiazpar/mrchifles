@@ -2,37 +2,73 @@
  Modal and Overlay Styles
  ========================================================================== */
 
-/* ===== Modal ===== */
+/* ===== Bottom Drawer Modal =====
+   Replaces the prior centered-card "morphing modal." Open/close, drag-to-
+   dismiss, step content fade, and footer fade are driven by framer-motion in
+   src/components/ui/modal/Modal.tsx. CSS here owns layout and static visuals
+   only — no @keyframes, no animations. The phase state machine in
+   ModalContext.tsx still ticks; ModalStep.tsx applies opacity-only classes
+   from animations.css to drive the body content fade. */
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: var(--z-modal-backdrop);
+  /* Push the drawer down by the safe-area-inset-top so it sits directly under
+     the iPhone notch / status bar with no extra gap. */
+  padding-top: env(safe-area-inset-top);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4);
+  flex-direction: column;
 }
 
 .modal {
+  width: 100vw;
+  /* Fill the rest of the viewport below the safe-area inset. flex: 1 inside
+     the backdrop's column flex makes the drawer take all remaining height,
+     which respects the iOS Safari URL-bar dvh quirk automatically. */
+  flex: 1;
+  min-height: 0;
   background: var(--color-bg-surface);
-  border-radius: var(--radius-2xl);
-  width: 100%;
-  max-width: 440px;
-  max-height: calc(100vh - var(--space-8));
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
   z-index: var(--z-modal);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
+/* Header: drag surface + visual chrome. The entire header (notch row + button
+   row) initiates a drag via onPointerDown -> useDragControls.start(). Buttons
+   inside stopPropagation on pointerdown so taps don't initiate drags. */
 .modal-header {
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: grab;
+}
+.modal-header:active {
+  cursor: grabbing;
+}
+
+.modal-notch {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2) 0;
+}
+.modal-notch::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+}
+
+.modal-header-bar {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
+  gap: var(--space-3);
+  padding: 0 var(--space-4) var(--space-3);
 }
 
 .modal-title {
@@ -40,89 +76,97 @@
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 700;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin: 0;
 }
 
+/* Circular icon buttons — visual language from .icon-stack-btn (44x44 muted
+   circle, scale-on-press). Icon uses text-primary so the chrome reads neutral,
+   not branded. */
+.modal-back,
 .modal-close {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-lg);
-  color: var(--color-text-tertiary);
-  background: transparent;
-  transition: background-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-muted);
+  color: var(--color-text-primary);
+  border: none;
+  flex-shrink: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--duration-fast) ease-out, background var(--duration-fast) ease-out, opacity var(--duration-fast) ease-out;
+}
+
+.modal-back:active,
+.modal-close:active {
+  transform: scale(0.94);
 }
 
 @media (hover: hover) {
-  .modal-close:hover {
-    background: var(--color-bg-muted);
-    color: var(--color-text-primary);
+  .modal-back:hover:not(:disabled),
+  .modal-close:hover:not(:disabled) {
+    background: var(--color-bg-subtle);
   }
 }
 
-
-.modal-body {
-  padding: var(--space-5);
-  flex: 1;
-  min-height: 0; /* Allow shrinking below content size for proper overflow */
-  overflow-y: auto;
-  /* Hide scrollbar across browsers */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
-}
-
-.modal-body::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-/* Modal back button in header */
-.modal-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
-  transition: color var(--duration-fast), background var(--duration-fast);
-  margin-right: var(--space-2);
-}
-
-.modal-back:hover:not(:disabled) {
-  color: var(--color-text-primary);
-  background: var(--color-bg-muted);
-}
-
-.modal-back:disabled {
+.modal-back:disabled,
+.modal-close:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Modal back button container - animates width to push title */
-.modal-back-container {
+/* Back button slot — always reserved (44px wide) so the title stays perfectly
+   centered between the back-slot and the close button. The button itself
+   fades in/out via the .modal-back-hidden modifier. */
+.modal-back-slot {
+  width: 44px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  flex-shrink: 0;
-  overflow: hidden;
-  transition: width var(--duration-normal) ease-out;
-}
-
-.modal-back-visible {
-  width: 40px; /* 32px button + 8px spacing */
+  justify-content: flex-start;
 }
 
 .modal-back-hidden {
-  width: 0;
-}
-
-.modal-back-hidden .modal-back {
   opacity: 0;
   pointer-events: none;
 }
 
-.modal-back-visible .modal-back {
-  opacity: 1;
+.modal-body {
+  padding: var(--space-5);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Footer wrapper — animated by framer-motion AnimatePresence keyed on
+   currentStep. Holds positioning, padding, safe-area inset, and the divider
+   line. The flex layout lives on .morph-footer (the consumer-rendered child). */
+.modal-footer-wrapper {
+  flex-shrink: 0;
+  width: 100%;
+  padding: var(--space-4) var(--space-5) calc(var(--space-4) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+}
+
+/* Footer row — rendered by <Modal.Footer>. Buttons spread across the full
+   width using their own flex-1 (per the Modal.Footer convention). No
+   justify-content here — buttons with flex-1 fill the row. */
+.morph-footer {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+  width: 100%;
 }
 
 /* ===== Bottom Sheet ===== */

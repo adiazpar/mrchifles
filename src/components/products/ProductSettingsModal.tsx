@@ -438,7 +438,6 @@ export function ProductSettingsModal({
             className="input"
             placeholder={t('category_name_placeholder')}
             autoComplete="off"
-            autoFocus
           />
         </Modal.Item>
 
