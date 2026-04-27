@@ -2,7 +2,7 @@ import { db, inviteCodes } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { isOwner } from '@/lib/business-auth'
+import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { isExpiryWithinBounds } from '@/lib/invite-expiry'
@@ -21,8 +21,8 @@ const regenerateInviteSchema = z.object({
  * Delete old invite code and create a new one.
  */
 export const POST = withBusinessAuth(async (request, access) => {
-  if (!isOwner(access.role)) {
-    return errorResponse(ApiMessageCode.TEAM_FORBIDDEN_NOT_OWNER, 403)
+  if (!canManageBusiness(access.role)) {
+    return errorResponse(ApiMessageCode.TEAM_FORBIDDEN_NOT_MANAGER, 403)
   }
 
   const body = await request.json()

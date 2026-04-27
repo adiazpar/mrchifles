@@ -47,7 +47,10 @@ export const GET = withBusinessAuth(async (_request, access) => {
 const PATCH_MAX_BODY_BYTES = 5 * 1024 * 1024
 
 export const PATCH = withBusinessAuth(async (request, access) => {
-  if (access.role !== 'owner' && access.role !== 'partner') {
+  // Identity edits (name, icon, type, locale, currency) are owner-only.
+  // Functional settings (defaultCategoryId, sortPreference) live on a
+  // separate route and remain manager-level.
+  if (!isOwner(access.role)) {
     return errorResponse(ApiMessageCode.BUSINESS_UPDATE_FORBIDDEN, 403)
   }
 

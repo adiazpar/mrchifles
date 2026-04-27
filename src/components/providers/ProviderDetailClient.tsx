@@ -823,7 +823,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     const alreadyReceived = getOrderDisplayStatus(order) === 'received'
                     // Same semantic ordering as the Products page Orders tab
                     // for muscle-memory consistency across surfaces.
-                    const swipeActions = [
+                    const swipeActions = canManage ? [
                       {
                         icon: <CircleCheckBig size={20} />,
                         label: tOrders('action_receive'),
@@ -845,10 +845,10 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                         variant: 'danger' as const,
                         // Received orders can't be deleted either — would
                         // require rolling back the stock changes they posted.
-                        disabled: !canManage || alreadyReceived,
+                        disabled: alreadyReceived,
                         onClick: () => orderFlows.openOrderDetail(order, 'delete'),
                       },
-                    ]
+                    ] : []
                     return (
                       <Fragment key={order.id}>
                         {i > 0 && <hr className="list-divider" />}

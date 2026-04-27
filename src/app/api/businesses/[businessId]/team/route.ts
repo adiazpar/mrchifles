@@ -1,25 +1,25 @@
 import { db, businessUsers, users, inviteCodes } from '@/db'
 import { eq, and, gt, sql } from 'drizzle-orm'
-import { canManageBusiness, isOwner } from '@/lib/business-auth'
-import { withBusinessAuth, errorResponse, successResponse } from '@/lib/api-middleware'
-import { ApiMessageCode } from '@/lib/api-messages'
+import { canManageBusiness } from '@/lib/business-auth'
+import { withBusinessAuth, successResponse } from '@/lib/api-middleware'
 
 /**
  * GET /api/businesses/[businessId]/team
  *
- * Get team members and active invite codes for the business.
- * Restricted to managers (owner + partner) — employees don't need the
- * team roster and surfacing teammate emails to them is an unnecessary
- * data exposure.
+ * Read-only team view. Available to any active member of the business.
+ *
+ * Response shape varies by caller role:
+ *   - Owner / partner ("manager"): full payload — every member's email is
+ *     included, plus active invite codes.
+ *   - Employee: roster without emails, no invite codes. Employees have
+ *     no need to act on their teammates' email addresses, and the route's
+ *     prior author called this out as an unnecessary data exposure.
  */
 export const GET = withBusinessAuth(async (_request, access) => {
-  if (!canManageBusiness(access.role)) {
-    return errorResponse(ApiMessageCode.FORBIDDEN, 403)
-  }
+  const isManager = canManageBusiness(access.role)
 
-  // Team members via business_users join. 100 is a defensive cap; the
-  // target audience has <10 teammates per business.
-  const teamMembers = await db
+  // Defensive cap of 100 — the target audience has <10 teammates per business.
+  const allMembers = await db
     .select({
       id: users.id,
       email: users.email,
@@ -33,7 +33,14 @@ export const GET = withBusinessAuth(async (_request, access) => {
     .where(eq(businessUsers.businessId, access.businessId))
     .limit(100)
 
-  // Get active (unused, non-expired) invite codes if user is owner
+  // Employee-facing payload omits the email field entirely. We strip it
+  // from each row rather than running a different SELECT to keep the
+  // query plan stable across roles.
+  const teamMembers = isManager
+    ? allMembers
+    : allMembers.map(({ email: _email, ...rest }) => rest)
+
+  // Active (unused, non-expired) invite codes are visible to managers only.
   let activeInviteCodes: Array<{
     id: string
     code: string
@@ -41,7 +48,7 @@ export const GET = withBusinessAuth(async (_request, access) => {
     expiresAt: Date
   }> = []
 
-  if (isOwner(access.role)) {
+  if (isManager) {
     const now = new Date()
     activeInviteCodes = await db
       .select({

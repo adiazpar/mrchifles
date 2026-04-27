@@ -37,6 +37,7 @@ export default function TeamPage() {
 
     // Permission
     canManageTeam,
+    callerRole,
 
     // Invite code state
     selectedRole,
@@ -271,6 +272,7 @@ export default function TeamPage() {
               member={selectedMember}
               currentUser={user}
               canManageTeam={canManageTeam}
+              callerRole={callerRole}
               onToggleStatus={handleToggleUserStatus}
             />
           )}

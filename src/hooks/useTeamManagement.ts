@@ -12,11 +12,13 @@ import {
   type InviteDuration,
 } from '@/lib/auth'
 import { generateInviteQRCode } from '@/lib/qr'
-import { isOwner } from '@/lib/business-role'
+import { canManageBusiness } from '@/lib/business-role'
 import type { User, InviteCode, InviteRole, UserRole } from '@/types'
 
-// Team member includes role and status from business_users table
-export interface TeamMember extends User {
+// Team member includes role and status from business_users table.
+// email is optional: the GET /team route strips it for employee callers.
+export interface TeamMember extends Omit<User, 'email'> {
+  email?: string
   role: UserRole
   status: 'active' | 'pending' | 'disabled'
   createdAt: Date | string
@@ -36,6 +38,7 @@ interface UseTeamManagementReturn {
 
   // Permission
   canManageTeam: boolean
+  callerRole: UserRole | null
 
   // Invite code state
   selectedRole: InviteRole
@@ -133,8 +136,10 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
   const [newRole, setNewRole] = useState<'partner' | 'employee'>('employee')
   const [roleChangeLoading, setRoleChangeLoading] = useState(false)
 
-  // Check if current user is owner
-  const canManageTeam = isOwner(role)
+  // Managers (owner + partner) can perform team operations. Server-side
+  // routes additionally enforce a partner-on-partner guard for change-role
+  // and toggle-status, which the UI mirrors via callerRole + member.role.
+  const canManageTeam = canManageBusiness(role)
 
   // Load team members and invite codes
   useEffect(() => {
@@ -459,6 +464,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
 
     // Permission
     canManageTeam,
+    callerRole: role,
 
     // Invite code state
     selectedRole,

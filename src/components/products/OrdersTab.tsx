@@ -56,6 +56,7 @@ export interface OrdersTabProps {
   onDeleteOrder?: (order: ExpandedOrder) => void
   /** Gates the delete swipe action; matches the canDelete used by the modal. */
   canDelete?: boolean
+  canManage?: boolean
 
   // Error state
   error?: string
@@ -94,6 +95,7 @@ export function OrdersTab({
   onEditOrder,
   onDeleteOrder,
   canDelete = false,
+  canManage = false,
   error,
   isModalOpen,
   isLoading = false,
@@ -144,15 +146,17 @@ export function OrdersTab({
           <p className="empty-state-description">
             {t('empty_no_orders_description')}
           </p>
-          <button
-            type="button"
-            onClick={onNewOrder}
-            className="btn btn-primary mt-4"
-            style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
-          >
-            <Plus className="w-4 h-4" />
-            {t('create_order_button')}
-          </button>
+          {canManage && (
+            <button
+              type="button"
+              onClick={onNewOrder}
+              className="btn btn-primary mt-4"
+              style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
+            >
+              <Plus className="w-4 h-4" />
+              {t('create_order_button')}
+            </button>
+          )}
         </div>
       ) : (
         /* Orders exist - show search, filter, and list */
@@ -229,15 +233,17 @@ export function OrdersTab({
                   {t('providers_link')}
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={onNewOrder}
-                className="btn btn-primary"
-                style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
-              >
-                <Plus style={{ width: 14, height: 14 }} />
-                {tCommon('add')}
-              </button>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={onNewOrder}
+                  className="btn btn-primary"
+                  style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
+                >
+                  <Plus style={{ width: 14, height: 14 }} />
+                  {tCommon('add')}
+                </button>
+              )}
             </div>
 
             <hr className="border-border" />
@@ -262,7 +268,7 @@ export function OrdersTab({
             ) : (
               <div className="list-divided">
                 {filteredOrders.map((order, i) => {
-                  const hasSwipeActions = viewMode !== 'completed' && !!(onReceiveOrder && onEditOrder && onDeleteOrder)
+                  const hasSwipeActions = canManage && viewMode !== 'completed' && !!(onReceiveOrder && onEditOrder && onDeleteOrder)
                   const alreadyReceived = getOrderDisplayStatus(order) === 'received'
                   // Mirrors the products list ordering for muscle-memory consistency:
                   // primary action leftmost (deepest swipe), secondary middle, the

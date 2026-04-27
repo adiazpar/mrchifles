@@ -13,6 +13,7 @@ export interface UserDetailsStepProps {
   member: TeamMember
   currentUser: User | null
   canManageTeam: boolean
+  callerRole: UserRole | null
   onToggleStatus: () => void
 }
 
@@ -20,13 +21,19 @@ export const UserDetailsStep = memo(function UserDetailsStep({
   member,
   currentUser,
   canManageTeam,
+  callerRole,
   onToggleStatus,
 }: UserDetailsStepProps) {
   const t = useTranslations('team')
   const { goToStep } = useModal()
   const { formatDate } = useBusinessFormat()
   const isSelf = member.id === currentUser?.id
-  const isManageable = canManageTeam && !isSelf && member.role !== 'owner'
+  // Partner-on-partner guard mirrors the server-side check in
+  // /users/change-role and /users/toggle-status: a partner cannot mutate
+  // another partner; only the owner can.
+  const isPartnerOnPartner = callerRole === 'partner' && member.role === 'partner'
+  const isManageable =
+    canManageTeam && !isSelf && member.role !== 'owner' && !isPartnerOnPartner
 
   const roleLabels: Record<UserRole, string> = {
     owner: t('role_owner'),
@@ -58,14 +65,16 @@ export const UserDetailsStep = memo(function UserDetailsStep({
       <Modal.Item>
         {/* Member details */}
         <div className="space-y-3 p-4 bg-bg-muted rounded-lg">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-text-secondary">{t('email_label')}</span>
-            <span className="text-sm font-medium">
-              {isSelf
-                ? member.email
-                : `****${member.email.split('@')[0].slice(-4)}@${member.email.split('@')[1]}`}
-            </span>
-          </div>
+          {member.email && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-text-secondary">{t('email_label')}</span>
+              <span className="text-sm font-medium">
+                {isSelf
+                  ? member.email
+                  : `****${member.email.split('@')[0].slice(-4)}@${member.email.split('@')[1]}`}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between items-center">
             <span className="text-sm text-text-secondary">{t('member_since_label')}</span>
             <span className="text-sm font-medium">

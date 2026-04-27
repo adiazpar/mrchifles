@@ -823,6 +823,7 @@ export default function ProductosPage() {
               onEditProduct={handleOpenEdit}
               onAdjustInventory={handleAdjustInventory}
               onToggleActive={handleToggleActive}
+              canManage={canManage}
               canModify={canManage}
               onOpenSettings={() => setIsSettingsModalOpen(true)}
               error={error}
@@ -850,6 +851,7 @@ export default function ProductosPage() {
               onReceiveOrder={(order) => orderFlows.openOrderDetail(order, 'receive')}
               onEditOrder={(order) => orderFlows.openOrderDetail(order, 'edit')}
               onDeleteOrder={(order) => orderFlows.openOrderDetail(order, 'delete')}
+              canManage={canManage}
               canDelete={canDelete}
               error={error || orderFlows.error}
               isModalOpen={orderFlows.isNewOrderOpen}

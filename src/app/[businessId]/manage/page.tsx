@@ -54,7 +54,7 @@ export default function ManagePage() {
   const t = useTranslations('manage')
   const tCreate = useTranslations('createBusiness')
   const tAccount = useTranslations('account')
-  const { business, businessId, role, isOwner } = useBusiness()
+  const { business, businessId, isOwner } = useBusiness()
   const { setSlideDirection, setSlideTargetPath, navigate } = usePageTransition()
   const { transfer: pendingTransfer } = usePendingTransferContext()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
@@ -75,8 +75,6 @@ export default function ManagePage() {
   const showIncomingTransferBanner =
     Boolean(incomingTransfer) &&
     incomingTransfer?.business.id === businessId
-
-  const canEdit = role === 'owner' || role === 'partner'
 
   const slideTo = (href: string) => {
     setSlideTargetPath(href)
@@ -157,32 +155,32 @@ export default function ManagePage() {
           <SettingsRow
             icon={ImageIcon}
             label={t('row_logo')}
-            onClick={canEdit ? () => setLogoOpen(true) : undefined}
-            hideChevron={!canEdit}
+            onClick={isOwner ? () => setLogoOpen(true) : undefined}
+            hideChevron={!isOwner}
           />
           <div className="settings-divider" />
           <SettingsRow
             icon={Building2}
             label={t('row_name')}
             value={business.name}
-            onClick={canEdit ? () => setNameOpen(true) : undefined}
-            hideChevron={!canEdit}
+            onClick={isOwner ? () => setNameOpen(true) : undefined}
+            hideChevron={!isOwner}
           />
           <div className="settings-divider" />
           <SettingsRow
             icon={Briefcase}
             label={t('row_type')}
             value={business.type ? tCreate(`business_type_${business.type}`) : '—'}
-            onClick={canEdit ? () => setTypeOpen(true) : undefined}
-            hideChevron={!canEdit}
+            onClick={isOwner ? () => setTypeOpen(true) : undefined}
+            hideChevron={!isOwner}
           />
           <div className="settings-divider" />
           <SettingsRow
             icon={MapPin}
             label={t('row_location')}
             value={`${business.locale} · ${business.currency}`}
-            onClick={canEdit ? () => setLocationOpen(true) : undefined}
-            hideChevron={!canEdit}
+            onClick={isOwner ? () => setLocationOpen(true) : undefined}
+            hideChevron={!isOwner}
           />
         </div>
       </div>

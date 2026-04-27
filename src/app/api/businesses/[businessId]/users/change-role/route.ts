@@ -1,7 +1,7 @@
 import { db, businessUsers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { isOwner, invalidateAccessCache } from '@/lib/business-auth'
+import { canManageBusiness, invalidateAccessCache } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
@@ -18,8 +18,8 @@ const changeRoleSchema = z.object({
  * Only owners can change roles, and they can't change another owner's role.
  */
 export const POST = withBusinessAuth(async (request, access) => {
-  if (!isOwner(access.role)) {
-    return errorResponse(ApiMessageCode.TEAM_FORBIDDEN_NOT_OWNER, 403)
+  if (!canManageBusiness(access.role)) {
+    return errorResponse(ApiMessageCode.TEAM_FORBIDDEN_NOT_MANAGER, 403)
   }
 
   const body = await request.json()
@@ -54,6 +54,12 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   if (targetMembership.role === 'owner') {
     return errorResponse(ApiMessageCode.TEAM_CANNOT_CHANGE_OWNER_ROLE, 400)
+  }
+
+  // Partner-on-partner guard: a partner cannot change another partner's
+  // role. Only the owner can manage partners. Owners are excluded above.
+  if (access.role === 'partner' && targetMembership.role === 'partner') {
+    return errorResponse(ApiMessageCode.TEAM_PARTNER_CANNOT_MUTATE_PARTNER, 403)
   }
 
   // Update user role in business_users

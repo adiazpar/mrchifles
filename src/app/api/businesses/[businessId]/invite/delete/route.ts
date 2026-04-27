@@ -1,7 +1,7 @@
 import { db, inviteCodes } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { isOwner } from '@/lib/business-auth'
+import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
@@ -16,8 +16,8 @@ const deleteInviteSchema = z.object({
  * Delete an invite code.
  */
 export const POST = withBusinessAuth(async (request, access) => {
-  if (!isOwner(access.role)) {
-    return errorResponse(ApiMessageCode.TEAM_FORBIDDEN_NOT_OWNER, 403)
+  if (!canManageBusiness(access.role)) {
+    return errorResponse(ApiMessageCode.TEAM_FORBIDDEN_NOT_MANAGER, 403)
   }
 
   const body = await request.json()

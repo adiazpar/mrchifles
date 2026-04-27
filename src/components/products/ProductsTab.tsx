@@ -54,6 +54,7 @@ export interface ProductsTabProps {
 
   // Permissions
   canModify?: boolean
+  canManage?: boolean
 
   // Error state
   error?: string
@@ -88,6 +89,7 @@ export function ProductsTab({
   onToggleActive,
   onOpenSettings,
   canModify = false,
+  canManage = false,
   error,
   isModalOpen,
   onScanClick,
@@ -190,23 +192,27 @@ export function ProductsTab({
                     {t('product_count', { count: filteredProducts.length })}
                   </span>
                   <span className="text-text-tertiary">&#183;</span>
+                  {canManage && (
+                    <button
+                      type="button"
+                      onClick={onOpenSettings}
+                      className="text-sm text-brand hover:text-brand transition-colors"
+                    >
+                      {t('settings_link')}
+                    </button>
+                  )}
+                </div>
+                {canManage && (
                   <button
                     type="button"
-                    onClick={onOpenSettings}
-                    className="text-sm text-brand hover:text-brand transition-colors"
+                    onClick={onAddProduct}
+                    className="btn btn-primary"
+                    style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
                   >
-                    {t('settings_link')}
+                    <Plus style={{ width: 14, height: 14 }} />
+                    {t('add_button')}
                   </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={onAddProduct}
-                  className="btn btn-primary"
-                  style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
-                >
-                  <Plus style={{ width: 14, height: 14 }} />
-                  {t('add_button')}
-                </button>
+                )}
               </div>
 
               <hr className="border-border" />
@@ -257,15 +263,17 @@ export function ProductsTab({
             <p className="empty-state-description">
               {t('empty_state_description')}
             </p>
-            <button
-              type="button"
-              onClick={onAddProduct}
-              className="btn btn-primary mt-4"
-              style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
-            >
-              <Plus className="w-4 h-4" />
-              {t('empty_state_button')}
-            </button>
+            {canManage && (
+              <button
+                type="button"
+                onClick={onAddProduct}
+                className="btn btn-primary mt-4"
+                style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
+              >
+                <Plus className="w-4 h-4" />
+                {t('empty_state_button')}
+              </button>
+            )}
           </div>
         )}
 
@@ -430,15 +438,15 @@ const ProductListItem = memo(function ProductListItem({
     <SwipeableRow actions={swipeActions}>
       <div
         className={`list-item-clickable ${hasBarcode ? 'items-start' : ''}`}
-        onClick={() => onEdit(product)}
-        onKeyDown={(e) => {
+        onClick={canModify ? () => onEdit(product) : undefined}
+        onKeyDown={canModify ? (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             onEdit(product)
           }
-        }}
-        tabIndex={0}
-        role="button"
+        } : undefined}
+        tabIndex={canModify ? 0 : undefined}
+        role={canModify ? 'button' : undefined}
       >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3">
