@@ -104,21 +104,28 @@ function ModalHeader({
       <div className="modal-notch" aria-hidden />
       <div className="modal-header-bar">
         {/* Back-button slot — always reserved (44px wide) so the title stays
-            perfectly centered. The button itself fades in/out via the
-            .modal-back-hidden modifier. */}
+            perfectly centered. The button itself unmounts on the first step
+            and fades in/out via AnimatePresence on subsequent steps. */}
         <div className="modal-back-slot">
-          <button
-            type="button"
-            onClick={handleBack}
-            onPointerDown={stopHeaderDrag}
-            className={`modal-back ${showBackIcon ? '' : 'modal-back-hidden'}`}
-            aria-label={t('go_back')}
-            aria-hidden={!showBackIcon}
-            tabIndex={showBackIcon ? 0 : -1}
-            disabled={isLocked || isTransitioning || !showBackIcon}
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+          <AnimatePresence>
+            {showBackIcon && (
+              <motion.button
+                key="modal-back"
+                type="button"
+                onClick={handleBack}
+                onPointerDown={stopHeaderDrag}
+                className="modal-back"
+                aria-label={t('go_back')}
+                disabled={isLocked || isTransitioning}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
         <h2 className="modal-title">{displayTitle}</h2>
         <button

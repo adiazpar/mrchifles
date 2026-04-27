@@ -119,19 +119,16 @@
 }
 
 /* Back button slot — always reserved (44px wide) so the title stays perfectly
-   centered between the back-slot and the close button. The button itself
-   fades in/out via the .modal-back-hidden modifier. */
+   centered between the back-slot and the close button. The button itself is
+   conditionally rendered (mounted only when showBackIcon is true) and the
+   mount/unmount transitions are animated by framer-motion AnimatePresence
+   in Modal.tsx. */
 .modal-back-slot {
   width: 44px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-}
-
-.modal-back-hidden {
-  opacity: 0;
-  pointer-events: none;
 }
 
 .modal-body {
@@ -168,13 +165,15 @@
   width: 100%;
 }
 
-/* ===== Bottom Sheet ===== */
+/* ===== Bottom Sheet =====
+   Open/close, drag-to-dismiss, and backdrop fade are driven by framer-motion
+   in src/components/ui/bottom-sheet.tsx. CSS here owns layout and static
+   visuals only — no @keyframes, no animations. */
 .bottom-sheet-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: var(--z-modal-backdrop);
-  animation: fadeIn var(--duration-fast) ease-out;
 }
 
 .bottom-sheet {
@@ -186,17 +185,8 @@
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
   padding-bottom: env(safe-area-inset-bottom, var(--space-4));
   z-index: var(--z-modal);
-  animation: slideUp var(--duration-normal) ease-out;
   max-height: 85vh;
   overflow-y: auto;
-}
-
-.bottom-sheet-closing {
-  animation: slideDown var(--duration-normal) ease-out forwards;
-}
-
-.bottom-sheet-backdrop-closing {
-  animation: fadeOut var(--duration-normal) ease-out forwards;
 }
 
 .bottom-sheet-handle {

@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { motion, AnimatePresence, useDragControls, type PanInfo } from 'framer-motion'
 
 interface BottomSheetProps {
   isOpen: boolean
@@ -12,120 +13,96 @@ interface BottomSheetProps {
   children: ReactNode
 }
 
-const ANIMATION_DURATION = 200 // matches --duration-normal
+// Drag-to-dismiss thresholds — same shape as the modal drawer system so the
+// behavior feels uniform across the app.
+const DRAG_DISTANCE_RATIO = 0.30
+const DRAG_VELOCITY_PX_S = 600
 
 export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetProps) {
+  if (typeof window === 'undefined') return null
+
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && <BottomSheetInner onClose={onClose} title={title}>{children}</BottomSheetInner>}
+    </AnimatePresence>,
+    document.body,
+  )
+}
+
+function BottomSheetInner({
+  onClose,
+  title,
+  children,
+}: {
+  onClose: () => void
+  title?: string
+  children: ReactNode
+}) {
   const t = useTranslations('common')
   const sheetRef = useRef<HTMLDivElement>(null)
-  const startY = useRef<number>(0)
-  const currentY = useRef<number>(0)
-  const [isVisible, setIsVisible] = useState(false)
-  const [isClosing, setIsClosing] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const dragControls = useDragControls()
 
-  // Track if component is mounted (for portal)
+  // ESC key handler
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Handle open/close state
-  useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true)
-      setIsClosing(false)
-    } else if (isVisible) {
-      // Start closing animation
-      setIsClosing(true)
-      const timer = setTimeout(() => {
-        setIsVisible(false)
-        setIsClosing(false)
-      }, ANIMATION_DURATION)
-      return () => clearTimeout(timer)
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
     }
-  }, [isOpen, isVisible])
-
-  // Handle escape key
-  useEffect(() => {
-    if (!isVisible) return
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-
     document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [onClose])
 
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [isVisible, onClose])
-
-  // Handle touch events for swipe-to-dismiss
-  const handleTouchStart = (e: React.TouchEvent) => {
-    startY.current = e.touches[0].clientY
+  // Drag is initiated only by the handle / header pointer-down (not the body).
+  // Buttons inside the header stop propagation so taps don't initiate drags.
+  const handleHeaderPointerDown = (e: React.PointerEvent) => {
+    dragControls.start(e)
   }
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    currentY.current = e.touches[0].clientY
-    const delta = currentY.current - startY.current
-
-    // Only allow swiping down
-    if (delta > 0 && sheetRef.current) {
-      sheetRef.current.style.transform = `translateY(${delta}px)`
-    }
+  const handleDragEnd = (_event: unknown, info: PanInfo) => {
+    const sheetHeight = sheetRef.current?.offsetHeight ?? window.innerHeight
+    const shouldClose =
+      info.offset.y > sheetHeight * DRAG_DISTANCE_RATIO ||
+      info.velocity.y > DRAG_VELOCITY_PX_S
+    if (shouldClose) onClose()
+    // Otherwise framer-motion springs y back to 0.
   }
 
-  const handleTouchEnd = () => {
-    const delta = currentY.current - startY.current
-
-    // If swiped more than 100px, close the sheet
-    if (delta > 100) {
-      onClose()
-    } else if (sheetRef.current) {
-      // Reset position
-      sheetRef.current.style.transform = ''
-    }
-
-    startY.current = 0
-    currentY.current = 0
-  }
-
-  // Don't render if not visible or not mounted (SSR safety)
-  if (!isVisible || !mounted) return null
-
-  // Use portal to escape parent stacking contexts (fixes z-index issues with fixed navbars)
-  return createPortal(
-    <>
-      {/* Backdrop */}
-      <div
-        className={`bottom-sheet-backdrop${isClosing ? ' bottom-sheet-backdrop-closing' : ''}`}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Sheet */}
-      <div
+  return (
+    <motion.div
+      className="bottom-sheet-backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <motion.div
         ref={sheetRef}
-        className={`bottom-sheet${isClosing ? ' bottom-sheet-closing' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        className="bottom-sheet"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%', opacity: 0 }}
+        transition={{ type: 'spring', damping: 35, stiffness: 300 }}
+        drag="y"
+        dragListener={false}
+        dragControls={dragControls}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.2 }}
+        onDragEnd={handleDragEnd}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle bar for swipe gesture indicator */}
-        <div className="bottom-sheet-handle">
+        <div className="bottom-sheet-handle" onPointerDown={handleHeaderPointerDown}>
           <div className="bottom-sheet-handle-bar" />
         </div>
 
-        {/* Header */}
         {title && (
-          <div className="bottom-sheet-header">
+          <div className="bottom-sheet-header" onPointerDown={handleHeaderPointerDown}>
             <h3 className="bottom-sheet-title">{title}</h3>
             <button
               type="button"
               onClick={onClose}
+              onPointerDown={(e) => e.stopPropagation()}
               className="bottom-sheet-close"
               aria-label={t('close')}
             >
@@ -134,12 +111,10 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
           </div>
         )}
 
-        {/* Content */}
         <div className="bottom-sheet-content">
           {children}
         </div>
-      </div>
-    </>,
-    document.body
+      </motion.div>
+    </motion.div>
   )
 }

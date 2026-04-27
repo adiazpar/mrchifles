@@ -3,12 +3,6 @@
    Non-blocking delight: speed AND beauty
    ========================================================================== */
 
-/* ===== Basic Keyframes ===== */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 /* Pop-in with slight overshoot, used for nav notification badges. */
 @keyframes badge-pop-in {
   from { opacity: 0; transform: scale(0); }
@@ -23,23 +17,6 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-
-/* ===== Bottom Sheet Animations ===== */
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-@keyframes slideDown {
-  from { transform: translateY(0); }
-  to { transform: translateY(100%); }
-}
-
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
 
 /* ===== Modal Content Morph ===== */
 
