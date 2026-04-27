@@ -177,6 +177,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     businessId,
     providers: allProviders,
     canDelete: canManage,
+    canManage,
   })
 
   // ===== Load data =====

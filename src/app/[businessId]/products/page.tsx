@@ -419,6 +419,7 @@ export default function ProductosPage() {
     businessId: businessId || '',
     providers: activeProviders,
     canDelete,
+    canManage,
   })
 
   // Products, providers, and active orders all prime eagerly on mount —

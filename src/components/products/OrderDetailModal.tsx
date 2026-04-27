@@ -101,6 +101,9 @@ export interface OrderDetailModalProps {
 
   // Permissions
   canDelete: boolean
+  /** Owners + partners; false for employees. Gates Edit and Receive buttons
+   *  on the pending-order overview footer. */
+  canManage: boolean
 }
 
 // ============================================
@@ -260,6 +263,7 @@ export function OrderDetailModal({
   getReceiptUrl,
   initialEditSnapshot,
   canDelete,
+  canManage,
 }: OrderDetailModalProps) {
   const t = useTranslations('orders')
   const tCommon = useTranslations('common')
@@ -446,8 +450,9 @@ export function OrderDetailModal({
           </div>
         </Modal.Item>
 
-        {/* Footer for pending orders */}
-        {order.status === 'pending' ? (
+        {/* Footer for pending orders. Edit/Receive/Delete are manager-only;
+            employees see a Close button instead so the footer isn't empty. */}
+        {order.status === 'pending' && canManage ? (
           <Modal.Footer>
             {canDelete && (
               <Modal.GoToStepButton step={5} className="btn btn-secondary btn-icon">

@@ -97,7 +97,11 @@
   flex-shrink: 0;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--duration-fast) ease-out, background var(--duration-fast) ease-out, opacity var(--duration-fast) ease-out;
+  /* No opacity transition — framer-motion AnimatePresence drives the back
+     button's mount/unmount opacity. A CSS transition on opacity would fight
+     framer-motion's animation on the same property and cause a visible
+     stutter during step transitions. */
+  transition: transform var(--duration-fast) ease-out, background var(--duration-fast) ease-out;
 }
 
 .modal-back:active,

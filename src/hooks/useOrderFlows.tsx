@@ -23,6 +23,9 @@ interface UseOrderFlowsOptions {
    */
   providers: Provider[]
   canDelete: boolean
+  /** Owners + partners. Gates Edit / Receive footer buttons in
+   *  OrderDetailModal. Defaults match canDelete callers if omitted. */
+  canManage?: boolean
 }
 
 interface UseOrderFlowsReturn {
@@ -92,7 +95,7 @@ function isoToLocalDateOnly(iso: string | Date): string {
  * authoritative post-mutation refresh.
  */
 export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
-  const { businessId, providers, canDelete } = opts
+  const { businessId, providers, canDelete, canManage = false } = opts
 
   const tOrders = useTranslations('orders')
   const translateApiMessage = useApiMessage()
@@ -546,6 +549,7 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
           getReceiptUrl={getOrderReceiptUrl}
           initialEditSnapshot={initialEditSnapshot}
           canDelete={canDelete}
+          canManage={canManage}
         />
       )}
     </>

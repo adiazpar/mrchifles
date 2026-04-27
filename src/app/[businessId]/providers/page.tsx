@@ -66,6 +66,7 @@ export default function ProveedoresPage() {
     businessId: businessId || '',
     providers,
     canDelete: canManage,
+    canManage,
   })
 
   if (isLoading) {
