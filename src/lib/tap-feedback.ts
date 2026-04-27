@@ -24,7 +24,6 @@ const TAP_FEEDBACK_SELECTOR = [
   '.caja-action-btn',
   '.mobile-nav-item',
   '.icon-stack-btn',
-  '.page-header__back',
   '.list-item-clickable',
   '.user-menu-item',
   '.settings-row',

@@ -417,45 +417,31 @@
 }
 
 .page-subtitle {
-  font-size: var(--text-sm);
-  color: var(--color-text-tertiary);
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-text-secondary);
   margin-top: 2px;
 }
 
-/* Page header content wrapper */
+/* Page header left-column wrapper. Holds either the /account back button or
+   the business identifier. The wrapper itself never fades — nested elements
+   fade per their own scope so in-business nav doesn't blank the header. */
 .page-header__content {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;
+  flex: 1;
 }
 
-/* Back button in page header */
-.page-header__back {
+/* Business identifier (logo + name + page label). Fades together as one unit
+   only when leaving the business context (cross-context nav). */
+.page-header__business-id {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-lg);
-  background: transparent;
-  border: none;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: transform var(--duration-instant) ease-out, background var(--duration-fast) ease;
-  /* Animation: slide in from left */
-  animation: page-header-back-enter var(--duration-slow) var(--ease-out-expo) backwards;
-}
-
-@media (hover: hover) {
-  .page-header__back:hover {
-    background: var(--color-bg-muted);
-  }
-}
-
-.page-header__back:active,
-.page-header__back[data-pressed='true'] {
-  background: var(--color-bg-muted);
-  transform: scale(0.94);
+  gap: var(--space-3);
+  min-width: 0;
+  flex: 1;
 }
 
 /* Titles wrapper - centered in header */
@@ -466,18 +452,19 @@
   text-align: center;
 }
 
-/* Titles wrapper - left-aligned (business context).
-   Height matches the 48px business logo so the title's top edge and the
-   subtitle's bottom edge align with the logo top/bottom. */
+/* Titles wrapper - left-aligned (business context). Vertically centered
+   relative to the 48px logo; title and subtitle sit close together with a
+   small gap. Height is content-driven so descenders ("g", "p", etc.) aren't
+   clipped by a fixed-height + line-height:1 box. */
 .page-header__titles--inline {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   align-items: flex-start;
   text-align: left;
   min-width: 0;
   flex: 1;
-  height: 48px;
+  gap: 2px;
 }
 
 .page-header__titles--inline .page-title,
@@ -486,7 +473,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1;
+  line-height: 1.2;
   margin: 0;
 }
 

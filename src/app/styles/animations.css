@@ -24,18 +24,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* ===== Page Header Animations ===== */
-@keyframes page-header-back-enter {
-  from {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
 /* ===== Bottom Sheet Animations ===== */
 @keyframes slideUp {
   from { transform: translateY(100%); }

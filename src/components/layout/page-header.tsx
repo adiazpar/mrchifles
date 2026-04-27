@@ -159,32 +159,51 @@ export function PageHeader() {
   // Fade header content during account slide transitions
   const isAccountNav = slideDirection !== null
 
-  // Style for fading inner content during context or account navigation.
+  // Hub-context center (Kasero logo / "Account" back-title) and the /account
+  // back button fade for cross-context AND account-slide navigation, since
+  // both swap the content in those slots.
+  const shouldHideHubChrome = isCrossContextNav || isAccountNav
+
+  // Business identifier (logo + name + page label) only fades when we're
+  // leaving the business context entirely (hub, account, or join). It does
+  // NOT fade for in-business navigation — slide drill-downs (e.g., providers
+  // -> provider detail) and fade nav between top-level business pages keep
+  // the identifier visible so only the page label content changes.
+  const shouldHideBusinessId = isCrossContextNav
+
+  // The user menu never fades — it's stable across every navigation path.
+
   // Slide transitions hide instantly (no transition) to prevent content
   // flashing mid-fade. The fade-in transition only applies when revealing.
-  const shouldHide = isCrossContextNav || isAccountNav
-  const contentFadeStyle = {
-    opacity: shouldHide ? 0 : 1,
-    transition: shouldHide ? 'none' : 'opacity 100ms ease-out',
+  const hubChromeFadeStyle = {
+    opacity: shouldHideHubChrome ? 0 : 1,
+    transition: shouldHideHubChrome ? 'none' : 'opacity 100ms ease-out',
+  }
+  const businessIdFadeStyle = {
+    opacity: shouldHideBusinessId ? 0 : 1,
+    transition: shouldHideBusinessId ? 'none' : 'opacity 100ms ease-out',
   }
 
   return (
     <header
       className={`page-header page-header--fixed ${isScrolled ? 'page-header--scrolled' : ''} ${isHubContext ? 'page-header--three-col' : 'page-header--two-col'}`}
     >
-      {/* Left column */}
-      <div className="page-header__content" style={contentFadeStyle}>
+      {/* Left column. The wrapper itself never fades; nested elements fade
+          per their own scope so in-business nav doesn't blank the header. */}
+      <div className="page-header__content">
         {isHubPageWithBackButton ? (
           <button
             type="button"
             onClick={handleBack}
-            className="page-header__back"
+            data-tap-feedback
+            className="btn btn-secondary btn-icon flex-shrink-0"
             aria-label={t('ui.page_header.go_back')}
+            style={hubChromeFadeStyle}
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft style={{ width: 20, height: 20 }} />
           </button>
         ) : !isHubContext ? (
-          <>
+          <div className="page-header__business-id" style={businessIdFadeStyle}>
             <div className="page-header__business-logo">
               <BusinessLogo business={business} />
             </div>
@@ -192,13 +211,13 @@ export function PageHeader() {
               <h1 className="page-title">{business?.name || t('common.loading')}</h1>
               {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
             </div>
-          </>
+          </div>
         ) : null}
       </div>
 
       {/* Center column - hub context only */}
       {isHubContext && (
-        <div className="page-header__titles" style={contentFadeStyle}>
+        <div className="page-header__titles" style={hubChromeFadeStyle}>
           {isHubPageWithBackButton && title ? (
             <>
               <h1 className="page-title">{title}</h1>
@@ -219,8 +238,8 @@ export function PageHeader() {
         </div>
       )}
 
-      {/* Right column - user menu */}
-      <div className="page-header__actions" style={contentFadeStyle}>
+      {/* Right column - user menu. Always visible, never fades. */}
+      <div className="page-header__actions">
         <UserMenu />
       </div>
     </header>
