@@ -30,6 +30,10 @@ const ProductSettingsModal = dynamic(
   () => import('@/components/products/ProductSettingsModal').then(m => m.ProductSettingsModal),
   { ssr: false },
 )
+const ProductInfoDrawer = dynamic(
+  () => import('@/components/products/ProductInfoDrawer').then(m => m.ProductInfoDrawer),
+  { ssr: false },
+)
 import { ProductFormProvider, useProductForm } from '@/contexts/product-form-context'
 import type { PipelineStep } from '@/hooks'
 import {
@@ -468,6 +472,10 @@ export default function ProductosPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [editInitialStep, setEditInitialStep] = useState(0)
 
+  // Read-only product view used by employees — managers tap rows into the
+  // edit modal; non-managers land here.
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null)
+
   // Filtered orders
   const filteredOrders = useMemo(() => {
     // Stage 1: partition by view mode (received = "completed"; anything else = "active")
@@ -821,6 +829,7 @@ export default function ProductosPage() {
               onSortSheetOpenChange={setIsSortSheetOpen}
               onAddProduct={handleOpenAdd}
               onEditProduct={handleOpenEdit}
+              onViewProduct={setViewingProduct}
               onAdjustInventory={handleAdjustInventory}
               onToggleActive={handleToggleActive}
               canManage={canManage}
@@ -902,6 +911,13 @@ export default function ProductosPage() {
           initialStep={editInitialStep}
         />
       </ProductFormProvider>
+      <ProductInfoDrawer
+        isOpen={!!viewingProduct}
+        onClose={() => setViewingProduct(null)}
+        onExitComplete={() => setViewingProduct(null)}
+        product={viewingProduct}
+        categories={categories}
+      />
 
       {/* Product Settings Modal */}
       <ProductSettingsModal

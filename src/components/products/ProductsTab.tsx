@@ -48,6 +48,7 @@ export interface ProductsTabProps {
   // Handlers
   onAddProduct: () => void
   onEditProduct: (product: Product) => void
+  onViewProduct?: (product: Product) => void
   onAdjustInventory?: (product: Product) => void
   onToggleActive?: (product: Product) => void
   onOpenSettings: () => void
@@ -85,6 +86,7 @@ export function ProductsTab({
   onSortSheetOpenChange,
   onAddProduct,
   onEditProduct,
+  onViewProduct,
   onAdjustInventory,
   onToggleActive,
   onOpenSettings,
@@ -231,6 +233,7 @@ export function ProductsTab({
                         product={product}
                         categoryName={getCategoryName(product.categoryId)}
                         onEdit={onEditProduct}
+                        onView={onViewProduct}
                         onAdjustInventory={onAdjustInventory}
                         onToggleActive={onToggleActive}
                         canModify={canModify}
@@ -378,6 +381,7 @@ interface ProductListItemProps {
   product: Product
   categoryName: string
   onEdit: (product: Product) => void
+  onView?: (product: Product) => void
   onAdjustInventory?: (product: Product) => void
   onToggleActive?: (product: Product) => void
   canModify?: boolean
@@ -387,6 +391,7 @@ const ProductListItem = memo(function ProductListItem({
   product,
   categoryName,
   onEdit,
+  onView,
   onAdjustInventory,
   onToggleActive,
   canModify = false,
@@ -434,19 +439,24 @@ const ProductListItem = memo(function ProductListItem({
       ]
     : []
 
+  // Tap dispatch: managers (canModify) open the edit modal; everyone else
+  // gets the read-only ProductInfoDrawer. The row is always tappable —
+  // employees just land on a different surface.
+  const activate = canModify ? () => onEdit(product) : (onView ? () => onView(product) : undefined)
+
   return (
     <SwipeableRow actions={swipeActions}>
       <div
         className={`list-item-clickable ${hasBarcode ? 'items-start' : ''}`}
-        onClick={canModify ? () => onEdit(product) : undefined}
-        onKeyDown={canModify ? (e) => {
+        onClick={activate}
+        onKeyDown={activate ? (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
-            onEdit(product)
+            activate()
           }
         } : undefined}
-        tabIndex={canModify ? 0 : undefined}
-        role={canModify ? 'button' : undefined}
+        tabIndex={activate ? 0 : undefined}
+        role={activate ? 'button' : undefined}
       >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3">

@@ -24,3 +24,6 @@ export type { NewOrderModalProps } from './NewOrderModal'
 
 export { OrderDetailModal } from './OrderDetailModal'
 export type { OrderDetailModalProps } from './OrderDetailModal'
+
+export { ProductInfoDrawer } from './ProductInfoDrawer'
+export type { ProductInfoDrawerProps } from './ProductInfoDrawer'
