@@ -83,16 +83,12 @@
     "empty_state_description": "Create your own business or join an existing one with an invite code",
     "search_placeholder": "Search businesses...",
     "search_clear": "Clear search",
-    "sort_and_filter": "Sort and filter",
     "no_results": "No businesses found matching \"{query}\"",
     "member_count": "{count, plural, one {# member} other {# members}}",
     "section_owned_singular": "Your Business",
     "section_owned_plural": "Your Businesses",
     "section_joined_singular": "Joined Business",
-    "section_joined_plural": "Joined Businesses",
-    "greeting_morning": "Good morning",
-    "greeting_afternoon": "Good afternoon",
-    "greeting_evening": "Good evening"
+    "section_joined_plural": "Joined Businesses"
   },
   "createBusiness": {
     "modal_title": "Create Business",

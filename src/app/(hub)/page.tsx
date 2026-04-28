@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ChevronRight, X, Building2, ListFilter, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
+import { ChevronRight, X, Building2, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
@@ -58,15 +58,6 @@ function getCachedBusinessList(): Business[] {
   return hubBusinessesCache.get() ?? []
 }
 
-type GreetingKey = 'greeting_morning' | 'greeting_afternoon' | 'greeting_evening'
-
-function computeGreetingKey(): GreetingKey {
-  const hour = new Date().getHours()
-  if (hour >= 6 && hour < 12) return 'greeting_morning'
-  if (hour >= 12 && hour < 18) return 'greeting_afternoon'
-  return 'greeting_evening'
-}
-
 export default function HubPage() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
@@ -76,15 +67,7 @@ export default function HubPage() {
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
   const [isLoading, setIsLoading] = useState(() => getCachedBusinessList().length === 0)
   const [searchQuery, setSearchQuery] = useState('')
-  // Greeting key is derived from the client clock only. Set inside a
-  // useEffect so SSR + hydration don't disagree on the hour when the
-  // server is in a different timezone than the user.
-  const [greetingKey, setGreetingKey] = useState<GreetingKey | null>(null)
   const t = useTranslations('hub')
-
-  useEffect(() => {
-    setGreetingKey(computeGreetingKey())
-  }, [])
 
   // Release the auth-gate's hold phase as soon as the hub has its data.
   // Safe to call repeatedly — markHubReady clears its resolver after the
@@ -248,46 +231,26 @@ export default function HubPage() {
 
   return (
     <main className="hub-content space-y-4">
-      {/* Time-of-day greeting. Renders once the client has computed the
-          hour (greetingKey is null on first render to avoid SSR mismatch).
-          Name is rendered verbatim via {user.name} — user-entered content,
-          never translated (per the project i18n rules). */}
-      {greetingKey && user?.name && (
-        <h1 className="text-2xl font-semibold text-text-primary">
-          {t(greetingKey)}, {user.name}
-        </h1>
-      )}
-
       {/* Search Bar */}
-      <div className="flex gap-2 items-stretch">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder={t('search_placeholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="input w-full h-full"
-            style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-              aria-label={t('search_clear')}
-            >
-              <X size={18} />
-            </button>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => {}}
-          className="btn btn-secondary btn-icon flex-shrink-0"
-          aria-label={t('sort_and_filter')}
-        >
-          <ListFilter style={{ width: 18, height: 18 }} />
-        </button>
+      <div className="relative">
+        <input
+          type="text"
+          placeholder={t('search_placeholder')}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input input-search w-full"
+          style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery('')}
+            className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+            aria-label={t('search_clear')}
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* No search results */}

@@ -83,16 +83,12 @@
     "empty_state_description": "Cree su propio negocio o únase a uno existente con un código de invitación",
     "search_placeholder": "Buscar negocios...",
     "search_clear": "Limpiar búsqueda",
-    "sort_and_filter": "Ordenar y filtrar",
     "no_results": "No se encontraron negocios con \"{query}\"",
     "member_count": "{count, plural, one {# miembro} other {# miembros}}",
     "section_owned_singular": "Su Negocio",
     "section_owned_plural": "Sus Negocios",
     "section_joined_singular": "Negocio Unido",
-    "section_joined_plural": "Negocios Unidos",
-    "greeting_morning": "Buenos días",
-    "greeting_afternoon": "Buenas tardes",
-    "greeting_evening": "Buenas noches"
+    "section_joined_plural": "Negocios Unidos"
   },
   "createBusiness": {
     "modal_title": "Crear Negocio",

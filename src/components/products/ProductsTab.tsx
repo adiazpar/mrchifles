@@ -145,7 +145,7 @@ export function ProductsTab({
                   placeholder={t('search_placeholder')}
                   value={searchQuery}
                   onChange={e => onSearchChange(e.target.value)}
-                  className="input w-full h-full"
+                  className="input input-search w-full h-full"
                   style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
                 />
                 {searchQuery && (

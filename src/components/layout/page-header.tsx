@@ -53,13 +53,17 @@ function BusinessLogo({ business }: { business: Business | null }) {
 /**
  * Page header that works in both hub and business contexts.
  *
- * Hub context (no BusinessProvider):
- * - Left: Empty spacer (or back button on /account)
- * - Center: App name "Kasero" (or page title on /account)
+ * Hub home (`/`):
+ * - Left: Kasero icon
+ * - Right: User avatar menu
+ *
+ * Hub sub-page with back button (`/account`):
+ * - Left: Back button
+ * - Center: Page title
  * - Right: User avatar menu
  *
  * Business context:
- * - Left: Business logo + business name + current page label (left-aligned)
+ * - Left: Business logo + business name + current page label
  * - Right: User avatar menu
  */
 export function PageHeader() {
@@ -192,7 +196,7 @@ export function PageHeader() {
 
   return (
     <header
-      className={`page-header page-header--fixed ${isScrolled ? 'page-header--scrolled' : ''} ${isHubContext ? 'page-header--three-col' : 'page-header--two-col'}`}
+      className={`page-header page-header--fixed ${isScrolled ? 'page-header--scrolled' : ''} ${isHubPageWithBackButton ? 'page-header--three-col' : 'page-header--two-col'}`}
     >
       {/* Left column. The wrapper itself never fades; nested elements fade
           per their own scope so in-business nav doesn't blank the header. */}
@@ -218,29 +222,28 @@ export function PageHeader() {
               {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
             </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="page-header__brand-icon" style={hubChromeFadeStyle}>
+            <Image
+              src="/icon-source.png"
+              alt="Kasero"
+              width={48}
+              height={48}
+              priority
+            />
+          </div>
+        )}
       </div>
 
-      {/* Center column - hub context only */}
-      {isHubContext && (
+      {/* Center column - only rendered on /account (hub sub-page with back
+          button), where the three-col grid centers this title between the
+          back button and the user menu. Hub home and business mode use the
+          two-col grid: identifier in col 1 (1fr), menu in col 2 (auto), no
+          center column needed. */}
+      {isHubPageWithBackButton && title && (
         <div className="page-header__titles" style={hubChromeFadeStyle}>
-          {isHubPageWithBackButton && title ? (
-            <>
-              <h1 className="page-title">{title}</h1>
-              {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
-            </>
-          ) : (
-            <div className="page-header__logo">
-              <Image
-                src="/kasero-logo.png"
-                alt="Kasero"
-                width={160}
-                height={56}
-                style={{ height: 'auto' }}
-                priority
-              />
-            </div>
-          )}
+          <h1 className="page-title">{title}</h1>
+          {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
         </div>
       )}
 

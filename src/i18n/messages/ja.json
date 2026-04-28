@@ -83,16 +83,12 @@
     "empty_state_description": "自分で業務を作成するか、招待コードで既存の業務に参加できます",
     "search_placeholder": "業務を検索...",
     "search_clear": "検索をクリア",
-    "sort_and_filter": "並び替えと絞り込み",
     "no_results": "「{query}」に一致する業務が見つかりません",
     "member_count": "{count, plural, one {#名} other {#名}}",
     "section_owned_singular": "あなたの業務",
     "section_owned_plural": "あなたの業務",
     "section_joined_singular": "参加中の業務",
-    "section_joined_plural": "参加中の業務",
-    "greeting_morning": "おはようございます",
-    "greeting_afternoon": "こんにちは",
-    "greeting_evening": "こんばんは"
+    "section_joined_plural": "参加中の業務"
   },
   "createBusiness": {
     "modal_title": "業務を作成",

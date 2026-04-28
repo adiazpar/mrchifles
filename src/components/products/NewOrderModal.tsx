@@ -170,7 +170,7 @@ export function NewOrderModal({
                 placeholder={t('product_search_placeholder')}
                 value={productSearchQuery}
                 onChange={e => onProductSearchQueryChange(e.target.value)}
-                className="input w-full h-full"
+                className="input input-search w-full h-full"
                 style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
               />
               {productSearchQuery && (

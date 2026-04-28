@@ -48,6 +48,11 @@
   border-color: var(--color-error);
 }
 
+/* Search inputs: pill-shaped, fully rounded. Applied alongside .input. */
+.input-search {
+  border-radius: var(--radius-full);
+}
+
 /* Number input spinner styling */
 input[type="number"].input {
   -moz-appearance: textfield;
