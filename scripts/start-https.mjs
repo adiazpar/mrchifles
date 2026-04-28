@@ -16,7 +16,11 @@ import next from 'next'
 
 const KEY_PATH = './certificates/tailscale-dev.key'
 const CERT_PATH = './certificates/tailscale-dev.crt'
-const PORT = Number(process.env.PORT) || 3000
+// Pin to 3000 explicitly, ignoring process.env.PORT. A sibling project in
+// the same shell environment exports PORT=3001, which would collide with
+// claude-relay (which must keep 3001). The `dev` script does the same via
+// next's `--port 3000` flag — see CLAUDE.md "what the flags mean".
+const PORT = 3000
 
 if (!existsSync(KEY_PATH) || !existsSync(CERT_PATH)) {
   console.error(
