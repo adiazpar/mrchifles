@@ -32,6 +32,11 @@ interface PageTransitionContextValue {
   // Optimistic navigation state - shared across nav components and header
   pendingHref: string | null
   setPendingHref: (href: string | null) => void
+  // Translation key (under the `navigation` namespace) for a transient
+  // navigation-error notice. Set when the safety-net timeout fires;
+  // auto-clears 4 seconds later. Consumed by <NavigationErrorNotice/>.
+  navigationError: string | null
+  setNavigationError: (key: string | null) => void
   // Centralised navigation. Sets pendingHref and pushes via router inside a
   // React transition so rapid taps coalesce. A safety timeout in the
   // provider auto-clears pendingHref if pathname doesn't catch up, so a
@@ -71,6 +76,7 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   const [slideTargetPath, setSlideTargetPathState] = useState<string | null>(null)
   const [pendingHref, setPendingHrefState] = useState<string | null>(null)
   const [pageSubtitleSuffix, setPageSubtitleSuffixState] = useState<string | null>(null)
+  const [navigationError, setNavigationErrorState] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
   // Business cache - use ref to avoid re-renders, initialize from sessionStorage
@@ -115,6 +121,7 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   const setSlideTargetPath = useCallback((path: string | null) => setSlideTargetPathState(path), [])
   const setPendingHref = useCallback((href: string | null) => setPendingHrefState(href), [])
   const setPageSubtitleSuffix = useCallback((suffix: string | null) => setPageSubtitleSuffixState(suffix), [])
+  const setNavigationError = useCallback((key: string | null) => setNavigationErrorState(key), [])
 
   const navigate = useCallback((href: string) => {
     setPendingHrefState(href)
@@ -183,9 +190,10 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   // pendingHref auto-clear with safety net.
   // - Clears immediately once pathname catches up to pendingHref (the
   //   navigation actually happened).
-  // - Force-clears after a watchdog timeout if pathname never catches up,
-  //   so a stalled or coalesced router.push can't leave the UI faded out
-  //   with a stuck "active" highlight on the wrong nav item.
+  // - Force-clears after a 5-second watchdog timeout if pathname never
+  //   catches up, AND surfaces a transient error notice. 5s is generous
+  //   enough that real cold-start loads always complete first; only
+  //   genuine failures (offline, server error) trip it.
   useEffect(() => {
     if (!pendingHref) return
     if (pendingHref === pathname) {
@@ -194,9 +202,21 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
     }
     const timeout = window.setTimeout(() => {
       setPendingHrefState(null)
-    }, 1000)
+      setNavigationErrorState('load_failed')
+    }, 5000)
     return () => window.clearTimeout(timeout)
   }, [pendingHref, pathname])
+
+  // Auto-clear navigationError after 4 seconds so the notice doesn't
+  // linger. The component reading it just stops rendering when this flips
+  // back to null.
+  useEffect(() => {
+    if (!navigationError) return
+    const timeout = window.setTimeout(() => {
+      setNavigationErrorState(null)
+    }, 4000)
+    return () => window.clearTimeout(timeout)
+  }, [navigationError])
 
   // Memoize to avoid re-rendering the entire business-scoped tree every
   // time this provider re-renders. PageTransition lives in the root
@@ -208,6 +228,7 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
       slideDirection, setSlideDirection,
       slideTargetPath, setSlideTargetPath,
       pendingHref, setPendingHref,
+      navigationError, setNavigationError,
       navigate,
       pageSubtitleSuffix, setPageSubtitleSuffix,
       getCachedBusiness, setCachedBusiness, setCachedBusinesses, clearCachedBusiness,
@@ -216,6 +237,7 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
       slideDirection, setSlideDirection,
       slideTargetPath, setSlideTargetPath,
       pendingHref, setPendingHref,
+      navigationError, setNavigationError,
       navigate,
       pageSubtitleSuffix, setPageSubtitleSuffix,
       getCachedBusiness, setCachedBusiness, setCachedBusinesses, clearCachedBusiness,
