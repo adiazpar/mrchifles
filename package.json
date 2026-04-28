@@ -6,6 +6,7 @@
     "dev": "next dev --port 3000 --experimental-https --experimental-https-key ./certificates/tailscale-dev.key --experimental-https-cert ./certificates/tailscale-dev.crt",
     "build": "next build",
     "start": "next start",
+    "start:local": "next build && node scripts/start-https.mjs",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "db:push": "npx drizzle-kit push --force",
