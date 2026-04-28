@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
+import { hapticSuccess } from '@/lib/haptics'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { hasMessageEnvelope } from '@/lib/api-messages'
 
@@ -164,6 +165,7 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
       })
 
       setJoinSuccess(true)
+      hapticSuccess()
       // Redirect to the business after a brief delay
       setTimeout(() => {
         setIsOpen(false)

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Camera, Sparkles, UserPlus, FileScan, FileSpreadsheet } from 'lucide-react'
 import { Spinner, Modal, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
+import { hapticSuccess } from '@/lib/haptics'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductFormValidation } from '@/contexts/product-form-context'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -279,6 +280,7 @@ function SaveButton({ onSubmit }: { onSubmit: AddProductModalProps['onSubmit'] }
       }
 
       setProductSaved(true)
+      hapticSuccess()
       goToStep(6)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('failed_to_save'))

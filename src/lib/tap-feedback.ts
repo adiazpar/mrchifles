@@ -13,7 +13,15 @@
  * treating those as releases makes the pressed state look glitchy. The real
  * release cases (lift, scroll-steal, tab blur) are already covered by
  * `pointerup`, `pointercancel`, and window `blur`.
+ *
+ * Haptic feedback fires on `click` (NOT pointerdown) for elements matching
+ * HAPTIC_SELECTOR — primary/destructive actions only. iOS Safari's
+ * user-gesture rules for `navigator.vibrate` are stricter for pointerdown
+ * than for click; the proven progressier demo uses click and works on
+ * iOS 17.4+.
  */
+
+import { haptic } from './haptics'
 
 const MIN_PRESS_MS = 120
 
@@ -28,6 +36,15 @@ const TAP_FEEDBACK_SELECTOR = [
   '.user-menu-item',
   '.settings-row',
   '[data-tap-feedback]',
+].join(',')
+
+const HAPTIC_SELECTOR = [
+  '.btn-primary',
+  '.btn-danger',
+  '.fab',
+  '.payment-btn',
+  '.mobile-nav-item',
+  '[data-haptic]',
 ].join(',')
 
 interface PressRecord {
@@ -89,6 +106,15 @@ function handlePointerDown(e: PointerEvent) {
   })
 }
 
+function handleClick(e: MouseEvent) {
+  const target = e.target as Element | null
+  if (!target) return
+  const el = target.closest(HAPTIC_SELECTOR) as HTMLElement | null
+  if (!el) return
+  if (isDisabled(el)) return
+  haptic()
+}
+
 function handlePointerRelease(e: PointerEvent) {
   schedulePressClear(e.pointerId)
 }
@@ -107,6 +133,7 @@ export function mount() {
   document.addEventListener('pointerdown', handlePointerDown, { passive: true })
   document.addEventListener('pointerup', handlePointerRelease, { passive: true })
   document.addEventListener('pointercancel', handlePointerRelease, { passive: true })
+  document.addEventListener('click', handleClick)
   window.addEventListener('blur', handleWindowBlur)
 }
 
@@ -116,6 +143,7 @@ export function unmount() {
   document.removeEventListener('pointerdown', handlePointerDown)
   document.removeEventListener('pointerup', handlePointerRelease)
   document.removeEventListener('pointercancel', handlePointerRelease)
+  document.removeEventListener('click', handleClick)
   window.removeEventListener('blur', handleWindowBlur)
   for (const pointerId of [...activePresses.keys()]) {
     clearPress(pointerId)

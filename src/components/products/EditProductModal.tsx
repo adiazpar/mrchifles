@@ -6,6 +6,7 @@ import { Trash2, SlidersHorizontal, ImagePlus } from 'lucide-react'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { Spinner, Modal, useModal, StockStepper } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
+import { hapticSuccess } from '@/lib/haptics'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
 import { ProductForm } from './ProductForm'
 import type { ProductCategory } from '@/types'
@@ -118,6 +119,7 @@ function SaveButton({ onSubmit }: { onSubmit: EditProductModalProps['onSubmit'] 
       }
 
       setProductSaved(true)
+      hapticSuccess()
       goToStep(4)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('failed_to_save'))
