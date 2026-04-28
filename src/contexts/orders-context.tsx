@@ -11,6 +11,8 @@ import {
 } from 'react'
 import { fetchDeduped } from '@/lib/fetch'
 import { CACHE_KEYS, createSessionCache } from '@/hooks'
+import { isFresh } from '@/lib/freshness'
+import { useRevalidateOnFocus } from '@/hooks/useRevalidateOnFocus'
 import type { ExpandedOrder } from '@/lib/products'
 
 type OrdersUpdater =
@@ -126,11 +128,13 @@ export function OrdersProvider({ businessId, children }: OrdersProviderProps) {
 
   const inFlightActive = useRef<Promise<void> | null>(null)
   const inFlightCompleted = useRef<Promise<void> | null>(null)
-  // Whether the first consumer on this mount has already triggered the
-  // SWR revalidation per bucket. Flips once and stays true for the life
-  // of the provider (a business switch remounts via key={businessId}).
-  const hasRevalidatedActive = useRef(false)
-  const hasRevalidatedCompleted = useRef(false)
+  // Timestamp of the most recent successful fetch per bucket. Used by
+  // isFresh() to gate ensureActiveLoaded / ensureCompletedLoaded: within
+  // the freshness window, calls no-op; outside, they fire a background
+  // revalidate. A failed fetch leaves the previous timestamp in place —
+  // a transient error doesn't invalidate cached data that was good 30s ago.
+  const lastFetchedActiveAt = useRef<number | null>(null)
+  const lastFetchedCompletedAt = useRef<number | null>(null)
 
   const persist = useCallback(() => {
     cache.current.set({ active: activeRef.current, completed: completedRef.current })
@@ -161,9 +165,11 @@ export function OrdersProvider({ businessId, children }: OrdersProviderProps) {
           if (status === 'active') {
             writeActive(fetched)
             setIsActiveLoaded(true)
+            lastFetchedActiveAt.current = Date.now()
           } else {
             writeCompleted(fetched)
             setIsCompletedLoaded(true)
+            lastFetchedCompletedAt.current = Date.now()
           }
           persist()
         } else {
@@ -185,33 +191,35 @@ export function OrdersProvider({ businessId, children }: OrdersProviderProps) {
 
   const ensureActiveLoaded = useCallback((): Promise<void> => {
     if (inFlightActive.current) return inFlightActive.current
-    if (hasRevalidatedActive.current) return Promise.resolve()
-    hasRevalidatedActive.current = true
+    if (isFresh(lastFetchedActiveAt.current, Date.now())) return Promise.resolve()
     inFlightActive.current = fetchBucket('active')
     return isActiveLoaded ? Promise.resolve() : inFlightActive.current
   }, [isActiveLoaded, fetchBucket])
 
   const ensureCompletedLoaded = useCallback((): Promise<void> => {
     if (inFlightCompleted.current) return inFlightCompleted.current
-    if (hasRevalidatedCompleted.current) return Promise.resolve()
-    hasRevalidatedCompleted.current = true
+    if (isFresh(lastFetchedCompletedAt.current, Date.now())) return Promise.resolve()
     inFlightCompleted.current = fetchBucket('completed')
     return isCompletedLoaded ? Promise.resolve() : inFlightCompleted.current
   }, [isCompletedLoaded, fetchBucket])
 
   const refetchActive = useCallback((): Promise<void> => {
     if (inFlightActive.current) return inFlightActive.current
-    hasRevalidatedActive.current = true
     inFlightActive.current = fetchBucket('active')
     return inFlightActive.current
   }, [fetchBucket])
 
   const refetchCompleted = useCallback((): Promise<void> => {
     if (inFlightCompleted.current) return inFlightCompleted.current
-    hasRevalidatedCompleted.current = true
     inFlightCompleted.current = fetchBucket('completed')
     return inFlightCompleted.current
   }, [fetchBucket])
+
+  // Revalidate the active bucket on tab return — that's the bucket users
+  // care about as a live "what's pending" view. The completed bucket is a
+  // history view; users only land there intentionally and won't expect
+  // surprise updates while they're scrolling it.
+  useRevalidateOnFocus(ensureActiveLoaded)
 
   const setOrders = useCallback((updater: OrdersUpdater) => {
     const prev = [...activeRef.current, ...completedRef.current]
