@@ -66,8 +66,9 @@ export function ProductsProvider({ businessId, children }: ProductsProviderProps
   const inFlight = useRef<Promise<void> | null>(null)
   // Timestamp of the most recent successful fetch for this provider mount.
   // Used by isFresh() to gate ensureLoaded(): within the freshness window,
-  // calls no-op; outside, they fire a background revalidate. Reset to null
-  // on a fetch failure so the next call retries.
+  // calls no-op; outside, they fire a background revalidate. A failed
+  // fetch leaves the previous timestamp in place — a transient error
+  // doesn't invalidate cached data that was good 30s ago.
   const lastFetchedAt = useRef<number | null>(null)
 
   const setProducts = useCallback((updater: ProductsUpdater) => {
