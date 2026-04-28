@@ -11,6 +11,8 @@ import {
 } from 'react'
 import { fetchDeduped } from '@/lib/fetch'
 import { CACHE_KEYS, createSessionCache } from '@/hooks'
+import { isFresh } from '@/lib/freshness'
+import { useRevalidateOnFocus } from '@/hooks/useRevalidateOnFocus'
 import type { Product } from '@/types'
 
 type ProductsUpdater =
@@ -62,10 +64,11 @@ export function ProductsProvider({ businessId, children }: ProductsProviderProps
   const [isLoaded, setIsLoaded] = useState(() => !!cache.current.get())
   const [error, setError] = useState('')
   const inFlight = useRef<Promise<void> | null>(null)
-  // Whether the first consumer on this mount has already triggered the
-  // SWR revalidation. Flips once and stays true for the life of the
-  // provider (a business switch remounts via key={businessId}).
-  const hasRevalidated = useRef(false)
+  // Timestamp of the most recent successful fetch for this provider mount.
+  // Used by isFresh() to gate ensureLoaded(): within the freshness window,
+  // calls no-op; outside, they fire a background revalidate. Reset to null
+  // on a fetch failure so the next call retries.
+  const lastFetchedAt = useRef<number | null>(null)
 
   const setProducts = useCallback((updater: ProductsUpdater) => {
     setProductsState(prev => {
@@ -87,6 +90,7 @@ export function ProductsProvider({ businessId, children }: ProductsProviderProps
         setProductsState(data.products)
         cache.current.set(data.products)
         setIsLoaded(true)
+        lastFetchedAt.current = Date.now()
       } else {
         setError(data.error || 'Failed to load products')
       }
@@ -98,25 +102,28 @@ export function ProductsProvider({ businessId, children }: ProductsProviderProps
     }
   }, [businessId])
 
-  // Lazy load + stale-while-revalidate. The first consumer to call this per
-  // mount kicks off the fetch; subsequent callers either await the in-flight
-  // promise or no-op. When a sessionStorage cache hydrated the initial state
-  // we return immediately so consumers paint instantly, and revalidate in
-  // the background so a stale cache can't serve as ground truth.
+  // Lazy load + stale-while-revalidate.
+  // - Cache present and within freshness window: no-op (data is fresh).
+  // - Cache present but stale: return immediately, kick off background
+  //   refetch silently. fetchDeduped collapses duplicate concurrent calls.
+  // - No cache: await the fetch (consumers will see isLoading=true).
   const ensureLoaded = useCallback((): Promise<void> => {
     if (inFlight.current) return inFlight.current
-    if (hasRevalidated.current) return Promise.resolve()
-    hasRevalidated.current = true
+    if (isFresh(lastFetchedAt.current, Date.now())) return Promise.resolve()
     inFlight.current = fetchProducts()
     return isLoaded ? Promise.resolve() : inFlight.current
   }, [isLoaded, fetchProducts])
 
   const refetch = useCallback((): Promise<void> => {
     if (inFlight.current) return inFlight.current
-    hasRevalidated.current = true
     inFlight.current = fetchProducts()
     return inFlight.current
   }, [fetchProducts])
+
+  // When the tab/window becomes visible after being hidden, revalidate
+  // (debounced inside the hook). Routes through ensureLoaded so the
+  // freshness window still applies — quick alt-tabs won't refetch.
+  useRevalidateOnFocus(ensureLoaded)
 
   // Memoize so consumers don't re-render on every parent tick. Multiple
   // pages (products list, new-order picker, provider detail, providers
