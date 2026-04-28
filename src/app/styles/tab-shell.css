@@ -21,6 +21,13 @@
   opacity: 0;
   pointer-events: none;
   z-index: 0;
+  /* Flex column so children using `flex: 1` (.page-content, .page-body,
+   * .page-loading, .empty-state-fill) inherit the height chain that the
+   * old .main-scroll-container provided. Without this, empty states and
+   * loading spinners collapse to natural height instead of filling the
+   * visible area between header and mobile nav. */
+  display: flex;
+  flex-direction: column;
 }
 
 .tab-shell-view.is-active {
