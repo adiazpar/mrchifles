@@ -1,10 +1,14 @@
-import { getTranslations } from 'next-intl/server'
+'use client'
 
-// Render as a Server Component — stub only uses translations, no client
-// state or events. Drops the client bundle for this route to zero.
-export async function HomeView() {
-  const t = await getTranslations('home')
-  // Header is set optimistically by nav component
+import { useTranslations } from 'next-intl'
+
+// Client component because TabShell mounts views from a 'use client'
+// boundary. The original Server Component used `getTranslations` from
+// next-intl/server; the client equivalent is `useTranslations` from
+// next-intl. Same translated string, just resolved at render time on
+// the client. The bundle cost is trivial (one short stub).
+export function HomeView() {
+  const t = useTranslations('home')
 
   return (
     <main className="page-content">
