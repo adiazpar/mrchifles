@@ -9,7 +9,7 @@ const FADE_TRANSITION = { duration: 0.15 }
 
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { pendingHref, slideDirection, slideTargetPath } = usePageTransition()
+  const { slideDirection, slideTargetPath } = usePageTransition()
 
   // Back-compat fallback: the existing Account flow sets only slideDirection
   // without slideTargetPath. Treat /account as the default target in that case.
@@ -35,17 +35,13 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
     initial = { x: 0, opacity: 1 }
     animate = { x: slideDirection === 'back' ? '100%' : '-30%', opacity: 0 }
   } else {
-    // No slide — fade path. initial=false leaves current DOM state alone so
-    // we don't briefly reset to x:0 between transitions.
-    //
-    // Only stay faded out while pendingHref points somewhere OTHER than the
-    // current pathname. Once pathname catches up to pendingHref, show the
-    // page immediately — without this, rapid nav taps during a cold load
-    // can leave the destination page stuck at opacity 0 because the
-    // pendingHref-clearing useEffect hasn't committed yet.
+    // No slide — instant swap. Tab-bar navigation never fades; the new
+    // route mounts at full opacity immediately so the user never sees the
+    // ghost-content flash from fading the old page out before the new one
+    // is ready. Matches native iOS/Android tab-bar behavior. Drill-downs
+    // (which set slideDirection) are handled by the slide branches above.
     initial = false
-    const isNavigatingAway = Boolean(pendingHref) && pendingHref !== pathname
-    animate = { x: 0, opacity: isNavigatingAway ? 0 : 1 }
+    animate = { x: 0, opacity: 1 }
   }
 
   // Always render motion.div with the same key shape. Switching element types
