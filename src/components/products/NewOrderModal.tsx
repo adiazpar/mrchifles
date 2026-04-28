@@ -654,7 +654,7 @@ export function NewOrderModal({
       </Modal.Step>
 
       {/* Step 5: Success */}
-      <Modal.Step title={t('new_order_success_title')} hideBackButton>
+      <Modal.Step title={t('new_order_success_title')} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>

@@ -205,7 +205,7 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
         </Modal.Footer>
       </Modal.Step>
 
-      <Modal.Step title={t('profile_saved_heading')} hideBackButton>
+      <Modal.Step title={t('profile_saved_heading')} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>

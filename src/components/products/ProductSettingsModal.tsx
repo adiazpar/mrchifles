@@ -483,7 +483,7 @@ export function ProductSettingsModal({
       </Modal.Step>
 
       {/* Step 4: Success */}
-      <Modal.Step title={tCommon('done')} hideBackButton>
+      <Modal.Step title={tCommon('done')} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>

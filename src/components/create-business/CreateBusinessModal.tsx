@@ -102,7 +102,7 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
       </Modal.Step>
 
       {/* Step 4: Success */}
-      <Modal.Step title={t('step_success_title')} hideBackButton>
+      <Modal.Step title={t('step_success_title')} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <SuccessContent
             createdBusiness={createdBusiness}

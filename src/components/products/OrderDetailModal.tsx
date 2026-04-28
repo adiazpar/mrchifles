@@ -724,7 +724,7 @@ export function OrderDetailModal({
       </Modal.Step>
 
       {/* Step 2: Edit Success */}
-      <Modal.Step title={t('edit_order_success_title')} hideBackButton>
+      <Modal.Step title={t('edit_order_success_title')} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -824,7 +824,7 @@ export function OrderDetailModal({
       </Modal.Step>
 
       {/* Step 4: Receive Success */}
-      <Modal.Step title={t('receive_success_title')} hideBackButton>
+      <Modal.Step title={t('receive_success_title')} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -889,7 +889,7 @@ export function OrderDetailModal({
       </Modal.Step>
 
       {/* Step 6: Delete Success */}
-      <Modal.Step title={t('delete_success_title')} hideBackButton>
+      <Modal.Step title={t('delete_success_title')} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>

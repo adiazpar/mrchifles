@@ -494,7 +494,7 @@ export function AddProductModal({
       </Modal.Step>
 
       {/* Step 6: Save success */}
-      <Modal.Step title={t('title_created')} hideBackButton>
+      <Modal.Step title={t('title_created')} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>

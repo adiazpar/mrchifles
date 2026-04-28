@@ -44,5 +44,26 @@
   gap: var(--space-4);
 }
 
+/* Centered step modifier — applied via className="modal-step--centered" on
+   Modal.Step. Used for terminal/completion screens (success Lottie + heading
+   + description) so their short content sits in the visual center of the
+   drawer body instead of clinging to the top edge. */
+.modal-step--centered.modal-step-visible {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-step--centered .modal-step-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-step--centered .modal-step-content {
+  flex: 1;
+  justify-content: center;
+}
+
 
 

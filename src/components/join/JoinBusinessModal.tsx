@@ -94,7 +94,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
       </Modal.Step>
 
       {/* Step 2: Success */}
-      <Modal.Step title={codeType === 'transfer' ? t('success_transfer_title') : t('success_join_title')} hideBackButton>
+      <Modal.Step title={codeType === 'transfer' ? t('success_transfer_title') : t('success_join_title')} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <SuccessContent
             codeType={codeType}
