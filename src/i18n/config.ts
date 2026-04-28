@@ -18,7 +18,7 @@
  * rather than breaking the page.
  */
 
-export const SUPPORTED_LOCALES = ['en-US', 'es'] as const
+export const SUPPORTED_LOCALES = ['en-US', 'es', 'ja'] as const
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en-US'
@@ -36,5 +36,6 @@ export function resolveTranslationLocale(
 ): SupportedLocale {
   if (!businessLocale) return DEFAULT_LOCALE
   if (businessLocale.startsWith('es')) return 'es'
+  if (businessLocale.startsWith('ja')) return 'ja'
   return DEFAULT_LOCALE
 }

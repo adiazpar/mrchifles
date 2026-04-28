@@ -61,12 +61,23 @@ const LOCALE_GUIDANCE: Record<string, string> = {
   fr: `French-specific rules:
 - Use the "vous" form, not "tu".
 - Avoid anglicisms where a natural French term exists.`,
+  ja: `Japanese-specific rules:
+- Use polite form (desu/masu, です/ます). Do not use plain form (da/ru).
+- Do not use overly humble keigo (sonkeigo/kenjogo) — neutral polite is correct for a POS app used by the business owner.
+- Use kanji where natural; avoid forcing hiragana for words that are normally written in kanji (e.g. 商品 not しょうひん, 在庫 not ざいこ, 顧客 not こきゃく).
+- Use katakana for loanwords that are standard in Japanese retail/POS vocabulary (バーコード, カテゴリ, パスワード, メール, ログイン, ログアウト, アイコン).
+- Common POS / inventory vocabulary: 商品 (product), 在庫 (stock), カテゴリ (category), 仕入先 (supplier/provider), 発注 (order), 売上 (sales), 価格 (price), 数量 (quantity), 業務 (business), チーム (team), メンバー (member), オーナー (owner), 招待コード (invite code).
+- Buttons / actions stay short. Use 保存 (save), キャンセル (cancel), 削除 (delete), 戻る (back), 次へ (next), 続ける (continue), 完了 (done), 追加 (add), 編集 (edit).
+- Do NOT add Japanese sentence-ending punctuation (。) where the English source has none. Mirror the source's punctuation discipline — UI labels, button text, and short headers stay punctuation-free.
+- Use full-width Japanese punctuation (。、) only inside actual sentences (toasts, paragraphs, helper text), never inside ICU placeholders or button labels.
+- Spacing: do NOT insert spaces between Japanese characters. Keep spaces only around Latin words, numbers, and ICU placeholders ({name}, {count}).`,
 }
 
 const LANGUAGE_NAMES: Record<string, string> = {
   es: 'Spanish',
   pt: 'Portuguese',
   fr: 'French',
+  ja: 'Japanese',
 }
 
 // ============================================================================

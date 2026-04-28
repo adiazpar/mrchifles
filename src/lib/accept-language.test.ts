@@ -35,12 +35,17 @@ describe('pickLocaleFromAcceptLanguage', () => {
 
   it('picks the first supported locale by preference order', () => {
     expect(pickLocaleFromAcceptLanguage('fr,es-MX,en-US')).toBe('es')
-    expect(pickLocaleFromAcceptLanguage('de,ja,en-GB,es')).toBe('en-US')
+    expect(pickLocaleFromAcceptLanguage('de,ja,en-GB,es')).toBe('ja')
+  })
+
+  it('collapses all Japanese variants to ja', () => {
+    expect(pickLocaleFromAcceptLanguage('ja')).toBe('ja')
+    expect(pickLocaleFromAcceptLanguage('ja-JP')).toBe('ja')
   })
 
   it('falls back to default when no supported language is present', () => {
     expect(pickLocaleFromAcceptLanguage('fr-FR')).toBe('en-US')
-    expect(pickLocaleFromAcceptLanguage('de,ja;q=0.8')).toBe('en-US')
+    expect(pickLocaleFromAcceptLanguage('de,fr;q=0.8')).toBe('en-US')
     expect(pickLocaleFromAcceptLanguage('zh-CN')).toBe('en-US')
   })
 

@@ -22,7 +22,12 @@ export function LanguageRow() {
   if (!user) return null
 
   const currentLanguage = resolveTranslationLocale(user.language)
-  const currentLabel = currentLanguage === 'es' ? 'Español' : 'English'
+  const labelByLocale: Record<SupportedLocale, string> = {
+    'en-US': 'English',
+    es: 'Español',
+    ja: '日本語',
+  }
+  const currentLabel = labelByLocale[currentLanguage]
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const next = event.target.value as SupportedLocale
@@ -47,7 +52,7 @@ export function LanguageRow() {
       >
         {SUPPORTED_LOCALES.map((locale) => (
           <option key={locale} value={locale}>
-            {locale === 'es' ? 'Español' : 'English'}
+            {labelByLocale[locale]}
           </option>
         ))}
       </select>

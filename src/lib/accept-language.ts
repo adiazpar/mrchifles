@@ -70,6 +70,7 @@ export function pickLocaleFromAcceptLanguage(
     // 2. Language-prefix match. Extend when adding new SUPPORTED_LOCALES.
     const base = tag.split('-')[0]
     if (base === 'es') return 'es'
+    if (base === 'ja') return 'ja'
     if (base === 'en') return 'en-US'
   }
 
