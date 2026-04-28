@@ -447,7 +447,8 @@
     "team": "Equipo",
     "providers": "Proveedores",
     "settings": "Configuración",
-    "account": "Cuenta"
+    "account": "Cuenta",
+    "load_failed": "No se pudo cargar la página. Verifica tu conexión e inténtalo de nuevo."
   },
   "account": {
     "section_preferences": "Preferencias",

@@ -447,7 +447,8 @@
     "team": "Team",
     "providers": "Providers",
     "settings": "Settings",
-    "account": "Account"
+    "account": "Account",
+    "load_failed": "Couldn't load page. Check your connection and try again."
   },
   "account": {
     "section_preferences": "Preferences",
