@@ -89,21 +89,27 @@ export function PageHeader() {
     (!isHubContext && (pendingHref === '/' || pendingHref.startsWith('/account') || pendingHref.startsWith('/join')))
   )
 
-  // Track scroll position to show shadow
+  // Track scroll position to show shadow.
+  // After the Tier 4 TabShell refactor, business routes scroll inside per-tab
+  // containers (.tab-shell-view) rather than the AppShell's
+  // .main-scroll-container. We prefer the active tab view, falling back to
+  // .main-scroll-container for hub/auth routes that still scroll the outer
+  // container. Re-runs on pathname change so the listener follows the user
+  // as they switch tabs (the active view element changes).
   useEffect(() => {
-    const scrollContainer = document.querySelector('.main-scroll-container')
+    const scrollContainer =
+      document.querySelector('.tab-shell-view.is-active') ??
+      document.querySelector('.main-scroll-container')
     if (!scrollContainer) return
 
     const handleScroll = () => {
       setIsScrolled(scrollContainer.scrollTop > 0)
     }
 
-    // Check initial scroll position
     handleScroll()
-
     scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
     return () => scrollContainer.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [pathname])
 
   // Map English page titles/titles from route configs to i18n keys
   const PAGE_TITLE_MAP: Record<string, string> = {
