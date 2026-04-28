@@ -4,12 +4,10 @@
 import { defaultCache } from '@serwist/next/worker'
 import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist'
 import {
-  CacheFirst,
   ExpirationPlugin,
   NetworkFirst,
   NetworkOnly,
   Serwist,
-  StaleWhileRevalidate,
 } from 'serwist'
 
 declare global {

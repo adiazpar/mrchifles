@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { DM_Sans, IBM_Plex_Sans } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { AuthProvider } from '@/contexts/auth-context'
 import { PageTransitionProvider } from '@/contexts/page-transition-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
@@ -141,6 +143,8 @@ export default async function RootLayout({
             </AuthGateProvider>
           </AuthProvider>
         </NextIntlClientProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
