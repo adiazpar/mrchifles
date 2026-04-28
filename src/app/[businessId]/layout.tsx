@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation'
 import { PageTransition } from '@/components/layout'
+import { BusinessDataPreloader } from '@/components/layout/BusinessDataPreloader'
 import { ContentGuard } from '@/components/auth'
 import { OrdersProvider } from '@/contexts/orders-context'
 import { ProvidersProvider } from '@/contexts/providers-context'
@@ -30,6 +31,7 @@ export default function BusinessLayout({
           <ProvidersProvider key={`providers-${businessId}`} businessId={businessId}>
             <ProductsProvider key={`products-${businessId}`} businessId={businessId}>
               <ProductSettingsProvider key={`product-settings-${businessId}`} businessId={businessId}>
+                <BusinessDataPreloader businessId={businessId} />
                 {children}
               </ProductSettingsProvider>
             </ProductsProvider>
