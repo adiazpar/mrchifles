@@ -33,4 +33,5 @@
 @import './styles/animations.css';
 @import './styles/modal.css';
 @import './styles/auth-gate.css';
+@import './styles/tab-shell.css';
 @import './styles/utilities.css';
