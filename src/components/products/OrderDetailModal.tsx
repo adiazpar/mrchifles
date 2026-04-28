@@ -274,6 +274,36 @@ export function OrderDetailModal({
   const [editReceiptError, setEditReceiptError] = useState('')
   const productsById = useMemo(() => new Map(products.map(p => [p.id, p])), [products])
 
+  // Compact 32x32 icon cell for an order item. Resolves the product via the
+  // productsById Map (built once per render — no per-row find / fetch, per
+  // performance-patterns.md §6). Falls back to a placeholder when the
+  // product is null or no longer in the catalog (e.g. deleted).
+  const OrderItemIconCell = ({ productId }: { productId: string | null | undefined }) => {
+    const product = productId ? productsById.get(productId) : null
+    const iconUrl = product ? getProductIconUrl(product) : null
+    return (
+      <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-bg-muted flex-shrink-0">
+        {iconUrl && isPresetIcon(iconUrl) ? (
+          (() => {
+            const p = getPresetIcon(iconUrl)
+            return p ? <p.icon size={18} className="text-text-primary" /> : null
+          })()
+        ) : iconUrl ? (
+          <Image
+            src={iconUrl}
+            alt=""
+            width={32}
+            height={32}
+            className="object-cover w-full h-full"
+            unoptimized
+          />
+        ) : (
+          <ImagePlus className="w-4 h-4 text-text-tertiary" />
+        )}
+      </div>
+    )
+  }
+
   // When the modal was opened at a sub-step directly (via a swipe-tray action
   // on the list row), the overview isn't part of the user's mental stack —
   // so Back / Cancel should dismiss the modal rather than slide to step 0.
@@ -303,6 +333,7 @@ export function OrderDetailModal({
           <div className="space-y-1">
             {order.expand?.['order_items(order)']?.map(item => (
               <div key={item.id} className="flex items-center justify-between gap-2 text-sm">
+                <OrderItemIconCell productId={item.productId} />
                 <span className="text-text-secondary truncate flex-1 min-w-0">{item.productName}</span>
                 <span className="text-text-secondary flex-shrink-0 tabular-nums">{item.quantity}x</span>
                 {item.unitCost != null && (
@@ -333,7 +364,8 @@ export function OrderDetailModal({
                   {t('variance_section_title')}
                 </span>
                 {varianceItems.map(item => (
-                  <div key={`variance-${item.id}`} className="flex justify-between text-sm text-warning">
+                  <div key={`variance-${item.id}`} className="flex items-center gap-2 text-sm text-warning">
+                    <OrderItemIconCell productId={item.productId} />
                     <span className="truncate flex-1 min-w-0">{item.productName}</span>
                     <span className="flex-shrink-0">
                       {t('variance_item_line', { ordered: item.quantity, received: item.receivedQuantity ?? 0 })}
@@ -740,9 +772,10 @@ export function OrderDetailModal({
         <Modal.Item>
           <div className="space-y-1">
             {order.expand?.['order_items(order)']?.map(item => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-text-secondary">{item.productName}</span>
-                <span className="text-text-secondary">{item.quantity}x</span>
+              <div key={item.id} className="flex items-center gap-2 text-sm">
+                <OrderItemIconCell productId={item.productId} />
+                <span className="text-text-secondary truncate flex-1 min-w-0">{item.productName}</span>
+                <span className="text-text-secondary flex-shrink-0">{item.quantity}x</span>
               </div>
             ))}
           </div>

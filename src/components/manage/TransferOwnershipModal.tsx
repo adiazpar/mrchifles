@@ -14,6 +14,7 @@ interface TeamMember {
   id: string
   email: string
   name: string
+  avatar?: string | null
   role: 'owner' | 'partner' | 'employee'
   status: 'active' | 'disabled'
 }
@@ -110,10 +111,19 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
                           : 'border-border enabled:hover:border-brand-300'
                       }`}
                     >
-                      <div className="w-12 h-12 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-brand">
-                          {getUserInitials(m.name)}
-                        </span>
+                      <div className="w-12 h-12 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {m.avatar ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={m.avatar}
+                            alt=""
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm font-bold text-brand">
+                            {getUserInitials(m.name)}
+                          </span>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text-primary truncate">{m.name}</p>

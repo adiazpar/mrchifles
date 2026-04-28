@@ -46,8 +46,17 @@ export const UserDetailsStep = memo(function UserDetailsStep({
       <Modal.Item>
         {/* Member header */}
         <div className="flex items-center gap-3">
-          <div className="avatar w-11 h-11 text-sm">
-            {getUserInitials(member.name)}
+          <div className="avatar w-11 h-11 text-sm overflow-hidden">
+            {member.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={member.avatar}
+                alt=""
+                className="w-11 h-11 rounded-full object-cover"
+              />
+            ) : (
+              getUserInitials(member.name)
+            )}
           </div>
           <div>
             <h3 className="font-display font-bold text-lg">{member.name}</h3>

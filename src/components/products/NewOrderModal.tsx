@@ -583,12 +583,34 @@ export function NewOrderModal({
         {/* Products list - compact */}
         <Modal.Item>
           <div className="space-y-1">
-            {orderItems.map(item => (
-              <div key={item.product.id} className="flex justify-between text-sm">
-                <span className="text-text-secondary">{item.product.name}</span>
-                <span className="text-text-secondary">{item.quantity}x</span>
-              </div>
-            ))}
+            {orderItems.map(item => {
+              const iconUrl = getProductIconUrl(item.product)
+              return (
+                <div key={item.product.id} className="flex items-center gap-2 text-sm">
+                  <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-bg-muted flex-shrink-0">
+                    {iconUrl && isPresetIcon(iconUrl) ? (
+                      (() => {
+                        const p = getPresetIcon(iconUrl)
+                        return p ? <p.icon size={18} className="text-text-primary" /> : null
+                      })()
+                    ) : iconUrl ? (
+                      <Image
+                        src={iconUrl}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="object-cover w-full h-full"
+                        unoptimized
+                      />
+                    ) : (
+                      <ImagePlus className="w-4 h-4 text-text-tertiary" />
+                    )}
+                  </div>
+                  <span className="text-text-secondary truncate flex-1 min-w-0">{item.product.name}</span>
+                  <span className="text-text-secondary flex-shrink-0">{item.quantity}x</span>
+                </div>
+              )
+            })}
           </div>
         </Modal.Item>
 

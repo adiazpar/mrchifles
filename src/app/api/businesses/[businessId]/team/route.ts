@@ -24,6 +24,7 @@ export const GET = withBusinessAuth(async (_request, access) => {
       id: users.id,
       email: users.email,
       name: users.name,
+      avatar: users.avatar,
       role: businessUsers.role,
       status: businessUsers.status,
       createdAt: businessUsers.createdAt,

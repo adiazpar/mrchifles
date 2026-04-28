@@ -35,10 +35,19 @@ export function TeamMemberListItem({ member, isSelf, onClick }: TeamMemberListIt
       role="button"
     >
       {/* Avatar */}
-      <div className="w-12 h-12 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0">
-        <span className="text-sm font-bold text-brand">
-          {getUserInitials(member.name)}
-        </span>
+      <div className="w-12 h-12 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0 overflow-hidden">
+        {member.avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={member.avatar}
+            alt=""
+            className="w-12 h-12 rounded-full object-cover"
+          />
+        ) : (
+          <span className="text-sm font-bold text-brand">
+            {getUserInitials(member.name)}
+          </span>
+        )}
       </div>
 
       {/* Info */}
