@@ -45,35 +45,25 @@
   gap: var(--space-4);
 }
 
-/* Content exit animation - staggered fade up */
-.modal-step-content-exit .modal-step-item {
-  animation: modal-step-item-exit var(--duration-instant) ease-in forwards;
+/* Step content fades as a single unit — the previous per-item stagger
+   read as flicker for step-to-step transitions inside a drawer. The
+   .modal-step-item class is still used as a marker by ProductForm.tsx
+   (and is harmless if other consumers add it), but no longer drives any
+   animation. */
+.modal-step-content-exit {
+  animation: modal-step-content-fade-out var(--duration-fast) ease-in forwards;
 }
 
-.modal-step-content-exit .modal-step-item:nth-child(1) { animation-delay: 0ms; }
-.modal-step-content-exit .modal-step-item:nth-child(2) { animation-delay: 25ms; }
-.modal-step-content-exit .modal-step-item:nth-child(3) { animation-delay: 50ms; }
-.modal-step-content-exit .modal-step-item:nth-child(4) { animation-delay: 75ms; }
-.modal-step-content-exit .modal-step-item:nth-child(5) { animation-delay: 100ms; }
-
-/* Content enter animation - staggered fade in from below */
-.modal-step-content-enter .modal-step-item {
-  animation: modal-step-item-enter var(--duration-instant) ease-out forwards;
-  opacity: 0;
+.modal-step-content-enter {
+  animation: modal-step-content-fade-in var(--duration-fast) ease-out forwards;
 }
 
-.modal-step-content-enter .modal-step-item:nth-child(1) { animation-delay: 0ms; }
-.modal-step-content-enter .modal-step-item:nth-child(2) { animation-delay: 25ms; }
-.modal-step-content-enter .modal-step-item:nth-child(3) { animation-delay: 50ms; }
-.modal-step-content-enter .modal-step-item:nth-child(4) { animation-delay: 75ms; }
-.modal-step-content-enter .modal-step-item:nth-child(5) { animation-delay: 100ms; }
-
-@keyframes modal-step-item-exit {
+@keyframes modal-step-content-fade-out {
   from { opacity: 1; }
   to   { opacity: 0; }
 }
 
-@keyframes modal-step-item-enter {
+@keyframes modal-step-content-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
