@@ -7,7 +7,13 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { AuthProvider } from '@/contexts/auth-context'
 import { PageTransitionProvider } from '@/contexts/page-transition-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
-import { AppShell, TapFeedbackProvider, AuthGateOverlay, IOSStartupImages } from '@/components/layout'
+import {
+  AppShell,
+  TapFeedbackProvider,
+  AuthGateOverlay,
+  DevServiceWorkerCleanup,
+  IOSStartupImages,
+} from '@/components/layout'
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from '@/lib/theme-color'
 import './globals.css'
 
@@ -145,6 +151,7 @@ export default async function RootLayout({
         </NextIntlClientProvider>
         <Analytics />
         <SpeedInsights />
+        {process.env.NODE_ENV !== 'production' && <DevServiceWorkerCleanup />}
       </body>
     </html>
   )
