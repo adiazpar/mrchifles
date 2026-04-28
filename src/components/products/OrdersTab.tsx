@@ -268,40 +268,41 @@ export function OrdersTab({
             ) : (
               <div className="list-divided">
                 {filteredOrders.map((order, i) => {
-                  const hasSwipeActions = canManage && viewMode !== 'completed' && !!(onReceiveOrder && onEditOrder && onDeleteOrder)
                   const alreadyReceived = getOrderDisplayStatus(order) === 'received'
-                  // Mirrors the products list ordering for muscle-memory consistency:
-                  // primary action leftmost (deepest swipe), secondary middle, the
-                  // remove-ish action rightmost (shallowest swipe).
-                  const swipeActions = hasSwipeActions
+                  // Receive is available to any active member (employees
+                  // included) — receiving incoming inventory is normal floor
+                  // work. Edit + Delete are manager-only. Mirrors the
+                  // products list ordering for muscle-memory consistency.
+                  const swipeActions = viewMode !== 'completed'
                     ? [
-                        {
+                        ...(onReceiveOrder ? [{
                           icon: <CircleCheckBig size={20} />,
                           label: t('action_receive'),
                           variant: 'info' as const,
                           disabled: alreadyReceived,
-                          onClick: () => onReceiveOrder!(order),
-                        },
-                        {
+                          onClick: () => onReceiveOrder(order),
+                        }] : []),
+                        ...(canManage && onEditOrder ? [{
                           icon: <Pencil size={20} />,
                           label: t('action_edit'),
                           variant: 'neutral' as const,
                           // Received orders are locked — no quantity / total /
                           // provider edits once stock has been posted.
                           disabled: alreadyReceived,
-                          onClick: () => onEditOrder!(order),
-                        },
-                        {
+                          onClick: () => onEditOrder(order),
+                        }] : []),
+                        ...(canManage && onDeleteOrder ? [{
                           icon: <Trash2 size={20} />,
                           label: t('action_delete'),
                           variant: 'danger' as const,
                           // Received orders can't be deleted either — would
                           // require rolling back the stock changes they posted.
                           disabled: !canDelete || alreadyReceived,
-                          onClick: () => onDeleteOrder!(order),
-                        },
+                          onClick: () => onDeleteOrder(order),
+                        }] : []),
                       ]
                     : []
+                  const hasSwipeActions = swipeActions.length > 0
                   return (
                     <Fragment key={order.id}>
                       {i > 0 && <hr className="list-divider" />}

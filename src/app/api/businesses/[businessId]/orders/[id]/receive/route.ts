@@ -2,7 +2,6 @@ import { db, orders, orderItems, products } from '@/db'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
-import { canManageBusiness } from '@/lib/business-auth'
 import { ApiMessageCode } from '@/lib/api-messages'
 
 const receiveOrderSchema = z.object({
@@ -15,14 +14,12 @@ const receiveOrderSchema = z.object({
 /**
  * POST /api/businesses/[businessId]/orders/[id]/receive
  *
- * Receive an order and update product stock.
+ * Receive an order and update product stock. Available to any active
+ * business member (employees included) — receiving incoming inventory is
+ * a normal floor-staff task. Other order mutations (create, edit, delete)
+ * remain manager-only.
  */
 export const POST = withBusinessAuth(async (request, access, routeParams) => {
-  // Only partners and owners can receive an order (it mutates stock).
-  if (!canManageBusiness(access.role)) {
-    return errorResponse(ApiMessageCode.ORDER_FORBIDDEN_NOT_MANAGER, 403)
-  }
-
   const id = routeParams?.id
   if (!id) {
     return errorResponse(ApiMessageCode.ORDER_ID_REQUIRED, 400)

@@ -822,9 +822,10 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                 <div className="list-divided">
                   {providerOrders.map((order, i) => {
                     const alreadyReceived = getOrderDisplayStatus(order) === 'received'
-                    // Same semantic ordering as the Products page Orders tab
-                    // for muscle-memory consistency across surfaces.
-                    const swipeActions = canManage ? [
+                    // Same semantic ordering as the Products page Orders tab.
+                    // Receive is available to any active member; Edit + Delete
+                    // are manager-only.
+                    const swipeActions = [
                       {
                         icon: <CircleCheckBig size={20} />,
                         label: tOrders('action_receive'),
@@ -832,24 +833,26 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                         disabled: alreadyReceived,
                         onClick: () => orderFlows.openOrderDetail(order, 'receive'),
                       },
-                      {
-                        icon: <Pencil size={20} />,
-                        label: tOrders('action_edit'),
-                        variant: 'neutral' as const,
-                        // Received orders are locked — no edits once stock posted.
-                        disabled: alreadyReceived,
-                        onClick: () => orderFlows.openOrderDetail(order, 'edit'),
-                      },
-                      {
-                        icon: <Trash2 size={20} />,
-                        label: tOrders('action_delete'),
-                        variant: 'danger' as const,
-                        // Received orders can't be deleted either — would
-                        // require rolling back the stock changes they posted.
-                        disabled: alreadyReceived,
-                        onClick: () => orderFlows.openOrderDetail(order, 'delete'),
-                      },
-                    ] : []
+                      ...(canManage ? [
+                        {
+                          icon: <Pencil size={20} />,
+                          label: tOrders('action_edit'),
+                          variant: 'neutral' as const,
+                          // Received orders are locked — no edits once stock posted.
+                          disabled: alreadyReceived,
+                          onClick: () => orderFlows.openOrderDetail(order, 'edit'),
+                        },
+                        {
+                          icon: <Trash2 size={20} />,
+                          label: tOrders('action_delete'),
+                          variant: 'danger' as const,
+                          // Received orders can't be deleted either — would
+                          // require rolling back the stock changes they posted.
+                          disabled: alreadyReceived,
+                          onClick: () => orderFlows.openOrderDetail(order, 'delete'),
+                        },
+                      ] : []),
+                    ]
                     return (
                       <Fragment key={order.id}>
                         {i > 0 && <hr className="list-divider" />}

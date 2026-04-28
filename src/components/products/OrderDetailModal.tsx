@@ -450,16 +450,19 @@ export function OrderDetailModal({
           </div>
         </Modal.Item>
 
-        {/* Footer for pending orders. Edit/Receive/Delete are manager-only;
-            employees see a Close button instead so the footer isn't empty. */}
-        {order.status === 'pending' && canManage ? (
+        {/* Footer for pending orders. Receive is always visible (employees
+            can receive incoming inventory). Edit + Delete are manager-only.
+            For non-pending orders the footer is just a Close button. */}
+        {order.status === 'pending' ? (
           <Modal.Footer>
             {canDelete && (
               <Modal.GoToStepButton step={5} className="btn btn-secondary btn-icon">
                 <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
               </Modal.GoToStepButton>
             )}
-            <GoToEditStepButton order={order} onInitialize={onInitializeEditForm} />
+            {canManage && (
+              <GoToEditStepButton order={order} onInitialize={onInitializeEditForm} />
+            )}
             <GoToReceiveStepButton order={order} onInitialize={onInitializeReceiveQuantities} />
           </Modal.Footer>
         ) : (
