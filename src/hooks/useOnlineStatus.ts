@@ -9,13 +9,13 @@ const FLICKER_DEBOUNCE_MS = 500
 // rapidly-flapping connection on a flaky wifi doesn't cause the offline
 // banner to strobe.
 //
-// Initial value is read from navigator.onLine but defaults to true on the
-// server (where navigator is undefined) so the offline banner doesn't
-// SSR/hydrate as visible.
+// Initial state is unconditionally `true` so SSR and the first client
+// render agree (the server has no `navigator`). The real `navigator.onLine`
+// value is read in the mount effect below; if the user is actually offline,
+// the state flips on the second render — after hydration, so React doesn't
+// see a tree mismatch.
 export function useOnlineStatus(): boolean {
-  const [isOnline, setIsOnline] = useState<boolean>(() =>
-    typeof navigator === 'undefined' ? true : navigator.onLine
-  )
+  const [isOnline, setIsOnline] = useState<boolean>(true)
 
   useEffect(() => {
     let pending: ReturnType<typeof setTimeout> | null = null
@@ -34,15 +34,15 @@ export function useOnlineStatus(): boolean {
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
 
-    // Sync once on mount in case state changed between SSR and now.
-    if (navigator.onLine !== isOnline) setIsOnline(navigator.onLine)
+    // Sync once on mount: this is the first time we can safely read
+    // navigator.onLine without breaking hydration.
+    if (!navigator.onLine) setIsOnline(false)
 
     return () => {
       if (pending) clearTimeout(pending)
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return isOnline
