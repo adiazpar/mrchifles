@@ -1,9 +1,19 @@
 const createNextIntlPlugin = require('next-intl/plugin')
+const withSerwistInit = require('@serwist/next').default
 
 // Wrap next.config with next-intl's plugin so it knows where to find the
 // server-side request config. We keep our request config alongside the
 // rest of the i18n machinery in `src/i18n/request.ts`.
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
+
+const withSerwist = withSerwistInit({
+  swSrc: 'src/app/sw.ts',
+  swDest: 'public/sw.js',
+  // Disable in dev: SW + Next dev HMR fight each other and stale chunks
+  // get pinned to the SW cache. Use `npm run start:local` to verify SW
+  // behavior locally (next build + custom HTTPS wrapper).
+  disable: process.env.NODE_ENV !== 'production',
+})
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -97,4 +107,4 @@ const nextConfig = {
   },
 }
 
-module.exports = withNextIntl(nextConfig)
+module.exports = withSerwist(withNextIntl(nextConfig))

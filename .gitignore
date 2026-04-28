@@ -60,4 +60,10 @@ public/media/
 .claude/
 .superpowers/
 
+# Serwist (service worker build outputs)
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
+public/swe-worker-*.js.map
+
 certificates
