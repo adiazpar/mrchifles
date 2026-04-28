@@ -2,21 +2,18 @@
 'use client'
 
 import type { ModalItemProps } from './types'
-import { TIMING } from './types'
 
 interface InternalItemProps extends ModalItemProps {
   _index?: number
 }
 
-export function ModalItem({ children, className = '', _index = 0 }: InternalItemProps) {
-  // Apply stagger delay via inline style
-  const delay = _index * TIMING.STAGGER_DELAY
-
+export function ModalItem({ children, className = '' }: InternalItemProps) {
+  // The .modal-step-item class is purely a marker for external consumers
+  // (e.g. ProductForm.tsx). Step-content fade lives on the wrapper —
+  // .modal-step-content-exit / .modal-step-content-enter — so individual
+  // items no longer need their own animation-delay.
   return (
-    <div
-      className={`modal-step-item ${className}`}
-      style={{ animationDelay: `${delay}ms` }}
-    >
+    <div className={`modal-step-item ${className}`}>
       {children}
     </div>
   )
