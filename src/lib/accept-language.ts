@@ -18,6 +18,7 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from '@/i18n/config'
+import { resolveLocaleByPrefix } from '@/i18n/locales'
 
 interface AcceptLanguageEntry {
   tag: string
@@ -48,12 +49,13 @@ function parseAcceptLanguage(header: string): AcceptLanguageEntry[] {
  *
  * Matching strategy, per entry in q-order:
  *   1. Exact match against SUPPORTED_LOCALES (e.g. "en-US" === "en-US")
- *   2. Language-prefix match (e.g. "es-MX", "es-PE", "es-AR" → "es")
- *   3. English variants (e.g. "en", "en-GB", "en-AU") → "en-US"
+ *   2. Language-prefix match driven by each locale's `acceptPrefixes`
+ *      (e.g. "es-MX", "es-PE" → "es"; "en-GB", "en-AU" → "en-US";
+ *      "ja-JP" → "ja").
  *
  * Falls back to DEFAULT_LOCALE when the header is missing, malformed, or
- * names only unsupported languages. Extend the prefix-match block when
- * adding new SUPPORTED_LOCALES.
+ * names only unsupported languages. Adding a new locale to the registry
+ * automatically wires it up here — no edits needed in this file.
  */
 export function pickLocaleFromAcceptLanguage(
   header: string | null | undefined,
@@ -63,15 +65,11 @@ export function pickLocaleFromAcceptLanguage(
   const entries = parseAcceptLanguage(header)
 
   for (const { tag } of entries) {
-    // 1. Exact match against SUPPORTED_LOCALES
     const exact = SUPPORTED_LOCALES.find((s) => s.toLowerCase() === tag)
     if (exact) return exact
 
-    // 2. Language-prefix match. Extend when adding new SUPPORTED_LOCALES.
-    const base = tag.split('-')[0]
-    if (base === 'es') return 'es'
-    if (base === 'ja') return 'ja'
-    if (base === 'en') return 'en-US'
+    const matched = resolveLocaleByPrefix(tag)
+    if (matched) return matched
   }
 
   return DEFAULT_LOCALE

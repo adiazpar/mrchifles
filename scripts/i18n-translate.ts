@@ -21,6 +21,7 @@ import { config as loadEnv } from 'dotenv'
 import { readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import Anthropic from '@anthropic-ai/sdk'
+import { getLocaleConfig } from '../src/i18n/locales'
 
 loadEnv({ path: '.env.local' })
 
@@ -49,36 +50,9 @@ const MESSAGES_DIR = resolve(process.cwd(), 'src/i18n/messages')
 const SOURCE_FILE = 'en-US.json'
 const MAX_RETRIES = 3
 
-// Tone and style guidance per locale. Extend this map to add new languages.
-const LOCALE_GUIDANCE: Record<string, string> = {
-  es: `Spanish-specific rules:
-- Use the "usted" form, not "tu".
-- Avoid anglicisms where a natural Spanish term exists. Prefer: "Guardar" not "Salvar"; "Atras" not "Espalda"; "Iniciar sesion" not "Loguearse"; "Contrasena" not "Password"; "Correo" not "Email" unless space-constrained.
-- Match POS / retail vocabulary the Latin American market actually uses.`,
-  pt: `Portuguese-specific rules:
-- Use Brazilian Portuguese (pt-BR) as the default dialect.
-- Use the "voce" form for user-facing copy.`,
-  fr: `French-specific rules:
-- Use the "vous" form, not "tu".
-- Avoid anglicisms where a natural French term exists.`,
-  ja: `Japanese-specific rules:
-- Use polite form (desu/masu, です/ます). Do not use plain form (da/ru).
-- Do not use overly humble keigo (sonkeigo/kenjogo) — neutral polite is correct for a POS app used by the business owner.
-- Use kanji where natural; avoid forcing hiragana for words that are normally written in kanji (e.g. 商品 not しょうひん, 在庫 not ざいこ, 顧客 not こきゃく).
-- Use katakana for loanwords that are standard in Japanese retail/POS vocabulary (バーコード, カテゴリ, パスワード, メール, ログイン, ログアウト, アイコン).
-- Common POS / inventory vocabulary: 商品 (product), 在庫 (stock), カテゴリ (category), 仕入先 (supplier/provider), 発注 (order), 売上 (sales), 価格 (price), 数量 (quantity), 業務 (business), チーム (team), メンバー (member), オーナー (owner), 招待コード (invite code).
-- Buttons / actions stay short. Use 保存 (save), キャンセル (cancel), 削除 (delete), 戻る (back), 次へ (next), 続ける (continue), 完了 (done), 追加 (add), 編集 (edit).
-- Do NOT add Japanese sentence-ending punctuation (。) where the English source has none. Mirror the source's punctuation discipline — UI labels, button text, and short headers stay punctuation-free.
-- Use full-width Japanese punctuation (。、) only inside actual sentences (toasts, paragraphs, helper text), never inside ICU placeholders or button labels.
-- Spacing: do NOT insert spaces between Japanese characters. Keep spaces only around Latin words, numbers, and ICU placeholders ({name}, {count}).`,
-}
-
-const LANGUAGE_NAMES: Record<string, string> = {
-  es: 'Spanish',
-  pt: 'Portuguese',
-  fr: 'French',
-  ja: 'Japanese',
-}
+// Language name + tone guidance live in the locale registry at
+// src/i18n/locales.ts — that's the only place to edit when adding a
+// language. This script reads from there via getLocaleConfig().
 
 // ============================================================================
 // CLI parsing
@@ -222,8 +196,9 @@ function validatePlaceholders(path: string, source: string, translated: string):
 // ============================================================================
 
 function buildSystemPrompt(targetLocale: string): string {
-  const languageName = LANGUAGE_NAMES[targetLocale] ?? targetLocale
-  const localeGuidance = LOCALE_GUIDANCE[targetLocale] ?? ''
+  const config = getLocaleConfig(targetLocale)
+  const languageName = config?.translate?.name ?? targetLocale
+  const localeGuidance = config?.translate?.guidance ?? ''
 
   return `You are translating UI strings for Kasero, a small-business POS and inventory app used primarily in Latin America. Your audience is small business owners: food vendors, artisans, retailers. They use the app on mobile while running their business, so copy must be concise and scannable.
 

@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { pickLocaleFromAcceptLanguage } from './accept-language'
 
+// Use `zz` / `xx` (ISO 639-1 reserved/unassigned) as synthetic
+// "unsupported language" fixtures. Real codes like `fr`, `de`, `zh` could
+// one day become supported, which would silently invalidate fallback
+// assertions. Reserved tags never will.
 describe('pickLocaleFromAcceptLanguage', () => {
   it('returns default locale when header is missing', () => {
     expect(pickLocaleFromAcceptLanguage(null)).toBe('en-US')
@@ -34,8 +38,8 @@ describe('pickLocaleFromAcceptLanguage', () => {
   })
 
   it('picks the first supported locale by preference order', () => {
-    expect(pickLocaleFromAcceptLanguage('fr,es-MX,en-US')).toBe('es')
-    expect(pickLocaleFromAcceptLanguage('de,ja,en-GB,es')).toBe('ja')
+    expect(pickLocaleFromAcceptLanguage('zz,es-MX,en-US')).toBe('es')
+    expect(pickLocaleFromAcceptLanguage('zz,en-GB,es')).toBe('en-US')
   })
 
   it('collapses all Japanese variants to ja', () => {
@@ -44,9 +48,9 @@ describe('pickLocaleFromAcceptLanguage', () => {
   })
 
   it('falls back to default when no supported language is present', () => {
-    expect(pickLocaleFromAcceptLanguage('fr-FR')).toBe('en-US')
-    expect(pickLocaleFromAcceptLanguage('de,fr;q=0.8')).toBe('en-US')
-    expect(pickLocaleFromAcceptLanguage('zh-CN')).toBe('en-US')
+    expect(pickLocaleFromAcceptLanguage('zz')).toBe('en-US')
+    expect(pickLocaleFromAcceptLanguage('zz,xx;q=0.8')).toBe('en-US')
+    expect(pickLocaleFromAcceptLanguage('zz-ZZ')).toBe('en-US')
   })
 
   it('parses realistic browser headers', () => {

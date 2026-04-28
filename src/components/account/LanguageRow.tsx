@@ -3,7 +3,7 @@
 import { Languages, ChevronRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
-import { SUPPORTED_LOCALES, resolveTranslationLocale, type SupportedLocale } from '@/i18n/config'
+import { LOCALES, SUPPORTED_LOCALES, resolveTranslationLocale, type SupportedLocale } from '@/i18n/config'
 
 /**
  * Language row with a full-size invisible native <select> overlay.
@@ -22,12 +22,7 @@ export function LanguageRow() {
   if (!user) return null
 
   const currentLanguage = resolveTranslationLocale(user.language)
-  const labelByLocale: Record<SupportedLocale, string> = {
-    'en-US': 'English',
-    es: 'Español',
-    ja: '日本語',
-  }
-  const currentLabel = labelByLocale[currentLanguage]
+  const currentLabel = LOCALES[currentLanguage].label
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const next = event.target.value as SupportedLocale
@@ -52,7 +47,7 @@ export function LanguageRow() {
       >
         {SUPPORTED_LOCALES.map((locale) => (
           <option key={locale} value={locale}>
-            {labelByLocale[locale]}
+            {LOCALES[locale].label}
           </option>
         ))}
       </select>
