@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { PageHeader } from './page-header'
 import { MobileNav } from './mobile-nav'
+import { NavigationErrorNotice } from './NavigationErrorNotice'
 import { JoinBusinessProvider } from '@/contexts/join-business-context'
 import { CreateBusinessProvider } from '@/contexts/create-business-context'
 import { BusinessProvider } from '@/contexts/business-context'
@@ -44,6 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <BusinessProvider businessId={businessId}>
             <PendingTransferProvider>
               <div className="h-full">
+                <NavigationErrorNotice />
                 <PageHeader />
                 <div className="main-scroll-container flex flex-col h-full overflow-y-auto overflow-x-hidden">
                   {children}
