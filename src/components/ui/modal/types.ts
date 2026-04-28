@@ -5,13 +5,16 @@ import { ReactNode } from 'react'
 export type Phase = 'idle' | 'exiting' | 'transitioning' | 'entering'
 export type Direction = 'forward' | 'backward'
 
-// Timing constants (must match CSS variables in globals.css)
-// CSS: --duration-fast: 150ms, --duration-normal: 250ms
+// Step transitions inside the bottom drawer are instant — no fade, no
+// stagger, no height tween. The phase machine still ticks (idle → exiting
+// → transitioning → entering → idle) for backward compatibility with any
+// consumer that subscribes to phase / isTransitioning, but each tick
+// resolves on the next microtask so currentStep updates immediately.
 export const TIMING = {
-  STAGGER_DELAY: 40,        // ms between each item animation
-  EXIT_DURATION: 150,       // matches --duration-fast
-  ENTER_DURATION: 150,      // matches --duration-fast
-  HEIGHT_TRANSITION: 250,   // matches --duration-normal
+  STAGGER_DELAY: 0,
+  EXIT_DURATION: 0,
+  ENTER_DURATION: 0,
+  HEIGHT_TRANSITION: 0,
 } as const
 
 // Internal state

@@ -104,28 +104,21 @@ function ModalHeader({
       <div className="modal-notch" aria-hidden />
       <div className="modal-header-bar">
         {/* Back-button slot — always reserved (44px wide) so the title stays
-            perfectly centered. The button itself unmounts on the first step
-            and fades in/out via AnimatePresence on subsequent steps. */}
+            perfectly centered. The button snaps in/out (no fade) — step
+            transitions are instant. */}
         <div className="modal-back-slot">
-          <AnimatePresence>
-            {showBackIcon && (
-              <motion.button
-                key="modal-back"
-                type="button"
-                onClick={handleBack}
-                onPointerDown={stopHeaderDrag}
-                className="modal-back"
-                aria-label={t('go_back')}
-                disabled={isLocked || isTransitioning}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </motion.button>
-            )}
-          </AnimatePresence>
+          {showBackIcon && (
+            <button
+              type="button"
+              onClick={handleBack}
+              onPointerDown={stopHeaderDrag}
+              className="modal-back"
+              aria-label={t('go_back')}
+              disabled={isLocked || isTransitioning}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
         </div>
         <h2 className="modal-title">{displayTitle}</h2>
         <button
@@ -352,23 +345,12 @@ function ModalInner({
       >
         {children}
       </ModalBody>
-      {/* Footer animated by AnimatePresence keyed on currentStep. When the
-          current step provides no <Modal.Footer>, currentFooter is null and
-          the AnimatePresence child is absent — exit animation runs. */}
-      <AnimatePresence mode="wait">
-        {currentFooter && (
-          <motion.div
-            key={`modal-footer-${ctx.currentStep}`}
-            className="modal-footer-wrapper"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.15 }}
-          >
-            {currentFooter}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Footer snaps when the step changes — no fade. */}
+      {currentFooter && (
+        <div className="modal-footer-wrapper">
+          {currentFooter}
+        </div>
+      )}
     </motion.div>
   )
 }

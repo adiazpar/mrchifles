@@ -12,8 +12,6 @@ interface InternalStepProps extends ModalStepProps {
 export function ModalStep({ children, title, hideBackButton = false, backStep, onBackStep, className, _index = 0 }: InternalStepProps) {
   const {
     currentStep,
-    targetStep,
-    phase,
     _registerStep,
     _unregisterStep,
     _setCurrentStepHideBackButton,
@@ -36,47 +34,10 @@ export function ModalStep({ children, title, hideBackButton = false, backStep, o
     }
   }, [_index, currentStep, hideBackButton, backStep, onBackStep, _setCurrentStepHideBackButton, _setCurrentStepBackStep, _setCurrentStepOnBackStep])
 
-  const isCurrentStep = _index === currentStep
-  const isTargetStep = _index === targetStep
-  const isExiting = isCurrentStep && phase === 'exiting'
-  const isEntering = isCurrentStep && phase === 'entering'
-
-  // FIX: Proper visibility during transitions
-  // - During idle: only current step is visible
-  // - During exiting: current step visible (fading out)
-  // - During transitioning: target step visible (for height measurement), current hidden
-  // - During entering: current step visible (fading in) - note: currentStep has updated to target
-  const getVisibility = () => {
-    if (phase === 'idle') {
-      return isCurrentStep
-    }
-    if (phase === 'exiting') {
-      // Old step is still visible (fading out)
-      return isCurrentStep
-    }
-    if (phase === 'transitioning') {
-      // Key fix: Show TARGET step (expanding), hide current step (collapsing)
-      return isTargetStep
-    }
-    if (phase === 'entering') {
-      // currentStep has been updated to target, show it
-      return isCurrentStep
-    }
-    return isCurrentStep
-  }
-
-  const isVisible = getVisibility()
-
-  // Animation classes — direction-agnostic opacity-only fade. The drawer is a
-  // fixed-height surface; old direction-aware translate animations are gone.
-  const getContentClass = () => {
-    if (isExiting) return 'modal-step-content-exit'
-    if (isEntering) return 'modal-step-content-enter'
-    return ''
-  }
-
-  // Hide content during transitioning phase (content faded out, height animating)
-  const hideContent = phase === 'transitioning'
+  // Step swaps are instant — no fades, no transitioning-phase visibility
+  // gymnastics. With TIMING set to 0 the phase machine ticks through
+  // synchronously and currentStep updates immediately.
+  const isVisible = _index === currentStep
 
   return (
     <div
@@ -85,10 +46,7 @@ export function ModalStep({ children, title, hideBackButton = false, backStep, o
       data-step-title={title}
     >
       <div className="modal-step-inner">
-        <div
-          className={`modal-step-content ${getContentClass()}`}
-          style={{ opacity: hideContent ? 0 : undefined }}
-        >
+        <div className="modal-step-content">
           {children}
         </div>
       </div>
