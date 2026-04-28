@@ -11,6 +11,8 @@ import {
 } from 'react'
 import { fetchDeduped } from '@/lib/fetch'
 import { CACHE_KEYS, createSessionCache } from '@/hooks'
+import { isFresh } from '@/lib/freshness'
+import { useRevalidateOnFocus } from '@/hooks/useRevalidateOnFocus'
 import type { Provider } from '@/types'
 
 type ProvidersUpdater = Provider[] | ((prev: Provider[]) => Provider[])
@@ -59,10 +61,12 @@ export function ProvidersProvider({ businessId, children }: ProvidersProviderPro
   const [isLoaded, setIsLoaded] = useState(() => !!cache.current.get())
   const [error, setError] = useState('')
   const inFlight = useRef<Promise<void> | null>(null)
-  // Whether the first consumer on this mount has already triggered the
-  // SWR revalidation. Flips once and stays true for the life of the
-  // provider (a business switch remounts via key={businessId}).
-  const hasRevalidated = useRef(false)
+  // Timestamp of the most recent successful fetch for this provider mount.
+  // Used by isFresh() to gate ensureLoaded(): within the freshness window,
+  // calls no-op; outside, they fire a background revalidate. A failed
+  // fetch leaves the previous timestamp in place — a transient error
+  // doesn't invalidate cached data that was good 30s ago.
+  const lastFetchedAt = useRef<number | null>(null)
 
   const setProviders = useCallback((updater: ProvidersUpdater) => {
     setProvidersState(prev => {
@@ -84,6 +88,7 @@ export function ProvidersProvider({ businessId, children }: ProvidersProviderPro
         setProvidersState(data.providers)
         cache.current.set(data.providers)
         setIsLoaded(true)
+        lastFetchedAt.current = Date.now()
       } else {
         setError(data.error || 'Failed to load providers')
       }
@@ -95,25 +100,20 @@ export function ProvidersProvider({ businessId, children }: ProvidersProviderPro
     }
   }, [businessId])
 
-  // Lazy load + stale-while-revalidate. The first consumer to call this per
-  // mount kicks off the fetch; subsequent callers either await the in-flight
-  // promise or no-op. When a sessionStorage cache hydrated the initial state
-  // we return immediately so consumers paint instantly, and revalidate in
-  // the background so a stale cache can't serve as ground truth.
   const ensureLoaded = useCallback((): Promise<void> => {
     if (inFlight.current) return inFlight.current
-    if (hasRevalidated.current) return Promise.resolve()
-    hasRevalidated.current = true
+    if (isFresh(lastFetchedAt.current, Date.now())) return Promise.resolve()
     inFlight.current = fetchProviders()
     return isLoaded ? Promise.resolve() : inFlight.current
   }, [isLoaded, fetchProviders])
 
   const refetch = useCallback((): Promise<void> => {
     if (inFlight.current) return inFlight.current
-    hasRevalidated.current = true
     inFlight.current = fetchProviders()
     return inFlight.current
   }, [fetchProviders])
+
+  useRevalidateOnFocus(ensureLoaded)
 
   // Memoize so consumers only re-render on meaningful changes. Mirrors
   // the OrdersContext / ProductsContext pattern; same fan-out concern.
