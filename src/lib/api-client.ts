@@ -82,7 +82,21 @@ export async function apiRequest<T extends ApiResponse>(
   url: string,
   options?: RequestInit
 ): Promise<T> {
-  const response = await fetch(url, options)
+  let response: Response
+  try {
+    response = await fetch(url, options)
+  } catch (err) {
+    // Network-layer failure (offline, DNS error, request blocked). The
+    // browser-specific TypeError messages we recognise: Chrome ("Failed
+    // to fetch"), Firefox ("NetworkError when attempting to fetch
+    // resource."), Safari ("Load failed"). Anything else (e.g. AbortError
+    // from a manual signal) we rethrow unchanged so callers can handle it
+    // as before.
+    if (err instanceof TypeError && /Failed to fetch|NetworkError|Load failed/i.test(err.message)) {
+      throw new ApiError(0, { success: false, messageCode: 'OFFLINE_MUTATION_BLOCKED' })
+    }
+    throw err
+  }
 
   const text = await response.text()
   if (!text) {
