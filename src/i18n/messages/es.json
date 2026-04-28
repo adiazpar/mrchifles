@@ -450,6 +450,9 @@
     "account": "Cuenta",
     "load_failed": "No se pudo cargar la página. Verifica tu conexión e inténtalo de nuevo."
   },
+  "network": {
+    "offline_banner": "Sin conexión. Mostrando datos en caché."
+  },
   "account": {
     "section_preferences": "Preferencias",
     "section_security": "Seguridad",
@@ -712,6 +715,7 @@
   },
   "apiMessages": {
     "internal_error": "Algo salió mal. Intente nuevamente.",
+    "offline_mutation_blocked": "Sin conexión. Inténtalo de nuevo cuando vuelvas a conectarte.",
     "not_found": "No encontrado",
     "forbidden": "Permiso denegado",
     "unauthorized": "Autenticación requerida",

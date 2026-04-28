@@ -450,6 +450,9 @@
     "account": "Account",
     "load_failed": "Couldn't load page. Check your connection and try again."
   },
+  "network": {
+    "offline_banner": "You're offline. Showing cached data."
+  },
   "account": {
     "section_preferences": "Preferences",
     "section_security": "Security",
@@ -712,6 +715,7 @@
   },
   "apiMessages": {
     "internal_error": "Something went wrong. Please try again.",
+    "offline_mutation_blocked": "You're offline. Try again when you reconnect.",
     "not_found": "Not found",
     "forbidden": "Permission denied",
     "unauthorized": "Authentication required",
