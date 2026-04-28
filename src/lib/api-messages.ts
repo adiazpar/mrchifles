@@ -25,6 +25,13 @@ export const ApiMessageCode = {
   REQUEST_TOO_LARGE: 'REQUEST_TOO_LARGE',
   REQUEST_LENGTH_REQUIRED: 'REQUEST_LENGTH_REQUIRED',
 
+  // Network / offline. Emitted by src/lib/api-client.ts when the browser
+  // reports the request failed at the network layer (offline, DNS error,
+  // request blocked). The user-facing message reads as a mutation hint
+  // because that's where users notice it; for background GET revalidations
+  // the caller swallows the error and keeps cached data.
+  OFFLINE_MUTATION_BLOCKED: 'OFFLINE_MUTATION_BLOCKED',
+
   // Validation (emitted by the Zod issue mapper)
   VALIDATION_GENERIC: 'VALIDATION_GENERIC',
   VALIDATION_REQUIRED: 'VALIDATION_REQUIRED',
