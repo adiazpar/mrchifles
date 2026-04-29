@@ -702,7 +702,89 @@
     "coming_soon": "Coming soon"
   },
   "sales": {
-    "coming_soon": "Coming soon"
+    "title": "Sales",
+    "coming_soon": "Coming soon",
+    "search_placeholder": "Search products...",
+    "charge_button": "Charge {total}",
+    "filter": "Filter",
+    "load_more": "Load more",
+
+    "empty_state": {
+      "no_sales_yet": "No sales yet",
+      "ring_up_first": "Ring up your first sale to see it here.",
+      "no_results_for_filter": "No sales match these filters."
+    },
+
+    "stats": {
+      "today": "Today",
+      "today_revenue": "Revenue",
+      "today_count": "Transactions",
+      "avg_ticket": "Avg ticket",
+      "vs_yesterday_up": "+{pct}% vs yesterday",
+      "vs_yesterday_down": "{pct}% vs yesterday",
+      "no_comparison": "—"
+    },
+
+    "cart": {
+      "qty": "Qty",
+      "remove": "Remove",
+      "clear": "Clear cart",
+      "confirm_clear_title": "Clear cart?",
+      "confirm_clear_body": "This removes all {count, plural, one {# item} other {# items}} from the cart. You can't undo this.",
+      "confirm_clear_action": "Clear",
+      "confirm_clear_cancel": "Cancel"
+    },
+
+    "charge_sheet": {
+      "title": "Complete sale",
+      "payment_label": "Payment method",
+      "payment_cash": "Cash",
+      "payment_card": "Card",
+      "payment_other": "Other",
+      "date_label": "Date",
+      "notes_label": "Notes",
+      "notes_counter": "{remaining} characters left",
+      "confirm_button": "Charge {total}",
+      "prices_changed_banner": "Some prices have changed. Review the new total before charging.",
+      "line_unavailable": "Unavailable",
+      "submitting": "Charging..."
+    },
+
+    "detail": {
+      "title": "Sale #{number}",
+      "payment_method_label": "Payment",
+      "items_label": "Items",
+      "total_label": "Total",
+      "notes_label": "Notes",
+      "rang_up_by": "Rang up by {name}"
+    },
+
+    "history": {
+      "filter_title": "Filter sales",
+      "filter_date_from": "From",
+      "filter_date_to": "To",
+      "filter_payment_method": "Payment method",
+      "filter_payment_any": "Any",
+      "filter_apply": "Apply filter",
+      "filter_reset": "Reset",
+      "no_results": "No sales match these filters.",
+      "item_summary": "{count, plural, one {# item} other {# items}}: {names}",
+      "item_summary_with_more": "{count, plural, one {# item} other {# items}}: {names}, +{remaining} more",
+      "rel_today": "Today {time}",
+      "rel_yesterday": "Yesterday {time}"
+    },
+
+    "toast": {
+      "no_barcode_match": "No product matches that barcode.",
+      "out_of_stock_confirm_title": "Stock will go negative",
+      "out_of_stock_confirm_body": "{name} has 0 in stock. Add anyway?",
+      "out_of_stock_confirm_action": "Add",
+      "out_of_stock_confirm_cancel": "Cancel"
+    },
+
+    "error": {
+      "unknown": "Something went wrong saving the sale. Try again."
+    }
   },
   "business": {
     "error_not_found": "Business not found",

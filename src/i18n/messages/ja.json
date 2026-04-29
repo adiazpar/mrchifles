@@ -702,7 +702,81 @@
     "coming_soon": "近日公開"
   },
   "sales": {
-    "coming_soon": "近日公開"
+    "title": "売上",
+    "coming_soon": "近日公開",
+    "search_placeholder": "商品を検索...",
+    "charge_button": "{total}を請求",
+    "filter": "フィルター",
+    "load_more": "さらに読み込む",
+    "empty_state": {
+      "no_sales_yet": "まだ売上がありません",
+      "ring_up_first": "最初の売上を登録すると、ここに表示されます",
+      "no_results_for_filter": "このフィルターに一致する売上はありません"
+    },
+    "stats": {
+      "today": "今日",
+      "today_revenue": "売上高",
+      "today_count": "取引数",
+      "avg_ticket": "平均単価",
+      "vs_yesterday_up": "昨日比 +{pct}%",
+      "vs_yesterday_down": "昨日比 {pct}%",
+      "no_comparison": "—"
+    },
+    "cart": {
+      "qty": "数量",
+      "remove": "削除",
+      "clear": "カートをクリア",
+      "confirm_clear_title": "カートをクリアしますか",
+      "confirm_clear_body": "カート内の{count, plural, one {# 件} other {# 件}}の商品がすべて削除されます。この操作は取り消せません",
+      "confirm_clear_action": "クリア",
+      "confirm_clear_cancel": "キャンセル"
+    },
+    "charge_sheet": {
+      "title": "売上を確定",
+      "payment_label": "支払方法",
+      "payment_cash": "現金",
+      "payment_card": "カード",
+      "payment_other": "その他",
+      "date_label": "日付",
+      "notes_label": "メモ",
+      "notes_counter": "残り {remaining} 文字",
+      "confirm_button": "{total}を請求",
+      "prices_changed_banner": "一部の価格が変更されました。請求前に新しい合計を確認してください",
+      "line_unavailable": "利用不可",
+      "submitting": "請求中..."
+    },
+    "detail": {
+      "title": "売上 #{number}",
+      "payment_method_label": "支払方法",
+      "items_label": "商品",
+      "total_label": "合計",
+      "notes_label": "メモ",
+      "rang_up_by": "{name}が登録"
+    },
+    "history": {
+      "filter_title": "売上を絞り込む",
+      "filter_date_from": "開始日",
+      "filter_date_to": "終了",
+      "filter_payment_method": "支払方法",
+      "filter_payment_any": "すべて",
+      "filter_apply": "フィルタを適用",
+      "filter_reset": "リセット",
+      "no_results": "フィルタに一致する売上がありません",
+      "item_summary": "{count, plural, one {#点} other {#点}}: {names}",
+      "item_summary_with_more": "{count, plural, one {#点} other {#点}}: {names}、他{remaining}点",
+      "rel_today": "今日 {time}",
+      "rel_yesterday": "昨日 {time}"
+    },
+    "toast": {
+      "no_barcode_match": "該当するバーコードの商品がありません",
+      "out_of_stock_confirm_title": "在庫がマイナスになります",
+      "out_of_stock_confirm_body": "{name}の在庫は0です。追加しますか?",
+      "out_of_stock_confirm_action": "追加",
+      "out_of_stock_confirm_cancel": "キャンセル"
+    },
+    "error": {
+      "unknown": "売上の保存中に問題が発生しました。もう一度お試しください"
+    }
   },
   "business": {
     "error_not_found": "業務が見つかりません",

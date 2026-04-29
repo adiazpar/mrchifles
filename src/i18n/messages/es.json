@@ -702,7 +702,81 @@
     "coming_soon": "Próximamente"
   },
   "sales": {
-    "coming_soon": "Próximamente"
+    "title": "Ventas",
+    "coming_soon": "Próximamente",
+    "search_placeholder": "Buscar productos...",
+    "charge_button": "Cobrar {total}",
+    "filter": "Filtrar",
+    "load_more": "Cargar más",
+    "empty_state": {
+      "no_sales_yet": "Aún no hay ventas",
+      "ring_up_first": "Registre su primera venta para verla aquí.",
+      "no_results_for_filter": "Ninguna venta coincide con estos filtros."
+    },
+    "stats": {
+      "today": "Hoy",
+      "today_revenue": "Ingresos",
+      "today_count": "Transacciones",
+      "avg_ticket": "Ticket promedio",
+      "vs_yesterday_up": "+{pct}% vs ayer",
+      "vs_yesterday_down": "{pct}% vs ayer",
+      "no_comparison": "—"
+    },
+    "cart": {
+      "qty": "Cant",
+      "remove": "Eliminar",
+      "clear": "Vaciar carrito",
+      "confirm_clear_title": "¿Vaciar carrito?",
+      "confirm_clear_body": "Esto elimina {count, plural, one {# artículo} other {# artículos}} del carrito. No puede deshacer esto.",
+      "confirm_clear_action": "Vaciar",
+      "confirm_clear_cancel": "Cancelar"
+    },
+    "charge_sheet": {
+      "title": "Completar venta",
+      "payment_label": "Método de pago",
+      "payment_cash": "Efectivo",
+      "payment_card": "Tarjeta",
+      "payment_other": "Otro",
+      "date_label": "Fecha",
+      "notes_label": "Notas",
+      "notes_counter": "{remaining} caracteres restantes",
+      "confirm_button": "Cobrar {total}",
+      "prices_changed_banner": "Algunos precios han cambiado. Revise el nuevo total antes de cobrar.",
+      "line_unavailable": "No disponible",
+      "submitting": "Cobrando..."
+    },
+    "detail": {
+      "title": "Venta #{number}",
+      "payment_method_label": "Pago",
+      "items_label": "Artículos",
+      "total_label": "Total",
+      "notes_label": "Notas",
+      "rang_up_by": "Registrado por {name}"
+    },
+    "history": {
+      "filter_title": "Filtrar ventas",
+      "filter_date_from": "Desde",
+      "filter_date_to": "Hasta",
+      "filter_payment_method": "Método de pago",
+      "filter_payment_any": "Cualquiera",
+      "filter_apply": "Aplicar filtro",
+      "filter_reset": "Restablecer",
+      "no_results": "No hay ventas que coincidan con estos filtros.",
+      "item_summary": "{count, plural, one {# artículo} other {# artículos}}: {names}",
+      "item_summary_with_more": "{count, plural, one {# artículo} other {# artículos}}: {names}, +{remaining} más",
+      "rel_today": "Hoy {time}",
+      "rel_yesterday": "Ayer {time}"
+    },
+    "toast": {
+      "no_barcode_match": "Ningún producto coincide con ese código de barras.",
+      "out_of_stock_confirm_title": "El inventario quedará negativo",
+      "out_of_stock_confirm_body": "{name} tiene 0 en inventario. ¿Agregar de todos modos?",
+      "out_of_stock_confirm_action": "Agregar",
+      "out_of_stock_confirm_cancel": "Cancelar"
+    },
+    "error": {
+      "unknown": "Ocurrió un error al guardar la venta. Intente de nuevo."
+    }
   },
   "business": {
     "error_not_found": "Negocio no encontrado",
