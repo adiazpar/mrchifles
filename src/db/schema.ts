@@ -332,6 +332,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     references: [productCategories.id],
   }),
   orderItems: many(orderItems),
+  saleItems: many(saleItems),
 }))
 
 export const productCategoriesRelations = relations(productCategories, ({ one, many }) => ({
@@ -386,14 +387,26 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
 }))
 
 export const salesRelations = relations(sales, ({ one, many }) => ({
-  business: one(businesses, { fields: [sales.businessId], references: [businesses.id] }),
-  createdByUser: one(users, { fields: [sales.createdByUserId], references: [users.id] }),
+  business: one(businesses, {
+    fields: [sales.businessId],
+    references: [businesses.id],
+  }),
+  createdByUser: one(users, {
+    fields: [sales.createdByUserId],
+    references: [users.id],
+  }),
   items: many(saleItems),
 }))
 
 export const saleItemsRelations = relations(saleItems, ({ one }) => ({
-  sale: one(sales, { fields: [saleItems.saleId], references: [sales.id] }),
-  product: one(products, { fields: [saleItems.productId], references: [products.id] }),
+  sale: one(sales, {
+    fields: [saleItems.saleId],
+    references: [sales.id],
+  }),
+  product: one(products, {
+    fields: [saleItems.productId],
+    references: [products.id],
+  }),
 }))
 
 export const inviteCodesRelations = relations(inviteCodes, ({ one }) => ({
