@@ -1,5 +1,5 @@
 import { db, sales, saleItems, products, businesses } from '@/db'
-import { eq, inArray, and, sql } from 'drizzle-orm'
+import { eq, inArray, and, sql, desc, gte, lt, lte } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import {
   withBusinessAuth,
@@ -9,7 +9,7 @@ import {
   validationError,
 } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
-import { roundToCurrencyDecimals } from '@/lib/sales-helpers'
+import { roundToCurrencyDecimals, startOfUtcDay, startOfPrevUtcDay } from '@/lib/sales-helpers'
 import { postSaleSchema } from './schema'
 
 // 64KB easily covers 100 lines + 1000-char notes.
@@ -169,3 +169,152 @@ export const POST = withBusinessAuth(async (request, access) => {
     },
   })
 })
+
+const DEFAULT_LIMIT = 50
+const MAX_LIMIT = 200
+
+/**
+ * GET /api/businesses/[businessId]/sales
+ *
+ * List sales with their items, sorted by date DESC. Supports keyset
+ * pagination via `?cursor=<saleId>` and optional `?include=stats`.
+ *
+ * Filters: from (ISO), to (ISO), paymentMethod.
+ */
+export const GET = withBusinessAuth(async (request, access) => {
+  const { searchParams } = new URL(request.url)
+  const fromParam = searchParams.get('from')
+  const toParam = searchParams.get('to')
+  const paymentMethodParam = searchParams.get('paymentMethod')
+  const limitParam = searchParams.get('limit')
+  const cursorParam = searchParams.get('cursor')
+  const includeParam = searchParams.get('include')
+
+  const limit = limitParam
+    ? Math.min(Math.max(1, parseInt(limitParam, 10) || DEFAULT_LIMIT), MAX_LIMIT)
+    : DEFAULT_LIMIT
+
+  const conditions = [eq(sales.businessId, access.businessId)]
+  if (fromParam) conditions.push(gte(sales.date, new Date(fromParam)))
+  if (toParam) conditions.push(lte(sales.date, new Date(toParam)))
+  if (paymentMethodParam === 'cash' || paymentMethodParam === 'card' || paymentMethodParam === 'other') {
+    conditions.push(eq(sales.paymentMethod, paymentMethodParam))
+  }
+
+  // Keyset pagination: load the cursor's date and id, then continue from
+  // anything older than (date, id) in DESC order.
+  if (cursorParam) {
+    const cursorRow = await db
+      .select({ date: sales.date, id: sales.id })
+      .from(sales)
+      .where(and(eq(sales.id, cursorParam), eq(sales.businessId, access.businessId)))
+      .get()
+    if (cursorRow) {
+      conditions.push(lt(sales.date, cursorRow.date))
+    }
+  }
+
+  const rows = await db
+    .select()
+    .from(sales)
+    .where(and(...conditions))
+    .orderBy(desc(sales.date))
+    .limit(limit + 1)
+
+  const hasMore = rows.length > limit
+  const slice = hasMore ? rows.slice(0, limit) : rows
+  const nextCursor = hasMore ? slice[slice.length - 1].id : null
+
+  // Hydrate items.
+  const saleIds = slice.map((s) => s.id)
+  const items = saleIds.length
+    ? await db.select().from(saleItems).where(inArray(saleItems.saleId, saleIds))
+    : []
+  const itemsBySaleId = new Map<string, typeof items>()
+  for (const item of items) {
+    const list = itemsBySaleId.get(item.saleId) ?? []
+    list.push(item)
+    itemsBySaleId.set(item.saleId, list)
+  }
+
+  const currency = access.businessCurrency ?? 'USD'
+
+  const expandedSales = slice.map((sale) => ({
+    id: sale.id,
+    saleNumber: sale.saleNumber,
+    date: sale.date.toISOString(),
+    total: sale.total,
+    paymentMethod: sale.paymentMethod,
+    notes: sale.notes,
+    items: (itemsBySaleId.get(sale.id) ?? []).map((it) => ({
+      productId: it.productId,
+      productName: it.productName,
+      quantity: it.quantity,
+      unitPrice: it.unitPrice,
+      subtotal: roundToCurrencyDecimals(it.quantity * it.unitPrice, currency),
+    })),
+    createdByUserId: sale.createdByUserId,
+    createdAt: sale.createdAt.toISOString(),
+  }))
+
+  // Optional inline stats.
+  let stats: ReturnType<typeof emptyStats> | undefined
+  if (includeParam?.split(',').includes('stats')) {
+    stats = await computeStats(access.businessId)
+  }
+
+  return successResponse({
+    sales: expandedSales,
+    nextCursor,
+    ...(stats !== undefined ? { stats } : {}),
+  })
+})
+
+function emptyStats() {
+  return {
+    todayRevenue: 0,
+    todayCount: 0,
+    todayAvgTicket: null as number | null,
+    yesterdayRevenue: 0,
+    vsYesterdayPct: null as number | null,
+  }
+}
+
+async function computeStats(businessId: string) {
+  const now = new Date()
+  const todayStart = startOfUtcDay(now)
+  const yesterdayStart = startOfPrevUtcDay(now)
+
+  const todayRows = await db
+    .select({ total: sales.total })
+    .from(sales)
+    .where(and(eq(sales.businessId, businessId), gte(sales.date, todayStart)))
+
+  const yesterdayRows = await db
+    .select({ total: sales.total })
+    .from(sales)
+    .where(
+      and(
+        eq(sales.businessId, businessId),
+        gte(sales.date, yesterdayStart),
+        lt(sales.date, todayStart),
+      ),
+    )
+
+  const todayRevenue = todayRows.reduce((acc, r) => acc + r.total, 0)
+  const todayCount = todayRows.length
+  const yesterdayRevenue = yesterdayRows.reduce((acc, r) => acc + r.total, 0)
+  const todayAvgTicket = todayCount > 0 ? todayRevenue / todayCount : null
+  const vsYesterdayPct =
+    yesterdayRevenue > 0
+      ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100
+      : null
+
+  return {
+    todayRevenue,
+    todayCount,
+    todayAvgTicket,
+    yesterdayRevenue,
+    vsYesterdayPct,
+  }
+}
