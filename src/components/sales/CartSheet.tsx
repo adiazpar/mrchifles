@@ -46,7 +46,7 @@ export function CartSheet({ cart, businessId }: CartSheetProps) {
                 <button
                   type="button"
                   className="rounded-full border border-border w-7 h-7 flex items-center justify-center"
-                  aria-label="Decrease"
+                  aria-label={tCart('qty_decrease')}
                   onClick={() => cart.updateQty(line.productId, line.quantity - 1)}
                 >
                   <Minus className="w-3 h-3" />
@@ -55,7 +55,7 @@ export function CartSheet({ cart, businessId }: CartSheetProps) {
                 <button
                   type="button"
                   className="rounded-full border border-border w-7 h-7 flex items-center justify-center"
-                  aria-label="Increase"
+                  aria-label={tCart('qty_increase')}
                   onClick={() => cart.updateQty(line.productId, line.quantity + 1)}
                 >
                   <Plus className="w-3 h-3" />

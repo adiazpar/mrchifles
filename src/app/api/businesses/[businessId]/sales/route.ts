@@ -267,7 +267,7 @@ export const GET = withBusinessAuth(async (request, access) => {
   }))
 
   // Optional inline stats.
-  let stats: ReturnType<typeof emptyStats> | undefined
+  let stats: StatsResult | undefined
   if (includeParam?.split(',').includes('stats')) {
     stats = await computeStats(access.businessId)
   }
@@ -279,18 +279,15 @@ export const GET = withBusinessAuth(async (request, access) => {
   })
 })
 
-// Used only for its return type via ReturnType<typeof emptyStats>; never called at runtime.
-function emptyStats() {
-  return {
-    todayRevenue: 0,
-    todayCount: 0,
-    todayAvgTicket: null as number | null,
-    yesterdayRevenue: 0,
-    vsYesterdayPct: null as number | null,
-  }
+interface StatsResult {
+  todayRevenue: number
+  todayCount: number
+  todayAvgTicket: number | null
+  yesterdayRevenue: number
+  vsYesterdayPct: number | null
 }
 
-async function computeStats(businessId: string) {
+async function computeStats(businessId: string): Promise<StatsResult> {
   const now = new Date()
   const todayStart = startOfUtcDay(now)
   const yesterdayStart = startOfPrevUtcDay(now)

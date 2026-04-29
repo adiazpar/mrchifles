@@ -727,6 +727,8 @@
 
     "cart": {
       "qty": "Qty",
+      "qty_decrease": "Decrease quantity",
+      "qty_increase": "Increase quantity",
       "remove": "Remove",
       "clear": "Clear cart",
       "confirm_clear_title": "Clear cart?",
@@ -747,6 +749,7 @@
       "confirm_button": "Charge {total}",
       "prices_changed_banner": "Some prices have changed. Review the new total before charging.",
       "line_unavailable": "Unavailable",
+      "line_old_price_aria": "was {amount}",
       "submitting": "Charging..."
     },
 

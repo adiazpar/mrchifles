@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Filter } from 'lucide-react'
+import { Filter, Receipt } from 'lucide-react'
 import { useSales } from '@/contexts/sales-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { SaleDetailModal } from './SaleDetailModal'
@@ -68,11 +68,17 @@ export function SalesHistoryList({ hidden }: Props) {
       </div>
 
       {visibleSales.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-text-secondary">
-          {(filter.from || filter.to || filter.paymentMethod)
-            ? tEmpty('no_results_for_filter')
-            : tEmpty('no_sales_yet')}
-        </div>
+        (filter.from || filter.to || filter.paymentMethod) ? (
+          <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-text-secondary">
+            {tEmpty('no_results_for_filter')}
+          </div>
+        ) : (
+          <div className="empty-state-fill">
+            <Receipt className="empty-state-icon" />
+            <h3 className="empty-state-title">{tEmpty('no_sales_yet')}</h3>
+            <p className="empty-state-description">{tEmpty('ring_up_first')}</p>
+          </div>
+        )
       ) : (
         <div className="flex flex-col gap-1">
           {visibleSales.map((sale) => {

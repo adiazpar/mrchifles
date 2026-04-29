@@ -724,6 +724,8 @@
     },
     "cart": {
       "qty": "Cant",
+      "qty_decrease": "Disminuir cantidad",
+      "qty_increase": "Aumentar cantidad",
       "remove": "Eliminar",
       "clear": "Vaciar carrito",
       "confirm_clear_title": "¿Vaciar carrito?",
@@ -743,6 +745,7 @@
       "confirm_button": "Cobrar {total}",
       "prices_changed_banner": "Algunos precios han cambiado. Revise el nuevo total antes de cobrar.",
       "line_unavailable": "No disponible",
+      "line_old_price_aria": "era {amount}",
       "submitting": "Cobrando..."
     },
     "detail": {

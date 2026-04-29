@@ -164,7 +164,10 @@ export function ChargeSheet({ isOpen, cart, onClose }: ChargeSheetProps) {
                 </span>
                 <span>
                   {drifted && (
-                    <span className="line-through text-text-secondary mr-2">
+                    <span
+                      className="line-through text-text-secondary mr-2"
+                      aria-label={tCh('line_old_price_aria', { amount: formatCurrency(line.unitPrice * line.quantity) })}
+                    >
                       {formatCurrency(line.unitPrice * line.quantity)}
                     </span>
                   )}

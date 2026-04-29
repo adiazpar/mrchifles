@@ -724,6 +724,8 @@
     },
     "cart": {
       "qty": "数量",
+      "qty_decrease": "数量を減らす",
+      "qty_increase": "数量を増やす",
       "remove": "削除",
       "clear": "カートをクリア",
       "confirm_clear_title": "カートをクリアしますか",
@@ -743,6 +745,7 @@
       "confirm_button": "{total}を請求",
       "prices_changed_banner": "一部の価格が変更されました。請求前に新しい合計を確認してください",
       "line_unavailable": "利用不可",
+      "line_old_price_aria": "以前の金額: {amount}",
       "submitting": "請求中..."
     },
     "detail": {
