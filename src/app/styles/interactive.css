@@ -497,18 +497,6 @@
   object-fit: cover;
 }
 
-/* Brand icon for hub context (left-aligned, bare — no chip background).
-   Width matches the 48px business-logo footprint so the right-edge user menu
-   sits in the same screen position across hub and business contexts. */
-.page-header__brand-icon {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Right side actions - align to end */
 .page-header__actions {
   display: flex;

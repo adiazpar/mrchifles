@@ -54,7 +54,7 @@ function BusinessLogo({ business }: { business: Business | null }) {
  * Page header that works in both hub and business contexts.
  *
  * Hub home (`/`):
- * - Left: Kasero icon
+ * - Left: empty
  * - Right: User avatar menu
  *
  * Hub sub-page with back button (`/account`):
@@ -222,17 +222,7 @@ export function PageHeader() {
               {pageTitle && <p className="page-subtitle">{pageTitle}</p>}
             </div>
           </div>
-        ) : (
-          <div className="page-header__brand-icon" style={hubChromeFadeStyle}>
-            <Image
-              src="/icon-source.png"
-              alt="Kasero"
-              width={48}
-              height={48}
-              priority
-            />
-          </div>
-        )}
+        ) : null}
       </div>
 
       {/* Center column - only rendered on /account (hub sub-page with back
