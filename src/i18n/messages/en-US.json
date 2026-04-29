@@ -705,6 +705,7 @@
     "title": "Sales",
     "coming_soon": "Coming soon",
     "search_placeholder": "Search products...",
+    "scan_barcode_aria": "Scan barcode",
     "charge_button": "Charge {total}",
     "filter": "Filter",
     "load_more": "Load more",

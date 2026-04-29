@@ -18,6 +18,7 @@ const EMPTY_FILTER: HistoryFilter = { from: null, to: null, paymentMethod: null 
 export function SalesHistoryList({ hidden }: Props) {
   const t = useTranslations('sales')
   const tH = useTranslations('sales.history')
+  const tCh = useTranslations('sales.charge_sheet')
   const tEmpty = useTranslations('sales.empty_state')
   const { sales, isLoading, loadMore } = useSales()
   const { formatCurrency, formatTime, formatDate } = useBusinessFormat()
@@ -113,7 +114,9 @@ export function SalesHistoryList({ hidden }: Props) {
                 </div>
                 <div className="text-sm mt-1 truncate">{itemSummary}</div>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-text-secondary uppercase">{sale.paymentMethod}</span>
+                  <span className="text-xs text-text-secondary uppercase">
+                    {tCh(`payment_${sale.paymentMethod}` as 'payment_cash' | 'payment_card' | 'payment_other')}
+                  </span>
                   <span className="text-sm font-semibold">{formatCurrency(sale.total)}</span>
                 </div>
               </button>

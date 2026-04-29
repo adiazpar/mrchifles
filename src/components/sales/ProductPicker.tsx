@@ -86,7 +86,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
           type="button"
           onClick={openScanner}
           className="rounded-full border border-border bg-bg-elevated p-2 hover:border-brand-300"
-          aria-label="Scan barcode"
+          aria-label={t('scan_barcode_aria')}
         >
           <Camera className="w-5 h-5" />
         </button>

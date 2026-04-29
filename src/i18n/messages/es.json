@@ -705,6 +705,7 @@
     "title": "Ventas",
     "coming_soon": "Próximamente",
     "search_placeholder": "Buscar productos...",
+    "scan_barcode_aria": "Escanear código de barras",
     "charge_button": "Cobrar {total}",
     "filter": "Filtrar",
     "load_more": "Cargar más",
