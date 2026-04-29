@@ -21,6 +21,9 @@ export const businesses = sqliteTable('businesses', {
   // Monotonic counter for orders.order_number. Incremented atomically
   // on each order insert so references are stable even after deletes.
   nextOrderNumber: integer('next_order_number').default(1).notNull(),
+  // Monotonic counter for sales.sale_number. Incremented atomically on each
+  // sale insert so references are stable even after deletes.
+  nextSaleNumber: integer('next_sale_number').default(1).notNull(),
 })
 
 // ===========================================
@@ -208,6 +211,54 @@ export const orderItems = sqliteTable('order_items', {
 }))
 
 // ===========================================
+// SALES (Customer transactions)
+// ===========================================
+export const sales = sqliteTable('sales', {
+  id: text('id').primaryKey(),
+  businessId: text('business_id').references(() => businesses.id).notNull(),
+  // Sequential per-business reference ("#101"). Pulled from
+  // businesses.next_sale_number via atomic UPDATE ... RETURNING. Gaps are
+  // accepted (failed validations don't burn numbers because reservation
+  // happens AFTER validation; a failed batch can still leave a gap).
+  saleNumber: integer('sale_number').notNull(),
+  createdByUserId: text('created_by_user_id').references(() => users.id).notNull(),
+  // Sale date — can be backdated up to 1 year, can be at most 1 minute in
+  // the future for clock skew. Used for history sort and stats bucketing.
+  date: integer('date', { mode: 'timestamp' }).notNull(),
+  total: real('total').notNull(),
+  paymentMethod: text('payment_method', { enum: ['cash', 'card', 'other'] }).notNull(),
+  notes: text('notes'),
+  // Actual record creation time. Distinct from `date` for backdated entries.
+  // Not used for stats bucketing — see design spec section 4.
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  // Drives both the history list query and the today/yesterday stats
+  // aggregation. DESC because most queries scan from newest first.
+  businessDateIdx: index('idx_sales_business_date').on(table.businessId, table.date),
+}))
+
+// ===========================================
+// SALE ITEMS (Line items per sale)
+// ===========================================
+export const saleItems = sqliteTable('sale_items', {
+  id: text('id').primaryKey(),
+  saleId: text('sale_id').references(() => sales.id, { onDelete: 'cascade' }).notNull(),
+  // Nullable + ON DELETE SET NULL so deleting a product doesn't block; the
+  // productName snapshot survives in history. Note: `subtotal` is NOT stored
+  // (computed at read time as quantity * unitPrice) — see design spec.
+  productId: text('product_id').references(() => products.id, { onDelete: 'set null' }),
+  productName: text('product_name').notNull(),
+  quantity: integer('quantity').notNull(),
+  unitPrice: real('unit_price').notNull(),
+}, (table) => ({
+  saleIdIdx: index('idx_sale_items_sale_id').on(table.saleId),
+  // REQUIRED for ON DELETE SET NULL FK enforcement — without this, every
+  // product DELETE full-scans sale_items to null rows. NOT a block-on-delete
+  // index (different from order_items.productId, which IS a block index).
+  productIdIdx: index('idx_sale_items_product_id').on(table.productId),
+}))
+
+// ===========================================
 // INVITE CODES
 // ===========================================
 export const inviteCodes = sqliteTable('invite_codes', {
@@ -251,6 +302,7 @@ export const businessesRelations = relations(businesses, ({ many }) => ({
   productCategories: many(productCategories),
   providers: many(providers),
   orders: many(orders),
+  sales: many(sales),
   inviteCodes: many(inviteCodes),
   ownershipTransfers: many(ownershipTransfers),
 }))
@@ -331,6 +383,17 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
     fields: [orderItems.productId],
     references: [products.id],
   }),
+}))
+
+export const salesRelations = relations(sales, ({ one, many }) => ({
+  business: one(businesses, { fields: [sales.businessId], references: [businesses.id] }),
+  createdByUser: one(users, { fields: [sales.createdByUserId], references: [users.id] }),
+  items: many(saleItems),
+}))
+
+export const saleItemsRelations = relations(saleItems, ({ one }) => ({
+  sale: one(sales, { fields: [saleItems.saleId], references: [sales.id] }),
+  product: one(products, { fields: [saleItems.productId], references: [products.id] }),
 }))
 
 export const inviteCodesRelations = relations(inviteCodes, ({ one }) => ({
