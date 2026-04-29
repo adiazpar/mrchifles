@@ -101,7 +101,10 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   // Reserve the next saleNumber atomically. UPDATE ... RETURNING is
   // atomic per-statement on libSQL (single-region Turso); see design
-  // spec section 12 risk #6 for the multi-replica caveat.
+  // spec section 12 risk #6 for the multi-replica caveat. Note: if the
+  // db.batch below fails after this UPDATE succeeds, the counter has
+  // advanced and the reserved number is unused — a normal POS gap. See
+  // design spec section 12 risk #5.
   const reservation = await db
     .update(businesses)
     .set({ nextSaleNumber: sql`${businesses.nextSaleNumber} + 1` })
@@ -144,6 +147,8 @@ export const POST = withBusinessAuth(async (request, access) => {
     ),
   ])
 
+  // Items: subtotal is a computed field (not stored in sale_items) — the
+  // GET routes recompute it the same way (roundToCurrencyDecimals(qty * unitPrice, currency)).
   return successResponse({
     sale: {
       id: saleId,
