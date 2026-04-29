@@ -1,5 +1,5 @@
 import { db, sales, saleItems, products, businesses } from '@/db'
-import { eq, inArray, and, sql, desc, gte, lt, lte } from 'drizzle-orm'
+import { eq, inArray, and, or, sql, desc, gte, lt, lte } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import {
   withBusinessAuth,
@@ -190,8 +190,9 @@ export const GET = withBusinessAuth(async (request, access) => {
   const cursorParam = searchParams.get('cursor')
   const includeParam = searchParams.get('include')
 
-  const limit = limitParam
-    ? Math.min(Math.max(1, parseInt(limitParam, 10) || DEFAULT_LIMIT), MAX_LIMIT)
+  const parsedLimit = limitParam ? parseInt(limitParam, 10) : NaN
+  const limit = Number.isFinite(parsedLimit)
+    ? Math.min(Math.max(1, parsedLimit), MAX_LIMIT)
     : DEFAULT_LIMIT
 
   const conditions = [eq(sales.businessId, access.businessId)]
@@ -202,7 +203,10 @@ export const GET = withBusinessAuth(async (request, access) => {
   }
 
   // Keyset pagination: load the cursor's date and id, then continue from
-  // anything older than (date, id) in DESC order.
+  // anything strictly older in (date DESC, id DESC) order. The compound
+  // predicate is required because two sales can share the same `date`
+  // value (rapid ringup, backdates colliding on day boundaries) — a
+  // date-only predicate would silently skip the rest of the tied bucket.
   if (cursorParam) {
     const cursorRow = await db
       .select({ date: sales.date, id: sales.id })
@@ -210,7 +214,12 @@ export const GET = withBusinessAuth(async (request, access) => {
       .where(and(eq(sales.id, cursorParam), eq(sales.businessId, access.businessId)))
       .get()
     if (cursorRow) {
-      conditions.push(lt(sales.date, cursorRow.date))
+      conditions.push(
+        or(
+          lt(sales.date, cursorRow.date),
+          and(eq(sales.date, cursorRow.date), lt(sales.id, cursorRow.id)),
+        )!
+      )
     }
   }
 
@@ -218,7 +227,7 @@ export const GET = withBusinessAuth(async (request, access) => {
     .select()
     .from(sales)
     .where(and(...conditions))
-    .orderBy(desc(sales.date))
+    .orderBy(desc(sales.date), desc(sales.id))
     .limit(limit + 1)
 
   const hasMore = rows.length > limit
@@ -270,6 +279,7 @@ export const GET = withBusinessAuth(async (request, access) => {
   })
 })
 
+// Used only for its return type via ReturnType<typeof emptyStats>; never called at runtime.
 function emptyStats() {
   return {
     todayRevenue: 0,
