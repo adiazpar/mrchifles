@@ -79,24 +79,23 @@ export function SalesStatsCard({
             </div>
           </div>
 
-          {/* Action row: History (icon-only) + Open Session (primary).
-              Both use the canonical .btn / .btn-icon framework — no
-              compact-style overrides. Mirrors the cart-bar pattern. */}
-          <div className="flex items-center gap-2 mt-4">
+          {/* Action row: 50/50 grid — History (icon + text) and Open
+              Session both follow the canonical .btn framework. */}
+          <div className="grid grid-cols-2 gap-2 mt-4">
             <button
               type="button"
-              className="btn btn-secondary btn-icon"
-              aria-label={tAction('history')}
+              className="btn btn-secondary"
               onClick={() => {
                 haptic()
                 /* placeholder — wired up when history is rebuilt */
               }}
             >
               <History />
+              <span>{tAction('history')}</span>
             </button>
             <button
               type="button"
-              className="btn btn-primary flex-1"
+              className="btn btn-primary"
               onClick={() => {
                 haptic()
                 onToggleSession()
@@ -109,19 +108,19 @@ export function SalesStatsCard({
         </div>
       </div>
 
-      {/* Compact layout: balance value (1/3) + Close button (2/3, same
-          col-span-2 as the Open button above so the session button keeps
-          the same proportion across states). */}
+      {/* Compact layout: 50/50 grid — balance value on the left, Close
+          button on the right. Session button keeps 1/2 width across both
+          states (Open and Close share the same proportion). */}
       <div
         className="grid transition-[grid-template-rows] duration-300 ease-in-out"
         style={{ gridTemplateRows: sessionOpen ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden min-h-0">
-          <div className="grid grid-cols-3 gap-2 items-center">
+          <div className="grid grid-cols-2 gap-2 items-center">
             <div className="text-2xl font-semibold truncate">{revenueLabel}</div>
             <button
               type="button"
-              className="btn btn-danger col-span-2"
+              className="btn btn-danger"
               onClick={() => {
                 haptic()
                 onToggleSession()
