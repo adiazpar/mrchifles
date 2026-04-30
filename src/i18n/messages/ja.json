@@ -724,8 +724,8 @@
       "no_comparison": "—"
     },
     "action": {
-      "open_session": "レジ開設",
-      "close_session": "レジ締め",
+      "open_session": "売上セッションを開始",
+      "close_session": "売上セッションを終了",
       "history": "履歴",
       "reports": "レポート"
     },

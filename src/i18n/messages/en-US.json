@@ -727,8 +727,8 @@
     },
 
     "action": {
-      "open_session": "Open cash session",
-      "close_session": "Close cash session",
+      "open_session": "Open sales session",
+      "close_session": "Close sales session",
       "history": "History",
       "reports": "Reports"
     },

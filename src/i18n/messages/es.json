@@ -724,8 +724,8 @@
       "no_comparison": "—"
     },
     "action": {
-      "open_session": "Abrir turno de caja",
-      "close_session": "Cerrar turno de caja",
+      "open_session": "Abrir sesión de ventas",
+      "close_session": "Cerrar sesión de ventas",
       "history": "Historial",
       "reports": "Reportes"
     },
