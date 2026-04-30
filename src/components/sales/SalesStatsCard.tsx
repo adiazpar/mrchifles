@@ -69,59 +69,91 @@ export function SalesStatsCard({
         ? 'text-success'
         : 'text-error'
 
+  const revenueLabel = stats ? formatCurrency(stats.todayRevenue) : t('no_comparison')
+
   return (
     <div className="rounded-xl border border-border bg-bg-surface p-4">
-      <div className="text-xs uppercase tracking-wide text-text-secondary mb-3">
-        {t('today')}
-      </div>
-      <div className="grid grid-cols-2 gap-y-3 gap-x-6">
-        <div>
-          <div className="text-2xl font-semibold">
-            {stats ? formatCurrency(stats.todayRevenue) : t('no_comparison')}
+      {/* Expanded layout: TODAY label + 4-stat grid + History/Open buttons.
+          Uses the grid-template-rows 1fr ↔ 0fr collapse technique so the
+          card auto-heights smoothly when sessionOpen flips. */}
+      <div
+        className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+        style={{ gridTemplateRows: sessionOpen ? '0fr' : '1fr' }}
+      >
+        <div className="overflow-hidden min-h-0">
+          <div className="text-xs uppercase tracking-wide text-text-secondary mb-3">
+            {t('today')}
           </div>
-          <div className="text-xs text-text-secondary mt-0.5">{t('today_revenue')}</div>
-        </div>
-        <div>
-          <div className="text-2xl font-semibold">
-            {stats ? stats.todayCount : t('no_comparison')}
+          <div className="grid grid-cols-2 gap-y-3 gap-x-6">
+            <div>
+              <div className="text-2xl font-semibold">{revenueLabel}</div>
+              <div className="text-xs text-text-secondary mt-0.5">{t('today_revenue')}</div>
+            </div>
+            <div>
+              <div className="text-2xl font-semibold">
+                {stats ? stats.todayCount : t('no_comparison')}
+              </div>
+              <div className="text-xs text-text-secondary mt-0.5">{t('today_count')}</div>
+            </div>
+            <div>
+              <div className="text-2xl font-semibold">
+                {stats && stats.todayAvgTicket !== null
+                  ? formatCurrency(stats.todayAvgTicket)
+                  : t('no_comparison')}
+              </div>
+              <div className="text-xs text-text-secondary mt-0.5">{t('avg_ticket')}</div>
+            </div>
+            <div>
+              <div className={`text-2xl font-semibold ${vsColor}`}>{vsLabel}</div>
+            </div>
           </div>
-          <div className="text-xs text-text-secondary mt-0.5">{t('today_count')}</div>
-        </div>
-        <div>
-          <div className="text-2xl font-semibold">
-            {stats && stats.todayAvgTicket !== null
-              ? formatCurrency(stats.todayAvgTicket)
-              : t('no_comparison')}
+
+          {/* Action row: History + Open Session. */}
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={COMPACT_BUTTON_STYLE}
+              onClick={() => {
+                /* placeholder — wired up when history is rebuilt under the cash-session model */
+              }}
+            >
+              <History className="w-4 h-4" />
+              <span>{tAction('history')}</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary col-span-2"
+              style={COMPACT_BUTTON_STYLE}
+              onClick={onToggleSession}
+            >
+              <SessionIcon className="w-4 h-4" />
+              <span>{tAction('open_session')}</span>
+            </button>
           </div>
-          <div className="text-xs text-text-secondary mt-0.5">{t('avg_ticket')}</div>
-        </div>
-        <div>
-          <div className={`text-2xl font-semibold ${vsColor}`}>{vsLabel}</div>
         </div>
       </div>
 
-      {/* Bottom action row: 1/3 History, 2/3 Open/Close cash session (rightmost). */}
-      <div className="grid grid-cols-3 gap-2 mt-4">
-        <button
-          type="button"
-          className="btn btn-secondary"
-          style={COMPACT_BUTTON_STYLE}
-          onClick={() => {
-            /* placeholder — wired up when history is rebuilt under the cash-session model */
-          }}
-        >
-          <History className="w-4 h-4" />
-          <span>{tAction('history')}</span>
-        </button>
-        <button
-          type="button"
-          className={`btn ${sessionOpen ? 'btn-danger' : 'btn-primary'} col-span-2`}
-          style={COMPACT_BUTTON_STYLE}
-          onClick={onToggleSession}
-        >
-          <SessionIcon className="w-4 h-4" />
-          <span>{sessionOpen ? tAction('close_session') : tAction('open_session')}</span>
-        </button>
+      {/* Compact layout: just the revenue total inline with the Close
+          button. Expands when sessionOpen flips true. */}
+      <div
+        className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+        style={{ gridTemplateRows: sessionOpen ? '1fr' : '0fr' }}
+      >
+        <div className="overflow-hidden min-h-0">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl font-semibold flex-shrink-0">{revenueLabel}</div>
+            <button
+              type="button"
+              className="btn btn-danger flex-1"
+              style={COMPACT_BUTTON_STYLE}
+              onClick={onToggleSession}
+            >
+              <SessionIcon className="w-4 h-4" />
+              <span>{tAction('close_session')}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
