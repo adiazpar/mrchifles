@@ -726,6 +726,13 @@
       "no_comparison": "—"
     },
 
+    "action": {
+      "open_session": "Open cash session",
+      "close_session": "Close cash session",
+      "history": "History",
+      "reports": "Reports"
+    },
+
     "cart": {
       "qty": "Qty",
       "qty_decrease": "Decrease quantity",

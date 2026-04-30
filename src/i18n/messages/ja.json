@@ -723,6 +723,12 @@
       "vs_yesterday_down": "昨日比 {pct}%",
       "no_comparison": "—"
     },
+    "action": {
+      "open_session": "レジ開設",
+      "close_session": "レジ締め",
+      "history": "履歴",
+      "reports": "レポート"
+    },
     "cart": {
       "qty": "数量",
       "qty_decrease": "数量を減らす",

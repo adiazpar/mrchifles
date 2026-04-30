@@ -1,19 +1,18 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useBusiness } from '@/contexts/business-context'
 import { useSales } from '@/contexts/sales-context'
-import { useCart } from '@/hooks/useCart'
 import { SalesStatsCard } from '@/components/sales/SalesStatsCard'
-import { ProductPicker } from '@/components/sales/ProductPicker'
-import { SalesHistoryList } from '@/components/sales/SalesHistoryList'
-import { CartSheet } from '@/components/sales/CartSheet'
+import { SalesActionButtons } from '@/components/sales/SalesActionButtons'
 
 export function SalesView() {
   const { business } = useBusiness()
   const sales = useSales()
   const businessId = business?.id ?? ''
-  const cart = useCart(businessId)
+  // Local placeholder for the cash-session lifecycle until the real backend
+  // and persistence layer for sessions exists.
+  const [sessionOpen, setSessionOpen] = useState(false)
 
   useEffect(() => {
     if (!businessId) return
@@ -23,18 +22,15 @@ export function SalesView() {
 
   if (!businessId) return null
 
-  const cartHasItems = cart.lines.length > 0
-
   return (
     <main className="page-content">
       <div className="page-body">
-        <SalesStatsCard compact={cartHasItems} />
-        <div className={cartHasItems ? 'is-cart-active' : 'is-cart-empty'}>
-          <ProductPicker cart={cart} />
-          <SalesHistoryList hidden={cartHasItems} />
-        </div>
+        <SalesStatsCard compact={false} />
+        <SalesActionButtons
+          sessionOpen={sessionOpen}
+          onToggleSession={() => setSessionOpen((v) => !v)}
+        />
       </div>
-      {cartHasItems && <CartSheet cart={cart} businessId={businessId} />}
     </main>
   )
 }

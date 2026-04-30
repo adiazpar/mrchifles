@@ -723,6 +723,12 @@
       "vs_yesterday_down": "{pct}% vs ayer",
       "no_comparison": "—"
     },
+    "action": {
+      "open_session": "Abrir turno de caja",
+      "close_session": "Cerrar turno de caja",
+      "history": "Historial",
+      "reports": "Reportes"
+    },
     "cart": {
       "qty": "Cant",
       "qty_decrease": "Disminuir cantidad",
