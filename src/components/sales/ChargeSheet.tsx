@@ -113,7 +113,7 @@ export function ChargeSheet({ isOpen, cart, onClose }: ChargeSheetProps) {
       // sheet.
       if (
         err instanceof ApiError &&
-        err.envelope?.code === 'SALE_INSUFFICIENT_STOCK'
+        err.envelope?.messageCode === 'SALE_INSUFFICIENT_STOCK'
       ) {
         void refetchProducts()
       }
