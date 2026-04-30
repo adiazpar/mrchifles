@@ -723,7 +723,7 @@
       "vs_yesterday_down": "昨日比 {pct}%",
       "no_comparison": "—",
       "balance": "累計残高",
-      "session_label": "セッション"
+      "session_label": "締め処理の準備はできましたか"
     },
     "action": {
       "open_session": "セッションを開始",

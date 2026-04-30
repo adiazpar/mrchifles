@@ -723,7 +723,7 @@
       "vs_yesterday_down": "{pct}% vs ayer",
       "no_comparison": "—",
       "balance": "Saldo acumulado",
-      "session_label": "Sesión"
+      "session_label": "¿Listo para cerrar?"
     },
     "action": {
       "open_session": "Abrir sesión",

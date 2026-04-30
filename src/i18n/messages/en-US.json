@@ -725,7 +725,7 @@
       "vs_yesterday_down": "{pct}% vs yesterday",
       "no_comparison": "—",
       "balance": "Running balance",
-      "session_label": "Session"
+      "session_label": "Ready to close?"
     },
 
     "action": {
