@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { DoorClosed, DoorOpen, History } from 'lucide-react'
+import { History, Receipt, ShoppingBag } from 'lucide-react'
 import { useSales } from '@/contexts/sales-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 
@@ -30,7 +30,7 @@ export function SalesStatsCard({
   const tAction = useTranslations('sales.action')
   const { stats } = useSales()
   const { formatCurrency } = useBusinessFormat()
-  const SessionIcon = sessionOpen ? DoorClosed : DoorOpen
+  const SessionIcon = sessionOpen ? Receipt : ShoppingBag
 
   if (compact) {
     if (!stats) {
