@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { History, Play, Square } from 'lucide-react'
+import { History, Wallet } from 'lucide-react'
 import { useSales } from '@/contexts/sales-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 
@@ -30,7 +30,11 @@ export function SalesStatsCard({
   const tAction = useTranslations('sales.action')
   const { stats } = useSales()
   const { formatCurrency } = useBusinessFormat()
-  const SessionIcon = sessionOpen ? Square : Play
+  // Industry pattern (Square POS, Loyverse, Lightspeed, Shopify): a single
+  // static "money/session" icon, with state conveyed by the button color
+  // (btn-primary when ready to open, btn-danger when ready to close) and
+  // the label, NOT by swapping the icon.
+  const SessionIcon = Wallet
 
   if (compact) {
     if (!stats) {
