@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Receipt, ShoppingCart } from 'lucide-react'
+import { haptic } from '@/lib/haptics'
 import type { UseCartResult } from '@/hooks/useCart'
 
 // Compact button override style — same pattern as the in-card action
@@ -34,25 +35,31 @@ export function CartSheet({ cart, businessId }: CartSheetProps) {
         <div className="flex-1 text-sm font-medium text-center">
           {t('item_count', { count: itemCount })}
         </div>
-        {/* Session-sales icon button — sized to match the compact view-cart
-            button so the bar stays tight. Receipt icon in text-success
-            (green) for the 'completed sales' semantic; the bg stays neutral
-            via btn-secondary. Wiring deferred. */}
+        {/* Session-sales icon button — same .btn framework, same vertical
+            padding/font as the view-cart button so heights match; square
+            via equal var(--space-2) padding all around. Same w-4 h-4 icon
+            size as the view-cart's ShoppingCart. Receipt in text-success
+            (green) for the 'completed sales' semantic; bg stays neutral
+            via btn-secondary. Haptic on tap. */}
         <button
           type="button"
           className="btn btn-secondary flex-shrink-0"
           style={{
-            width: 32,
-            height: 32,
+            fontSize: 'var(--text-sm)',
+            padding: 'var(--space-2)',
             minHeight: 'unset',
-            padding: 0,
+            gap: 0,
           }}
           aria-label={t('view_session_sales')}
           onClick={() => {
+            haptic()
             /* placeholder — opens the session sales view when wired up */
           }}
         >
-          <Receipt size={16} className="text-success" />
+          <Receipt
+            style={{ width: 16, height: 16 }}
+            className="text-success"
+          />
         </button>
         <button
           type="button"
@@ -60,10 +67,11 @@ export function CartSheet({ cart, businessId }: CartSheetProps) {
           style={COMPACT_BUTTON_STYLE}
           disabled={isEmpty}
           onClick={() => {
+            haptic()
             /* placeholder — opens the View cart drawer when wired up */
           }}
         >
-          <ShoppingCart className="w-4 h-4" />
+          <ShoppingCart style={{ width: 16, height: 16 }} />
           <span>{t('view_cart')}</span>
         </button>
       </div>
