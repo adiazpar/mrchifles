@@ -731,6 +731,12 @@
       "reports": "レポート"
     },
     "cart": {
+      "title": "現在の売上",
+      "empty_title": "商品がありません",
+      "empty_description": "スキャンまたは商品を選択して売上に追加してください",
+      "item_count": "{count, plural, one {#点} other {#点}}",
+      "total_label": "合計",
+      "finalize_button": "売上を確定",
       "qty": "数量",
       "qty_decrease": "数量を減らす",
       "qty_increase": "数量を増やす",

@@ -731,6 +731,12 @@
       "reports": "Reportes"
     },
     "cart": {
+      "title": "Venta actual",
+      "empty_title": "Sin artículos",
+      "empty_description": "Escanee o seleccione un producto para agregar a la venta.",
+      "item_count": "{count, plural, one {# artículo} other {# artículos}}",
+      "total_label": "Total",
+      "finalize_button": "Finalizar venta",
       "qty": "Cant",
       "qty_decrease": "Disminuir cantidad",
       "qty_increase": "Aumentar cantidad",

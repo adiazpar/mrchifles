@@ -735,6 +735,12 @@
     },
 
     "cart": {
+      "title": "Current sale",
+      "empty_title": "No items yet",
+      "empty_description": "Scan or pick a product to add to the sale.",
+      "item_count": "{count, plural, one {# item} other {# items}}",
+      "total_label": "Total",
+      "finalize_button": "Finalize sale",
       "qty": "Qty",
       "qty_decrease": "Decrease quantity",
       "qty_increase": "Increase quantity",
