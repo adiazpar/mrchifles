@@ -83,10 +83,13 @@ export function ProductPicker({ cart }: ProductPickerProps) {
     })
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-3">
-      {/* Search + scan row — static, doesn't scroll with the grid. Same
-          JSX/classes as the Products tab. */}
-      <div className="flex gap-2 items-stretch flex-shrink-0">
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* Single scrollable area: search/scan row + product grid scroll
+          together so the search row can move out of view and free up
+          space for more product cards as the user pages through. */}
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3">
+      {/* Search + scan row — same JSX/classes as the Products tab. */}
+      <div className="flex gap-2 items-stretch">
         <div className="relative flex-1">
           <input
             type="text"
@@ -129,9 +132,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
         {scanHiddenInput}
       </div>
 
-      {/* Scrollable area — only the product grid scrolls; the search row
-          above and the cart card below stay anchored. */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      {/* Product grid. */}
         <div className="grid grid-cols-2 gap-3">
           {visibleProducts.map((product) => {
           const qty = qtyMap.get(product.id) ?? 0
