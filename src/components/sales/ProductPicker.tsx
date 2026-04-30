@@ -1,10 +1,14 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, type MouseEvent } from 'react'
 import { useTranslations } from 'next-intl'
+import Image from 'next/image'
 import { Minus, Package, Plus } from 'lucide-react'
 import { useProducts } from '@/contexts/products-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
+import { getProductIconUrl } from '@/lib/utils'
+import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
+import type { Product } from '@/types'
 import type { UseCartResult } from '@/hooks/useCart'
 
 interface ProductPickerProps {
@@ -41,32 +45,37 @@ export function ProductPicker({ cart }: ProductPickerProps) {
       {visibleProducts.map((product) => {
         const qty = qtyMap.get(product.id) ?? 0
         const isSelected = qty > 0
+        const iconUrl = getProductIconUrl(product)
+
+        const handleToggle = () => {
+          if (isSelected) cart.removeLine(product.id)
+          else cart.addLine(product)
+        }
+        const handleKey = (e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleToggle()
+          }
+        }
 
         return (
           <div
             key={product.id}
-            className="rounded-xl border border-border bg-bg-surface p-3 flex flex-col gap-3"
+            role="button"
+            aria-pressed={isSelected}
+            tabIndex={0}
+            onClick={handleToggle}
+            onKeyDown={handleKey}
+            className={`rounded-xl border-2 p-3 flex flex-col gap-3 transition-all cursor-pointer outline-none ${
+              isSelected
+                ? 'border-brand bg-bg-elevated'
+                : 'border-border bg-bg-surface hover:border-brand-300'
+            }`}
           >
-            {/* Row 1: icon + (name + price as sublabel). Tapping
-                anywhere in the row adds qty 1 to the cart. */}
-            <button
-              type="button"
-              className="flex items-center gap-2 text-left rounded-md -m-1 p-1"
-              onClick={() => cart.addLine(product)}
-            >
+            {/* Row 1: icon + (name + price as sublabel). */}
+            <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-lg bg-bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {product.icon?.startsWith('data:') ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={product.icon}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                ) : product.icon ? (
-                  <span className="text-xl leading-none">{product.icon}</span>
-                ) : (
-                  <Package className="w-5 h-5 text-text-secondary" />
-                )}
+                {renderProductIcon(product, iconUrl, isSelected)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">
@@ -76,42 +85,100 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                   {formatCurrency(product.price)}
                 </div>
               </div>
-            </button>
+            </div>
 
-            {/* Row 2: -/qty/+. Visually disabled (opacity-40) until the
-                product has been added; the minus button is also
-                HTML-disabled at qty 0 so it can't go negative. The plus
-                button stays enabled so it works as an alternate
-                add-to-cart affordance from the disabled-look state. */}
+            {/* Row 2: -/qty/+. Both buttons HTML-disabled until the
+                product is selected; stopPropagation prevents the card-
+                level toggle from firing when the user adjusts qty. */}
             <div
               className={`flex items-center justify-between gap-1 transition-opacity ${
                 isSelected ? 'opacity-100' : 'opacity-40'
               }`}
             >
-              <button
-                type="button"
-                className="rounded-full border border-border w-7 h-7 flex items-center justify-center disabled:cursor-not-allowed"
-                aria-label={t('qty_decrease')}
+              <QtyButton
+                ariaLabel={t('qty_decrease')}
                 disabled={!isSelected}
-                onClick={() => cart.updateQty(product.id, qty - 1)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  cart.updateQty(product.id, qty - 1)
+                }}
               >
                 <Minus className="w-3 h-3" />
-              </button>
+              </QtyButton>
               <span className="text-sm font-medium tabular-nums w-6 text-center">
                 {qty}
               </span>
-              <button
-                type="button"
-                className="rounded-full border border-border w-7 h-7 flex items-center justify-center"
-                aria-label={t('qty_increase')}
-                onClick={() => cart.addLine(product)}
+              <QtyButton
+                ariaLabel={t('qty_increase')}
+                disabled={!isSelected}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  cart.addLine(product)
+                }}
               >
                 <Plus className="w-3 h-3" />
-              </button>
+              </QtyButton>
             </div>
           </div>
         )
       })}
     </div>
+  )
+}
+
+function renderProductIcon(
+  product: Product,
+  iconUrl: string | null,
+  isSelected: boolean,
+) {
+  if (iconUrl && isPresetIcon(iconUrl)) {
+    const preset = getPresetIcon(iconUrl)
+    return preset ? (
+      <preset.icon
+        size={22}
+        className={isSelected ? 'text-brand' : 'text-text-secondary'}
+      />
+    ) : null
+  }
+  if (iconUrl) {
+    return (
+      <Image
+        src={iconUrl}
+        alt=""
+        width={40}
+        height={40}
+        className="w-full h-full object-cover"
+        unoptimized
+      />
+    )
+  }
+  return (
+    <Package
+      className={`w-5 h-5 ${isSelected ? 'text-brand' : 'text-text-secondary'}`}
+    />
+  )
+}
+
+function QtyButton({
+  ariaLabel,
+  disabled,
+  onClick,
+  children,
+}: {
+  ariaLabel: string
+  disabled: boolean
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      className="rounded-full border border-border w-7 h-7 flex items-center justify-center disabled:cursor-not-allowed"
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {children}
+    </button>
   )
 }
