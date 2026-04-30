@@ -740,6 +740,7 @@
       "finalize_button": "Finalizar venta",
       "view_cart": "Ver carrito",
       "qty": "Cant",
+      "out_of_stock": "Agotado",
       "qty_decrease": "Disminuir cantidad",
       "qty_increase": "Aumentar cantidad",
       "remove": "Eliminar",

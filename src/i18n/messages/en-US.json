@@ -744,6 +744,7 @@
       "finalize_button": "Finalize sale",
       "view_cart": "View cart",
       "qty": "Qty",
+      "out_of_stock": "Out of stock",
       "qty_decrease": "Decrease quantity",
       "qty_increase": "Increase quantity",
       "remove": "Remove",

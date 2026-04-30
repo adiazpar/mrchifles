@@ -50,7 +50,8 @@ export function ProductPicker({ cart }: ProductPickerProps) {
 
   // Look up a product by barcode and add it to the cart. cart.addLine
   // already increments qty for an existing line, so a repeat scan of the
-  // same code naturally bumps the count.
+  // same code naturally bumps the count. Stock-aware: scans for
+  // out-of-stock products or already-at-max-qty are rejected.
   const handleScanResult = async (result: { value: string }) => {
     if (!business?.id) return
     try {
@@ -58,7 +59,14 @@ export function ProductPicker({ cart }: ProductPickerProps) {
       const res = await fetch(url)
       const data = await res.json()
       if (res.ok && data.success && data.product) {
-        cart.addLine(data.product as Product)
+        const product = data.product as Product
+        const stock = product.stock ?? 0
+        const current = cart.lines.find((l) => l.productId === product.id)?.quantity ?? 0
+        if (stock <= 0 || current >= stock) {
+          alert(t('out_of_stock'))
+          return
+        }
+        cart.addLine(product)
         haptic()
         return
       }
@@ -128,13 +136,18 @@ export function ProductPicker({ cart }: ProductPickerProps) {
           {visibleProducts.map((product) => {
           const qty = qtyMap.get(product.id) ?? 0
           const isSelected = qty > 0
+          const stockTotal = product.stock ?? 0
+          const outOfStock = stockTotal <= 0
+          const atMaxQty = qty >= stockTotal
           const iconUrl = getProductIconUrl(product)
 
           const handleToggle = () => {
+            if (outOfStock) return
             if (isSelected) cart.removeLine(product.id)
             else cart.addLine(product)
           }
           const handleKey = (e: React.KeyboardEvent) => {
+            if (outOfStock) return
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
               handleToggle()
@@ -146,13 +159,16 @@ export function ProductPicker({ cart }: ProductPickerProps) {
               key={product.id}
               role="button"
               aria-pressed={isSelected}
-              tabIndex={0}
+              aria-disabled={outOfStock}
+              tabIndex={outOfStock ? -1 : 0}
               onClick={handleToggle}
               onKeyDown={handleKey}
-              className={`rounded-xl border-2 p-3 flex flex-col gap-3 transition-all cursor-pointer outline-none ${
-                isSelected
-                  ? 'border-brand bg-brand-subtle'
-                  : 'border-border bg-bg-surface hover:border-brand-300'
+              className={`rounded-xl border-2 p-3 flex flex-col gap-3 transition-all outline-none ${
+                outOfStock
+                  ? 'cursor-default border-border bg-bg-surface'
+                  : isSelected
+                    ? 'border-brand bg-brand-subtle cursor-pointer'
+                    : 'border-border bg-bg-surface hover:border-brand-300 cursor-pointer'
               }`}
             >
               {/* Row 1: icon + (name + price as sublabel). */}
@@ -170,42 +186,49 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                 </div>
               </div>
 
-              {/* Row 2: -/qty/+. Both buttons HTML-disabled until the
-                  product is selected; stopPropagation prevents the card-
-                  level toggle from firing when the user adjusts qty. */}
-              <div
-                className={`flex items-center justify-between gap-1 transition-opacity ${
-                  isSelected ? 'opacity-100' : 'opacity-40'
-                }`}
-              >
-                <QtyButton
-                  active={isSelected}
-                  variant="danger"
-                  ariaLabel={t('qty_decrease')}
-                  disabled={!isSelected}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    cart.updateQty(product.id, qty - 1)
-                  }}
+              {/* Row 2: out-of-stock label OR qty stepper. The plus
+                  button is also HTML-disabled at qty >= stock so the
+                  user can't add more than the available inventory. */}
+              {outOfStock ? (
+                <div className="text-xs text-text-tertiary text-center h-8 flex items-center justify-center">
+                  {t('out_of_stock')}
+                </div>
+              ) : (
+                <div
+                  className={`flex items-center justify-between gap-1 transition-opacity ${
+                    isSelected ? 'opacity-100' : 'opacity-40'
+                  }`}
                 >
-                  <Minus style={{ width: 14, height: 14 }} />
-                </QtyButton>
-                <span className="text-sm font-semibold tabular-nums w-6 text-center">
-                  {qty}
-                </span>
-                <QtyButton
-                  active={isSelected}
-                  variant="primary"
-                  ariaLabel={t('qty_increase')}
-                  disabled={!isSelected}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    cart.addLine(product)
-                  }}
-                >
-                  <Plus style={{ width: 14, height: 14 }} />
-                </QtyButton>
-              </div>
+                  <QtyButton
+                    active={isSelected}
+                    variant="danger"
+                    ariaLabel={t('qty_decrease')}
+                    disabled={!isSelected}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      cart.updateQty(product.id, qty - 1)
+                    }}
+                  >
+                    <Minus style={{ width: 14, height: 14 }} />
+                  </QtyButton>
+                  <span className="text-sm font-semibold tabular-nums w-6 text-center">
+                    {qty}
+                  </span>
+                  <QtyButton
+                    active={isSelected}
+                    variant="primary"
+                    ariaLabel={t('qty_increase')}
+                    disabled={!isSelected || atMaxQty}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (atMaxQty) return
+                      cart.addLine(product)
+                    }}
+                  >
+                    <Plus style={{ width: 14, height: 14 }} />
+                  </QtyButton>
+                </div>
+              )}
             </div>
           )
         })}

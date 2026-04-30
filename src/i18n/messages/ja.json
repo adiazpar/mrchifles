@@ -740,6 +740,7 @@
       "finalize_button": "売上を確定",
       "view_cart": "カートを表示",
       "qty": "数量",
+      "out_of_stock": "在庫切れ",
       "qty_decrease": "数量を減らす",
       "qty_increase": "数量を増やす",
       "remove": "削除",
