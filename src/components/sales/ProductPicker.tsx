@@ -166,10 +166,10 @@ export function ProductPicker({ cart }: ProductPickerProps) {
               onKeyDown={handleKey}
               className={`rounded-xl border-2 p-3 flex flex-col gap-3 transition-all outline-none ${
                 outOfStock
-                  ? 'cursor-default border-border bg-bg-surface'
+                  ? 'cursor-default border-transparent bg-bg-surface'
                   : isSelected
                     ? 'border-brand bg-brand-subtle cursor-pointer'
-                    : 'border-border bg-bg-surface hover:border-brand-300 cursor-pointer'
+                    : 'border-transparent bg-bg-surface cursor-pointer'
               }`}
             >
               {/* Row 1: icon + (name + price as sublabel). When the
