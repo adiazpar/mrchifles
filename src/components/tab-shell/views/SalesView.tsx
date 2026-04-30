@@ -26,7 +26,7 @@ export function SalesView() {
   if (!businessId) return null
 
   return (
-    <main className="page-content">
+    <main className="page-content" style={{ minHeight: 0 }}>
       <div className="page-body">
         <SalesStatsCard
           compact={false}
