@@ -145,13 +145,13 @@ export function SalesStatsCard({
         <div className="overflow-hidden min-h-0">
           <div className="grid grid-cols-3 gap-2 items-end">
             <div>
-              <div className="text-xs uppercase tracking-wide text-text-secondary mb-0.5">
+              <div className="text-xs text-text-secondary mb-0.5">
                 {t('balance')}
               </div>
               <div className="text-2xl font-semibold truncate">{revenueLabel}</div>
             </div>
             <div className="col-span-2">
-              <div className="text-xs uppercase tracking-wide text-text-secondary mb-1">
+              <div className="text-xs text-text-secondary mb-1">
                 {t('session_label')}
               </div>
               <button
