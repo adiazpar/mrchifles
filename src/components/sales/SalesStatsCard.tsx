@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { BarChart3, History, Power, PowerOff } from 'lucide-react'
+import { History, Power, PowerOff } from 'lucide-react'
 import { useSales } from '@/contexts/sales-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 
@@ -36,13 +36,13 @@ export function SalesStatsCard({
     if (!stats) {
       return (
         <div
-          className="rounded-xl border border-border bg-bg-elevated px-4 py-2 text-sm text-text-secondary"
+          className="rounded-xl border border-border bg-bg-surface px-4 py-2 text-sm text-text-secondary"
           aria-hidden="true"
         />
       )
     }
     return (
-      <div className="rounded-xl border border-border bg-bg-elevated px-4 py-2 text-sm text-text-secondary flex items-center gap-3">
+      <div className="rounded-xl border border-border bg-bg-surface px-4 py-2 text-sm text-text-secondary flex items-center gap-3">
         <span>{t('today')}: {formatCurrency(stats.todayRevenue)}</span>
         <span aria-hidden="true">·</span>
         <span>{stats.todayCount} {t('today_count').toLowerCase()}</span>
@@ -66,7 +66,7 @@ export function SalesStatsCard({
         : 'text-error'
 
   return (
-    <div className="rounded-xl border border-border bg-bg-elevated p-4">
+    <div className="rounded-xl border border-border bg-bg-surface p-4">
       <div className="text-xs uppercase tracking-wide text-text-secondary mb-3">
         {t('today')}
       </div>
@@ -96,8 +96,8 @@ export function SalesStatsCard({
         </div>
       </div>
 
-      {/* Bottom action row: 1/4 History, 1/4 Reports, 2/4 Open/Close cash session (rightmost). */}
-      <div className="grid grid-cols-4 gap-2 mt-4">
+      {/* Bottom action row: 1/3 History, 2/3 Open/Close cash session (rightmost). */}
+      <div className="grid grid-cols-3 gap-2 mt-4">
         <button
           type="button"
           className="btn btn-secondary"
@@ -108,17 +108,6 @@ export function SalesStatsCard({
         >
           <History className="w-4 h-4" />
           <span>{tAction('history')}</span>
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          style={COMPACT_BUTTON_STYLE}
-          onClick={() => {
-            /* placeholder — daily/weekly aggregates live here */
-          }}
-        >
-          <BarChart3 className="w-4 h-4" />
-          <span>{tAction('reports')}</span>
         </button>
         <button
           type="button"
