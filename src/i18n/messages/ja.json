@@ -739,6 +739,7 @@
       "total_label": "合計",
       "finalize_button": "売上を確定",
       "view_cart": "カートを表示",
+      "view_session_sales": "セッション売上を表示",
       "qty": "数量",
       "out_of_stock": "在庫切れ",
       "qty_decrease": "数量を減らす",

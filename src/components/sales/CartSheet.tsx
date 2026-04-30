@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { ShoppingCart } from 'lucide-react'
+import { Receipt, ShoppingCart } from 'lucide-react'
 import type { UseCartResult } from '@/hooks/useCart'
 
 // Compact button override style — same pattern as the in-card action
@@ -30,13 +30,33 @@ export function CartSheet({ cart, businessId }: CartSheetProps) {
 
   return (
     <div className="rounded-full border border-border bg-bg-surface p-4">
-      <div className="grid grid-cols-2 gap-2 items-center">
-        <div className="text-sm font-medium text-center">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 text-sm font-medium text-center">
           {t('item_count', { count: itemCount })}
         </div>
+        {/* Session-sales icon button — sized to match the compact view-cart
+            button so the bar stays tight. Receipt icon in text-success
+            (green) for the 'completed sales' semantic; the bg stays neutral
+            via btn-secondary. Wiring deferred. */}
         <button
           type="button"
-          className="btn btn-primary"
+          className="btn btn-secondary flex-shrink-0"
+          style={{
+            width: 32,
+            height: 32,
+            minHeight: 'unset',
+            padding: 0,
+          }}
+          aria-label={t('view_session_sales')}
+          onClick={() => {
+            /* placeholder — opens the session sales view when wired up */
+          }}
+        >
+          <Receipt size={16} className="text-success" />
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary flex-shrink-0"
           style={COMPACT_BUTTON_STYLE}
           disabled={isEmpty}
           onClick={() => {
