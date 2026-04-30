@@ -724,8 +724,8 @@
       "no_comparison": "—"
     },
     "action": {
-      "open_session": "Abrir sesión de ventas",
-      "close_session": "Cerrar sesión de ventas",
+      "open_session": "Abrir sesión",
+      "close_session": "Cerrar sesión",
       "history": "Historial",
       "reports": "Reportes"
     },

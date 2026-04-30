@@ -134,18 +134,20 @@ export function SalesStatsCard({
         </div>
       </div>
 
-      {/* Compact layout: just the revenue total inline with the Close
-          button. Expands when sessionOpen flips true. */}
+      {/* Compact layout: revenue in the first 1/3 column (where History
+          lives in the full layout) + Close button in cols 2-3 (same
+          col-span-2 as the Open button above), so the session button
+          stays the exact same width between states. */}
       <div
         className="grid transition-[grid-template-rows] duration-300 ease-in-out"
         style={{ gridTemplateRows: sessionOpen ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden min-h-0">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl font-semibold flex-shrink-0">{revenueLabel}</div>
+          <div className="grid grid-cols-3 gap-2 items-center">
+            <div className="text-2xl font-semibold truncate">{revenueLabel}</div>
             <button
               type="button"
-              className="btn btn-danger flex-1"
+              className="btn btn-danger col-span-2"
               style={COMPACT_BUTTON_STYLE}
               onClick={onToggleSession}
             >
