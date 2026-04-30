@@ -111,7 +111,7 @@ export function SalesStatsCard({
         </button>
         <button
           type="button"
-          className="btn btn-primary col-span-2"
+          className={`btn ${sessionOpen ? 'btn-danger' : 'btn-primary'} col-span-2`}
           style={COMPACT_BUTTON_STYLE}
           onClick={onToggleSession}
         >
