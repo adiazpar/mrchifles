@@ -143,20 +143,27 @@ export function SalesStatsCard({
         style={{ gridTemplateRows: sessionOpen ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden min-h-0">
-          <div className="grid grid-cols-3 gap-2 items-center">
+          <div className="grid grid-cols-3 gap-2 items-end">
             <div>
+              <div className="text-xs uppercase tracking-wide text-text-secondary mb-0.5">
+                {t('balance')}
+              </div>
               <div className="text-2xl font-semibold truncate">{revenueLabel}</div>
-              <div className="text-xs text-text-secondary mt-0.5">{t('balance')}</div>
             </div>
-            <button
-              type="button"
-              className="btn btn-danger col-span-2"
-              style={COMPACT_BUTTON_STYLE}
-              onClick={onToggleSession}
-            >
-              <SessionIcon className="w-4 h-4" />
-              <span>{tAction('close_session')}</span>
-            </button>
+            <div className="col-span-2">
+              <div className="text-xs uppercase tracking-wide text-text-secondary mb-1">
+                {t('session_label')}
+              </div>
+              <button
+                type="button"
+                className="btn btn-danger w-full"
+                style={COMPACT_BUTTON_STYLE}
+                onClick={onToggleSession}
+              >
+                <SessionIcon className="w-4 h-4" />
+                <span>{tAction('close_session')}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

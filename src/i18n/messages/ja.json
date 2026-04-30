@@ -722,7 +722,8 @@
       "vs_yesterday_up": "昨日比 +{pct}%",
       "vs_yesterday_down": "昨日比 {pct}%",
       "no_comparison": "—",
-      "balance": "累計残高"
+      "balance": "累計残高",
+      "session_label": "セッション"
     },
     "action": {
       "open_session": "セッションを開始",

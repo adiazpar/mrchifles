@@ -724,7 +724,8 @@
       "vs_yesterday_up": "+{pct}% vs yesterday",
       "vs_yesterday_down": "{pct}% vs yesterday",
       "no_comparison": "—",
-      "balance": "Running balance"
+      "balance": "Running balance",
+      "session_label": "Session"
     },
 
     "action": {
