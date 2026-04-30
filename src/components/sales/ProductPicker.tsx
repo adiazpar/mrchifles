@@ -178,11 +178,19 @@ function QtyButton({
   return (
     <button
       type="button"
-      className={`btn rounded-full w-12 h-8 min-h-0 p-0 border-2 ${
+      className={`btn border-2 ${
         active
           ? 'border-brand bg-bg-elevated'
           : 'border-transparent bg-bg-muted'
       }`}
+      style={{
+        width: 48,
+        height: 32,
+        minHeight: 'unset',
+        padding: 0,
+        borderRadius: 'var(--radius-full)',
+        gap: 0,
+      }}
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={(e) => {
