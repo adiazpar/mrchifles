@@ -68,7 +68,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
             onKeyDown={handleKey}
             className={`rounded-xl border-2 p-3 flex flex-col gap-3 transition-all cursor-pointer outline-none ${
               isSelected
-                ? 'border-brand bg-bg-elevated'
+                ? 'border-brand bg-brand-subtle'
                 : 'border-border bg-bg-surface hover:border-brand-300'
             }`}
           >
@@ -103,9 +103,9 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                   cart.updateQty(product.id, qty - 1)
                 }}
               >
-                <Minus className="w-3 h-3" />
+                <Minus className="w-4 h-4" />
               </QtyButton>
-              <span className="text-sm font-medium tabular-nums w-6 text-center">
+              <span className="text-base font-semibold tabular-nums w-8 text-center">
                 {qty}
               </span>
               <QtyButton
@@ -116,7 +116,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                   cart.addLine(product)
                 }}
               >
-                <Plus className="w-3 h-3" />
+                <Plus className="w-4 h-4" />
               </QtyButton>
             </div>
           </div>
@@ -173,7 +173,7 @@ function QtyButton({
   return (
     <button
       type="button"
-      className="rounded-full border border-border w-7 h-7 flex items-center justify-center disabled:cursor-not-allowed"
+      className="rounded-full bg-bg-muted w-11 h-11 flex items-center justify-center transition-colors hover:bg-bg-elevated disabled:cursor-not-allowed"
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}
