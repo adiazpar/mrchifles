@@ -87,7 +87,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
       {/* Single scrollable area: search/scan row + product grid scroll
           together so the search row can move out of view and free up
           space for more product cards as the user pages through. */}
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hidden flex flex-col gap-3">
       {/* Search + scan row — same JSX/classes as the Products tab. */}
       <div className="flex gap-2 items-stretch">
         <div className="relative flex-1">
