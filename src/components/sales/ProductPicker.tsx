@@ -104,9 +104,9 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                   cart.updateQty(product.id, qty - 1)
                 }}
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3.5 h-3.5" />
               </QtyButton>
-              <span className="text-base font-semibold tabular-nums w-8 text-center">
+              <span className="text-sm font-semibold tabular-nums w-6 text-center">
                 {qty}
               </span>
               <QtyButton
@@ -118,7 +118,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                   cart.addLine(product)
                 }}
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
               </QtyButton>
             </div>
           </div>
@@ -177,7 +177,7 @@ function QtyButton({
   return (
     <button
       type="button"
-      className={`rounded-full w-11 h-11 flex items-center justify-center border-2 border-solid transition-colors disabled:cursor-not-allowed ${
+      className={`rounded-full w-12 h-8 flex items-center justify-center border-2 border-solid transition-colors disabled:cursor-not-allowed ${
         active
           ? 'border-brand bg-bg-elevated'
           : 'border-transparent bg-bg-muted'
