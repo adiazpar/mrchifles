@@ -98,6 +98,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
             >
               <QtyButton
                 active={isSelected}
+                variant="danger"
                 ariaLabel={t('qty_decrease')}
                 disabled={!isSelected}
                 onClick={(e) => {
@@ -112,6 +113,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
               </span>
               <QtyButton
                 active={isSelected}
+                variant="primary"
                 ariaLabel={t('qty_increase')}
                 disabled={!isSelected}
                 onClick={(e) => {
@@ -162,26 +164,29 @@ function renderProductIcon(
   )
 }
 
+type QtyButtonVariant = 'primary' | 'danger'
+
 function QtyButton({
   active,
+  variant,
   ariaLabel,
   disabled,
   onClick,
   children,
 }: {
   active: boolean
+  variant: QtyButtonVariant
   ariaLabel: string
   disabled: boolean
   onClick: (e: MouseEvent<HTMLButtonElement>) => void
   children: React.ReactNode
 }) {
+  const activeClass = variant === 'primary' ? 'btn-primary' : 'btn-danger'
   return (
     <button
       type="button"
-      className={`btn border-2 ${
-        active
-          ? 'border-brand bg-bg-elevated'
-          : 'border-transparent bg-bg-muted'
+      className={`btn border-2 border-transparent ${
+        active ? activeClass : 'bg-bg-muted'
       }`}
       style={{
         width: 48,
