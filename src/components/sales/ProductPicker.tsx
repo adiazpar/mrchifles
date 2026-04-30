@@ -171,16 +171,29 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                     : 'border-border bg-bg-surface hover:border-brand-300 cursor-pointer'
               }`}
             >
-              {/* Row 1: icon + (name + price as sublabel). */}
+              {/* Row 1: icon + (name + price as sublabel). When the
+                  product is out of stock, the name and price drop to
+                  text-text-tertiary (matches the inactive-product styling
+                  in ProductsTab) and the icon container fades. */}
               <div className="flex items-center gap-2">
-                <div className="product-list-image">
+                <div
+                  className={`product-list-image ${outOfStock ? 'opacity-50' : ''}`}
+                >
                   {renderProductIcon(product, iconUrl)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
+                  <div
+                    className={`text-sm font-medium truncate ${
+                      outOfStock ? 'text-text-tertiary' : ''
+                    }`}
+                  >
                     {product.name}
                   </div>
-                  <div className="text-xs text-text-secondary mt-0.5">
+                  <div
+                    className={`text-xs mt-0.5 ${
+                      outOfStock ? 'text-text-tertiary' : 'text-text-secondary'
+                    }`}
+                  >
                     {formatCurrency(product.price)}
                   </div>
                 </div>
