@@ -181,12 +181,12 @@ function QtyButton({
   onClick: (e: MouseEvent<HTMLButtonElement>) => void
   children: React.ReactNode
 }) {
-  const activeClass = variant === 'primary' ? 'btn-primary' : 'btn-danger'
+  const activeColor = variant === 'primary' ? 'text-brand' : 'text-error'
   return (
     <button
       type="button"
-      className={`btn border-2 border-transparent ${
-        active ? activeClass : 'bg-bg-muted'
+      className={`btn border-2 border-transparent bg-transparent ${
+        active ? activeColor : ''
       }`}
       style={{
         width: 48,
