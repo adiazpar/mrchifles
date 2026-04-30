@@ -29,7 +29,6 @@ export function SalesView() {
     <main className="page-content" style={{ minHeight: 0 }}>
       <div className="page-body">
         <SalesStatsCard
-          compact={false}
           sessionOpen={sessionOpen}
           onToggleSession={() => setSessionOpen((v) => !v)}
         />

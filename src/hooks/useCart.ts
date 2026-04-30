@@ -33,9 +33,8 @@ const empty: CartState = { lines: [] }
  * keeps mounted.
  *
  * Note: `unitPrice` here is a snapshot at cart-add time. The server
- * re-snapshots prices at commit. If product prices have drifted, the
- * ChargeSheet surfaces the difference before the user confirms (see
- * design spec section 6).
+ * re-snapshots prices at commit; the checkout surface is responsible
+ * for surfacing any drift before the user confirms.
  */
 export function useCart(businessId: string): UseCartResult {
   const cache = useRef(scopedCache<CartState>(CACHE_KEYS.SALES_CART, businessId))
