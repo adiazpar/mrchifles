@@ -96,6 +96,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
               }`}
             >
               <QtyButton
+                active={isSelected}
                 ariaLabel={t('qty_decrease')}
                 disabled={!isSelected}
                 onClick={(e) => {
@@ -109,6 +110,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                 {qty}
               </span>
               <QtyButton
+                active={isSelected}
                 ariaLabel={t('qty_increase')}
                 disabled={!isSelected}
                 onClick={(e) => {
@@ -160,11 +162,13 @@ function renderProductIcon(
 }
 
 function QtyButton({
+  active,
   ariaLabel,
   disabled,
   onClick,
   children,
 }: {
+  active: boolean
   ariaLabel: string
   disabled: boolean
   onClick: (e: MouseEvent<HTMLButtonElement>) => void
@@ -173,7 +177,9 @@ function QtyButton({
   return (
     <button
       type="button"
-      className="rounded-full bg-bg-muted w-11 h-11 flex items-center justify-center transition-colors hover:bg-bg-elevated disabled:cursor-not-allowed"
+      className={`rounded-full bg-bg-muted w-11 h-11 flex items-center justify-center border-2 transition-colors hover:bg-bg-elevated disabled:cursor-not-allowed ${
+        active ? 'border-brand' : 'border-transparent'
+      }`}
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}
