@@ -766,8 +766,11 @@
       "notes_counter": "{remaining} characters left",
       "confirm_button": "Charge {total}",
       "prices_changed_banner": "Some prices have changed. Review the new total before charging.",
+      "stock_changed_banner": "Some items exceed available stock.",
+      "trim_to_available": "Trim to available",
       "line_unavailable": "Unavailable",
       "line_old_price_aria": "was {amount}",
+      "line_only_n_available": "Only {available} available",
       "submitting": "Charging..."
     },
 
@@ -867,6 +870,7 @@
     "sale_not_found": "Sale not found.",
     "sale_product_not_found": "One of the products in this sale could not be found.",
     "sale_product_inactive": "One of the products in this sale is no longer available.",
+    "sale_insufficient_stock": "Not enough stock for one or more items.",
     "sale_invalid_date": "Sale date must be at most 1 minute in the future and within the past year.",
     "sale_no_items": "A sale must have at least one item.",
     "team_forbidden_not_owner": "Only the owner can perform this action",

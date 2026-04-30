@@ -60,6 +60,7 @@ export const POST = withBusinessAuth(async (request, access) => {
       name: products.name,
       price: products.price,
       active: products.active,
+      stock: products.stock,
     })
     .from(products)
     .where(and(eq(products.businessId, access.businessId), inArray(products.id, productIds)))
@@ -75,6 +76,19 @@ export const POST = withBusinessAuth(async (request, access) => {
     if (!product.active) {
       return errorResponse(ApiMessageCode.SALE_PRODUCT_INACTIVE, 400, { productId: item.productId, name: product.name })
     }
+  }
+
+  // Stock validation. Reject the whole batch if any line exceeds current
+  // stock. The picker UI prevents over-adding for a single user, but two
+  // cashiers committing the last 6 of a 6-stock product simultaneously
+  // can only race here — first commit wins, second gets a 409 and the
+  // client re-fetches products + offers trim-to-available on retry.
+  const hasInsufficientStock = body.items.some((item) => {
+    const product = productsMap.get(item.productId)!
+    return item.quantity > (product.stock ?? 0)
+  })
+  if (hasInsufficientStock) {
+    return errorResponse(ApiMessageCode.SALE_INSUFFICIENT_STOCK, 409)
   }
 
   const currency = access.businessCurrency ?? 'USD'

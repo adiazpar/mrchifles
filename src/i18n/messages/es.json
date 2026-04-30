@@ -761,6 +761,9 @@
       "notes_counter": "{remaining} caracteres restantes",
       "confirm_button": "Cobrar {total}",
       "prices_changed_banner": "Algunos precios han cambiado. Revise el nuevo total antes de cobrar.",
+      "stock_changed_banner": "Algunos artículos exceden el inventario disponible.",
+      "trim_to_available": "Ajustar a disponible",
+      "line_only_n_available": "Solo {available} disponibles",
       "line_unavailable": "No disponible",
       "line_old_price_aria": "era {amount}",
       "submitting": "Cobrando..."
@@ -858,6 +861,7 @@
     "sale_not_found": "Venta no encontrada.",
     "sale_product_not_found": "Uno de los productos de esta venta no se pudo encontrar.",
     "sale_product_inactive": "Uno de los productos de esta venta ya no está disponible.",
+    "sale_insufficient_stock": "No hay suficiente inventario para uno o más artículos.",
     "sale_invalid_date": "La fecha de la venta debe ser como máximo 1 minuto en el futuro y dentro del último año.",
     "sale_no_items": "Una venta debe tener al menos un artículo.",
     "team_forbidden_not_owner": "Solo el propietario puede realizar esta acción",

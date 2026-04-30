@@ -57,13 +57,16 @@ export function ChargeSheet({ isOpen, cart, onClose }: ChargeSheetProps) {
   const lineStates = cart.lines.map((line) => {
     const product = productMap.get(line.productId)
     const currentPrice = product?.price ?? line.unitPrice
+    const stockAvailable = product?.stock ?? 0
     const isUnavailable = !product || product.active === false
     const drifted = !isUnavailable && currentPrice !== line.unitPrice
-    return { line, currentPrice, isUnavailable, drifted }
+    const insufficientStock = !isUnavailable && line.quantity > stockAvailable
+    return { line, currentPrice, isUnavailable, drifted, stockAvailable, insufficientStock }
   })
 
   const hasUnavailable = lineStates.some((s) => s.isUnavailable)
   const hasDrift = lineStates.some((s) => s.drifted)
+  const hasInsufficientStock = lineStates.some((s) => s.insufficientStock)
 
   const expectedTotal = lineStates.reduce(
     (acc, s) => acc + (s.isUnavailable ? 0 : s.currentPrice * s.line.quantity),
@@ -71,7 +74,19 @@ export function ChargeSheet({ isOpen, cart, onClose }: ChargeSheetProps) {
   )
 
   const canConfirm =
-    paymentMethod !== null && !hasUnavailable && !submitting && cart.lines.length > 0
+    paymentMethod !== null &&
+    !hasUnavailable &&
+    !hasInsufficientStock &&
+    !submitting &&
+    cart.lines.length > 0
+
+  const trimToAvailable = () => {
+    for (const { line, stockAvailable, insufficientStock } of lineStates) {
+      if (insufficientStock) {
+        cart.updateQty(line.productId, stockAvailable)
+      }
+    }
+  }
 
   const onConfirm = async () => {
     if (!paymentMethod) return
@@ -92,6 +107,16 @@ export function ChargeSheet({ isOpen, cart, onClose }: ChargeSheetProps) {
           ? translateApiMessage(err.envelope)
           : tErr('unknown')
       setErrorMsg(message)
+      // If the server rejected because stock changed under us (multi-
+      // cashier race), refetch products so the trim-to-available banner
+      // appears right away and the user can recover without leaving the
+      // sheet.
+      if (
+        err instanceof ApiError &&
+        err.envelope?.code === 'SALE_INSUFFICIENT_STOCK'
+      ) {
+        void refetchProducts()
+      }
     } finally {
       setSubmitting(false)
     }
@@ -106,6 +131,24 @@ export function ChargeSheet({ isOpen, cart, onClose }: ChargeSheetProps) {
           {(hasDrift || hasUnavailable) && (
             <div className="rounded-md bg-warning-subtle border border-warning text-warning px-3 py-2">
               {tCh('prices_changed_banner')}
+            </div>
+          )}
+
+          {hasInsufficientStock && (
+            <div className="rounded-md bg-warning-subtle border border-warning text-warning px-3 py-2 flex items-center justify-between gap-3">
+              <span>{tCh('stock_changed_banner')}</span>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{
+                  fontSize: 'var(--text-sm)',
+                  padding: 'var(--space-1) var(--space-3)',
+                  minHeight: 'unset',
+                }}
+                onClick={trimToAvailable}
+              >
+                {tCh('trim_to_available')}
+              </button>
             </div>
           )}
 
@@ -157,24 +200,31 @@ export function ChargeSheet({ isOpen, cart, onClose }: ChargeSheetProps) {
           </label>
 
           <div className="border-t border-border pt-3 flex flex-col gap-1">
-            {lineStates.map(({ line, currentPrice, drifted, isUnavailable }) => (
-              <div key={line.productId} className="flex items-center justify-between text-sm">
-                <span className={isUnavailable ? 'line-through text-text-secondary' : ''}>
-                  {line.productName} &times; {line.quantity}
-                </span>
-                <span>
-                  {drifted && (
-                    <span
-                      className="line-through text-text-secondary mr-2"
-                      aria-label={tCh('line_old_price_aria', { amount: formatCurrency(line.unitPrice * line.quantity) })}
-                    >
-                      {formatCurrency(line.unitPrice * line.quantity)}
-                    </span>
-                  )}
-                  {isUnavailable
-                    ? tCh('line_unavailable')
-                    : formatCurrency(currentPrice * line.quantity)}
-                </span>
+            {lineStates.map(({ line, currentPrice, drifted, isUnavailable, insufficientStock, stockAvailable }) => (
+              <div key={line.productId} className="flex flex-col gap-0.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className={isUnavailable ? 'line-through text-text-secondary' : ''}>
+                    {line.productName} &times; {line.quantity}
+                  </span>
+                  <span>
+                    {drifted && (
+                      <span
+                        className="line-through text-text-secondary mr-2"
+                        aria-label={tCh('line_old_price_aria', { amount: formatCurrency(line.unitPrice * line.quantity) })}
+                      >
+                        {formatCurrency(line.unitPrice * line.quantity)}
+                      </span>
+                    )}
+                    {isUnavailable
+                      ? tCh('line_unavailable')
+                      : formatCurrency(currentPrice * line.quantity)}
+                  </span>
+                </div>
+                {insufficientStock && (
+                  <div className="text-xs text-warning">
+                    {tCh('line_only_n_available', { available: stockAvailable })}
+                  </div>
+                )}
               </div>
             ))}
             <div className="flex items-center justify-between font-semibold mt-2">

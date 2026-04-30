@@ -761,6 +761,9 @@
       "notes_counter": "残り {remaining} 文字",
       "confirm_button": "{total}を請求",
       "prices_changed_banner": "一部の価格が変更されました。請求前に新しい合計を確認してください",
+      "stock_changed_banner": "一部の商品の在庫数を超えています",
+      "trim_to_available": "在庫数に調整",
+      "line_only_n_available": "在庫{available}個のみ",
       "line_unavailable": "利用不可",
       "line_old_price_aria": "以前の金額: {amount}",
       "submitting": "請求中..."
@@ -858,6 +861,7 @@
     "sale_not_found": "売上が見つかりません",
     "sale_product_not_found": "この売上の商品が見つかりませんでした",
     "sale_product_inactive": "この売上の商品は利用できなくなりました",
+    "sale_insufficient_stock": "1つ以上の商品の在庫が不足しています",
     "sale_invalid_date": "売上日時は最大1分先、かつ過去1年以内である必要があります",
     "sale_no_items": "売上には最低1つの商品が必要です",
     "team_forbidden_not_owner": "オーナーのみがこの操作を実行できます",
