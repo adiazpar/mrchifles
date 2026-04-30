@@ -29,7 +29,7 @@ export function CartSheet({ cart, businessId }: CartSheetProps) {
   const isEmpty = cart.lines.length === 0
 
   return (
-    <div className="rounded-xl border border-border bg-bg-surface p-4">
+    <div className="rounded-full border border-border bg-bg-surface p-4">
       <div className="grid grid-cols-2 gap-2 items-center">
         <div className="text-sm font-medium">
           {t('item_count', { count: itemCount })}
