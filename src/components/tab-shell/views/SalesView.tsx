@@ -6,6 +6,7 @@ import { useSales } from '@/contexts/sales-context'
 import { useCart } from '@/hooks/useCart'
 import { SalesStatsCard } from '@/components/sales/SalesStatsCard'
 import { CartSheet } from '@/components/sales/CartSheet'
+import { ProductPicker } from '@/components/sales/ProductPicker'
 
 export function SalesView() {
   const { business } = useBusiness()
@@ -32,10 +33,17 @@ export function SalesView() {
           sessionOpen={sessionOpen}
           onToggleSession={() => setSessionOpen((v) => !v)}
         />
-        {/* Cart card: mt-auto pushes it to the bottom of .page-body
-            (which is already a flex column with min-height: 0). The grid
-            grid-template-rows: 1fr | 0fr trick gives a smooth glide-in
-            and glide-out as the session opens/closes. */}
+        {/* Product picker — fills the space between the stats card and
+            the cart card while the session is open, scrolls internally. */}
+        {sessionOpen && (
+          <div className="flex-1 overflow-y-auto pt-4 min-h-0">
+            <ProductPicker cart={cart} />
+          </div>
+        )}
+        {/* Cart card — uses the grid-template-rows 1fr/0fr collapse
+            trick to glide in/out as the session toggles. mt-auto pushes
+            it to the bottom of .page-body when nothing else is filling
+            the available height (i.e. when the picker isn't rendered). */}
         <div
           className="grid transition-[grid-template-rows] duration-300 ease-in-out mt-auto"
           style={{ gridTemplateRows: sessionOpen ? '1fr' : '0fr' }}
