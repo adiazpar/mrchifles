@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Minus, Package, Plus } from 'lucide-react'
 import { useProducts } from '@/contexts/products-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
+import { haptic } from '@/lib/haptics'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import type { Product } from '@/types'
@@ -104,7 +105,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                   cart.updateQty(product.id, qty - 1)
                 }}
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus style={{ width: 14, height: 14 }} />
               </QtyButton>
               <span className="text-sm font-semibold tabular-nums w-6 text-center">
                 {qty}
@@ -118,7 +119,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                   cart.addLine(product)
                 }}
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus style={{ width: 14, height: 14 }} />
               </QtyButton>
             </div>
           </div>
@@ -177,14 +178,17 @@ function QtyButton({
   return (
     <button
       type="button"
-      className={`rounded-full w-12 h-8 flex items-center justify-center border-2 border-solid transition-colors disabled:cursor-not-allowed ${
+      className={`btn rounded-full w-12 h-8 min-h-0 p-0 border-2 ${
         active
           ? 'border-brand bg-bg-elevated'
           : 'border-transparent bg-bg-muted'
       }`}
       aria-label={ariaLabel}
       disabled={disabled}
-      onClick={onClick}
+      onClick={(e) => {
+        haptic()
+        onClick(e)
+      }}
     >
       {children}
     </button>
