@@ -722,7 +722,7 @@
       "vs_yesterday_up": "昨日比 +{pct}%",
       "vs_yesterday_down": "昨日比 {pct}%",
       "no_comparison": "—",
-      "balance": "残高"
+      "balance": "累計残高"
     },
     "action": {
       "open_session": "セッションを開始",
@@ -737,6 +737,7 @@
       "item_count": "{count, plural, one {#点} other {#点}}",
       "total_label": "合計",
       "finalize_button": "売上を確定",
+      "view_cart": "カートを表示",
       "qty": "数量",
       "qty_decrease": "数量を減らす",
       "qty_increase": "数量を増やす",

@@ -722,7 +722,7 @@
       "vs_yesterday_up": "+{pct}% vs ayer",
       "vs_yesterday_down": "{pct}% vs ayer",
       "no_comparison": "—",
-      "balance": "Saldo"
+      "balance": "Saldo acumulado"
     },
     "action": {
       "open_session": "Abrir sesión",
@@ -737,6 +737,7 @@
       "item_count": "{count, plural, one {# artículo} other {# artículos}}",
       "total_label": "Total",
       "finalize_button": "Finalizar venta",
+      "view_cart": "Ver carrito",
       "qty": "Cant",
       "qty_decrease": "Disminuir cantidad",
       "qty_increase": "Aumentar cantidad",

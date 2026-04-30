@@ -724,7 +724,7 @@
       "vs_yesterday_up": "+{pct}% vs yesterday",
       "vs_yesterday_down": "{pct}% vs yesterday",
       "no_comparison": "—",
-      "balance": "Balance"
+      "balance": "Running balance"
     },
 
     "action": {
@@ -741,6 +741,7 @@
       "item_count": "{count, plural, one {# item} other {# items}}",
       "total_label": "Total",
       "finalize_button": "Finalize sale",
+      "view_cart": "View cart",
       "qty": "Qty",
       "qty_decrease": "Decrease quantity",
       "qty_increase": "Increase quantity",
