@@ -721,7 +721,8 @@
       "avg_ticket": "Ticket promedio",
       "vs_yesterday_up": "+{pct}% vs ayer",
       "vs_yesterday_down": "{pct}% vs ayer",
-      "no_comparison": "—"
+      "no_comparison": "—",
+      "balance": "Saldo"
     },
     "action": {
       "open_session": "Abrir sesión",

@@ -144,7 +144,10 @@ export function SalesStatsCard({
       >
         <div className="overflow-hidden min-h-0">
           <div className="grid grid-cols-3 gap-2 items-center">
-            <div className="text-2xl font-semibold truncate">{revenueLabel}</div>
+            <div>
+              <div className="text-2xl font-semibold truncate">{revenueLabel}</div>
+              <div className="text-xs text-text-secondary mt-0.5">{t('balance')}</div>
+            </div>
             <button
               type="button"
               className="btn btn-danger col-span-2"

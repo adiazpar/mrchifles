@@ -721,7 +721,8 @@
       "avg_ticket": "平均単価",
       "vs_yesterday_up": "昨日比 +{pct}%",
       "vs_yesterday_down": "昨日比 {pct}%",
-      "no_comparison": "—"
+      "no_comparison": "—",
+      "balance": "残高"
     },
     "action": {
       "open_session": "セッションを開始",

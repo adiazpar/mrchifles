@@ -723,7 +723,8 @@
       "avg_ticket": "Avg ticket",
       "vs_yesterday_up": "+{pct}% vs yesterday",
       "vs_yesterday_down": "{pct}% vs yesterday",
-      "no_comparison": "—"
+      "no_comparison": "—",
+      "balance": "Balance"
     },
 
     "action": {
