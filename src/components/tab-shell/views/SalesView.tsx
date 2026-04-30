@@ -34,9 +34,12 @@ export function SalesView() {
           onToggleSession={() => setSessionOpen((v) => !v)}
         />
         {/* Product picker — fills the space between the stats card and
-            the cart card while the session is open, scrolls internally. */}
+            the cart card while the session is open. Wrapper is a flex
+            column with no overflow of its own; the picker handles its
+            own internal scroll on just the product grid so the search
+            row above stays anchored. */}
         {sessionOpen && (
-          <div className="flex-1 overflow-y-auto pt-4 min-h-0">
+          <div className="flex-1 min-h-0 pt-4 flex flex-col">
             <ProductPicker cart={cart} />
           </div>
         )}
