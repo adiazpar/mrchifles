@@ -31,7 +31,7 @@ export function CartSheet({ cart, businessId }: CartSheetProps) {
   return (
     <div className="rounded-full border border-border bg-bg-surface p-4">
       <div className="grid grid-cols-2 gap-2 items-center">
-        <div className="text-sm font-medium">
+        <div className="text-sm font-medium text-center">
           {t('item_count', { count: itemCount })}
         </div>
         <button
