@@ -177,8 +177,10 @@ function QtyButton({
   return (
     <button
       type="button"
-      className={`rounded-full bg-bg-muted w-11 h-11 flex items-center justify-center border-2 transition-colors hover:bg-bg-elevated disabled:cursor-not-allowed ${
-        active ? 'border-brand' : 'border-transparent'
+      className={`rounded-full w-11 h-11 flex items-center justify-center border-2 transition-colors disabled:cursor-not-allowed ${
+        active
+          ? 'border-brand bg-bg-elevated text-brand'
+          : 'border-transparent bg-bg-muted text-text-primary'
       }`}
       aria-label={ariaLabel}
       disabled={disabled}
