@@ -723,7 +723,9 @@
       "vs_yesterday_down": "{pct}% vs ayer",
       "no_comparison": "—",
       "balance": "Saldo acumulado",
-      "session_label": "¿Listo para cerrar?"
+      "session_label": "¿Listo para cerrar?",
+      "manager_opens_session": "Gerente abre sesión",
+      "manager_closes_session": "Gerente cierra sesión"
     },
     "action": {
       "open_session": "Abrir sesión",

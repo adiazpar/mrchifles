@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { History } from 'lucide-react'
+import { useBusiness } from '@/contexts/business-context'
 import { useSales } from '@/contexts/sales-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
@@ -23,6 +24,7 @@ export function SalesStatsCard({
   const tAction = useTranslations('sales.action')
   const { stats } = useSales()
   const { formatCurrency } = useBusinessFormat()
+  const { canManage } = useBusiness()
   const [historyOpen, setHistoryOpen] = useState(false)
 
   const vsLabel = stats
@@ -97,16 +99,22 @@ export function SalesStatsCard({
             >
               <History />
             </button>
-            <button
-              type="button"
-              className="btn btn-primary w-1/2"
-              onClick={() => {
-                haptic()
-                onOpenSession()
-              }}
-            >
-              <span>{tAction('open_session')}</span>
-            </button>
+            {canManage ? (
+              <button
+                type="button"
+                className="btn btn-primary w-1/2"
+                onClick={() => {
+                  haptic()
+                  onOpenSession()
+                }}
+              >
+                <span>{tAction('open_session')}</span>
+              </button>
+            ) : (
+              <div className="w-1/2 text-right text-xs text-text-tertiary">
+                {t('manager_opens_session')}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -121,16 +129,22 @@ export function SalesStatsCard({
         <div className="overflow-hidden min-h-0">
           <div className="grid grid-cols-2 gap-2 items-center">
             <div className="text-2xl font-semibold truncate">{revenueLabel}</div>
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={() => {
-                haptic()
-                onRequestCloseSession()
-              }}
-            >
-              <span>{tAction('close_session')}</span>
-            </button>
+            {canManage ? (
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => {
+                  haptic()
+                  onRequestCloseSession()
+                }}
+              >
+                <span>{tAction('close_session')}</span>
+              </button>
+            ) : (
+              <div className="text-right text-xs text-text-tertiary">
+                {t('manager_closes_session')}
+              </div>
+            )}
           </div>
         </div>
       </div>
