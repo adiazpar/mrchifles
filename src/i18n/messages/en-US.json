@@ -736,13 +736,51 @@
     },
 
     "session": {
+      "open_modal": {
+        "title": "Open session",
+        "description": "Start a new session for your business.",
+        "starting_cash": "Starting cash",
+        "starting_cash_helper": "Cash already in the drawer. Use 0 if empty.",
+        "confirm": "Open session",
+        "success_heading": "Session opened",
+        "error_back": "Back",
+        "error_already_open": "A session is already open. Refresh and ring up sales there."
+      },
       "close_modal": {
         "title": "Close session?",
+        "count_helper": "Count what's actually in the drawer right now.",
+        "counted_label": "Counted cash",
+        "cart_warning": "{count, plural, one {# item} other {# items}} in your cart will be discarded if you close.",
+        "next": "Next",
         "summary_heading": "Session summary",
         "transactions_label": "Transactions",
         "revenue_label": "Total revenue",
         "avg_ticket_label": "Avg ticket",
-        "confirm": "Close session"
+        "recon_heading": "Cash reconciliation",
+        "starting_cash": "Starting cash",
+        "cash_sales": "Cash sales",
+        "expected": "Expected",
+        "counted": "Counted",
+        "variance": "Variance",
+        "confirm": "Close session",
+        "success_heading": "Session closed",
+        "error_back": "Back",
+        "error_not_open": "Session is already closed. Refresh and try again."
+      },
+      "history_modal": {
+        "title": "Session history",
+        "empty": "No closed sessions yet.",
+        "opened_label": "Opened",
+        "closed_label": "Closed",
+        "transactions_label": "Transactions",
+        "revenue_label": "Revenue",
+        "variance_label": "Variance",
+        "load_more": "Load more"
+      },
+      "active_sales_modal": {
+        "title": "Session sales",
+        "empty": "No sales yet in this session.",
+        "sale_label": "Sale #{number}"
       }
     },
 

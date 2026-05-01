@@ -732,13 +732,51 @@
       "reports": "レポート"
     },
     "session": {
+      "open_modal": {
+        "title": "セッション開始",
+        "description": "業務の新しいセッションを開始します",
+        "starting_cash": "開始時現金",
+        "starting_cash_helper": "レジ内の既存現金額。空の場合は0を入力してください",
+        "confirm": "セッション開始",
+        "success_heading": "セッション開始済み",
+        "error_back": "戻る",
+        "error_already_open": "既にセッションが開始されています。更新して販売を記録してください"
+      },
       "close_modal": {
         "title": "セッションを終了しますか？",
+        "count_helper": "現在レジにある実際の金額を入力してください",
+        "counted_label": "実査現金",
+        "cart_warning": "カート内の{count, plural, one {#商品} other {#商品}}は閉じると破棄されます",
+        "next": "次へ",
         "summary_heading": "セッションのサマリー",
         "transactions_label": "取引数",
         "revenue_label": "売上合計",
         "avg_ticket_label": "平均単価",
-        "confirm": "セッションを終了"
+        "recon_heading": "現金照合",
+        "starting_cash": "開始時現金",
+        "cash_sales": "現金売上",
+        "expected": "予定額",
+        "counted": "実査額",
+        "variance": "差異",
+        "confirm": "セッションを終了",
+        "success_heading": "セッション終了済み",
+        "error_back": "戻る",
+        "error_not_open": "セッションは既に終了されています。更新して再試行してください"
+      },
+      "history_modal": {
+        "title": "セッション履歴",
+        "empty": "終了したセッションはまだありません",
+        "opened_label": "開始",
+        "closed_label": "終了",
+        "transactions_label": "取引数",
+        "revenue_label": "売上",
+        "variance_label": "差異",
+        "load_more": "さらに読み込む"
+      },
+      "active_sales_modal": {
+        "title": "セッション売上",
+        "empty": "このセッションにはまだ売上がありません",
+        "sale_label": "売上 #{number}"
       }
     },
     "cart": {

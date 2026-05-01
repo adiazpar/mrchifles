@@ -732,13 +732,51 @@
       "reports": "Reportes"
     },
     "session": {
+      "open_modal": {
+        "title": "Abrir sesión",
+        "description": "Inicie una nueva sesión para su negocio.",
+        "starting_cash": "Efectivo inicial",
+        "starting_cash_helper": "Efectivo ya en caja. Use 0 si está vacía.",
+        "confirm": "Abrir sesión",
+        "success_heading": "Sesión abierta",
+        "error_back": "Atrás",
+        "error_already_open": "Ya hay una sesión abierta. Actualice y registre ventas allí."
+      },
       "close_modal": {
         "title": "¿Cerrar sesión?",
+        "count_helper": "Cuente lo que realmente hay en caja ahora.",
+        "counted_label": "Efectivo contado",
+        "cart_warning": "{count, plural, one {# artículo} other {# artículos}} en su carrito se descartarán si cierra.",
+        "next": "Siguiente",
         "summary_heading": "Resumen de sesión",
         "transactions_label": "Transacciones",
         "revenue_label": "Ingresos totales",
         "avg_ticket_label": "Ticket promedio",
-        "confirm": "Cerrar sesión"
+        "recon_heading": "Conciliación de efectivo",
+        "starting_cash": "Efectivo inicial",
+        "cash_sales": "Ventas en efectivo",
+        "expected": "Esperado",
+        "counted": "Contado",
+        "variance": "Diferencia",
+        "confirm": "Cerrar sesión",
+        "success_heading": "Sesión cerrada",
+        "error_back": "Atrás",
+        "error_not_open": "La sesión ya está cerrada. Actualice e intente de nuevo."
+      },
+      "history_modal": {
+        "title": "Historial de sesiones",
+        "empty": "Aún no hay sesiones cerradas.",
+        "opened_label": "Abierta",
+        "closed_label": "Cerrada",
+        "transactions_label": "Transacciones",
+        "revenue_label": "Ingresos",
+        "variance_label": "Diferencia",
+        "load_more": "Cargar más"
+      },
+      "active_sales_modal": {
+        "title": "Ventas de la sesión",
+        "empty": "Aún no hay ventas en esta sesión.",
+        "sale_label": "Venta #{number}"
       }
     },
     "cart": {
