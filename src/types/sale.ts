@@ -11,13 +11,14 @@ export interface SaleItem {
 export interface Sale {
   id: string
   saleNumber: number
-  date: string         // ISO timestamp
+  sessionId: string         // FK to sales_sessions.id (NOT NULL on the wire)
+  date: string              // ISO timestamp
   total: number
   paymentMethod: PaymentMethod
   notes: string | null
   items: SaleItem[]
   createdByUserId: string
-  createdAt: string    // ISO timestamp
+  createdAt: string         // ISO timestamp
 }
 
 export interface SalesStats {
@@ -25,5 +26,25 @@ export interface SalesStats {
   todayCount: number
   todayAvgTicket: number | null
   yesterdayRevenue: number
-  vsYesterdayPct: number | null  // percentage value, e.g. 12.5 means +12.5%
+  vsYesterdayPct: number | null
+}
+
+/**
+ * Cash-drawer session. Either open (closedAt === null and all close-time
+ * fields are null) or closed (closedAt set + denormalized totals stamped).
+ */
+export interface SalesSession {
+  id: string
+  openedAt: string                   // ISO timestamp
+  openedByUserId: string
+  startingCash: number
+  closedAt: string | null
+  closedByUserId: string | null
+  countedCash: number | null
+  salesCount: number | null
+  salesTotal: number | null
+  cashSalesTotal: number | null
+  expectedCash: number | null
+  variance: number | null
+  notes: string | null
 }
