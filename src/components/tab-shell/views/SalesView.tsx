@@ -60,13 +60,9 @@ export function SalesView() {
       </div>
       <CloseSessionConfirmModal
         isOpen={closeModalOpen}
-        stats={sales.stats}
         onClose={() => setCloseModalOpen(false)}
-        onConfirm={() => {
-          setCloseModalOpen(false)
-          // PR 4 will rebuild this modal as a 3-step flow that calls
-          // salesSessions.closeSession() with the counted cash. For now,
-          // just dismisses so we don't break existing UI.
+        onCloseComplete={() => {
+          cart.clear()
         }}
       />
     </main>
