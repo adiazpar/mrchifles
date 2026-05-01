@@ -1,29 +1,29 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { History, Wallet } from 'lucide-react'
+import { History } from 'lucide-react'
 import { useSales } from '@/contexts/sales-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
+import { SessionHistoryModal } from '@/components/sales/SessionHistoryModal'
 
 interface SalesStatsCardProps {
   sessionOpen: boolean
-  onToggleSession: () => void
+  onOpenSession: () => void
+  onRequestCloseSession: () => void
 }
 
 export function SalesStatsCard({
   sessionOpen,
-  onToggleSession,
+  onOpenSession,
+  onRequestCloseSession,
 }: SalesStatsCardProps) {
   const t = useTranslations('sales.stats')
   const tAction = useTranslations('sales.action')
   const { stats } = useSales()
   const { formatCurrency } = useBusinessFormat()
-  // Industry pattern (Square POS, Loyverse, Lightspeed, Shopify): a single
-  // static "money/session" icon, with state conveyed by the button color
-  // (btn-primary when ready to open, btn-danger when ready to close) and
-  // the label, NOT by swapping the icon.
-  const SessionIcon = Wallet
+  const [historyOpen, setHistoryOpen] = useState(false)
 
   const vsLabel = stats
     ? stats.vsYesterdayPct === null
@@ -43,6 +43,7 @@ export function SalesStatsCard({
   const revenueLabel = stats ? formatCurrency(stats.todayRevenue) : t('no_comparison')
 
   return (
+    <>
     <div className="rounded-xl border border-border bg-bg-surface p-4">
       {/* Expanded layout: TODAY label + 4-stat grid + History/Open buttons.
           Uses the grid-template-rows 1fr ↔ 0fr collapse technique so the
@@ -79,29 +80,31 @@ export function SalesStatsCard({
             </div>
           </div>
 
-          {/* Action row: 50/50 grid — History (icon + text) and Open
-              Session both follow the canonical .btn framework. */}
-          <div className="grid grid-cols-2 gap-2 mt-4">
+          {/* Action row: History (circular icon button) anchored left,
+              Open Session locked to 50% width on the right — matches the
+              compact-state Close Session footprint. Both follow the
+              canonical .btn framework. */}
+          <div className="flex items-center justify-between mt-4">
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-secondary btn-icon"
+              style={{ borderRadius: 'var(--radius-full)' }}
+              aria-label={tAction('history')}
               onClick={() => {
                 haptic()
-                /* placeholder — wired up when history is rebuilt */
+                setHistoryOpen(true)
               }}
             >
               <History />
-              <span>{tAction('history')}</span>
             </button>
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-primary w-1/2"
               onClick={() => {
                 haptic()
-                onToggleSession()
+                onOpenSession()
               }}
             >
-              <SessionIcon />
               <span>{tAction('open_session')}</span>
             </button>
           </div>
@@ -123,15 +126,16 @@ export function SalesStatsCard({
               className="btn btn-danger"
               onClick={() => {
                 haptic()
-                onToggleSession()
+                onRequestCloseSession()
               }}
             >
-              <SessionIcon />
               <span>{tAction('close_session')}</span>
             </button>
           </div>
         </div>
       </div>
     </div>
+    <SessionHistoryModal isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
+    </>
   )
 }
