@@ -42,3 +42,28 @@ export function startOfPrevUtcDay(d: Date): Date {
   start.setUTCDate(start.getUTCDate() - 1)
   return start
 }
+
+/**
+ * Expected cash in the drawer at session close: starting float plus all
+ * cash-payment-method sales. Rounded to currency decimals so the value
+ * matches the cashier's mental model (no $230.0000000004).
+ */
+export function computeExpectedCash(
+  startingCash: number,
+  cashSalesTotal: number,
+  currency: string,
+): number {
+  return roundToCurrencyDecimals(startingCash + cashSalesTotal, currency)
+}
+
+/**
+ * Variance between the cashier's counted cash and the expected cash.
+ * Negative = drawer short, positive = drawer over, 0 = reconciled.
+ */
+export function computeVariance(
+  countedCash: number,
+  expectedCash: number,
+  currency: string,
+): number {
+  return roundToCurrencyDecimals(countedCash - expectedCash, currency)
+}
