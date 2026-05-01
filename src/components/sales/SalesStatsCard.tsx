@@ -82,11 +82,20 @@ export function SalesStatsCard({
             </div>
           </div>
 
+          {/* Employee notice sits above the Open Session button on the
+              right half, styled like the small stat labels. */}
+          {!canManage && (
+            <div className="flex justify-end mt-4">
+              <p className="text-xs text-text-secondary w-1/2">
+                {t('employee_open_notice')}
+              </p>
+            </div>
+          )}
           {/* Action row: History (circular icon button) anchored left,
               Open Session locked to 50% width on the right — matches the
               compact-state Close Session footprint. Both follow the
               canonical .btn framework. */}
-          <div className="flex items-center justify-between mt-4">
+          <div className={`flex items-center justify-between ${!canManage ? 'mt-1' : 'mt-4'}`}>
             <button
               type="button"
               className="btn btn-secondary btn-icon"
@@ -111,11 +120,6 @@ export function SalesStatsCard({
               <span>{tAction('open_session')}</span>
             </button>
           </div>
-          {!canManage && (
-            <p className="text-xs text-text-tertiary mt-6">
-              {t('employee_open_notice')}
-            </p>
-          )}
         </div>
       </div>
 
