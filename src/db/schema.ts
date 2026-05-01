@@ -259,6 +259,43 @@ export const saleItems = sqliteTable('sale_items', {
 }))
 
 // ===========================================
+// SALES SESSIONS (Cash-drawer reconciliation)
+// ===========================================
+export const salesSessions = sqliteTable('sales_sessions', {
+  id: text('id').primaryKey(),
+  businessId: text('business_id').references(() => businesses.id).notNull(),
+
+  // Open phase
+  openedAt: integer('opened_at', { mode: 'timestamp' }).notNull(),
+  openedByUserId: text('opened_by_user_id').references(() => users.id).notNull(),
+  startingCash: real('starting_cash').notNull(),
+
+  // Close phase — null while open
+  closedAt: integer('closed_at', { mode: 'timestamp' }),
+  closedByUserId: text('closed_by_user_id').references(() => users.id),
+  countedCash: real('counted_cash'),
+
+  // Denormalized close-time stats — stamped during the close transaction.
+  // Avoids re-aggregating the sales table on every history list render.
+  salesCount: integer('sales_count'),
+  salesTotal: real('sales_total'),
+  cashSalesTotal: real('cash_sales_total'),
+  expectedCash: real('expected_cash'),
+  variance: real('variance'),
+
+  notes: text('notes'),
+}, (table) => ({
+  // Drives history list query: WHERE businessId = ? ORDER BY closedAt DESC.
+  businessClosedIdx: index('idx_sales_sessions_business_closed')
+    .on(table.businessId, table.closedAt),
+
+  // "At most one open session per business" — DB-enforced.
+  uniqueOpenPerBusiness: uniqueIndex('idx_unique_sales_sessions_open_per_business')
+    .on(table.businessId)
+    .where(sql`${table.closedAt} IS NULL`),
+}))
+
+// ===========================================
 // INVITE CODES
 // ===========================================
 export const inviteCodes = sqliteTable('invite_codes', {
@@ -407,6 +444,24 @@ export const saleItemsRelations = relations(saleItems, ({ one }) => ({
     fields: [saleItems.productId],
     references: [products.id],
   }),
+}))
+
+export const salesSessionsRelations = relations(salesSessions, ({ one, many }) => ({
+  business: one(businesses, {
+    fields: [salesSessions.businessId],
+    references: [businesses.id],
+  }),
+  openedByUser: one(users, {
+    fields: [salesSessions.openedByUserId],
+    references: [users.id],
+    relationName: 'sessionOpenedBy',
+  }),
+  closedByUser: one(users, {
+    fields: [salesSessions.closedByUserId],
+    references: [users.id],
+    relationName: 'sessionClosedBy',
+  }),
+  sales: many(sales),
 }))
 
 export const inviteCodesRelations = relations(inviteCodes, ({ one }) => ({
