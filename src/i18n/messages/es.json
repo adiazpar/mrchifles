@@ -727,7 +727,8 @@
       "vs_yesterday_down": "{pct}% vs ayer",
       "no_comparison": "—",
       "balance": "Saldo acumulado",
-      "session_label": "¿Listo para cerrar?"
+      "session_label": "¿Listo para cerrar?",
+      "employee_open_notice": "Solo un gerente puede abrir una sesión."
     },
     "action": {
       "open_session": "Abrir sesión",

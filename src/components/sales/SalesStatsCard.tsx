@@ -111,6 +111,11 @@ export function SalesStatsCard({
               <span>{tAction('open_session')}</span>
             </button>
           </div>
+          {!canManage && (
+            <p className="text-xs text-text-tertiary text-center mt-3">
+              {t('employee_open_notice')}
+            </p>
+          )}
         </div>
       </div>
 
