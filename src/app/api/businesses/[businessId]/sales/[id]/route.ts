@@ -24,6 +24,7 @@ export const GET = withBusinessAuth(async (_request, access, params) => {
     sale: {
       id: sale.id,
       saleNumber: sale.saleNumber,
+      sessionId: sale.sessionId,
       date: sale.date.toISOString(),
       total: sale.total,
       paymentMethod: sale.paymentMethod,

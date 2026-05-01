@@ -238,6 +238,11 @@ export const GET = withBusinessAuth(async (request, access) => {
     conditions.push(eq(sales.paymentMethod, paymentMethodParam))
   }
 
+  const sessionIdParam = searchParams.get('sessionId')
+  if (sessionIdParam) {
+    conditions.push(eq(sales.sessionId, sessionIdParam))
+  }
+
   // Keyset pagination: load the cursor's date and id, then continue from
   // anything strictly older in (date DESC, id DESC) order. The compound
   // predicate is required because two sales can share the same `date`
@@ -287,6 +292,7 @@ export const GET = withBusinessAuth(async (request, access) => {
   const expandedSales = slice.map((sale) => ({
     id: sale.id,
     saleNumber: sale.saleNumber,
+    sessionId: sale.sessionId,
     date: sale.date.toISOString(),
     total: sale.total,
     paymentMethod: sale.paymentMethod,
