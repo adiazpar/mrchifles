@@ -73,6 +73,7 @@ interface UseTeamManagementReturn {
   newRole: 'partner' | 'employee'
   setNewRole: (role: 'partner' | 'employee') => void
   roleChangeLoading: boolean
+  removeLoading: boolean
 
   // User management actions
   handleOpenUserModal: (member: TeamMember) => void
@@ -80,6 +81,7 @@ interface UseTeamManagementReturn {
   handleUserModalExitComplete: () => void
   handleToggleUserStatus: () => Promise<void>
   handleSubmitRoleChange: () => Promise<boolean>
+  handleRemoveMember: () => Promise<boolean>
 }
 
 interface TeamDataResponse {
@@ -135,6 +137,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
   // Role change state
   const [newRole, setNewRole] = useState<'partner' | 'employee'>('employee')
   const [roleChangeLoading, setRoleChangeLoading] = useState(false)
+  const [removeLoading, setRemoveLoading] = useState(false)
 
   // Managers (owner + partner) can perform team operations. Server-side
   // routes additionally enforce a partner-on-partner guard for change-role
@@ -454,6 +457,25 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     }
   }, [selectedMember, newRole, businessId])
 
+  const handleRemoveMember = useCallback(async (): Promise<boolean> => {
+    if (!selectedMember) return false
+
+    setRemoveLoading(true)
+    try {
+      await apiPost<ApiSuccessResponse>(
+        `/api/businesses/${businessId}/users/remove`,
+        { userId: selectedMember.id },
+      )
+      setTeamMembers(prev => prev.filter(m => m.id !== selectedMember.id))
+      return true
+    } catch (err) {
+      console.error('Error removing member:', err)
+      return false
+    } finally {
+      setRemoveLoading(false)
+    }
+  }, [selectedMember, businessId])
+
   return {
     // Data
     teamMembers,
@@ -499,6 +521,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     newRole,
     setNewRole,
     roleChangeLoading,
+    removeLoading,
 
     // User management actions
     handleOpenUserModal,
@@ -506,5 +529,6 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     handleUserModalExitComplete,
     handleToggleUserStatus,
     handleSubmitRoleChange,
+    handleRemoveMember,
   }
 }

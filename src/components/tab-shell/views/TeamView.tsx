@@ -149,6 +149,26 @@ function ConfirmRoleChangeButton({
   )
 }
 
+function ConfirmRemoveMemberButton({
+  removeLoading,
+  onSubmit,
+}: {
+  removeLoading: boolean
+  onSubmit: () => Promise<void>
+}) {
+  const t = useTranslations('team')
+  return (
+    <button
+      type="button"
+      className="btn btn-danger flex-1"
+      disabled={removeLoading}
+      onClick={() => void onSubmit()}
+    >
+      {removeLoading ? <Spinner /> : t('remove_confirm')}
+    </button>
+  )
+}
+
 export function TeamView() {
   const t = useTranslations('team')
   const tCommon = useTranslations('common')
@@ -199,6 +219,7 @@ export function TeamView() {
     newRole,
     setNewRole,
     roleChangeLoading,
+    removeLoading,
 
     // User management actions
     handleOpenUserModal,
@@ -206,6 +227,7 @@ export function TeamView() {
     handleUserModalExitComplete,
     handleToggleUserStatus,
     handleSubmitRoleChange,
+    handleRemoveMember,
   } = useTeamManagement({ businessId: businessId || '' })
 
   if (isLoading) {
@@ -454,6 +476,31 @@ export function TeamView() {
             <ConfirmRoleChangeButton
               roleChangeLoading={roleChangeLoading}
               onSubmit={handleSubmitRoleChange}
+            />
+          </Modal.Footer>
+        </Modal.Step>
+
+        <Modal.Step title={t('step_remove_member')} backStep={0}>
+          {selectedMember && (
+            <Modal.Item>
+              <h3 className="text-lg font-semibold text-text-primary">
+                {t('remove_warning_heading', { name: selectedMember.name })}
+              </h3>
+              <p className="text-sm text-text-secondary mt-2">
+                {t('remove_warning_body', { name: selectedMember.name })}
+              </p>
+            </Modal.Item>
+          )}
+          <Modal.Footer>
+            <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={removeLoading}>
+              {tCommon('cancel')}
+            </Modal.GoToStepButton>
+            <ConfirmRemoveMemberButton
+              removeLoading={removeLoading}
+              onSubmit={async () => {
+                const ok = await handleRemoveMember()
+                if (ok) handleCloseUserModal()
+              }}
             />
           </Modal.Footer>
         </Modal.Step>

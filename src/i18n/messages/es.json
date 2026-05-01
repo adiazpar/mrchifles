@@ -700,7 +700,12 @@
     "step_partner_warning": "¿Hacer socio?",
     "partner_warning_heading": "Los socios tienen acceso de administrador",
     "partner_warning_body": "Los socios pueden abrir y cerrar sesiones de caja, administrar productos y miembros del equipo, y acceder a la mayoría de configuraciones. Otorgue esto solo a personas de su total confianza.",
-    "partner_warning_confirm": "Sí, hacer socio"
+    "partner_warning_confirm": "Sí, hacer socio",
+    "remove_member_button": "Remover del negocio",
+    "step_remove_member": "¿Remover miembro?",
+    "remove_warning_heading": "¿Remover a {name}?",
+    "remove_warning_body": "{name} perderá acceso a este negocio inmediatamente. Solo podrá volver a unirse con una nueva invitación. Su historial de ventas y demás actividad permanecerá atribuido a su nombre.",
+    "remove_confirm": "Sí, remover"
   },
   "home": {
     "coming_soon": "Próximamente"
@@ -930,6 +935,8 @@
     "team_cannot_change_own_role": "No puede cambiar su propio rol",
     "team_cannot_change_owner_role": "No puede cambiar el rol del dueño",
     "team_cannot_change_own_status": "No puede cambiar su propio estado",
+    "team_cannot_remove_owner": "Los propietarios no pueden ser removidos.",
+    "team_cannot_remove_self": "Use salir del negocio para removerse usted mismo.",
     "invite_rate_limited": "Demasiados intentos. Intente nuevamente más tarde.",
     "invite_invalid_or_expired": "Código inválido o vencido",
     "invite_wrong_recipient": "Esta transferencia es para otra dirección de correo",

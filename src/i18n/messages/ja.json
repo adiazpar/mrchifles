@@ -700,7 +700,12 @@
     "step_partner_warning": "パートナーにしますか",
     "partner_warning_heading": "パートナーは管理者権限を持ちます",
     "partner_warning_body": "パートナーは現金セッションの開始・終了、商品とチームメンバーの管理、ほとんどの設定へのアクセスが可能です。完全に信頼できる人にのみ付与してください。",
-    "partner_warning_confirm": "はい、パートナーにする"
+    "partner_warning_confirm": "はい、パートナーにする",
+    "remove_member_button": "業務から削除",
+    "step_remove_member": "メンバーを削除しますか?",
+    "remove_warning_heading": "{name}を削除しますか?",
+    "remove_warning_body": "{name}はこの業務へのアクセス権を直ちに失います。新しい招待でのみ再参加できます。過去の売上やその他の履歴は引き続き{name}に帰属します。",
+    "remove_confirm": "はい、削除します"
   },
   "home": {
     "coming_soon": "近日公開"
@@ -930,6 +935,8 @@
     "team_cannot_change_own_role": "自分の役割は変更できません",
     "team_cannot_change_owner_role": "オーナーの役割は変更できません",
     "team_cannot_change_own_status": "自分のステータスは変更できません",
+    "team_cannot_remove_owner": "オーナーは削除できません。",
+    "team_cannot_remove_self": "自分自身を削除するには業務から退出を使用してください。",
     "invite_rate_limited": "試行回数が多すぎます。後でもう一度お試しください",
     "invite_invalid_or_expired": "無効または期限切れのコード",
     "invite_wrong_recipient": "この譲渡は別のメールアドレス宛てです",
