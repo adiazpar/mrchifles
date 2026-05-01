@@ -142,8 +142,6 @@ export const POST = withBusinessAuth(async (request, access) => {
       paymentMethod: body.paymentMethod,
       notes: body.notes ?? null,
       createdAt,
-      // TODO(PR-2): replace with real session ID once SalesSessionsContext exists
-      sessionId: '',
     }),
     db.insert(saleItems).values(
       lineRows.map((r) => ({
