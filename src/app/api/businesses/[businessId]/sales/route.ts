@@ -1,5 +1,5 @@
-import { db, sales, saleItems, products, businesses } from '@/db'
-import { eq, inArray, and, or, sql, desc, gte, lt, lte } from 'drizzle-orm'
+import { db, sales, saleItems, products, businesses, salesSessions } from '@/db'
+import { eq, inArray, and, or, sql, desc, gte, lt, lte, isNull } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import {
   withBusinessAuth,
@@ -42,7 +42,6 @@ export const POST = withBusinessAuth(async (request, access) => {
   if (!parsed.success) return validationError(parsed)
   const body = parsed.data
 
-  // Date validation: backdate up to 1 year, future tolerance 1 minute.
   const now = new Date()
   const saleDate = body.date ? new Date(body.date) : now
   if (
@@ -52,7 +51,6 @@ export const POST = withBusinessAuth(async (request, access) => {
     return errorResponse(ApiMessageCode.SALE_INVALID_DATE, 400)
   }
 
-  // Look up products in one batched SELECT.
   const productIds = body.items.map((i) => i.productId)
   const productsList = await db
     .select({
@@ -67,7 +65,6 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   const productsMap = new Map(productsList.map((p) => [p.id, p]))
 
-  // Reject if any productId is missing or inactive.
   for (const item of body.items) {
     const product = productsMap.get(item.productId)
     if (!product) {
@@ -78,11 +75,6 @@ export const POST = withBusinessAuth(async (request, access) => {
     }
   }
 
-  // Stock validation. Reject the whole batch if any line exceeds current
-  // stock. The picker UI prevents over-adding for a single user, but two
-  // cashiers committing the last 6 of a 6-stock product simultaneously
-  // can only race here — first commit wins, second gets a 409 and the
-  // client re-fetches products + offers trim-to-available on retry.
   const hasInsufficientStock = body.items.some((item) => {
     const product = productsMap.get(item.productId)!
     return item.quantity > (product.stock ?? 0)
@@ -93,8 +85,6 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   const currency = access.businessCurrency ?? 'USD'
 
-  // Snapshot prices server-side. Compute line subtotals and total with
-  // currency-appropriate rounding (matches orders/route.ts pattern).
   const lineRows = body.items.map((item) => {
     const product = productsMap.get(item.productId)!
     const unitPrice = product.price
@@ -113,76 +103,108 @@ export const POST = withBusinessAuth(async (request, access) => {
     currency,
   )
 
-  // Reserve the next saleNumber atomically. UPDATE ... RETURNING is
-  // atomic per-statement on libSQL (single-region Turso); see design
-  // spec section 12 risk #6 for the multi-replica caveat. Note: if the
-  // db.batch below fails after this UPDATE succeeds, the counter has
-  // advanced and the reserved number is unused — a normal POS gap. See
-  // design spec section 12 risk #5.
-  const reservation = await db
-    .update(businesses)
-    .set({ nextSaleNumber: sql`${businesses.nextSaleNumber} + 1` })
-    .where(eq(businesses.id, access.businessId))
-    .returning({ reserved: sql<number>`${businesses.nextSaleNumber} - 1` })
-  const saleNumber = Number(reservation[0]?.reserved ?? 1)
-
   const saleId = nanoid()
   const createdAt = new Date()
 
-  // Atomic batch: insert sale + items + decrement stock per line. libSQL
-  // batch is all-or-nothing.
-  await db.batch([
-    db.insert(sales).values({
-      id: saleId,
-      businessId: access.businessId,
-      saleNumber,
-      createdByUserId: access.userId,
-      date: saleDate,
-      total,
-      paymentMethod: body.paymentMethod,
-      notes: body.notes ?? null,
-      createdAt,
-    }),
-    db.insert(saleItems).values(
-      lineRows.map((r) => ({
-        id: r.id,
-        saleId,
-        productId: r.productId,
-        productName: r.productName,
-        quantity: r.quantity,
-        unitPrice: r.unitPrice,
-      })),
-    ),
-    ...lineRows.map((r) =>
-      db
-        .update(products)
-        .set({ stock: sql`${products.stock} - ${r.quantity}` })
-        .where(and(eq(products.id, r.productId), eq(products.businessId, access.businessId))),
-    ),
-  ])
+  try {
+    const result = await db.transaction(async (tx) => {
+      // CAS sentinel: claim the open session row by writing to it. The
+      // matching UPDATE acquires SQLite's write lock; concurrent close
+      // transactions are blocked or, if they committed first, this
+      // returns 0 rows and we throw SessionNotOpenError.
+      const claimed = await tx
+        .update(salesSessions)
+        .set({ openedAt: salesSessions.openedAt })
+        .where(
+          and(
+            eq(salesSessions.businessId, access.businessId),
+            isNull(salesSessions.closedAt),
+          ),
+        )
+        .returning({ id: salesSessions.id })
+        .all()
 
-  // Items: subtotal is a computed field (not stored in sale_items) — the
-  // GET routes recompute it the same way (roundToCurrencyDecimals(qty * unitPrice, currency)).
-  return successResponse({
-    sale: {
-      id: saleId,
-      saleNumber,
-      date: saleDate.toISOString(),
-      total,
-      paymentMethod: body.paymentMethod,
-      notes: body.notes ?? null,
-      items: lineRows.map((r) => ({
-        productId: r.productId,
-        productName: r.productName,
-        quantity: r.quantity,
-        unitPrice: r.unitPrice,
-        subtotal: r.subtotal,
-      })),
-      createdByUserId: access.userId,
-      createdAt: createdAt.toISOString(),
-    },
-  })
+      if (claimed.length === 0) {
+        throw new SessionNotOpenError()
+      }
+      const openSessionId = claimed[0].id
+
+      // Reserve sale_number atomically inside the transaction.
+      const reservation = await tx
+        .update(businesses)
+        .set({ nextSaleNumber: sql`${businesses.nextSaleNumber} + 1` })
+        .where(eq(businesses.id, access.businessId))
+        .returning({ reserved: sql<number>`${businesses.nextSaleNumber} - 1` })
+      const saleNumber = Number(reservation[0]?.reserved ?? 1)
+
+      // Insert sale + items + decrement stock.
+      await tx.insert(sales).values({
+        id: saleId,
+        businessId: access.businessId,
+        saleNumber,
+        sessionId: openSessionId,
+        createdByUserId: access.userId,
+        date: saleDate,
+        total,
+        paymentMethod: body.paymentMethod,
+        notes: body.notes ?? null,
+        createdAt,
+      })
+
+      await tx.insert(saleItems).values(
+        lineRows.map((r) => ({
+          id: r.id,
+          saleId,
+          productId: r.productId,
+          productName: r.productName,
+          quantity: r.quantity,
+          unitPrice: r.unitPrice,
+        })),
+      )
+
+      for (const r of lineRows) {
+        await tx
+          .update(products)
+          .set({ stock: sql`${products.stock} - ${r.quantity}` })
+          .where(and(eq(products.id, r.productId), eq(products.businessId, access.businessId)))
+      }
+
+      return { openSessionId, saleNumber }
+    })
+
+    return successResponse({
+      sale: {
+        id: saleId,
+        saleNumber: result.saleNumber,
+        sessionId: result.openSessionId,
+        date: saleDate.toISOString(),
+        total,
+        paymentMethod: body.paymentMethod,
+        notes: body.notes ?? null,
+        items: lineRows.map((r) => ({
+          productId: r.productId,
+          productName: r.productName,
+          quantity: r.quantity,
+          unitPrice: r.unitPrice,
+          subtotal: r.subtotal,
+        })),
+        createdByUserId: access.userId,
+        createdAt: createdAt.toISOString(),
+      },
+    })
+  } catch (err) {
+    if (err instanceof SessionNotOpenError) {
+      return errorResponse(ApiMessageCode.SESSION_NOT_OPEN, 409)
+    }
+    throw err
+  }
 })
+
+class SessionNotOpenError extends Error {
+  constructor() {
+    super('No open session for this business')
+  }
+}
 
 const DEFAULT_LIMIT = 50
 const MAX_LIMIT = 200
