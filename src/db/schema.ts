@@ -231,10 +231,18 @@ export const sales = sqliteTable('sales', {
   // Actual record creation time. Distinct from `date` for backdated entries.
   // Not used for stats bucketing — see design spec section 4.
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  // Cash-drawer session this sale belongs to. Always set at insert time
+  // by the POST /sales handler. The DB-level NOT NULL is enforced by
+  // wiping pre-session sales rows before this push (local) and assuming
+  // prod has zero sales rows yet.
+  sessionId: text('session_id')
+    .references(() => salesSessions.id, { onDelete: 'restrict' })
+    .notNull(),
 }, (table) => ({
   // Drives both the history list query and the today/yesterday stats
   // aggregation. DESC because most queries scan from newest first.
   businessDateIdx: index('idx_sales_business_date').on(table.businessId, table.date),
+  sessionIdIdx: index('idx_sales_session_id').on(table.sessionId),
 }))
 
 // ===========================================
@@ -431,6 +439,10 @@ export const salesRelations = relations(sales, ({ one, many }) => ({
   createdByUser: one(users, {
     fields: [sales.createdByUserId],
     references: [users.id],
+  }),
+  session: one(salesSessions, {
+    fields: [sales.sessionId],
+    references: [salesSessions.id],
   }),
   items: many(saleItems),
 }))
