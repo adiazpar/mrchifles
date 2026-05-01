@@ -3,6 +3,7 @@
 import { useParams, usePathname } from 'next/navigation'
 import { ContentGuard } from '@/components/auth'
 import { OrdersProvider } from '@/contexts/orders-context'
+import { SalesSessionsProvider } from '@/contexts/sales-sessions-context'
 import { SalesProvider } from '@/contexts/sales-context'
 import { ProvidersProvider } from '@/contexts/providers-context'
 import { ProductsProvider } from '@/contexts/products-context'
@@ -34,27 +35,29 @@ export default function BusinessLayout({
   return (
     <ContentGuard>
       <OrdersProvider key={`orders-${businessId}`} businessId={businessId}>
-        <SalesProvider key={`sales-${businessId}`} businessId={businessId}>
-          <ProvidersProvider key={`providers-${businessId}`} businessId={businessId}>
-            <ProductsProvider key={`products-${businessId}`} businessId={businessId}>
-              <ProductSettingsProvider key={`product-settings-${businessId}`} businessId={businessId}>
-                <BusinessDataPreloader businessId={businessId} />
-                {/*
-                  Positioning context for absolutely-positioned TabShell views
-                  and the drill-down overlay. h-full takes the height that
-                  AppShell's main-scroll-container provides; relative
-                  establishes the positioning context for inset:0 children.
-                */}
-                <div className="relative h-full">
-                  <TabShell key={`tab-shell-${businessId}`} />
-                  <DrillDownOverlay isOpen={isDrillDown}>
-                    {children}
-                  </DrillDownOverlay>
-                </div>
-              </ProductSettingsProvider>
-            </ProductsProvider>
-          </ProvidersProvider>
-        </SalesProvider>
+        <SalesSessionsProvider key={`sales-sessions-${businessId}`} businessId={businessId}>
+          <SalesProvider key={`sales-${businessId}`} businessId={businessId}>
+            <ProvidersProvider key={`providers-${businessId}`} businessId={businessId}>
+              <ProductsProvider key={`products-${businessId}`} businessId={businessId}>
+                <ProductSettingsProvider key={`product-settings-${businessId}`} businessId={businessId}>
+                  <BusinessDataPreloader businessId={businessId} />
+                  {/*
+                    Positioning context for absolutely-positioned TabShell views
+                    and the drill-down overlay. h-full takes the height that
+                    AppShell's main-scroll-container provides; relative
+                    establishes the positioning context for inset:0 children.
+                  */}
+                  <div className="relative h-full">
+                    <TabShell key={`tab-shell-${businessId}`} />
+                    <DrillDownOverlay isOpen={isDrillDown}>
+                      {children}
+                    </DrillDownOverlay>
+                  </div>
+                </ProductSettingsProvider>
+              </ProductsProvider>
+            </ProvidersProvider>
+          </SalesProvider>
+        </SalesSessionsProvider>
       </OrdersProvider>
     </ContentGuard>
   )
