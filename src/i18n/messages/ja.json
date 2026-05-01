@@ -733,12 +733,15 @@
       "no_comparison": "—",
       "balance": "累計残高",
       "session_label": "締め処理の準備はできましたか",
-      "employee_open_notice": "管理者のみ"
+      "employee_open_notice": "管理者のみ",
+      "session_total_label": "合計: {value}",
+      "session_sales_count": "{count, plural, =0 {売上なし} other {# 件}}"
     },
     "action": {
       "open_session": "セッションを開始",
       "close_session": "セッションを終了",
       "history": "履歴",
+      "view_session_sales": "セッション売上を表示",
       "reports": "レポート"
     },
     "session": {
@@ -796,8 +799,7 @@
       "item_count": "{count, plural, one {#点} other {#点}}",
       "total_label": "合計",
       "finalize_button": "売上を確定",
-      "view_cart": "カートを表示",
-      "view_session_sales": "セッション売上を表示",
+      "view_cart": "{count, plural, =0 {カートを表示} other {カートを表示 (#)}}",
       "qty": "数量",
       "out_of_stock": "在庫切れ",
       "qty_decrease": "数量を減らす",

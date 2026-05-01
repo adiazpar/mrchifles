@@ -86,7 +86,12 @@ export function ProductPicker({ cart }: ProductPickerProps) {
     <div className="flex flex-col flex-1 min-h-0">
       {/* Single scrollable area: search/scan row + product grid scroll
           together so the search row can move out of view and free up
-          space for more product cards as the user pages through. */}
+          space for more product cards as the user pages through. A
+          fixed-height sentinel at the end clears the floating View
+          Cart button anchored to the bottom of the page-body in
+          SalesView (using `pb-*` on a flex-column overflow container
+          hits a WebKit bug where bottom padding collapses during
+          scroll). */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hidden flex flex-col gap-3">
       {/* Search + scan row — same JSX/classes as the Products tab. */}
       <div className="flex gap-2 items-stretch">
@@ -247,6 +252,10 @@ export function ProductPicker({ cart }: ProductPickerProps) {
           )
         })}
         </div>
+        {/* Sentinel: clears the floating View Cart FAB at page-body
+            bottom. Uses a non-shrinking spacer instead of padding-bottom
+            on the scroll container, which collapses on iOS Safari. */}
+        <div aria-hidden="true" className="shrink-0 h-20" />
       </div>
     </div>
   )

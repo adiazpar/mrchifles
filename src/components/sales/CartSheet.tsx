@@ -1,73 +1,38 @@
 'use client'
 
-import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Receipt, ShoppingCart } from 'lucide-react'
+import { ShoppingCart } from 'lucide-react'
 import { haptic } from '@/lib/haptics'
 import type { UseCartResult } from '@/hooks/useCart'
-import { ActiveSessionSalesModal } from '@/components/sales/ActiveSessionSalesModal'
 
 interface CartSheetProps {
   cart: UseCartResult
-  businessId: string
 }
 
-export function CartSheet({ cart, businessId }: CartSheetProps) {
+export function CartSheet({ cart }: CartSheetProps) {
   const t = useTranslations('sales.cart')
-  const [sessionSalesOpen, setSessionSalesOpen] = useState(false)
-
-  // businessId is retained on the props for the View cart drawer that will
-  // mount from this card — it'll need it to drive the charge / commit flow.
 
   const itemCount = cart.lines.reduce((acc, l) => acc + l.quantity, 0)
   const isEmpty = cart.lines.length === 0
 
+  // Persistent floating action: anchored to the bottom of the page-body
+  // (which is `relative`-positioned in SalesView). Removes the bar from
+  // layout flow so the product picker can scroll the full remaining
+  // height behind it.
   return (
-    <>
-    <div className="rounded-full border border-border bg-bg-surface p-4">
-      <div className="grid grid-cols-3 gap-2 items-center">
-        <div className="text-sm font-medium text-center">
-          {t('item_count', { count: itemCount })}
-        </div>
-        {/* Right cluster spans 2/3 of the bar: session-sales icon button
-            (auto width) + view-cart button (flex-1). Both follow the
-            project's button design tokens — same .btn / .btn-icon classes
-            as the Modal.Footer pattern (e.g. EditProductModal, ProvidersView
-            edit/back buttons). 44px touch-target height, 24px icons,
-            built-in tap-scale + brightness from the .btn framework, plus
-            a haptic() on tap. */}
-        <div className="col-span-2 flex items-center gap-2">
-          <button
-            type="button"
-            className="btn btn-secondary btn-icon"
-            aria-label={t('view_session_sales')}
-            onClick={() => {
-              haptic()
-              setSessionSalesOpen(true)
-            }}
-          >
-            <Receipt className="text-success" />
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary flex-1"
-            disabled={isEmpty}
-            onClick={() => {
-              haptic()
-              /* placeholder — opens the View cart drawer when wired up */
-            }}
-          >
-            <ShoppingCart />
-            <span>{t('view_cart')}</span>
-          </button>
-        </div>
-      </div>
+    <div className="absolute bottom-0 left-0 right-0">
+      <button
+        type="button"
+        className="btn btn-primary w-full"
+        disabled={isEmpty}
+        onClick={() => {
+          haptic()
+          /* placeholder — opens the View cart drawer when wired up */
+        }}
+      >
+        <ShoppingCart />
+        <span>{t('view_cart', { count: itemCount })}</span>
+      </button>
     </div>
-    <ActiveSessionSalesModal
-      isOpen={sessionSalesOpen}
-      onClose={() => setSessionSalesOpen(false)}
-      businessId={businessId}
-    />
-    </>
   )
 }

@@ -735,13 +735,16 @@
       "no_comparison": "—",
       "balance": "Running balance",
       "session_label": "Ready to close?",
-      "employee_open_notice": "Manager only"
+      "employee_open_notice": "Manager only",
+      "session_total_label": "Total: {value}",
+      "session_sales_count": "{count, plural, =0 {No sales yet} one {# sale} other {# sales}}"
     },
 
     "action": {
       "open_session": "Open session",
       "close_session": "Close session",
       "history": "History",
+      "view_session_sales": "View session sales",
       "reports": "Reports"
     },
 
@@ -801,8 +804,7 @@
       "item_count": "{count, plural, one {# item} other {# items}}",
       "total_label": "Total",
       "finalize_button": "Finalize sale",
-      "view_cart": "View cart",
-      "view_session_sales": "View session sales",
+      "view_cart": "{count, plural, =0 {View cart} other {View cart (#)}}",
       "qty": "Qty",
       "out_of_stock": "Out of stock",
       "qty_decrease": "Decrease quantity",

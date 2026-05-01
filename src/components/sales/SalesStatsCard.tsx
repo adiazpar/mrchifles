@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { History } from 'lucide-react'
+import { History, Receipt } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { useSales } from '@/contexts/sales-context'
+import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
 import { SessionHistoryModal } from '@/components/sales/SessionHistoryModal'
+import { ActiveSessionSalesModal } from '@/components/sales/ActiveSessionSalesModal'
 
 interface SalesStatsCardProps {
   sessionOpen: boolean
@@ -22,10 +24,18 @@ export function SalesStatsCard({
 }: SalesStatsCardProps) {
   const t = useTranslations('sales.stats')
   const tAction = useTranslations('sales.action')
-  const { stats } = useSales()
+  const { stats, sales } = useSales()
+  const { currentSession } = useSalesSessions()
   const { formatCurrency } = useBusinessFormat()
-  const { canManage } = useBusiness()
+  const { business, canManage } = useBusiness()
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [sessionSalesOpen, setSessionSalesOpen] = useState(false)
+
+  const sessionSales = currentSession
+    ? sales.filter((s) => s.sessionId === currentSession.id)
+    : []
+  const sessionRevenue = sessionSales.reduce((sum, s) => sum + s.total, 0)
+  const sessionCount = sessionSales.length
 
   const vsLabel = stats
     ? stats.vsYesterdayPct === null
@@ -119,19 +129,39 @@ export function SalesStatsCard({
         </div>
       </div>
 
-      {/* Compact layout: 50/50 grid — balance value on the left, Close
-          button on the right. Session button keeps 1/2 width across both
-          states (Open and Close share the same proportion). */}
+      {/* Compact layout: a small label row showing live session metrics
+          sits above an action row that mirrors the open-state header
+          (icon-left + 1/2 width primary action on the right). The
+          Receipt icon button slots into the same anchor as History does
+          when the session is closed — same affordance, same location,
+          state-aware in meaning. */}
       <div
         className="grid transition-[grid-template-rows] duration-300 ease-in-out"
         style={{ gridTemplateRows: sessionOpen ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden min-h-0">
-          <div className="grid grid-cols-2 gap-2 items-center">
-            <div className="text-2xl font-semibold truncate">{revenueLabel}</div>
+          <div className="flex items-center justify-between mb-3 text-sm text-text-secondary">
+            <span>{t('session_sales_count', { count: sessionCount })}</span>
+            <span>
+              {t('session_total_label', { value: formatCurrency(sessionRevenue) })}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
             <button
               type="button"
-              className="btn btn-danger"
+              className="btn btn-secondary btn-icon"
+              style={{ borderRadius: 'var(--radius-full)' }}
+              aria-label={tAction('view_session_sales')}
+              onClick={() => {
+                haptic()
+                setSessionSalesOpen(true)
+              }}
+            >
+              <Receipt className="text-success" />
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger w-1/2"
               disabled={!canManage}
               onClick={() => {
                 haptic()
@@ -145,6 +175,11 @@ export function SalesStatsCard({
       </div>
     </div>
     <SessionHistoryModal isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
+    <ActiveSessionSalesModal
+      isOpen={sessionSalesOpen}
+      onClose={() => setSessionSalesOpen(false)}
+      businessId={business?.id ?? ''}
+    />
     </>
   )
 }

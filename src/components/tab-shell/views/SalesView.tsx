@@ -34,7 +34,7 @@ export function SalesView() {
 
   return (
     <main className="page-content" style={{ minHeight: 0 }}>
-      <div className="page-body">
+      <div className="page-body relative">
         <SalesStatsCard
           sessionOpen={sessionOpen}
           onOpenSession={() => setOpenModalOpen(true)}
@@ -45,16 +45,7 @@ export function SalesView() {
             <ProductPicker cart={cart} />
           </div>
         )}
-        <div
-          className="grid transition-[grid-template-rows] duration-300 ease-in-out mt-auto"
-          style={{ gridTemplateRows: sessionOpen ? '1fr' : '0fr' }}
-        >
-          <div className="overflow-hidden min-h-0">
-            <div className="pt-4">
-              <CartSheet cart={cart} businessId={businessId} />
-            </div>
-          </div>
-        </div>
+        {sessionOpen && <CartSheet cart={cart} />}
       </div>
       <CloseSessionConfirmModal
         isOpen={closeModalOpen}

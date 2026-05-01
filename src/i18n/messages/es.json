@@ -733,12 +733,15 @@
       "no_comparison": "—",
       "balance": "Saldo acumulado",
       "session_label": "¿Listo para cerrar?",
-      "employee_open_notice": "Solo gerente"
+      "employee_open_notice": "Solo gerente",
+      "session_total_label": "Total: {value}",
+      "session_sales_count": "{count, plural, =0 {Sin ventas} one {# venta} other {# ventas}}"
     },
     "action": {
       "open_session": "Abrir sesión",
       "close_session": "Cerrar sesión",
       "history": "Historial",
+      "view_session_sales": "Ver ventas de sesión",
       "reports": "Reportes"
     },
     "session": {
@@ -796,8 +799,7 @@
       "item_count": "{count, plural, one {# artículo} other {# artículos}}",
       "total_label": "Total",
       "finalize_button": "Finalizar venta",
-      "view_cart": "Ver carrito",
-      "view_session_sales": "Ver ventas de sesión",
+      "view_cart": "{count, plural, =0 {Ver carrito} other {Ver carrito (#)}}",
       "qty": "Cant",
       "out_of_stock": "Agotado",
       "qty_decrease": "Disminuir cantidad",
