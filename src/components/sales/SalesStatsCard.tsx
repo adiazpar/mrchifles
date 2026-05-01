@@ -112,7 +112,7 @@ export function SalesStatsCard({
             </button>
           </div>
           {!canManage && (
-            <p className="text-xs text-text-tertiary text-center mt-3">
+            <p className="text-xs text-text-tertiary mt-6">
               {t('employee_open_notice')}
             </p>
           )}
