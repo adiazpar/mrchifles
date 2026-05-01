@@ -727,9 +727,7 @@
       "vs_yesterday_down": "昨日比 {pct}%",
       "no_comparison": "—",
       "balance": "累計残高",
-      "session_label": "締め処理の準備はできましたか",
-      "manager_opens_session": "マネージャーがセッションを開始",
-      "manager_closes_session": "マネージャーがセッションを終了"
+      "session_label": "締め処理の準備はできましたか"
     },
     "action": {
       "open_session": "セッションを開始",

@@ -99,22 +99,17 @@ export function SalesStatsCard({
             >
               <History />
             </button>
-            {canManage ? (
-              <button
-                type="button"
-                className="btn btn-primary w-1/2"
-                onClick={() => {
-                  haptic()
-                  onOpenSession()
-                }}
-              >
-                <span>{tAction('open_session')}</span>
-              </button>
-            ) : (
-              <div className="w-1/2 text-right text-xs text-text-tertiary">
-                {t('manager_opens_session')}
-              </div>
-            )}
+            <button
+              type="button"
+              className="btn btn-primary w-1/2"
+              disabled={!canManage}
+              onClick={() => {
+                haptic()
+                onOpenSession()
+              }}
+            >
+              <span>{tAction('open_session')}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -129,22 +124,17 @@ export function SalesStatsCard({
         <div className="overflow-hidden min-h-0">
           <div className="grid grid-cols-2 gap-2 items-center">
             <div className="text-2xl font-semibold truncate">{revenueLabel}</div>
-            {canManage ? (
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={() => {
-                  haptic()
-                  onRequestCloseSession()
-                }}
-              >
-                <span>{tAction('close_session')}</span>
-              </button>
-            ) : (
-              <div className="text-right text-xs text-text-tertiary">
-                {t('manager_closes_session')}
-              </div>
-            )}
+            <button
+              type="button"
+              className="btn btn-danger"
+              disabled={!canManage}
+              onClick={() => {
+                haptic()
+                onRequestCloseSession()
+              }}
+            >
+              <span>{tAction('close_session')}</span>
+            </button>
           </div>
         </div>
       </div>
