@@ -917,6 +917,7 @@
     "session_not_open": "No hay sesión abierta. Abra una antes de registrar ventas o cerrar.",
     "session_not_found": "Sesión no encontrada.",
     "session_invalid_cash": "El monto en efectivo no es válido.",
+    "session_forbidden_not_manager": "Solo propietarios y socios pueden abrir o cerrar sesiones.",
     "team_forbidden_not_owner": "Solo el propietario puede realizar esta acción",
     "team_forbidden_not_manager": "Solo los gerentes pueden gestionar miembros e invitaciones",
     "team_partner_cannot_mutate_partner": "Los socios no pueden cambiar el rol o estado de otro socio. Pide al propietario.",

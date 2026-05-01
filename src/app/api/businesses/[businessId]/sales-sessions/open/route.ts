@@ -8,6 +8,7 @@ import {
   validationError,
 } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
+import { canManageBusiness } from '@/lib/business-role'
 import { openSessionSchema } from '../schema'
 import type { SalesSession } from '@/types/sale'
 
@@ -21,6 +22,10 @@ const POST_MAX_BODY_BYTES = 1024  // tiny: { startingCash: number }
  * business. Any active member may open.
  */
 export const POST = withBusinessAuth(async (request, access) => {
+  if (!canManageBusiness(access.role)) {
+    return errorResponse(ApiMessageCode.SESSION_FORBIDDEN_NOT_MANAGER, 403)
+  }
+
   const oversize = enforceMaxContentLength(request, POST_MAX_BODY_BYTES)
   if (oversize) return oversize
 

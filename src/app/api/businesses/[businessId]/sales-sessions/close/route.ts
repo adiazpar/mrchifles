@@ -8,6 +8,7 @@ import {
   validationError,
 } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
+import { canManageBusiness } from '@/lib/business-role'
 import { closeSessionSchema } from '../schema'
 import { computeExpectedCash, computeVariance } from '@/lib/sales-helpers'
 import type { SalesSession } from '@/types/sale'
@@ -27,6 +28,10 @@ const POST_MAX_BODY_BYTES = 4 * 1024  // notes can be up to ~500 chars
  *   3. UPDATE the same session row with denormalized totals + counted + variance.
  */
 export const POST = withBusinessAuth(async (request, access) => {
+  if (!canManageBusiness(access.role)) {
+    return errorResponse(ApiMessageCode.SESSION_FORBIDDEN_NOT_MANAGER, 403)
+  }
+
   const oversize = enforceMaxContentLength(request, POST_MAX_BODY_BYTES)
   if (oversize) return oversize
 

@@ -927,6 +927,7 @@
     "session_not_open": "No session is open. Open one before ringing up sales or closing.",
     "session_not_found": "Session not found.",
     "session_invalid_cash": "Cash amount is invalid.",
+    "session_forbidden_not_manager": "Only owners and partners can open or close sessions.",
     "team_forbidden_not_owner": "Only the owner can perform this action",
     "team_forbidden_not_manager": "Only managers can manage team members and invites",
     "team_partner_cannot_mutate_partner": "Partners cannot change another partner's role or status. Ask the business owner.",

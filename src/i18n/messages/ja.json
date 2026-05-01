@@ -917,6 +917,7 @@
     "session_not_open": "セッションが開かれていません。売上登録やクローズの前にセッションを開いてください",
     "session_not_found": "セッションが見つかりません",
     "session_invalid_cash": "現金額が無効です",
+    "session_forbidden_not_manager": "セッションの開始・終了はオーナーとパートナーのみ可能です",
     "team_forbidden_not_owner": "オーナーのみがこの操作を実行できます",
     "team_forbidden_not_manager": "パートナー以上のみがチームメンバーと招待を管理できます",
     "team_partner_cannot_mutate_partner": "パートナーは他のパートナーの役割やステータスを変更できません。業務オーナーに依頼してください",
