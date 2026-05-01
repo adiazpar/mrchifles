@@ -9,6 +9,7 @@ import { SalesStatsCard } from '@/components/sales/SalesStatsCard'
 import { CartSheet } from '@/components/sales/CartSheet'
 import { ProductPicker } from '@/components/sales/ProductPicker'
 import { CloseSessionConfirmModal } from '@/components/sales/CloseSessionConfirmModal'
+import { OpenSessionModal } from '@/components/sales/OpenSessionModal'
 
 export function SalesView() {
   const { business } = useBusiness()
@@ -18,6 +19,7 @@ export function SalesView() {
   const cart = useCart(businessId)
 
   const [closeModalOpen, setCloseModalOpen] = useState(false)
+  const [openModalOpen, setOpenModalOpen] = useState(false)
 
   useEffect(() => {
     if (!businessId) return
@@ -35,11 +37,7 @@ export function SalesView() {
       <div className="page-body">
         <SalesStatsCard
           sessionOpen={sessionOpen}
-          onOpenSession={() => {
-            // PR 4 will mount OpenSessionModal here. For now, no-op
-            // because the modal isn't implemented yet — testing will use
-            // the API directly until PR 4 lands.
-          }}
+          onOpenSession={() => setOpenModalOpen(true)}
           onRequestCloseSession={() => setCloseModalOpen(true)}
         />
         {sessionOpen && (
@@ -64,6 +62,11 @@ export function SalesView() {
         onCloseComplete={() => {
           cart.clear()
         }}
+      />
+      <OpenSessionModal
+        isOpen={openModalOpen}
+        onClose={() => setOpenModalOpen(false)}
+        previousCountedCash={salesSessions.sessions[0]?.countedCash ?? null}
       />
     </main>
   )
