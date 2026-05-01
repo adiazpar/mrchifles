@@ -730,7 +730,7 @@
       "no_comparison": "—",
       "balance": "Running balance",
       "session_label": "Ready to close?",
-      "employee_open_notice": "Only a manager can open a session."
+      "employee_open_notice": "Manager only"
     },
 
     "action": {

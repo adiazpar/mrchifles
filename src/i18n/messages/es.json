@@ -728,7 +728,7 @@
       "no_comparison": "—",
       "balance": "Saldo acumulado",
       "session_label": "¿Listo para cerrar?",
-      "employee_open_notice": "Solo un gerente puede abrir una sesión."
+      "employee_open_notice": "Solo gerente"
     },
     "action": {
       "open_session": "Abrir sesión",

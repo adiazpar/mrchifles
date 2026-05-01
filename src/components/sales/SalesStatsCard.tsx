@@ -79,23 +79,19 @@ export function SalesStatsCard({
             </div>
             <div>
               <div className={`text-2xl font-semibold ${vsColor}`}>{vsLabel}</div>
+              {!canManage && (
+                <div className="text-xs text-text-secondary mt-0.5">
+                  {t('employee_open_notice')}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Employee notice sits above the Open Session button on the
-              right half, styled like the small stat labels. */}
-          {!canManage && (
-            <div className="flex justify-end mt-4">
-              <p className="text-xs text-text-secondary w-1/2">
-                {t('employee_open_notice')}
-              </p>
-            </div>
-          )}
           {/* Action row: History (circular icon button) anchored left,
               Open Session locked to 50% width on the right — matches the
               compact-state Close Session footprint. Both follow the
               canonical .btn framework. */}
-          <div className={`flex items-center justify-between ${!canManage ? 'mt-1' : 'mt-4'}`}>
+          <div className="flex items-center justify-between mt-4">
             <button
               type="button"
               className="btn btn-secondary btn-icon"

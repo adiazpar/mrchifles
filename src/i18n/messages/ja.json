@@ -728,7 +728,7 @@
       "no_comparison": "—",
       "balance": "累計残高",
       "session_label": "締め処理の準備はできましたか",
-      "employee_open_notice": "セッションを開始できるのは管理者のみです"
+      "employee_open_notice": "管理者のみ"
     },
     "action": {
       "open_session": "セッションを開始",
