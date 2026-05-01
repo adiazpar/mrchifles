@@ -45,9 +45,19 @@
   text-decoration: none;
 }
 
+/* Real disabled state — flat muted fill with low-emphasis text instead
+   of a 50% opacity ghost. Higher specificity than the variant rules
+   (`.btn:disabled` = 1 class + 1 pseudo-class, vs `.btn-primary` = 1
+   class), so it overrides primary/danger fills and the secondary
+   text color without per-variant rules. SVGs inherit the muted color
+   via `currentColor`. */
 .btn:disabled {
-  opacity: 0.5;
+  background: var(--color-bg-muted);
+  color: var(--color-text-tertiary);
+  border-color: transparent;
   cursor: not-allowed;
+  filter: none;
+  transform: none;
 }
 
 .btn-primary {
