@@ -735,6 +735,17 @@
       "reports": "Reports"
     },
 
+    "session": {
+      "close_modal": {
+        "title": "Close session?",
+        "summary_heading": "Session summary",
+        "transactions_label": "Transactions",
+        "revenue_label": "Total revenue",
+        "avg_ticket_label": "Avg ticket",
+        "confirm": "Close session"
+      }
+    },
+
     "cart": {
       "title": "Current sale",
       "empty_title": "No items yet",

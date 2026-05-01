@@ -731,6 +731,16 @@
       "history": "Historial",
       "reports": "Reportes"
     },
+    "session": {
+      "close_modal": {
+        "title": "¿Cerrar sesión?",
+        "summary_heading": "Resumen de sesión",
+        "transactions_label": "Transacciones",
+        "revenue_label": "Ingresos totales",
+        "avg_ticket_label": "Ticket promedio",
+        "confirm": "Cerrar sesión"
+      }
+    },
     "cart": {
       "title": "Venta actual",
       "empty_title": "Sin artículos",

@@ -731,6 +731,16 @@
       "history": "履歴",
       "reports": "レポート"
     },
+    "session": {
+      "close_modal": {
+        "title": "セッションを終了しますか？",
+        "summary_heading": "セッションのサマリー",
+        "transactions_label": "取引数",
+        "revenue_label": "売上合計",
+        "avg_ticket_label": "平均単価",
+        "confirm": "セッションを終了"
+      }
+    },
     "cart": {
       "title": "現在の売上",
       "empty_title": "商品がありません",
