@@ -696,7 +696,11 @@
     "error_failed_to_load": "Error al cargar equipo",
     "error_failed_to_generate_code": "Error al generar código",
     "error_failed_to_regenerate_code": "Error al regenerar código",
-    "copy_fallback_alert": "Código: {code}"
+    "copy_fallback_alert": "Código: {code}",
+    "step_partner_warning": "¿Hacer socio?",
+    "partner_warning_heading": "Los socios tienen acceso de administrador",
+    "partner_warning_body": "Los socios pueden abrir y cerrar sesiones de caja, administrar productos y miembros del equipo, y acceder a la mayoría de configuraciones. Otorgue esto solo a personas de su total confianza.",
+    "partner_warning_confirm": "Sí, hacer socio"
   },
   "home": {
     "coming_soon": "Próximamente"

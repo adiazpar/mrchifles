@@ -696,7 +696,11 @@
     "error_failed_to_load": "チームの読み込みに失敗しました",
     "error_failed_to_generate_code": "コードの生成に失敗しました",
     "error_failed_to_regenerate_code": "コードの再生成に失敗しました",
-    "copy_fallback_alert": "コード: {code}"
+    "copy_fallback_alert": "コード: {code}",
+    "step_partner_warning": "パートナーにしますか",
+    "partner_warning_heading": "パートナーは管理者権限を持ちます",
+    "partner_warning_body": "パートナーは現金セッションの開始・終了、商品とチームメンバーの管理、ほとんどの設定へのアクセスが可能です。完全に信頼できる人にのみ付与してください。",
+    "partner_warning_confirm": "はい、パートナーにする"
   },
   "home": {
     "coming_soon": "近日公開"

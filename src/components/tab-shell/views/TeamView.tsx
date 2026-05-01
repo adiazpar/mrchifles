@@ -2,7 +2,7 @@
 
 import { Fragment } from 'react'
 import { Plus, Check, Copy, Trash2 } from 'lucide-react'
-import { Spinner, Modal, ConfirmationAnimation } from '@/components/ui'
+import { Spinner, Modal, ConfirmationAnimation, useModal } from '@/components/ui'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
@@ -13,13 +13,141 @@ import {
   CodeGeneratedContent,
   UserDetailsStep,
   RoleChangeContent,
-  RoleChangeSaveButton,
   RoleChangeCancelButton,
-  GenerateCodeButton,
   ConfirmDeleteCodeButton,
   TeamMemberListItem,
   InviteCodeListItem,
 } from '@/components/team'
+
+// Intercepts the generate action: if role is partner, show warning step first
+function GenerateOrConfirmButton({
+  isGenerating,
+  selectedRole,
+  onGenerate,
+}: {
+  isGenerating: boolean
+  selectedRole: 'partner' | 'employee'
+  onGenerate: () => Promise<void>
+}) {
+  const t = useTranslations('team')
+  const { goToStep, lock, unlock } = useModal()
+
+  const handleClick = async () => {
+    if (selectedRole === 'partner') {
+      goToStep(4)
+    } else {
+      lock()
+      await onGenerate()
+      unlock()
+      goToStep(1)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      className="btn btn-primary flex-1"
+      disabled={isGenerating}
+      onClick={handleClick}
+    >
+      {isGenerating ? <Spinner /> : t('generate_code_button')}
+    </button>
+  )
+}
+
+// Confirm button on partner-warning step (invite flow): always generates then navigates to step 1
+function ConfirmGenerateButton({
+  isGenerating,
+  onGenerate,
+}: {
+  isGenerating: boolean
+  onGenerate: () => Promise<void>
+}) {
+  const t = useTranslations('team')
+  const { goToStep, lock, unlock } = useModal()
+
+  const handleClick = async () => {
+    lock()
+    await onGenerate()
+    unlock()
+    goToStep(1)
+  }
+
+  return (
+    <button
+      type="button"
+      className="btn btn-primary flex-1"
+      disabled={isGenerating}
+      onClick={handleClick}
+    >
+      {isGenerating ? <Spinner /> : t('partner_warning_confirm')}
+    </button>
+  )
+}
+
+// Intercepts the role-change save: if new role is partner, show warning step first
+function RoleChangeSaveOrConfirmButton({
+  roleChangeLoading,
+  isDisabled,
+  newRole,
+  onSubmit,
+}: {
+  roleChangeLoading: boolean
+  isDisabled: boolean
+  newRole: 'partner' | 'employee'
+  onSubmit: () => Promise<boolean>
+}) {
+  const tCommon = useTranslations('common')
+  const { goToStep } = useModal()
+
+  const handleClick = () => {
+    if (newRole === 'partner') {
+      goToStep(2)
+    } else {
+      goToStep(0)
+      void onSubmit()
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="btn btn-primary flex-1"
+      disabled={roleChangeLoading || isDisabled}
+    >
+      {roleChangeLoading ? <Spinner /> : tCommon('save')}
+    </button>
+  )
+}
+
+// Confirm button on partner-warning step (role-change flow): always submits
+function ConfirmRoleChangeButton({
+  roleChangeLoading,
+  onSubmit,
+}: {
+  roleChangeLoading: boolean
+  onSubmit: () => Promise<boolean>
+}) {
+  const t = useTranslations('team')
+  const { goToStep } = useModal()
+
+  const handleClick = () => {
+    goToStep(0)
+    void onSubmit()
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="btn btn-primary flex-1"
+      disabled={roleChangeLoading}
+    >
+      {roleChangeLoading ? <Spinner /> : t('partner_warning_confirm')}
+    </button>
+  )
+}
 
 export function TeamView() {
   const t = useTranslations('team')
@@ -176,8 +304,9 @@ export function TeamView() {
           />
           <Modal.Footer>
             <Modal.CancelBackButton />
-            <GenerateCodeButton
+            <GenerateOrConfirmButton
               isGenerating={isGenerating}
+              selectedRole={selectedRole}
               onGenerate={handleGenerateCode}
             />
           </Modal.Footer>
@@ -255,6 +384,22 @@ export function TeamView() {
             </button>
           </Modal.Footer>
         </Modal.Step>
+
+        <Modal.Step title={t('step_partner_warning')} backStep={0}>
+          <Modal.Item>
+            <h3 className="text-lg font-semibold text-text-primary">{t('partner_warning_heading')}</h3>
+            <p className="text-sm text-text-secondary mt-2">{t('partner_warning_body')}</p>
+          </Modal.Item>
+          <Modal.Footer>
+            <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isGenerating}>
+              {tCommon('cancel')}
+            </Modal.GoToStepButton>
+            <ConfirmGenerateButton
+              isGenerating={isGenerating}
+              onGenerate={handleGenerateCode}
+            />
+          </Modal.Footer>
+        </Modal.Step>
       </Modal>
 
       {/* User Management Modal */}
@@ -288,9 +433,26 @@ export function TeamView() {
           )}
           <Modal.Footer>
             <RoleChangeCancelButton disabled={roleChangeLoading} />
-            <RoleChangeSaveButton
+            <RoleChangeSaveOrConfirmButton
               roleChangeLoading={roleChangeLoading}
               isDisabled={selectedMember ? newRole === selectedMember.role : false}
+              newRole={newRole}
+              onSubmit={handleSubmitRoleChange}
+            />
+          </Modal.Footer>
+        </Modal.Step>
+
+        <Modal.Step title={t('step_partner_warning')} backStep={1}>
+          <Modal.Item>
+            <h3 className="text-lg font-semibold text-text-primary">{t('partner_warning_heading')}</h3>
+            <p className="text-sm text-text-secondary mt-2">{t('partner_warning_body')}</p>
+          </Modal.Item>
+          <Modal.Footer>
+            <Modal.GoToStepButton step={1} className="btn btn-secondary flex-1" disabled={roleChangeLoading}>
+              {tCommon('cancel')}
+            </Modal.GoToStepButton>
+            <ConfirmRoleChangeButton
+              roleChangeLoading={roleChangeLoading}
               onSubmit={handleSubmitRoleChange}
             />
           </Modal.Footer>
