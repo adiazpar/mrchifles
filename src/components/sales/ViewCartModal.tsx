@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, type MouseEvent } from 'react'
+import { useMemo, useState, type MouseEvent } from 'react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { Minus, Package, Plus } from 'lucide-react'
@@ -12,6 +12,11 @@ import { getProductIconUrl } from '@/lib/utils'
 import { getPresetIcon, isPresetIcon } from '@/lib/preset-icons'
 import type { Product } from '@/types'
 import type { CartLine, UseCartResult } from '@/hooks/useCart'
+import { useBusiness } from '@/contexts/business-context'
+import type { PaymentMethod } from '@/types/sale'
+import { PaymentStepContent } from './cart-modal/PaymentStep'
+import { ChargeButton } from './cart-modal/ChargeButton'
+import { SuccessStepContent, type ConfirmedSaleRecap } from './cart-modal/SuccessStep'
 
 interface ViewCartModalProps {
   isOpen: boolean
@@ -36,10 +41,40 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
 
   const isEmpty = cart.lines.length === 0
 
+  const { business } = useBusiness()
+  const currency = business?.currency ?? 'USD'
+
+  const [methodId, setMethodId] = useState<PaymentMethod>('cash')
+  const [tenderedStr, setTenderedStr] = useState<string>('')
+  const [submitting, setSubmitting] = useState(false)
+  const [confirmedSale, setConfirmedSale] = useState<ConfirmedSaleRecap | null>(null)
+  const [error, setError] = useState<string>('')
+  const [errorMessageCode, setErrorMessageCode] = useState<string | undefined>(undefined)
+
+  const tendered = parseFloat(tenderedStr) || 0
+  const isCash = methodId === 'cash'
+  const tenderedSufficient = !isCash || tendered >= cart.total
+  const canConfirm =
+    !submitting &&
+    cart.lines.length > 0 &&
+    cart.total > 0 &&
+    tenderedSufficient
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      onExitComplete={() => {
+        if (confirmedSale != null) {
+          cart.clear()
+        }
+        setMethodId('cash')
+        setTenderedStr('')
+        setSubmitting(false)
+        setConfirmedSale(null)
+        setError('')
+        setErrorMessageCode(undefined)
+      }}
       title={t('modal_title')}
     >
       <Modal.Step title={t('modal_title')}>
@@ -101,12 +136,49 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
         </Modal.Footer>
       </Modal.Step>
 
-      {/* Step 1: Payment — temporary placeholder. Task 7 (wire-up)
-          replaces this with the real PaymentStep + ChargeButton. */}
+      {/* Step 1: Payment. */}
       <Modal.Step title={t('modal_payment_step_title')}>
-        <Modal.Item>
-          <p className="text-sm text-text-secondary">{t('modal_payment_step_title')}</p>
-        </Modal.Item>
+        <PaymentStepContent
+          total={cart.total}
+          currency={currency}
+          methodId={methodId}
+          setMethodId={setMethodId}
+          tenderedStr={tenderedStr}
+          setTenderedStr={setTenderedStr}
+          error={error}
+          errorMessageCode={errorMessageCode}
+        />
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-secondary flex-1"
+            disabled={submitting}
+          >
+            {tCommon('cancel')}
+          </button>
+          <ChargeButton
+            cart={cart}
+            currency={currency}
+            methodId={methodId}
+            tenderedStr={tenderedStr}
+            submitting={submitting}
+            setSubmitting={setSubmitting}
+            setConfirmedSale={setConfirmedSale}
+            setError={setError}
+            setErrorMessageCode={setErrorMessageCode}
+            canConfirm={canConfirm}
+          />
+        </Modal.Footer>
+      </Modal.Step>
+
+      {/* Step 2: Success. */}
+      <Modal.Step
+        title={t('modal_success_title')}
+        hideBackButton
+        className="modal-step--centered"
+      >
+        <SuccessStepContent confirmedSale={confirmedSale} onDone={onClose} />
       </Modal.Step>
     </Modal>
   )
