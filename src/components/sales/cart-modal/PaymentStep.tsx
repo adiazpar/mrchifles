@@ -59,10 +59,10 @@ export function PaymentStepContent({
   return (
     <>
       <Modal.Item>
-        <div className="text-sm text-text-secondary mb-2">
+        <div id="payment-method-picker-label" className="text-sm text-text-secondary mb-2">
           {t('modal_pay_with_label')}
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div role="group" aria-labelledby="payment-method-picker-label" className="grid grid-cols-3 gap-2">
           {PAYMENT_METHODS.map((method) => {
             const Icon = method.icon
             const active = method.id === methodId
@@ -73,7 +73,6 @@ export function PaymentStepContent({
                   color: method.colorToken,
                 }
               : undefined
-            const labelKey = `modal_method_${method.id}` as const
             return (
               <button
                 key={method.id}
@@ -89,11 +88,8 @@ export function PaymentStepContent({
                 aria-pressed={active}
               >
                 <Icon size={24} />
-                <span
-                  className="text-sm font-medium"
-                  style={active ? { color: method.colorToken } : undefined}
-                >
-                  {t(labelKey)}
+                <span className="text-sm font-medium">
+                  {t(method.labelKey)}
                 </span>
               </button>
             )

@@ -18,9 +18,14 @@ export interface ProcessorResult {
   externalRef?: string
 }
 
+// Each method's i18n label lives at sales.cart.modal_method_<id>. Encoded
+// as a typed union so next-intl's typed t() can accept method.labelKey
+// directly without a cast at the call site.
+export type PaymentMethodLabelKey = `modal_method_${PaymentMethod}`
+
 export interface PaymentMethodEntry {
   id: PaymentMethod              // matches the DB enum: 'cash' | 'card' | 'other'
-  labelKey: string               // i18n key under sales.cart, e.g. 'modal_method_cash'
+  labelKey: PaymentMethodLabelKey
   icon: LucideIcon
   colorToken: string             // CSS var: active-state border + icon tint
   subtleBg?: string              // CSS var: active-state bg fill (optional)
