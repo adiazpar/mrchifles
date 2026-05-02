@@ -67,3 +67,36 @@ export function computeVariance(
 ): number {
   return roundToCurrencyDecimals(countedCash - expectedCash, currency)
 }
+
+const BILL_DENOMS_BY_CURRENCY: Record<string, number[]> = {
+  USD: [5, 10, 20, 50, 100],
+  PEN: [10, 20, 50, 100, 200],
+  JPY: [1000, 5000, 10000],
+  CLP: [1000, 5000, 10000, 20000],
+}
+
+/**
+ * Returns up to 4 unique "round-up" bill amounts strictly greater than `total`,
+ * derived from a per-currency denomination set. Used to render the cash
+ * quick-fill buttons in the cart payment step. Falls back to USD denoms for
+ * unknown currencies. Returns an empty array when the total is at or above
+ * every denomination in the set.
+ */
+export function nextRoundBills(total: number, currency: string): number[] {
+  const denoms =
+    BILL_DENOMS_BY_CURRENCY[currency.toUpperCase()] ??
+    BILL_DENOMS_BY_CURRENCY.USD
+  // When the total exceeds every denomination, the loop would still push
+  // Math.ceil(total/d)*d for each d (a value strictly above total), which
+  // isn't useful for picking a single bill the customer actually handed
+  // over. Bail out so the UI falls back to "Exact" + free-form input.
+  const maxDenom = denoms[denoms.length - 1]
+  if (total > maxDenom) return []
+  const result: number[] = []
+  for (const d of denoms) {
+    const rounded = Math.ceil(total / d) * d
+    if (rounded > total && !result.includes(rounded)) result.push(rounded)
+    if (result.length >= 4) break
+  }
+  return result
+}

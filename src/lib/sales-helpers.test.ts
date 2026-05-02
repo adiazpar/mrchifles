@@ -6,6 +6,7 @@ import {
   startOfPrevUtcDay,
   computeExpectedCash,
   computeVariance,
+  nextRoundBills,
 } from './sales-helpers'
 
 describe('decimalsForCurrency', () => {
@@ -92,5 +93,46 @@ describe('computeVariance', () => {
 
   it('rounds to 0 decimals for zero-decimal currency', () => {
     expect(computeVariance(228.7, 230.4, 'JPY')).toBe(-2)
+  })
+})
+
+describe('nextRoundBills', () => {
+  it('returns up to 4 unique round-up bill amounts above the total (USD)', () => {
+    expect(nextRoundBills(13.5, 'USD')).toEqual([15, 20, 50, 100])
+  })
+
+  it('handles PEN denominations', () => {
+    expect(nextRoundBills(13.5, 'PEN')).toEqual([20, 50, 100, 200])
+  })
+
+  it('handles JPY (zero-decimal) denominations including the smallest bill', () => {
+    expect(nextRoundBills(1850, 'JPY')).toEqual([2000, 5000, 10000])
+  })
+
+  it('handles CLP denominations', () => {
+    expect(nextRoundBills(7500, 'CLP')).toEqual([8000, 10000, 20000])
+  })
+
+  it('rounds the cheapest denomination up correctly for tiny totals', () => {
+    expect(nextRoundBills(0.5, 'USD')).toEqual([5, 10, 20, 50])
+  })
+
+  it('falls back to USD denominations for unknown currencies', () => {
+    expect(nextRoundBills(13.5, 'XXX')).toEqual([15, 20, 50, 100])
+  })
+
+  it('skips a denomination whose round-up equals an already-included amount', () => {
+    // total = 21 → ceil(21/5)*5=25, ceil(21/10)*10=30, ceil(21/20)*20=40, ceil(21/50)*50=50.
+    expect(nextRoundBills(21, 'USD')).toEqual([25, 30, 40, 50])
+  })
+
+  it('returns empty array when total exceeds the largest denomination', () => {
+    expect(nextRoundBills(150, 'USD')).toEqual([])
+  })
+
+  it('returns empty array when total is exactly a denomination value', () => {
+    // ceil(20/5)*5 = 20, not strictly > 20 → skipped. Same for the 10 and 20 denoms.
+    // ceil(20/50)*50 = 50 → included. ceil(20/100)*100 = 100 → included.
+    expect(nextRoundBills(20, 'USD')).toEqual([50, 100])
   })
 })
