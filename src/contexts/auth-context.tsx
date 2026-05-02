@@ -16,6 +16,7 @@ import { fetchDeduped } from '@/lib/fetch'
 import type { SupportedLocale } from '@/i18n/config'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError, apiPost, apiPatch } from '@/lib/api-client'
+import { clearKaseroLocalStorage } from '@/hooks/useSessionCache'
 
 // ============================================
 // TYPES
@@ -163,15 +164,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await apiPost<{ user: User }>('/api/auth/login', { email, password })
 
-      // Wipe any residual per-user session caches (business role cache,
+      // Wipe any residual per-user caches (business role cache,
       // per-business data caches) from a prior user on this tab before
       // seating the new identity. Without this, the business-context
       // would hand the new user the previous user's cached role.
+      // Both stores get flushed: sessionStorage covers the per-tab
+      // caches, clearKaseroLocalStorage covers the cold-start-survivors
+      // (e.g. sales-sessions).
       try {
         sessionStorage.clear()
       } catch {
         // Ignore storage errors
       }
+      clearKaseroLocalStorage()
 
       setUser(data.user)
       setCachedUser(data.user)
@@ -201,14 +206,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await apiPost<{ user: User }>('/api/auth/register', { email, password, name })
 
-      // Wipe residual per-user session caches from a prior user on this
-      // tab (e.g. someone logged out and then registered a fresh account
+      // Wipe residual per-user caches from a prior user on this tab
+      // (e.g. someone logged out and then registered a fresh account
       // in the same tab). Same defensive clear as login().
       try {
         sessionStorage.clear()
       } catch {
         // Ignore storage errors
       }
+      clearKaseroLocalStorage()
 
       setUser(data.user)
       setCachedUser(data.user)
@@ -238,13 +244,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(null)
     setCachedUser(null)
-    // Clear all per-user session caches so the next account to sign in
-    // on this tab doesn't inherit stale role / business data.
+    // Clear all per-user caches so the next account to sign in on this
+    // tab doesn't inherit stale role / business / session data. Cover
+    // both stores — sessionStorage for per-tab caches and our prefixed
+    // localStorage entries for cold-start-survivors.
     try {
       sessionStorage.clear()
     } catch {
       // Ignore storage errors
     }
+    clearKaseroLocalStorage()
   }, [])
 
   const refreshUser = useCallback(async () => {

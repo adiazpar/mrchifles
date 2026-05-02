@@ -18,7 +18,16 @@ export { useApiMessage } from './useApiMessage'
 export { useTheme } from './useTheme'
 export type { Theme } from './useTheme'
 
-export { createSessionCache, scopedCache, CACHE_KEYS, clearPerBusinessCaches, clearHubBusinessesCache } from './useSessionCache'
+export {
+  createSessionCache,
+  createLocalStorageCache,
+  scopedCache,
+  scopedLocalCache,
+  CACHE_KEYS,
+  clearPerBusinessCaches,
+  clearHubBusinessesCache,
+  clearKaseroLocalStorage,
+} from './useSessionCache'
 
 export { useJoinBusiness } from './useJoinBusiness'
 export type { UseJoinBusinessReturn, CodeType } from './useJoinBusiness'

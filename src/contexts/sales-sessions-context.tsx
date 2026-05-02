@@ -11,7 +11,7 @@ import {
 } from 'react'
 import { fetchDeduped } from '@/lib/fetch'
 import { apiRequest } from '@/lib/api-client'
-import { CACHE_KEYS, scopedCache } from '@/hooks'
+import { CACHE_KEYS, scopedLocalCache } from '@/hooks'
 import { isFresh } from '@/lib/freshness'
 import { useRevalidateOnFocus } from '@/hooks/useRevalidateOnFocus'
 import type { SalesSession } from '@/types/sale'
@@ -56,7 +56,13 @@ export function SalesSessionsProvider({
   onSessionClosed,
   children,
 }: SalesSessionsProviderProps) {
-  const cache = useRef(scopedCache<SalesSessionsCacheShape>(CACHE_KEYS.SALES_SESSIONS, businessId))
+  // localStorage so the open-session state survives a PWA cold-start —
+  // SalesView paints the in-progress layout on the first render after
+  // relaunch instead of flashing the "no session" expanded state while
+  // the API resolves. clearKaseroLocalStorage at auth transitions and
+  // clearPerBusinessCaches on leave/delete keep this from outliving its
+  // owner.
+  const cache = useRef(scopedLocalCache<SalesSessionsCacheShape>(CACHE_KEYS.SALES_SESSIONS, businessId))
   const initial = useRef(
     cache.current.get() ?? { currentSession: null, sessions: [], nextCursor: null },
   ).current
