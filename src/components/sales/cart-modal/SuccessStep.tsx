@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl'
 import { Modal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { getMethodById } from '@/lib/payment-methods'
 import type { PaymentMethod } from '@/types/sale'
 
 export interface ConfirmedSaleRecap {
@@ -35,8 +34,13 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
   const tCommon = useTranslations('common')
   const { formatCurrency } = useBusinessFormat()
 
-  const method = confirmedSale ? getMethodById(confirmedSale.method) : null
   const showCashRows = confirmedSale?.method === 'cash'
+  // Build the method label key as a template literal so next-intl's typed
+  // t() narrows to the union of declared keys instead of `string`. Using
+  // PAYMENT_METHODS[i].labelKey (typed as string) would force a cast.
+  const methodLabelKey = confirmedSale
+    ? (`modal_method_${confirmedSale.method}` as const)
+    : null
 
   return (
     <>
@@ -60,12 +64,12 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
           )}
         </div>
       </Modal.Item>
-      {confirmedSale && method && (
+      {confirmedSale && methodLabelKey && (
         <Modal.Item>
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-text-secondary">{t('modal_success_method_label')}</span>
-              <span className="font-medium">{t(method.labelKey)}</span>
+              <span className="font-medium">{t(methodLabelKey)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-text-secondary">{t('modal_success_total_label')}</span>
