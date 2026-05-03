@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { DailyRevenueEntry } from '@/types/sales-aggregate'
 
@@ -16,7 +16,10 @@ interface DailyRevenueCardProps {
  */
 export function DailyRevenueCard({ entries }: DailyRevenueCardProps) {
   const t = useTranslations('sales.reports')
-  const { formatCurrency, locale } = useBusinessFormat()
+  const { formatCurrency } = useBusinessFormat()
+  // Day-of-week label is LANGUAGE, not formatting — use the user's UI locale
+  // so an English UI doesn't show "Lun/Mar/Mié" for a Spanish-locale business.
+  const userLocale = useLocale()
 
   const max = entries.reduce((m, e) => (e.total > m ? e.total : m), 0)
 
@@ -32,7 +35,7 @@ export function DailyRevenueCard({ entries }: DailyRevenueCardProps) {
               ? Math.max(6, (entry.total / max) * 100)
               : 0
           // Day-of-week label from the entry's UTC date.
-          const dayLabel = new Intl.DateTimeFormat(locale, {
+          const dayLabel = new Intl.DateTimeFormat(userLocale, {
             weekday: 'short',
             timeZone: 'UTC',
           }).format(new Date(entry.date + 'T00:00:00Z'))
