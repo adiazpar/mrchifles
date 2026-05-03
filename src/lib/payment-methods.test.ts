@@ -21,10 +21,11 @@ describe('PAYMENT_METHODS registry', () => {
     }
   })
 
-  it('only cash and card carry a subtleBg; other has none', () => {
-    expect(PAYMENT_METHODS.find((m) => m.id === 'cash')!.subtleBg).toBeDefined()
-    expect(PAYMENT_METHODS.find((m) => m.id === 'card')!.subtleBg).toBeDefined()
-    expect(PAYMENT_METHODS.find((m) => m.id === 'other')!.subtleBg).toBeUndefined()
+  it('every entry carries a subtleBg via a CSS var token', () => {
+    for (const m of PAYMENT_METHODS) {
+      expect(m.subtleBg).toBeDefined()
+      expect(m.subtleBg).toMatch(/^var\(--/)
+    }
   })
 })
 

@@ -55,7 +55,10 @@ export const PAYMENT_METHODS: PaymentMethodEntry[] = [
     labelKey: 'modal_method_other',
     icon: MoreHorizontal,
     colorToken: 'var(--color-text-secondary)',
-    // no subtleBg — active state shown by border + icon tint only
+    // Page-bg as the active fill — slightly darker than the inactive
+    // bg-surface, so it reads as "pressed in" against the modal body.
+    // Avoids bg-muted (collides with bg-elevated/surface in light mode).
+    subtleBg: 'var(--color-bg-base)',
     supportsCashTendering: false,
   },
 ]
