@@ -788,7 +788,9 @@
         "transactions_label": "Transactions",
         "revenue_label": "Revenue",
         "variance_label": "Variance",
-        "load_more": "Load more"
+        "load_more": "Load more",
+        "sales_step_title": "Sales · {date}",
+        "detail_step_title": "Sale receipt"
       },
       "active_sales_modal": {
         "title": "Session sales",

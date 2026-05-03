@@ -784,7 +784,9 @@
         "transactions_label": "Transacciones",
         "revenue_label": "Ingresos",
         "variance_label": "Diferencia",
-        "load_more": "Cargar más"
+        "load_more": "Cargar más",
+        "sales_step_title": "Ventas · {date}",
+        "detail_step_title": "Recibo de venta"
       },
       "active_sales_modal": {
         "title": "Ventas de la sesión",

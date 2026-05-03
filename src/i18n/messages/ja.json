@@ -784,7 +784,9 @@
         "transactions_label": "取引数",
         "revenue_label": "売上",
         "variance_label": "差異",
-        "load_more": "さらに読み込む"
+        "load_more": "さらに読み込む",
+        "sales_step_title": "売上 · {date}",
+        "detail_step_title": "売上レシート"
       },
       "active_sales_modal": {
         "title": "セッション売上",
