@@ -33,25 +33,36 @@ export function SalesView() {
 
   const sessionOpen = Boolean(salesSessions.currentSession)
 
+  const statsCard = (
+    <SalesStatsCard
+      sessionOpen={sessionOpen}
+      onOpenSession={() => setOpenModalOpen(true)}
+      onRequestCloseSession={() => setCloseModalOpen(true)}
+    />
+  )
+
   return (
     <main className="page-content" style={{ minHeight: 0 }}>
       <div className="page-body relative">
-        <SalesStatsCard
-          sessionOpen={sessionOpen}
-          onOpenSession={() => setOpenModalOpen(true)}
-          onRequestCloseSession={() => setCloseModalOpen(true)}
-        />
-        {!sessionOpen && (
-          <div className="flex-1 min-h-0 pt-4 overflow-y-auto scrollbar-hidden">
-            <SalesReports businessId={businessId} />
+        {sessionOpen ? (
+          <>
+            {statsCard}
+            <div className="flex-1 min-h-0 pt-4 flex flex-col">
+              <ProductPicker cart={cart} />
+            </div>
+            <CartSheet cart={cart} />
+          </>
+        ) : (
+          /* No session: header + reports scroll together inside one
+             overflow container so the SalesStatsCard slides up out of
+             view as the user explores the report cards below. */
+          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hidden">
+            {statsCard}
+            <div className="pt-4">
+              <SalesReports businessId={businessId} />
+            </div>
           </div>
         )}
-        {sessionOpen && (
-          <div className="flex-1 min-h-0 pt-4 flex flex-col">
-            <ProductPicker cart={cart} />
-          </div>
-        )}
-        {sessionOpen && <CartSheet cart={cart} />}
       </div>
       <CloseSessionConfirmModal
         isOpen={closeModalOpen}
