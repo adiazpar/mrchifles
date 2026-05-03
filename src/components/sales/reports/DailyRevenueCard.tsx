@@ -16,7 +16,7 @@ interface DailyRevenueCardProps {
  */
 export function DailyRevenueCard({ entries }: DailyRevenueCardProps) {
   const t = useTranslations('sales.reports')
-  const { formatCurrency } = useBusinessFormat()
+  const { formatCurrency, locale } = useBusinessFormat()
 
   const max = entries.reduce((m, e) => (e.total > m ? e.total : m), 0)
 
@@ -32,7 +32,7 @@ export function DailyRevenueCard({ entries }: DailyRevenueCardProps) {
               ? Math.max(6, (entry.total / max) * 100)
               : 0
           // Day-of-week label from the entry's UTC date.
-          const dayLabel = new Intl.DateTimeFormat(undefined, {
+          const dayLabel = new Intl.DateTimeFormat(locale, {
             weekday: 'short',
             timeZone: 'UTC',
           }).format(new Date(entry.date + 'T00:00:00Z'))

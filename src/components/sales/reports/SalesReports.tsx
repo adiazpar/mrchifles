@@ -15,7 +15,6 @@ interface SalesReportsProps {
 /**
  * No-session sales-reports surface. Mounts five summary cards in a
  * vertical stack. Owns the aggregate fetch + loading/error states.
- * Placeholder cards (Tasks 7-11 fill these in).
  */
 export function SalesReports({ businessId }: SalesReportsProps) {
   const t = useTranslations('sales.reports')
@@ -23,15 +22,18 @@ export function SalesReports({ businessId }: SalesReportsProps) {
 
   if (error && !isLoaded) {
     return (
-      <div className="rounded-lg bg-error-subtle p-4 text-sm text-error flex items-center justify-between gap-3">
-        <span>{error}</span>
-        <button
-          type="button"
-          onClick={() => void refetch()}
-          className="font-medium underline whitespace-nowrap"
-        >
-          {t('error_retry')}
-        </button>
+      <div className="flex flex-col gap-4">
+        <div className="rounded-lg bg-error-subtle p-4 text-sm text-error flex items-center justify-between gap-3">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            className="font-medium underline whitespace-nowrap"
+          >
+            {t('error_retry')}
+          </button>
+        </div>
+        <RecentSessionsCard />
       </div>
     )
   }
@@ -50,7 +52,6 @@ export function SalesReports({ businessId }: SalesReportsProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Card slots — Tasks 7-11 replace these placeholders. */}
       <DailyRevenueCard entries={data.dailyRevenue} />
       <RecentSessionsCard />
       <PaymentSplitCard split={data.paymentSplit} />
