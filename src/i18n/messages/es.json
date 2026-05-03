@@ -789,7 +789,11 @@
       "active_sales_modal": {
         "title": "Ventas de la sesión",
         "empty": "Aún no hay ventas en esta sesión.",
-        "sale_label": "Venta #{number}"
+        "sale_label": "Venta #{number}",
+        "detail_title": "Venta #{number}",
+        "detail_total_label": "Total",
+        "detail_method_label": "Pagado via",
+        "detail_time_label": "Hora"
       }
     },
     "cart": {

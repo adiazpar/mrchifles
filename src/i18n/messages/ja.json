@@ -789,7 +789,11 @@
       "active_sales_modal": {
         "title": "セッション売上",
         "empty": "このセッションにはまだ売上がありません",
-        "sale_label": "売上 #{number}"
+        "sale_label": "売上 #{number}",
+        "detail_title": "売上 #{number}",
+        "detail_total_label": "合計",
+        "detail_method_label": "支払方法",
+        "detail_time_label": "時刻"
       }
     },
     "cart": {

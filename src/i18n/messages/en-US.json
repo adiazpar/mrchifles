@@ -793,7 +793,11 @@
       "active_sales_modal": {
         "title": "Session sales",
         "empty": "No sales yet in this session.",
-        "sale_label": "Sale #{number}"
+        "sale_label": "Sale #{number}",
+        "detail_title": "Sale #{number}",
+        "detail_total_label": "Total",
+        "detail_method_label": "Paid via",
+        "detail_time_label": "Time"
       }
     },
 
