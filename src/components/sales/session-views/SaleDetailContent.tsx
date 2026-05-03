@@ -113,7 +113,7 @@ export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps
                 <span className="text-text-primary truncate flex-1 min-w-0">
                   {item.productName}
                 </span>
-                <span className="text-text-secondary flex-shrink-0 tabular-nums">
+                <span className="text-text-secondary flex-shrink-0 tabular-nums w-12 text-right">
                   {item.quantity}x
                 </span>
                 <span className="text-text-tertiary flex-shrink-0 tabular-nums w-16 text-right">
