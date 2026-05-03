@@ -97,6 +97,7 @@ export const CACHE_KEYS = {
   CATEGORIES: 'product_categories_cache',
   PRODUCT_SETTINGS: 'product_settings_cache',
   PENDING_TRANSFER: 'pending_transfer',
+  SALES_AGGREGATE: 'sales_aggregate_cache',
 
   // Cross-business caches. NOT scoped by businessId.
   BUSINESS_SHELL: 'kasero_business_cache',   // Map<businessId, {name, role, ...}> used by PageTransitionContext
@@ -113,6 +114,7 @@ const SESSION_PER_BUSINESS_KEYS = [
   CACHE_KEYS.CATEGORIES,
   CACHE_KEYS.PRODUCT_SETTINGS,
   CACHE_KEYS.PENDING_TRANSFER,
+  CACHE_KEYS.SALES_AGGREGATE,
 ] as const
 
 // Per-business localStorage keys — same lifecycle as the session caches
