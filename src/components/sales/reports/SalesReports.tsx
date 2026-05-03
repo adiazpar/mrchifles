@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useSalesAggregate } from '@/hooks/useSalesAggregate'
+import { DailyRevenueCard } from './DailyRevenueCard'
 
 interface SalesReportsProps {
   businessId: string
@@ -46,7 +47,7 @@ export function SalesReports({ businessId }: SalesReportsProps) {
   return (
     <div className="flex flex-col gap-4">
       {/* Card slots — Tasks 7-11 replace these placeholders. */}
-      <PlaceholderCard label="Daily revenue (Task 7)" />
+      <DailyRevenueCard entries={data.dailyRevenue} />
       <PlaceholderCard label="Recent sessions (Task 8)" />
       <PlaceholderCard label="Payment split (Task 9)" />
       <PlaceholderCard label="Top products (Task 10)" />
