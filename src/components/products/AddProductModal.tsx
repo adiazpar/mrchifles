@@ -8,7 +8,6 @@ import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { hapticSuccess } from '@/lib/haptics'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductFormValidation } from '@/contexts/product-form-context'
-import { useIsMobile } from '@/hooks/useIsMobile'
 import { ProductForm } from './ProductForm'
 import { AiBarcodeStepBody } from './AiBarcodeStep'
 import { SuggestedCategoryStep } from './SuggestedCategoryStep'
@@ -117,8 +116,7 @@ function AiPhotoStepInput({
   onClearPendingPhoto: () => void
 }) {
   const { goToStep, currentStep } = useModal()
-  const cameraInputRef = useRef<HTMLInputElement>(null)
-  const isMobile = useIsMobile()
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   // Whenever the user lands on (or returns to) step 1, clear any previously
   // captured photo so they can re-take. Also reset the file input value so
@@ -126,49 +124,35 @@ function AiPhotoStepInput({
   useEffect(() => {
     if (currentStep === 1) {
       onClearPendingPhoto()
-      if (cameraInputRef.current) {
-        cameraInputRef.current.value = ''
+      if (photoInputRef.current) {
+        photoInputRef.current.value = ''
       }
     }
   }, [currentStep, onClearPendingPhoto])
 
   const t = useTranslations('productForm')
-  // On mobile the button should open the camera for a fresh snapshot
-  // (fastest path for a user holding the physical product). On desktop
-  // the same button opens the native file picker so the user can choose
-  // a pre-taken photo — desktops rarely have a well-framed rear camera
-  // and forcing webcam capture produces bad source images for AI.
-  const buttonLabel = isMobile ? t('open_camera_button') : t('choose_photo_button')
-  const buttonDescription = isMobile
-    ? t('open_camera_desc')
-    : t('choose_photo_desc')
 
   return (
     <>
       <button
         type="button"
-        onClick={() => cameraInputRef.current?.click()}
+        onClick={() => photoInputRef.current?.click()}
         className="caja-action-btn caja-action-btn--large w-full"
       >
         <Camera className="caja-action-btn__icon text-brand" />
         <div className="caja-action-btn__text">
-          <span className="caja-action-btn__title">{buttonLabel}</span>
-          <span className="caja-action-btn__desc">{buttonDescription}</span>
+          <span className="caja-action-btn__title">{t('choose_photo_button')}</span>
+          <span className="caja-action-btn__desc">{t('choose_photo_desc')}</span>
         </div>
       </button>
       <input
-        ref={cameraInputRef}
+        ref={photoInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-        // Only hint the camera on touch-first devices. Desktop browsers
-        // that honor `capture` would otherwise open the webcam capture UI
-        // instead of the native file picker, which is the bug this hook
-        // is designed to avoid.
-        {...(isMobile ? { capture: 'environment' as const } : {})}
         onChange={async (e) => {
           await onAiPhotoCapture(e)
-          if (cameraInputRef.current) {
-            cameraInputRef.current.value = ''
+          if (photoInputRef.current) {
+            photoInputRef.current.value = ''
           }
           goToStep(2)
         }}
