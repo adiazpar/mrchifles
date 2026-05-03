@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { useSalesAggregate } from '@/hooks/useSalesAggregate'
 import { DailyRevenueCard } from './DailyRevenueCard'
 import { RecentSessionsCard } from './RecentSessionsCard'
+import { PaymentSplitCard } from './PaymentSplitCard'
 
 interface SalesReportsProps {
   businessId: string
@@ -50,7 +51,7 @@ export function SalesReports({ businessId }: SalesReportsProps) {
       {/* Card slots — Tasks 7-11 replace these placeholders. */}
       <DailyRevenueCard entries={data.dailyRevenue} />
       <RecentSessionsCard />
-      <PlaceholderCard label="Payment split (Task 9)" />
+      <PaymentSplitCard split={data.paymentSplit} />
       <PlaceholderCard label="Top products (Task 10)" />
       <PlaceholderCard label="Hourly distribution (Task 11)" />
     </div>
