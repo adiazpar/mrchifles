@@ -5,6 +5,7 @@ import { useSalesAggregate } from '@/hooks/useSalesAggregate'
 import { DailyRevenueCard } from './DailyRevenueCard'
 import { RecentSessionsCard } from './RecentSessionsCard'
 import { PaymentSplitCard } from './PaymentSplitCard'
+import { TopProductsCard } from './TopProductsCard'
 
 interface SalesReportsProps {
   businessId: string
@@ -52,7 +53,7 @@ export function SalesReports({ businessId }: SalesReportsProps) {
       <DailyRevenueCard entries={data.dailyRevenue} />
       <RecentSessionsCard />
       <PaymentSplitCard split={data.paymentSplit} />
-      <PlaceholderCard label="Top products (Task 10)" />
+      <TopProductsCard entries={data.topProducts} />
       <PlaceholderCard label="Hourly distribution (Task 11)" />
     </div>
   )
