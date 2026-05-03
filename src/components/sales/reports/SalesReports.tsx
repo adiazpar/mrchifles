@@ -6,6 +6,7 @@ import { DailyRevenueCard } from './DailyRevenueCard'
 import { RecentSessionsCard } from './RecentSessionsCard'
 import { PaymentSplitCard } from './PaymentSplitCard'
 import { TopProductsCard } from './TopProductsCard'
+import { HourlyDistributionCard } from './HourlyDistributionCard'
 
 interface SalesReportsProps {
   businessId: string
@@ -54,7 +55,7 @@ export function SalesReports({ businessId }: SalesReportsProps) {
       <RecentSessionsCard />
       <PaymentSplitCard split={data.paymentSplit} />
       <TopProductsCard entries={data.topProducts} />
-      <PlaceholderCard label="Hourly distribution (Task 11)" />
+      <HourlyDistributionCard entries={data.hourly} />
     </div>
   )
 }
@@ -69,11 +70,5 @@ function SkeletonCard({ height }: { height: number }) {
       <div className="h-4 w-32 bg-bg-muted rounded mb-3" />
       <div className="flex-1 bg-bg-muted rounded opacity-60" style={{ height: '70%' }} />
     </div>
-  )
-}
-
-function PlaceholderCard({ label }: { label: string }) {
-  return (
-    <div className="card p-4 text-sm text-text-tertiary">{label}</div>
   )
 }
