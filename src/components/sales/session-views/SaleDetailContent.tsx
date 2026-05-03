@@ -1,16 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import Image from 'next/image'
-import { Package } from 'lucide-react'
 import { Modal, Spinner } from '@/components/ui'
-import { useProducts } from '@/contexts/products-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { apiRequest } from '@/lib/api-client'
-import { getProductIconUrl } from '@/lib/utils'
-import { getPresetIcon, isPresetIcon } from '@/lib/preset-icons'
-import type { Product } from '@/types'
 import type { Sale } from '@/types/sale'
 
 interface SaleDetailContentProps {
@@ -31,20 +25,11 @@ interface SaleDetailContentProps {
 export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps) {
   const t = useTranslations('sales.session.active_sales_modal')
   const tMethod = useTranslations('sales.cart')
-  const { products } = useProducts()
   const { formatCurrency, formatTime } = useBusinessFormat()
 
   const [sale, setSale] = useState<Sale | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
-
-  // Live product lookup for icons. Falls back to the Package
-  // placeholder if a product was deleted post-sale.
-  const productById = useMemo(() => {
-    const m = new Map<string, Product>()
-    for (const p of products) m.set(p.id, p)
-    return m
-  }, [products])
 
   useEffect(() => {
     if (!saleId) {
@@ -97,34 +82,25 @@ export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps
     <>
       <Modal.Item>
         <div className="space-y-2">
-          {sale.items.map((item, idx) => {
-            const product = item.productId ? productById.get(item.productId) : undefined
-            const iconUrl = product ? getProductIconUrl(product) : null
-            return (
-              <div
-                key={`${item.productId ?? 'item'}-${idx}`}
-                className="flex items-center gap-2 text-sm"
-              >
-                <div className="product-list-image flex-shrink-0">
-                  {product ? renderIcon(product, iconUrl) : (
-                    <Package className="w-5 h-5 text-text-tertiary" />
-                  )}
-                </div>
-                <span className="text-text-primary truncate flex-1 min-w-0">
-                  {item.productName}
-                </span>
-                <span className="text-text-secondary flex-shrink-0 tabular-nums w-12 text-right">
-                  {item.quantity}x
-                </span>
-                <span className="text-text-tertiary flex-shrink-0 tabular-nums w-16 text-right">
-                  {formatCurrency(item.unitPrice)}
-                </span>
-                <span className="text-text-primary flex-shrink-0 tabular-nums w-20 text-right font-medium">
-                  {formatCurrency(item.subtotal)}
-                </span>
-              </div>
-            )
-          })}
+          {sale.items.map((item, idx) => (
+            <div
+              key={`${item.productId ?? 'item'}-${idx}`}
+              className="flex items-center gap-2 text-sm"
+            >
+              <span className="text-text-primary truncate flex-1 min-w-0">
+                {item.productName}
+              </span>
+              <span className="text-text-secondary flex-shrink-0 tabular-nums w-12 text-right">
+                {item.quantity}x
+              </span>
+              <span className="text-text-tertiary flex-shrink-0 tabular-nums w-16 text-right">
+                {formatCurrency(item.unitPrice)}
+              </span>
+              <span className="text-text-primary flex-shrink-0 tabular-nums w-20 text-right font-medium">
+                {formatCurrency(item.subtotal)}
+              </span>
+            </div>
+          ))}
         </div>
       </Modal.Item>
 
@@ -152,26 +128,4 @@ export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps
       </Modal.Item>
     </>
   )
-}
-
-function renderIcon(product: Product, iconUrl: string | null) {
-  if (iconUrl && isPresetIcon(iconUrl)) {
-    const preset = getPresetIcon(iconUrl)
-    return preset ? (
-      <preset.icon size={24} className="text-text-primary" />
-    ) : null
-  }
-  if (iconUrl) {
-    return (
-      <Image
-        src={iconUrl}
-        alt={product.name}
-        width={40}
-        height={40}
-        className="product-list-image-img"
-        unoptimized
-      />
-    )
-  }
-  return <Package className="w-5 h-5 text-text-tertiary" />
 }

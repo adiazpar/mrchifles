@@ -2,14 +2,11 @@
 
 import { useMemo, useState, type MouseEvent } from 'react'
 import { useTranslations } from 'next-intl'
-import Image from 'next/image'
-import { Minus, Package, Plus } from 'lucide-react'
+import { Minus, Plus } from 'lucide-react'
 import { Modal } from '@/components/ui'
 import { useProducts } from '@/contexts/products-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
-import { getProductIconUrl } from '@/lib/utils'
-import { getPresetIcon, isPresetIcon } from '@/lib/preset-icons'
 import type { Product } from '@/types'
 import type { CartLine, UseCartResult } from '@/hooks/useCart'
 import { useBusiness } from '@/contexts/business-context'
@@ -30,9 +27,9 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
   const { products } = useProducts()
   const { formatCurrency } = useBusinessFormat()
 
-  // Look up the live product for each line so we can render the same icon
-  // and respect current stock when stepping quantity up. Lines store a
-  // snapshot of name/price; the products map gives us the rest.
+  // Look up the live product for each line to respect current stock when
+  // stepping quantity up. Lines store a snapshot of name/price; the products
+  // map only supplies stock-cap info.
   const productById = useMemo(() => {
     const m = new Map<string, Product>()
     for (const p of products) m.set(p.id, p)
@@ -195,16 +192,10 @@ function CartLineRow({ line, product, cart, formatCurrency }: CartLineRowProps) 
   const t = useTranslations('sales.cart')
   const stockTotal = product?.stock ?? 0
   const atMaxQty = product != null && line.quantity >= stockTotal
-  const iconUrl = product ? getProductIconUrl(product) : null
   const lineTotal = line.unitPrice * line.quantity
 
   return (
     <div className="flex items-center gap-3">
-      <div className="product-list-image">
-        {product ? renderProductIcon(product, iconUrl) : (
-          <Package className="w-5 h-5 text-text-tertiary" />
-        )}
-      </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">{line.productName}</div>
         <div className="text-xs text-text-secondary mt-0.5">
@@ -243,28 +234,6 @@ function CartLineRow({ line, product, cart, formatCurrency }: CartLineRowProps) 
       </div>
     </div>
   )
-}
-
-function renderProductIcon(product: Product, iconUrl: string | null) {
-  if (iconUrl && isPresetIcon(iconUrl)) {
-    const preset = getPresetIcon(iconUrl)
-    return preset ? (
-      <preset.icon size={24} className="text-text-primary" />
-    ) : null
-  }
-  if (iconUrl) {
-    return (
-      <Image
-        src={iconUrl}
-        alt={product.name}
-        width={40}
-        height={40}
-        className="product-list-image-img"
-        unoptimized
-      />
-    )
-  }
-  return <Package className="w-5 h-5 text-text-tertiary" />
 }
 
 type QtyButtonVariant = 'primary' | 'danger'
