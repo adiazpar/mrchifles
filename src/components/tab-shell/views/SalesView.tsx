@@ -8,6 +8,7 @@ import { useCart } from '@/hooks/useCart'
 import { SalesStatsCard } from '@/components/sales/SalesStatsCard'
 import { CartSheet } from '@/components/sales/CartSheet'
 import { ProductPicker } from '@/components/sales/ProductPicker'
+import { SalesReports } from '@/components/sales/reports/SalesReports'
 import { CloseSessionConfirmModal } from '@/components/sales/CloseSessionConfirmModal'
 import { OpenSessionModal } from '@/components/sales/OpenSessionModal'
 
@@ -40,6 +41,11 @@ export function SalesView() {
           onOpenSession={() => setOpenModalOpen(true)}
           onRequestCloseSession={() => setCloseModalOpen(true)}
         />
+        {!sessionOpen && (
+          <div className="flex-1 min-h-0 pt-4 overflow-y-auto scrollbar-hidden">
+            <SalesReports businessId={businessId} />
+          </div>
+        )}
         {sessionOpen && (
           <div className="flex-1 min-h-0 pt-4 flex flex-col">
             <ProductPicker cart={cart} />
