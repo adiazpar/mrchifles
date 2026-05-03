@@ -841,6 +841,26 @@
       "confirm_clear_action": "クリア",
       "confirm_clear_cancel": "キャンセル"
     },
+    "reports": {
+      "daily_revenue_title": "Last 7 days revenue",
+      "recent_sessions_title": "Recent sessions",
+      "recent_sessions_view_all": "View all sessions",
+      "recent_sessions_empty": "No sessions yet",
+      "recent_sessions_count": "{count, plural, one {# sale} other {# sales}}",
+      "payment_split_title": "Payment methods (7 days)",
+      "payment_split_no_data": "No sales in this period",
+      "top_products_title": "Top products (30 days)",
+      "top_products_qty": "{count, plural, one {# sold} other {# sold}}",
+      "top_products_empty": "No sales yet",
+      "hourly_title": "Peak hours (7 days)",
+      "hourly_no_data": "No sales in this period",
+      "hourly_label_12am": "12am",
+      "hourly_label_6am": "6am",
+      "hourly_label_12pm": "12pm",
+      "hourly_label_6pm": "6pm",
+      "error_load_failed": "Couldn't load reports.",
+      "error_retry": "Retry"
+    },
     "charge_sheet": {
       "title": "売上を確定",
       "payment_label": "支払方法",
