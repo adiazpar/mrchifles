@@ -35,3 +35,26 @@
   pointer-events: auto;
   z-index: 1;
 }
+
+/* Layer (LayerStack-rendered slab). Each layer is fixed to the viewport,
+ * scrolls its own content, and acts as a flex column so children using
+ * `flex: 1` (.page-loading, .empty-state-fill) fill the available area
+ * between the layer's own header and the bottom of the viewport — same
+ * height-chain contract that .tab-shell-view provides for tab views.
+ *
+ * Positioning intentionally uses `inset: 0` (full viewport) instead of
+ * the centered max-width pattern used by .page-header / .mobile-nav.
+ * Framer Motion writes to this element's `transform` via its `x` motion
+ * value during open / close / drag, so any CSS transform here would be
+ * overwritten. The chrome inside the layer (page-header, mobile-nav)
+ * handles its own centering and width-capping, so on wide screens the
+ * chrome stays centered while the layer's bg-base fills behind it. */
+.layer {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg-base);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}

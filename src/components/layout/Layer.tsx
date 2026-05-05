@@ -33,14 +33,22 @@ interface LayerProps {
   reducedMotion: boolean
 }
 
+// Pixel value treated as "definitely offscreen" — used as a non-window
+// fallback during SSR so the type stays numeric.
+const OFFSCREEN_FALLBACK = 1500
+
+function offscreenRight(): number {
+  return typeof window !== 'undefined' ? window.innerWidth : OFFSCREEN_FALLBACK
+}
+
 export function Layer({
   index, isTop, isInitialMount, exitDirection,
   peelProgress, isUnderlay, onPeelDismiss, ariaLabel, children, reducedMotion,
 }: LayerProps) {
-  // The layer's own x. We start offscreen-right unless this is the
-  // initial-mount root (depth 0 on first paint after page load), in which
-  // case it sits at 0 with no animation.
-  const x = useMotionValue<number | string>(isInitialMount ? 0 : '100%')
+  // The layer's own x is purely numeric (pixels) so the imperative
+  // `animate(x, 0)` and the drag handler write to a single value type —
+  // mixing units (e.g. '100%') silently snaps instead of animating.
+  const x = useMotionValue<number>(isInitialMount ? 0 : offscreenRight())
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLElement | null>(null)
@@ -62,23 +70,12 @@ export function Layer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // While this layer is on top, drive peelProgress from x. Framer Motion
-  // can emit either numeric pixel values (during/after drag and after the
-  // open animation has resolved units) or percentage strings (briefly,
-  // before the unit conversion settles). Handle both: numbers pass through;
-  // percentage strings get parsed and scaled to viewport width.
+  // While this layer is on top, drive peelProgress from x.
   useEffect(() => {
     if (!isTop) return
     const unsub = x.on('change', (v) => {
       const w = typeof window !== 'undefined' ? window.innerWidth : 1
-      let pixels: number
-      if (typeof v === 'number') {
-        pixels = v
-      } else {
-        const parsed = parseFloat(v)
-        pixels = Number.isFinite(parsed) ? (parsed / 100) * w : 0
-      }
-      const progress = Math.max(0, Math.min(1, pixels / w))
+      const progress = Math.max(0, Math.min(1, v / w))
       peelProgress.set(progress)
     })
     return unsub
@@ -147,8 +144,8 @@ export function Layer({
   // The layer's own transform: own x normally, parallax-driven x when underlay.
   const styleX = isUnderlay ? underlayX : x
 
-  // Exit target. Root-swap: 'left' (the previous root has been replaced).
-  const exitX = exitDirection === 'left' ? '-100%' : '100%'
+  // Exit target — numeric pixels, not strings, so animate() resolves cleanly.
+  const exitX = exitDirection === 'left' ? -offscreenRight() : offscreenRight()
 
   return (
     <motion.div
@@ -157,7 +154,7 @@ export function Layer({
       aria-modal={isTop ? 'true' : 'false'}
       aria-label={ariaLabel}
       tabIndex={-1}
-      className="layer fixed inset-0 bg-bg-base overflow-y-auto overflow-x-hidden"
+      className="layer"
       style={{
         zIndex: `calc(var(--z-overlay) + ${index})`,
         x: styleX,
