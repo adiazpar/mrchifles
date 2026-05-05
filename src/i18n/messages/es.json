@@ -17,7 +17,8 @@
     "yes": "Sí",
     "error": "Error",
     "success": "Éxito",
-    "page": "Página"
+    "page": "Página",
+    "detail": "Detalle"
   },
   "ui": {
     "modal": {

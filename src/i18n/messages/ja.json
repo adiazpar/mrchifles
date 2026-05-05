@@ -17,7 +17,8 @@
     "yes": "はい",
     "error": "エラー",
     "success": "成功",
-    "page": "ページ"
+    "page": "ページ",
+    "detail": "詳細"
   },
   "ui": {
     "modal": {
