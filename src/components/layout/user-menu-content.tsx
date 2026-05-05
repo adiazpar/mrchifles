@@ -10,6 +10,7 @@ import { usePageTransition } from '@/contexts/page-transition-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { getUserInitials } from '@/lib/auth'
 import { getBusinessIdFromPath } from '@/lib/navigation'
+import { setAccountUnderlay } from '@/lib/layer-stack'
 import { Building2, ChevronRight, Settings, CircleHelp, LogOut } from 'lucide-react'
 
 interface UserMenuContentProps {
@@ -95,7 +96,21 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
         <Link
           href="/account"
           className="user-menu-item"
-          onClick={(e) => handleLinkClick(e, '/account')}
+          onClick={(e) => {
+            // Modifier clicks pass through to default anchor behavior.
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+            if (e.button !== 0) return
+            e.preventDefault()
+            if (pathname === '/account') {
+              onAction?.()
+              return
+            }
+            // Capture the underlay BEFORE navigating so getLayerStack reads
+            // the right value when /account becomes the top URL.
+            setAccountUnderlay(pathname)
+            navigate('/account')
+            onAction?.()
+          }}
         >
           <Settings />
           <span>{t('account_settings')}</span>
