@@ -71,7 +71,7 @@ export function PageHeader() {
   const tNav = useTranslations('navigation')
   const pathname = usePathname()
   const router = useRouter()
-  const { pendingHref, navigate, slideDirection, setSlideDirection, setSlideTargetPath, pageSubtitleSuffix } = usePageTransition()
+  const { pendingHref, navigate, pageSubtitleSuffix } = usePageTransition()
   const businessContext = useOptionalBusiness()
   const [isScrolled, setIsScrolled] = useState(false)
 
@@ -129,7 +129,7 @@ export function PageHeader() {
 
   // During transitions (slide or cross-context), use current pathname to
   // prevent header content from changing while still visible.
-  const config = getRouteConfig(slideDirection || isCrossContextNav ? pathname : (pendingHref || pathname))
+  const config = getRouteConfig(pendingHref || pathname)
 
   const { title: rawTitle, pageTitle: rawPageTitle, backTo } = config
   const title = rawTitle ? (PAGE_TITLE_MAP[rawTitle] ?? rawTitle) : rawTitle
@@ -144,35 +144,19 @@ export function PageHeader() {
   // - Otherwise (top-level business page), go to hub
   const handleBack = () => {
     if (isHubPageWithBackButton) {
-      setSlideDirection('back')
-      setSlideTargetPath(pathname)
-      setTimeout(() => router.back(), 280)
+      router.back()
     } else if (backTo && businessId) {
-      // Drill-down page — return to wherever the user came from via browser
-      // history. backTo is a logical fallback but we prefer history so the
-      // user lands back where they actually were (e.g. /products orders tab,
-      // /manage, or a future entry point). Matches the Account flow.
-      setSlideDirection('back')
-      setSlideTargetPath(pathname)
-      setTimeout(() => router.back(), 280)
+      router.back()
     } else {
-      // Top-level business page → hub. Slide back so the business page
-      // animates out to the right and the hub slides in from the left
-      // (parallax peek), matching the Account / drill-down pattern.
-      setSlideDirection('back')
-      setSlideTargetPath(pathname)
       navigate('/')
     }
   }
 
 
-  // Fade header content during account slide transitions
-  const isAccountNav = slideDirection !== null
-
   // Hub-context center (Kasero logo / "Account" back-title) and the /account
-  // back button fade for cross-context AND account-slide navigation, since
-  // both swap the content in those slots.
-  const shouldHideHubChrome = isCrossContextNav || isAccountNav
+  // back button fade for cross-context navigation, when the chrome content
+  // in those slots is swapping.
+  const shouldHideHubChrome = isCrossContextNav
 
   // Business identifier (logo + name + page label) only fades when we're
   // leaving the business context entirely (hub, account, or join). It does
