@@ -23,6 +23,7 @@ import { getUserInitials } from '@/lib/auth'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 import { LanguageRow } from '@/components/account/LanguageRow'
+import { DrillDownHeader } from '@/components/layout/DrillDownHeader'
 
 // Every modal on this page is closed by default and only needed on user
 // action. Dynamic import with `ssr: false` keeps the modal code (plus
@@ -62,6 +63,7 @@ export function AccountPage() {
   const { playExit } = useAuthGate()
   const router = useRouter()
   const t = useTranslations('account')
+  const tNav = useTranslations('navigation')
   const { theme } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
@@ -74,9 +76,12 @@ export function AccountPage() {
 
   if (isLoading) {
     return (
-      <main className="page-loading">
-        <Spinner className="spinner-lg" />
-      </main>
+      <>
+        <DrillDownHeader title={tNav('account')} onBack={() => router.back()} />
+        <main className="page-loading">
+          <Spinner className="spinner-lg" />
+        </main>
+      </>
     )
   }
 
@@ -92,8 +97,10 @@ export function AccountPage() {
   }
 
   return (
-    <main className="page-content space-y-4">
-      {/* Profile header card — tappable, opens the edit profile modal */}
+    <>
+      <DrillDownHeader title={tNav('account')} onBack={() => router.back()} />
+      <main className="page-content space-y-4">
+        {/* Profile header card — tappable, opens the edit profile modal */}
       <button
         type="button"
         onClick={() => setIsProfileModalOpen(true)}
@@ -256,6 +263,7 @@ export function AccountPage() {
         isOpen={isTransferModalOpen}
         onClose={() => setIsTransferModalOpen(false)}
       />
-    </main>
+      </main>
+    </>
   )
 }
