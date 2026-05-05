@@ -84,8 +84,10 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({
   children,
+  overlay,
 }: {
   children: React.ReactNode
+  overlay: React.ReactNode
 }) {
   // next-intl resolves the locale and messages from src/i18n/request.ts,
   // which reads the locale cookie set by BusinessProvider. Missing keys
@@ -141,7 +143,7 @@ export default async function RootLayout({
           <AuthProvider>
             <AuthGateProvider>
               <PageTransitionProvider>
-                <AppShell>
+                <AppShell overlay={overlay}>
                   {children}
                 </AppShell>
               </PageTransitionProvider>

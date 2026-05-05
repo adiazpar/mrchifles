@@ -10,6 +10,7 @@ import { CreateBusinessProvider } from '@/contexts/create-business-context'
 import { BusinessProvider } from '@/contexts/business-context'
 import { PendingTransferProvider } from '@/contexts/pending-transfer-context'
 import { IncomingTransferProvider } from '@/contexts/incoming-transfer-context'
+import { RootOverlayMount } from './RootOverlayMount'
 import { getBusinessIdFromPath } from '@/lib/navigation'
 
 /**
@@ -17,7 +18,7 @@ import { getBusinessIdFromPath } from '@/lib/navigation'
  * This component lives in the root layout to prevent unmounting during navigation.
  * Auth routes (/login, /register) don't show the shell.
  */
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, overlay }: { children: React.ReactNode; overlay?: React.ReactNode }) {
   const pathname = usePathname()
 
   // Auth routes have their own layout without header/nav
@@ -54,6 +55,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <MobileNav />
               </div>
+              <RootOverlayMount>{overlay}</RootOverlayMount>
             </PendingTransferProvider>
           </BusinessProvider>
         </IncomingTransferProvider>
