@@ -60,7 +60,7 @@ function getCachedBusinessList(): Business[] {
 
 export function HubHome() {
   return (
-    <div className="shell-enter h-full">
+    <div className="shell-enter flex flex-col flex-1 min-h-0">
       <HubHomeBody />
     </div>
   )
