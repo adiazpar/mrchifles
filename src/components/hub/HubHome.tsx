@@ -59,6 +59,14 @@ function getCachedBusinessList(): Business[] {
 }
 
 export function HubHome() {
+  return (
+    <div className="shell-enter h-full">
+      <HubHomeBody />
+    </div>
+  )
+}
+
+function HubHomeBody() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const { markHubReady } = useAuthGate()

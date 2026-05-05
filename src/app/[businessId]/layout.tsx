@@ -46,7 +46,7 @@ export default function BusinessLayout({
               <ProductsProvider key={`products-${businessId}`} businessId={businessId}>
                 <ProductSettingsProvider key={`product-settings-${businessId}`} businessId={businessId}>
                   <BusinessDataPreloader businessId={businessId} />
-                  <div className="relative h-full">
+                  <div className="relative h-full shell-enter">
                     <div ref={tabShellRef} className="absolute inset-0">
                       <TabShell key={`tab-shell-${businessId}`} />
                     </div>
