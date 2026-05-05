@@ -1,4 +1,5 @@
 export { AppShell } from './app-shell'
+export { DrillDownHeader } from './DrillDownHeader'
 export { AuthGateOverlay } from './auth-gate-overlay'
 export { DevServiceWorkerCleanup } from './dev-service-worker-cleanup'
 export { IOSStartupImages } from './ios-startup-images'
