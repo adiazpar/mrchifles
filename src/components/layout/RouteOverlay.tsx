@@ -119,15 +119,21 @@ export function RouteOverlay({
     }
   }
 
+  // Left-edge shadow so a same-color overlay sliding over a same-color
+  // underlay is still visually distinguishable. Without this, an empty
+  // overlay sliding in (before its route content has resolved) looks
+  // like nothing happened — same color over same color.
+  const overlayShadow = '-12px 0 24px -8px rgba(0, 0, 0, 0.18)'
+
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={true}>
       {isOpen && (
         reducedMotion ? (
           <div
             role="dialog"
             aria-modal="true"
             aria-label={ariaLabel}
-            className="absolute inset-0 z-[var(--z-overlay)] bg-bg-base overflow-y-auto overflow-x-hidden"
+            className="fixed inset-0 z-[var(--z-overlay)] bg-bg-base overflow-y-auto overflow-x-hidden"
             tabIndex={-1}
           >
             {children}
@@ -139,7 +145,8 @@ export function RouteOverlay({
             aria-modal="true"
             aria-label={ariaLabel}
             tabIndex={-1}
-            className="absolute inset-0 z-[var(--z-overlay)] bg-bg-base overflow-y-auto overflow-x-hidden"
+            className="fixed inset-0 z-[var(--z-overlay)] bg-bg-base overflow-y-auto overflow-x-hidden"
+            style={{ boxShadow: overlayShadow }}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
