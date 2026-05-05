@@ -20,70 +20,92 @@ export const PARALLAX_OPEN_PERCENT = -30
 interface LayerProps {
   index: number
   isTop: boolean
-  /** True iff this layer is the immediate underlay (idx === layers.length - 2). */
   isUnderlay: boolean
-  /** Skip the slide-in animation. True for: first paint, layers kept-mounted, non-top newly-mounted layers. */
-  skipOpenAnimation: boolean
+  /** Animate in from the right when this layer first mounts. */
+  animateIn: boolean
+  /** When true, animate out to the right and fire onExitComplete when done. */
+  animateOut: boolean
+  /** Drag-to-peel enabled. Should be true only for top non-root layers. */
+  peelable: boolean
   /** Shared MotionValue (0..1). 0 = fully open. 1 = fully peeled away. */
   peelProgress: MotionValue<number>
   onPeelDismiss: () => void
+  onExitComplete?: () => void
+  onEntered?: () => void
   ariaLabel: string
   children: React.ReactNode
   reducedMotion: boolean
 }
 
-// Pixel value treated as "definitely offscreen" — used as a non-window
-// fallback during SSR so the type stays numeric.
 const OFFSCREEN_FALLBACK = 1500
-
 function offscreenRight(): number {
   return typeof window !== 'undefined' ? window.innerWidth : OFFSCREEN_FALLBACK
 }
 
-// Drag-to-peel thresholds. iOS-style: dismiss past a meaningful offset
-// OR a deliberate flick. Pure offset would force users to drag too far
-// for "fast back"; pure velocity would misfire on accidental release
-// jitter. The combination is more deliberate than the previous values
-// (which dismissed on any release with velocity > 500 px/s, easy to
-// misfire on slow drags).
-const DISMISS_OFFSET_FRACTION = 0.5  // 50% of viewport width
-const DISMISS_VELOCITY = 800         // px/s — a clear flick, not a slip
-const DISMISS_VELOCITY_MIN_OFFSET_FRACTION = 0.2  // velocity-only dismiss requires at least this much offset
+const DISMISS_OFFSET_FRACTION = 0.5
+const DISMISS_VELOCITY = 800
+const DISMISS_VELOCITY_MIN_OFFSET_FRACTION = 0.2
 
 export function Layer({
-  index, isTop, isUnderlay, skipOpenAnimation,
-  peelProgress, onPeelDismiss, ariaLabel, children, reducedMotion,
+  index, isTop, isUnderlay,
+  animateIn, animateOut, peelable,
+  peelProgress, onPeelDismiss, onExitComplete, onEntered,
+  ariaLabel, children, reducedMotion,
 }: LayerProps) {
-  // The layer's own x is purely numeric (pixels) so the imperative
-  // `animate(x, 0)` and the drag handler write to a single value type —
-  // mixing units (e.g. '100%') silently snaps instead of animating.
-  const x = useMotionValue<number>(skipOpenAnimation ? 0 : offscreenRight())
-
+  const x = useMotionValue<number>(animateIn ? offscreenRight() : 0)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLElement | null>(null)
   const wasTopRef = useRef(false)
-  // Snapshot viewport width at drag start so a mid-drag rotation/resize
-  // doesn't silently shift the dismiss threshold.
   const dragViewportWidthRef = useRef(0)
+  // Guards against running the exit animation twice (once from drag-dismiss,
+  // again when animateOut prop catches up via stack-sync).
+  const exitStartedRef = useRef(false)
+  // Guards against firing onExitComplete twice.
+  const exitCompleteFiredRef = useRef(false)
 
-  // Open animation — imperative on the same MotionValue used by drag.
-  // Single source of truth means parallax stays consistent in all phases.
-  // Mount-only effect (deps intentionally empty); skipOpenAnimation is
-  // captured at mount time and shouldn't change after.
+  const fireExitComplete = () => {
+    if (exitCompleteFiredRef.current) return
+    exitCompleteFiredRef.current = true
+    onExitComplete?.()
+  }
+
+  // Open animation on mount.
   useEffect(() => {
-    if (skipOpenAnimation || reducedMotion) {
+    if (!animateIn || reducedMotion) {
       x.set(0)
+      onEntered?.()
       return
     }
     const controls = animate(x, 0, SLIDE_TRANSITION)
+    controls.then(() => onEntered?.())
     return () => controls.stop()
+    // Mount-only effect; props captured at mount-time intentionally.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // While this layer is on top, drive peelProgress from x. Subscribe on
-  // becoming top, AND immediately publish the current x so the underlay's
-  // initial parallax matches reality before the first `change` event.
-  // (`change` fires only on subsequent updates, not the initial value.)
+  // Exit animation when animateOut becomes true (driven by stack-sync).
+  // If drag-dismiss already started the exit, this is a no-op.
+  useEffect(() => {
+    if (!animateOut) return
+    if (exitStartedRef.current) {
+      // Drag already started exit. Just ensure complete callback fires
+      // when the running animation finishes (it has its own .then).
+      return
+    }
+    exitStartedRef.current = true
+    if (reducedMotion) {
+      fireExitComplete()
+      return
+    }
+    const controls = animate(x, offscreenRight(), SLIDE_TRANSITION)
+    controls.then(() => fireExitComplete())
+    return () => controls.stop()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animateOut])
+
+  // While this layer is on top, drive peelProgress from x. Subscribe and
+  // immediately publish current x — `change` fires only on subsequent
+  // updates, so the initial value would otherwise miss the underlay.
   useEffect(() => {
     if (!isTop) return
     const w = typeof window !== 'undefined' ? window.innerWidth : 1
@@ -95,10 +117,13 @@ export function Layer({
     return unsub
   }, [isTop, x, peelProgress])
 
-  // Underlay reads peelProgress to compute its parallax x.
-  const underlayX = useTransform(peelProgress, (p) => `${PARALLAX_OPEN_PERCENT * (1 - p)}%`)
+  // Underlay parallax, derived from peelProgress.
+  const underlayX = useTransform(
+    peelProgress,
+    (p) => `${PARALLAX_OPEN_PERCENT * (1 - p)}%`,
+  )
 
-  // Focus capture and restore.
+  // Focus capture / restore.
   useEffect(() => {
     if (isTop && !wasTopRef.current) {
       const active = document.activeElement
@@ -113,20 +138,17 @@ export function Layer({
     }
   }, [isTop])
 
-  // Escape-to-dismiss while top.
+  // Escape-to-dismiss while top and not exiting.
   useEffect(() => {
-    if (!isTop) return
+    if (!isTop || animateOut) return
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onPeelDismiss()
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [isTop, onPeelDismiss])
+  }, [isTop, animateOut, onPeelDismiss])
 
-  // Scroll-lock when not on top so parallax-shifted underlay can't
-  // ghost-scroll. We do NOT reset peelProgress here — the new top
-  // layer publishes its own current x in its top-effect above, which
-  // is the authoritative source for the underlay parallax.
+  // Scroll-lock when not top (so parallax-shifted underlay can't ghost-scroll).
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -142,23 +164,32 @@ export function Layer({
   }
 
   const handleDragEnd = (_: PointerEvent, info: PanInfo) => {
-    if (reducedMotion || !isTop) return
-    const w = dragViewportWidthRef.current || (typeof window !== 'undefined' ? window.innerWidth : 0)
+    if (reducedMotion || !isTop || animateOut) return
+    const w =
+      dragViewportWidthRef.current ||
+      (typeof window !== 'undefined' ? window.innerWidth : 0)
     const offsetFrac = w > 0 ? info.offset.x / w : 0
     const dismissed =
       offsetFrac >= DISMISS_OFFSET_FRACTION ||
-      (offsetFrac >= DISMISS_VELOCITY_MIN_OFFSET_FRACTION && info.velocity.x >= DISMISS_VELOCITY)
+      (offsetFrac >= DISMISS_VELOCITY_MIN_OFFSET_FRACTION &&
+        info.velocity.x >= DISMISS_VELOCITY)
     if (dismissed) {
+      // Start exit animation immediately for instant visual response. The
+      // stack-sync (via onPeelDismiss → router.back) will follow up with
+      // animateOut=true, which our effect will see exitStartedRef and skip.
+      exitStartedRef.current = true
+      const controls = animate(x, offscreenRight(), SLIDE_TRANSITION)
+      controls.then(() => fireExitComplete())
+      // Sync URL in parallel — pathname update will mark this entry
+      // as exiting in the parent stack, but the animation we just
+      // started will finish first and fire onExitComplete.
       onPeelDismiss()
     } else {
       animate(x, 0, { ...SLIDE_TRANSITION, duration: 0.2 })
     }
   }
 
-  // Drag-peel: only on top non-root layers; reduced-motion disables drag.
-  const peelable = isTop && index > 0 && !reducedMotion
-
-  // The layer's own transform: own x normally, parallax-driven x when underlay.
+  const dragEnabled = peelable && isTop && !animateOut && !reducedMotion
   const styleX = isUnderlay ? underlayX : x
 
   return (
@@ -172,11 +203,12 @@ export function Layer({
       style={{
         zIndex: `calc(var(--z-overlay) + ${index})`,
         x: styleX,
-        boxShadow: isTop && index > 0 ? '-12px 0 24px -8px rgba(0, 0, 0, 0.18)' : undefined,
+        boxShadow: isTop && index > 0
+          ? '-12px 0 24px -8px rgba(0, 0, 0, 0.18)'
+          : undefined,
         willChange: 'transform',
       }}
-      exit={reducedMotion ? undefined : { x: offscreenRight(), transition: SLIDE_TRANSITION }}
-      drag={peelable ? 'x' : false}
+      drag={dragEnabled ? 'x' : false}
       dragConstraints={{ left: 0 }}
       dragElastic={{ left: 0.05, right: 1 }}
       dragDirectionLock

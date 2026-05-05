@@ -16,6 +16,20 @@ vi.mock('next-intl', () => ({
   useLocale: () => 'en-US',
 }))
 
+vi.mock('@/contexts/page-transition-context', () => ({
+  usePageTransition: () => ({
+    pendingHref: null,
+    setPendingHref: vi.fn(),
+    navigationError: null,
+    setNavigationError: vi.fn(),
+    navigate: vi.fn(),
+    getCachedBusiness: () => null,
+    setCachedBusiness: vi.fn(),
+    setCachedBusinesses: vi.fn(),
+    clearCachedBusiness: vi.fn(),
+  }),
+}))
+
 vi.mock('./HubRoot', () => ({ HubRoot: () => <div data-testid="hub-root" /> }))
 vi.mock('./BusinessRoot', () => ({ BusinessRoot: () => <div data-testid="business-root" /> }))
 vi.mock('@/components/providers/ProvidersDrilldown', () => ({
