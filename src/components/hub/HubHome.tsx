@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ChevronRight, X, Building2, ChefHat, HandHelping, Store, Boxes, Factory, Shapes } from 'lucide-react'
+import { ChevronRight, X, Building2, ChefHat, HandHelping, Store, Boxes, Factory, Shapes, Plus, UserPlus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
+import { useJoinBusinessModal } from '@/contexts/join-business-context'
 import { Spinner } from '@/components/ui'
 import { fetchDeduped } from '@/lib/fetch'
 import { createSessionCache, CACHE_KEYS } from '@/hooks'
@@ -71,7 +72,8 @@ function HubHomeBody() {
   const { user, isLoading: authLoading } = useAuth()
   const { markHubReady } = useAuthGate()
   const { navigate, setCachedBusinesses } = usePageTransition()
-  const { createdBusiness } = useCreateBusinessModal()
+  const { createdBusiness, openCreateModal } = useCreateBusinessModal()
+  const { openJoinModal } = useJoinBusinessModal()
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
   const [isLoading, setIsLoading] = useState(() => getCachedBusinessList().length === 0)
   const [searchQuery, setSearchQuery] = useState('')
@@ -148,7 +150,7 @@ function HubHomeBody() {
 
   if (!hasBusinesses) {
     return (
-      <main className="page-loading">
+      <main className="hub-content space-y-4">
         <div className="empty-state-fill">
           <Building2 className="empty-state-icon" />
           <h3 className="empty-state-title">{t('empty_state_title')}</h3>
@@ -156,6 +158,7 @@ function HubHomeBody() {
             {t('empty_state_description')}
           </p>
         </div>
+        <HubActionCards onCreate={openCreateModal} onJoin={openJoinModal} />
       </main>
     )
   }
@@ -237,6 +240,8 @@ function HubHomeBody() {
 
   return (
     <main className="hub-content space-y-4">
+      <HubActionCards onCreate={openCreateModal} onJoin={openJoinModal} />
+
       {/* Search Bar */}
       <div className="relative">
         <input
@@ -294,5 +299,46 @@ function HubHomeBody() {
         </div>
       )}
     </main>
+  )
+}
+
+interface HubActionCardsProps {
+  onCreate: () => void
+  onJoin: () => void
+}
+
+function HubActionCards({ onCreate, onJoin }: HubActionCardsProps) {
+  const t = useTranslations('hub')
+  return (
+    <div className="caja-actions">
+      <button
+        type="button"
+        onClick={onCreate}
+        className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
+      >
+        <div className="flex items-start justify-between w-full">
+          <Plus className="caja-action-btn__icon text-brand" />
+          <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+        </div>
+        <div className="caja-action-btn__text">
+          <span className="caja-action-btn__title">{t('action_create_title')}</span>
+          <span className="caja-action-btn__desc">{t('action_create_desc')}</span>
+        </div>
+      </button>
+      <button
+        type="button"
+        onClick={onJoin}
+        className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
+      >
+        <div className="flex items-start justify-between w-full">
+          <UserPlus className="caja-action-btn__icon text-brand" />
+          <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+        </div>
+        <div className="caja-action-btn__text">
+          <span className="caja-action-btn__title">{t('action_join_title')}</span>
+          <span className="caja-action-btn__desc">{t('action_join_desc')}</span>
+        </div>
+      </button>
+    </div>
   )
 }

@@ -90,7 +90,11 @@
     "section_owned_singular": "Su Negocio",
     "section_owned_plural": "Sus Negocios",
     "section_joined_singular": "Negocio Unido",
-    "section_joined_plural": "Negocios Unidos"
+    "section_joined_plural": "Negocios Unidos",
+    "action_create_title": "Create a business",
+    "action_create_desc": "Start a new business from scratch",
+    "action_join_title": "Join a business",
+    "action_join_desc": "Use an invite code to join an existing business"
   },
   "createBusiness": {
     "modal_title": "Crear Negocio",

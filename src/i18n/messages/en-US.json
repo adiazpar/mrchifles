@@ -90,7 +90,11 @@
     "section_owned_singular": "Your Business",
     "section_owned_plural": "Your Businesses",
     "section_joined_singular": "Joined Business",
-    "section_joined_plural": "Joined Businesses"
+    "section_joined_plural": "Joined Businesses",
+    "action_create_title": "Create a business",
+    "action_create_desc": "Start a new business from scratch",
+    "action_join_title": "Join a business",
+    "action_join_desc": "Use an invite code to join an existing business"
   },
   "createBusiness": {
     "modal_title": "Create Business",
@@ -721,13 +725,11 @@
     "charge_button": "Charge {total}",
     "filter": "Filter",
     "load_more": "Load more",
-
     "empty_state": {
       "no_sales_yet": "No sales yet",
       "ring_up_first": "Ring up your first sale to see it here.",
       "no_results_for_filter": "No sales match these filters."
     },
-
     "stats": {
       "today": "Today",
       "today_revenue": "Revenue",
@@ -742,7 +744,6 @@
       "session_total_label": "Total: {value}",
       "session_sales_count": "{count, plural, =0 {No sales yet} one {# sale} other {# sales}}"
     },
-
     "action": {
       "open_session": "Open session",
       "close_session": "Close session",
@@ -750,7 +751,6 @@
       "view_session_sales": "View session sales",
       "reports": "Reports"
     },
-
     "session": {
       "open_modal": {
         "title": "Open session",
@@ -805,7 +805,6 @@
         "detail_time_label": "Time"
       }
     },
-
     "cart": {
       "title": "Current sale",
       "empty_title": "No items yet",
@@ -849,7 +848,6 @@
       "confirm_clear_action": "Clear",
       "confirm_clear_cancel": "Cancel"
     },
-
     "reports": {
       "daily_revenue_title": "Last 7 days revenue",
       "recent_sessions_title": "Recent sessions",
@@ -870,7 +868,6 @@
       "error_load_failed": "Couldn't load reports.",
       "error_retry": "Retry"
     },
-
     "charge_sheet": {
       "title": "Complete sale",
       "payment_label": "Payment method",
@@ -889,7 +886,6 @@
       "line_only_n_available": "Only {available} available",
       "submitting": "Charging..."
     },
-
     "detail": {
       "title": "Sale #{number}",
       "payment_method_label": "Payment",
@@ -898,7 +894,6 @@
       "notes_label": "Notes",
       "rang_up_by": "Rang up by {name}"
     },
-
     "history": {
       "filter_title": "Filter sales",
       "filter_date_from": "From",
@@ -913,7 +908,6 @@
       "rel_today": "Today {time}",
       "rel_yesterday": "Yesterday {time}"
     },
-
     "toast": {
       "no_barcode_match": "No product matches that barcode.",
       "out_of_stock_confirm_title": "Stock will go negative",
@@ -921,7 +915,6 @@
       "out_of_stock_confirm_action": "Add",
       "out_of_stock_confirm_cancel": "Cancel"
     },
-
     "error": {
       "unknown": "Something went wrong saving the sale. Try again."
     }
