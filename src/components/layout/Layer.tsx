@@ -45,6 +45,9 @@ export function Layer({
   const containerRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLElement | null>(null)
   const wasTopRef = useRef(false)
+  // Snapshot viewport width at drag start so a mid-drag rotation/resize
+  // doesn't silently shift the dismiss threshold.
+  const dragViewportWidthRef = useRef(0)
 
   // Open animation — imperative on the same MotionValue used by drag.
   // Single source of truth means parallax stays consistent in all phases.
@@ -116,13 +119,21 @@ export function Layer({
     if (!isTop) {
       const prev = el.style.overflow
       el.style.overflow = 'hidden'
+      // Reset shared peel progress so the new top layer's open animation
+      // doesn't briefly inherit our last-written value.
+      peelProgress.set(0)
       return () => { el.style.overflow = prev }
     }
-  }, [isTop])
+  }, [isTop, peelProgress])
+
+  const handleDragStart = () => {
+    dragViewportWidthRef.current = typeof window !== 'undefined' ? window.innerWidth : 0
+  }
 
   const handleDragEnd = (_: PointerEvent, info: PanInfo) => {
     if (reducedMotion || !isTop) return
-    const dismissed = info.offset.x > window.innerWidth * 0.4 || info.velocity.x > 500
+    const w = dragViewportWidthRef.current || (typeof window !== 'undefined' ? window.innerWidth : 0)
+    const dismissed = info.offset.x > w * 0.4 || info.velocity.x > 500
     if (dismissed) {
       onPeelDismiss()
     } else {
@@ -148,7 +159,7 @@ export function Layer({
       tabIndex={-1}
       className="layer fixed inset-0 bg-bg-base overflow-y-auto overflow-x-hidden"
       style={{
-        zIndex: `calc(var(--z-overlay) + ${index})` as unknown as number,
+        zIndex: `calc(var(--z-overlay) + ${index})`,
         x: styleX,
         boxShadow: isTop && index > 0 ? '-12px 0 24px -8px rgba(0, 0, 0, 0.18)' : undefined,
         willChange: 'transform',
@@ -158,6 +169,7 @@ export function Layer({
       dragConstraints={{ left: 0 }}
       dragElastic={{ left: 0.05, right: 1 }}
       dragDirectionLock
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       {children}
