@@ -16,7 +16,8 @@
     "or": "or",
     "yes": "Yes",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "page": "Page"
   },
   "ui": {
     "modal": {
@@ -442,6 +443,7 @@
     "providers": "Providers",
     "settings": "Settings",
     "account": "Account",
+    "join": "Join",
     "load_failed": "Couldn't load page. Check your connection and try again."
   },
   "network": {

@@ -16,7 +16,8 @@
     "or": "または",
     "yes": "はい",
     "error": "エラー",
-    "success": "成功"
+    "success": "成功",
+    "page": "ページ"
   },
   "ui": {
     "modal": {
@@ -442,6 +443,7 @@
     "providers": "仕入先",
     "settings": "設定",
     "account": "アカウント",
+    "join": "参加",
     "load_failed": "ページを読み込めませんでした。接続を確認してもう一度お試しください"
   },
   "network": {

@@ -16,7 +16,8 @@
     "or": "o",
     "yes": "Sí",
     "error": "Error",
-    "success": "Éxito"
+    "success": "Éxito",
+    "page": "Página"
   },
   "ui": {
     "modal": {
@@ -442,6 +443,7 @@
     "providers": "Proveedores",
     "settings": "Configuración",
     "account": "Cuenta",
+    "join": "Unirse",
     "load_failed": "No se pudo cargar la página. Verifica tu conexión e inténtalo de nuevo."
   },
   "network": {
