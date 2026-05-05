@@ -31,11 +31,6 @@ interface PageTransitionContextValue {
   // provider auto-clears pendingHref if pathname doesn't catch up, so a
   // stalled router.push can't leave the UI stuck.
   navigate: (href: string) => void
-  // Optional suffix appended to the header's page subtitle (e.g. the
-  // provider name on a provider detail page). Cleared by the detail
-  // page on unmount.
-  pageSubtitleSuffix: string | null
-  setPageSubtitleSuffix: (suffix: string | null) => void
   // Business cache for instant display and access validation
   getCachedBusiness: (businessId: string) => CachedBusiness | null
   setCachedBusiness: (businessId: string, data: CachedBusiness) => void
@@ -62,7 +57,6 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   const router = useRouter()
   const { user } = useAuth()
   const [pendingHref, setPendingHrefState] = useState<string | null>(null)
-  const [pageSubtitleSuffix, setPageSubtitleSuffixState] = useState<string | null>(null)
   const [navigationError, setNavigationErrorState] = useState<string | null>(null)
   const [, startTransition] = useTransition()
 
@@ -97,6 +91,7 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
       businessCacheRef.current = {}
       try {
         sessionStorage.removeItem(BUSINESS_CACHE_STORAGE_KEY)
+        sessionStorage.removeItem('layer.accountUnderlay')
       } catch {
         // Ignore storage errors
       }
@@ -105,7 +100,6 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   }, [user?.id])
 
   const setPendingHref = useCallback((href: string | null) => setPendingHrefState(href), [])
-  const setPageSubtitleSuffix = useCallback((suffix: string | null) => setPageSubtitleSuffixState(suffix), [])
   const setNavigationError = useCallback((key: string | null) => setNavigationErrorState(key), [])
 
   const navigate = useCallback((href: string) => {
@@ -193,22 +187,20 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
 
   // Memoize to avoid re-rendering the entire business-scoped tree every
   // time this provider re-renders. This context is consumed by PageHeader,
-  // MobileNav, RouteOverlay (via HubOverlayMount and BusinessLayout), and
-  // most pages — the blast radius of an unmemoized value is the whole
-  // app shell on every auth/pathname tick.
+  // MobileNav, LayerStack at the AppShell level, and most pages — the blast
+  // radius of an unmemoized value is the whole app shell on every
+  // auth/pathname tick.
   const value = useMemo<PageTransitionContextValue>(
     () => ({
       pendingHref, setPendingHref,
       navigationError, setNavigationError,
       navigate,
-      pageSubtitleSuffix, setPageSubtitleSuffix,
       getCachedBusiness, setCachedBusiness, setCachedBusinesses, clearCachedBusiness,
     }),
     [
       pendingHref, setPendingHref,
       navigationError, setNavigationError,
       navigate,
-      pageSubtitleSuffix, setPageSubtitleSuffix,
       getCachedBusiness, setCachedBusiness, setCachedBusinesses, clearCachedBusiness,
     ],
   )
