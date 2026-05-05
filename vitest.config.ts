@@ -1,7 +1,12 @@
 import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig({
+  // tsconfig.json sets `jsx: preserve` (Next.js convention), so `.test.tsx`
+  // files can't be parsed by Vite's default loader. The React plugin
+  // installs the JSX transform needed to compile component tests.
+  plugins: [react()],
   test: {
     environment: 'jsdom',
     globals: true,
