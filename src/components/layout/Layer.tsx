@@ -59,13 +59,23 @@ export function Layer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // While this layer is on top, drive peelProgress from x.
+  // While this layer is on top, drive peelProgress from x. Framer Motion
+  // can emit either numeric pixel values (during/after drag and after the
+  // open animation has resolved units) or percentage strings (briefly,
+  // before the unit conversion settles). Handle both: numbers pass through;
+  // percentage strings get parsed and scaled to viewport width.
   useEffect(() => {
     if (!isTop) return
     const unsub = x.on('change', (v) => {
       const w = typeof window !== 'undefined' ? window.innerWidth : 1
-      const numeric = typeof v === 'number' ? v : (v === '0' ? 0 : (v === '100%' ? w : 0))
-      const progress = Math.max(0, Math.min(1, numeric / w))
+      let pixels: number
+      if (typeof v === 'number') {
+        pixels = v
+      } else {
+        const parsed = parseFloat(v)
+        pixels = Number.isFinite(parsed) ? (parsed / 100) * w : 0
+      }
+      const progress = Math.max(0, Math.min(1, pixels / w))
       peelProgress.set(progress)
     })
     return unsub
