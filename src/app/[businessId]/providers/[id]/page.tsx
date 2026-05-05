@@ -1,10 +1,7 @@
 'use client'
 
-import { useParams } from 'next/navigation'
-import { ProviderDetailClient } from '@/components/providers/ProviderDetailClient'
-
+// ProviderDetailClient is rendered by LayerStack at the AppShell level.
+// This stub exists only so Next.js routing matches /[businessId]/providers/[id].
 export default function ProviderDetailPage() {
-  const params = useParams<{ businessId: string; id: string }>()
-  if (!params?.businessId || !params?.id) return null
-  return <ProviderDetailClient businessId={params.businessId} providerId={params.id} />
+  return null
 }

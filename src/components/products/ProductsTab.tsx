@@ -248,7 +248,7 @@ export function ProductsTab({
             {filteredProducts.length > 5 && (
               <button
                 type="button"
-                onClick={scrollToTop}
+                onClick={() => scrollToTop()}
                 className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
               >
                 <ChevronUp className="w-4 h-4" />
