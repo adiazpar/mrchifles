@@ -17,18 +17,7 @@ interface CachedBusiness {
   icon: string | null
 }
 
-export type SlideDirection = 'forward' | 'back' | null
-
 interface PageTransitionContextValue {
-  // Slide transition direction for page navigation
-  slideDirection: SlideDirection
-  setSlideDirection: (dir: SlideDirection) => void
-  // Path of the page that is "deeper" in a slide transition. Read by
-  // PageTransition to decide which mounted page plays the enter-from-right
-  // animation. Set together with slideDirection. Cleared automatically on
-  // pathname change.
-  slideTargetPath: string | null
-  setSlideTargetPath: (path: string | null) => void
   // Optimistic navigation state - shared across nav components and header
   pendingHref: string | null
   setPendingHref: (href: string | null) => void
@@ -72,8 +61,6 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   const pathname = usePathname()
   const router = useRouter()
   const { user } = useAuth()
-  const [slideDirection, setSlideDirectionState] = useState<SlideDirection>(null)
-  const [slideTargetPath, setSlideTargetPathState] = useState<string | null>(null)
   const [pendingHref, setPendingHrefState] = useState<string | null>(null)
   const [pageSubtitleSuffix, setPageSubtitleSuffixState] = useState<string | null>(null)
   const [navigationError, setNavigationErrorState] = useState<string | null>(null)
@@ -117,8 +104,6 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
     }
   }, [user?.id])
 
-  const setSlideDirection = useCallback((dir: SlideDirection) => setSlideDirectionState(dir), [])
-  const setSlideTargetPath = useCallback((path: string | null) => setSlideTargetPathState(path), [])
   const setPendingHref = useCallback((href: string | null) => setPendingHrefState(href), [])
   const setPageSubtitleSuffix = useCallback((suffix: string | null) => setPageSubtitleSuffixState(suffix), [])
   const setNavigationError = useCallback((key: string | null) => setNavigationErrorState(key), [])
@@ -175,18 +160,6 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
     }
   }, [])
 
-  // Slide cleanup. Delay clearing slideDirection on pathname change so the
-  // entry animation can finish before the header content reappears.
-  useEffect(() => {
-    if (!slideDirection) return
-    const timer = setTimeout(() => {
-      setSlideDirectionState(null)
-      setSlideTargetPathState(null)
-    }, 180)
-    return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname])
-
   // pendingHref auto-clear with safety net.
   // - Clears immediately once pathname catches up to pendingHref (the
   //   navigation actually happened).
@@ -225,8 +198,6 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   // app shell on every auth/pathname tick.
   const value = useMemo<PageTransitionContextValue>(
     () => ({
-      slideDirection, setSlideDirection,
-      slideTargetPath, setSlideTargetPath,
       pendingHref, setPendingHref,
       navigationError, setNavigationError,
       navigate,
@@ -234,8 +205,6 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
       getCachedBusiness, setCachedBusiness, setCachedBusinesses, clearCachedBusiness,
     }),
     [
-      slideDirection, setSlideDirection,
-      slideTargetPath, setSlideTargetPath,
       pendingHref, setPendingHref,
       navigationError, setNavigationError,
       navigate,
