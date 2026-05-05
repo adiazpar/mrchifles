@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { getLayerStack } from './layer-stack'
+import {
+  getLayerStack,
+  getAccountUnderlay,
+  setAccountUnderlay,
+  clearAccountUnderlay,
+} from './layer-stack'
 
 describe('getLayerStack', () => {
   beforeEach(() => sessionStorage.clear())
@@ -76,5 +81,30 @@ describe('getLayerStack', () => {
   it('falls back to hub-root for unknown URLs', () => {
     expect(getLayerStack('/login')).toEqual([{ kind: 'hub-root' }])
     expect(getLayerStack('')).toEqual([{ kind: 'hub-root' }])
+  })
+})
+
+describe('account underlay session helpers — SSR safety', () => {
+  it('getAccountUnderlay returns null when window is undefined', () => {
+    const original = globalThis.window
+    // @ts-expect-error simulate SSR
+    delete globalThis.window
+    try {
+      expect(getAccountUnderlay()).toBeNull()
+    } finally {
+      globalThis.window = original
+    }
+  })
+
+  it('setAccountUnderlay/clearAccountUnderlay no-op when window is undefined', () => {
+    const original = globalThis.window
+    // @ts-expect-error simulate SSR
+    delete globalThis.window
+    try {
+      expect(() => setAccountUnderlay('/abc/sales')).not.toThrow()
+      expect(() => clearAccountUnderlay()).not.toThrow()
+    } finally {
+      globalThis.window = original
+    }
   })
 })
