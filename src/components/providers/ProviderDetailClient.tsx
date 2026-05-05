@@ -29,8 +29,8 @@ import { apiRequest, apiPost, apiPatch, apiDelete, ApiError } from '@/lib/api-cl
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useBusiness } from '@/contexts/business-context'
-import { usePageTransition } from '@/contexts/page-transition-context'
 import { canManageBusiness } from '@/lib/business-role'
+import { DrillDownHeader } from '@/components/layout/DrillDownHeader'
 import { formatRelative } from '@/lib/formatRelative'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { getProductIconUrl } from '@/lib/utils'
@@ -68,7 +68,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const userLocale = useLocale()
   const translateApiMessage = useApiMessage()
   const { role } = useBusiness()
-  const { navigate, setPageSubtitleSuffix } = usePageTransition()
+  const tNav = useTranslations('navigation')
   const canManage = canManageBusiness(role)
 
   // Tab state — initialized from the URL so browser back/forward and
@@ -94,12 +94,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     },
     [router, urlForTab],
   )
-
-  // Append the provider name to the header subtitle ("Providers · Name").
-  // Clear on unmount so the subtitle reverts when leaving the page.
-  useEffect(() => {
-    return () => setPageSubtitleSuffix(null)
-  }, [setPageSubtitleSuffix])
 
   const [provider, setProvider] = useState<Provider | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -207,10 +201,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   }, [businessId, providerId, ensureActiveOrdersLoaded, ensureCompletedOrdersLoaded, ensureProvidersLoaded, ensureProductsLoaded, t, translateApiMessage])
 
   useEffect(() => { loadAll() }, [loadAll])
-
-  useEffect(() => {
-    if (provider?.name) setPageSubtitleSuffix(provider.name)
-  }, [provider?.name, setPageSubtitleSuffix])
 
   // ===== Edit provider =====
   const openEdit = () => {
@@ -440,19 +430,25 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   if (isLoading) {
     return (
-      <main className="page-loading">
-        <Spinner className="spinner-lg" />
-      </main>
+      <>
+        <DrillDownHeader title="" subtitle={tNav('providers')} onBack={() => router.back()} />
+        <main className="page-loading">
+          <Spinner className="spinner-lg" />
+        </main>
+      </>
     )
   }
 
   if (error || !provider) {
     return (
-      <main className="page-content">
-        <div className="p-4 bg-error-subtle text-error rounded-lg">
-          {error || t('error_failed_to_load')}
-        </div>
-      </main>
+      <>
+        <DrillDownHeader title={provider?.name ?? ''} subtitle={tNav('providers')} onBack={() => router.back()} />
+        <main className="page-content">
+          <div className="p-4 bg-error-subtle text-error rounded-lg">
+            {error || t('error_failed_to_load')}
+          </div>
+        </main>
+      </>
     )
   }
 
@@ -491,6 +487,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   return (
     <>
+      <DrillDownHeader title={provider.name} subtitle={tNav('providers')} onBack={() => router.back()} />
       <main className="page-content space-y-4">
         {/* ============== Identity Header ==============
             Top row: avatar + name/status. Tappable for managers — opens
@@ -997,8 +994,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           setProviderSaved(false)
           setEditError('')
           if (providerDeleted) {
-            const href = `/${businessId}/providers`
-            navigate(href)
+            router.push(`/${businessId}/providers`)
             setProviderDeleted(false)
           }
         }}
