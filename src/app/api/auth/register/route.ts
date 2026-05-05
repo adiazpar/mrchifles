@@ -4,10 +4,11 @@ import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { hashPassword, createToken, setAuthCookie } from '@/lib/simple-auth'
-import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { logServerError } from '@/lib/server-logger'
+import { validationError, errorResponse, successResponse, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
-import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
+import { getClientIp, RateLimits } from '@/lib/rate-limit'
 import { setLocaleCookieServer } from '@/lib/locale-cookie'
 import { pickLocaleFromAcceptLanguage } from '@/lib/accept-language'
 
@@ -23,17 +24,29 @@ const registerSchema = z.object({
  * Register a new user account.
  * Creates user only - no business. User creates/joins business from hub.
  */
+// 16 KB covers email + password + name + the JSON envelope; keeps
+// parse cost trivial pre-rate-limit.
+const MAX_BODY_BYTES = 16 * 1024
+
 export async function POST(request: NextRequest) {
   try {
-    // Rate limit by IP
-    const clientIp = getClientIp(request)
-    const rateLimitResult = await checkRateLimit(`register:${clientIp}`, RateLimits.register)
-    if (!rateLimitResult.success) {
-      const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
-      const response = errorResponse(ApiMessageCode.AUTH_REGISTER_RATE_LIMITED, 429)
-      response.headers.set('Retry-After', retryAfter)
-      return response
+    const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+    if (oversize) return oversize
+    if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
+      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
     }
+
+    // Rate limit by IP. Fail-closed: if Upstash is unreachable on
+    // this auth-critical limiter, the helper returns 503 instead of
+    // silently dropping back to in-memory (which would let
+    // registration spam through during a brownout).
+    const clientIp = getClientIp(request)
+    const limited = await applyRateLimit(
+      `register:${clientIp}`,
+      RateLimits.register,
+      ApiMessageCode.AUTH_REGISTER_RATE_LIMITED,
+    )
+    if (limited) return limited
 
     const body = await request.json()
     const validation = registerSchema.safeParse(body)
@@ -101,7 +114,7 @@ export async function POST(request: NextRequest) {
       ApiMessageCode.AUTH_REGISTER_SUCCESS
     )
   } catch (error) {
-    console.error('Registration error:', error)
+    logServerError('auth.register', error)
     return errorResponse(ApiMessageCode.AUTH_REGISTER_FAILED, 500)
   }
 }

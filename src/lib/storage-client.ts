@@ -23,11 +23,21 @@ export async function fileToBase64(file: File): Promise<string> {
 }
 
 /**
- * Get the approximate size in bytes of a base64 string
+ * Get the size in bytes of a base64-encoded payload.
+ *
+ * Decodes via Buffer.from rather than computing
+ * `Math.ceil(length * 3 / 4)` — that math underestimates by up to 2
+ * bytes when the `=` padding is stripped and is brittle if any
+ * caller ever feeds in whitespace-containing or non-padded base64
+ * (audit L-15). Buffer.from handles all of these consistently.
+ *
+ * Browser-safe: Node's Buffer is polyfilled by Next.js's webpack
+ * config in client bundles for code paths that share this helper.
+ * We're called from React event handlers, never the SSR layer.
  */
 export function getBase64Size(base64: string): number {
   const base64Data = base64.includes(',') ? base64.split(',')[1] : base64
-  return Math.ceil((base64Data.length * 3) / 4)
+  return Buffer.from(base64Data, 'base64').length
 }
 
 /**

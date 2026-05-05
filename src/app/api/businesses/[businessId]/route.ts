@@ -1,12 +1,28 @@
 import { isOwner, invalidateAccessCacheForBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, errorResponse, successResponse, validationError, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
-import { db, businesses } from '@/db'
-import { eq } from 'drizzle-orm'
+import {
+  db,
+  businesses,
+  businessUsers,
+  products,
+  productCategories,
+  providers,
+  providerNotes,
+  orders,
+  orderItems,
+  sales,
+  saleItems,
+  salesSessions,
+  inviteCodes,
+  ownershipTransfers,
+} from '@/db'
+import { eq, inArray } from 'drizzle-orm'
 import { getLocaleConfig } from '@/lib/locale-config'
 import { patchSchema } from './schema'
 import { MAX_UPLOAD_SIZE } from '@/lib/storage'
 import { sniffImageMimeType } from '@/lib/file-sniff'
+import { logServerError } from '@/lib/server-logger'
 
 /**
  * GET /api/businesses/[businessId]
@@ -93,11 +109,15 @@ export const PATCH = withBusinessAuth(async (request, access) => {
   // stored-XSS surface through embedded <script> tags. HEIC/HEIF are
   // converted to JPEG client-side before upload, so they shouldn't
   // arrive here either.
-  const ACCEPTED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+  const ACCEPTED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const
   let logoBuffer: Buffer | null = null
-  let sniffedLogoType: 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif' | null = null
+  // TS union matches the runtime allowlist (audit L-16). The previous
+  // declaration included 'image/gif' but the allowlist rejected it,
+  // misleading future contributors who might extend the union and
+  // accidentally enable GIF storage.
+  let sniffedLogoType: typeof ACCEPTED_LOGO_TYPES[number] | null = null
   if (logoFile) {
-    if (!ACCEPTED_LOGO_TYPES.includes(logoFile.type)) {
+    if (!(ACCEPTED_LOGO_TYPES as ReadonlyArray<string>).includes(logoFile.type)) {
       return errorResponse(ApiMessageCode.BUSINESS_UPDATE_LOGO_INVALID_TYPE, 400)
     }
     if (logoFile.size > MAX_UPLOAD_SIZE) {
@@ -109,10 +129,16 @@ export const PATCH = withBusinessAuth(async (request, access) => {
     // under a <img> surface. Store the data URL using the SNIFFED
     // type so the prefix can never disagree with the payload.
     logoBuffer = Buffer.from(await logoFile.arrayBuffer())
-    sniffedLogoType = sniffImageMimeType(logoBuffer)
-    if (!sniffedLogoType || !ACCEPTED_LOGO_TYPES.includes(sniffedLogoType)) {
+    const sniffed = sniffImageMimeType(logoBuffer)
+    if (
+      !sniffed ||
+      !(ACCEPTED_LOGO_TYPES as ReadonlyArray<string>).includes(sniffed)
+    ) {
       return errorResponse(ApiMessageCode.BUSINESS_UPDATE_LOGO_INVALID_TYPE, 400)
     }
+    // Narrow to the runtime allowlist so the assignment satisfies
+    // the tightened union (audit L-16).
+    sniffedLogoType = sniffed as typeof ACCEPTED_LOGO_TYPES[number]
   }
 
   // Build update object
@@ -152,16 +178,39 @@ export const PATCH = withBusinessAuth(async (request, access) => {
       },
     }, ApiMessageCode.BUSINESS_UPDATE_SUCCESS)
   } catch (err) {
-    console.error('Business update error:', err)
+    logServerError('business.update', err)
     return errorResponse(ApiMessageCode.BUSINESS_UPDATE_FAILED, 500)
   }
-})
+}, { maxBodyBytes: PATCH_MAX_BODY_BYTES })
 
 /**
  * DELETE /api/businesses/[businessId]
  *
- * Delete a business. Cascades to related tables via foreign keys.
- * Only the owner can delete a business.
+ * Delete a business and every child row that references it. Only the
+ * owner can delete.
+ *
+ * IMPORTANT — child cleanup is explicit, not FK-cascade. The schema
+ * declares onDelete:'cascade' on `business_users` and `provider_notes`
+ * only. Every other child table (`products`, `product_categories`,
+ * `providers`, `orders`, `order_items`, `sales`, `sale_items`,
+ * `sales_sessions`, `invite_codes`, `ownership_transfers`) declares its
+ * `business_id` FK without onDelete. libsql/Turso also runs with FK
+ * enforcement OFF by default — `src/db/index.ts` never issues
+ * `PRAGMA foreign_keys = ON`. Without explicit deletes, the prior
+ * implementation silently left orphan rows for every business that was
+ * ever deleted (GDPR-relevant data retention bug).
+ *
+ * Order matters because of FK dependencies:
+ *   - sale_items must go before sales (FK saleId)
+ *   - order_items must go before orders (FK orderId)
+ *   - sales must go before sales_sessions (FK sessionId, restrict)
+ *   - products must go before product_categories (FK categoryId, set null)
+ *   - business_users last (cascades from users in some flows; the
+ *     access cache is invalidated AFTER the transaction commits)
+ *
+ * The whole operation runs in `db.transaction` so a mid-flight failure
+ * either commits all rows gone, or rolls back to the pre-delete state.
+ * No half-deleted business is possible.
  */
 export const DELETE = withBusinessAuth(async (_request, access) => {
   if (!isOwner(access.role)) {
@@ -179,7 +228,83 @@ export const DELETE = withBusinessAuth(async (_request, access) => {
       return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND, 404)
     }
 
-    await db.delete(businesses).where(eq(businesses.id, access.businessId))
+    await db.transaction(async (tx) => {
+      // 1. sale_items — fetch parent sale ids first (no businessId on
+      //    sale_items, so we go via the join).
+      const saleIds = await tx
+        .select({ id: sales.id })
+        .from(sales)
+        .where(eq(sales.businessId, access.businessId))
+      if (saleIds.length > 0) {
+        await tx
+          .delete(saleItems)
+          .where(inArray(saleItems.saleId, saleIds.map((s) => s.id)))
+      }
+
+      // 2. sales (must be after sale_items; sales_sessions FK is
+      //    declared restrict so sales must go before sales_sessions).
+      await tx.delete(sales).where(eq(sales.businessId, access.businessId))
+
+      // 3. sales_sessions
+      await tx
+        .delete(salesSessions)
+        .where(eq(salesSessions.businessId, access.businessId))
+
+      // 4. order_items — same pattern as sale_items.
+      const orderIds = await tx
+        .select({ id: orders.id })
+        .from(orders)
+        .where(eq(orders.businessId, access.businessId))
+      if (orderIds.length > 0) {
+        await tx
+          .delete(orderItems)
+          .where(inArray(orderItems.orderId, orderIds.map((o) => o.id)))
+      }
+
+      // 5. orders
+      await tx.delete(orders).where(eq(orders.businessId, access.businessId))
+
+      // 6. provider_notes (denormalized businessId; cleanest direct delete).
+      await tx
+        .delete(providerNotes)
+        .where(eq(providerNotes.businessId, access.businessId))
+
+      // 7. providers
+      await tx
+        .delete(providers)
+        .where(eq(providers.businessId, access.businessId))
+
+      // 8. products before product_categories (categoryId FK)
+      await tx
+        .delete(products)
+        .where(eq(products.businessId, access.businessId))
+
+      // 9. product_categories
+      await tx
+        .delete(productCategories)
+        .where(eq(productCategories.businessId, access.businessId))
+
+      // 10. invite_codes
+      await tx
+        .delete(inviteCodes)
+        .where(eq(inviteCodes.businessId, access.businessId))
+
+      // 11. ownership_transfers (in-flight transfers for this business
+      //     are abandoned — they cannot be honored once the business
+      //     is gone).
+      await tx
+        .delete(ownershipTransfers)
+        .where(eq(ownershipTransfers.businessId, access.businessId))
+
+      // 12. business_users — would cascade via FK if enforcement were
+      //     on, but we delete explicitly to be FK-off-safe.
+      await tx
+        .delete(businessUsers)
+        .where(eq(businessUsers.businessId, access.businessId))
+
+      // 13. businesses (the row itself)
+      await tx.delete(businesses).where(eq(businesses.id, access.businessId))
+    })
 
     // Business is gone — every cached BusinessAccess that references it
     // is now invalid (every member, not just the deleting owner).
@@ -187,7 +312,7 @@ export const DELETE = withBusinessAuth(async (_request, access) => {
 
     return successResponse({}, ApiMessageCode.BUSINESS_DELETE_SUCCESS)
   } catch (error) {
-    console.error('Business deletion error:', error)
+    logServerError('business.delete', error)
     return errorResponse(ApiMessageCode.BUSINESS_DELETE_FAILED, 500)
   }
 })

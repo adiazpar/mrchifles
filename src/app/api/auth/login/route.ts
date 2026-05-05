@@ -3,10 +3,11 @@ import { db, users } from '@/db'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { verifyPassword, createToken, setAuthCookie } from '@/lib/simple-auth'
-import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { logServerError } from '@/lib/server-logger'
+import { validationError, errorResponse, successResponse, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
-import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
+import { getClientIp, RateLimits } from '@/lib/rate-limit'
 import { setLocaleCookieServer } from '@/lib/locale-cookie'
 
 const loginSchema = z.object({
@@ -19,17 +20,32 @@ const loginSchema = z.object({
  *
  * Login with email and password
  */
+// 8 KB is plenty for { email, password } — keeps the parser pre-rate-
+// limit cheap so an attacker can't shovel multi-MB JSON into auth.
+const MAX_BODY_BYTES = 8 * 1024
+
 export async function POST(request: NextRequest) {
   try {
-    // Rate limit by IP
-    const clientIp = getClientIp(request)
-    const rateLimitResult = await checkRateLimit(`login:${clientIp}`, RateLimits.login)
-    if (!rateLimitResult.success) {
-      const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
-      const response = errorResponse(ApiMessageCode.AUTH_LOGIN_RATE_LIMITED, 429)
-      response.headers.set('Retry-After', retryAfter)
-      return response
+    // Reject obviously-bogus requests before any auth work — multi-MB
+    // bodies, non-JSON Content-Types — so an attacker can't drive
+    // Lambda CPU/memory by spamming the rate-limited entry point.
+    const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+    if (oversize) return oversize
+    if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
+      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
     }
+
+    // Rate limit by IP. applyRateLimit handles fail-closed: if
+    // Upstash is unreachable on this auth-critical limiter, it
+    // returns a 503 (RATE_LIMITER_UNAVAILABLE) instead of silently
+    // falling back to per-Lambda in-memory counters.
+    const clientIp = getClientIp(request)
+    const ipLimited = await applyRateLimit(
+      `login:${clientIp}`,
+      RateLimits.login,
+      ApiMessageCode.AUTH_LOGIN_RATE_LIMITED,
+    )
+    if (ipLimited) return ipLimited
 
     const body = await request.json()
     const validation = loginSchema.safeParse(body)
@@ -39,6 +55,19 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, password } = validation.data
+
+    // Per-email rate limit, layered on top of the per-IP cap above.
+    // Without this, a credential-stuffing attacker who rotates IPs
+    // (botnet, residential proxies, IPv6 /64) bypasses the only
+    // brake on guessing one specific victim's password. Keyed on
+    // the normalized lowercase email (Schemas.email() lowercases on
+    // parse) so case variants share a counter.
+    const emailLimited = await applyRateLimit(
+      `login-email:${email}`,
+      RateLimits.loginEmail,
+      ApiMessageCode.AUTH_LOGIN_RATE_LIMITED,
+    )
+    if (emailLimited) return emailLimited
 
     // Find user by email (email is already normalized to lowercase by schema)
     const [user] = await db
@@ -78,7 +107,7 @@ export async function POST(request: NextRequest) {
       ApiMessageCode.AUTH_LOGIN_SUCCESS
     )
   } catch (error) {
-    console.error('Login error:', error)
+    logServerError('auth.login', error)
     return errorResponse(ApiMessageCode.AUTH_LOGIN_FAILED, 500)
   }
 }

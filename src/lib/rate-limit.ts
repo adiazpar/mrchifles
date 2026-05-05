@@ -32,6 +32,34 @@ const redis =
       })
     : null
 
+// Refuse to start in Vercel production without Upstash creds. Without
+// Redis, every Lambda has its own in-memory counter — so the effective
+// rate limit is `limit * concurrency` and brute-force protection is a
+// myth. We gate on VERCEL_ENV (set only on Vercel runtime) instead of
+// NODE_ENV so a local `next build` for typecheck doesn't trip this on
+// machines that don't have prod env wired up.
+if (process.env.VERCEL_ENV === 'production' && !redis) {
+  throw new Error(
+    'Rate-limit backend misconfiguration: UPSTASH_REDIS_REST_URL and ' +
+      'UPSTASH_REDIS_REST_TOKEN are required in production. The in-memory ' +
+      'fallback is per-Lambda and provides no real rate-limit protection ' +
+      'across instances.',
+  )
+}
+
+/**
+ * Thrown by checkRateLimit when a fail-closed limiter (e.g. login)
+ * cannot reach Upstash. Callers catch this and translate to a 503 with
+ * RATE_LIMITER_UNAVAILABLE so the auth surface degrades safely instead
+ * of silently disabling brute-force protection during an Upstash blip.
+ */
+export class UpstashUnavailableError extends Error {
+  constructor(message = 'Upstash rate-limiter unavailable') {
+    super(message)
+    this.name = 'UpstashUnavailableError'
+  }
+}
+
 // One Ratelimit instance per distinct (limit, window) pair — creating
 // them is a no-op for Upstash once Redis is shared, but caching the
 // instance keeps allocation off the hot path.
@@ -120,6 +148,16 @@ export interface RateLimitConfig {
   limit: number
   /** Window size in seconds */
   windowSeconds: number
+  /**
+   * When true, a transient Upstash failure causes checkRateLimit to
+   * THROW UpstashUnavailableError instead of silently falling back to
+   * the per-Lambda in-memory limiter. Use for auth-critical limits
+   * (login, register, change-password): better to 503 the request
+   * than to disable brute-force protection during an Upstash blip.
+   * For non-auth limiters (AI, HEIC, business mutations) leave
+   * unset — the in-memory fallback is acceptable degradation.
+   */
+  failClosed?: boolean
 }
 
 interface RateLimitResult {
@@ -149,42 +187,93 @@ export async function checkRateLimit(
         resetAt: result.reset,
       }
     } catch (error) {
-      // Fail open on Upstash errors — better to let a request through
-      // than to take the app down over the limiter. Bubble a warning so
-      // the outage is visible in logs.
-      console.warn('Upstash rate-limit call failed; falling back to memory:', error)
+      // Two failure modes diverge here:
+      //   - failClosed: throw UpstashUnavailableError so the calling
+      //     route returns 503. Mandatory for auth limiters: silent
+      //     fallback to per-Lambda counters during a brownout = no
+      //     real rate limit at scale = brute force enabled.
+      //   - !failClosed: log + fall back to in-memory. Acceptable for
+      //     business mutations and AI routes where the in-memory cap
+      //     is still meaningful per-Lambda.
+      console.warn('Upstash rate-limit call failed:', error)
+      if (config.failClosed) {
+        throw new UpstashUnavailableError()
+      }
     }
   }
   return checkInMemory(identifier, config)
 }
 
 /**
- * Get client IP from request headers.
- * Handles common proxy headers.
+ * Get the trusted client IP from request headers.
+ *
+ * The previous implementation took the first hop of `x-forwarded-for`,
+ * which a client can spoof unconditionally. On Vercel that worked
+ * because Vercel rewrites the header at its edge — but anywhere else
+ * (`npm run start:local`, a non-Vercel deploy, a future container
+ * migration), an attacker rotating `X-Forwarded-For: <random>` per
+ * request bypassed every per-IP rate limit (login brute-force,
+ * register spam, invite-code guessing).
+ *
+ * Trust hierarchy (first match wins):
+ *   1. `x-vercel-forwarded-for` — set by Vercel's edge from the
+ *      verified TLS peer; not forwarded from upstream and so cannot
+ *      be set by a client.
+ *   2. `x-real-ip` — typically set by a trusted proxy (nginx,
+ *      Cloudflare, Tailscale). On non-Vercel deploys this is the
+ *      conventional way to surface the real client IP.
+ *   3. The LAST hop of `x-forwarded-for`. The right-most entry is the
+ *      one added by the closest trusted proxy; the left-most is what
+ *      the upstream client claimed and is untrustworthy. The previous
+ *      implementation took the LEFT-most — the spoofable one — so
+ *      this swap is the security fix.
+ *   4. Fallback `127.0.0.1` for environments where none of the above
+ *      is present (dev curl). Not security-relevant in dev.
+ *
+ * DEPLOYMENT REQUIREMENT — non-Vercel: the upstream proxy MUST strip
+ * any `x-forwarded-for` and `x-vercel-forwarded-for` it receives from
+ * the client and APPEND its own observation. If your proxy passes the
+ * client header through unchanged, this function is back to spoofable.
  */
 export function getClientIp(request: Request): string {
-  // Check common proxy headers
-  const forwardedFor = request.headers.get('x-forwarded-for')
-  if (forwardedFor) {
-    // Take the first IP in the chain (original client)
-    return forwardedFor.split(',')[0].trim()
+  const vercel = request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim()
+  if (vercel) return vercel
+
+  const realIp = request.headers.get('x-real-ip')?.trim()
+  if (realIp) return realIp
+
+  const xff = request.headers.get('x-forwarded-for')
+  if (xff) {
+    const hops = xff.split(',').map((s) => s.trim()).filter(Boolean)
+    const lastHop = hops[hops.length - 1]
+    if (lastHop) return lastHop
   }
 
-  const realIp = request.headers.get('x-real-ip')
-  if (realIp) {
-    return realIp.trim()
-  }
-
-  // Fallback for development
   return '127.0.0.1'
 }
 
 // Preset configurations for common use cases
 export const RateLimits = {
-  /** Login attempts: 5 per 15 minutes */
-  login: { limit: 5, windowSeconds: 15 * 60 },
-  /** Registration: 3 per hour */
-  register: { limit: 3, windowSeconds: 60 * 60 },
+  /**
+   * Login attempts: 5 per 15 minutes per IP. failClosed because
+   * silent fallback to per-Lambda counters during an Upstash blip
+   * effectively disables brute-force protection at any non-trivial
+   * concurrency.
+   */
+  login: { limit: 5, windowSeconds: 15 * 60, failClosed: true },
+  /**
+   * Login attempts per target email: 10 per hour. Layered on top of
+   * the per-IP cap so credential-stuffing attackers who rotate IPs
+   * (botnet, residential proxies) still hit a brake when they target a
+   * single victim's email. The window is intentionally longer than the
+   * per-IP window so a legitimate user retrying their own password a
+   * few times doesn't lock themselves out of the account globally.
+   * failClosed for the same reason as login above.
+   */
+  loginEmail: { limit: 10, windowSeconds: 60 * 60, failClosed: true },
+  /** Registration: 3 per hour. failClosed — registration spam is the
+   * pre-step to credential stuffing and AI-cost abuse. */
+  register: { limit: 3, windowSeconds: 60 * 60, failClosed: true },
   /** Code validation (invite, transfer): 10 per 15 minutes */
   codeValidation: { limit: 10, windowSeconds: 15 * 60 },
   /**
@@ -194,6 +283,25 @@ export const RateLimits = {
    * so the limit is intentionally tight.
    */
   ai: { limit: 20, windowSeconds: 60 },
+  /**
+   * AI per-user DAILY ceiling: 100 calls per user per 24 hours.
+   * Layered on top of the per-minute cap. Mitigates the
+   * "register fresh accounts to bypass per-user budget" attack: even
+   * with N fake users, each is still bounded daily. failClosed
+   * because the fal.ai/OpenAI cost amplification is unbounded
+   * during an Upstash brownout otherwise (~$500/hour observed in
+   * audit modeling for generate-icon at $0.04/call).
+   */
+  aiDaily: { limit: 100, windowSeconds: 24 * 60 * 60, failClosed: true },
+  /**
+   * GLOBAL AI daily kill-switch: 10000 calls per day across the whole
+   * deployment. Single counter for ALL users; trips a circuit
+   * breaker if attack traffic somehow saturates user-level limits
+   * (large botnet, mass account creation). Tune downward if
+   * organic usage stays well under this. failClosed for the same
+   * cost-protection rationale as aiDaily.
+   */
+  aiGlobalDaily: { limit: 10_000, windowSeconds: 24 * 60 * 60, failClosed: true },
   /**
    * HEIC conversion: 30 per minute per user. Not billable externally, but
    * each call can buffer up to 30 MB into Lambda memory.
@@ -217,4 +325,11 @@ export const RateLimits = {
    * interactively and never in bulk.
    */
   userMutation: { limit: 30, windowSeconds: 60 },
+  /**
+   * Coarse per-IP mutation guardrail layered on top of user-keyed
+   * limits. 600/min is well above any legitimate single-user
+   * interactive load but tight enough to cap a single attacker who
+   * registers N fresh accounts to bypass per-user budgets.
+   */
+  ipMutation: { limit: 600, windowSeconds: 60 },
 } as const

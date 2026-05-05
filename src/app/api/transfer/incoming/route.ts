@@ -5,6 +5,7 @@ import { eq, and, gt } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { errorResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
+import { logServerError } from '@/lib/server-logger'
 
 /**
  * GET /api/transfer/incoming
@@ -78,7 +79,7 @@ export async function GET() {
       },
     })
   } catch (error) {
-    console.error('Fetch incoming transfer error:', error)
+    logServerError('transfer.incoming', error)
     return errorResponse(ApiMessageCode.TRANSFER_FETCH_INCOMING_FAILED, 500)
   }
 }

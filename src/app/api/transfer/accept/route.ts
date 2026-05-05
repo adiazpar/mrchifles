@@ -4,11 +4,12 @@ import { eq, and, gt, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError, errorResponse } from '@/lib/api-middleware'
+import { validationError, errorResponse, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
 import { invalidateAccessCache } from '@/lib/business-auth'
+import { logServerError } from '@/lib/server-logger'
 
 const acceptSchema = z.object({
   code: Schemas.code(),
@@ -21,8 +22,13 @@ const acceptSchema = z.object({
  * User-level endpoint (not business-scoped) because the recipient
  * may not yet have access to the business.
  */
+const MAX_BODY_BYTES = 1024
+
 export async function POST(request: NextRequest) {
   try {
+    const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+    if (oversize) return oversize
+
     // Rate limit by IP
     const clientIp = getClientIp(request)
     const rateLimitResult = await checkRateLimit(`transfer:${clientIp}`, RateLimits.codeValidation)
@@ -91,51 +97,88 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Atomic: demote old owner, promote recipient, mark transfer completed
-    await db.transaction(async (tx) => {
-      // Demote old owner to partner
-      await tx
-        .update(businessUsers)
-        .set({ role: 'partner' })
-        .where(and(
-          eq(businessUsers.userId, transfer.fromUser),
-          eq(businessUsers.businessId, transfer.businessId),
-        ))
-
-      // Upsert recipient as owner
-      const [existingMembership] = await tx
-        .select()
-        .from(businessUsers)
-        .where(and(
-          eq(businessUsers.userId, user.userId),
-          eq(businessUsers.businessId, transfer.businessId),
-        ))
-        .limit(1)
-
-      if (existingMembership) {
-        await tx
+    // Atomic: demote old owner, promote recipient, mark transfer completed.
+    // Two extra invariants are enforced inside the transaction:
+    //   1. Demote MUST find the from-user as the active owner. If
+    //      another flow already demoted them (manual DB write, future
+    //      bug, or another race), refuse to promote — otherwise the
+    //      result is two owners on this business (no DB-level
+    //      uniqueness guard prior to the schema migration shipped
+    //      alongside this fix).
+    //   2. If the recipient already has a membership and it's
+    //      disabled, refuse the accept. Without this, a user the
+    //      owner disabled mid-flow could re-activate as owner using
+    //      a still-valid transfer code.
+    try {
+      await db.transaction(async (tx) => {
+        // Demote old owner to partner — conditional on the row still
+        // existing as the active owner. .returning() lets us detect
+        // "0 rows updated" without a follow-up SELECT.
+        const demoted = await tx
           .update(businessUsers)
-          .set({ role: 'owner', status: 'active' })
-          .where(eq(businessUsers.id, existingMembership.id))
-      } else {
-        await tx.insert(businessUsers).values({
-          id: nanoid(),
-          userId: user.userId,
-          businessId: transfer.businessId,
-          role: 'owner',
-          status: 'active',
-          createdAt: now,
-        })
-      }
+          .set({ role: 'partner' })
+          .where(and(
+            eq(businessUsers.userId, transfer.fromUser),
+            eq(businessUsers.businessId, transfer.businessId),
+            eq(businessUsers.role, 'owner'),
+            eq(businessUsers.status, 'active'),
+          ))
+          .returning({ id: businessUsers.id })
 
-      await tx
-        .update(ownershipTransfers)
-        .set({
-          status: 'completed',
-          toUser: user.userId,
-        })
-        .where(eq(ownershipTransfers.id, transfer.id))
-    })
+        if (demoted.length === 0) {
+          throw new TransferOwnerGoneError()
+        }
+
+        // Upsert recipient as owner
+        const [existingMembership] = await tx
+          .select()
+          .from(businessUsers)
+          .where(and(
+            eq(businessUsers.userId, user.userId),
+            eq(businessUsers.businessId, transfer.businessId),
+          ))
+          .limit(1)
+
+        if (existingMembership) {
+          // Refuse if the recipient was disabled by the owner before
+          // the accept landed. They can't re-enter as a member, much
+          // less as the owner, via a stale transfer code. The owner
+          // must explicitly re-enable via /users/toggle-status.
+          if (existingMembership.status === 'disabled') {
+            throw new TransferRecipientDisabledError()
+          }
+          await tx
+            .update(businessUsers)
+            .set({ role: 'owner', status: 'active' })
+            .where(eq(businessUsers.id, existingMembership.id))
+        } else {
+          await tx.insert(businessUsers).values({
+            id: nanoid(),
+            userId: user.userId,
+            businessId: transfer.businessId,
+            role: 'owner',
+            status: 'active',
+            createdAt: now,
+          })
+        }
+
+        await tx
+          .update(ownershipTransfers)
+          .set({
+            status: 'completed',
+            toUser: user.userId,
+          })
+          .where(eq(ownershipTransfers.id, transfer.id))
+      })
+    } catch (err) {
+      if (err instanceof TransferRecipientDisabledError) {
+        return errorResponse(ApiMessageCode.TRANSFER_RECIPIENT_DISABLED, 403)
+      }
+      if (err instanceof TransferOwnerGoneError) {
+        return errorResponse(ApiMessageCode.TRANSFER_OWNER_GONE, 409)
+      }
+      throw err
+    }
 
     // Invalidate cached access
     invalidateAccessCache(transfer.fromUser, transfer.businessId)
@@ -146,7 +189,23 @@ export async function POST(request: NextRequest) {
       businessId: transfer.businessId,
     })
   } catch (error) {
-    console.error('Accept transfer error:', error)
+    logServerError('transfer.accept', error)
     return errorResponse(ApiMessageCode.TRANSFER_ACCEPT_FAILED, 500)
+  }
+}
+
+// Sentinel errors thrown inside the accept transaction so the rollback
+// happens automatically and the outer code can map back to the right
+// envelope. Defined at module scope so `instanceof` works across the
+// transaction boundary.
+class TransferRecipientDisabledError extends Error {
+  constructor() {
+    super('Transfer recipient is disabled in this business')
+  }
+}
+
+class TransferOwnerGoneError extends Error {
+  constructor() {
+    super('Original owner is no longer the active owner')
   }
 }

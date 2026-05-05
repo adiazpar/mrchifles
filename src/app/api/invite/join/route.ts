@@ -4,10 +4,11 @@ import { eq, and, gt, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError, errorResponse, applyRateLimit } from '@/lib/api-middleware'
+import { validationError, errorResponse, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { RateLimits } from '@/lib/rate-limit'
+import { logServerError } from '@/lib/server-logger'
 
 const joinSchema = z.object({
   code: Schemas.code(),
@@ -19,8 +20,14 @@ const joinSchema = z.object({
  * Joins the authenticated user to a business using an invite code.
  * Creates a business_users membership entry.
  */
+// Body is `{ code }` — 1 KB cap is generous.
+const MAX_BODY_BYTES = 1024
+
 export async function POST(request: NextRequest) {
   try {
+    const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+    if (oversize) return oversize
+
     // Require authentication
     const user = await getCurrentUser()
     if (!user) {
@@ -74,9 +81,20 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Check if user is already a member of this business
+    // Check existing membership and split by status. The status='active'
+    // and status='disabled' branches return DIFFERENT envelopes:
+    //   - active   -> INVITE_ALREADY_MEMBER (UX hint, no security
+    //                 concern; the user can already get in)
+    //   - disabled -> INVITE_USER_IS_DISABLED (refuses to silently
+    //                 re-activate via fresh invite — that bypass let
+    //                 a partner remove-then-reinvite to undo a
+    //                 manager's disable. Re-activation must go
+    //                 through users/toggle-status.)
+    // Filtering only by id (no status) previously returned
+    // INVITE_ALREADY_MEMBER for both, leaking that the user is a
+    // (disabled) member to anyone holding the invite code.
     const existingMembership = await db
-      .select({ id: businessUsers.id })
+      .select({ id: businessUsers.id, status: businessUsers.status })
       .from(businessUsers)
       .where(
         and(
@@ -87,33 +105,58 @@ export async function POST(request: NextRequest) {
       .get()
 
     if (existingMembership) {
+      const messageCode =
+        existingMembership.status === 'disabled'
+          ? ApiMessageCode.INVITE_USER_IS_DISABLED
+          : ApiMessageCode.INVITE_ALREADY_MEMBER
       return NextResponse.json({
         success: false,
-        messageCode: ApiMessageCode.INVITE_ALREADY_MEMBER,
+        messageCode,
       })
     }
 
-    // Create membership + mark invite as used atomically. Previously two
-    // sequential writes — if the membership insert succeeded but the
-    // invite update failed, the code would stay usable and the same
-    // person (or a friend with the code) could join again.
+    // Atomic claim: only one redeemer can flip usedBy from NULL. If two
+    // users race the same single-use code, one wins the UPDATE, the
+    // other gets `claimed.length === 0` and a 409. The previous
+    // db.batch(insert + update) ran the writes simultaneously — neither
+    // could observe the other's claim, so both batches succeeded and
+    // the "single use" invariant was broken (two memberships, one row
+    // in invite_codes set to whichever user wrote last).
     const membershipId = nanoid()
-    await db.batch([
-      db.insert(businessUsers).values({
-        id: membershipId,
-        userId: user.userId,
-        businessId: invite.businessId,
-        role: invite.role,
-        status: 'active',
-        createdAt: now,
-      }),
-      db
-        .update(inviteCodes)
-        .set({
-          usedBy: user.userId,
-        })
-        .where(eq(inviteCodes.id, invite.id)),
-    ])
+    const claimed = await db
+      .update(inviteCodes)
+      .set({ usedBy: user.userId })
+      .where(
+        and(
+          eq(inviteCodes.id, invite.id),
+          sql`${inviteCodes.usedBy} IS NULL`,
+        ),
+      )
+      .returning({ id: inviteCodes.id })
+
+    if (claimed.length === 0) {
+      // Lost the race to another redeemer — the code was already used
+      // between our SELECT above and this UPDATE. Treat as invalid
+      // (same envelope as expired/missing) so a probing client can't
+      // distinguish "lost the race" from "wrong code".
+      return NextResponse.json({
+        success: false,
+        messageCode: ApiMessageCode.INVITE_INVALID_OR_EXPIRED,
+      })
+    }
+
+    // Claim succeeded — only NOW write the membership row. If this
+    // insert fails for any reason, the invite stays consumed (better
+    // than the inverse: an unredeemable invite is recoverable by an
+    // admin, a free re-claim is a security regression).
+    await db.insert(businessUsers).values({
+      id: membershipId,
+      userId: user.userId,
+      businessId: invite.businessId,
+      role: invite.role,
+      status: 'active',
+      createdAt: now,
+    })
 
     return NextResponse.json({
       success: true,
@@ -122,7 +165,7 @@ export async function POST(request: NextRequest) {
       role: invite.role,
     })
   } catch (error) {
-    console.error('Join business error:', error)
+    logServerError('invite.join', error)
     return NextResponse.json(
       {
         success: false,

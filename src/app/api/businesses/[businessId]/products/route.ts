@@ -2,9 +2,11 @@ import { db, products } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { uploadProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
+import { uploadProductIcon, validateIconSize } from '@/lib/storage'
+import { sniffImageMimeType, type ImageMimeType } from '@/lib/file-sniff'
+import { logServerError } from '@/lib/server-logger'
 import { withBusinessAuth, validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
-import { canManageBusiness } from '@/lib/business-auth'
+import { canManageBusiness, assertCategoryInBusiness } from '@/lib/business-auth'
 import { ApiMessageCode } from '@/lib/api-messages'
 import {
   computeCanonicalGtin,
@@ -16,7 +18,8 @@ import { Schemas } from '@/lib/schemas'
 
 const createProductSchema = z.object({
   name: Schemas.name(),
-  price: Schemas.amount(),
+  // FormData input — `formData.get('price')` is always a string.
+  price: Schemas.amountFromString(),
   categoryId: Schemas.id().optional(),
   active: Schemas.activeFlag(),
   barcode: z.string().optional(),
@@ -111,6 +114,15 @@ export const POST = withBusinessAuth(async (request, access) => {
     barcodeSource: validBarcodeSource,
   } = validation.data
 
+  // Cross-tenant guard: when a category is supplied it must belong to
+  // THIS business. Without this a partner can attach a foreign business's
+  // categoryId to their product; the row then dangles when the foreign
+  // business deletes that category and the cascade nulls only its own
+  // products.
+  if (validCategoryId && !(await assertCategoryInBusiness(validCategoryId, access.businessId))) {
+    return errorResponse(ApiMessageCode.CATEGORY_NOT_FOUND, 404)
+  }
+
   // Derive format from value via the cascade. Format is never trusted from
   // the client. If the value is non-empty but the cascade can't classify it,
   // reject as a malformed barcode.
@@ -152,18 +164,38 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   const productId = nanoid()
 
-  // Resolve icon: custom upload, preset emoji, or null
+  // Resolve icon: custom upload, preset emoji, or null.
+  // Content-sniff the buffer before storing — File.type is client-
+  // declared and spoofable. Without this, an SVG with
+  // Content-Type: image/png would land in the DB (data URL) or on dev
+  // disk (.svg with image/svg+xml served by Next), opening a stored-
+  // XSS surface the moment any UI surface renders the icon outside
+  // <img src=...>. SVG is rejected unconditionally — sniffImageMimeType
+  // never returns it.
+  const ICON_ALLOWED_TYPES: ReadonlyArray<ImageMimeType> = [
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'image/gif',
+  ]
   let iconData: string | null = null
   if (iconFile && iconFile.size > 0) {
     try {
-      const base64 = await fileToBase64(iconFile)
-      const { valid } = validateIconSize(base64)
+      const buffer = Buffer.from(await iconFile.arrayBuffer())
+      const sniffed = sniffImageMimeType(buffer)
+      if (!sniffed || !ICON_ALLOWED_TYPES.includes(sniffed)) {
+        return errorResponse(ApiMessageCode.PRODUCT_ICON_INVALID_TYPE, 400)
+      }
+      // Build the data URL with the sniffed MIME so size validation
+      // matches what'll actually be stored in production.
+      const base64DataUrl = `data:${sniffed};base64,${buffer.toString('base64')}`
+      const { valid } = validateIconSize(base64DataUrl)
       if (!valid) {
         return errorResponse(ApiMessageCode.PRODUCT_ICON_TOO_LARGE, 400)
       }
-      iconData = await uploadProductIcon(iconFile, productId, base64)
+      iconData = await uploadProductIcon(buffer, productId, sniffed)
     } catch (err) {
-      console.error('Error uploading icon:', err)
+      logServerError('products.icon-upload', err)
       return errorResponse(ApiMessageCode.PRODUCT_ICON_UPLOAD_FAILED, 500)
     }
   } else if (presetIcon) {
@@ -186,4 +218,4 @@ export const POST = withBusinessAuth(async (request, access) => {
   }).returning()
 
   return successResponse({ product: newProduct })
-})
+}, { maxBodyBytes: POST_MAX_BODY_BYTES })

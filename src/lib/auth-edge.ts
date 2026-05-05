@@ -11,7 +11,16 @@
 import { jwtVerify } from 'jose/jwt/verify'
 import type { NextRequest } from 'next/server'
 
-const AUTH_COOKIE_NAME = 'auth-token'
+// Mirrors src/lib/simple-auth.ts: only the __Host-prefixed cookie is
+// authoritative. The legacy `auth-token` name is no longer read.
+const AUTH_COOKIE_NAME = '__Host-auth-token'
+
+// Issuer / audience claims pinned to this app — same constants as
+// simple-auth.ts. Edge runtime can't import from simple-auth (which
+// pulls in Node-only deps), so the values are duplicated here. If
+// you change one, change both.
+const JWT_ISSUER = 'kasero'
+const JWT_AUDIENCE = 'kasero-app'
 
 interface JWTPayload {
   userId: string
@@ -29,10 +38,19 @@ function getJwtSecret(): Uint8Array {
 
 /**
  * Verify and decode a JWT token. Edge-safe.
+ *
+ * Same enforcement as src/lib/simple-auth.ts: HS256 only, required
+ * issuer / audience, 5s clock tolerance. Tokens missing iss/aud are
+ * rejected — pre-migration sessions force a re-login.
  */
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getJwtSecret())
+    const { payload } = await jwtVerify(token, getJwtSecret(), {
+      algorithms: ['HS256'],
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+      clockTolerance: '5s',
+    })
     return payload as unknown as JWTPayload
   } catch {
     return null

@@ -73,6 +73,95 @@ export function sniffImageMimeType(bytes: Uint8Array): ImageMimeType | null {
 }
 
 /**
+ * Decode + sniff a base64 (or `data:image/...;base64,...`) string,
+ * enforce a max-decoded-size cap, and return the safe payload to
+ * forward to upstream AI providers.
+ *
+ * Returns:
+ *   - { ok: true, sniffed, dataUrl } on success — `dataUrl` is the
+ *     re-encoded data URL using the SNIFFED MIME (never the
+ *     client-declared one).
+ *   - { ok: false, reason } when the input is non-string, decodes to
+ *     bytes that don't match a known raster image, or exceeds the cap.
+ *
+ * Without this guard, the AI routes accepted any string and forwarded
+ * it to OpenAI / fal.ai unchecked. Even a non-image string burned
+ * provider tokens before the upstream rejected, and a `data:text/html`
+ * payload could in theory be stored if any future code path persisted
+ * the input verbatim.
+ */
+export function decodeAndSniffAiImage(
+  input: unknown,
+  maxDecodedBytes: number,
+):
+  | { ok: true; sniffed: ImageMimeType; dataUrl: string }
+  | { ok: false; reason: 'invalid-input' | 'unsupported-type' | 'too-large' } {
+  if (typeof input !== 'string' || input.length === 0) {
+    return { ok: false, reason: 'invalid-input' }
+  }
+  // Strip the optional `data:image/...;base64,` prefix. The MIME in
+  // that prefix is client-declared and ignored — we sniff the bytes.
+  const commaIdx = input.indexOf(',')
+  const payload =
+    input.startsWith('data:') && commaIdx !== -1 ? input.slice(commaIdx + 1) : input
+  let bytes: Buffer
+  try {
+    bytes = Buffer.from(payload, 'base64')
+  } catch {
+    return { ok: false, reason: 'invalid-input' }
+  }
+  if (bytes.length === 0) {
+    return { ok: false, reason: 'invalid-input' }
+  }
+  if (bytes.length > maxDecodedBytes) {
+    return { ok: false, reason: 'too-large' }
+  }
+  const sniffed = sniffImageMimeType(bytes)
+  if (!sniffed || sniffed === 'image/gif') {
+    // GIF is not an AI-pipeline input format (the upstreams choke on
+    // animated GIF and the icon pipeline expects still images);
+    // restrict to PNG/JPEG/WEBP.
+    return { ok: false, reason: 'unsupported-type' }
+  }
+  return {
+    ok: true,
+    sniffed,
+    dataUrl: `data:${sniffed};base64,${bytes.toString('base64')}`,
+  }
+}
+
+/**
+ * Detect a HEIC / HEIF file by inspecting the ftyp box at offset 4.
+ * Returns true for any of the brand codes (`heic`, `heix`, `hevc`,
+ * `hevx`, `mif1`, `msf1`) that map to still-image HEIF variants.
+ *
+ * The convert-heic route hands raw bytes to `heic-convert` (which
+ * wraps native libheif/libde265 — historical CVE surface). Without
+ * this guard the route accepted any 0-30 MB blob; sniffing
+ * upfront rejects garbage before the parser sees it.
+ */
+export function isHeic(bytes: Uint8Array): boolean {
+  // ftyp container: bytes 0-3 are box size (any), bytes 4-7 are
+  // ASCII "ftyp", bytes 8-11 are the major brand. We allow the
+  // brand to live at offset 8 (standard) or at offset 16 in
+  // segmented files; the standard offset covers ~all HEIC produced
+  // by phones.
+  if (bytes.length < 12) return false
+  if (bytes[4] !== 0x66 || bytes[5] !== 0x74 || bytes[6] !== 0x79 || bytes[7] !== 0x70) {
+    return false // missing "ftyp"
+  }
+  const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11])
+  return (
+    brand === 'heic' ||
+    brand === 'heix' ||
+    brand === 'hevc' ||
+    brand === 'hevx' ||
+    brand === 'mif1' ||
+    brand === 'msf1'
+  )
+}
+
+/**
  * Like sniffImageMimeType but also accepts PDF (common for order
  * receipts). Returns the detected MIME or null.
  */

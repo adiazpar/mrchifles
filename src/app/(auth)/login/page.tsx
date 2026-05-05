@@ -9,9 +9,22 @@ import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { APP_VERSION } from '@/lib/version'
 
+// Defense against open-redirect via the `?redirect=` query param.
+// `//attacker.tld/foo` is a protocol-relative URL — passing it to
+// router.push lands the user on a phishing site after a successful
+// login. Match `/<single-non-slash-non-backslash>...` so the value is
+// always a same-origin path; anything else falls back to /home.
+function safeRedirect(raw: string | null): string {
+  if (!raw) return '/home'
+  // Allow only paths that start with exactly one '/' followed by a
+  // non-'/' non-'\\' character. This rejects '//host', '/\\host',
+  // 'http://...', and the empty string.
+  return /^\/[^/\\]/.test(raw) ? raw : '/home'
+}
+
 function LoginPageContent() {
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/home'
+  const redirect = safeRedirect(searchParams.get('redirect'))
   const { login } = useAuth()
   const { playEntry } = useAuthGate()
   const { navigate } = usePageTransition()

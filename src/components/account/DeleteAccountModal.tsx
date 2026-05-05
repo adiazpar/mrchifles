@@ -35,6 +35,7 @@ export function DeleteAccountModal({
   const [isCheckLoading, setIsCheckLoading] = useState(true)
   const [ownedBusinesses, setOwnedBusinesses] = useState<OwnedBusiness[]>([])
   const [confirmEmail, setConfirmEmail] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState('')
 
@@ -81,6 +82,7 @@ export function DeleteAccountModal({
 
   const handleExitComplete = useCallback(() => {
     setConfirmEmail('')
+    setCurrentPassword('')
     setIsDeleting(false)
     setError('')
     onExitComplete?.()
@@ -89,7 +91,9 @@ export function DeleteAccountModal({
   const isBlocked = ownedBusinesses.length > 0
   const emailMatches =
     !!user && confirmEmail.trim().toLowerCase() === user.email.toLowerCase()
-  const canDelete = !isCheckLoading && !isBlocked && emailMatches && !isDeleting
+  const passwordEntered = currentPassword.length > 0
+  const canDelete =
+    !isCheckLoading && !isBlocked && emailMatches && passwordEntered && !isDeleting
 
   const handleDelete = useCallback(async () => {
     if (!canDelete || !user) return
@@ -99,7 +103,10 @@ export function DeleteAccountModal({
       await apiRequest('/api/auth/me', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmEmail: confirmEmail.trim() }),
+        body: JSON.stringify({
+          confirmEmail: confirmEmail.trim(),
+          currentPassword,
+        }),
       })
       // Success: clear local auth cache and redirect to register.
       await logout()
@@ -125,7 +132,7 @@ export function DeleteAccountModal({
     } finally {
       setIsDeleting(false)
     }
-  }, [canDelete, user, confirmEmail, logout, router, translateApiMessage, tCommon])
+  }, [canDelete, user, confirmEmail, currentPassword, logout, router, translateApiMessage, tCommon])
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} onExitComplete={handleExitComplete}>
@@ -151,6 +158,8 @@ export function DeleteAccountModal({
               email={user?.email ?? ''}
               confirmEmail={confirmEmail}
               onConfirmEmailChange={setConfirmEmail}
+              currentPassword={currentPassword}
+              onCurrentPasswordChange={setCurrentPassword}
             />
           )}
         </Modal.Item>
@@ -225,13 +234,21 @@ interface ConfirmStateProps {
   email: string
   confirmEmail: string
   onConfirmEmailChange: (value: string) => void
+  currentPassword: string
+  onCurrentPasswordChange: (value: string) => void
 }
 
-function ConfirmState({ email, confirmEmail, onConfirmEmailChange }: ConfirmStateProps) {
+function ConfirmState({
+  email,
+  confirmEmail,
+  onConfirmEmailChange,
+  currentPassword,
+  onCurrentPasswordChange,
+}: ConfirmStateProps) {
   const t = useTranslations('account')
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col items-center text-center py-2 mb-4">
         <div className="w-14 h-14 rounded-full bg-error-subtle flex items-center justify-center mb-4">
           <AlertTriangle className="w-7 h-7 text-error" />
@@ -251,6 +268,16 @@ function ConfirmState({ email, confirmEmail, onConfirmEmailChange }: ConfirmStat
         placeholder={email || t('delete_confirm_placeholder')}
         autoComplete="off"
         type="email"
+        required
+      />
+
+      <Input
+        label={t('delete_password_label')}
+        value={currentPassword}
+        onChange={(e) => onCurrentPasswordChange(e.target.value)}
+        placeholder={t('delete_password_placeholder')}
+        autoComplete="current-password"
+        type="password"
         required
       />
     </div>

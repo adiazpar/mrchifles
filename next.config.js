@@ -101,6 +101,54 @@ const nextConfig = {
             key: 'Cross-Origin-Opener-Policy',
             value: 'same-origin',
           },
+          {
+            // Force HTTPS on every browser that has ever seen this
+            // header — for one year, including subdomains. Safe to
+            // enable on Vercel (always HTTPS at the edge); revisit
+            // before pointing the apex at a non-HTTPS host.
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
+          },
+          {
+            // Block cross-origin documents from fetching/embedding our
+            // resources (Spectre-style protection). Combined with
+            // X-Frame-Options: DENY this also stops legacy clickjacking.
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'same-origin',
+          },
+          {
+            // CSP shipped in REPORT-ONLY mode first so the team can
+            // walk the app and clean up any inline-script / inline-
+            // style / unexpected connect violations before flipping
+            // to enforcing. Browsers log violations to the console
+            // (DevTools → Console) and to any configured report-uri.
+            //
+            // To flip to enforcing once the report stream is clean:
+            //   - rename the header key from
+            //     'Content-Security-Policy-Report-Only' to
+            //     'Content-Security-Policy'
+            //   - swap 'unsafe-inline' for the SHA-256 hash of the
+            //     inline theme script in app/layout.tsx (or move
+            //     that script to /public/theme-init.js)
+            //
+            // connect-src 'self' is enough today: AI/HEIC routes
+            // proxy fal.ai/OpenAI server-side, so the browser only
+            // ever fetches same-origin /api/* paths.
+            key: 'Content-Security-Policy-Report-Only',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self'",
+              "frame-ancestors 'none'",
+              "base-uri 'none'",
+              "form-action 'self'",
+              "object-src 'none'",
+              'upgrade-insecure-requests',
+            ].join('; '),
+          },
         ],
       },
     ]

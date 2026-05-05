@@ -44,6 +44,13 @@ export const POST = withBusinessAuth(async (request, access) => {
 
   const now = new Date()
   const saleDate = body.date ? new Date(body.date) : now
+  // Reject Invalid Date BEFORE the range check. NaN comparisons
+  // always evaluate to false, so an invalid string would otherwise
+  // sail through as "neither in the future nor in the past" and land
+  // a NaN timestamp in the row.
+  if (!Number.isFinite(saleDate.getTime())) {
+    return errorResponse(ApiMessageCode.SALE_INVALID_DATE, 400)
+  }
   if (
     saleDate.getTime() > now.getTime() + ONE_MINUTE_MS ||
     saleDate.getTime() < now.getTime() - ONE_YEAR_MS

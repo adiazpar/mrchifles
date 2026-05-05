@@ -3,10 +3,11 @@ import { db, ownershipTransfers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError, errorResponse, successResponse, applyRateLimit } from '@/lib/api-middleware'
+import { validationError, errorResponse, successResponse, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { RateLimits } from '@/lib/rate-limit'
+import { logServerError } from '@/lib/server-logger'
 
 const declineSchema = z.object({
   code: Schemas.code(),
@@ -23,8 +24,13 @@ const declineSchema = z.object({
  * Already-completed or already-cancelled transfers return the usual
  * TRANSFER_INVALID_OR_EXPIRED code.
  */
+const MAX_BODY_BYTES = 1024
+
 export async function POST(request: NextRequest) {
   try {
+    const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+    if (oversize) return oversize
+
     const user = await getCurrentUser()
     if (!user) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
@@ -70,14 +76,27 @@ export async function POST(request: NextRequest) {
       return errorResponse(ApiMessageCode.TRANSFER_WRONG_RECIPIENT, 403)
     }
 
-    await db
+    // Atomic claim: same TOCTOU rationale as cancel. If /accept lands
+    // between the SELECT above and this UPDATE, status is already
+    // 'completed' and we must NOT overwrite it with 'cancelled'.
+    const declined = await db
       .update(ownershipTransfers)
       .set({ status: 'cancelled' })
-      .where(eq(ownershipTransfers.id, transfer.id))
+      .where(
+        and(
+          eq(ownershipTransfers.id, transfer.id),
+          eq(ownershipTransfers.status, 'pending'),
+        ),
+      )
+      .returning({ id: ownershipTransfers.id })
+
+    if (declined.length === 0) {
+      return errorResponse(ApiMessageCode.TRANSFER_INVALID_OR_EXPIRED, 400)
+    }
 
     return successResponse({})
   } catch (error) {
-    console.error('Decline transfer error:', error)
+    logServerError('transfer.decline', error)
     return errorResponse(ApiMessageCode.TRANSFER_DECLINE_FAILED, 500)
   }
 }

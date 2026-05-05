@@ -628,13 +628,21 @@ export function ProductsView() {
 
   const handleSaveAdjustment = useCallback(async (data: StockAdjustmentData) => {
     try {
+      // Optimistic-locked write: the server compares `expectedStock`
+      // to the row's current value and refuses with 409 if another
+      // manager edited it in the meantime. Without this guard the
+      // last write silently won and the earlier edit was lost.
       await apiPatch(`/api/businesses/${businessId}/products/${data.productId}/stock`, {
         stock: data.newStockValue,
+        expectedStock: data.expectedStockValue,
       })
       setProducts(prev => prev.map(p => p.id === data.productId ? { ...p, stock: data.newStockValue } : p))
       setIsModalOpen(false)
     } catch (err) {
       console.error('Error adjusting stock:', err)
+      // Re-throw so the modal can surface the envelope (e.g.
+      // STOCK_CONCURRENCY_CONFLICT prompts the user to refresh).
+      throw err
     }
   }, [businessId, setProducts])
 

@@ -10,9 +10,12 @@
  * directly. They are re-exported here for server convenience.
  */
 
+import 'server-only'
 import fs from 'fs/promises'
 import path from 'path'
 import { isBase64DataUrl } from './utils'
+import type { ImageMimeType } from './file-sniff'
+import { logServerError } from './server-logger'
 // Pulled in for both local use (uploadProductIcon needs fileToBase64) and
 // for the re-export below.
 import {
@@ -35,18 +38,25 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 const MEDIA_DIR = path.join(process.cwd(), 'public', 'media', 'products')
 
 /**
- * Get file extension from MIME type
+ * Map a sniffed image MIME to a filesystem extension. Limited to the
+ * raster types `sniffImageMimeType` can return — no SVG, since the
+ * upload routes content-sniff and reject SVG explicitly. Including
+ * 'image/svg+xml' here previously was dead+dangerous: combined with a
+ * client-declared MIME, an SVG could land on dev disk under a .svg
+ * filename, which Next.js then served with Content-Type: image/svg+xml,
+ * giving a stored-XSS surface in any direct hit.
  */
-function getExtensionFromMimeType(mimeType: string): string {
-  const extensions: Record<string, string> = {
-    'image/png': 'png',
-    'image/jpeg': 'jpg',
-    'image/jpg': 'jpg',
-    'image/gif': 'gif',
-    'image/webp': 'webp',
-    'image/svg+xml': 'svg',
+function getExtensionFromMimeType(mimeType: ImageMimeType): string {
+  switch (mimeType) {
+    case 'image/png':
+      return 'png'
+    case 'image/jpeg':
+      return 'jpg'
+    case 'image/gif':
+      return 'gif'
+    case 'image/webp':
+      return 'webp'
   }
-  return extensions[mimeType] || 'png'
 }
 
 /**
@@ -61,39 +71,48 @@ async function ensureMediaDir(): Promise<void> {
 }
 
 /**
- * Upload a product icon
+ * Upload a product icon. The MIME type passed here MUST be the result
+ * of `sniffImageMimeType(buffer)` — never File.type, which is client-
+ * declared and spoofable. Storing the sniffed type guarantees the data
+ * URL prefix (production) or the on-disk extension (dev) cannot lie.
  *
  * Local dev: Saves file to public/media/products/<productId>.<ext>
- * Production: Returns base64 data URL
+ * Production: Returns base64 data URL using the SNIFFED MIME
  *
  * @returns The icon URL or data URL to store in the database
  */
-export async function uploadProductIcon(file: File, productId: string, precomputedBase64?: string): Promise<string> {
+export async function uploadProductIcon(
+  buffer: Buffer,
+  productId: string,
+  sniffedMime: ImageMimeType,
+): Promise<string> {
   if (IS_PRODUCTION) {
-    // Production: return base64 data URL (reuse if already computed)
-    return precomputedBase64 || await fileToBase64(file)
-  } else {
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const mimeType = file.type || 'image/png'
-    // Local dev: save to file system
-    await ensureMediaDir()
-    const ext = getExtensionFromMimeType(mimeType)
-    const filename = `${productId}.${ext}`
-    const filepath = path.join(MEDIA_DIR, filename)
-
-    // Delete any existing files for this product (different extensions)
-    await deleteProductIconFiles(productId)
-
-    await fs.writeFile(filepath, buffer)
-    // Cache-buster query param — same filename on re-upload would otherwise
-    // serve a stale image from the browser cache.
-    return `/media/products/${filename}?v=${Date.now()}`
+    // Production: build the data URL from the buffer + sniffed MIME so
+    // the prefix can never disagree with the payload.
+    return `data:${sniffedMime};base64,${buffer.toString('base64')}`
   }
+  // Local dev: save to file system. Filename uses the sniffed-extension
+  // mapping; SVG is intentionally absent so an SVG can never end up on
+  // disk even via a future bug.
+  await ensureMediaDir()
+  const ext = getExtensionFromMimeType(sniffedMime)
+  const filename = `${productId}.${ext}`
+  const filepath = path.join(MEDIA_DIR, filename)
+
+  // Delete any existing files for this product (different extensions)
+  await deleteProductIconFiles(productId)
+
+  await fs.writeFile(filepath, buffer)
+  // Cache-buster query param — same filename on re-upload would otherwise
+  // serve a stale image from the browser cache.
+  return `/media/products/${filename}?v=${Date.now()}`
 }
 
 /**
  * Delete product icon files (local dev only)
- * Removes all files matching the productId regardless of extension
+ * Removes all files matching the productId regardless of extension.
+ * Includes 'svg' in the cleanup list so legacy on-disk SVGs from
+ * before the icon-sniff hardening still get cleaned up on next write.
  */
 async function deleteProductIconFiles(productId: string): Promise<void> {
   try {
@@ -109,7 +128,7 @@ async function deleteProductIconFiles(productId: string): Promise<void> {
     }
   } catch (err) {
     // Ignore errors - file might not exist
-    console.error('Error deleting icon files:', err)
+    logServerError('storage.delete-icon-files', err)
   }
 }
 
@@ -137,7 +156,7 @@ export async function deleteProductIcon(iconUrl: string | null, productId?: stri
     try {
       await fs.unlink(path.join(MEDIA_DIR, filename))
     } catch (err) {
-      console.error('Error deleting icon file:', err)
+      logServerError('storage.delete-icon-file', err)
     }
   }
 }

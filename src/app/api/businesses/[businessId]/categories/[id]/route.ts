@@ -95,20 +95,29 @@ export const DELETE = withBusinessAuth(async (request, access, routeParams) => {
 
   // Narrow count aggregate instead of pulling every product row (which
   // includes the base64 icon column — MBs of bandwidth per call on
-  // larger catalogs).
+  // larger catalogs). Scoped by businessId — defense in depth against
+  // any cross-tenant categoryId planting (a partner setting their
+  // product's categoryId to a foreign id) ever flowing into this count.
   const [countRow] = await db
     .select({ count: sql<number>`count(*)` })
     .from(products)
-    .where(eq(products.categoryId, id))
+    .where(and(eq(products.categoryId, id), eq(products.businessId, access.businessId)))
   const affectedProducts = Number(countRow?.count ?? 0)
 
-  // Atomic batch: null out the categoryId on products, null out the
-  // defaultCategoryId on the business if set, then delete the category
-  // itself. Non-atomic sequential writes could previously leave the
-  // business pointing at a soon-to-be-deleted category.
+  // Atomic batch: null out the categoryId on products (scoped by THIS
+  // business — if a partner planted a foreign categoryId on their own
+  // product it'd be untouched here, but we never want this DELETE to
+  // walk products in another business), null out the defaultCategoryId
+  // on this business if it points at this id, then delete the category.
+  // Non-atomic sequential writes could previously leave the business
+  // pointing at a soon-to-be-deleted category.
   await db.batch([
-    db.update(products).set({ categoryId: null }).where(eq(products.categoryId, id)),
-    db.update(businesses).set({ defaultCategoryId: null }).where(eq(businesses.defaultCategoryId, id)),
+    db.update(products)
+      .set({ categoryId: null })
+      .where(and(eq(products.categoryId, id), eq(products.businessId, access.businessId))),
+    db.update(businesses)
+      .set({ defaultCategoryId: null })
+      .where(and(eq(businesses.defaultCategoryId, id), eq(businesses.id, access.businessId))),
     db.delete(productCategories).where(eq(productCategories.id, id)),
   ])
 

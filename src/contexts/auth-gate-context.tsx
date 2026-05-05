@@ -94,6 +94,25 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     ): Promise<void> => {
       if (inFlightRef.current) return inFlightRef.current
 
+      // Defense-in-depth: every caller of runTransition is supposed
+      // to pass a same-origin path, but the login page reads the
+      // destination from a query parameter. If that path-validation
+      // ever regresses, this guard prevents router.push from sending
+      // the user to an attacker-controlled origin (open redirect).
+      // We resolve `destination` against location.origin and confirm
+      // the resulting URL stays same-origin; otherwise fall back to
+      // /home (the safe default for post-auth navigation).
+      if (typeof window !== 'undefined') {
+        try {
+          const url = new URL(destination, window.location.origin)
+          if (url.origin !== window.location.origin) {
+            destination = '/home'
+          }
+        } catch {
+          destination = '/home'
+        }
+      }
+
       const navigateEarly = !work
 
       const run = (async () => {

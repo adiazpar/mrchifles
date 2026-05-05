@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server'
-import { errorResponse, withAuth, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
+import { randomUUID } from 'crypto'
+import { errorResponse, withAuth, applyRateLimit } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { RateLimits } from '@/lib/rate-limit'
+import { isHeic } from '@/lib/file-sniff'
+import { logServerError } from '@/lib/server-logger'
 
 // iPhone HEIC captures top out around 10-15 MB; cap at 30 MB for headroom.
 const MAX_BODY_BYTES = 30 * 1024 * 1024
 
 export const POST = withAuth(async (request, user) => {
-  const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
-  if (oversize) return oversize
-
   const rateLimited = await applyRateLimit(`heic:${user.userId}`, RateLimits.heic)
   if (rateLimited) return rateLimited
 
@@ -21,11 +21,18 @@ export const POST = withAuth(async (request, user) => {
       return errorResponse(ApiMessageCode.HEIC_NO_FILE, 400)
     }
 
-    // Debug logging for HEIC conversion
-
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer()
     const inputBuffer = Buffer.from(arrayBuffer)
+
+    // Magic-byte sniff BEFORE handing the bytes to heic-convert /
+    // libheif. heic-convert wraps native parsers with a long history
+    // of CVEs; sniffing first refuses to invoke the parser on
+    // anything that isn't actually HEIC. Belt-and-suspenders with
+    // the rate limit + body size cap above.
+    if (!isHeic(inputBuffer)) {
+      return errorResponse(ApiMessageCode.HEIC_NO_FILE, 400)
+    }
 
     let jpegBuffer: Buffer
 
@@ -52,8 +59,13 @@ export const POST = withAuth(async (request, user) => {
 
       const execFileAsync = promisify(execFile)
 
-      const tempInput = join(tmpdir(), `heic-${Date.now()}.heic`)
-      const tempOutput = join(tmpdir(), `heic-${Date.now()}.jpg`)
+      // Use crypto.randomUUID() instead of Date.now() — under
+      // concurrent calls within the same millisecond the old name
+      // collided, with the second writer overwriting the first
+      // writer's input file.
+      const requestId = randomUUID()
+      const tempInput = join(tmpdir(), `heic-${requestId}.heic`)
+      const tempOutput = join(tmpdir(), `heic-${requestId}.jpg`)
 
       await writeFile(tempInput, inputBuffer)
 
@@ -88,7 +100,7 @@ export const POST = withAuth(async (request, user) => {
       },
     })
   } catch (error) {
-    console.error('[convert-heic] Error:', error)
+    logServerError('heic.convert', error)
     return errorResponse(ApiMessageCode.HEIC_CONVERT_FAILED, 500)
   }
-})
+}, { maxBodyBytes: MAX_BODY_BYTES })

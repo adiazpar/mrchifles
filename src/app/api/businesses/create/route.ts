@@ -1,12 +1,18 @@
-import { NextRequest } from 'next/server'
 import { db, businesses, businessUsers } from '@/db'
 import { nanoid } from 'nanoid'
+import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import {
+  validationError,
+  errorResponse,
+  successResponse,
+  withAuth,
+  enforceMaxContentLength,
+} from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { getCurrencyForLocale } from '@/lib/locale-config'
+import { logServerError } from '@/lib/server-logger'
 
 const createBusinessSchema = z.object({
   name: Schemas.name().max(100),
@@ -16,18 +22,50 @@ const createBusinessSchema = z.object({
   icon: Schemas.businessIcon(),
 })
 
+// Icon is the only large field; Schemas.businessIcon caps at 2 MB
+// decoded base64. 3 MB on the JSON envelope leaves headroom for the
+// other fields without letting an attacker stream multi-megabyte
+// payloads into Lambda memory pre-validation.
+const MAX_BODY_BYTES = 3 * 1024 * 1024
+
+// Per-user cap on owned businesses. Mitigates cost-amplification via
+// rapid create-then-delete loops that would otherwise burn DB write
+// metering on Turso. A small business operator with > 50 owned
+// businesses is unrealistic; if support hears a real complaint the
+// cap can be lifted on a case-by-case basis.
+const MAX_OWNED_BUSINESSES_PER_USER = 50
+
 /**
  * POST /api/businesses/create
  *
  * Creates a new business and adds the current user as owner.
  * Any authenticated user can create a business.
+ *
+ * Wrapped in withAuth so the per-user-mutation + per-IP guardrails
+ * fire automatically. Body capped at MAX_BODY_BYTES; per-user owned
+ * count capped at MAX_OWNED_BUSINESSES_PER_USER.
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, user) => {
   try {
-    // Require authentication
-    const user = await getCurrentUser()
-    if (!user) {
-      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+    const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+    if (oversize) return oversize
+
+    // Per-user business cap. Cheap COUNT — uses the existing
+    // (userId, businessId) composite index on business_users.
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(businessUsers)
+      .where(
+        and(
+          eq(businessUsers.userId, user.userId),
+          eq(businessUsers.role, 'owner'),
+          eq(businessUsers.status, 'active'),
+        ),
+      )
+    if (Number(count) >= MAX_OWNED_BUSINESSES_PER_USER) {
+      return errorResponse(ApiMessageCode.BUSINESS_OWNED_CAP_REACHED, 409, {
+        max: MAX_OWNED_BUSINESSES_PER_USER,
+      })
     }
 
     const body = await request.json()
@@ -72,7 +110,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Create business error:', error)
+    logServerError('businesses.create', error)
     return errorResponse(ApiMessageCode.BUSINESS_CREATE_FAILED, 500)
   }
-}
+}, { maxBodyBytes: MAX_BODY_BYTES })

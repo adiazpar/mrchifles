@@ -1,7 +1,15 @@
 'use client'
 
+import DOMPurify from 'dompurify'
 import { getBarcodeFormatLabel } from './barcodes'
 import type { BarcodeFormat } from '@/types'
+
+// SVG-only profile mirrors BarcodeDisplay.tsx — same trust boundary
+// for the same upstream renderer. Defined as a module constant so
+// the option object is referentially stable across calls.
+const DOMPURIFY_OPTIONS = {
+  USE_PROFILES: { svg: true, svgFilters: true },
+} as const
 
 interface PrintBarcodeLabelOptions {
   barcode: string
@@ -139,7 +147,7 @@ export async function printBarcodeLabel({ barcode, barcodeFormat, name }: PrintB
     <main class="label">
       <section class="label-card">
         <div class="title">${safeTitle}</div>
-        <div class="barcode">${result.svg}</div>
+        <div class="barcode">${DOMPurify.sanitize(result.svg, DOMPURIFY_OPTIONS)}</div>
         <div class="meta">${safeLabel}</div>
       </section>
     </main>

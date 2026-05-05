@@ -3,6 +3,7 @@ import { eq, and, sql } from 'drizzle-orm'
 import { getCurrentUser } from '@/lib/simple-auth'
 import { errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
+import { logServerError } from '@/lib/server-logger'
 
 /**
  * GET /api/businesses/list
@@ -79,7 +80,7 @@ export async function GET() {
       })),
     })
   } catch (error) {
-    console.error('List businesses error:', error)
+    logServerError('businesses.list', error)
     return errorResponse(ApiMessageCode.BUSINESS_LIST_FAILED, 500)
   }
 }

@@ -6,12 +6,14 @@
  * bodies for i18n-aware error and success messages.
  */
 
+import 'server-only'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireBusinessAccess, type BusinessAccess } from './business-auth'
 import { ApiMessageCode, type ApiMessageEnvelope } from './api-messages'
 import { getCurrentUser, type JWTPayload } from './simple-auth'
-import { checkRateLimit, RateLimits, type RateLimitConfig } from './rate-limit'
+import { checkRateLimit, getClientIp, RateLimits, UpstashUnavailableError, type RateLimitConfig } from './rate-limit'
+import { logServerError } from './server-logger'
 
 // ============================================
 // ROUTE PARAMETER TYPES
@@ -24,6 +26,47 @@ export interface RouteParams {
   params: Promise<{
     businessId: string
   }>
+}
+
+// ============================================
+// CSRF DEFENSE-IN-DEPTH
+// ============================================
+
+/**
+ * Reject any non-GET/HEAD request whose Origin or Referer doesn't
+ * match the request URL's origin.
+ *
+ * Auth cookies are SameSite=Lax which is the primary CSRF defense
+ * against cross-site mutations — but multipart POST is still one of
+ * the three "simple" content types and would be form-CSRF-able if
+ * SameSite ever weakens (e.g., a future change to support iframe
+ * embedding sets SameSite=None). This helper is the second line of
+ * defense: even if a cookie reaches a route via a cross-site
+ * navigation, the Origin header doesn't match and the request is
+ * rejected before any state mutation happens.
+ *
+ * Returns null if the request passes; otherwise returns a 403
+ * response the route should bubble up.
+ */
+function enforceSameOrigin(request: NextRequest): NextResponse | null {
+  if (request.method === 'GET' || request.method === 'HEAD') return null
+  const origin = request.headers.get('origin') ?? request.headers.get('referer')
+  if (!origin) {
+    // Missing both headers: this is unusual for a real browser
+    // making a same-origin request (Origin is sent on virtually
+    // every non-GET fetch since 2020) and is the shape of a curl /
+    // server-to-server call. Reject with 403 — legitimate clients
+    // can re-issue with the proper header set automatically by the
+    // browser.
+    return errorResponse(ApiMessageCode.FORBIDDEN, 403)
+  }
+  const allowedOrigin = new URL(request.url).origin
+  // Use startsWith on Origin (which has no trailing path) and a
+  // strict origin-prefix match on Referer (which may include path).
+  if (!origin.startsWith(allowedOrigin)) {
+    return errorResponse(ApiMessageCode.FORBIDDEN, 403)
+  }
+  return null
 }
 
 // ============================================
@@ -42,17 +85,89 @@ type UserRouteHandler = (
  * business — e.g. AI / HEIC pipelines, account-level operations that don't
  * fit under `/businesses/[businessId]/*`.
  *
+ * Default mutation guard: on non-GET/HEAD methods the wrapper applies
+ * RateLimits.userMutation keyed on userId (30/min) AND a coarse per-IP
+ * cap (600/min). The per-IP cap stops a botnet from spreading work
+ * across N fresh accounts to bypass the per-user budget. Routes that
+ * need custom limits (login uses a stricter login bucket; AI uses a
+ * tighter ai bucket; auth/me DELETE uses a login-shaped bucket) can
+ * opt out via `{ rateLimit: false }` and call applyRateLimit themselves.
+ *
  * On failure returns UNAUTHORIZED 401. Rare framework errors return
  * INTERNAL_ERROR 500.
  */
-export function withAuth(handler: UserRouteHandler) {
+// Default body size cap applied by both wrappers. 256 KB is plenty
+// for any JSON-only route (the largest realistic body on this app is
+// a list of order items or a paste of provider notes). Routes that
+// accept media uploads override via `{ maxBodyBytes: <bigger> }`.
+const DEFAULT_MAX_BODY_BYTES = 256 * 1024
+
+// URL-segment validator. nanoid uses the alphabet [A-Za-z0-9_-]; the
+// length is 21 by default but we accept 12-64 to leave room for
+// legacy IDs and future migration. Used by withBusinessAuth before
+// businessId reaches Drizzle so a 1 MB segment can't drive a full-
+// string compare per request (audit L-3).
+const URL_ID_SEGMENT = /^[A-Za-z0-9_-]{12,64}$/
+
+function isValidUrlIdSegment(value: string | undefined): value is string {
+  return typeof value === 'string' && URL_ID_SEGMENT.test(value)
+}
+
+export function withAuth(
+  handler: UserRouteHandler,
+  options: { rateLimit?: false; maxBodyBytes?: number } = {},
+) {
   return async (request: NextRequest): Promise<NextResponse> => {
     try {
+      // CSRF defense-in-depth fires BEFORE auth lookup so a cross-
+      // site request can't even probe for "is the cookie still
+      // valid?" via response timing.
+      const csrfReject = enforceSameOrigin(request)
+      if (csrfReject) return csrfReject
+
+      // Body-size guard. Fires for any non-GET/HEAD; the cap is
+      // either the route-supplied override or the default 256 KB.
+      // Routes that pre-validated body already (legacy callers that
+      // call enforceMaxContentLength themselves) re-trip safely —
+      // this is idempotent.
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        const cap = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES
+        const oversize = enforceMaxContentLength(request, cap)
+        if (oversize) return oversize
+      }
+
       const user = await getCurrentUser()
       if (!user) return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+
+      if (
+        options.rateLimit !== false &&
+        request.method !== 'GET' &&
+        request.method !== 'HEAD'
+      ) {
+        // Per-user mutation cap. Mirrors the protection withBusinessAuth
+        // applies to /businesses/[businessId]/* mutations; without this,
+        // /api/auth/profile and /api/user/language were unrate-limited
+        // and an attacker with a stolen cookie could hammer them
+        // unconstrained.
+        const userLimited = await applyRateLimit(
+          `user-mutation:${user.userId}`,
+          RateLimits.userMutation,
+        )
+        if (userLimited) return userLimited
+        // Coarse per-IP guardrail. The user-keyed limit above is
+        // bypassable by an attacker spreading load across many fresh
+        // accounts; a per-IP cap is the second line of defense.
+        const ip = getClientIp(request)
+        const ipLimited = await applyRateLimit(
+          `ip-mutation:${ip}`,
+          RateLimits.ipMutation,
+        )
+        if (ipLimited) return ipLimited
+      }
+
       return await handler(request, user)
     } catch (error) {
-      console.error('API Error:', error)
+      logServerError('api.with-auth', error)
       return errorResponse(ApiMessageCode.INTERNAL_ERROR, 500)
     }
   }
@@ -80,11 +195,26 @@ export function withAuth(handler: UserRouteHandler) {
 export async function applyRateLimit(
   identifier: string,
   config: RateLimitConfig,
+  rateLimitedCode: ApiMessageCode = ApiMessageCode.RATE_LIMITED,
 ): Promise<NextResponse | null> {
-  const result = await checkRateLimit(identifier, config)
+  let result
+  try {
+    result = await checkRateLimit(identifier, config)
+  } catch (err) {
+    // Fail-closed limiters (auth-critical) throw when Upstash is
+    // unreachable. Translate to a 503 with a sensible Retry-After
+    // instead of falling back to in-memory and silently disabling
+    // brute-force protection.
+    if (err instanceof UpstashUnavailableError) {
+      const response = errorResponse(ApiMessageCode.RATE_LIMITER_UNAVAILABLE, 503)
+      response.headers.set('Retry-After', '5')
+      return response
+    }
+    throw err
+  }
   if (result.success) return null
   const retryAfter = Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000))
-  const response = errorResponse(ApiMessageCode.RATE_LIMITED, 429)
+  const response = errorResponse(rateLimitedCode, 429)
   response.headers.set('Retry-After', String(retryAfter))
   return response
 }
@@ -143,14 +273,42 @@ type BusinessRouteHandler = (
  * - Calling requireBusinessAccess for authorization
  * - Standard error responses for Unauthorized/Not found/Server errors
  */
-export function withBusinessAuth(handler: BusinessRouteHandler) {
+export function withBusinessAuth(
+  handler: BusinessRouteHandler,
+  options: { maxBodyBytes?: number } = {},
+) {
   return async (
     request: NextRequest,
     { params }: { params: Promise<Record<string, string>> }
   ) => {
     try {
+      // CSRF defense-in-depth — see enforceSameOrigin and the H-15
+      // audit finding for context. Fires before the access lookup
+      // for the same reason as withAuth: response-time probing.
+      const csrfReject = enforceSameOrigin(request)
+      if (csrfReject) return csrfReject
+
+      // Body-size backstop. Most business routes parse small JSON;
+      // the few file-upload routes (orders create/update with up to
+      // 15 MB receipts, products POST/PATCH with up to 5 MB icons)
+      // override the cap explicitly. Without this default, dozens of
+      // routes were unbounded in the audit (H-16).
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        const cap = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES
+        const oversize = enforceMaxContentLength(request, cap)
+        if (oversize) return oversize
+      }
+
       const resolvedParams = await params
       const { businessId, ...restParams } = resolvedParams
+      // URL-segment format check (audit L-3): businessIds are
+      // nanoids in the [A-Za-z0-9_-] alphabet. Without this guard
+      // an attacker passing a 1 MB businessId would force a
+      // full-length DB string compare on every requireBusinessAccess
+      // call; reject early with 400.
+      if (!isValidUrlIdSegment(businessId)) {
+        return errorResponse(ApiMessageCode.BUSINESS_NOT_FOUND, 404)
+      }
       const access = await requireBusinessAccess(businessId)
 
       // Rate-limit writes per (user, business). Reads are unbounded so
@@ -181,7 +339,7 @@ export function withBusinessAuth(handler: BusinessRouteHandler) {
           return errorResponse(ApiMessageCode.NOT_FOUND, 404)
         }
       }
-      console.error('API Error:', error)
+      logServerError('api.with-business-auth', error)
       return errorResponse(ApiMessageCode.INTERNAL_ERROR, 500)
     }
   }

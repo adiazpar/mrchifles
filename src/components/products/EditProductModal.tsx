@@ -176,7 +176,13 @@ export function EditProductModal({
 
   const handleSaveAdjustment = async (): Promise<void> => {
     if (!editingProduct) return
-    return onSaveAdjustment({ productId: editingProduct.id, newStockValue })
+    return onSaveAdjustment({
+      productId: editingProduct.id,
+      newStockValue,
+      // Snapshot of stock at the moment the modal opened. The server
+      // refuses the write if the row changed since (optimistic lock).
+      expectedStockValue: editingProduct.stock ?? 0,
+    })
   }
 
   return (

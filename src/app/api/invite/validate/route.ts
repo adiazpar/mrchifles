@@ -3,10 +3,11 @@ import { db, inviteCodes, businesses, ownershipTransfers, users } from '@/db'
 import { eq, and, gt, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError, errorResponse } from '@/lib/api-middleware'
+import { validationError, errorResponse, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
+import { logServerError } from '@/lib/server-logger'
 
 const validateSchema = z.object({
   code: Schemas.code(),
@@ -23,8 +24,15 @@ const validateSchema = z.object({
  * - For invites: business info, role
  * - For transfers: business info, from user info, status
  */
+// Body is `{ code }` — 1 KB cap is generous and stops anyone shoving
+// a megabyte string into the validate path before rate-limiting.
+const MAX_BODY_BYTES = 1024
+
 export async function POST(request: NextRequest) {
   try {
+    const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+    if (oversize) return oversize
+
     // Rate limit by IP
     const clientIp = getClientIp(request)
     const rateLimitResult = await checkRateLimit(`validate:${clientIp}`, RateLimits.codeValidation)
@@ -151,7 +159,7 @@ export async function POST(request: NextRequest) {
       messageCode: ApiMessageCode.INVITE_INVALID_OR_EXPIRED,
     })
   } catch (error) {
-    console.error('Validate code error:', error)
+    logServerError('invite.validate', error)
     return NextResponse.json(
       {
         valid: false,

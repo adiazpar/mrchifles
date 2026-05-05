@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db, users, businessUsers, businesses, inviteCodes, ownershipTransfers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { getCurrentUser, clearAuthCookie } from '@/lib/simple-auth'
+import { getCurrentUser, clearAuthCookie, verifyPassword } from '@/lib/simple-auth'
 import { invalidateAccessCacheForUser } from '@/lib/business-auth'
-import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { validationError, errorResponse, successResponse, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
+import { RateLimits } from '@/lib/rate-limit'
+import { logServerError } from '@/lib/server-logger'
 
 /**
  * GET /api/auth/me
@@ -34,7 +36,7 @@ export async function GET() {
 
     return NextResponse.json({ user: userWithoutPassword })
   } catch (error) {
-    console.error('Get current user error:', error)
+    logServerError('auth.me.get', error)
     return errorResponse(ApiMessageCode.INTERNAL_ERROR, 500)
   }
 }
@@ -45,6 +47,12 @@ export async function GET() {
 
 const deleteSchema = z.object({
   confirmEmail: z.string().min(1),
+  // Required reauth. The email-confirmation alone was a typo guard — the
+  // user's email is on /api/auth/me GET, so any session cookie + open
+  // browser was enough to nuke the account. The password is the actual
+  // security gate. .max(128) bounds bcrypt input cost and matches the
+  // schema cap policy.
+  currentPassword: z.string().min(1).max(128),
 })
 
 /**
@@ -69,12 +77,29 @@ const deleteSchema = z.object({
  * After deletion the auth cookie is cleared. The client is responsible
  * for redirecting (typically to /register).
  */
+// 8 KB body is plenty for { confirmEmail, currentPassword }.
+const DELETE_MAX_BODY_BYTES = 8 * 1024
+
 export async function DELETE(request: NextRequest) {
   try {
+    const oversize = enforceMaxContentLength(request, DELETE_MAX_BODY_BYTES)
+    if (oversize) return oversize
+
     const session = await getCurrentUser()
     if (!session) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
+
+    // Rate-limit before any password compare so a stolen-cookie attacker
+    // can't brute-force the password via this endpoint. Keyed on userId
+    // because the attack surface is "I have your cookie" — IP rotation
+    // doesn't help the attacker against a per-user counter, and 5 per
+    // 15 min is far more than legitimate retry traffic ever needs.
+    const rateLimited = await applyRateLimit(
+      `delete-account:${session.userId}`,
+      RateLimits.login,
+    )
+    if (rateLimited) return rateLimited
 
     const body = await request.json()
     const validation = deleteSchema.safeParse(body)
@@ -90,6 +115,19 @@ export async function DELETE(request: NextRequest) {
 
     if (!user) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+    }
+
+    // Reauthentication: bcrypt.compare is constant-time and runs before
+    // the email-match check so a wrong-password attacker can't infer
+    // anything from response timing. On failure return 401 with the
+    // existing "incorrect current password" envelope used by the
+    // change-password flow.
+    const passwordValid = await verifyPassword(
+      validation.data.currentPassword,
+      user.password,
+    )
+    if (!passwordValid) {
+      return errorResponse(ApiMessageCode.USER_INCORRECT_CURRENT_PASSWORD, 401)
     }
 
     if (
@@ -109,7 +147,14 @@ export async function DELETE(request: NextRequest) {
         and(
           eq(businessUsers.userId, session.userId),
           eq(businessUsers.role, 'owner'),
-          eq(businessUsers.status, 'active'),
+          // Audit L-11: do NOT filter by status='active' here. A
+          // 'disabled' owner row should still block account
+          // deletion; otherwise a corruption / future bug that
+          // disables an owner would let them be deleted, leaving
+          // the business permanently ownerless. The owner-cannot-
+          // be-disabled invariant in toggle-status (Fix 2) makes
+          // this state unreachable through the API today, but
+          // defense-in-depth is cheap.
         ),
       )
 
@@ -153,7 +198,7 @@ export async function DELETE(request: NextRequest) {
 
     return successResponse({}, ApiMessageCode.USER_DELETED)
   } catch (error) {
-    console.error('Delete account error:', error)
+    logServerError('auth.me.delete', error)
     return errorResponse(ApiMessageCode.USER_DELETE_FAILED, 500)
   }
 }

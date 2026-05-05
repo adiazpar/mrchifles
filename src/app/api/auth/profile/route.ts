@@ -1,13 +1,12 @@
-import { NextRequest } from 'next/server'
 import { db, users } from '@/db'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { getCurrentUser } from '@/lib/simple-auth'
-import { validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
+import { validationError, errorResponse, successResponse, enforceMaxContentLength, withAuth } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { getBase64Size, MAX_UPLOAD_SIZE } from '@/lib/storage'
 import { sniffImageMimeType } from '@/lib/file-sniff'
+import { logServerError } from '@/lib/server-logger'
 
 // 2 MB decoded cap (MAX_UPLOAD_SIZE) plus base64 overhead and JSON padding
 // → 5 MB is a comfortable Content-Length ceiling.
@@ -29,16 +28,17 @@ const profileUpdateSchema = z.object({
  * Update the current user's profile. Accepts partial updates: name,
  * avatar, or both. Avatar is a base64 data URL capped at the shared
  * MAX_UPLOAD_SIZE (2MB), matching the business logo upload limit.
+ *
+ * Wrapped in withAuth so the per-user-mutation and per-IP guardrails
+ * fire automatically — without them, a stolen-cookie attacker could
+ * spam unbounded 5MB avatar overwrites.
  */
-export async function PATCH(request: NextRequest) {
+// Avatar uploads can be up to 5 MB (MAX_BODY_BYTES); explicitly
+// override the wrapper's default 256 KB cap.
+export const PATCH = withAuth(async (request, session) => {
   try {
     const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
     if (oversize) return oversize
-
-    const session = await getCurrentUser()
-    if (!session) {
-      return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
-    }
 
     const body = await request.json()
     const validation = profileUpdateSchema.safeParse(body)
@@ -107,7 +107,7 @@ export async function PATCH(request: NextRequest) {
       ApiMessageCode.USER_PROFILE_UPDATED
     )
   } catch (error) {
-    console.error('Update profile error:', error)
+    logServerError('auth.profile', error)
     return errorResponse(ApiMessageCode.USER_PROFILE_UPDATE_FAILED, 500)
   }
-}
+}, { maxBodyBytes: MAX_BODY_BYTES })

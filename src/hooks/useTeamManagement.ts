@@ -7,7 +7,6 @@ import { useBusiness } from '@/contexts/business-context'
 import { apiRequest, apiPost, ApiError } from '@/lib/api-client'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import {
-  generateInviteCode,
   getInviteCodeExpiration,
   type InviteDuration,
 } from '@/lib/auth'
@@ -95,6 +94,10 @@ interface TeamDataResponse {
 interface InviteCodeResponse {
   success?: boolean
   id: string
+  // Server-generated invite code (audit M-18). The client used to
+  // send the code in the request and re-use the local value; now
+  // the server returns the canonical value here.
+  code: string
   error?: string
   [key: string]: unknown
 }
@@ -189,30 +192,31 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     setNewCodeExpiresAt(null)
 
     try {
-      const code = generateInviteCode()
       const expiresAt = getInviteCodeExpiration(selectedDuration)
 
+      // Server generates the code now (audit M-18). The client used
+      // to pick the value, which let a malicious manager choose a
+      // memorable string and shrink the brute-force keyspace.
       const data = await apiPost<InviteCodeResponse>(
         `/api/businesses/${businessId}/invite/create`,
         {
-          code,
           role: selectedRole,
           expiresAt: expiresAt.toISOString(),
         }
       )
 
       setGeneratedCodeId(data.id)
-      setNewCode(code)
+      setNewCode(data.code)
       setNewCodeExpiresAt(expiresAt)
 
       // Generate QR code
-      const qr = await generateInviteQRCode(code)
+      const qr = await generateInviteQRCode(data.code)
       setQrDataUrl(qr)
 
       // Add new code to the list
       const newInviteCode: InviteCode = {
         id: data.id,
-        code,
+        code: data.code,
         role: selectedRole,
         createdBy: user.id,
         expiresAt: expiresAt.toISOString(),
@@ -267,15 +271,14 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     setIsGenerating(true)
 
     try {
-      // Delete old code and create new one
-      const code = generateInviteCode()
+      // Server generates the new code and returns it; the client no
+      // longer picks the value (audit M-18).
       const expiresAt = getInviteCodeExpiration(selectedDuration)
 
       const data = await apiPost<InviteCodeResponse>(
         `/api/businesses/${businessId}/invite/regenerate`,
         {
           oldCodeId: generatedCodeId,
-          newCode: code,
           role: selectedRole,
           expiresAt: expiresAt.toISOString(),
         }
@@ -283,17 +286,17 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
 
       const oldCodeId = generatedCodeId
       setGeneratedCodeId(data.id)
-      setNewCode(code)
+      setNewCode(data.code)
       setNewCodeExpiresAt(expiresAt)
 
       // Generate new QR
-      const qr = await generateInviteQRCode(code)
+      const qr = await generateInviteQRCode(data.code)
       setQrDataUrl(qr)
 
       // Update invite codes list: remove old, add new
       const newInviteCode: InviteCode = {
         id: data.id,
-        code,
+        code: data.code,
         role: selectedRole,
         createdBy: user.id,
         expiresAt: expiresAt.toISOString(),

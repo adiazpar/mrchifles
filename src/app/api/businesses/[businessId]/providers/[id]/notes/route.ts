@@ -43,35 +43,66 @@ export const POST = withBusinessAuth(async (request, access, routeParams) => {
     return validationError(validation)
   }
 
-  // Limit check: count existing notes before inserting so a client-side
-  // stale count can't bypass the cap.
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(providerNotes)
-    .where(and(
-      eq(providerNotes.providerId, providerId),
-      eq(providerNotes.businessId, access.businessId),
-    ))
+  const now = new Date()
+  // provider_notes.{created_at,updated_at} use Drizzle's `mode: 'timestamp'`
+  // which serializes as Unix SECONDS (Math.floor(ms / 1000)). When we
+  // bypass Drizzle's ORM-level insert and write via raw `sql`, we must
+  // perform the same conversion ourselves or the column ends up holding
+  // a millisecond value that reads back as ~50000-year-future dates.
+  const nowSec = Math.floor(now.getTime() / 1000)
+  const noteId = nanoid()
+  const titleTrimmed = validation.data.title.trim()
+  const bodyTrimmed = validation.data.body.trim()
 
-  if (Number(count) >= MAX_PROVIDER_NOTES) {
+  // Atomic 5-cap enforcement via CTE-style INSERT...SELECT...WHERE.
+  // The previous flow ran a separate COUNT then INSERT — under N
+  // concurrent POSTs each request observed count=4 and inserted, ending
+  // with N+1 notes. Doing the count INSIDE the INSERT statement makes
+  // the gate atomic with the row creation: SQLite evaluates the
+  // sub-SELECT and the row materialization as a single statement under
+  // the write lock, so concurrent inserts serialize correctly.
+  // RETURNING gives us the row back without a follow-up SELECT; an
+  // empty result means the cap was hit.
+  const inserted = await db.all<{
+    id: string
+    provider_id: string
+    business_id: string
+    title: string
+    body: string
+    created_at: number
+    updated_at: number
+  }>(sql`
+    INSERT INTO provider_notes (id, provider_id, business_id, title, body, created_at, updated_at)
+    SELECT
+      ${noteId},
+      ${providerId},
+      ${access.businessId},
+      ${titleTrimmed},
+      ${bodyTrimmed},
+      ${nowSec},
+      ${nowSec}
+    WHERE (
+      SELECT COUNT(*) FROM provider_notes
+      WHERE provider_id = ${providerId}
+        AND business_id = ${access.businessId}
+    ) < ${MAX_PROVIDER_NOTES}
+    RETURNING *
+  `)
+
+  if (inserted.length === 0) {
     return errorResponse(ApiMessageCode.PROVIDER_NOTES_LIMIT_REACHED, 400, {
       max: MAX_PROVIDER_NOTES,
     })
   }
 
-  const now = new Date()
-  const [newNote] = await db
-    .insert(providerNotes)
-    .values({
-      id: nanoid(),
-      providerId,
-      businessId: access.businessId,
-      title: validation.data.title.trim(),
-      body: validation.data.body.trim(),
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning()
+  // Re-fetch the inserted row through Drizzle so the response uses the
+  // same shape as GET (Date objects, camelCase keys) without manual
+  // mapping of the raw row above.
+  const newNote = await db
+    .select()
+    .from(providerNotes)
+    .where(eq(providerNotes.id, noteId))
+    .get()
 
   // Return the fresh list so the client can replace state in one shot — no
   // extra round-trip to re-sort.

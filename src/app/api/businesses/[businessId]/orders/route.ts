@@ -2,8 +2,9 @@ import { db, orders, orderItems, providers, products, businesses, users } from '
 import { eq, desc, inArray, and, ne, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { withBusinessAuth, validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
-import { canManageBusiness } from '@/lib/business-auth'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { canManageBusiness, assertProductsInBusiness, assertProviderInBusiness } from '@/lib/business-auth'
+import { sniffDocumentMimeType } from '@/lib/file-sniff'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
 
@@ -13,7 +14,10 @@ const orderItemSchema = z.object({
   // Per-line quantity caps match the stock cap: 1M units is enough
   // headroom for any legit order, pathological input is rejected.
   quantity: z.number().int().positive().max(1_000_000),
-  // Same billion-unit ceiling as Schemas.amount() for per-unit cost.
+  // Same billion-unit ceiling as Schemas.amount()/amountFromString().
+  // JSON path here so the strict z.number() shape is the right cap
+  // — items arrive parsed inside the items[] JSON blob, not as raw
+  // FormData strings.
   unitCost: z.number().nonnegative().max(1_000_000_000).optional().nullable(),
 })
 
@@ -82,7 +86,10 @@ export const GET = withBusinessAuth(async (request, access) => {
   // Get unique product IDs from items
   const productIds = [...new Set(allItems.map(i => i.productId).filter(Boolean))] as string[]
 
-  // Fetch only needed product fields (NO icons - major bandwidth savings)
+  // Fetch only needed product fields (NO icons - major bandwidth savings).
+  // Scoped by businessId so any cross-tenant productId that slipped into
+  // order_items (legacy data, future bug) is filtered out at hydration —
+  // the foreign product never appears in the response payload.
   const productsList = productIds.length > 0
     ? await db
         .select({
@@ -94,7 +101,7 @@ export const GET = withBusinessAuth(async (request, access) => {
           active: products.active,
         })
         .from(products)
-        .where(inArray(products.id, productIds))
+        .where(and(eq(products.businessId, access.businessId), inArray(products.id, productIds)))
     : []
 
   const productsMap = new Map(productsList.map(p => [p.id, p]))
@@ -163,6 +170,8 @@ export const GET = withBusinessAuth(async (request, access) => {
  * Create a new order with items.
  */
 // Orders may include a receipt (image or PDF); 15 MB covers multi-page PDFs.
+// Passed to withBusinessAuth via maxBodyBytes so the wrapper's default
+// 256 KB cap is overridden for this specific route.
 const POST_MAX_BODY_BYTES = 15 * 1024 * 1024
 
 export const POST = withBusinessAuth(async (request, access) => {
@@ -170,9 +179,6 @@ export const POST = withBusinessAuth(async (request, access) => {
   if (!canManageBusiness(access.role)) {
     return errorResponse(ApiMessageCode.ORDER_FORBIDDEN_NOT_MANAGER, 403)
   }
-
-  const oversize = enforceMaxContentLength(request, POST_MAX_BODY_BYTES)
-  if (oversize) return oversize
 
   const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
   const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
@@ -186,12 +192,29 @@ export const POST = withBusinessAuth(async (request, access) => {
   const itemsJson = formData.get('items') as string
   const receiptFile = formData.get('receipt') as File | null
 
-  // Validate receipt file if provided
+  // Validate receipt file if provided. Two-step check:
+  //   1. file.type must be in the allowlist (cheap reject for
+  //      obviously-wrong client metadata).
+  //   2. Magic-byte sniff the actual bytes to confirm the type
+  //      matches what was claimed. file.type is client-declared and
+  //      spoofable; without sniffing, an attacker could send an HTML
+  //      file under image/png — harmless today (the receipt is
+  //      currently discarded) but a stored-XSS surface the moment
+  //      receipts start being persisted.
   if (receiptFile) {
     if (!ACCEPTED_RECEIPT_TYPES.includes(receiptFile.type)) {
       return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
     }
     if (receiptFile.size > MAX_RECEIPT_BYTES) {
+      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
+    }
+    const buffer = Buffer.from(await receiptFile.arrayBuffer())
+    const sniffed = sniffDocumentMimeType(buffer)
+    // HEIC/HEIF receipts are accepted in the client list but
+    // sniffDocumentMimeType only recognizes the static raster + PDF
+    // shapes — both file.type and sniffed must agree.
+    const ACCEPTED_SNIFFED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const
+    if (!sniffed || !(ACCEPTED_SNIFFED as ReadonlyArray<string>).includes(sniffed)) {
       return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
     }
   }
@@ -208,16 +231,46 @@ export const POST = withBusinessAuth(async (request, access) => {
     return errorResponse(ApiMessageCode.ORDER_INVALID_ITEMS, 400)
   }
 
-  const totalValidation = Schemas.positiveAmount().safeParse(totalStr)
+  // Cross-tenant guard: every productId must belong to THIS business.
+  // The wrapper pins the URL businessId; only this check stops a partner
+  // from referencing a foreign business's product (info leak via the GET
+  // hydration of order items + stock manipulation via /receive).
+  const productIds = items.map((i) => i.productId)
+  if (!(await assertProductsInBusiness(productIds, access.businessId))) {
+    return errorResponse(ApiMessageCode.PRODUCT_NOT_FOUND, 404)
+  }
+
+  // Cross-tenant guard for providerId.
+  if (providerId && !(await assertProviderInBusiness(providerId, access.businessId))) {
+    return errorResponse(ApiMessageCode.PROVIDER_NOT_FOUND, 404)
+  }
+
+  // FormData input — string-coerce variant.
+  const totalValidation = Schemas.positiveAmountFromString().safeParse(totalStr)
   if (!totalValidation.success) {
     return validationError(totalValidation)
   }
   const total = totalValidation.data
 
   const orderId = nanoid()
+  // Validate the user-supplied date BEFORE constructing it. Passing
+  // garbage to the JS Date constructor returns an Invalid Date whose
+  // .getTime() is NaN; SQLite then stores null/NaN under the
+  // 'timestamp' column and the row becomes effectively unsortable.
+  // Same for estimatedArrival.
   const orderDate = new Date(dateStr)
+  if (!Number.isFinite(orderDate.getTime())) {
+    return errorResponse(ApiMessageCode.ORDER_INVALID_DATE, 400)
+  }
   const orderStatus = status === 'received' ? 'received' : 'pending'
-  const estimatedArrival = estimatedArrivalStr ? new Date(estimatedArrivalStr) : null
+  let estimatedArrival: Date | null = null
+  if (estimatedArrivalStr) {
+    const parsed = new Date(estimatedArrivalStr)
+    if (!Number.isFinite(parsed.getTime())) {
+      return errorResponse(ApiMessageCode.ORDER_INVALID_DATE, 400)
+    }
+    estimatedArrival = parsed
+  }
 
   // Per-business sequential reference ("#47"). Pulled from a monotonic
   // counter on the businesses row via atomic UPDATE ... RETURNING, so
@@ -261,13 +314,15 @@ export const POST = withBusinessAuth(async (request, access) => {
       : []),
   ])
 
-  // Look up provider if needed
+  // Look up provider if needed. Scoped by businessId — defense in depth
+  // against ever returning a foreign provider in the response (the
+  // pre-insert assert above already rejects cross-tenant providerIds).
   let provider = null
   if (providerId) {
     provider = await db
       .select()
       .from(providers)
-      .where(eq(providers.id, providerId))
+      .where(and(eq(providers.id, providerId), eq(providers.businessId, access.businessId)))
       .get() || null
   }
 
@@ -305,4 +360,4 @@ export const POST = withBusinessAuth(async (request, access) => {
       },
     },
   })
-})
+}, { maxBodyBytes: POST_MAX_BODY_BYTES })

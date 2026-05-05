@@ -42,6 +42,14 @@ export const users = sqliteTable('users', {
   // old sessions can't outlive a password change. Nullable because
   // users who've never changed their password don't need the check.
   passwordChangedAt: integer('password_changed_at', { mode: 'timestamp' }),
+  // Bumped on explicit logout (and on disable / removal-for-cause).
+  // Same revocation semantics as passwordChangedAt: any JWT whose
+  // `iat` predates this timestamp is rejected by getCurrentUser.
+  // This is what makes "log out" actually revoke the captured cookie
+  // server-side, instead of only deleting the browser's copy. Without
+  // it, a JWT exfiltrated via XSS / malicious extension stays valid
+  // for the rest of its 7-day window after the user clicks logout.
+  tokensInvalidBefore: integer('tokens_invalid_before', { mode: 'timestamp' }),
 }, (table) => ({
   // Expression index for case-insensitive email lookup (invite-validate,
   // transfer-initiate). The built-in unique index on `email` is case-
@@ -71,6 +79,18 @@ export const businessUsers = sqliteTable('business_users', {
   // right invariant, but enforcing it atomically would fail a prod push if
   // any duplicate rows exist. Keeping this as a performance index only.
   userBusinessIdx: index('idx_business_users_user_business').on(table.userId, table.businessId),
+  // Single-active-owner invariant. The transfer/accept demote-and-promote
+  // sequence relies on there being exactly one row with role='owner' AND
+  // status='active' per business; without this, a manual DB write or a
+  // future race could land two owners and either one could re-transfer
+  // or delete the business. PROD PUSH NOTE: this push will FAIL if any
+  // existing business has more than one active-owner row. Run a
+  // pre-flight `SELECT businessId, COUNT(*) FROM business_users WHERE
+  // role='owner' AND status='active' GROUP BY businessId HAVING COUNT(*)>1`
+  // and reconcile before pushing to Turso.
+  ownerPerBusinessIdx: uniqueIndex('idx_unique_business_users_owner_per_business')
+    .on(table.businessId)
+    .where(sql`${table.role} = 'owner' AND ${table.status} = 'active'`),
 }))
 
 // ===========================================

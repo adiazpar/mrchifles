@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import { db, products, orderItems, orders } from '@/db'
 import { eq, and, ne } from 'drizzle-orm'
-import { uploadProductIcon, deleteProductIcon, validateIconSize, fileToBase64 } from '@/lib/storage'
+import { uploadProductIcon, deleteProductIcon, validateIconSize } from '@/lib/storage'
+import { sniffImageMimeType, type ImageMimeType } from '@/lib/file-sniff'
+import { logServerError } from '@/lib/server-logger'
 import { withBusinessAuth, errorResponse, successResponse, validationError, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
-import { canManageBusiness } from '@/lib/business-auth'
+import { canManageBusiness, assertCategoryInBusiness } from '@/lib/business-auth'
 import {
   computeCanonicalGtin,
   detectBarcodeFormat,
@@ -59,7 +61,9 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   }
 
   if (price !== null) {
-    const priceValidation = Schemas.amount().safeParse(price)
+    // `formData.get('price')` is always a string — use the
+    // string-input variant of the amount schema.
+    const priceValidation = Schemas.amountFromString().safeParse(price)
     if (!priceValidation.success) {
       return validationError(priceValidation)
     }
@@ -70,6 +74,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     if (categoryId === '') {
       updateData.categoryId = null
     } else {
+      // Cross-tenant guard: same justification as the POST route. A
+      // partner could otherwise plant a foreign categoryId.
+      if (!(await assertCategoryInBusiness(categoryId, access.businessId))) {
+        return errorResponse(ApiMessageCode.CATEGORY_NOT_FOUND, 404)
+      }
       updateData.categoryId = categoryId
     }
   }
@@ -150,19 +159,33 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     return errorResponse(ApiMessageCode.BARCODE_SOURCE_REQUIRES_VALUE, 400)
   }
 
-  // Handle icon changes
+  // Handle icon changes. Same content-sniff guard as the POST route —
+  // File.type is client-declared; trusting it would let an SVG land
+  // under a <img> surface and become stored-XSS the moment any future
+  // render path uses unsafe-HTML / iframe.
+  const ICON_ALLOWED_TYPES: ReadonlyArray<ImageMimeType> = [
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'image/gif',
+  ]
   if (iconFile && iconFile.size > 0) {
     // Custom icon upload (AI-generated or user-uploaded)
     try {
-      const base64ForValidation = await fileToBase64(iconFile)
-      const { valid } = validateIconSize(base64ForValidation)
+      const buffer = Buffer.from(await iconFile.arrayBuffer())
+      const sniffed = sniffImageMimeType(buffer)
+      if (!sniffed || !ICON_ALLOWED_TYPES.includes(sniffed)) {
+        return errorResponse(ApiMessageCode.PRODUCT_ICON_INVALID_TYPE, 400)
+      }
+      const base64DataUrl = `data:${sniffed};base64,${buffer.toString('base64')}`
+      const { valid } = validateIconSize(base64DataUrl)
       if (!valid) {
         return errorResponse(ApiMessageCode.PRODUCT_ICON_TOO_LARGE, 400)
       }
       // uploadProductIcon deletes any existing file at this id before writing.
-      updateData.icon = await uploadProductIcon(iconFile, id, base64ForValidation)
+      updateData.icon = await uploadProductIcon(buffer, id, sniffed)
     } catch (err) {
-      console.error('Error uploading icon:', err)
+      logServerError('products.icon-upload', err)
       return errorResponse(ApiMessageCode.PRODUCT_ICON_UPLOAD_FAILED, 500)
     }
   } else if (presetIcon) {
@@ -194,7 +217,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   }
 
   return successResponse({ product: updatedProduct })
-})
+}, { maxBodyBytes: PATCH_MAX_BODY_BYTES })
 
 /**
  * DELETE /api/businesses/[businessId]/products/[id]

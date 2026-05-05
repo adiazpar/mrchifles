@@ -8,10 +8,11 @@ import {
   hashPassword,
   invalidateUserSession,
 } from '@/lib/simple-auth'
-import { validationError, errorResponse, successResponse } from '@/lib/api-middleware'
+import { validationError, errorResponse, successResponse, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
 import { Schemas } from '@/lib/schemas'
-import { checkRateLimit, getClientIp, RateLimits } from '@/lib/rate-limit'
+import { getClientIp, RateLimits } from '@/lib/rate-limit'
+import { logServerError } from '@/lib/server-logger'
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
@@ -27,21 +28,33 @@ const changePasswordSchema = z.object({
  * number). Rate limited per IP on the same bucket as login to make
  * credential-stuffing attempts expensive.
  */
+// 8 KB easily covers two passwords + JSON envelope; bigger bodies
+// don't represent a legitimate password input.
+const MAX_BODY_BYTES = 8 * 1024
+
 export async function POST(request: NextRequest) {
   try {
+    const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
+    if (oversize) return oversize
+    if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
+      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
+    }
+
     const session = await getCurrentUser()
     if (!session) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
+    // Reuses the login limiter shape (5/15min/IP, fail-closed). If
+    // Upstash is unreachable the helper returns 503 instead of
+    // letting password-change brute-force ride a per-Lambda counter.
     const clientIp = getClientIp(request)
-    const rateLimitResult = await checkRateLimit(`change-password:${clientIp}`, RateLimits.login)
-    if (!rateLimitResult.success) {
-      const retryAfter = String(Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000))
-      const response = errorResponse(ApiMessageCode.AUTH_LOGIN_RATE_LIMITED, 429)
-      response.headers.set('Retry-After', retryAfter)
-      return response
-    }
+    const limited = await applyRateLimit(
+      `change-password:${clientIp}`,
+      RateLimits.login,
+      ApiMessageCode.AUTH_LOGIN_RATE_LIMITED,
+    )
+    if (limited) return limited
 
     const body = await request.json()
     const validation = changePasswordSchema.safeParse(body)
@@ -90,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     return successResponse({}, ApiMessageCode.USER_PASSWORD_CHANGED)
   } catch (error) {
-    console.error('Change password error:', error)
+    logServerError('auth.change-password', error)
     return errorResponse(ApiMessageCode.USER_PASSWORD_CHANGE_FAILED, 500)
   }
 }

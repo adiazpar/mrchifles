@@ -1,5 +1,6 @@
-import { db, businessUsers, businesses } from '@/db'
-import { eq, and } from 'drizzle-orm'
+import 'server-only'
+import { db, businessUsers, businesses, products, providers, productCategories } from '@/db'
+import { eq, and, inArray } from 'drizzle-orm'
 import { getCurrentUser } from './simple-auth'
 
 // Re-export client-safe utilities
@@ -138,4 +139,68 @@ export async function requireBusinessAccess(
   })
 
   return access
+}
+
+// ============================================
+// CROSS-TENANT FK ASSERTIONS
+// ============================================
+
+/**
+ * Confirm every product ID belongs to the given business.
+ *
+ * The business-auth wrapper pins the URL businessId, but FK references in
+ * request bodies (e.g. order items' productId) need a separate check.
+ * Without this, a manager in business A can write an order line that
+ * references a product in business B — leaking name/price/stock when the
+ * order is read back.
+ *
+ * Returns true only if EVERY id in `productIds` exists AND has the given
+ * businessId. Empty input is vacuously true. Duplicates in `productIds`
+ * are tolerated (the row-set check uses the unique IDs).
+ */
+export async function assertProductsInBusiness(
+  productIds: string[],
+  businessId: string,
+): Promise<boolean> {
+  if (productIds.length === 0) return true
+  const uniqueIds = [...new Set(productIds)]
+  const rows = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.businessId, businessId), inArray(products.id, uniqueIds)))
+  if (rows.length !== uniqueIds.length) return false
+  const found = new Set(rows.map((r) => r.id))
+  return uniqueIds.every((id) => found.has(id))
+}
+
+/**
+ * Confirm a provider ID belongs to the given business. Empty/null IDs
+ * are caller's responsibility to filter out before invoking.
+ */
+export async function assertProviderInBusiness(
+  providerId: string,
+  businessId: string,
+): Promise<boolean> {
+  const row = await db
+    .select({ id: providers.id })
+    .from(providers)
+    .where(and(eq(providers.id, providerId), eq(providers.businessId, businessId)))
+    .get()
+  return row != null
+}
+
+/**
+ * Confirm a category ID belongs to the given business. Empty/null IDs
+ * are caller's responsibility to filter out before invoking.
+ */
+export async function assertCategoryInBusiness(
+  categoryId: string,
+  businessId: string,
+): Promise<boolean> {
+  const row = await db
+    .select({ id: productCategories.id })
+    .from(productCategories)
+    .where(and(eq(productCategories.id, categoryId), eq(productCategories.businessId, businessId)))
+    .get()
+  return row != null
 }

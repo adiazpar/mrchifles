@@ -4,7 +4,8 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { withBusinessAuth, validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@/lib/api-messages'
-import { canManageBusiness } from '@/lib/business-auth'
+import { canManageBusiness, assertProductsInBusiness, assertProviderInBusiness } from '@/lib/business-auth'
+import { sniffDocumentMimeType } from '@/lib/file-sniff'
 import { Schemas } from '@/lib/schemas'
 
 const orderItemSchema = z.object({
@@ -68,7 +69,9 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   const itemsJson = formData.get('items') as string | null
   const receiptFile = formData.get('receipt') as File | null
 
-  // Validate receipt file if provided
+  // Validate receipt file if provided. Same two-step check as the
+  // POST route — see that file for the rationale on magic-byte
+  // sniffing in addition to client-declared MIME.
   if (receiptFile) {
     if (!ACCEPTED_RECEIPT_TYPES.includes(receiptFile.type)) {
       return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
@@ -76,23 +79,51 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     if (receiptFile.size > MAX_RECEIPT_BYTES) {
       return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
     }
+    const buffer = Buffer.from(await receiptFile.arrayBuffer())
+    const sniffed = sniffDocumentMimeType(buffer)
+    const ACCEPTED_SNIFFED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const
+    if (!sniffed || !(ACCEPTED_SNIFFED as ReadonlyArray<string>).includes(sniffed)) {
+      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
+    }
   }
 
   const updateData: Record<string, unknown> = {}
 
+  // Validate the optional client-supplied total. We may overwrite
+  // it below if `items` is also being updated and the client total
+  // disagrees with the recomputed total — the audit (L-12) flagged
+  // that the previous code accepted divergent values silently.
+  let clientTotal: number | null = null
   if (totalStr !== null) {
-    const totalValidation = Schemas.positiveAmount().safeParse(totalStr)
+    // FormData input — string-coerce variant.
+    const totalValidation = Schemas.positiveAmountFromString().safeParse(totalStr)
     if (!totalValidation.success) {
       return validationError(totalValidation)
     }
-    updateData.total = totalValidation.data
+    clientTotal = totalValidation.data
+    updateData.total = clientTotal
   }
 
   if (estimatedArrivalStr !== null) {
-    updateData.estimatedArrival = estimatedArrivalStr ? new Date(estimatedArrivalStr) : null
+    if (estimatedArrivalStr) {
+      const parsed = new Date(estimatedArrivalStr)
+      if (!Number.isFinite(parsed.getTime())) {
+        return errorResponse(ApiMessageCode.ORDER_INVALID_DATE, 400)
+      }
+      updateData.estimatedArrival = parsed
+    } else {
+      updateData.estimatedArrival = null
+    }
   }
 
   if (providerId !== null) {
+    // Cross-tenant guard: an empty string clears the provider; a non-empty
+    // value must reference a provider in THIS business. Without this a
+    // partner can plant a foreign providerId that surfaces in the GET
+    // hydration (PII leak: name/phone/email of another tenant's supplier).
+    if (providerId && !(await assertProviderInBusiness(providerId, access.businessId))) {
+      return errorResponse(ApiMessageCode.PROVIDER_NOT_FOUND, 404)
+    }
     updateData.providerId = providerId || null
   }
 
@@ -118,6 +149,14 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     } catch {
       return errorResponse(ApiMessageCode.ORDER_INVALID_ITEMS, 400)
     }
+    // Cross-tenant guard: every productId in the new items list must
+    // belong to THIS business. Same justification as the POST route.
+    if (parsed.length > 0) {
+      const productIds = parsed.map((i) => i.productId)
+      if (!(await assertProductsInBusiness(productIds, access.businessId))) {
+        return errorResponse(ApiMessageCode.PRODUCT_NOT_FOUND, 404)
+      }
+    }
     itemRowsToInsert = parsed.map(item => ({
       id: nanoid(),
       orderId: id,
@@ -127,6 +166,28 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
       unitCost: item.unitCost ?? null,
       subtotal: item.unitCost != null ? Number((item.unitCost * item.quantity).toFixed(2)) : null,
     }))
+
+    // Audit L-12: when items are updated, keep `total` in sync with
+    // the line subtotals. Three branches:
+    //   - client sent neither: skip (the column stays unchanged)
+    //   - client sent only items: recompute total from the new items
+    //   - client sent both: trust the client total but only if it
+    //     matches the recomputed total to within rounding (1 cent
+    //     tolerance for the floating-point sum). Mismatch returns
+    //     400 instead of letting drift accumulate silently.
+    const allLinesPriced = itemRowsToInsert.every((r) => r.subtotal !== null)
+    if (allLinesPriced) {
+      const recomputed = Number(
+        itemRowsToInsert.reduce((acc, r) => acc + (r.subtotal ?? 0), 0).toFixed(2),
+      )
+      if (clientTotal !== null) {
+        if (Math.abs(clientTotal - recomputed) > 0.01) {
+          return errorResponse(ApiMessageCode.ORDER_INVALID_ITEMS, 400)
+        }
+      } else {
+        updateData.total = recomputed
+      }
+    }
   }
 
   // Run the order UPDATE and any items rewrite atomically, so a failure
@@ -143,7 +204,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   ])
 
   return successResponse({})
-})
+}, { maxBodyBytes: PATCH_MAX_BODY_BYTES })
 
 /**
  * DELETE /api/businesses/[businessId]/orders/[id]

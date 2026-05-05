@@ -1,3 +1,4 @@
+import 'server-only'
 import { resolve } from 'path'
 import { drizzle } from 'drizzle-orm/libsql'
 import { createClient, type Client } from '@libsql/client'

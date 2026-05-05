@@ -20,4 +20,9 @@ export interface ProductFormData {
 export interface StockAdjustmentData {
   productId: string
   newStockValue: number
+  // The value the user observed when the modal opened. Sent to the
+  // server as `expectedStock` for optimistic locking — if the row's
+  // stock changed underneath, the server returns 409 instead of
+  // silently overwriting another manager's edit.
+  expectedStockValue: number
 }

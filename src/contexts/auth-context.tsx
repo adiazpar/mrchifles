@@ -45,6 +45,35 @@ const AUTH_CACHE_KEY = 'auth_user_cache_v2'
 const AUTH_VALIDATED_KEY = 'auth_last_validated'
 const VALIDATION_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
 
+// Names of the Serwist caches whose contents are scoped to the
+// current user's session. Must match the cacheName entries in
+// src/app/sw.ts. Listing them in one place so both caches stay
+// purged on identity change. Adding a new per-user cache to sw.ts
+// requires extending this list.
+const SCOPED_SW_CACHE_NAMES = ['api-business', 'app-pages'] as const
+
+// Wipe service-worker caches that hold per-user response data. The
+// SW caches are keyed only by URL — there's no per-userId namespace
+// — so when a user logs out (or a different user logs in on the
+// same browser), the cached snapshots from the prior session would
+// otherwise be served from caches.match() the next time the network
+// is slow. Verified-exploitable on shared devices in the audit (H-2).
+async function clearScopedServiceWorkerCaches(): Promise<void> {
+  if (typeof window === 'undefined' || !('caches' in window)) return
+  try {
+    await Promise.all(
+      SCOPED_SW_CACHE_NAMES.map((name) => caches.delete(name)),
+    )
+  } catch {
+    // caches.delete can reject in private-browsing modes or when the
+    // SW hasn't yet installed. Failure here is best-effort cleanup,
+    // not a security boundary — the cookie has already been cleared
+    // server-side by /api/auth/logout, so an attacker would need
+    // both the cached responses AND a way to make the SW serve them
+    // without an auth check (which doesn't exist today).
+  }
+}
+
 function getCachedUser(): User | null {
   if (typeof window === 'undefined') return null
   try {
@@ -177,6 +206,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Ignore storage errors
       }
       clearKaseroLocalStorage()
+      // Drop the SW caches owned by the previous user. await is safe
+      // here — login latency is dominated by the network round-trip
+      // above, the cache deletion is a few ms.
+      await clearScopedServiceWorkerCaches()
 
       setUser(data.user)
       setCachedUser(data.user)
@@ -215,6 +248,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Ignore storage errors
       }
       clearKaseroLocalStorage()
+      // Same SW-cache wipe as login(): a fresh registration in a
+      // browser that previously held another user's session must
+      // not serve that user's stale snapshots offline.
+      await clearScopedServiceWorkerCaches()
 
       setUser(data.user)
       setCachedUser(data.user)
@@ -246,14 +283,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCachedUser(null)
     // Clear all per-user caches so the next account to sign in on this
     // tab doesn't inherit stale role / business / session data. Cover
-    // both stores — sessionStorage for per-tab caches and our prefixed
-    // localStorage entries for cold-start-survivors.
+    // ALL stores — sessionStorage for per-tab caches, our prefixed
+    // localStorage entries for cold-start-survivors, AND the SW
+    // caches that hold per-user API/page responses (without this
+    // last clear, an attacker offline-mode'ing the device after
+    // logout could replay the cached responses without an auth
+    // check — verified-exploitable as audit H-2).
     try {
       sessionStorage.clear()
     } catch {
       // Ignore storage errors
     }
     clearKaseroLocalStorage()
+    await clearScopedServiceWorkerCaches()
   }, [])
 
   const refreshUser = useCallback(async () => {
