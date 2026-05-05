@@ -20,12 +20,20 @@ export function getAccountUnderlay(): string | null {
 
 export function setAccountUnderlay(path: string): void {
   if (typeof window === 'undefined') return
-  try { window.sessionStorage.setItem(ACCOUNT_UNDERLAY_KEY, path) } catch {}
+  try {
+    window.sessionStorage.setItem(ACCOUNT_UNDERLAY_KEY, path)
+  } catch {
+    // Private mode / quota / disabled storage — nothing to do.
+  }
 }
 
 export function clearAccountUnderlay(): void {
   if (typeof window === 'undefined') return
-  try { window.sessionStorage.removeItem(ACCOUNT_UNDERLAY_KEY) } catch {}
+  try {
+    window.sessionStorage.removeItem(ACCOUNT_UNDERLAY_KEY)
+  } catch {
+    // Private mode / quota / disabled storage — nothing to do.
+  }
 }
 
 function rootForPath(pathname: string): LayerDescriptor {
