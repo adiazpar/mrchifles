@@ -13,8 +13,9 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 // palette is theme-stable (not swapped in dark mode), so the banner
 // looks consistent in both themes.
 //
-// z-40 sits one layer below NavigationErrorNotice (z-50) so a transient
-// navigation error overlays this persistent connectivity indicator.
+// z-[160] keeps the offline indicator visible above RouteOverlay
+// (z-150). The transient navigation-error notice sits at the same
+// layer so the most-recent banner wins for stack order.
 export function OfflineBadge() {
   const t = useTranslations('network')
   const isOnline = useOnlineStatus()
@@ -24,7 +25,7 @@ export function OfflineBadge() {
   return (
     <div
       role="status"
-      className="fixed top-0 inset-x-0 z-40 px-4 py-1.5 text-xs text-center bg-neutral-800 text-text-inverse shadow-sm pointer-events-none"
+      className="fixed top-0 inset-x-0 z-[160] px-4 py-1.5 text-xs text-center bg-neutral-800 text-text-inverse shadow-sm pointer-events-none"
     >
       {t('offline_banner')}
     </div>

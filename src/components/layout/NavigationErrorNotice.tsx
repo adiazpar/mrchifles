@@ -17,7 +17,7 @@ export function NavigationErrorNotice() {
   return (
     <div
       role="alert"
-      className="fixed top-0 inset-x-0 z-50 px-4 py-2 text-sm text-center bg-warning text-text-inverse shadow-md pointer-events-none"
+      className="fixed top-0 inset-x-0 z-[160] px-4 py-2 text-sm text-center bg-warning text-text-inverse shadow-md pointer-events-none"
     >
       {/* next-intl's `t` is typed against the full AppConfig messages, so
           we narrow to a runtime lookup here. The provider only ever stores

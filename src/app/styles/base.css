@@ -145,6 +145,7 @@
   /* ===== Z-Index ===== */
   --z-dropdown: 50;
   --z-sticky: 100;
+  --z-overlay: 150;
   --z-modal-backdrop: 200;
   --z-modal: 210;
   --z-auth-gate: 250;
