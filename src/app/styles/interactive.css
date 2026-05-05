@@ -155,17 +155,6 @@
   display: flex;
   z-index: var(--z-sticky);
   padding-bottom: env(safe-area-inset-bottom, 0);
-  transition: transform var(--duration-normal) ease-out,
-              opacity var(--duration-normal) ease-out;
-}
-
-/* Hidden on focused pages (e.g. /account). Slides off-screen + fades.
- * Combines with the existing translateX(-50%) centering, hence the
- * full translate() pair. */
-.mobile-nav--hidden {
-  transform: translate(-50%, 100%);
-  opacity: 0;
-  pointer-events: none;
 }
 
 .mobile-nav-item {

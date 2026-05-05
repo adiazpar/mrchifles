@@ -28,10 +28,6 @@ export function MobileNav() {
   const businessIdFromPath = getBusinessIdFromPath(pathname)
   const businessId = businessContext?.businessId ?? businessIdFromPath
   const isHubContext = !businessIdFromPath
-  // Hide the nav on settings — it's a focused page, the Create/Join
-  // shortcuts are out of context. Hidden via CSS class so the transform +
-  // opacity transition plays on enter and exit, no DOM unmount.
-  const isAccountRoute = pathname === '/account'
 
   const NAV_LABEL_MAP: Record<string, string> = {
     home: tNav('home'),
@@ -82,7 +78,7 @@ export function MobileNav() {
   }
 
   return (
-    <nav className={`mobile-nav ${isAccountRoute ? 'mobile-nav--hidden' : ''}`}>
+    <nav className="mobile-nav">
       <div className="flex w-full" style={contentFadeStyle}>
         {isHubContext ? (
           <>
