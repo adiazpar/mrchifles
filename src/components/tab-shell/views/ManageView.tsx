@@ -55,7 +55,7 @@ export function ManageView() {
   const tCreate = useTranslations('createBusiness')
   const tAccount = useTranslations('account')
   const { business, businessId, isOwner } = useBusiness()
-  const { setSlideDirection, setSlideTargetPath, navigate } = usePageTransition()
+  const { navigate } = usePageTransition()
   const { transfer: pendingTransfer } = usePendingTransferContext()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
 
@@ -76,11 +76,7 @@ export function ManageView() {
     Boolean(incomingTransfer) &&
     incomingTransfer?.business.id === businessId
 
-  const slideTo = (href: string) => {
-    setSlideTargetPath(href)
-    setSlideDirection('forward')
-    navigate(href)
-  }
+  const slideTo = (href: string) => navigate(href)
 
   if (!business || !businessId) return null
 

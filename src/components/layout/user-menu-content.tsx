@@ -25,7 +25,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
   const t = useTranslations('ui.user_menu')
   const { user } = useAuth()
   const { playExit } = useAuthGate()
-  const { navigate, setSlideDirection, setSlideTargetPath } = usePageTransition()
+  const { navigate } = usePageTransition()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
 
   const handleLogout = useCallback(async () => {
@@ -44,16 +44,9 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
       onAction?.()
       return
     }
-    if (href === '/account') {
-      setSlideTargetPath(href)
-      setSlideDirection('forward')
-    } else if (href === '/') {
-      setSlideTargetPath(pathname)
-      setSlideDirection('back')
-    }
     navigate(href)
     onAction?.()
-  }, [navigate, setSlideDirection, setSlideTargetPath, onAction, pathname])
+  }, [navigate, onAction, pathname])
 
   const isBusinessContext = !!getBusinessIdFromPath(pathname)
 

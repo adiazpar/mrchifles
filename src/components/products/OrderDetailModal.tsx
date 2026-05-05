@@ -269,7 +269,7 @@ export function OrderDetailModal({
   const tCommon = useTranslations('common')
   const { formatCurrency, formatDate } = useBusinessFormat()
   const params = useParams<{ businessId: string }>()
-  const { setSlideDirection, setSlideTargetPath, navigate } = usePageTransition()
+  const { navigate } = usePageTransition()
   const editReceiptInputRef = useRef<HTMLInputElement>(null)
   const [editReceiptError, setEditReceiptError] = useState('')
   const productsById = useMemo(() => new Map(products.map(p => [p.id, p])), [products])
@@ -435,8 +435,6 @@ export function OrderDetailModal({
                     // visible on top — jarring.
                     onClose()
                     setTimeout(() => {
-                      setSlideTargetPath(href)
-                      setSlideDirection('forward')
                       navigate(href)
                     }, 200)
                   }}

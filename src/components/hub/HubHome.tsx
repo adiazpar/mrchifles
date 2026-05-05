@@ -62,7 +62,7 @@ export function HubHome() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const { markHubReady } = useAuthGate()
-  const { navigate, setSlideDirection, setSlideTargetPath, setCachedBusinesses } = usePageTransition()
+  const { navigate, setCachedBusinesses } = usePageTransition()
   const { createdBusiness } = useCreateBusinessModal()
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
   const [isLoading, setIsLoading] = useState(() => getCachedBusinessList().length === 0)
@@ -115,8 +115,6 @@ export function HubHome() {
 
   const handleEnterBusiness = (businessId: string) => {
     const href = `/${businessId}/home`
-    setSlideTargetPath(href)
-    setSlideDirection('forward')
     navigate(href)
   }
 

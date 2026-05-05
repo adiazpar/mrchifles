@@ -104,7 +104,7 @@ export function OrdersTab({
   const tProducts = useTranslations('products')
   const tCommon = useTranslations('common')
   const params = useParams<{ businessId: string }>()
-  const { setSlideDirection, setSlideTargetPath, navigate } = usePageTransition()
+  const { navigate } = usePageTransition()
   const [isSortSheetOpen, setSortSheetOpen] = useState(false)
 
   const sortLabels: Record<OrderSortOption, string> = {
@@ -224,8 +224,6 @@ export function OrdersTab({
                   onClick={() => {
                     if (!params?.businessId) return
                     const href = `/${params.businessId}/providers`
-                    setSlideTargetPath(href)
-                    setSlideDirection('forward')
                     navigate(href)
                   }}
                   className="text-sm text-brand hover:text-brand transition-colors"

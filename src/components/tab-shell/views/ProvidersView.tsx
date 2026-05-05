@@ -13,7 +13,7 @@ import { usePageTransition } from '@/contexts/page-transition-context'
 
 export function ProvidersView() {
   const { businessId } = useBusiness()
-  const { navigate, setSlideDirection, setSlideTargetPath } = usePageTransition()
+  const { navigate } = usePageTransition()
   const t = useTranslations('providers')
 
   const { setOrders } = useOrders()
@@ -145,8 +145,6 @@ export function ProvidersView() {
                             provider={provider}
                             onClick={() => {
                               const href = `/${businessId}/providers/${provider.id}`
-                              setSlideTargetPath(href)
-                              setSlideDirection('forward')
                               navigate(href)
                             }}
                           />
@@ -156,8 +154,6 @@ export function ProvidersView() {
                           provider={provider}
                           onClick={() => {
                             const href = `/${businessId}/providers/${provider.id}`
-                            setSlideTargetPath(href)
-                            setSlideDirection('forward')
                             navigate(href)
                           }}
                         />
