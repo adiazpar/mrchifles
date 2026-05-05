@@ -13,9 +13,10 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 // palette is theme-stable (not swapped in dark mode), so the banner
 // looks consistent in both themes.
 //
-// z-[160] keeps the offline indicator visible above RouteOverlay
-// (z-150). The transient navigation-error notice sits at the same
-// layer so the most-recent banner wins for stack order.
+// z-[160] keeps the offline indicator visible above the layer stack
+// (top layer sits at calc(--z-overlay + n) where --z-overlay is 150).
+// The transient navigation-error notice sits at the same layer so the
+// most-recent banner wins for stack order.
 export function OfflineBadge() {
   const t = useTranslations('network')
   const isOnline = useOnlineStatus()

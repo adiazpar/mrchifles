@@ -379,7 +379,7 @@ function ModalRoot({
 
   // Portal to document.body so the backdrop + drawer are outside any
   // scroll container or stacking context created by page layouts (e.g.
-  // main-scroll-container's overflow, RouteOverlay's z-index).
+  // main-scroll-container's overflow, the layer stack's z-index ladder).
   if (typeof window === 'undefined') return null
 
   return createPortal(

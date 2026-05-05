@@ -79,23 +79,12 @@ const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   'providers': { pageTitle: 'Providers', backTo: '/manage' },
 }
 
-// User-level routes (no businessId prefix)
-// For hub pages with titles, title shows as main header, pageTitle as subtitle
-const USER_ROUTE_CONFIGS: Record<string, RouteConfig> = {
-  '/account': { title: 'Account', pageTitle: 'Settings' },
-}
-
 /**
- * Get route config for a pathname
- * Handles both business-scoped routes (/{businessId}/...) and user-level routes (/account)
+ * Get route config for a pathname (business-scoped routes only).
+ * /account renders its own DrillDownHeader with i18n keys; this map is
+ * consumed only by the business-variant PageHeader for tab subtitles.
  */
 export function getRouteConfig(pathname: string): RouteConfig & { businessId?: string } {
-  // Check user-level routes first
-  if (USER_ROUTE_CONFIGS[pathname]) {
-    return USER_ROUTE_CONFIGS[pathname]
-  }
-
-  // Parse business-scoped routes: /{businessId}/{rest}
   const segments = pathname.split('/').filter(Boolean)
   if (segments.length === 0) {
     return { pageTitle: '' }
