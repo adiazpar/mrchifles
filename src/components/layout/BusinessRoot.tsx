@@ -44,7 +44,7 @@ export function BusinessRoot({ businessId, activeTab }: BusinessRootProps) {
                   <BusinessDataPreloader businessId={businessId} />
                   <NavigationErrorNotice />
                   <PageHeader variant="business" />
-                  <TabShell key={`tab-shell-${businessId}`} />
+                  <TabShell key={`tab-shell-${businessId}`} activeTab={activeTab} />
                   <MobileNav />
                 </ProductSettingsProvider>
               </ProductsProvider>

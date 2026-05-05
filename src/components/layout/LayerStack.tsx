@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useEffect } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useMotionValue, AnimatePresence } from 'framer-motion'
 import { useTranslations } from 'next-intl'
@@ -35,41 +35,53 @@ export function LayerStack() {
   const t = useTranslations()
   const peelProgress = useMotionValue(0)
   const reducedMotion = prefersReducedMotion()
+
+  // True only during the very first render after mount. After the first
+  // useEffect commits, this stays false. Used so deep-link refresh on
+  // /<biz>/providers/<id> shows all layers materialized in place
+  // instead of three of them sliding in from the right.
   const firstPaintRef = useRef(true)
   useEffect(() => { firstPaintRef.current = false }, [])
 
-  // Recompute the stack on every pathname change. sessionStorage reads
-  // inside getLayerStack are sync; safe to call during useMemo.
+  // Layer keys present in the previous render. Lets us decide which layers
+  // in the new render are NEW (need slide-in) vs already-mounted (just
+  // stayed put). When multiple new layers arrive in one render (e.g. a
+  // navigate that jumps through multiple stack levels), only the topmost
+  // slides in — anything beneath it appears in place. Without this, a
+  // jump like / → /<biz>/providers/<id> would slide in 3 layers at once.
+  const prevKeysRef = useRef<Set<string>>(new Set())
   const layers = useMemo(() => getLayerStack(pathname), [pathname])
-
-  // The new root key. If a layer's key matches this, it's the (current or
-  // newly-installed) root. If a layer is exiting AND it was a root AND a
-  // different root is now in place, its exit goes left (root-swap). All
-  // other exits go right (normal pop).
-  const newRootKey = layers[0] ? getLayerKey(layers[0]) : null
+  // Capture the prev set BEFORE updating the ref, so per-layer logic in
+  // this render reads the previous-render keys.
+  const prevKeys = prevKeysRef.current
+  useEffect(() => {
+    prevKeysRef.current = new Set(layers.map(getLayerKey))
+  })
 
   return (
     <AnimatePresence initial={false} mode="sync">
       {layers.map((d, idx) => {
+        const key = getLayerKey(d)
         const isTop = idx === layers.length - 1
         const isUnderlay = idx === layers.length - 2
-        const isRoot = idx === 0
-        // Only suppress slide-in on the very first paint of the app (page load).
-        // After that, even root swaps animate (old root exits left, new root enters right).
-        const isInitialMount = isRoot && firstPaintRef.current
-        // A root layer's exit goes left iff it has been replaced by a different root.
-        // For non-root layers (drill-downs), exit always goes right (normal pop).
-        const exitDirection: 'left' | 'right' =
-          isRoot && newRootKey !== null && getLayerKey(d) !== newRootKey ? 'left' : 'right'
+        const wasInPrev = prevKeys.has(key)
+
+        // Skip the open animation when:
+        //   - This is the very first paint (deep-link refresh case).
+        //   - The layer was already mounted in the previous render
+        //     (its x is already 0; AnimatePresence kept it).
+        //   - It's a non-top NEW layer (multi-level navigate jump):
+        //     only the topmost newly-arrived layer slides in.
+        const skipOpenAnimation =
+          firstPaintRef.current || wasInPrev || !isTop
 
         return (
           <Layer
-            key={getLayerKey(d)}
+            key={key}
             index={idx}
             isTop={isTop}
-            isInitialMount={isInitialMount}
-            exitDirection={exitDirection}
             isUnderlay={isUnderlay}
+            skipOpenAnimation={skipOpenAnimation}
             peelProgress={peelProgress}
             onPeelDismiss={() => router.back()}
             ariaLabel={t('common.detail')}

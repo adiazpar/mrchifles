@@ -52,28 +52,40 @@ describe('LayerStack', () => {
     mockPathname = '/'
     render(<LayerStack />)
     expect(screen.getByTestId('hub-root')).toBeTruthy()
+    expect(screen.queryByTestId('business-root')).toBeNull()
     expect(screen.queryByTestId('account')).toBeNull()
   })
 
-  it('renders [BusinessRoot, ProvidersDrilldown] at /<biz>/providers', () => {
+  it('renders [hub, business, providers] at /<biz>/providers', () => {
     mockPathname = '/abc/providers'
     render(<LayerStack />)
+    expect(screen.getByTestId('hub-root')).toBeTruthy()
     expect(screen.getByTestId('business-root')).toBeTruthy()
     expect(screen.getByTestId('providers')).toBeTruthy()
   })
 
-  it('renders 3 layers at /<biz>/providers/<id>', () => {
+  it('renders [hub, business, providers, provider-detail] at /<biz>/providers/<id>', () => {
     mockPathname = '/abc/providers/p1'
     render(<LayerStack />)
+    expect(screen.getByTestId('hub-root')).toBeTruthy()
     expect(screen.getByTestId('business-root')).toBeTruthy()
     expect(screen.getByTestId('providers')).toBeTruthy()
     expect(screen.getByTestId('provider-detail')).toBeTruthy()
   })
 
-  it('renders Account on top of stored underlay context', () => {
+  it('renders [hub, account] at /account with no stored underlay', () => {
+    mockPathname = '/account'
+    render(<LayerStack />)
+    expect(screen.getByTestId('hub-root')).toBeTruthy()
+    expect(screen.queryByTestId('business-root')).toBeNull()
+    expect(screen.getByTestId('account')).toBeTruthy()
+  })
+
+  it('renders [hub, business, account] when /account underlay is a business path', () => {
     sessionStorage.setItem('layer.accountUnderlay', '/abc/sales')
     mockPathname = '/account'
     render(<LayerStack />)
+    expect(screen.getByTestId('hub-root')).toBeTruthy()
     expect(screen.getByTestId('business-root')).toBeTruthy()
     expect(screen.getByTestId('account')).toBeTruthy()
   })

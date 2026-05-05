@@ -1,8 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useParams, usePathname } from 'next/navigation'
-import { TAB_IDS, getActiveTab, type TabId } from '@/lib/tab-routing'
+import { TAB_IDS, type TabId } from '@/lib/tab-routing'
 import { useIdleMount } from '@/hooks/useIdleMount'
 import { HomeView } from './views/HomeView'
 import { ProductsView } from './views/ProductsView'
@@ -16,20 +15,30 @@ const VIEW_COMPONENTS: Record<TabId, React.ComponentType> = {
   manage: ManageView,
 }
 
-// TabShell — single mount, all 6 tab views rendered persistently inside.
-// Active tab is derived from pathname; switching tabs is a CSS class flip,
-// not a React mount/unmount. Inactive tabs mount on idle-time after the
-// active tab has painted, so the first business entry stays fast and
-// subsequent tab taps are instant.
+interface TabShellProps {
+  /** Currently active tab. Provided by BusinessRoot from the layer-stack
+   * descriptor — the single source of truth for "what tab am I on" so
+   * the visible tab stays in sync with the descriptor during peel-back
+   * animations and drill-down dismissals. */
+  activeTab: TabId
+}
+
+// TabShell — single mount, all four tab views rendered persistently inside.
+// The active tab is controlled by the parent (BusinessRoot) which derives
+// it from the layer-stack descriptor, NOT from pathname directly. This
+// matters during peel-back: the URL is briefly the drill-down's URL
+// (e.g. /<biz>/providers) before router.back() commits, but the visible
+// tab underneath needs to be 'manage' (the drill-down's parent), not
+// 'home' (which getActiveTab(pathname) would default to for non-tab URLs).
 //
-// Mount this with key={businessId} (the parent layout does this) so that
+// Switching tabs is a CSS class flip, not a React mount/unmount. Inactive
+// tabs mount on idle-time after the active tab has painted, so the first
+// business entry stays fast and subsequent tab taps are instant.
+//
+// Mount this with key={businessId} (the parent does this) so that
 // switching businesses cleanly resets the per-business mount tracking and
 // scroll positions.
-export function TabShell() {
-  const pathname = usePathname()
-  const params = useParams<{ businessId: string }>()
-  const businessId = params?.businessId ?? ''
-  const activeTab = getActiveTab(pathname, businessId)
+export function TabShell({ activeTab }: TabShellProps) {
 
   // Set of tabs that are currently mounted in the DOM. Starts with just
   // the active one; expands as idle-mount fires.
