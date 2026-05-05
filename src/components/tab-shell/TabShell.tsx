@@ -7,16 +7,12 @@ import { useIdleMount } from '@/hooks/useIdleMount'
 import { HomeView } from './views/HomeView'
 import { ProductsView } from './views/ProductsView'
 import { SalesView } from './views/SalesView'
-import { ProvidersView } from './views/ProvidersView'
-import { TeamView } from './views/TeamView'
 import { ManageView } from './views/ManageView'
 
 const VIEW_COMPONENTS: Record<TabId, React.ComponentType> = {
   home: HomeView,
-  products: ProductsView,
   sales: SalesView,
-  providers: ProvidersView,
-  team: TeamView,
+  products: ProductsView,
   manage: ManageView,
 }
 
