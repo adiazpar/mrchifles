@@ -11,8 +11,6 @@ import { Spinner } from '@/components/ui'
  * Shows a spinner during auth or business loading.
  * Redirects to login if not authenticated.
  * Business access validation is handled by BusinessContext.
- *
- * Note: Page transitions are handled by PageTransition wrapper in the layout.
  */
 export function ContentGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -60,6 +58,6 @@ export function ContentGuard({ children }: { children: React.ReactNode }) {
     return null
   }
 
-  // Render children - transitions handled by PageTransition in layout
+  // Render children
   return <>{children}</>
 }

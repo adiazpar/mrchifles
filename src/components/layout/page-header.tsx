@@ -127,8 +127,10 @@ export function PageHeader() {
     'Account': tNav('account'),
   }
 
-  // During transitions (slide or cross-context), use current pathname to
-  // prevent header content from changing while still visible.
+  // During cross-context navigation, use the current pathname to prevent
+  // header content from changing while still visible. The header is
+  // otherwise covered by the overlay during in-context transitions, so
+  // content swap during the slide is invisible.
   const config = getRouteConfig(pendingHref || pathname)
 
   const { title: rawTitle, pageTitle: rawPageTitle, backTo } = config

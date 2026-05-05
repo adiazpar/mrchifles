@@ -75,6 +75,21 @@ export function RouteOverlay({
     }
   }, [isOpen, reducedMotion, underlayRef])
 
+  // Lock underlay scroll while the overlay is open. Otherwise the parallax-
+  // shifted sliver of underlay visible at the right edge during peel can
+  // still receive scroll events, creating a perceived "ghost scroll".
+  useEffect(() => {
+    const el = underlayRef?.current
+    if (!el) return
+    if (isOpen) {
+      const prevOverflow = el.style.overflow
+      el.style.overflow = 'hidden'
+      return () => {
+        el.style.overflow = prevOverflow
+      }
+    }
+  }, [isOpen, underlayRef])
+
   const handleDrag = (_: PointerEvent, info: PanInfo) => {
     if (reducedMotion) return
     const el = underlayRef?.current

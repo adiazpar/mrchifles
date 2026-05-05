@@ -192,9 +192,9 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   }, [navigationError])
 
   // Memoize to avoid re-rendering the entire business-scoped tree every
-  // time this provider re-renders. PageTransition lives in the root
-  // layout and is consumed by PageHeader, MobileNav, PageTransition, and
-  // every page — the blast radius of an unmemoized value is the whole
+  // time this provider re-renders. This context is consumed by PageHeader,
+  // MobileNav, RouteOverlay (via HubOverlayMount and BusinessLayout), and
+  // most pages — the blast radius of an unmemoized value is the whole
   // app shell on every auth/pathname tick.
   const value = useMemo<PageTransitionContextValue>(
     () => ({
