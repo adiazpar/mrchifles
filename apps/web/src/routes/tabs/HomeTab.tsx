@@ -7,12 +7,33 @@ import {
 } from '@ionic/react'
 import { useIntl } from 'react-intl'
 
+import { HomeView } from '@/components/tab-shell/views/HomeView'
+
 /**
- * Home tab placeholder. Phase 11.1 will replace this body with the real
- * HomeView (dashboard/greeting + business switcher + recent activity).
+ * Home tab — the per-business dashboard surface.
  *
  * Mounted at `/<businessId>/home` from BusinessTabsLayout's IonRouterOutlet.
  * IonTabs preserves this page's scroll + state when other tabs are active.
+ *
+ * Phase 11.1: ports the legacy `HomeView` content into Ionic chrome.
+ *
+ * Pattern choice:
+ *   - We REUSE `<HomeView />` verbatim rather than inlining the markup.
+ *     HomeView is a small self-contained view with no header of its own
+ *     (the legacy app set the page title via the external MobileNav,
+ *     not from inside the view), so it slots cleanly into `<IonContent>`.
+ *   - We DO render `<IonHeader>` with the `navigation.home` title. This
+ *     mirrors how every other Ionic page in the migration sets its title
+ *     and gives the bottom-tab "tap active tab to scroll-to-top" gesture
+ *     a stable header to anchor against.
+ *   - No UserMenu in this header — the legacy home tab never had one.
+ *     Account access lives on the user-scoped HubPage / AccountPage.
+ *
+ * The HomeView body is currently a "coming soon" stub (this matches the
+ * legacy state — the home dashboard has always been a placeholder; the
+ * tab exists in the IA but the dashboard widgets are not built yet).
+ * When real dashboard content lands, it goes inside HomeView so the
+ * Ionic chrome here stays untouched.
  */
 export function HomeTab() {
   const intl = useIntl()
@@ -24,9 +45,7 @@ export function HomeTab() {
         </IonToolbar>
       </IonHeader>
       <IonContent>
-        <div className="p-4 text-sm text-[var(--color-text-secondary)]">
-          Home — Phase 11 will implement this tab.
-        </div>
+        <HomeView />
       </IonContent>
     </IonPage>
   )
