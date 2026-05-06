@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
 import { Redirect } from 'react-router-dom'
-import { IonContent, IonHeader, IonPage, IonToolbar } from '@ionic/react'
+import { IonContent, IonHeader, IonPage, IonSpinner, IonToolbar } from '@ionic/react'
 import { useAuth } from '@/contexts/auth-context'
 import { CreateBusinessProvider } from '@/contexts/create-business-context'
 import { JoinBusinessProvider } from '@/contexts/join-business-context'
 import { IncomingTransferProvider } from '@/contexts/incoming-transfer-context'
 import { PageTransitionProvider } from '@/contexts/page-transition-context'
-import { Spinner } from '@/components/ui'
 import { UserMenu } from '@/components/layout/user-menu'
 import { HubHome } from '@/components/hub/HubHome'
 
@@ -58,8 +57,14 @@ export function HubPage() {
     return (
       <IonPage>
         <IonContent>
-          <div className="flex-1 flex items-center justify-center h-full">
-            <Spinner size="lg" />
+          {/* Full-viewport centered spinner. `IonContent` provides a
+              scroll container with height: 100% set internally, so
+              `h-full` on the inner flex container fills the viewport.
+              `IonSpinner name="crescent"` matches Ionic's iOS spinner
+              style and inherits --ion-color-primary (mapped to the
+              Kasero brand token in ionic-theme.css). */}
+          <div className="flex h-full items-center justify-center">
+            <IonSpinner name="crescent" />
           </div>
         </IonContent>
       </IonPage>

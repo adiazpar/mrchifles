@@ -1,8 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { Redirect, useHistory, useLocation } from 'react-router-dom'
-import { IonContent, IonPage } from '@ionic/react'
+import { IonContent, IonPage, IonSpinner } from '@ionic/react'
 import { useAuth } from '@/contexts/auth-context'
-import { Spinner } from '@/components/ui'
 
 /**
  * Join page route (`/join`). Thin redirector that supports the QR-code
@@ -66,8 +65,10 @@ export function JoinPage() {
   return (
     <IonPage>
       <IonContent>
-        <div className="flex-1 flex items-center justify-center h-full">
-          <Spinner size="lg" />
+        {/* Full-viewport centered spinner. See HubPage for the
+            IonContent + IonSpinner pattern rationale. */}
+        <div className="flex h-full items-center justify-center">
+          <IonSpinner name="crescent" />
         </div>
       </IonContent>
     </IonPage>
