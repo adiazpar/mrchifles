@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { registerSW } from 'virtual:pwa-register'
 import { App } from './App'
 import './styles/index.css'
 import '@ionic/react/css/core.css'
@@ -28,3 +29,20 @@ root.render(
     <App />
   </React.StrictMode>,
 )
+
+// PWA service worker registration. The SW only ships in `vite build` output
+// (devOptions.enabled = false), so in dev this becomes a no-op stub provided
+// by vite-plugin-pwa's virtual module.
+if ('serviceWorker' in navigator) {
+  registerSW({
+    immediate: true,
+    onRegisteredSW(swUrl) {
+      if (import.meta.env.DEV) {
+        console.log('[pwa] SW registered:', swUrl)
+      }
+    },
+    onRegisterError(error) {
+      console.warn('[pwa] SW registration failed:', error)
+    },
+  })
+}

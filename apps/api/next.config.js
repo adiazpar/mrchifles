@@ -20,11 +20,12 @@ const nextConfig = {
   // Locally uploaded product icons are served from /media/products/<id>.<ext>
   // with a ?v=<timestamp> cache-buster (see src/lib/storage.ts). Next.js 16
   // will require query-stringed local paths to be explicitly allowlisted.
+  // Static SPA assets (kasero-logo.png, icon-source.png, manifest, icons,
+  // splash, og-image, animations) live in apps/web/public/ now and are
+  // served by Vite/Vercel from the SPA origin — no longer the API's job.
   images: {
     localPatterns: [
       { pathname: '/media/products/**', search: '' },
-      { pathname: '/kasero-logo.png', search: '' },
-      { pathname: '/icon-source.png', search: '' },
     ],
   },
 

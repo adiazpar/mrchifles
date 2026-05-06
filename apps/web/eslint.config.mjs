@@ -26,4 +26,12 @@ export default [
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  // Service worker source: runs in the ServiceWorkerGlobalScope, not a window.
+  // Use serviceworker globals (importScripts, ServiceWorkerGlobalScope, etc.).
+  {
+    files: ['src/pwa/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: { ...globals.serviceworker },
+    },
+  },
 ]

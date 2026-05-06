@@ -23,9 +23,30 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       VitePWA({
-        // Phase 4.2 will replace this with a custom Workbox SW. For now,
-        // disable PWA generation entirely so Phase 3.1 boots cleanly.
-        disable: true,
+        // Custom Workbox SW source lives at src/pwa/sw.ts. The plugin
+        // compiles it during `vite build`, injects the precache manifest
+        // (`__WB_MANIFEST`), and emits `dist/sw.js`. The SW explicitly
+        // bypasses `/api/*` (NetworkOnly) so authenticated/rate-limited
+        // requests never see the cache.
+        registerType: 'autoUpdate',
+        strategies: 'injectManifest',
+        srcDir: 'src/pwa',
+        filename: 'sw.ts',
+        // We register the SW manually in main.tsx via `virtual:pwa-register`,
+        // so the plugin shouldn't auto-inject a registration script.
+        injectRegister: false,
+        // Use the existing `public/manifest.json` directly. Setting
+        // `manifest: false` tells the plugin not to generate or rewrite it.
+        manifest: false,
+        injectManifest: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
+          // Splash images are large (some are ~700KB). Bump the per-file
+          // cap to 5 MB so they make it into the precache manifest.
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        },
+        // Disable SW in dev — it conflicts with HMR and Vite's dev server
+        // already serves modules without caching.
+        devOptions: { enabled: false },
       }),
     ],
     server: {

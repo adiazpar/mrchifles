@@ -3,6 +3,7 @@
   "short_name": "Kasero",
   "description": "Multi-business management system",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#F8FAFC",
   "theme_color": "#F5A623",
