@@ -23,7 +23,6 @@ import { getUserInitials } from '@kasero/shared/auth'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 import { LanguageRow } from '@/components/account/LanguageRow'
-import { DrillDownHeader } from '@/components/layout/DrillDownHeader'
 
 // Every modal on this page is closed by default and only needed on user
 // action. Dynamic import with `ssr: false` keeps the modal code (plus
@@ -58,12 +57,19 @@ const IncomingTransferModal = dynamic(
   { ssr: false },
 )
 
-export function AccountPage() {
+/**
+ * Body of the Account page. The Ionic chrome (header + back button) is
+ * provided by the route-level wrapper at `apps/web/src/routes/AccountPage.tsx`,
+ * so this component renders ONLY the scrollable settings body.
+ *
+ * Renamed from `AccountPage` to `AccountPageContent` during the
+ * apps/web migration to avoid colliding with the new route component.
+ */
+export function AccountPageContent() {
   const { user, isLoading } = useAuth()
   const { playExit } = useAuthGate()
   const router = useRouter()
   const t = useIntl()
-  const tNav = useIntl()
   const { theme } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
@@ -76,14 +82,9 @@ export function AccountPage() {
 
   if (isLoading) {
     return (
-      <>
-        <DrillDownHeader title={tNav.formatMessage({
-          id: 'navigation.account'
-        })} onBack={() => router.back()} />
-        <main className="page-loading">
-          <Spinner className="spinner-lg" />
-        </main>
-      </>
+      <main className="page-loading">
+        <Spinner className="spinner-lg" />
+      </main>
     );
   }
 
@@ -102,9 +103,6 @@ export function AccountPage() {
 
   return (
     <>
-      <DrillDownHeader title={tNav.formatMessage({
-        id: 'navigation.account'
-      })} onBack={() => router.back()} />
       <main className="page-content space-y-4">
         {/* Profile header card — tappable, opens the edit profile modal */}
       <button
@@ -299,3 +297,11 @@ export function AccountPage() {
     </>
   );
 }
+
+/**
+ * Legacy alias. The dead-code LayerStack still imports `AccountPage`
+ * from this module; this re-export keeps it compiling until Phase 13.1
+ * deletes the layer-stack tree. New consumers should import the route
+ * component from `@/routes/AccountPage` instead.
+ */
+export { AccountPageContent as AccountPage }

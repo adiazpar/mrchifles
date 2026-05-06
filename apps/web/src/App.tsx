@@ -4,6 +4,7 @@ import { Route, Switch } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { AppIntlProvider } from '@/i18n/AppIntlProvider'
+import { AccountPage } from '@/routes/AccountPage'
 import { HubPage } from '@/routes/HubPage'
 import { LoginPage } from '@/routes/LoginPage'
 import { RegisterPage } from '@/routes/RegisterPage'
@@ -37,6 +38,13 @@ export function App() {
                 </Route>
                 <Route exact path="/register">
                   <RegisterPage />
+                </Route>
+                {/* Account (drill-down off the Hub). Auth gating and
+                    its feature providers live inside AccountPage. The
+                    `/account` route is matched before `/` so the
+                    exact-match Hub never swallows it. */}
+                <Route exact path="/account">
+                  <AccountPage />
                 </Route>
                 {/* Hub home (post-login landing page). Auth gating and
                     its tree of feature providers live inside HubPage
