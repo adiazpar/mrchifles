@@ -9,16 +9,20 @@ import { useProviderManagement } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
 import { ProviderListItem, ProviderModal } from '@/components/providers'
-import { DrillDownHeader } from '@/components/layout/DrillDownHeader'
 
 interface ProvidersDrilldownProps {
   businessId: string
 }
 
+/**
+ * Legacy in-view header (`DrillDownHeader`) was stripped during the
+ * Vite + Ionic migration: the wrapping `IonHeader` + `IonBackButton`
+ * inside `ProvidersTab` provides the title and back affordance now,
+ * matching the same pattern used by `AccountPageContent`.
+ */
 export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
   const router = useRouter()
   const t = useIntl()
-  const tNav = useIntl()
 
   const { setOrders } = useOrders()
 
@@ -60,9 +64,6 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
 
   return (
     <>
-      <DrillDownHeader title={tNav.formatMessage({
-        id: 'navigation.providers'
-      })} onBack={() => router.back()} />
       {isLoading ? (
         <main className="page-loading">
           <Spinner className="spinner-lg" />
