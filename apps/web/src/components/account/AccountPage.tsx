@@ -297,11 +297,3 @@ export function AccountPageContent() {
     </>
   );
 }
-
-/**
- * Legacy alias. The dead-code LayerStack still imports `AccountPage`
- * from this module; this re-export keeps it compiling until Phase 13.1
- * deletes the layer-stack tree. New consumers should import the route
- * component from `@/routes/AccountPage` instead.
- */
-export { AccountPageContent as AccountPage }

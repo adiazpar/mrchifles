@@ -10,7 +10,6 @@ import { usePageTransition } from '@/contexts/page-transition-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { getUserInitials } from '@kasero/shared/auth'
 import { getBusinessIdFromPath } from '@/lib/navigation'
-import { setAccountUnderlay } from '@/lib/layer-stack'
 import { Building2, ChevronRight, Settings, CircleHelp, LogOut } from 'lucide-react'
 
 interface UserMenuContentProps {
@@ -106,9 +105,6 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
               onAction?.()
               return
             }
-            // Capture the underlay BEFORE navigating so getLayerStack reads
-            // the right value when /account becomes the top URL.
-            setAccountUnderlay(pathname)
             navigate('/account')
             onAction?.()
           }}
