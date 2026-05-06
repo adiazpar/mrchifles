@@ -46,10 +46,10 @@ import { ProviderDetailPage } from './tabs/ProviderDetailPage'
  *     between sibling pages inside the same tab. Pages that pushed via
  *     `IonRouterLink`/`useIonRouter().push()` slide in; back gestures and
  *     `IonBackButton` slide them off.
- *   - `IonTabBar` is the persistent bottom nav. Tab order matches the
- *     legacy MobileNav: Home, Sales, Products, Manage. Providers and Team
- *     do NOT appear in the bar — they are drill-downs from Manage that
- *     live inside the IonRouterOutlet's tab stack.
+ *   - `IonTabBar` is the persistent bottom nav. Tab order: Home, Sales,
+ *     Products, Manage. Providers and Team do NOT appear in the bar —
+ *     they are drill-downs from Manage that live inside the
+ *     IonRouterOutlet's tab stack.
  *
  * Provider tree mirrors the legacy `app-shell.tsx` + `BusinessRoot.tsx`
  * combo (read those two files for the rationale):

@@ -19,14 +19,13 @@ import { HomeView } from '@/components/tab-shell/views/HomeView'
  *
  * Pattern choice:
  *   - We REUSE `<HomeView />` verbatim rather than inlining the markup.
- *     HomeView is a small self-contained view with no header of its own
- *     (the legacy app set the page title via the external MobileNav,
- *     not from inside the view), so it slots cleanly into `<IonContent>`.
+ *     HomeView is a small self-contained view with no header of its own,
+ *     so it slots cleanly into `<IonContent>`.
  *   - We DO render `<IonHeader>` with the `navigation.home` title. This
  *     mirrors how every other Ionic page in the migration sets its title
  *     and gives the bottom-tab "tap active tab to scroll-to-top" gesture
  *     a stable header to anchor against.
- *   - No UserMenu in this header — the legacy home tab never had one.
+ *   - No UserMenu in this header.
  *     Account access lives on the user-scoped HubPage / AccountPage.
  *
  * The HomeView body is currently a "coming soon" stub (this matches the

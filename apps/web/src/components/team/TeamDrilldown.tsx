@@ -179,11 +179,8 @@ function ConfirmRemoveMemberButton({
 }
 
 /**
- * Legacy in-view header (`DrillDownHeader`) was stripped during the
- * Vite + Ionic migration: the wrapping `IonHeader` + `IonBackButton`
- * inside `TeamTab` provides the title and back affordance now,
- * matching the same pattern used by `ProvidersDrilldown` and
- * `AccountPageContent`.
+ * The wrapping `IonHeader` + `IonBackButton` inside `TeamTab` provides
+ * the title and back affordance for this view.
  */
 export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
   const t = useIntl()

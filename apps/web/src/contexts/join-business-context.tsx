@@ -66,8 +66,8 @@ function JoinBusinessProviderInner({ children }: JoinBusinessProviderProps) {
     }
   }, [joinBusiness.isOpen])
 
-  // Memoize so consumers (MobileNav, hub header) don't re-render on
-  // every joinBusiness state tick.
+  // Memoize so the hub UI consumers don't re-render on every
+  // joinBusiness state tick.
   const value = useMemo<JoinBusinessContextValue>(
     () => ({
       openJoinModal: joinBusiness.handleOpen,
@@ -86,7 +86,7 @@ function JoinBusinessProviderInner({ children }: JoinBusinessProviderProps) {
 
 /**
  * Provider for join business modal functionality.
- * Used in hub layout to allow MobileNav to open the join modal.
+ * Used in hub layout to allow Hub UI controls to open the join modal.
  *
  * Also handles QR code deep linking: if URL has ?code=ABC123,
  * automatically opens modal with pre-filled code and validates.

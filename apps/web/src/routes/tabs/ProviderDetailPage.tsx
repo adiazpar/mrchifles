@@ -21,11 +21,9 @@ import { useProviders } from '@/contexts/providers-context'
  * IonRouterOutlet. Reached via `router.push()` from the providers list,
  * which animates as a native iOS-style slide.
  *
- * Pattern choice (mirrors `ProvidersTab` / `TeamTab` from Phase 12.1
- * and 12.2):
+ * Pattern choice (mirrors `ProvidersTab` / `TeamTab`):
  *   - We REUSE `<ProviderDetailClient businessId=... providerId=... />`
- *     verbatim. Its legacy `DrillDownHeader` was stripped (see the
- *     component) so the `IonHeader` + `IonBackButton` here is the only
+ *     verbatim. The `IonHeader` + `IonBackButton` here is the only
  *     chrome.
  *   - The dynamic title (the provider's name) is hoisted up: we look
  *     up `useProviders().providers.find(p => p.id === id)` here, so the

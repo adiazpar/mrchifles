@@ -21,22 +21,19 @@ import { AccountPageContent } from '@/components/account/AccountPage'
  *   - `IonHeader` + `IonToolbar` provide the top bar
  *   - `IonBackButton defaultHref="/"` handles both in-app history and
  *     deep-link entries (no history → falls back to the Hub)
- *   - The body component (`AccountPageContent`) was stripped of its
- *     legacy `DrillDownHeader` so the toolbar is the only chrome
+ *   - The body component (`AccountPageContent`) renders no in-view
+ *     header — the toolbar is the only chrome
  *
  * Provider tree mirrors HubPage. The body consumes:
  *   - `useAuth()` (provided at App.tsx)
  *   - `useAuthGate()` (provided at App.tsx) for the logout exit
  *     animation via `playExit('/login')`
  *   - `useIncomingTransferContext()` for the inbound-transfer banner +
- *     modal — mounted locally here, matching HubPage's pattern. Phase
- *     13.1 will dedupe by hoisting if appropriate.
- *   - `PageTransitionProvider` is mounted because the legacy body still
- *     calls `useRouter()` (next-navigation-shim). The shim itself does
- *     NOT need PageTransition, but several components reachable from
- *     here (e.g. modals that may navigate) historically did. Mounting
- *     it here matches HubPage and avoids surprise context-missing
- *     errors for any descendant that pulls it in.
+ *     modal — mounted locally here, matching HubPage's pattern.
+ *   - `PageTransitionProvider` is mounted because the body and several
+ *     descendants (notably modals that may navigate) call `useRouter()`
+ *     via the next-navigation-shim. Mounting it here matches HubPage
+ *     and avoids context-missing errors for any descendant.
  */
 export function AccountPage() {
   const { user, isLoading: authLoading } = useAuth()

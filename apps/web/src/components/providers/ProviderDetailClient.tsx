@@ -51,16 +51,14 @@ export interface ProviderDetailClientProps {
 }
 
 /**
- * Legacy in-view header (`DrillDownHeader`) was stripped during the
- * Vite + Ionic migration: the wrapping `IonHeader` + `IonBackButton`
- * inside `ProviderDetailPage` provides the title and back affordance now,
- * matching the same pattern used by `ProvidersDrilldown` and
- * `TeamDrilldown`. The route component hoists the provider lookup
+ * The wrapping `IonHeader` + `IonBackButton` inside `ProviderDetailPage`
+ * provides the title and back affordance for this view. The route
+ * component hoists the provider lookup
  * (`useProviders().providers.find(...)`) so the `IonTitle` can render
  * the provider name even before this component finishes its detail
  * fetch. `useRouter()` is retained because it still drives the tab
  * URL state (`router.replace`) and the post-delete redirect
- * (`router.push`) — only the back affordance moved out.
+ * (`router.push`).
  */
 
 type DetailTab = 'summary' | 'history' | 'notes'

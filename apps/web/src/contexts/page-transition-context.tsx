@@ -186,10 +186,9 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   }, [navigationError])
 
   // Memoize to avoid re-rendering the entire business-scoped tree every
-  // time this provider re-renders. This context is consumed by PageHeader,
-  // MobileNav, LayerStack at the AppShell level, and most pages — the blast
-  // radius of an unmemoized value is the whole app shell on every
-  // auth/pathname tick.
+  // time this provider re-renders. This context is consumed broadly across
+  // the app shell — the blast radius of an unmemoized value is the whole
+  // app shell on every auth/pathname tick.
   const value = useMemo<PageTransitionContextValue>(
     () => ({
       pendingHref, setPendingHref,

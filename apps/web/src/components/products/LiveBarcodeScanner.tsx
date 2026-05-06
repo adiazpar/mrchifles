@@ -235,10 +235,10 @@ export function LiveBarcodeScanner({
     }
   }, [])
 
-  // The overlay sits between the PageHeader and the MobileNav, respecting
-  // the app's CSS variables so the header and navbar remain visible and
-  // interactive around the scanner. Safe-area insets are accounted for so
-  // notches and home indicators don't overlap the content.
+  // The overlay sits between the IonHeader (--header-height) and the
+  // IonTabBar (--mobile-nav-height) so the header and tab bar remain
+  // visible and interactive around the scanner. Safe-area insets are
+  // accounted for so notches and home indicators don't overlap content.
   const overlayStyle: React.CSSProperties = {
     top: 'calc(var(--header-height) + env(safe-area-inset-top, 0px))',
     bottom: 'calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px))',

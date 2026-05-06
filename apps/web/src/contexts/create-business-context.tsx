@@ -27,13 +27,14 @@ interface CreateBusinessProviderProps {
 
 /**
  * Provider for create business modal functionality.
- * Used in hub layout to allow MobileNav to open the create business modal.
+ * Used in hub layout to allow Hub UI controls to open the create
+ * business modal.
  */
 export function CreateBusinessProvider({ children }: CreateBusinessProviderProps) {
   const createBusiness = useCreateBusiness()
 
-  // Memoize so consumers (MobileNav, hub header) don't re-render on
-  // every createBusiness state tick.
+  // Memoize so the hub UI consumers don't re-render on every
+  // createBusiness state tick.
   const value = useMemo<CreateBusinessContextValue>(
     () => ({
       openCreateModal: createBusiness.handleOpen,

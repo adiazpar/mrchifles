@@ -21,9 +21,8 @@ import { TeamDrilldown } from '@/components/team/TeamDrilldown'
  * IonRouterOutlet. Reached via the Manage tab's "Team" shortcut, which
  * animates as a native iOS-style push.
  *
- * Pattern choice (mirrors `ProvidersTab` from Phase 12.1):
- *   - We REUSE `<TeamDrilldown businessId=... />` verbatim. Its legacy
- *     `DrillDownHeader` was stripped (see the component) so the
+ * Pattern choice (mirrors `ProvidersTab`):
+ *   - We REUSE `<TeamDrilldown businessId=... />` verbatim. The
  *     `IonHeader` + `IonBackButton` here is the only chrome.
  *   - The view consumes `AuthContext` and the `useTeamManagement`
  *     hook (which fetches `/team` and owns invite/role/remove flows).

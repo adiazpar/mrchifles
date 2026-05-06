@@ -2,16 +2,8 @@ import { useIntl } from 'react-intl';
 import type { ReactNode } from 'react'
 import Image from '@/lib/Image'
 
-// Ported from the original Next.js auth layout (apps/api/src/app/(auth)/layout.tsx
-// in commit 0bcff5c). The original was an async Server Component using
-// next-intl/server's getTranslations; here it's a plain client component
-// using react-intl's useIntl, because Vite has no server-component split.
-//
-// The wrapper styling (auth-container, auth-logo) is referenced by class
-// name only — the corresponding CSS lived in apps/api/src/app/styles/
-// and was deleted with the rest of the legacy client routes. Until those
-// styles are ported (out-of-scope for Phase 5.2), the auth pages will
-// render structurally correct but visually unstyled. That's accepted.
+// Shared shell for /login and /register. The auth-container / auth-logo
+// classes are styled in apps/web/src/styles/.
 interface AuthLayoutProps {
   children: ReactNode
 }

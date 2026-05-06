@@ -40,8 +40,6 @@ const ROUTE_CONFIGS: Record<string, RouteConfig> = {
 
 /**
  * Get route config for a pathname (business-scoped routes only).
- * /account renders its own DrillDownHeader with i18n keys; this map is
- * consumed only by the business-variant PageHeader for tab subtitles.
  */
 export function getRouteConfig(pathname: string): RouteConfig & { businessId?: string } {
   const segments = pathname.split('/').filter(Boolean)

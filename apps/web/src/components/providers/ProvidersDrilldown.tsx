@@ -15,10 +15,8 @@ interface ProvidersDrilldownProps {
 }
 
 /**
- * Legacy in-view header (`DrillDownHeader`) was stripped during the
- * Vite + Ionic migration: the wrapping `IonHeader` + `IonBackButton`
- * inside `ProvidersTab` provides the title and back affordance now,
- * matching the same pattern used by `AccountPageContent`.
+ * The wrapping `IonHeader` + `IonBackButton` inside `ProvidersTab`
+ * provides the title and back affordance for this view.
  */
 export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
   const router = useRouter()

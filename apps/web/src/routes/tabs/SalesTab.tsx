@@ -27,9 +27,8 @@ import { SalesView } from '@/components/tab-shell/views/SalesView'
  *   - We DO render `<IonHeader>` with the `navigation.sales` title to
  *     match the rest of the bottom-tab pages and give the "tap active
  *     tab to scroll-to-top" gesture a stable anchor.
- *   - SalesView has NO custom in-view header / action bar — the legacy
- *     app set the page title via the external MobileNav, not from inside
- *     the view. So no buttons need promoting to `<IonToolbar>`.
+ *   - SalesView has NO custom in-view header / action bar, so no
+ *     buttons need promoting to `<IonToolbar>`.
  *
  * Note on scroll: the no-session branch of SalesView wraps content in its
  * own `overflow-y-auto` container so the SalesStatsCard slides off as the

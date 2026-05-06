@@ -50,9 +50,7 @@ const BUSINESS_TYPE_ICONS: Partial<Record<BusinessType, React.ComponentType<{ cl
 }
 
 /**
- * Hub page - Zone 2
- * Shows user's businesses or empty state
- * Action buttons are rendered by MobileNav in hub mode
+ * Hub page body. Shows the user's businesses or an empty state.
  */
 const hubBusinessesCache = createSessionCache<Business[]>(CACHE_KEYS.HUB_BUSINESSES)
 

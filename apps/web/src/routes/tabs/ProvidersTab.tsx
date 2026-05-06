@@ -22,8 +22,7 @@ import { ProvidersDrilldown } from '@/components/providers/ProvidersDrilldown'
  * which animates as a native iOS-style push.
  *
  * Pattern choice (mirrors `ManageTab` / `AccountPage`):
- *   - We REUSE `<ProvidersDrilldown businessId=... />` verbatim. Its
- *     legacy `DrillDownHeader` was stripped (see the component) so the
+ *   - We REUSE `<ProvidersDrilldown businessId=... />` verbatim. The
  *     `IonHeader` + `IonBackButton` here is the only chrome.
  *   - The view consumes `OrdersContext`, `ProvidersContext`,
  *     `BusinessContext` (via `useProviderManagement`) — all mounted by
