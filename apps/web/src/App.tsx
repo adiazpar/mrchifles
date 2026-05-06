@@ -1,9 +1,10 @@
-import { IonApp, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, setupIonicReact } from '@ionic/react'
+import { IonApp, setupIonicReact } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
 import { Route, Switch } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { AppIntlProvider } from '@/i18n/AppIntlProvider'
+import { HubPage } from '@/routes/HubPage'
 import { LoginPage } from '@/routes/LoginPage'
 import { RegisterPage } from '@/routes/RegisterPage'
 
@@ -37,23 +38,12 @@ export function App() {
                 <Route exact path="/register">
                   <RegisterPage />
                 </Route>
-                {/* Default placeholder route stays until Phase 7+ ports
-                    the hub. Once that lands, this route is replaced by
-                    HubPage and the auth pages become reachable from
-                    auth redirects. */}
+                {/* Hub home (post-login landing page). Auth gating and
+                    its tree of feature providers live inside HubPage
+                    rather than App.tsx so future per-route guards stay
+                    co-located with the route they protect. */}
                 <Route exact path="/">
-                  <IonPage>
-                    <IonHeader>
-                      <IonToolbar>
-                        <IonTitle>Kasero</IonTitle>
-                      </IonToolbar>
-                    </IonHeader>
-                    <IonContent>
-                      <div className="p-4">
-                        Auth providers wired. Login/register at /login and /register (Phase 5.2).
-                      </div>
-                    </IonContent>
-                  </IonPage>
+                  <HubPage />
                 </Route>
               </Switch>
             </AuthGateProvider>
