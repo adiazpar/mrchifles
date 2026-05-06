@@ -206,7 +206,11 @@ export function Layer({
         boxShadow: isTop && index > 0
           ? '-12px 0 24px -8px rgba(0, 0, 0, 0.18)'
           : undefined,
-        willChange: 'transform',
+        // No will-change: transform here. Multiple sibling layers each
+        // hinting will-change to the compositor has been observed to
+        // cause iOS Safari to over-promote and produce ghost paints
+        // (the layer's previous transform position lingers as a copy).
+        // Framer Motion's animations are GPU-accelerated regardless.
       }}
       drag={dragEnabled ? 'x' : false}
       dragConstraints={{ left: 0 }}

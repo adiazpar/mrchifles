@@ -181,6 +181,7 @@ export function LayerStack() {
 
   return (
     <div className="layer-stack-root">
+      <div className="layer-stack-frame">
       {hubDescriptor && (
         <Layer
           key="hub-root"
@@ -239,6 +240,7 @@ export function LayerStack() {
           </Layer>
         )
       })}
+      </div>
     </div>
   )
 }

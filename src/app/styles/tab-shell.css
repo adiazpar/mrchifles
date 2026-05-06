@@ -37,37 +37,32 @@
 }
 
 /* Layer-stack root: ONE viewport-fixed container that hosts all layers.
- * Layers themselves are position:absolute inside this container, NOT
- * position:fixed. iOS Safari has a long-standing compositor bug where
- * position:fixed descendants of a transformed ancestor render twice or
- * in the wrong place — Framer Motion sets transform on each layer for
- * the slide animation, so fixed-positioned chrome (page-header,
- * mobile-nav) inside a transformed layer triggers exactly that. Keeping
- * fixed positioning to a SINGLE non-transformed root avoids the bug.
+ * NO transform on this element — keeping fixed positioning + transform
+ * separate avoids iOS Safari compositor bugs. Centering on wide screens
+ * happens inside via a separate frame element with explicit width.
  *
- * Centered with max-width on wide screens so the chrome inside layers
- * doesn't stretch across desktop monitors. The body's bg-base fills the
- * area outside this container. */
+ * Layers themselves are position:absolute siblings inside the centered
+ * frame. Framer Motion writes transform on each layer for the slide
+ * animation. Chrome inside layers (page-header, mobile-nav) is also
+ * position:absolute, scoped to the layer — no position:fixed inside any
+ * transformed ancestor anywhere in the stack. */
 .layer-stack-root {
   position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: var(--max-viewport-width);
+  inset: 0;
   pointer-events: none;
+  /* Center the frame inside on wide screens. */
+  display: flex;
+  justify-content: center;
 }
 
-.layer-stack-root > .layer {
+.layer-stack-frame {
+  position: relative;
+  width: 100%;
+  max-width: var(--max-viewport-width);
+  height: 100%;
   pointer-events: auto;
 }
 
-/* Each layer is absolutely positioned inside the layer-stack root. Framer
- * Motion writes to its transform for the slide animation. Chrome inside
- * (page-header, mobile-nav) is also absolutely positioned relative to
- * the layer — no fixed-in-transformed nesting, so iOS Safari renders
- * each layer's content exactly once. */
 .layer {
   position: absolute;
   inset: 0;
