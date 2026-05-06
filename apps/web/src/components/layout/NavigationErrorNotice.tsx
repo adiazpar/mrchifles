@@ -19,11 +19,11 @@ export function NavigationErrorNotice() {
       role="alert"
       className="fixed top-0 inset-x-0 z-[160] px-4 py-2 text-sm text-center bg-warning text-text-inverse shadow-md pointer-events-none"
     >
-      {/* next-intl's `t` is typed against the full AppConfig messages, so
-          we narrow to a runtime lookup here. The provider only ever stores
-          known keys under the `navigation` namespace. */}
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {(t as any)(navigationError)}
+      {/* navigationError is the message id (under the `navigation`
+          namespace) stored by the page-transition safety net. We resolve
+          it at render time so the notice reflects the user's current
+          language even if they switch mid-session. */}
+      {t.formatMessage({ id: navigationError })}
     </div>
   )
 }

@@ -36,7 +36,7 @@ export const users = sqliteTable('users', {
   password: text('password').notNull(), // bcrypt hash
   name: text('name').notNull(),
   avatar: text('avatar'), // Base64 or URL
-  language: text('language').default('en-US').notNull(), // UI language (next-intl bundle); distinct from per-business locale/currency
+  language: text('language').default('en-US').notNull(), // UI language (react-intl bundle); distinct from per-business locale/currency
   // Bumped whenever the password changes. Any JWT whose `iat` is older
   // than this timestamp is treated as invalidated on the server side —
   // old sessions can't outlive a password change. Nullable because

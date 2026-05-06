@@ -7,10 +7,10 @@
  *   2. Copy `en-US.json` → `<code>.json` in src/i18n/messages/.
  *   3. Run `npm run i18n:translate -- --target <code>`.
  *
- * Everything else (the next-intl supported list, the Accept-Language
- * picker's prefix matching, the business-locale → translation-file
- * resolver, the language-row label, and the translate script's system
- * prompt) derives from this object.
+ * Everything else (the supported-locale list consumed by the react-intl
+ * provider, the Accept-Language picker's prefix matching, the
+ * business-locale → translation-file resolver, the language-row label,
+ * and the translate script's system prompt) derives from this object.
  */
 
 export interface LocaleConfig {

@@ -19,8 +19,8 @@ export interface ProcessorResult {
 }
 
 // Each method's i18n label lives at sales.cart.modal_method_<id>. Encoded
-// as a typed union so next-intl's typed t() can accept method.labelKey
-// directly without a cast at the call site.
+// as a typed union so call sites can pass method.labelKey to
+// formatMessage without a cast.
 export type PaymentMethodLabelKey = `modal_method_${PaymentMethod}`
 
 export interface PaymentMethodEntry {

@@ -35,8 +35,8 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
   const { formatCurrency } = useBusinessFormat()
 
   const showCashRows = confirmedSale?.method === 'cash'
-  // Build the method label key as a template literal so next-intl's typed
-  // t() narrows to the union of declared keys instead of `string`. Using
+  // Build the method label key as a template literal so the type narrows
+  // to the union of declared keys instead of `string`. Using
   // PAYMENT_METHODS[i].labelKey (typed as string) would force a cast.
   const methodLabelKey = confirmedSale
     ? (`modal_method_${confirmedSale.method}` as const)

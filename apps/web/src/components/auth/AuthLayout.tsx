@@ -5,8 +5,7 @@ import Image from '@/lib/Image'
 // Ported from the original Next.js auth layout (apps/api/src/app/(auth)/layout.tsx
 // in commit 0bcff5c). The original was an async Server Component using
 // next-intl/server's getTranslations; here it's a plain client component
-// because Vite has no server-component split. Phase 6 codemods next-intl
-// to react-intl.
+// using react-intl's useIntl, because Vite has no server-component split.
 //
 // The wrapper styling (auth-container, auth-logo) is referenced by class
 // name only — the corresponding CSS lived in apps/api/src/app/styles/

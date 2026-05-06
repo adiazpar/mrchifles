@@ -1,41 +1,34 @@
 import { IonApp, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, setupIonicReact } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
 import { Route, Switch } from 'react-router-dom'
-import { IntlProvider } from 'react-intl'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
+import { AppIntlProvider } from '@/i18n/AppIntlProvider'
 import { LoginPage } from '@/routes/LoginPage'
 import { RegisterPage } from '@/routes/RegisterPage'
-import enMessages from '@/i18n/messages/en-US.json'
-import { DEFAULT_LOCALE } from '@/i18n/config'
 
 setupIonicReact({ mode: 'ios' })
 
-// NOTE: Routes and additional providers (i18n locale switching, business
-// context, page transitions, drill-down stacks, etc.) land in later
-// migration phases:
+// Provider ordering rules:
+//   - IonReactRouter must wrap AuthProvider because AuthContext calls
+//     useRouter() (via the next-navigation-shim that wraps useHistory).
+//   - AppIntlProvider must be INSIDE AuthProvider because it reads
+//     user.language via useAuth() to pick the active locale bundle.
+//   - AppIntlProvider must be OUTSIDE AuthGateProvider and any consumer
+//     of useIntl() so translations are available everywhere downstream.
+//
+// Routes and additional providers (business context, page transitions,
+// drill-down stacks, etc.) land in later migration phases:
 //   - Phase 5.2 (DONE): login/register pages mounted at /login and /register
 //   - Phase 6.2 (DONE): codemod next-intl -> react-intl across consumers
-//   - Phase 6.3:  AppIntlProvider with locale switching, useApiMessage
-//                 adapter, full removal of next-intl dependency
+//   - Phase 6.3 (DONE): AppIntlProvider with locale switching, useApiMessage adapter
 //   - Phase 7-12: hub, account, business tabs, drill-downs
-//
-// AuthProvider + AuthGateProvider are wired so login/register can call
-// useAuth() and useAuthGate(). The Ion router lives ABOVE the auth
-// providers because AuthContext uses useRouter() internally (via the
-// next-navigation-shim that wraps react-router's useHistory).
-//
-// react-intl's IntlProvider is mounted with a hardcoded en-US bundle as
-// a temporary shim. Phase 6.3 replaces this with an AppIntlProvider that
-// reads the active locale from AuthContext and reactively swaps the
-// message bundle. Until then, this keeps the codemodded
-// `intl.formatMessage(...)` calls from throwing at runtime.
 export function App() {
   return (
     <IonApp>
       <IonReactRouter>
-        <IntlProvider locale={DEFAULT_LOCALE} defaultLocale={DEFAULT_LOCALE} messages={enMessages}>
-          <AuthProvider>
+        <AuthProvider>
+          <AppIntlProvider>
             <AuthGateProvider>
               <Switch>
                 <Route exact path="/login">
@@ -64,8 +57,8 @@ export function App() {
                 </Route>
               </Switch>
             </AuthGateProvider>
-          </AuthProvider>
-        </IntlProvider>
+          </AppIntlProvider>
+        </AuthProvider>
       </IonReactRouter>
     </IonApp>
   )

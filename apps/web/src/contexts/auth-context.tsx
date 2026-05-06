@@ -328,7 +328,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setCachedUser(next)
           return next
         })
-        // Force RSC re-render so next-intl picks up the new cookie-bound bundle.
+        // The user.language change above already propagates through
+        // AppIntlProvider (which reads useAuth().user.language and swaps
+        // the message bundle). router.refresh() is a leftover from the
+        // pre-Vite cookie-bound RSC pipeline and is now a no-op via the
+        // next-navigation-shim — kept for shim parity, no longer needed
+        // for i18n correctness.
         router.refresh()
         return { success: true }
       } catch (err) {
