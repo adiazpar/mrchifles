@@ -51,6 +51,7 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       port: webPort,
+      host: true,
       https: httpsConfig,
       proxy: {
         '/api': {

@@ -53,19 +53,31 @@ root.render(
   </React.StrictMode>,
 )
 
-// PWA service worker registration. The SW only ships in `vite build` output
-// (devOptions.enabled = false), so in dev this becomes a no-op stub provided
-// by vite-plugin-pwa's virtual module.
+// PWA service worker handling.
+// - Prod builds: register the Workbox SW that vite-plugin-pwa emits.
+// - Dev: actively unregister any SW from a prior production-preview session.
+//   `vite-plugin-pwa`'s `devOptions.enabled = false` only prevents registering
+//   a NEW SW in dev — it doesn't unregister one that's already installed.
+//   iOS Safari preserves service workers across "Clear History and Website
+//   Data" in many cases, so a stale SW will keep serving a cached app shell
+//   whose hashed JS bundles 404 against the dev server, presenting as a
+//   blank page with no traffic visible at Vite. Active unregistration here
+//   recovers without manual per-device cleanup.
 if ('serviceWorker' in navigator) {
-  registerSW({
-    immediate: true,
-    onRegisteredSW(swUrl) {
-      if (import.meta.env.DEV) {
-        console.log('[pwa] SW registered:', swUrl)
-      }
-    },
-    onRegisterError(error) {
-      console.warn('[pwa] SW registration failed:', error)
-    },
-  })
+  if (import.meta.env.DEV) {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      if (regs.length === 0) return
+      Promise.all(regs.map((r) => r.unregister())).then(() => {
+        console.warn('[pwa] Unregistered stale service worker; reloading.')
+        window.location.reload()
+      })
+    })
+  } else {
+    registerSW({
+      immediate: true,
+      onRegisterError(error) {
+        console.warn('[pwa] SW registration failed:', error)
+      },
+    })
+  }
 }
