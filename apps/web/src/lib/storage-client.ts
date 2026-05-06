@@ -14,10 +14,18 @@
 /**
  * Convert a File to a base64 data URL string
  * Returns format: data:image/png;base64,iVBORw0KGgo...
+ *
+ * Uses browser-native FileReader + btoa, avoiding the Node Buffer
+ * polyfill that Next.js used to inject. Vite does not polyfill Buffer
+ * by default, and the browser primitives are already what we want.
  */
 export async function fileToBase64(file: File): Promise<string> {
-  const buffer = Buffer.from(await file.arrayBuffer())
-  const base64 = buffer.toString('base64')
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  let binary = ''
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  const base64 = btoa(binary)
   const mimeType = file.type || 'image/png'
   return `data:${mimeType};base64,${base64}`
 }
@@ -25,19 +33,18 @@ export async function fileToBase64(file: File): Promise<string> {
 /**
  * Get the size in bytes of a base64-encoded payload.
  *
- * Decodes via Buffer.from rather than computing
+ * Decodes via `atob` (browser-native) rather than computing
  * `Math.ceil(length * 3 / 4)` — that math underestimates by up to 2
  * bytes when the `=` padding is stripped and is brittle if any
  * caller ever feeds in whitespace-containing or non-padded base64
- * (audit L-15). Buffer.from handles all of these consistently.
+ * (audit L-15). `atob` handles padding consistently.
  *
- * Browser-safe: Node's Buffer is polyfilled by Next.js's webpack
- * config in client bundles for code paths that share this helper.
- * We're called from React event handlers, never the SSR layer.
+ * Vite does not auto-polyfill Node's Buffer in client bundles like
+ * Next.js did, so this helper uses pure DOM primitives.
  */
 export function getBase64Size(base64: string): number {
   const base64Data = base64.includes(',') ? base64.split(',')[1] : base64
-  return Buffer.from(base64Data, 'base64').length
+  return atob(base64Data).length
 }
 
 /**

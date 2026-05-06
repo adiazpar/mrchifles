@@ -1,8 +1,9 @@
 'use client'
 
+import Image from '@/lib/Image'
+
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import type { ReactNode } from 'react'
 import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2, CircleCheckBig } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
@@ -35,7 +36,7 @@ import { formatRelative } from '@/lib/formatRelative'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { MAX_PROVIDER_NOTES } from '@/lib/provider-notes'
+import { MAX_PROVIDER_NOTES } from '@kasero/shared/provider-notes'
 import type { Provider, Product, ProviderNote } from '@kasero/shared/types'
 
 interface ProviderDetailResponse {

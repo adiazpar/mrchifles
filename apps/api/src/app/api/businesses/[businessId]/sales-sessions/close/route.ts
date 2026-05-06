@@ -10,7 +10,7 @@ import {
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { canManageBusiness } from '@kasero/shared/business-role'
 import { closeSessionSchema } from '../schema'
-import { computeExpectedCash, computeVariance } from '@/lib/sales-helpers'
+import { computeExpectedCash, computeVariance } from '@kasero/shared/sales-helpers'
 import type { SalesSession } from '@kasero/shared/types/sale'
 
 const POST_MAX_BODY_BYTES = 4 * 1024  // notes can be up to ~500 chars

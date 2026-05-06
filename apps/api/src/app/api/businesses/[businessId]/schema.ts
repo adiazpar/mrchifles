@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { BUSINESS_TYPES } from '@/lib/locale-config'
+import { BUSINESS_TYPES } from '@kasero/shared/locale-config'
 
 export const BUSINESS_TYPE_VALUES = BUSINESS_TYPES.map(t => t.value) as [string, ...string[]]
 

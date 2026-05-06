@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Spinner, Modal, useModal, ConfirmationAnimation } from '@/components/ui'
-import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@/lib/provider-notes'
+import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
 
 interface SaveNoteButtonProps {
   onSubmit: () => Promise<boolean>

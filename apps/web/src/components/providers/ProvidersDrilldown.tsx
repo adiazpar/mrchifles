@@ -1,7 +1,7 @@
 'use client'
 
 import { Fragment } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/next-navigation-shim'
 import { Plus, Handshake, ShoppingCart, Pencil, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Spinner, SwipeableRow } from '@/components/ui'

@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
-import Link from 'next/link'
-import { usePathname, useRouter, useParams } from 'next/navigation'
+import { Link } from 'react-router-dom'
+import { useRouter, usePathname } from '@/lib/next-navigation-shim'
+import { useParams } from 'react-router'
 import { useTranslations } from 'next-intl'
 import { getNavItems, getPrefetchRoutes } from '@/lib/navigation'
 import { usePageTransition } from '@/contexts/page-transition-context'
@@ -68,7 +69,7 @@ export function MobileNav() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               onClick={(e) => handleClick(e, item.href)}
               className={`mobile-nav-item ${isActive ? 'active' : ''}`}
             >

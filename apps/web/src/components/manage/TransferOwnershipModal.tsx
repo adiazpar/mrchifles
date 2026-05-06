@@ -8,7 +8,7 @@ import { useBusiness } from '@/contexts/business-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useTransferOwnership } from '@/hooks/useTransferOwnership'
 import { fetchDeduped } from '@/lib/fetch'
-import { getUserInitials } from '@/lib/auth'
+import { getUserInitials } from '@kasero/shared/auth'
 
 interface TeamMember {
   id: string

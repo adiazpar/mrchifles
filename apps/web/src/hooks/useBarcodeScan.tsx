@@ -1,9 +1,9 @@
 'use client'
 
-import dynamic from 'next/dynamic'
+import dynamic from '@/lib/next-dynamic-shim'
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import type { Html5Qrcode } from 'html5-qrcode'
-import { isBarcodeFormat } from '@/lib/barcodes'
+import { isBarcodeFormat } from '@kasero/shared/barcodes'
 import type { BarcodeFormat } from '@kasero/shared/types'
 import type { LiveBarcodeScanResult } from '@/components/products/LiveBarcodeScanner'
 import { useIsMobile } from './useIsMobile'

@@ -2,7 +2,7 @@
 
 import { ChevronRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { getUserInitials } from '@/lib/auth'
+import { getUserInitials } from '@kasero/shared/auth'
 import type { TeamMember } from '@/hooks/useTeamManagement'
 import type { UserRole } from '@kasero/shared/types'
 

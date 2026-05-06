@@ -11,7 +11,7 @@ import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError } from '@/lib/api-client'
 import { haptic } from '@/lib/haptics'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
-import { computeExpectedCash, computeVariance } from '@/lib/sales-helpers'
+import { computeExpectedCash, computeVariance } from '@kasero/shared/sales-helpers'
 import { useBusiness } from '@/contexts/business-context'
 
 interface CloseSessionConfirmModalProps {

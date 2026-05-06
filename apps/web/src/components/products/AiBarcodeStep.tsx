@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useModal } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
-import { generateInternalProductBarcode, getBarcodeFormatLabel } from '@/lib/barcodes'
+import { generateInternalProductBarcode, getBarcodeFormatLabel } from '@kasero/shared/barcodes'
 import { BarcodeDisplay } from './BarcodeDisplay'
 import type { BarcodeSource } from '@kasero/shared/types'
 

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import dynamic from 'next/dynamic'
-import { useSearchParams, useRouter } from 'next/navigation'
+import dynamic from '@/lib/next-dynamic-shim'
+import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
 import { useProductFilters, useProductSettings } from '@/hooks'

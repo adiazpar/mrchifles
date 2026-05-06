@@ -1,7 +1,8 @@
 'use client'
 
+import Image from '@/lib/Image'
+
 import { useCallback, useRef, useState } from 'react'
-import Image from 'next/image'
 import { Upload, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useModal } from '@/components/ui'

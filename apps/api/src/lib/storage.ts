@@ -13,25 +13,46 @@
 import 'server-only'
 import fs from 'fs/promises'
 import path from 'path'
-import { isBase64DataUrl } from './utils'
 import type { ImageMimeType } from './file-sniff'
 import { logServerError } from './server-logger'
-// Pulled in for both local use (uploadProductIcon needs fileToBase64) and
-// for the re-export below.
-import {
-  fileToBase64,
-  getBase64Size,
-  validateIconSize,
-  MAX_UPLOAD_SIZE,
-} from './storage-client'
 
-// Re-export the client-safe helpers so existing server consumers keep
-// working without changing their import paths.
-export {
-  fileToBase64,
-  getBase64Size,
-  validateIconSize,
-  MAX_UPLOAD_SIZE,
+// These small helpers used to live in `storage-client.ts` (a sibling
+// file in this directory) and were re-exported from here for server
+// consumers. After the Vite migration in Phase 5.1, the client-side
+// copies moved to `apps/web/src/lib/storage-client.ts`. Server code
+// here keeps its own inline copies — they're tiny, pure, and don't
+// belong in the shared package because they're only consumed inside
+// the API.
+
+const MAX_ICON_SIZE = 100 * 1024
+export const MAX_UPLOAD_SIZE = 2 * 1024 * 1024
+
+function isBase64DataUrl(str: string): boolean {
+  return str.startsWith('data:image/')
+}
+
+/**
+ * Convert a File-like object to a base64 data URL. Used by upload
+ * routes that produce base64 for the database in production.
+ */
+export async function fileToBase64(file: File): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const base64 = buffer.toString('base64')
+  const mimeType = file.type || 'image/png'
+  return `data:${mimeType};base64,${base64}`
+}
+
+export function getBase64Size(base64: string): number {
+  const base64Data = base64.includes(',') ? base64.split(',')[1] : base64
+  return Buffer.from(base64Data, 'base64').length
+}
+
+export function validateIconSize(base64: string): { valid: boolean; size: number } {
+  const size = getBase64Size(base64)
+  return {
+    valid: size <= MAX_ICON_SIZE,
+    size,
+  }
 }
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'

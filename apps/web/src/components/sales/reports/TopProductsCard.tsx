@@ -1,8 +1,9 @@
 'use client'
 
+import Image from '@/lib/Image'
+
 import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
-import Image from 'next/image'
 import { Package } from 'lucide-react'
 import { useProducts } from '@/contexts/products-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'

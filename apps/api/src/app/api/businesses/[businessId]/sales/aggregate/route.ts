@@ -1,5 +1,5 @@
 import { withBusinessAuth, successResponse } from '@/lib/api-middleware'
-import { roundToCurrencyDecimals, startOfUtcDay } from '@/lib/sales-helpers'
+import { roundToCurrencyDecimals, startOfUtcDay } from '@kasero/shared/sales-helpers'
 import {
   queryDailyRevenue,
   queryTopProducts,

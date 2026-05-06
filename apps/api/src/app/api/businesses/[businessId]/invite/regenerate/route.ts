@@ -7,7 +7,7 @@ import { withBusinessAuth, validationError, errorResponse, successResponse } fro
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { isExpiryWithinBounds } from '@/lib/invite-expiry'
 import { Schemas } from '@/lib/schemas'
-import { generateInviteCode } from '@/lib/auth'
+import { generateInviteCode } from '@kasero/shared/auth'
 import { logServerError } from '@/lib/server-logger'
 
 // Same rationale as invite/create: code is server-generated. Client

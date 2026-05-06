@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/next-navigation-shim'
 import { ContentGuard } from '@/components/auth'
 import { OrdersProvider } from '@/contexts/orders-context'
 import { SalesSessionsProvider } from '@/contexts/sales-sessions-context'

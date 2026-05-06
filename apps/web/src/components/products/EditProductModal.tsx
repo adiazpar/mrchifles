@@ -1,6 +1,7 @@
 'use client'
 
-import Image from 'next/image'
+import Image from '@/lib/Image'
+
 import { useTranslations } from 'next-intl'
 import { Trash2, SlidersHorizontal, ImagePlus } from 'lucide-react'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'

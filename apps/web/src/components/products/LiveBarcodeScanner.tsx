@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { isBarcodeFormat } from '@/lib/barcodes'
+import { isBarcodeFormat } from '@kasero/shared/barcodes'
 import type { BarcodeFormat } from '@kasero/shared/types'
 
 // Keep this in sync with the formats list in useBarcodeScan.tsx. Both paths

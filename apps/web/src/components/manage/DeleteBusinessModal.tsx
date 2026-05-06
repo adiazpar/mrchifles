@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/next-navigation-shim'
 import { useTranslations } from 'next-intl'
 import { TriangleAlert } from 'lucide-react'
 import { Modal, Spinner } from '@/components/ui'

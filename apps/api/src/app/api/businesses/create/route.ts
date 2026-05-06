@@ -11,7 +11,7 @@ import {
 } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { Schemas } from '@/lib/schemas'
-import { getCurrencyForLocale } from '@/lib/locale-config'
+import { getCurrencyForLocale } from '@kasero/shared/locale-config'
 import { logServerError } from '@/lib/server-logger'
 
 const createBusinessSchema = z.object({

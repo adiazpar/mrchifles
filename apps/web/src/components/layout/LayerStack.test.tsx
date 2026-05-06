@@ -4,11 +4,10 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 let mockPathname = '/'
 const mockBack = vi.fn()
 
-vi.mock('next/navigation', () => ({
+vi.mock('@/lib/next-navigation-shim', () => ({
   usePathname: () => mockPathname,
-  useRouter: () => ({ back: mockBack, push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
+  useRouter: () => ({ back: mockBack, push: vi.fn(), replace: vi.fn(), prefetch: vi.fn(), forward: vi.fn(), refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
-  useParams: () => ({}),
 }))
 
 vi.mock('next-intl', () => ({

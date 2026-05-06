@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError, apiPatch } from '@/lib/api-client'
 import { fileToBase64, MAX_UPLOAD_SIZE } from '@/lib/storage-client'
-import { getUserInitials } from '@/lib/auth'
+import { getUserInitials } from '@kasero/shared/auth'
 
 export interface EditProfileModalProps {
   isOpen: boolean

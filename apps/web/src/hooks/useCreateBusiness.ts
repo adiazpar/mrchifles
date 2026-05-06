@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
 import { useApiMessage } from '@/hooks/useApiMessage'
-import { getCurrencyForLocale, getLocaleByCountryCode } from '@/lib/locale-config'
+import { getCurrencyForLocale, getLocaleByCountryCode } from '@kasero/shared/locale-config'
 
 interface CreateBusinessResponse extends ApiResponse {
   business?: {

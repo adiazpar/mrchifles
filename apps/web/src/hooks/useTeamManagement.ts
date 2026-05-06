@@ -9,7 +9,7 @@ import { useApiMessage } from '@/hooks/useApiMessage'
 import {
   getInviteCodeExpiration,
   type InviteDuration,
-} from '@/lib/auth'
+} from '@kasero/shared/auth'
 import { generateInviteQRCode } from '@/lib/qr'
 import { canManageBusiness } from '@kasero/shared/business-role'
 import type { User, InviteCode, InviteRole, UserRole } from '@kasero/shared/types'
@@ -127,7 +127,7 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
   const [error, setError] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
-  const copyFeedbackTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const copyFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Code delete state
   const [isDeletingCode, setIsDeletingCode] = useState(false)

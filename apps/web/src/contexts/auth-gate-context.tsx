@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/next-navigation-shim'
 import { useAuth } from './auth-context'
 
 // Unified phase machine: both playEntry (login/register -> hub) and

@@ -9,6 +9,14 @@
     "./api-messages": "./src/api-messages.ts",
     "./business-role": "./src/business-role.ts",
     "./locales": "./src/locales.ts",
+    "./auth": "./src/auth.ts",
+    "./barcodes": "./src/barcodes.ts",
+    "./locale-config": "./src/locale-config.ts",
+    "./provider-notes": "./src/provider-notes.ts",
+    "./sales-helpers": "./src/sales-helpers.ts",
     "./validation/*": "./src/validation/*.ts"
+  },
+  "dependencies": {
+    "nanoid": "^5.1.7"
   }
 }

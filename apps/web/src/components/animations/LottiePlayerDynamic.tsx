@@ -1,6 +1,6 @@
 'use client'
 
-import dynamic from 'next/dynamic'
+import dynamic from '@/lib/next-dynamic-shim'
 
 // Dynamically import LottiePlayer to reduce initial bundle size
 // lottie-react is ~40KB gzipped and only needed for specific UI states

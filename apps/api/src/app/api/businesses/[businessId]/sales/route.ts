@@ -9,7 +9,7 @@ import {
   validationError,
 } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
-import { roundToCurrencyDecimals, startOfUtcDay, startOfPrevUtcDay } from '@/lib/sales-helpers'
+import { roundToCurrencyDecimals, startOfUtcDay, startOfPrevUtcDay } from '@kasero/shared/sales-helpers'
 import { postSaleSchema } from './schema'
 
 // 64KB easily covers 100 lines + 1000-char notes.

@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname } from '@/lib/next-navigation-shim'
 import { LayerStack } from './LayerStack'
 import { OfflineBadge } from './OfflineBadge'
 import { JoinBusinessProvider } from '@/contexts/join-business-context'

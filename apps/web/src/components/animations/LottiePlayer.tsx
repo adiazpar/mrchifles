@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import Lottie, { LottieRefCurrentProps } from 'lottie-react'
 
-interface LottiePlayerProps {
+export interface LottiePlayerProps {
   src: string
   loop?: boolean
   autoplay?: boolean

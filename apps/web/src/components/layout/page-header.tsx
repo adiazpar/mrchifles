@@ -1,8 +1,9 @@
 'use client'
 
+import Image from '@/lib/Image'
+
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname } from '@/lib/next-navigation-shim'
 import { Building2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { getRouteConfig } from '@/lib/navigation'

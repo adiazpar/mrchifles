@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useRef, ReactNode, Suspense } from 'react'
-import { useSearchParams, useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import { useJoinBusiness } from '@/hooks'
 import { JoinBusinessModal } from '@/components/join'
 

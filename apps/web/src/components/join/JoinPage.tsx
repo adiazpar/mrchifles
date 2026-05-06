@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useEffect } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import { Spinner } from '@/components/ui'
 
 /**

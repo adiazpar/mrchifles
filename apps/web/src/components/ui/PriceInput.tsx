@@ -2,7 +2,7 @@
 
 import CurrencyInput from 'react-currency-input-field'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { getCurrencyConfig } from '@/lib/locale-config'
+import { getCurrencyConfig } from '@kasero/shared/locale-config'
 
 /**
  * Locale-aware currency input. Reads the current business's locale and

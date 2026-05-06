@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/next-navigation-shim'
 import { useTranslations } from 'next-intl'
 import { Modal, Spinner } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'

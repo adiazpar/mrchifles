@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import dynamic from 'next/dynamic'
+import dynamic from '@/lib/next-dynamic-shim'
 import { useTranslations } from 'next-intl'
 import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Briefcase, ChevronRight, Clock, ImageIcon } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'

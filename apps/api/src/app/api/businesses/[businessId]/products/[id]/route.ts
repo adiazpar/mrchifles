@@ -12,7 +12,7 @@ import {
   detectBarcodeFormat,
   normalizeBarcodeValue,
   validateBarcodeSourcePrefix,
-} from '@/lib/barcodes'
+} from '@kasero/shared/barcodes'
 import { Schemas } from '@/lib/schemas'
 
 /**

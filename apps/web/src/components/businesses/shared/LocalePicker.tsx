@@ -1,8 +1,8 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { REGIONS, getLocalesByRegion, getCurrencyConfig } from '@/lib/locale-config'
-import type { Region } from '@/lib/locale-config'
+import { REGIONS, getLocalesByRegion, getCurrencyConfig } from '@kasero/shared/locale-config'
+import type { Region } from '@kasero/shared/locale-config'
 
 export interface LocalePickerProps {
   value: string

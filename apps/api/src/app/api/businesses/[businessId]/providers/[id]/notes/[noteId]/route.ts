@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
-import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@/lib/provider-notes'
+import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
 
 const updateNoteSchema = z.object({
   title: z.string().min(1).max(NOTE_TITLE_MAX).optional(),

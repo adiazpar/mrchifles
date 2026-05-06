@@ -1,8 +1,9 @@
 'use client'
 
+import Image from '@/lib/Image'
+
 import { useCallback, useEffect, useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import { useRouter } from '@/lib/next-navigation-shim'
 import { ChevronRight, X, Building2, ChefHat, HandHelping, Store, Boxes, Factory, Shapes, Plus, UserPlus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'

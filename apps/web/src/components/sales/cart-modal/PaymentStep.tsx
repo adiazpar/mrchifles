@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl'
 import { Modal, PriceInput, useModal } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
-import { roundToCurrencyDecimals, nextRoundBills } from '@/lib/sales-helpers'
+import { roundToCurrencyDecimals, nextRoundBills } from '@kasero/shared/sales-helpers'
 import { PAYMENT_METHODS } from '@/lib/payment-methods'
 import type { PaymentMethod } from '@kasero/shared/types/sale'
 

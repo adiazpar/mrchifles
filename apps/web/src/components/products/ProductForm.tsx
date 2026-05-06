@@ -1,7 +1,8 @@
 'use client'
 
+import Image from '@/lib/Image'
+
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import { Plus, Minus, ImagePlus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { BarcodeFields } from './BarcodeFields'

@@ -1,7 +1,8 @@
 'use client'
 
+import Image from '@/lib/Image'
+
 import { Fragment, memo, useMemo } from 'react'
-import Image from 'next/image'
 import { X, Plus, ChevronUp, ChevronRight, Loader2, Tags, ListFilter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff, Printer } from 'lucide-react'
 import { Modal, SwipeableRow } from '@/components/ui'
 import { printBarcodeLabel } from '@/lib/barcode-print'

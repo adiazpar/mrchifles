@@ -1,10 +1,10 @@
 'use client'
 
 import { memo } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { useTranslations } from 'next-intl'
 import { Modal, useModal } from '@/components/ui'
-import { getUserInitials } from '@/lib/auth'
+import { getUserInitials } from '@kasero/shared/auth'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { User, UserRole } from '@kasero/shared/types'
 import type { TeamMember } from '@/hooks/useTeamManagement'
@@ -162,7 +162,7 @@ export const UserDetailsStep = memo(function UserDetailsStep({
         <Modal.Item>
           <p className="text-xs text-text-tertiary text-center">
             {t('account_settings_hint')}{' '}
-            <Link href="/account" className="text-brand hover:underline">
+            <Link to="/account" className="text-brand hover:underline">
               {t('account_settings_link')}
             </Link>.
           </p>

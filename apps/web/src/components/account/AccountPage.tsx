@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
+import dynamic from '@/lib/next-dynamic-shim'
+import { useRouter } from '@/lib/next-navigation-shim'
 import { useTranslations } from 'next-intl'
 import {
   Palette,
@@ -19,7 +19,7 @@ import { useAuthGate } from '@/contexts/auth-gate-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { Spinner } from '@/components/ui'
 import { useTheme } from '@/hooks/useTheme'
-import { getUserInitials } from '@/lib/auth'
+import { getUserInitials } from '@kasero/shared/auth'
 import { SettingsRow } from '@/components/account/SettingsRow'
 import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 import { LanguageRow } from '@/components/account/LanguageRow'

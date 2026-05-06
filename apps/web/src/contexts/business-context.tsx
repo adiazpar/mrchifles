@@ -9,7 +9,7 @@ import {
   useMemo,
   type ReactNode,
 } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/next-navigation-shim'
 import { useTranslations } from 'next-intl'
 import { useAuth } from './auth-context'
 import { usePageTransition } from './page-transition-context'

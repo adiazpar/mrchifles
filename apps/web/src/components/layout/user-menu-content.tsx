@@ -1,14 +1,14 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { useCallback } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname } from '@/lib/next-navigation-shim'
 import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
-import { getUserInitials } from '@/lib/auth'
+import { getUserInitials } from '@kasero/shared/auth'
 import { getBusinessIdFromPath } from '@/lib/navigation'
 import { setAccountUnderlay } from '@/lib/layer-stack'
 import { Building2, ChevronRight, Settings, CircleHelp, LogOut } from 'lucide-react'
@@ -83,7 +83,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
       <div className="user-menu-items">
         {isBusinessContext && (
           <Link
-            href="/"
+            to="/"
             className="user-menu-item"
             onClick={(e) => handleLinkClick(e, '/')}
           >
@@ -94,7 +94,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
         )}
 
         <Link
-          href="/account"
+          to="/account"
           className="user-menu-item"
           onClick={(e) => {
             // Modifier clicks pass through to default anchor behavior.
@@ -126,7 +126,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
         </Link>
 
         <Link
-          href="/support"
+          to="/support"
           className="user-menu-item"
           onClick={(e) => handleLinkClick(e, '/support')}
         >

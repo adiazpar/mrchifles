@@ -78,7 +78,7 @@ export function hapticError() {
   window.setTimeout(fireSwitchHaptic, 260)
 }
 
-if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
   ;(window as unknown as Record<string, unknown>).__haptic = {
     haptic,
     hapticSuccess,

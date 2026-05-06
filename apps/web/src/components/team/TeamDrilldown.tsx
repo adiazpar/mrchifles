@@ -1,7 +1,7 @@
 'use client'
 
 import { Fragment } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/next-navigation-shim'
 import { Plus, Check, Copy, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Spinner, Modal, ConfirmationAnimation, useModal } from '@/components/ui'

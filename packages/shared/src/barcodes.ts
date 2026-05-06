@@ -1,5 +1,5 @@
 import { customAlphabet } from 'nanoid'
-import type { BarcodeFormat } from '@kasero/shared/types'
+import type { BarcodeFormat } from './types'
 
 const BARCODE_FORMATS: BarcodeFormat[] = [
   'UPC_A',

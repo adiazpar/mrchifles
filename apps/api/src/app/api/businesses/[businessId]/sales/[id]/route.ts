@@ -2,7 +2,7 @@ import { db, sales, saleItems } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { withBusinessAuth, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
-import { roundToCurrencyDecimals } from '@/lib/sales-helpers'
+import { roundToCurrencyDecimals } from '@kasero/shared/sales-helpers'
 
 export const GET = withBusinessAuth(async (_request, access, params) => {
   const id = params.id

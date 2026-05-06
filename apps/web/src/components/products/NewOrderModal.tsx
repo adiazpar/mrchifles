@@ -1,7 +1,8 @@
 'use client'
 
+import Image from '@/lib/Image'
+
 import { useCallback, useRef, useState } from 'react'
-import Image from 'next/image'
 import { X, ImageIcon, ChevronDown, CalendarClock, Minus, Plus, Loader2, ImagePlus, ScanLine, Trash2 } from 'lucide-react'
 import { Spinner, Modal, useModal, PriceInput } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Modal } from '@/components/ui'
-import type { InviteDuration } from '@/lib/auth'
+import type { InviteDuration } from '@kasero/shared/auth'
 
 const DURATIONS: InviteDuration[] = ['24h', '7d', '30d']
 

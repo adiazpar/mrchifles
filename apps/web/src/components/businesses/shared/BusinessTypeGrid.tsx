@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { BUSINESS_TYPES } from '@/lib/locale-config'
+import { BUSINESS_TYPES } from '@kasero/shared/locale-config'
 import type { BusinessType } from '@/hooks'
 import { BUSINESS_TYPE_ICONS, BUSINESS_TYPE_FALLBACK_EMOJIS } from './businessTypeIcons'
 

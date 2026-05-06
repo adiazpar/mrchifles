@@ -18,7 +18,7 @@ import {
   ownershipTransfers,
 } from '@/db'
 import { eq, inArray } from 'drizzle-orm'
-import { getLocaleConfig } from '@/lib/locale-config'
+import { getLocaleConfig } from '@kasero/shared/locale-config'
 import { patchSchema } from './schema'
 import { MAX_UPLOAD_SIZE } from '@/lib/storage'
 import { sniffImageMimeType } from '@/lib/file-sniff'

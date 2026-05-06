@@ -11,7 +11,7 @@ import { useEffect } from 'react'
 // device. This effect does the eviction.
 export function DevServiceWorkerCleanup() {
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') return
+    if (import.meta.env.PROD) return
     if (typeof window === 'undefined') return
     if (!('serviceWorker' in navigator)) return
 

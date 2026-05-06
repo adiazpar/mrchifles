@@ -1,8 +1,9 @@
 'use client'
 
+import Image from '@/lib/Image'
+
 import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { useTranslations } from 'next-intl'
-import Image from 'next/image'
 import { Loader2, Minus, Package, Plus, ScanLine, X } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { useProducts } from '@/contexts/products-context'

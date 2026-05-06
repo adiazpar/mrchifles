@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import { useMotionValue } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import {

@@ -1,4 +1,4 @@
-import { roundToCurrencyDecimals } from '@/lib/sales-helpers'
+import { roundToCurrencyDecimals } from '@kasero/shared/sales-helpers'
 import type { PaymentMethod } from '@kasero/shared/types/sale'
 
 interface DailyRow {

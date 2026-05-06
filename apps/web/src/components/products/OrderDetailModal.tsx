@@ -1,8 +1,9 @@
 'use client'
 
+import Image from '@/lib/Image'
+
 import { useMemo, useRef, useState } from 'react'
-import Image from 'next/image'
-import { useParams } from 'next/navigation'
+import { useParams } from 'react-router'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { Spinner, Modal, useModal, PriceInput } from '@/components/ui'
 import { Trash2, Pencil, ImagePlus } from 'lucide-react'

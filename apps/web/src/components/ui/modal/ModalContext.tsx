@@ -49,7 +49,7 @@ export function ModalProvider({ children, initialStep, onClose, isOpen }: ModalP
   }, [])
 
   // Track timeout IDs for cleanup
-  const timeoutIdsRef = useRef<NodeJS.Timeout[]>([])
+  const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   // Reset state when modal opens
   const prevIsOpen = useRef(isOpen)

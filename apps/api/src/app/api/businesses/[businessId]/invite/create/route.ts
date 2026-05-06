@@ -6,7 +6,7 @@ import { canManageBusiness } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { isExpiryWithinBounds } from '@/lib/invite-expiry'
-import { generateInviteCode } from '@/lib/auth'
+import { generateInviteCode } from '@kasero/shared/auth'
 import { logServerError } from '@/lib/server-logger'
 
 // Server-supplied codes only — the client used to send `code` in the
