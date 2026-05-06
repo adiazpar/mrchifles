@@ -2,7 +2,6 @@
 
 import { useIntl } from 'react-intl';
 import { Fragment } from 'react'
-import { useRouter } from '@/lib/next-navigation-shim'
 import { Plus, Check, Copy, Trash2 } from 'lucide-react'
 import { Spinner, Modal, ConfirmationAnimation, useModal } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
@@ -18,7 +17,6 @@ import {
   TeamMemberListItem,
   InviteCodeListItem,
 } from '@/components/team'
-import { DrillDownHeader } from '@/components/layout/DrillDownHeader'
 
 interface TeamDrilldownProps {
   businessId: string
@@ -180,11 +178,16 @@ function ConfirmRemoveMemberButton({
   );
 }
 
+/**
+ * Legacy in-view header (`DrillDownHeader`) was stripped during the
+ * Vite + Ionic migration: the wrapping `IonHeader` + `IonBackButton`
+ * inside `TeamTab` provides the title and back affordance now,
+ * matching the same pattern used by `ProvidersDrilldown` and
+ * `AccountPageContent`.
+ */
 export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
-  const router = useRouter()
   const t = useIntl()
   const tCommon = useIntl()
-  const tNav = useIntl()
   const { user } = useAuth()
 
   const {
@@ -231,9 +234,6 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
 
   return (
     <>
-      <DrillDownHeader title={tNav.formatMessage({
-        id: 'navigation.team'
-      })} onBack={() => router.back()} />
       {isLoading ? (
         <main className="page-loading">
           <Spinner className="spinner-lg" />
