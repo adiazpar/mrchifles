@@ -1,0 +1,69 @@
+/* ==========================================================================
+   Animations
+   Non-blocking delight: speed AND beauty
+   ========================================================================== */
+
+/* Pop-in with slight overshoot, used for nav notification badges. */
+@keyframes badge-pop-in {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.badge-pop-in {
+  transform-origin: center;
+  animation: badge-pop-in var(--duration-normal) var(--ease-out-back);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== Modal Step Layout =====
+   Step transitions inside a bottom drawer snap (no fade) — the open/close
+   slide is the only animation tied to the drawer chrome, and step swaps
+   feel snappier as instant content changes. */
+.modal-step {
+  display: block;
+}
+
+.modal-step-visible {
+  display: block;
+}
+
+.modal-step-hidden {
+  display: none;
+}
+
+.modal-step-inner {
+  /* No-op container kept for class-name compatibility with ModalStep.tsx */
+}
+
+.modal-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Centered step modifier — applied via className="modal-step--centered" on
+   Modal.Step. Used for terminal/completion screens (success Lottie + heading
+   + description) so their short content sits in the visual center of the
+   drawer body instead of clinging to the top edge. */
+.modal-step--centered.modal-step-visible {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-step--centered .modal-step-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-step--centered .modal-step-content {
+  flex: 1;
+  justify-content: center;
+}
+
+
+

@@ -1,8 +1,76 @@
-/* Ionic theme bridge — maps Ionic tokens to Kasero brand variables.
- * Phase 7+ will populate this with the full mapping once the brand-CSS
- * variable file is ported to apps/web/src/styles/. For now the bridge is
- * empty and Ionic uses its built-in defaults. */
+/* Ionic theme bridge — maps Ionic's --ion-* CSS variables to Kasero brand
+ * tokens defined in base.css. Keeping this in one place means Ionic
+ * primitives (<IonButton>, <IonItem>, <IonTabBar>, <IonHeader>, ...) inherit
+ * brand colors automatically without each component overriding manually.
+ *
+ * Order: this file MUST be imported AFTER base.css (which defines the brand
+ * tokens) and AFTER Ionic's core CSS (so these mappings override Ionic's
+ * defaults). main.tsx sequences the imports correctly.
+ *
+ * Reference: https://ionicframework.com/docs/theming/themes
+ */
 
 :root {
-  /* Placeholder. Real mapping in Phase 7. */
+  /* ===== Primary (brand) ===== */
+  --ion-color-primary: var(--color-brand);
+  --ion-color-primary-rgb: var(--color-brand-rgb);
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: var(--brand-700);
+  --ion-color-primary-tint: var(--brand-300);
+
+  /* ===== Success (green) ===== */
+  --ion-color-success: var(--color-success);
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+
+  /* ===== Warning (amber) ===== */
+  --ion-color-warning: var(--color-warning);
+  --ion-color-warning-contrast: #ffffff;
+  --ion-color-warning-contrast-rgb: 255, 255, 255;
+
+  /* ===== Danger (error) ===== */
+  --ion-color-danger: var(--color-error);
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+
+  /* ===== App canvas ===== */
+  --ion-background-color: var(--color-bg-base);
+  --ion-text-color: var(--color-text-primary);
+
+  /* ===== Toolbars / headers / tab bars ===== */
+  /* Use the surface token so Ionic chrome reads as elevated relative to the
+   * page body (which uses --color-bg-base). */
+  --ion-toolbar-background: var(--color-bg-surface);
+  --ion-toolbar-color: var(--color-text-primary);
+  --ion-toolbar-border-color: var(--color-border);
+  --ion-tab-bar-background: var(--color-bg-surface);
+  --ion-tab-bar-color: var(--color-text-secondary);
+  --ion-tab-bar-color-selected: var(--color-brand);
+  --ion-tab-bar-border-color: var(--color-border);
+
+  /* ===== Items / lists ===== */
+  --ion-item-background: var(--color-bg-surface);
+  --ion-item-color: var(--color-text-primary);
+  --ion-item-border-color: var(--color-border);
+
+  /* ===== Stepped neutrals (scrim, dividers) =====
+   * Ionic builds many of its surface variants from these stepped tokens.
+   * Mapping them to the brand neutral palette keeps modals, popovers, and
+   * scrollbars on-brand without per-component overrides. */
+  --ion-border-color: var(--color-border);
+}
+
+/* ===== Dark mode bridge ===== */
+.dark {
+  --ion-background-color: var(--color-bg-base);
+  --ion-text-color: var(--color-text-primary);
+  --ion-toolbar-background: var(--color-bg-surface);
+  --ion-toolbar-color: var(--color-text-primary);
+  --ion-tab-bar-background: var(--color-bg-surface);
+  --ion-tab-bar-color: var(--color-text-secondary);
+  --ion-tab-bar-color-selected: var(--color-brand);
+  --ion-item-background: var(--color-bg-surface);
+  --ion-item-color: var(--color-text-primary);
+  --ion-border-color: var(--color-border);
 }

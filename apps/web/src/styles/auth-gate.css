@@ -1,0 +1,31 @@
+/*
+ * AuthGateOverlay — branded full-viewport crossfade for auth-boundary
+ * transitions (login -> hub, logout -> login).
+ *
+ * Background uses --color-bg-base to match both .auth-container AND the
+ * hub body (both render on --color-bg-base). This eliminates the color
+ * shift during fade transitions — no blend between surface and base as
+ * the overlay animates opacity. The iOS status bar (theme-color) is set
+ * to base on auth routes to match, so no top-of-screen seam either.
+ * Sits above modals and below toasts so a logout from a page with an
+ * open modal covers cleanly.
+ */
+
+.auth-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-auth-gate);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-base);
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.auth-gate-overlay__icon {
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+  will-change: transform;
+}
