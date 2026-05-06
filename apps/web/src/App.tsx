@@ -15,10 +15,22 @@ import { RegisterPage } from '@/routes/RegisterPage'
 setupIonicReact({ mode: 'ios' })
 
 // Provider ordering rules:
-//   - IonReactRouter must wrap AuthProvider because AuthContext calls
+//   - IonReactRouter must wrap everything because AuthContext calls
 //     useRouter() (via the next-navigation-shim that wraps useHistory).
-//   - AppIntlProvider must be INSIDE AuthProvider because it reads
-//     user.language via useAuth() to pick the active locale bundle.
+//   - AppIntlProvider must be ABOVE AuthProvider because AuthProvider
+//     calls useIntl() and useApiMessage() at render time (for non-
+//     envelope error fallbacks like `auth.connection_error`). If
+//     AppIntlProvider sat below AuthProvider, those hook calls would
+//     fire in a tree position with no IntlProvider ancestor and
+//     IntlProvider would throw `Could not find required intl object`,
+//     which React's error boundary unmounts the whole tree from —
+//     producing a blank black page on fresh load.
+//   - AppIntlProvider does NOT consume useAuth(). It reads the active
+//     locale from `@/lib/user-cache` (same localStorage entry that
+//     AuthProvider writes to via setCachedUser) and listens for the
+//     LANGUAGE_CHANGE_EVENT custom event that auth-context dispatches
+//     whenever user.language mutates. This decoupling is what lets it
+//     sit above AuthProvider.
 //   - AppIntlProvider must be OUTSIDE AuthGateProvider and any consumer
 //     of useIntl() so translations are available everywhere downstream.
 //
@@ -40,8 +52,8 @@ export function App() {
   return (
     <IonApp>
       <IonReactRouter>
-        <AuthProvider>
-          <AppIntlProvider>
+        <AppIntlProvider>
+          <AuthProvider>
             <AuthGateProvider>
               {/* AuthGateOverlay is the brand-specific full-viewport
                   logo+fade choreography for auth-boundary transitions
@@ -83,8 +95,8 @@ export function App() {
                 <Route path="/:businessId" component={BusinessTabsLayout} />
               </IonRouterOutlet>
             </AuthGateProvider>
-          </AppIntlProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </AppIntlProvider>
       </IonReactRouter>
     </IonApp>
   )

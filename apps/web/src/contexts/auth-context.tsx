@@ -17,6 +17,12 @@ import type { SupportedLocale } from '@/i18n/config'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError, apiPost, apiPatch } from '@/lib/api-client'
 import { clearKaseroLocalStorage } from '@/hooks/useSessionCache'
+import {
+  LANGUAGE_CHANGE_EVENT,
+  USER_VALIDATED_KEY,
+  getCachedUser,
+  setCachedUser,
+} from '@/lib/user-cache'
 
 // ============================================
 // TYPES
@@ -39,10 +45,10 @@ interface AuthContextType {
 // LOCAL STORAGE CACHE
 // ============================================
 
-// Bumped to v2 when users.language was added — invalidates cached user
-// objects from before the schema change.
-const AUTH_CACHE_KEY = 'auth_user_cache_v2'
-const AUTH_VALIDATED_KEY = 'auth_last_validated'
+// User-cache helpers (USER_CACHE_KEY, getCachedUser, setCachedUser,
+// LANGUAGE_CHANGE_EVENT, USER_VALIDATED_KEY) live in
+// `@/lib/user-cache` so AppIntlProvider can read the active locale
+// without consuming useAuth() — see that module for details.
 const VALIDATION_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
 
 // Names of the Serwist caches whose contents are scoped to the
@@ -74,37 +80,10 @@ async function clearScopedServiceWorkerCaches(): Promise<void> {
   }
 }
 
-function getCachedUser(): User | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const cached = localStorage.getItem(AUTH_CACHE_KEY)
-    if (cached) {
-      return JSON.parse(cached) as User
-    }
-  } catch {
-    // Invalid cache, ignore
-  }
-  return null
-}
-
-function setCachedUser(user: User | null): void {
-  if (typeof window === 'undefined') return
-  try {
-    if (user) {
-      localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(user))
-    } else {
-      localStorage.removeItem(AUTH_CACHE_KEY)
-      localStorage.removeItem(AUTH_VALIDATED_KEY)
-    }
-  } catch {
-    // Storage error, ignore
-  }
-}
-
 function shouldRevalidate(): boolean {
   if (typeof window === 'undefined') return true
   try {
-    const lastValidated = localStorage.getItem(AUTH_VALIDATED_KEY)
+    const lastValidated = localStorage.getItem(USER_VALIDATED_KEY)
     if (!lastValidated) return true
     const elapsed = Date.now() - parseInt(lastValidated, 10)
     return elapsed > VALIDATION_INTERVAL_MS
@@ -116,10 +95,22 @@ function shouldRevalidate(): boolean {
 function setValidatedNow(): void {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(AUTH_VALIDATED_KEY, Date.now().toString())
+    localStorage.setItem(USER_VALIDATED_KEY, Date.now().toString())
   } catch {
     // Storage error, ignore
   }
+}
+
+// Broadcast a runtime language change so AppIntlProvider — which is
+// mounted ABOVE AuthProvider in the React tree and therefore can't
+// observe useAuth() updates directly — can swap its message bundle.
+// Called from every code path that mutates user.language: login,
+// register, refreshUser, and the explicit changeLanguage action.
+function dispatchLanguageChange(language: string | undefined): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(
+    new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: { language } }),
+  )
 }
 
 // ============================================
@@ -164,15 +155,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(data.user)
             setCachedUser(data.user)
             setValidatedNow()
+            dispatchLanguageChange(data.user.language)
           } else {
             // Server says no user, clear cache
             setUser(null)
             setCachedUser(null)
+            dispatchLanguageChange(undefined)
           }
         } else {
           // Auth failed, clear cache
           setUser(null)
           setCachedUser(null)
+          dispatchLanguageChange(undefined)
         }
       } catch (error) {
         console.error('Failed to validate auth:', error)
@@ -214,6 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(data.user)
       setCachedUser(data.user)
       setValidatedNow()
+      dispatchLanguageChange(data.user.language)
 
       // Kick off the hub's business-list fetch during the auth-gate
       // overlay animation so it's in flight (and often resolved) by the
@@ -258,6 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(data.user)
       setCachedUser(data.user)
       setValidatedNow()
+      dispatchLanguageChange(data.user.language)
 
       // Intentionally no /api/businesses/list prefetch — a freshly
       // registered user has no businesses yet, and the hub's empty
@@ -285,6 +281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(null)
     setCachedUser(null)
+    dispatchLanguageChange(undefined)
     // Clear all per-user caches so the next account to sign in on this
     // tab doesn't inherit stale role / business / session data. Cover
     // ALL stores — sessionStorage for per-tab caches, our prefixed
@@ -311,6 +308,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(data.user)
           setCachedUser(data.user)
           setValidatedNow()
+          dispatchLanguageChange(data.user.language)
         }
       }
     } catch {
@@ -328,12 +326,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setCachedUser(next)
           return next
         })
-        // The user.language change above already propagates through
-        // AppIntlProvider (which reads useAuth().user.language and swaps
-        // the message bundle). router.refresh() is a leftover from the
-        // pre-Vite cookie-bound RSC pipeline and is now a no-op via the
-        // next-navigation-shim — kept for shim parity, no longer needed
-        // for i18n correctness.
+        // AppIntlProvider sits ABOVE AuthProvider in the React tree
+        // (it can't consume useAuth() — see App.tsx ordering rules and
+        // user-cache.ts). Notify it via the LANGUAGE_CHANGE_EVENT so it
+        // swaps the active message bundle. router.refresh() is a leftover
+        // from the pre-Vite cookie-bound RSC pipeline and is now a no-op
+        // via the next-navigation-shim — kept for shim parity.
+        dispatchLanguageChange(language)
         router.refresh()
         return { success: true }
       } catch (err) {
