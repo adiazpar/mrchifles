@@ -259,23 +259,38 @@ body {
   }
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-  color: var(--color-text-primary);
+/* Element base styles. Wrapped in `@layer base` (Tailwind v4's base layer)
+   so that Tailwind utilities — which live in `@layer utilities` — can
+   override them. Without this layering, an unlayered `h2 { font-size:
+   var(--text-3xl) }` rule beats any `.text-xs` Tailwind utility on the
+   same element, because unlayered rules always win against layered
+   ones in CSS cascade. That's why <h2 className="text-xs ..."> was
+   rendering as a 1.875rem heading. */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--color-text-primary);
+  }
+
+  h1 { font-size: var(--text-4xl); font-weight: 700; }
+  h2 { font-size: var(--text-3xl); }
+  h3 { font-size: var(--text-2xl); }
+  h4 { font-size: var(--text-xl); }
+
+  p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
 }
 
-h1 { font-size: var(--text-4xl); font-weight: 700; }
-h2 { font-size: var(--text-3xl); }
-h3 { font-size: var(--text-2xl); }
-h4 { font-size: var(--text-xl); }
-
-p {
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-}
+/* NOTE: Tailwind v4 design-token registration (`@theme inline`) is
+   declared in index.css alongside `@import "tailwindcss"`. Tailwind's
+   CSS plugin only collects `@theme` blocks from the same CSS file as
+   the `@import` directive — putting them here would silently skip
+   utility generation. */
 
 a {
   color: var(--color-brand);

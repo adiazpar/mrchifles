@@ -1,5 +1,45 @@
 @import "tailwindcss";
 
+/* Tailwind v4 design-token registration. `@theme inline` exposes our
+   existing brand CSS variables (declared in base.css :root) to
+   Tailwind's utility generator without duplicating their values —
+   Tailwind emits utilities like `.text-error`, `.bg-bg-surface`,
+   `.border-border`, etc., each of which resolves the brand var() at
+   runtime (so theme switching via :root.dark Just Works).
+
+   `inline` is required: it tells Tailwind to inline the var() into
+   the generated utility's declaration rather than emit
+   `:root { --color-error: ...; }` itself, which would create a
+   circular self-reference against the same name in base.css.
+
+   Tailwind v4 only collects @theme directives from the same file as
+   `@import "tailwindcss"` — DO NOT move this to base.css. */
+@theme inline {
+  --color-brand: var(--color-brand);
+  --color-brand-subtle: var(--color-brand-subtle);
+  --color-error: var(--color-error);
+  --color-error-subtle: var(--color-error-subtle);
+  --color-warning: var(--color-warning);
+  --color-warning-subtle: var(--color-warning-subtle);
+  --color-success: var(--color-success);
+  --color-success-subtle: var(--color-success-subtle);
+  --color-pos: var(--color-pos);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-tertiary: var(--color-text-tertiary);
+  --color-text-inverse: var(--color-text-inverse);
+  --color-text-brand: var(--color-text-brand);
+
+  --color-bg-base: var(--color-bg-base);
+  --color-bg-surface: var(--color-bg-surface);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-bg-muted: var(--color-bg-muted);
+
+  --color-border: var(--color-border);
+  --color-border-hover: var(--color-border-hover);
+}
+
 /* Reset coexistence: Ionic provides its own base styles; Tailwind preflight
  * may conflict in places. Add scoped overrides here as needed. */
 
