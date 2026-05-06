@@ -1,4 +1,17 @@
-import { getBusinessIdFromPath } from './navigation'
+// Reserved top-level paths that are not business IDs. Mirrors the list
+// formerly in src/lib/navigation.ts (deleted in Phase 2.2 along with the
+// rest of the client-only nav helpers). Kept inline here so layer-stack
+// — the last surviving client-side navigation utility in apps/api —
+// remains self-contained until Phase 13.1 retires it entirely.
+const RESERVED_PATHS = ['login', 'register', 'account', 'join']
+
+function getBusinessIdFromPath(pathname: string): string | null {
+  const segments = pathname.split('/').filter(Boolean)
+  if (segments.length === 0) return null
+  const firstSegment = segments[0]
+  if (RESERVED_PATHS.includes(firstSegment)) return null
+  return firstSegment || null
+}
 
 export type BusinessTab = 'home' | 'sales' | 'products' | 'manage'
 
