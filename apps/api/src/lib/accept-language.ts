@@ -3,8 +3,6 @@
  *
  * Pure function: takes the raw header value, returns a SupportedLocale.
  * Used by:
- *   - src/i18n/request.ts    → RSC message bundle selection for anonymous
- *                              visitors (login, register, pre-auth pages)
  *   - /api/auth/register     → persisting the detected language on signup
  *                              so the user's first post-login experience is
  *                              also in their browser language
@@ -16,9 +14,9 @@
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
+  resolveLocaleByPrefix,
   type SupportedLocale,
-} from '@/i18n/config'
-import { resolveLocaleByPrefix } from '@kasero/shared/locales'
+} from '@kasero/shared/locales'
 
 interface AcceptLanguageEntry {
   tag: string

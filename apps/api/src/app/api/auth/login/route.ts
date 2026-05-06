@@ -8,7 +8,6 @@ import { validationError, errorResponse, successResponse, applyRateLimit, enforc
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { getClientIp, RateLimits } from '@/lib/rate-limit'
-import { setLocaleCookieServer } from '@/lib/locale-cookie'
 
 const loginSchema = z.object({
   email: Schemas.email(),
@@ -95,9 +94,6 @@ export async function POST(request: NextRequest) {
 
     // Set auth cookie
     await setAuthCookie(token)
-
-    // Set UI language cookie from user preference
-    await setLocaleCookieServer(user.language)
 
     // Return user (without password)
     const { password: _, ...userWithoutPassword } = user

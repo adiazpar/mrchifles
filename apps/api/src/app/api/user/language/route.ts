@@ -1,8 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db, users } from '@/db'
-import { setLocaleCookieServer } from '@/lib/locale-cookie'
-import { SUPPORTED_LOCALES } from '@/i18n/config'
+import { SUPPORTED_LOCALES } from '@kasero/shared/locales'
 import { validationError, errorResponse, successResponse, withAuth, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { logServerError } from '@/lib/server-logger'
@@ -18,8 +17,8 @@ const MAX_BODY_BYTES = 1024
  * PATCH /api/user/language
  *
  * Update the current user's UI language preference. Persists to the users
- * table and rewrites the kasero-locale cookie so the next RSC render picks
- * up the new message bundle.
+ * table; the web client manages the active UI bundle via its own intl
+ * provider after the response returns.
  *
  * Wrapped in withAuth for the default per-user + per-IP mutation caps.
  */
@@ -40,8 +39,6 @@ export const PATCH = withAuth(async (request, session) => {
       .update(users)
       .set({ language })
       .where(eq(users.id, session.userId))
-
-    await setLocaleCookieServer(language)
 
     return successResponse({ language })
   } catch (error) {

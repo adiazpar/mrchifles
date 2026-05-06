@@ -1,8 +1,0 @@
-export { EditNameModal } from './EditNameModal'
-export { EditTypeModal } from './EditTypeModal'
-export { EditLocationModal } from './EditLocationModal'
-export { EditLogoModal } from './EditLogoModal'
-export { TransferOwnershipModal } from './TransferOwnershipModal'
-export { CancelTransferModal } from './CancelTransferModal'
-export { LeaveBusinessModal } from './LeaveBusinessModal'
-export { DeleteBusinessModal } from './DeleteBusinessModal'

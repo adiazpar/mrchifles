@@ -9,7 +9,6 @@ import { validationError, errorResponse, successResponse, applyRateLimit, enforc
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { Schemas } from '@/lib/schemas'
 import { getClientIp, RateLimits } from '@/lib/rate-limit'
-import { setLocaleCookieServer } from '@/lib/locale-cookie'
 import { pickLocaleFromAcceptLanguage } from '@/lib/accept-language'
 
 const registerSchema = z.object({
@@ -101,10 +100,6 @@ export async function POST(request: NextRequest) {
 
     // Set auth cookie
     await setAuthCookie(token)
-
-    // Persist the detected UI language in the cookie so next-intl loads the
-    // matching bundle on the next RSC render.
-    await setLocaleCookieServer(detectedLanguage)
 
     // Return user (without password)
     const { password: _, ...userWithoutPassword } = newUser

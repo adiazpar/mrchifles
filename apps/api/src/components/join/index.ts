@@ -1,1 +1,0 @@
-export { JoinBusinessModal } from './JoinBusinessModal'

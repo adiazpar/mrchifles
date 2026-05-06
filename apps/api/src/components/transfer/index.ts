@@ -1,1 +1,0 @@
-export { IncomingTransferModal } from './IncomingTransferModal'
