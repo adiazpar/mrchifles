@@ -38,16 +38,24 @@
   --ion-background-color: var(--color-bg-base);
   --ion-text-color: var(--color-text-primary);
 
-  /* ===== Toolbars / headers / tab bars ===== */
-  /* Use the surface token so Ionic chrome reads as elevated relative to the
-   * page body (which uses --color-bg-base). */
-  --ion-toolbar-background: var(--color-bg-surface);
+  /* ===== Toolbars / headers / tab bars =====
+   * The legacy PageHeader used --color-bg-base (NOT surface) so the header
+   * blends seamlessly with the page body — no "ugly grey strip" effect.
+   * The bottom tab bar uses --color-bg-surface to read as a slightly
+   * elevated chrome over scrollable content. Both heights match the
+   * legacy custom components: 80px header, 80px tab bar. */
+  --ion-toolbar-background: var(--color-bg-base);
   --ion-toolbar-color: var(--color-text-primary);
   --ion-toolbar-border-color: var(--color-border);
+  /* Toolbar height — Ionic's iOS default is 44px; legacy header was 80px. */
+  --ion-toolbar-min-height: var(--header-height);
+
   --ion-tab-bar-background: var(--color-bg-surface);
   --ion-tab-bar-color: var(--color-text-secondary);
   --ion-tab-bar-color-selected: var(--color-brand);
   --ion-tab-bar-border-color: var(--color-border);
+  /* Tab bar height — Ionic's iOS default is 50px; legacy mobile-nav was 80px. */
+  --ion-tab-bar-height: var(--mobile-nav-height);
 
   /* ===== Items / lists ===== */
   --ion-item-background: var(--color-bg-surface);
@@ -65,7 +73,7 @@
 .dark {
   --ion-background-color: var(--color-bg-base);
   --ion-text-color: var(--color-text-primary);
-  --ion-toolbar-background: var(--color-bg-surface);
+  --ion-toolbar-background: var(--color-bg-base);
   --ion-toolbar-color: var(--color-text-primary);
   --ion-tab-bar-background: var(--color-bg-surface);
   --ion-tab-bar-color: var(--color-text-secondary);
@@ -73,4 +81,91 @@
   --ion-item-background: var(--color-bg-surface);
   --ion-item-color: var(--color-text-primary);
   --ion-border-color: var(--color-border);
+}
+
+/* ==========================================================================
+   Direct selectors for properties Ionic does not expose as CSS variables.
+   These mirror the legacy .page-header / .page-title / .mobile-nav /
+   .mobile-nav-item visual contract (recovered from the pre-migration
+   PageHeader and MobileNav components).
+   ========================================================================== */
+
+/* ===== Header / toolbar =====
+ * Legacy .page-header rules (interactive.css):
+ *   background: var(--color-bg-base);
+ *   border-bottom: none;
+ *   min-height: var(--header-height);   // 80px
+ *   padding: 0 var(--page-padding);     // 0 16px
+ *
+ * Ionic's iOS toolbar default uses --padding-start/--padding-end shadow
+ * variables (16px on iOS already), so we don't need to override padding.
+ * Background and height are handled via --ion-toolbar-* above.
+ * The legacy header had no border-bottom; Ionic's iOS mode also has none
+ * by default, but we explicitly null it via --ion-toolbar-border-color
+ * (Ionic's md mode does draw one). */
+ion-toolbar {
+  /* Honor the safe-area at the top of the screen (notch / dynamic island)
+   * — legacy .page-header--fixed did this with padding-top: env(...). */
+  --padding-top: env(safe-area-inset-top, 0);
+  --border-width: 0;
+}
+
+/* ===== Title typography =====
+ * Legacy .page-title rules:
+ *   font-family: var(--font-display);
+ *   font-size: var(--text-xl);   // 20px
+ *   font-weight: 700;
+ *   color: var(--color-text-primary);
+ *
+ * Ionic's <ion-title> uses font-weight 600 by default and inherits its
+ * font-family from the body. The shadow part `.toolbar-title` is the
+ * actual text node we need to target — Ionic exposes its inner part. */
+ion-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+/* ===== Tab bar / tab buttons =====
+ * Legacy .mobile-nav rules:
+ *   height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0));
+ *   background: var(--color-bg-surface);
+ *   border-top: 1px solid var(--color-border);
+ *
+ * --ion-tab-bar-height handles the chrome height; Ionic's iOS tab bar
+ * already adds the safe-area inset itself. The border-top comes from
+ * --ion-tab-bar-border-color, which is mapped above. */
+
+/* Legacy .mobile-nav-item rules:
+ *   gap: 4px between icon and label
+ *   color: var(--color-text-secondary)  // inactive
+ *   font-size: 11px
+ *   font-weight: 500
+ *   padding: var(--space-2)              // 8px
+ *
+ * .mobile-nav-item.active color: var(--color-brand) — already handled
+ * by --ion-tab-bar-color-selected.
+ *
+ * .mobile-nav-icon size: 28px x 28px. */
+ion-tab-button {
+  font-family: var(--font-body);
+  /* Ionic's tab buttons render icon over label in a flex column with
+   * a small gap. Match the legacy 4px gap + 8px padding. */
+  --padding-top: var(--space-2);
+  --padding-bottom: var(--space-2);
+  --padding-start: var(--space-2);
+  --padding-end: var(--space-2);
+}
+
+ion-tab-button ion-label {
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 4px;
+  letter-spacing: 0.01em;
+}
+
+ion-tab-button ion-icon {
+  font-size: 28px;
 }
