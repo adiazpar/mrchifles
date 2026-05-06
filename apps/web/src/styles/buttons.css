@@ -38,8 +38,7 @@
   }
 }
 
-.btn:active:not(:disabled),
-.btn[data-pressed='true']:not(:disabled) {
+.btn:active:not(:disabled) {
   filter: brightness(0.88);
   transform: scale(0.94);
   text-decoration: none;

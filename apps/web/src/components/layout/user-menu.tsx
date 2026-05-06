@@ -2,6 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useState } from 'react'
+import { IonRippleEffect } from '@ionic/react'
 import { Menu } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
@@ -24,13 +25,13 @@ export function UserMenu() {
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
-          data-tap-feedback
-          className="btn btn-secondary btn-icon flex-shrink-0"
+          className="btn btn-secondary btn-icon flex-shrink-0 ion-activatable ripple-parent"
           aria-label={t.formatMessage({
             id: 'ui.user_menu.open'
           })}
         >
           <Menu style={{ width: 20, height: 20 }} />
+          <IonRippleEffect />
         </button>
         {incomingTransfer && (
           <span

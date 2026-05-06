@@ -65,7 +65,7 @@ function closeAllExcept(self: () => void) {
  * `useTransform(x, ...)` over the slot's exposure range — so every button scale-fades
  * in as its slot is uncovered, tracking the finger rather than firing on a threshold.
  * The useTransform-driven buttons are supposed to land at scale/opacity 0 once the
- * row is back at x=0, but the tap-feedback scale(0.94) composing with the reveal
+ * row is back at x=0, but the press scale(0.94) composing with the reveal
  * transform can leave a visible ghost on close, so the row layer carries an opaque
  * surface-colored background (`.swipeable-row .list-item-clickable` in
  * interactive.css) matching the enclosing `.card`, to hide any such artifact once
@@ -188,7 +188,7 @@ export function SwipeableRow({ actions, children, className }: SwipeableRowProps
           container. Each button's opacity/scale is driven by `useTransform(x)`
           over the range in which its slot is being exposed, so every button
           scale-fades in as its slot emerges. The buttons are supposed to be
-          at scale(0)/opacity(0) when x=0, but in practice the tap-feedback
+          at scale(0)/opacity(0) when x=0, but in practice the press
           scale(0.94) composing with the reveal transform can leave a ghost
           mid-close; the row layer above carries an opaque surface-colored bg
           (see `.swipeable-row .list-item-clickable` in interactive.css, set
@@ -261,9 +261,8 @@ function SwipeActionButton({ action, slotIndex, x, onTap }: SwipeActionButtonPro
   const scale = useTransform(x, [fullyVisibleAt, startAppearingAt], [1, 0], { clamp: true })
 
   // The reveal scale/opacity live on a wrapper so the inner <button>'s CSS
-  // transform (scale(0.94) on [data-pressed='true'], applied by the global
-  // tap-feedback module) isn't overwritten by framer-motion's inline style.
-  // Nested transforms compose multiplicatively.
+  // transform (scale(0.94) on :active) isn't overwritten by framer-motion's
+  // inline style. Nested transforms compose multiplicatively.
   return (
     <div className="swipeable-row-slot" style={{ width: ACTION_WIDTH }}>
       <motion.div style={{ opacity, scale }}>

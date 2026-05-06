@@ -2,6 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useState } from 'react'
+import { IonRippleEffect } from '@ionic/react'
 import dynamic from '@/lib/next-dynamic-shim'
 import { useRouter } from '@/lib/next-navigation-shim'
 import {
@@ -108,8 +109,7 @@ export function AccountPageContent() {
       <button
         type="button"
         onClick={() => setIsProfileModalOpen(true)}
-        data-tap-feedback
-        className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left data-[pressed='true']:bg-bg-muted"
+        className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left ion-activatable ripple-parent"
       >
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
@@ -137,14 +137,14 @@ export function AccountPageContent() {
           </div>
         </div>
         <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+        <IonRippleEffect />
       </button>
 
       {incomingTransfer && (
         <button
           type="button"
           onClick={() => setIsTransferModalOpen(true)}
-          data-tap-feedback
-          className="card banner-semantic banner-semantic--warning w-full p-3 flex items-center gap-3 text-left"
+          className="card banner-semantic banner-semantic--warning w-full p-3 flex items-center gap-3 text-left ion-activatable ripple-parent"
         >
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -177,6 +177,7 @@ export function AccountPageContent() {
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+          <IonRippleEffect />
         </button>
       )}
 
