@@ -2,6 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useCallback, useRef, useState, useEffect } from 'react'
+import { IonRippleEffect } from '@ionic/react'
 
 interface StockStepperProps {
   value: number
@@ -79,10 +80,10 @@ export function StockStepper({
           type="button"
           onClick={handleDecrement}
           disabled={value <= min}
-          data-tap-feedback
-          className="w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-transform duration-150 disabled:opacity-30 disabled:cursor-not-allowed text-text-primary data-[pressed='true']:scale-[0.94]"
+          className="relative overflow-hidden w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-transform duration-150 disabled:opacity-30 disabled:cursor-not-allowed text-text-primary active:scale-[0.94] ion-activatable"
         >
           -
+          <IonRippleEffect />
         </button>
 
         {/* Editable number input */}
@@ -104,10 +105,10 @@ export function StockStepper({
           type="button"
           onClick={handleIncrement}
           disabled={value >= max}
-          data-tap-feedback
-          className="w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-transform duration-150 disabled:opacity-30 disabled:cursor-not-allowed text-text-primary data-[pressed='true']:scale-[0.94]"
+          className="relative overflow-hidden w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-transform duration-150 disabled:opacity-30 disabled:cursor-not-allowed text-text-primary active:scale-[0.94] ion-activatable"
         >
           +
+          <IonRippleEffect />
         </button>
       </div>
       {/* Label */}
