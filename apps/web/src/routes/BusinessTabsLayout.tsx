@@ -36,6 +36,16 @@ import { TeamTab } from './tabs/TeamTab'
 import { ManageTab } from './tabs/ManageTab'
 import { ProviderDetailPage } from './tabs/ProviderDetailPage'
 
+// Top-level path segments that share the `/:businessId` shape but are
+// NOT business ids. `IonRouterOutlet` (unlike `Switch`) keeps overlapping
+// matches mounted to support push/pop animations, so the catch-all
+// `/:businessId` route in App.tsx ALSO matches `/login`, `/register`,
+// `/account`, and `/join`. Without this guard, BusinessTabsLayout — and
+// every business-scoped provider beneath it — would mount with
+// `businessId` set to the literal string `'login'` (etc.), kicking off
+// a wave of `/api/businesses/login/*` 404s.
+const RESERVED_BUSINESS_PATHS = new Set(['login', 'register', 'account', 'join'])
+
 /**
  * Business tabs shell — the structural heart of the migration.
  *
@@ -88,6 +98,16 @@ import { ProviderDetailPage } from './tabs/ProviderDetailPage'
 export function BusinessTabsLayout() {
   const { businessId } = useParams<{ businessId: string }>()
   const intl = useIntl()
+
+  // Bail out when the matched `:businessId` is actually one of the
+  // top-level reserved paths (see RESERVED_BUSINESS_PATHS comment).
+  // `IonRouterOutlet` keeps overlapping routes mounted, so this layout
+  // gets a parallel mount alongside the real route component for
+  // /login, /register, /account, /join. Returning null here prevents
+  // BusinessProvider et al. from firing API calls with bogus businessIds.
+  if (!businessId || RESERVED_BUSINESS_PATHS.has(businessId)) {
+    return null
+  }
 
   // Per-business `key` resets each provider's internal state when the
   // user switches businesses (cache instances, refs, in-flight promises).
