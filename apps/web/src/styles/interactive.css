@@ -560,13 +560,18 @@
 }
 
 /* ===== Page Loading State ===== */
-/* Centers spinner in the middle of the visible area between header and navbar */
+/* Used by component-level loading branches that render inside an IonContent.
+   IonContent's slot is block, not flex, so `flex: 1` collapses to 0 height
+   and the spinner pins to the top. Use explicit `height: 100%` instead so
+   the centering works against the IonContent scroll container. */
 .page-loading {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Account for fixed header at top and mobile nav at bottom to center spinner */
+  height: 100%;
+  /* Padding kept for components still rendering outside an IonContent (legacy
+     drill-down branches). Inside IonContent these vars compose harmlessly with
+     the native safe-area handling. */
   padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0));
   padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0));
 }
