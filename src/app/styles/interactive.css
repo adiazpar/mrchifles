@@ -141,14 +141,16 @@
   flex-shrink: 0;
 }
 
-/* ===== Mobile Bottom Navigation ===== */
+/* ===== Mobile Bottom Navigation =====
+ * position: absolute (relative to its parent .layer), NOT fixed. Fixed
+ * inside a transformed ancestor triggers iOS Safari compositor bugs
+ * (descendants render twice or in wrong place). Layers ARE transformed
+ * via Framer Motion, so chrome inside must avoid position:fixed. */
 .mobile-nav {
-  position: fixed;
+  position: absolute;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: var(--max-viewport-width);
+  left: 0;
+  right: 0;
   height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0));
   background: var(--color-bg-surface);
   border-top: 1px solid var(--color-border);
@@ -377,16 +379,16 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Fixed header - always visible at top like mobile nav at bottom */
+/* Sticky header inside its layer. position:absolute (not fixed) for
+ * the same iOS Safari reason as .mobile-nav above. The layer itself is
+ * absolute-positioned inside a viewport-fixed root, so the header still
+ * appears at viewport top — just without the fixed-in-transformed bug. */
 .page-header--fixed {
-  position: fixed;
+  position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: var(--max-viewport-width);
+  left: 0;
+  right: 0;
   z-index: var(--z-sticky);
-  /* Account for safe area on devices with notches */
   padding-top: env(safe-area-inset-top, 0);
 }
 

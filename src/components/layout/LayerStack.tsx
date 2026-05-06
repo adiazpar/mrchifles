@@ -180,7 +180,7 @@ export function LayerStack() {
   const hubIsUnderlay = liveCount === 1
 
   return (
-    <>
+    <div className="layer-stack-root">
       {hubDescriptor && (
         <Layer
           key="hub-root"
@@ -239,6 +239,6 @@ export function LayerStack() {
           </Layer>
         )
       })}
-    </>
+    </div>
   )
 }
