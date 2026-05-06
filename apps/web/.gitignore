@@ -1,0 +1,14 @@
+# Build outputs
+dist/
+.vite/
+
+# Test coverage
+coverage/
+
+# Dev artifacts
+*.tsbuildinfo
+.tsbuild-node/
+
+# Local env
+.env.local
+.env.*.local

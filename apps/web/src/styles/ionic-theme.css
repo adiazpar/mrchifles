@@ -1,0 +1,8 @@
+/* Ionic theme bridge — maps Ionic tokens to Kasero brand variables.
+ * Phase 7+ will populate this with the full mapping once the brand-CSS
+ * variable file is ported to apps/web/src/styles/. For now the bridge is
+ * empty and Ionic uses its built-in defaults. */
+
+:root {
+  /* Placeholder. Real mapping in Phase 7. */
+}

@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* Reset coexistence: Ionic provides its own base styles; Tailwind preflight
+ * may conflict in places. Add scoped overrides here as needed. */
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
