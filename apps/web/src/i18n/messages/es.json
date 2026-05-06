@@ -534,6 +534,7 @@
   "providers.add_provider_button": "Agregar proveedor",
   "providers.empty_title": "Sin proveedores",
   "providers.empty_description": "Agregue su primer proveedor para comenzar",
+  "providers.detail_title": "Proveedor",
   "providers.modal_title_add": "Agregar proveedor",
   "providers.modal_title_edit": "Editar proveedor",
   "providers.name_label": "Nombre",

@@ -534,6 +534,7 @@
   "providers.add_provider_button": "仕入先を追加",
   "providers.empty_title": "仕入先なし",
   "providers.empty_description": "最初の仕入先を追加して始めましょう",
+  "providers.detail_title": "仕入先",
   "providers.modal_title_add": "仕入先を追加",
   "providers.modal_title_edit": "仕入先を編集",
   "providers.name_label": "名前",

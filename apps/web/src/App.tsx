@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/auth-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { AppIntlProvider } from '@/i18n/AppIntlProvider'
 import { AccountPage } from '@/routes/AccountPage'
+import { BusinessTabsLayout } from '@/routes/BusinessTabsLayout'
 import { HubPage } from '@/routes/HubPage'
 import { JoinPage } from '@/routes/JoinPage'
 import { LoginPage } from '@/routes/LoginPage'
@@ -61,6 +62,15 @@ export function App() {
                 <Route exact path="/">
                   <HubPage />
                 </Route>
+                {/* Business tabs shell (`/:businessId/*`). Catch-all that
+                    must remain LAST in the Switch — `/:businessId`
+                    matches anything, so any literal route declared after
+                    it would be unreachable. The layout owns the
+                    `IonTabs` + `IonRouterOutlet` and all per-business
+                    data providers (BusinessProvider, OrdersProvider,
+                    ProductsProvider, etc.). NOT `exact` because the
+                    inner outlet matches sub-paths like `/<id>/home`. */}
+                <Route path="/:businessId" component={BusinessTabsLayout} />
               </Switch>
             </AuthGateProvider>
           </AppIntlProvider>

@@ -534,6 +534,7 @@
   "providers.add_provider_button": "Add provider",
   "providers.empty_title": "No providers",
   "providers.empty_description": "Add your first provider to get started",
+  "providers.detail_title": "Provider",
   "providers.modal_title_add": "Add provider",
   "providers.modal_title_edit": "Edit provider",
   "providers.name_label": "Name",
