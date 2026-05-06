@@ -6,6 +6,7 @@ import Image from '@/lib/Image'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import type { ReactNode } from 'react'
+import { IonRippleEffect } from '@ionic/react'
 import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2, CircleCheckBig } from 'lucide-react'
 import { Spinner, SwipeableRow, TabContainer } from '@/components/ui'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
@@ -526,14 +527,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             <button
               type="button"
               onClick={openEdit}
-              data-tap-feedback
               aria-label={t.formatMessage({
                 id: 'providers.edit_provider_aria'
               })}
-              className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left data-[pressed='true']:bg-bg-muted"
+              className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left ion-activatable ripple-parent"
             >
               {identityContent}
               <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+              <IonRippleEffect />
             </button>
           ) : (
             <div className="flex items-center gap-4">
@@ -611,8 +612,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   <button
                     type="button"
                     onClick={() => handleTabChange('history')}
-                    data-tap-feedback
-                    className="card banner-semantic banner-semantic--error w-full p-4 flex items-center gap-3 text-left"
+                    className="card banner-semantic banner-semantic--error w-full p-4 flex items-center gap-3 text-left ion-activatable ripple-parent"
                   >
                     {/* Icon chip — uses color-mix on the error token so it
                         reads as a darker red against the error-subtle
@@ -640,6 +640,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+                    <IonRippleEffect />
                   </button>
                 )}
 

@@ -2,6 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useState } from 'react'
+import { IonRippleEffect } from '@ionic/react'
 import dynamic from '@/lib/next-dynamic-shim'
 import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Briefcase, ChevronRight, Clock, ImageIcon } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
@@ -86,8 +87,7 @@ export function ManageView() {
         <button
           type="button"
           onClick={() => setCancelTransferOpen(true)}
-          data-tap-feedback
-          className="card banner-semantic banner-semantic--warning w-full p-4 flex items-center gap-3 text-left"
+          className="card banner-semantic banner-semantic--warning w-full p-4 flex items-center gap-3 text-left ion-activatable ripple-parent"
         >
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -111,14 +111,14 @@ export function ManageView() {
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+          <IonRippleEffect />
         </button>
       )}
       {showIncomingTransferBanner && incomingTransfer && (
         <button
           type="button"
           onClick={() => setIncomingTransferOpen(true)}
-          data-tap-feedback
-          className="card banner-semantic banner-semantic--warning w-full p-4 flex items-center gap-3 text-left"
+          className="card banner-semantic banner-semantic--warning w-full p-4 flex items-center gap-3 text-left ion-activatable ripple-parent"
         >
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -151,6 +151,7 @@ export function ManageView() {
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+          <IonRippleEffect />
         </button>
       )}
       <div>
