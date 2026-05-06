@@ -53,6 +53,7 @@ drizzle/
 
 # Local media uploads (dev only)
 public/media/
+apps/*/public/media/
 # Git worktrees
 .worktrees/
 
@@ -65,6 +66,10 @@ public/sw.js
 public/sw.js.map
 public/swe-worker-*.js
 public/swe-worker-*.js.map
+apps/*/public/sw.js
+apps/*/public/sw.js.map
+apps/*/public/swe-worker-*.js
+apps/*/public/swe-worker-*.js.map
 
 certificates
 

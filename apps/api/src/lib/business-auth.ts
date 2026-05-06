@@ -1,0 +1,206 @@
+import 'server-only'
+import { db, businessUsers, businesses, products, providers, productCategories } from '@/db'
+import { eq, and, inArray } from 'drizzle-orm'
+import { getCurrentUser } from './simple-auth'
+
+// Re-export client-safe utilities
+export { isOwner, canManageBusiness } from '@kasero/shared/business-role'
+import type { BusinessRole } from '@kasero/shared/business-role'
+export type { BusinessRole }
+
+export interface BusinessAccess {
+  userId: string
+  businessId: string
+  businessName: string
+  businessType: 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other' | null
+  businessIcon: string | null
+  businessLocale: string
+  businessCurrency: string
+  role: BusinessRole
+}
+
+// ============================================
+// ACCESS CACHE (in-memory, per function instance)
+// ============================================
+
+const CACHE_TTL_MS = 60_000 // 60 seconds
+
+interface CachedAccess {
+  access: BusinessAccess
+  expiresAt: number
+}
+
+// Key format: "userId:businessId"
+const accessCache = new Map<string, CachedAccess>()
+
+function getCacheKey(userId: string, businessId: string): string {
+  return `${userId}:${businessId}`
+}
+
+/**
+ * Invalidate cached access for a user in a specific business.
+ * Call after role changes, membership removal, etc.
+ */
+export function invalidateAccessCache(userId: string, businessId: string): void {
+  accessCache.delete(getCacheKey(userId, businessId))
+}
+
+/**
+ * Invalidate every access-cache entry for the given businessId, across all
+ * users. Call this after a mutation on the `businesses` row so other members'
+ * next `/access` request re-fetches.
+ */
+export function invalidateAccessCacheForBusiness(businessId: string): void {
+  const suffix = `:${businessId}`
+  for (const key of accessCache.keys()) {
+    if (key.endsWith(suffix)) {
+      accessCache.delete(key)
+    }
+  }
+}
+
+/**
+ * Invalidate every access-cache entry owned by the given user, across all
+ * businesses. Call this when the user itself is being deleted or logged out
+ * of every business in one operation.
+ */
+export function invalidateAccessCacheForUser(userId: string): void {
+  const prefix = `${userId}:`
+  for (const key of accessCache.keys()) {
+    if (key.startsWith(prefix)) {
+      accessCache.delete(key)
+    }
+  }
+}
+
+/**
+ * Require business access - throws if not authenticated or no access.
+ * Uses a short-lived in-memory cache to avoid repeated DB queries.
+ */
+export async function requireBusinessAccess(
+  businessId: string
+): Promise<BusinessAccess> {
+  const session = await getCurrentUser()
+  if (!session) {
+    throw new Error('Unauthorized: Not authenticated')
+  }
+
+  // Check cache
+  const cacheKey = getCacheKey(session.userId, businessId)
+  const cached = accessCache.get(cacheKey)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.access
+  }
+
+  // Cache miss or expired — query DB
+  const membership = await db
+    .select({
+      businessId: businessUsers.businessId,
+      role: businessUsers.role,
+      status: businessUsers.status,
+      businessName: businesses.name,
+      businessType: businesses.type,
+      businessIcon: businesses.icon,
+      businessLocale: businesses.locale,
+      businessCurrency: businesses.currency,
+    })
+    .from(businessUsers)
+    .innerJoin(businesses, eq(businessUsers.businessId, businesses.id))
+    .where(
+      and(
+        eq(businessUsers.userId, session.userId),
+        eq(businessUsers.businessId, businessId),
+        eq(businessUsers.status, 'active')
+      )
+    )
+    .get()
+
+  if (!membership) {
+    // Clear any stale cache entry
+    accessCache.delete(cacheKey)
+    throw new Error('Unauthorized: No access to this business')
+  }
+
+  const access: BusinessAccess = {
+    userId: session.userId,
+    businessId: membership.businessId,
+    businessName: membership.businessName,
+    businessType: membership.businessType,
+    businessIcon: membership.businessIcon,
+    businessLocale: membership.businessLocale ?? 'en-US',
+    businessCurrency: membership.businessCurrency ?? 'USD',
+    role: membership.role as BusinessRole,
+  }
+
+  // Cache the result
+  accessCache.set(cacheKey, {
+    access,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+  })
+
+  return access
+}
+
+// ============================================
+// CROSS-TENANT FK ASSERTIONS
+// ============================================
+
+/**
+ * Confirm every product ID belongs to the given business.
+ *
+ * The business-auth wrapper pins the URL businessId, but FK references in
+ * request bodies (e.g. order items' productId) need a separate check.
+ * Without this, a manager in business A can write an order line that
+ * references a product in business B — leaking name/price/stock when the
+ * order is read back.
+ *
+ * Returns true only if EVERY id in `productIds` exists AND has the given
+ * businessId. Empty input is vacuously true. Duplicates in `productIds`
+ * are tolerated (the row-set check uses the unique IDs).
+ */
+export async function assertProductsInBusiness(
+  productIds: string[],
+  businessId: string,
+): Promise<boolean> {
+  if (productIds.length === 0) return true
+  const uniqueIds = [...new Set(productIds)]
+  const rows = await db
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.businessId, businessId), inArray(products.id, uniqueIds)))
+  if (rows.length !== uniqueIds.length) return false
+  const found = new Set(rows.map((r) => r.id))
+  return uniqueIds.every((id) => found.has(id))
+}
+
+/**
+ * Confirm a provider ID belongs to the given business. Empty/null IDs
+ * are caller's responsibility to filter out before invoking.
+ */
+export async function assertProviderInBusiness(
+  providerId: string,
+  businessId: string,
+): Promise<boolean> {
+  const row = await db
+    .select({ id: providers.id })
+    .from(providers)
+    .where(and(eq(providers.id, providerId), eq(providers.businessId, businessId)))
+    .get()
+  return row != null
+}
+
+/**
+ * Confirm a category ID belongs to the given business. Empty/null IDs
+ * are caller's responsibility to filter out before invoking.
+ */
+export async function assertCategoryInBusiness(
+  categoryId: string,
+  businessId: string,
+): Promise<boolean> {
+  const row = await db
+    .select({ id: productCategories.id })
+    .from(productCategories)
+    .where(and(eq(productCategories.id, categoryId), eq(productCategories.businessId, businessId)))
+    .get()
+  return row != null
+}
