@@ -101,15 +101,15 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
       // the user to an attacker-controlled origin (open redirect).
       // We resolve `destination` against location.origin and confirm
       // the resulting URL stays same-origin; otherwise fall back to
-      // /home (the safe default for post-auth navigation).
+      // / (the Hub — safe default for post-auth navigation).
       if (typeof window !== 'undefined') {
         try {
           const url = new URL(destination, window.location.origin)
           if (url.origin !== window.location.origin) {
-            destination = '/home'
+            destination = '/'
           }
         } catch {
-          destination = '/home'
+          destination = '/'
         }
       }
 

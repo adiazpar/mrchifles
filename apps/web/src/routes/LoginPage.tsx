@@ -12,13 +12,13 @@ import { APP_VERSION } from '@/lib/version'
 // `//attacker.tld/foo` is a protocol-relative URL — passing it to
 // router.push lands the user on a phishing site after a successful
 // login. Match `/<single-non-slash-non-backslash>...` so the value is
-// always a same-origin path; anything else falls back to /home.
+// always a same-origin path; anything else falls back to / (the Hub).
 function safeRedirect(raw: string | null): string {
-  if (!raw) return '/home'
+  if (!raw) return '/'
   // Allow only paths that start with exactly one '/' followed by a
   // non-'/' non-'\\' character. This rejects '//host', '/\\host',
   // 'http://...', and the empty string.
-  return /^\/[^/\\]/.test(raw) ? raw : '/home';
+  return /^\/[^/\\]/.test(raw) ? raw : '/';
 }
 
 export function LoginPage() {
