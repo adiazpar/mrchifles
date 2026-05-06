@@ -4,6 +4,8 @@ import { Route, Switch } from 'react-router-dom'
 import { NextIntlClientProvider } from 'next-intl'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
+import { LoginPage } from '@/routes/LoginPage'
+import { RegisterPage } from '@/routes/RegisterPage'
 import enMessages from '@/i18n/messages/en-US.json'
 import { DEFAULT_LOCALE } from '@/i18n/config'
 
@@ -12,16 +14,15 @@ setupIonicReact({ mode: 'ios' })
 // NOTE: Routes and additional providers (i18n locale switching, business
 // context, page transitions, drill-down stacks, etc.) land in later
 // migration phases:
-//   - Phase 5.2: login/register pages
+//   - Phase 5.2 (DONE): login/register pages mounted at /login and /register
 //   - Phase 6:   IntlProvider with locale switching, codemod next-intl ->
 //                react-intl, useApiMessage adapter
 //   - Phase 7-12: hub, account, business tabs, drill-downs
 //
-// For Phase 5.1 we wire AuthProvider + AuthGateProvider so the next
-// phase's login page can call useAuth() and useAuthGate(). The Ion
-// router lives ABOVE the auth providers because AuthContext uses
-// useRouter() internally (via the next-navigation-shim that wraps
-// react-router's useHistory).
+// AuthProvider + AuthGateProvider are wired so login/register can call
+// useAuth() and useAuthGate(). The Ion router lives ABOVE the auth
+// providers because AuthContext uses useRouter() internally (via the
+// next-navigation-shim that wraps react-router's useHistory).
 //
 // next-intl is mounted as a temporary placeholder. The current intl
 // surface in the ported code calls useTranslations() everywhere. Phase
@@ -36,6 +37,16 @@ export function App() {
           <AuthProvider>
             <AuthGateProvider>
               <Switch>
+                <Route exact path="/login">
+                  <LoginPage />
+                </Route>
+                <Route exact path="/register">
+                  <RegisterPage />
+                </Route>
+                {/* Default placeholder route stays until Phase 7+ ports
+                    the hub. Once that lands, this route is replaced by
+                    HubPage and the auth pages become reachable from
+                    auth redirects. */}
                 <Route exact path="/">
                   <IonPage>
                     <IonHeader>
@@ -45,7 +56,7 @@ export function App() {
                     </IonHeader>
                     <IonContent>
                       <div className="p-4">
-                        Auth providers wired. Awaiting login page (Phase 5.2).
+                        Auth providers wired. Login/register at /login and /register (Phase 5.2).
                       </div>
                     </IonContent>
                   </IonPage>
