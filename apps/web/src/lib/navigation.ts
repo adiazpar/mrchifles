@@ -1,12 +1,3 @@
-import { Home, ShoppingCart, Tags, Settings } from 'lucide-react'
-import type { ComponentType } from 'react'
-
-interface NavItem {
-  href: string
-  label: string
-  icon: ComponentType<{ className?: string }>
-}
-
 // Reserved top-level paths that are not business IDs
 const RESERVED_PATHS = ['login', 'register', 'account', 'join']
 
@@ -20,38 +11,6 @@ export function getBusinessIdFromPath(pathname: string): string | null {
   const firstSegment = segments[0]
   if (RESERVED_PATHS.includes(firstSegment)) return null
   return firstSegment || null
-}
-
-/**
- * Navigation item templates (without businessId prefix)
- */
-const NAV_ITEM_TEMPLATES = [
-  { path: '/home', label: 'Home', icon: Home },
-  { path: '/sales', label: 'Sales', icon: ShoppingCart },
-  { path: '/products', label: 'Products', icon: Tags },
-  { path: '/manage', label: 'Manage', icon: Settings },
-]
-
-/**
- * Get navigation items with business-scoped URLs
- */
-export function getNavItems(businessId: string): NavItem[] {
-  return NAV_ITEM_TEMPLATES.map(item => ({
-    href: `/${businessId}${item.path}`,
-    label: item.label,
-    icon: item.icon,
-  }))
-}
-
-/**
- * Get prefetch routes for a business
- */
-export function getPrefetchRoutes(businessId: string): string[] {
-  return [
-    '/account',
-    `/${businessId}/team`,
-    `/${businessId}/providers`,
-  ]
 }
 
 /**
