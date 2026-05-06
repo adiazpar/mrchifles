@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { Modal, PriceInput, useModal } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
@@ -43,7 +43,7 @@ export function PaymentStepContent({
   error,
   errorMessageCode,
 }: PaymentStepContentProps) {
-  const t = useTranslations('sales.cart')
+  const t = useIntl()
   const { formatCurrency } = useBusinessFormat()
   const { goToStep } = useModal()
 
@@ -60,7 +60,9 @@ export function PaymentStepContent({
     <>
       <Modal.Item>
         <div id="payment-method-picker-label" className="text-sm text-text-secondary mb-2">
-          {t('modal_pay_with_label')}
+          {t.formatMessage({
+            id: 'sales.cart.modal_pay_with_label'
+          })}
         </div>
         <div role="group" aria-labelledby="payment-method-picker-label" className="grid grid-cols-3 gap-2">
           {PAYMENT_METHODS.map((method) => {
@@ -89,14 +91,15 @@ export function PaymentStepContent({
               >
                 <Icon size={24} />
                 <span className="text-sm font-medium">
-                  {t(method.labelKey)}
+                  {t.formatMessage({
+                    id: 'sales.cart.' + method.labelKey
+                  })}
                 </span>
               </button>
-            )
+            );
           })}
         </div>
       </Modal.Item>
-
       {/* Cash form reveal — gridTemplateRows 0fr ↔ 1fr collapse trick. */}
       <Modal.Item>
         <div
@@ -107,7 +110,9 @@ export function PaymentStepContent({
             <div className="flex flex-col gap-3">
               <div>
                 <label className="label" htmlFor="payment-tendered">
-                  {t('modal_tendered_label')}
+                  {t.formatMessage({
+                    id: 'sales.cart.modal_tendered_label'
+                  })}
                 </label>
                 <PriceInput
                   id="payment-tendered"
@@ -120,7 +125,9 @@ export function PaymentStepContent({
               {/* Quick-fill row: Exact + dynamically computed bills. */}
               <div className="flex gap-2 overflow-x-auto scrollbar-hidden -mx-1 px-1">
                 <QuickBillButton
-                  label={t('modal_tendered_exact')}
+                  label={t.formatMessage({
+                    id: 'sales.cart.modal_tendered_exact'
+                  })}
                   onClick={() => {
                     haptic()
                     setTenderedStr(total.toString())
@@ -141,7 +148,9 @@ export function PaymentStepContent({
               {showChangeRow && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-text-secondary">
-                    {t('modal_change_label')}
+                    {t.formatMessage({
+                      id: 'sales.cart.modal_change_label'
+                    })}
                   </span>
                   <span
                     className={`font-medium tabular-nums ${
@@ -156,7 +165,6 @@ export function PaymentStepContent({
           </div>
         </div>
       </Modal.Item>
-
       {error && (
         <Modal.Item>
           <div className="flex items-center justify-between gap-3 rounded-lg bg-error-subtle p-3 text-sm text-error">
@@ -170,24 +178,27 @@ export function PaymentStepContent({
                   goToStep(0)
                 }}
               >
-                {t('modal_error_back_to_cart')}
+                {t.formatMessage({
+                  id: 'sales.cart.modal_error_back_to_cart'
+                })}
               </button>
             )}
           </div>
         </Modal.Item>
       )}
-
       {/* Sticky Total: same pattern as the step-0 subtotal. */}
       <Modal.Item className="sticky bottom-0 -mx-5 -mb-5 px-5 pt-5 pb-5 bg-bg-surface">
         <div className="pt-5 border-t border-border flex items-center justify-between">
-          <span className="text-lg font-bold">{t('modal_total_label')}</span>
+          <span className="text-lg font-bold">{t.formatMessage({
+            id: 'sales.cart.modal_total_label'
+          })}</span>
           <span className="text-lg font-bold tabular-nums">
             {formatCurrency(total)}
           </span>
         </div>
       </Modal.Item>
     </>
-  )
+  );
 }
 
 interface QuickBillButtonProps {

@@ -1,12 +1,12 @@
 'use client'
 
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl';
 
+import Image from '@/lib/Image'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import type { ReactNode } from 'react'
 import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2, CircleCheckBig } from 'lucide-react'
-import { useTranslations, useLocale } from 'next-intl'
 import { Spinner, SwipeableRow, TabContainer } from '@/components/ui'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import {
@@ -61,15 +61,15 @@ function isDetailTab(value: string | null): value is DetailTab {
 export function ProviderDetailClient({ businessId, providerId }: ProviderDetailClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const t = useTranslations('providers')
-  const tOrders = useTranslations('orders')
+  const t = useIntl()
+  const tOrders = useIntl()
   const { formatCurrencyCompact } = useBusinessFormat()
   // Relative time ("3 days ago") is LANGUAGE, not formatting — use user UI
   // locale, not business locale, so an English UI doesn't show "hace 3 días".
-  const userLocale = useLocale()
+  const userLocale = t.locale
   const translateApiMessage = useApiMessage()
   const { role } = useBusiness()
-  const tNav = useTranslations('navigation')
+  const tNav = useIntl()
   const canManage = canManageBusiness(role)
 
   // Tab state — initialized from the URL so browser back/forward and
@@ -194,7 +194,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_load')
+          : t.formatMessage({
+          id: 'providers.error_failed_to_load'
+        })
       )
     } finally {
       setIsLoading(false)
@@ -216,7 +218,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   }
 
   const handleSaveEdit = useCallback(async (): Promise<boolean> => {
-    if (!name.trim()) { setEditError(t('error_name_required')); return false }
+    if (!name.trim()) { setEditError(t.formatMessage({
+      id: 'providers.error_name_required'
+    })); return false }
     setIsSaving(true)
     setEditError('')
     try {
@@ -240,7 +244,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setEditError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_save')
+          : t.formatMessage({
+          id: 'providers.error_failed_to_save'
+        })
       )
       return false
     } finally {
@@ -309,7 +315,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setNoteError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_save')
+          : t.formatMessage({
+          id: 'providers.error_failed_to_save'
+        })
       )
       return false
     } finally {
@@ -333,7 +341,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setNoteError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_save')
+          : t.formatMessage({
+          id: 'providers.error_failed_to_save'
+        })
       )
       return false
     } finally {
@@ -356,7 +366,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setNoteError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_delete')
+          : t.formatMessage({
+          id: 'providers.error_failed_to_delete'
+        })
       )
       return false
     } finally {
@@ -396,7 +408,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setEditError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_delete')
+          : t.formatMessage({
+          id: 'providers.error_failed_to_delete'
+        })
       )
       return false
     } finally {
@@ -432,25 +446,31 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   if (isLoading) {
     return (
       <>
-        <DrillDownHeader title="" subtitle={tNav('providers')} onBack={() => router.back()} />
+        <DrillDownHeader title="" subtitle={tNav.formatMessage({
+          id: 'navigation.providers'
+        })} onBack={() => router.back()} />
         <main className="page-loading">
           <Spinner className="spinner-lg" />
         </main>
       </>
-    )
+    );
   }
 
   if (error || !provider) {
     return (
       <>
-        <DrillDownHeader title={provider?.name ?? ''} subtitle={tNav('providers')} onBack={() => router.back()} />
+        <DrillDownHeader title={provider?.name ?? ''} subtitle={tNav.formatMessage({
+          id: 'navigation.providers'
+        })} onBack={() => router.back()} />
         <main className="page-content">
           <div className="p-4 bg-error-subtle text-error rounded-lg">
-            {error || t('error_failed_to_load')}
+            {error || t.formatMessage({
+              id: 'providers.error_failed_to_load'
+            })}
           </div>
         </main>
       </>
-    )
+    );
   }
 
   const initials = getProviderInitials(provider.name)
@@ -471,13 +491,19 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               provider.active ? 'text-success' : 'text-error'
             }`}
           >
-            {provider.active ? t('status_active') : t('status_inactive')}
+            {provider.active ? t.formatMessage({
+              id: 'providers.status_active'
+            }) : t.formatMessage({
+              id: 'providers.status_inactive'
+            })}
           </span>
           {provider.createdAt && (
             <>
               <span className="text-text-tertiary flex-shrink-0">&#183;</span>
               <span className="text-text-tertiary truncate">
-                {t('since_date', { date: formatMonthYear(provider.createdAt, userLocale) })}
+                {t.formatMessage({
+                  id: 'providers.since_date'
+                }, { date: formatMonthYear(provider.createdAt, userLocale) })}
               </span>
             </>
           )}
@@ -488,7 +514,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   return (
     <>
-      <DrillDownHeader title={provider.name} subtitle={tNav('providers')} onBack={() => router.back()} />
+      <DrillDownHeader title={provider.name} subtitle={tNav.formatMessage({
+        id: 'navigation.providers'
+      })} onBack={() => router.back()} />
       <main className="page-content space-y-4">
         {/* ============== Identity Header ==============
             Top row: avatar + name/status. Tappable for managers — opens
@@ -501,7 +529,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               type="button"
               onClick={openEdit}
               data-tap-feedback
-              aria-label={t('edit_provider_aria')}
+              aria-label={t.formatMessage({
+                id: 'providers.edit_provider_aria'
+              })}
               className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left data-[pressed='true']:bg-bg-muted"
             >
               {identityContent}
@@ -522,7 +552,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               >
                 <Plus />
                 <span className="truncate">
-                  {t('new_order_button')}
+                  {t.formatMessage({
+                    id: 'providers.new_order_button'
+                  })}
                 </span>
               </button>
             )}
@@ -533,7 +565,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               className="btn btn-primary flex-1 min-w-0"
             >
               <Phone />
-              <span className="truncate">{t('contact_button')}</span>
+              <span className="truncate">{t.formatMessage({
+                id: 'providers.contact_button'
+              })}</span>
             </button>
           </div>
         </div>
@@ -551,7 +585,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               onClick={() => handleTabChange(id)}
               className={`section-tab ${activeTab === id ? 'section-tab-active' : ''}`}
             >
-              {t(`tab_${id}`)}
+              {t.formatMessage({
+                id: `providers.tab_${id}`
+              })}
             </button>
           ))}
         </div>
@@ -595,10 +631,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-error">
-                        {t('overdue_banner_title', { count: overdueCount })}
+                        {t.formatMessage({
+                          id: 'providers.overdue_banner_title'
+                        }, { count: overdueCount })}
                       </div>
                       <div className="text-xs text-text-secondary mt-0.5">
-                        {t('overdue_banner_subtitle')}
+                        {t.formatMessage({
+                          id: 'providers.overdue_banner_subtitle'
+                        })}
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
@@ -614,20 +654,28 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   {/* ---- GASTO TOTAL / Total Spent ---- */}
                   <div className="card p-4 flex flex-col gap-1">
                     <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary">
-                      {t('stat_total_spent')}
+                      {t.formatMessage({
+                        id: 'providers.stat_total_spent'
+                      })}
                     </div>
                     <div className="text-xl font-semibold text-text-primary tabular-nums mt-1">
                       {formatCurrencyCompact(metrics.totalSpent)}
                     </div>
                     <div className="text-xs text-text-tertiary tabular-nums mt-auto pt-2">
                       {metrics.orderCount === 0
-                        ? t('stat_never_ordered')
+                        ? t.formatMessage({
+                        id: 'providers.stat_never_ordered'
+                      })
                         : metrics.cadenceDays != null
-                          ? t('stat_total_spent_subtext_with_cadence', {
+                          ? t.formatMessage({
+                        id: 'providers.stat_total_spent_subtext_with_cadence'
+                      }, {
                               count: metrics.orderCount,
                               days: metrics.cadenceDays,
                             })
-                          : t('stat_total_spent_subtext_orders_only', {
+                          : t.formatMessage({
+                        id: 'providers.stat_total_spent_subtext_orders_only'
+                      }, {
                               count: metrics.orderCount,
                             })}
                     </div>
@@ -642,7 +690,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       size. */}
                   <div className="card p-4 flex flex-col gap-1">
                     <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary">
-                      {t('stat_reliability_label')}
+                      {t.formatMessage({
+                        id: 'providers.stat_reliability_label'
+                      })}
                     </div>
                     {metrics.reliability ? (
                       <>
@@ -652,18 +702,24 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                         <div className="mt-1">
                           <ReliabilityBar
                             percent={metrics.reliability.percent}
-                            ariaLabel={t('stat_reliability_label') + ': ' + metrics.reliability.percent + '%'}
+                            ariaLabel={t.formatMessage({
+                              id: 'providers.stat_reliability_label'
+                            }) + ': ' + metrics.reliability.percent + '%'}
                           />
                         </div>
                         <div className="text-xs text-text-tertiary tabular-nums mt-auto pt-2">
-                          {t('stat_reliability_breakdown', {
+                          {t.formatMessage({
+                            id: 'providers.stat_reliability_breakdown'
+                          }, {
                             onTime: metrics.reliability.onTime,
                             total: metrics.reliability.resolved,
                           })}
                           {metrics.reliability.windowSize < metrics.orderCount && (
                             <>
                               {' · '}
-                              {t('stat_reliability_window', {
+                              {t.formatMessage({
+                                id: 'providers.stat_reliability_window'
+                              }, {
                                 count: metrics.reliability.windowSize,
                               })}
                             </>
@@ -672,7 +728,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       </>
                     ) : (
                       <div className="text-sm text-text-tertiary mt-1">
-                        {t('stat_reliability_insufficient')}
+                        {t.formatMessage({
+                          id: 'providers.stat_reliability_insufficient'
+                        })}
                       </div>
                     )}
                   </div>
@@ -680,7 +738,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
                 <div className="card p-4 space-y-4">
                   <div className="text-sm text-text-secondary">
-                    {t('typical_items_title')}
+                    {t.formatMessage({
+                      id: 'providers.typical_items_title'
+                    })}
                   </div>
                   <hr className="border-border" />
                   {typicalItems.length > 0 ? (
@@ -714,19 +774,23 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                                 {item.name}
                               </div>
                               <div className="text-xs text-text-tertiary mt-0.5 tabular-nums">
-                                {t('typical_items_subtitle', {
+                                {t.formatMessage({
+                                  id: 'providers.typical_items_subtitle'
+                                }, {
                                   units: item.totalUnits,
                                   date: formatRelative(item.lastOrderedAt, userLocale),
                                 })}
                               </div>
                             </div>
                           </div>
-                        )
+                        );
                       })}
                     </div>
                   ) : (
                     <p className="text-sm text-text-tertiary text-center py-2">
-                      {t('typical_items_empty')}
+                      {t.formatMessage({
+                        id: 'providers.typical_items_empty'
+                      })}
                     </p>
                   )}
                 </div>
@@ -739,7 +803,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     color; past months are muted. */}
                 <div className="card p-4 space-y-4">
                   <div className="text-sm text-text-secondary">
-                    {t('monthly_spend_title')}
+                    {t.formatMessage({
+                      id: 'providers.monthly_spend_title'
+                    })}
                   </div>
                   <hr className="border-border" />
                   <div className="flex items-stretch gap-2 h-36">
@@ -800,10 +866,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           <TabContainer.Tab id="history">
             <div className="card p-4 space-y-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-text-secondary">{t('order_history_title')}</span>
+                <span className="text-text-secondary">{t.formatMessage({
+                  id: 'providers.order_history_title'
+                })}</span>
                 {hasOrders && (
                   <div className="text-text-tertiary">
-                    {tOrders('order_count', { count: providerOrders.length })}
+                    {tOrders.formatMessage({
+                      id: 'orders.order_count'
+                    }, { count: providerOrders.length })}
                     <span className="mx-1.5">&#183;</span>
                     {formatCurrencyCompact(metrics.totalSpent)}
                   </div>
@@ -814,7 +884,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
               {!hasOrders ? (
                 <p className="text-sm text-text-tertiary text-center py-6">
-                  {t('order_history_empty')}
+                  {t.formatMessage({
+                    id: 'providers.order_history_empty'
+                  })}
                 </p>
               ) : (
                 <div className="list-divided">
@@ -826,7 +898,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     const swipeActions = [
                       {
                         icon: <CircleCheckBig size={20} />,
-                        label: tOrders('action_receive'),
+                        label: tOrders.formatMessage({
+                          id: 'orders.action_receive'
+                        }),
                         variant: 'info' as const,
                         disabled: alreadyReceived,
                         onClick: () => orderFlows.openOrderDetail(order, 'receive'),
@@ -834,7 +908,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       ...(canManage ? [
                         {
                           icon: <Pencil size={20} />,
-                          label: tOrders('action_edit'),
+                          label: tOrders.formatMessage({
+                            id: 'orders.action_edit'
+                          }),
                           variant: 'neutral' as const,
                           // Received orders are locked — no edits once stock posted.
                           disabled: alreadyReceived,
@@ -842,7 +918,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                         },
                         {
                           icon: <Trash2 size={20} />,
-                          label: tOrders('action_delete'),
+                          label: tOrders.formatMessage({
+                            id: 'orders.action_delete'
+                          }),
                           variant: 'danger' as const,
                           // Received orders can't be deleted either — would
                           // require rolling back the stock changes they posted.
@@ -883,10 +961,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   Mirrors the other Summary cards' header pattern. */}
               <div className="flex items-center justify-between gap-3 text-sm">
                 <span className="text-text-secondary">
-                  {t('notes_card_header')}
+                  {t.formatMessage({
+                    id: 'providers.notes_card_header'
+                  })}
                 </span>
                 <span className="text-text-tertiary tabular-nums flex-shrink-0">
-                  {t('notes_count_label', {
+                  {t.formatMessage({
+                    id: 'providers.notes_count_label'
+                  }, {
                     count: notesCount,
                     max: MAX_PROVIDER_NOTES,
                   })}
@@ -903,7 +985,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   body, just spacing. */}
               {notesCount === 0 ? (
                 <p className="text-sm text-text-tertiary italic">
-                  {t('notes_empty')}
+                  {t.formatMessage({
+                    id: 'providers.notes_empty'
+                  })}
                 </p>
               ) : (
                 <div className="list-divided">
@@ -917,7 +1001,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                               {note.title}
                             </div>
                             <div className="text-xs text-text-tertiary mt-0.5">
-                              {t('note_edited_on', {
+                              {t.formatMessage({
+                                id: 'providers.note_edited_on'
+                              }, {
                                 date: formatRelative(note.updatedAt, userLocale),
                               })}
                             </div>
@@ -928,7 +1014,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                                 type="button"
                                 onClick={() => openEditNote(note)}
                                 className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
-                                aria-label={t('note_edit_aria')}
+                                aria-label={t.formatMessage({
+                                  id: 'providers.note_edit_aria'
+                                })}
                               >
                                 <Pencil style={{ width: 16, height: 16 }} />
                               </button>
@@ -936,7 +1024,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                                 type="button"
                                 onClick={() => openDeleteNote(note)}
                                 className="p-1 text-error hover:text-error transition-colors"
-                                aria-label={t('note_delete_aria')}
+                                aria-label={t.formatMessage({
+                                  id: 'providers.note_delete_aria'
+                                })}
                               >
                                 <Trash2 style={{ width: 16, height: 16 }} />
                               </button>
@@ -972,7 +1062,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       }}
                     >
                       <Plus style={{ width: 14, height: 14 }} />
-                      {t('add_note_button')}
+                      {t.formatMessage({
+                        id: 'providers.add_note_button'
+                      })}
                     </button>
                   </div>
                 </>
@@ -982,7 +1074,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         </TabContainer>
 
       </main>
-
       {/* ============== Edit modal ==============
           Hosts the delete flow as extra modal steps (see ProviderModal).
           When the modal has finished closing after a successful delete we
@@ -1017,7 +1108,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         providerDeleted={providerDeleted}
         onDelete={handleDelete}
       />
-
       {/* ============== Add note modal ============== */}
       <AddProviderNoteModal
         isOpen={isAddNoteOpen}
@@ -1037,7 +1127,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         error={noteError}
         onSubmit={handleAddNote}
       />
-
       {/* ============== Edit / delete note modal ==============
           Opens at step 0 from the edit pencil and step 1 (delete confirm)
           from the trash icon. Delete-success plays as step 2, save-success
@@ -1068,7 +1157,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         noteDeleted={noteDeleted}
         onDelete={handleDeleteNote}
       />
-
       {/* ============== Contact sheet ==============
           Tapping a row fires the native handler (tel:, mailto:, wa.me) and
           closes the sheet so returning to the app doesn't land back inside
@@ -1076,14 +1164,18 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       <BottomSheet
         isOpen={isContactSheetOpen}
         onClose={() => setContactSheetOpen(false)}
-        title={t('contact_sheet_title', { name: provider.name })}
+        title={t.formatMessage({
+          id: 'providers.contact_sheet_title'
+        }, { name: provider.name })}
       >
         <div className="py-2">
           {provider.phone && (
             <ContactSheetRow
               icon={<Phone className="w-5 h-5" />}
               iconColorClass="text-warning"
-              label={t('action_call')}
+              label={t.formatMessage({
+                id: 'providers.action_call'
+              })}
               value={provider.phone}
               href={`tel:${provider.phone}`}
               onAction={() => setContactSheetOpen(false)}
@@ -1093,7 +1185,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             <ContactSheetRow
               icon={<MessageCircle className="w-5 h-5" />}
               iconColorClass="text-success"
-              label={t('action_whatsapp')}
+              label={t.formatMessage({
+                id: 'providers.action_whatsapp'
+              })}
               value={provider.phone}
               href={`https://wa.me/${provider.phone.replace(/\D/g, '')}`}
               external
@@ -1104,7 +1198,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             <ContactSheetRow
               icon={<Mail className="w-5 h-5" />}
               iconColorClass="text-text-primary"
-              label={t('action_email')}
+              label={t.formatMessage({
+                id: 'providers.action_email'
+              })}
               value={provider.email}
               href={`mailto:${provider.email}`}
               onAction={() => setContactSheetOpen(false)}
@@ -1112,11 +1208,10 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           )}
         </div>
       </BottomSheet>
-
       {/* ============== Order flows (new order + order detail/edit/receive/delete) ============== */}
       {orderFlows.modals}
     </>
-  )
+  );
 }
 
 function formatMonthYear(date: Date | string, locale: string): string {

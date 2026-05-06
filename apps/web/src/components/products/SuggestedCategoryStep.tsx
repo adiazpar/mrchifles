@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState, useEffect } from 'react'
-import { useTranslations } from 'next-intl'
 import { Spinner, TabContainer } from '@/components/ui'
 import type { ProductCategory } from '@kasero/shared/types'
 
@@ -24,7 +24,7 @@ export function SuggestedCategoryStep({
   onCreate,
   onPickExisting,
 }: SuggestedCategoryStepProps) {
-  const t = useTranslations('aiPipeline')
+  const t = useIntl()
   const [name, setName] = useState(suggestedName)
   const [isCreating, setIsCreating] = useState(false)
   const [activeView, setActiveView] = useState<ActiveView>('suggest')
@@ -37,16 +37,22 @@ export function SuggestedCategoryStep({
   const handleCreate = async () => {
     const trimmed = name.trim()
     if (!trimmed) {
-      setError(t('category_name_required'))
+      setError(t.formatMessage({
+        id: 'aiPipeline.category_name_required'
+      }))
       return
     }
     setError('')
     setIsCreating(true)
     try {
       const newId = await onCreate(trimmed)
-      if (!newId) setError(t('failed_to_create_category'))
+      if (!newId) setError(t.formatMessage({
+        id: 'aiPipeline.failed_to_create_category'
+      }))
     } catch {
-      setError(t('failed_to_create_category'))
+      setError(t.formatMessage({
+        id: 'aiPipeline.failed_to_create_category'
+      }))
     } finally {
       setIsCreating(false)
     }
@@ -61,20 +67,25 @@ export function SuggestedCategoryStep({
       {/* Tabs are wrapped by TabContainer in `flex flex-col gap-4`, so
           top-level children here are spaced by gap-4 automatically. Avoid
           adding margin utilities on direct children. */}
-
       <TabContainer.Tab id="suggest">
         <div>
           <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-1 text-center">
-            {t('notice_label')}
+            {t.formatMessage({
+              id: 'aiPipeline.notice_label'
+            })}
           </div>
           <div className="text-sm text-text-secondary text-center">
-            {t('no_category_fit')}
+            {t.formatMessage({
+              id: 'aiPipeline.no_category_fit'
+            })}
           </div>
         </div>
 
         <div>
           <label htmlFor="suggested-category-name" className="label">
-            {t('new_category_name_label')}
+            {t.formatMessage({
+              id: 'aiPipeline.new_category_name_label'
+            })}
           </label>
           <input
             id="suggested-category-name"
@@ -98,7 +109,9 @@ export function SuggestedCategoryStep({
           disabled={isCreating || !name.trim()}
           className="btn btn-primary w-full"
         >
-          {isCreating ? <Spinner /> : t('create_and_continue')}
+          {isCreating ? <Spinner /> : t.formatMessage({
+            id: 'aiPipeline.create_and_continue'
+          })}
         </button>
 
         {categories.length > 0 && (
@@ -117,16 +130,19 @@ export function SuggestedCategoryStep({
                 onClick={() => setActiveView('picker')}
                 className="text-sm text-brand hover:text-brand"
               >
-                {t('pick_existing_instead')}
+                {t.formatMessage({
+                  id: 'aiPipeline.pick_existing_instead'
+                })}
               </button>
             </div>
           </>
         )}
       </TabContainer.Tab>
-
       <TabContainer.Tab id="picker">
         <div className="text-sm text-text-secondary text-center">
-          {t('pick_existing_intro')}
+          {t.formatMessage({
+            id: 'aiPipeline.pick_existing_intro'
+          })}
         </div>
 
         <div className="space-y-2">
@@ -158,10 +174,12 @@ export function SuggestedCategoryStep({
             onClick={() => setActiveView('suggest')}
             className="text-sm text-brand hover:text-brand"
           >
-            {t('back_to_suggestion')}
+            {t.formatMessage({
+              id: 'aiPipeline.back_to_suggestion'
+            })}
           </button>
         </div>
       </TabContainer.Tab>
     </TabContainer>
-  )
+  );
 }

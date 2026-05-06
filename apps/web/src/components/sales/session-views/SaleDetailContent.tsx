@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Modal, Spinner } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { apiRequest } from '@/lib/api-client'
@@ -23,8 +23,8 @@ interface SaleDetailContentProps {
  * SessionHistoryModal (historic session sales).
  */
 export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps) {
-  const t = useTranslations('sales.session.active_sales_modal')
-  const tMethod = useTranslations('sales.cart')
+  const t = useIntl()
+  const tMethod = useIntl()
   const { formatCurrency, formatTime } = useBusinessFormat()
 
   const [sale, setSale] = useState<Sale | null>(null)
@@ -70,10 +70,12 @@ export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps
     return (
       <Modal.Item>
         <p className="text-sm text-error text-center py-4">
-          {error || tMethod('modal_error_generic')}
+          {error || tMethod.formatMessage({
+            id: 'sales.cart.modal_error_generic'
+          })}
         </p>
       </Modal.Item>
-    )
+    );
   }
 
   const methodLabelKey = `modal_method_${sale.paymentMethod}` as const
@@ -103,29 +105,35 @@ export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps
           ))}
         </div>
       </Modal.Item>
-
       <Modal.Item>
         <div className="border-t border-dashed border-border" />
       </Modal.Item>
-
       <Modal.Item>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-text-tertiary">{t('detail_total_label')}</span>
+            <span className="text-text-tertiary">{t.formatMessage({
+              id: 'sales.session.active_sales_modal.detail_total_label'
+            })}</span>
             <span className="font-semibold tabular-nums">
               {formatCurrency(sale.total)}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-text-tertiary">{t('detail_method_label')}</span>
-            <span>{tMethod(methodLabelKey)}</span>
+            <span className="text-text-tertiary">{t.formatMessage({
+              id: 'sales.session.active_sales_modal.detail_method_label'
+            })}</span>
+            <span>{tMethod.formatMessage({
+              id: 'sales.cart.' + methodLabelKey
+            })}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-text-tertiary">{t('detail_time_label')}</span>
+            <span className="text-text-tertiary">{t.formatMessage({
+              id: 'sales.session.active_sales_modal.detail_time_label'
+            })}</span>
             <span>{formatTime(new Date(sale.createdAt))}</span>
           </div>
         </div>
       </Modal.Item>
     </>
-  )
+  );
 }

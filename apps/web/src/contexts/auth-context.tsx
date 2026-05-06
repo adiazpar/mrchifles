@@ -1,5 +1,6 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import {
   createContext,
   useContext,
@@ -10,7 +11,6 @@ import {
   type ReactNode,
 } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { useTranslations } from 'next-intl'
 import type { User } from '@kasero/shared/types'
 import { fetchDeduped } from '@/lib/fetch'
 import type { SupportedLocale } from '@/i18n/config'
@@ -134,7 +134,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const tAuth = useTranslations('auth')
+  const tAuth = useIntl()
   const translateApiMessage = useApiMessage()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -231,7 +231,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           : translateApiMessage({ messageCode: 'AUTH_LOGIN_FAILED' })
         return { success: false, error }
       }
-      return { success: false, error: tAuth('connection_error') }
+      return { success: false, error: tAuth.formatMessage({
+        id: 'auth.connection_error'
+      }) };
     }
   }, [tAuth, translateApiMessage])
 
@@ -269,7 +271,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           : translateApiMessage({ messageCode: 'AUTH_REGISTER_FAILED' })
         return { success: false, error }
       }
-      return { success: false, error: tAuth('connection_error') }
+      return { success: false, error: tAuth.formatMessage({
+        id: 'auth.connection_error'
+      }) };
     }
   }, [tAuth, translateApiMessage])
 
@@ -334,7 +338,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             : translateApiMessage({ messageCode: 'USER_LANGUAGE_UPDATE_FAILED' })
           return { success: false, error }
         }
-        return { success: false, error: tAuth('connection_error') }
+        return { success: false, error: tAuth.formatMessage({
+          id: 'auth.connection_error'
+        }) };
       }
     },
     [router, tAuth, translateApiMessage],

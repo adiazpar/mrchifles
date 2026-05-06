@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { ChevronRight } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { InviteCode, InviteRole } from '@kasero/shared/types'
 
@@ -11,12 +11,16 @@ export interface InviteCodeListItemProps {
 }
 
 export function InviteCodeListItem({ code, onClick }: InviteCodeListItemProps) {
-  const t = useTranslations('team')
+  const t = useIntl()
   const { formatDate } = useBusinessFormat()
 
   const roleLabels: Record<InviteRole, string> = {
-    partner: t('role_partner'),
-    employee: t('role_employee'),
+    partner: t.formatMessage({
+      id: 'team.role_partner'
+    }),
+    employee: t.formatMessage({
+      id: 'team.role_employee'
+    }),
   }
 
   return (
@@ -38,14 +42,15 @@ export function InviteCodeListItem({ code, onClick }: InviteCodeListItemProps) {
           {code.code}
         </code>
         <span className="text-xs text-text-tertiary mt-0.5 block">
-          {roleLabels[code.role]} · {t('invite_expires', { date: formatDate(code.expiresAt) })}
+          {roleLabels[code.role]} · {t.formatMessage({
+          id: 'team.invite_expires'
+        }, { date: formatDate(code.expiresAt) })}
         </span>
       </div>
-
       {/* Chevron */}
       <div className="text-text-tertiary ml-2">
         <ChevronRight className="w-5 h-5" />
       </div>
     </div>
-  )
+  );
 }

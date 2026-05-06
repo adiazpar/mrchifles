@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { Modal } from '@/components/ui'
 import { APP_VERSION } from '@/lib/version'
 
@@ -16,23 +16,31 @@ export interface AboutModalProps {
  * the next build -- no manual string tracking.
  */
 export function AboutModal({ isOpen, onClose }: AboutModalProps) {
-  const t = useTranslations('account')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <Modal.Step title={t('about_modal_title')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'account.about_modal_title'
+      })}>
         <Modal.Item>
           <div className="text-center py-4">
             <h1 className="text-2xl font-display font-bold text-text-primary">
-              {t('about_app_name')}
+              {t.formatMessage({
+                id: 'account.about_app_name'
+              })}
             </h1>
             <p className="text-sm text-text-tertiary mt-1">
-              {t('about_tagline')}
+              {t.formatMessage({
+                id: 'account.about_tagline'
+              })}
             </p>
             <div className="inline-flex items-center gap-2 mt-4 px-3 py-1 rounded-full bg-bg-muted">
               <span className="text-xs text-text-tertiary uppercase tracking-wider">
-                {t('about_version_label')}
+                {t.formatMessage({
+                  id: 'account.about_version_label'
+                })}
               </span>
               <span className="text-xs text-text-secondary font-medium">
                 {APP_VERSION}
@@ -43,10 +51,14 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
 
         <Modal.Item>
           <p className="text-sm text-text-secondary leading-relaxed">
-            {t('about_description')}
+            {t.formatMessage({
+              id: 'account.about_description'
+            })}
           </p>
           <p className="text-xs text-text-tertiary mt-4 text-center">
-            {t('about_credits')}
+            {t.formatMessage({
+              id: 'account.about_credits'
+            })}
           </p>
         </Modal.Item>
 
@@ -56,10 +68,12 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
             className="btn btn-primary flex-1"
             onClick={onClose}
           >
-            {tCommon('close')}
+            {tCommon.formatMessage({
+              id: 'common.close'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

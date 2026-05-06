@@ -1,10 +1,10 @@
 'use client'
 
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl';
 
+import Image from '@/lib/Image'
 import { useState, useEffect } from 'react'
 import { Plus, Minus, ImagePlus } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { BarcodeFields } from './BarcodeFields'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { TabContainer, PriceInput } from '@/components/ui'
@@ -28,7 +28,7 @@ export function ProductForm({
   isOpen,
   showActiveToggle = true,
 }: ProductFormProps) {
-  const t = useTranslations('productForm')
+  const t = useIntl()
   const [activeTab, setActiveTab] = useState<'details' | 'barcode'>('details')
 
   useEffect(() => {
@@ -61,17 +61,20 @@ export function ProductForm({
           onClick={() => setActiveTab('details')}
           className={`section-tab ${activeTab === 'details' ? 'section-tab-active' : ''}`}
         >
-          {t('tab_details')}
+          {t.formatMessage({
+            id: 'productForm.tab_details'
+          })}
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('barcode')}
           className={`section-tab ${activeTab === 'barcode' ? 'section-tab-active' : ''}`}
         >
-          {t('tab_barcode')}
+          {t.formatMessage({
+            id: 'productForm.tab_barcode'
+          })}
         </button>
       </div>
-
       <TabContainer
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as 'details' | 'barcode')}
@@ -81,7 +84,9 @@ export function ProductForm({
           <div className="flex flex-col gap-4">
             {/* Icon picker */}
             <div>
-              <label className="label">{t('icon_label')}</label>
+              <label className="label">{t.formatMessage({
+                id: 'productForm.icon_label'
+              })}</label>
               <div className="flex items-center gap-3">
                 <div className="input-height aspect-square rounded-lg overflow-hidden bg-bg-base flex items-center justify-center flex-shrink-0">
                   {iconPreview && isPresetIcon(iconPreview) ? (
@@ -130,10 +135,16 @@ export function ProductForm({
               <div className="flex items-center justify-between mt-2">
                 <span className="text-sm text-text-tertiary">
                   {!iconPreview
-                    ? t('icon_no_icon')
+                    ? t.formatMessage({
+                    id: 'productForm.icon_no_icon'
+                  })
                     : presetEmoji
-                    ? t('icon_preset', { number: PRESET_ICONS.findIndex((p) => p.id === presetEmoji) + 1 })
-                    : t('icon_custom')}
+                    ? t.formatMessage({
+                    id: 'productForm.icon_preset'
+                  }, { number: PRESET_ICONS.findIndex((p) => p.id === presetEmoji) + 1 })
+                    : t.formatMessage({
+                    id: 'productForm.icon_custom'
+                  })}
                 </span>
                 <button
                   type="button"
@@ -141,7 +152,9 @@ export function ProductForm({
                   disabled={!iconPreview}
                   className="text-sm text-error hover:text-error transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  {t('icon_reset')}
+                  {t.formatMessage({
+                    id: 'productForm.icon_reset'
+                  })}
                 </button>
               </div>
             </div>
@@ -149,7 +162,9 @@ export function ProductForm({
             {/* Name */}
             <div>
               <label htmlFor={`${idPrefix}-name`} className="label">
-                {t('name_label')} <span className="text-error">*</span>
+                {t.formatMessage({
+                  id: 'productForm.name_label'
+                })} <span className="text-error">*</span>
               </label>
               <input
                 id={`${idPrefix}-name`}
@@ -157,7 +172,9 @@ export function ProductForm({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="input"
-                placeholder={t('name_placeholder')}
+                placeholder={t.formatMessage({
+                  id: 'productForm.name_placeholder'
+                })}
                 autoComplete="off"
               />
             </div>
@@ -167,7 +184,9 @@ export function ProductForm({
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label htmlFor={`${idPrefix}-price`} className="label">
-                    {t('price_label')} <span className="text-error">*</span>
+                    {t.formatMessage({
+                      id: 'productForm.price_label'
+                    })} <span className="text-error">*</span>
                   </label>
                   <div className="input-number-wrapper">
                     <PriceInput
@@ -185,7 +204,9 @@ export function ProductForm({
                           setPrice((current + 1).toFixed(2))
                         }}
                         tabIndex={-1}
-                        aria-label={t('price_increase_aria')}
+                        aria-label={t.formatMessage({
+                          id: 'productForm.price_increase_aria'
+                        })}
                       >
                         <Plus />
                       </button>
@@ -197,7 +218,9 @@ export function ProductForm({
                           setPrice(Math.max(0, current - 1).toFixed(2))
                         }}
                         tabIndex={-1}
-                        aria-label={t('price_decrease_aria')}
+                        aria-label={t.formatMessage({
+                          id: 'productForm.price_decrease_aria'
+                        })}
                       >
                         <Minus />
                       </button>
@@ -206,7 +229,9 @@ export function ProductForm({
                 </div>
                 <div className="flex-1">
                   <label htmlFor={`${idPrefix}-category`} className="label">
-                    {t('category_label')}
+                    {t.formatMessage({
+                      id: 'productForm.category_label'
+                    })}
                   </label>
                   <select
                     id={`${idPrefix}-category`}
@@ -214,7 +239,9 @@ export function ProductForm({
                     onChange={(e) => setCategoryId(e.target.value)}
                     className={`input ${categoryId === '' ? 'select-placeholder' : ''}`}
                   >
-                    <option value="">{t('category_none')}</option>
+                    <option value="">{t.formatMessage({
+                      id: 'productForm.category_none'
+                    })}</option>
                     {categories
                       .sort((a, b) => a.sortOrder - b.sortOrder)
                       .map((cat) => (
@@ -231,9 +258,13 @@ export function ProductForm({
               <div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="label mb-0">{t('active_label')}</span>
+                    <span className="label mb-0">{t.formatMessage({
+                      id: 'productForm.active_label'
+                    })}</span>
                     <span className="text-sm text-text-tertiary leading-tight">
-                      {t('active_description')}
+                      {t.formatMessage({
+                        id: 'productForm.active_description'
+                      })}
                     </span>
                   </div>
                   <input
@@ -253,5 +284,5 @@ export function ProductForm({
         </TabContainer.Tab>
       </TabContainer>
     </div>
-  )
+  );
 }

@@ -39,10 +39,10 @@
 //
 'use client'
 
+import { useIntl } from 'react-intl';
 import React, { useState, useEffect, useRef, Children, isValidElement, ReactElement } from 'react'
 import { createPortal } from 'react-dom'
 import { X, ChevronLeft } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { motion, AnimatePresence, useDragControls, type PanInfo } from 'framer-motion'
 import { ModalProvider, useModalContext } from './ModalContext'
 import { ModalStep } from './ModalStep'
@@ -67,7 +67,7 @@ function ModalHeader({
   singleStepTitle?: string
   onPointerDown: (e: React.PointerEvent) => void
 }) {
-  const t = useTranslations('ui.modal')
+  const t = useIntl()
   const ctx = useModalContext()
   const {
     isFirstStep,
@@ -113,7 +113,9 @@ function ModalHeader({
               onClick={handleBack}
               onPointerDown={stopHeaderDrag}
               className="modal-back"
-              aria-label={t('go_back')}
+              aria-label={t.formatMessage({
+                id: 'ui.modal.go_back'
+              })}
               disabled={isLocked || isTransitioning}
             >
               <ChevronLeft className="w-5 h-5" />
@@ -126,14 +128,16 @@ function ModalHeader({
           onClick={_onClose}
           onPointerDown={stopHeaderDrag}
           className="modal-close"
-          aria-label={t('close')}
+          aria-label={t.formatMessage({
+            id: 'ui.modal.close'
+          })}
           disabled={isLocked || isTransitioning}
         >
           <X className="w-5 h-5" />
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 // Helper to separate footer from other children

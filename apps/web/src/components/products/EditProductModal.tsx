@@ -1,8 +1,8 @@
 'use client'
 
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl';
 
-import { useTranslations } from 'next-intl'
+import Image from '@/lib/Image'
 import { Trash2, SlidersHorizontal, ImagePlus } from 'lucide-react'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { Spinner, Modal, useModal, StockStepper } from '@/components/ui'
@@ -39,8 +39,8 @@ export interface EditProductModalProps {
 // ============================================
 
 function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<boolean>; isDeleting: boolean }) {
-  const t = useTranslations('productForm')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { setProductDeleted, setError } = useProductForm()
   const { goToStep } = useModal()
 
@@ -55,11 +55,15 @@ function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<bool
         setProductDeleted(true)
         goToStep(3)
       } else {
-        setError(t('failed_to_delete'))
+        setError(t.formatMessage({
+          id: 'productForm.failed_to_delete'
+        }))
         goToStep(0)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('failed_to_delete'))
+      setError(err instanceof Error ? err.message : t.formatMessage({
+        id: 'productForm.failed_to_delete'
+      }))
       goToStep(0)
     }
   }
@@ -71,9 +75,11 @@ function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<bool
       className="btn btn-danger flex-1"
       disabled={isDeleting}
     >
-      {isDeleting ? <Spinner /> : tCommon('delete')}
+      {isDeleting ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.delete'
+      })}
     </button>
-  )
+  );
 }
 
 // ============================================
@@ -81,8 +87,8 @@ function DeleteButton({ onConfirm, isDeleting }: { onConfirm: () => Promise<bool
 // ============================================
 
 function SaveButton({ onSubmit }: { onSubmit: EditProductModalProps['onSubmit'] }) {
-  const t = useTranslations('productForm')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const {
     name,
     price,
@@ -115,7 +121,9 @@ function SaveButton({ onSubmit }: { onSubmit: EditProductModalProps['onSubmit'] 
       )
 
       if (!success) {
-        setError(t('failed_to_save'))
+        setError(t.formatMessage({
+          id: 'productForm.failed_to_save'
+        }))
         return
       }
 
@@ -123,7 +131,9 @@ function SaveButton({ onSubmit }: { onSubmit: EditProductModalProps['onSubmit'] 
       hapticSuccess()
       goToStep(4)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('failed_to_save'))
+      setError(err instanceof Error ? err.message : t.formatMessage({
+        id: 'productForm.failed_to_save'
+      }))
     } finally {
       setIsSaving(false)
     }
@@ -136,9 +146,11 @@ function SaveButton({ onSubmit }: { onSubmit: EditProductModalProps['onSubmit'] 
       className="btn btn-primary flex-1"
       disabled={isSaving || !isFormValid || !hasChanges}
     >
-      {isSaving ? <Spinner /> : tCommon('save')}
+      {isSaving ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.save'
+      })}
     </button>
-  )
+  );
 }
 
 // ============================================
@@ -156,8 +168,8 @@ export function EditProductModal({
   canDelete,
   initialStep = 0,
 }: EditProductModalProps) {
-  const t = useTranslations('productForm')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const {
     iconPreview,
     editingProduct,
@@ -188,191 +200,222 @@ export function EditProductModal({
 
   return (
     <>
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      onExitComplete={onExitComplete}
-      title={t('title_edit')}
-      initialStep={initialStep}
-    >
-      {/* Step 0: Edit Form */}
-      <Modal.Step title={t('title_edit')}>
-        {error && (
-          <Modal.Item>
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
-          </Modal.Item>
-        )}
-
-        <Modal.Item>
-          <ProductForm
-            categories={categories}
-            idPrefix="edit"
-            isOpen={isOpen}
-          />
-        </Modal.Item>
-
-        <Modal.Footer>
-          {canDelete && (
-            <Modal.GoToStepButton step={2} className="btn btn-secondary btn-icon">
-              <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
-            </Modal.GoToStepButton>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        onExitComplete={onExitComplete}
+        title={t.formatMessage({
+          id: 'productForm.title_edit'
+        })}
+        initialStep={initialStep}
+      >
+        {/* Step 0: Edit Form */}
+        <Modal.Step title={t.formatMessage({
+          id: 'productForm.title_edit'
+        })}>
+          {error && (
+            <Modal.Item>
+              <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+                {error}
+              </div>
+            </Modal.Item>
           )}
-          <Modal.GoToStepButton step={1} className="btn btn-secondary btn-icon">
-            <SlidersHorizontal className="text-brand" style={{ width: 16, height: 16 }} />
-          </Modal.GoToStepButton>
-          <SaveButton onSubmit={onSubmit} />
-        </Modal.Footer>
-      </Modal.Step>
 
-      {/* Step 1: Adjust inventory */}
-      <Modal.Step title={t('title_adjust_inventory')} backStep={0}>
-        {editingProduct && (
           <Modal.Item>
-            <div className="flex flex-col items-center py-6">
-              <div className="w-56 h-56 rounded-3xl overflow-hidden flex items-center justify-center bg-bg-muted">
-                {iconPreview && isPresetIcon(iconPreview) ? (
-                  (() => { const p = getPresetIcon(iconPreview); return p ? <p.icon size={120} className="text-text-primary" /> : null })()
-                ) : iconPreview ? (
-                  <Image
-                    src={iconPreview}
-                    alt={editingProduct.name}
-                    width={224}
-                    height={224}
-                    className="object-cover w-full h-full"
-                    unoptimized
+            <ProductForm
+              categories={categories}
+              idPrefix="edit"
+              isOpen={isOpen}
+            />
+          </Modal.Item>
+
+          <Modal.Footer>
+            {canDelete && (
+              <Modal.GoToStepButton step={2} className="btn btn-secondary btn-icon">
+                <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
+              </Modal.GoToStepButton>
+            )}
+            <Modal.GoToStepButton step={1} className="btn btn-secondary btn-icon">
+              <SlidersHorizontal className="text-brand" style={{ width: 16, height: 16 }} />
+            </Modal.GoToStepButton>
+            <SaveButton onSubmit={onSubmit} />
+          </Modal.Footer>
+        </Modal.Step>
+
+        {/* Step 1: Adjust inventory */}
+        <Modal.Step title={t.formatMessage({
+          id: 'productForm.title_adjust_inventory'
+        })} backStep={0}>
+          {editingProduct && (
+            <Modal.Item>
+              <div className="flex flex-col items-center py-6">
+                <div className="w-56 h-56 rounded-3xl overflow-hidden flex items-center justify-center bg-bg-muted">
+                  {iconPreview && isPresetIcon(iconPreview) ? (
+                    (() => { const p = getPresetIcon(iconPreview); return p ? <p.icon size={120} className="text-text-primary" /> : null })()
+                  ) : iconPreview ? (
+                    <Image
+                      src={iconPreview}
+                      alt={editingProduct.name}
+                      width={224}
+                      height={224}
+                      className="object-cover w-full h-full"
+                      unoptimized
+                    />
+                  ) : (
+                    <ImagePlus className="w-20 h-20 text-text-tertiary" />
+                  )}
+                </div>
+                <div className="font-medium text-lg mt-4">{editingProduct.name}</div>
+              </div>
+            </Modal.Item>
+          )}
+
+          {error && (
+            <Modal.Item>
+              <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+                {error}
+              </div>
+            </Modal.Item>
+          )}
+
+          <Modal.Item>
+            <StockStepper
+              value={newStockValue}
+              onChange={setNewStockValue}
+            />
+          </Modal.Item>
+
+          <Modal.Footer>
+            <Modal.CancelBackButton className="btn btn-secondary flex-1" disabled={isAdjusting}>
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
+            </Modal.CancelBackButton>
+            <button
+              type="button"
+              onClick={handleSaveAdjustment}
+              className="btn btn-primary flex-1"
+              disabled={isAdjusting || newStockValue === (editingProduct?.stock ?? 0)}
+            >
+              {isAdjusting ? <Spinner /> : tCommon.formatMessage({
+                id: 'common.save'
+              })}
+            </button>
+          </Modal.Footer>
+        </Modal.Step>
+
+        {/* Step 2: Delete confirmation */}
+        <Modal.Step title={t.formatMessage({
+          id: 'productForm.title_delete_product'
+        })} backStep={0}>
+          <Modal.Item>
+            <p className="text-text-secondary">
+              {t.formatMessage({
+                id: 'productForm.delete_confirm_text'
+              }, { name: editingProduct?.name ?? '' })}
+            </p>
+          </Modal.Item>
+
+          <Modal.Footer>
+            <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
+            </Modal.GoToStepButton>
+            <DeleteButton onConfirm={handleDelete} isDeleting={isDeleting} />
+          </Modal.Footer>
+        </Modal.Step>
+
+        {/* Step 3: Delete success */}
+        <Modal.Step title={t.formatMessage({
+          id: 'productForm.title_deleted'
+        })} hideBackButton className="modal-step--centered">
+          <Modal.Item>
+            <div className="flex flex-col items-center text-center py-4">
+              <div style={{ width: 160, height: 160 }}>
+                {productDeleted && (
+                  <LottiePlayer
+                    src="/animations/error.json"
+                    loop={false}
+                    autoplay={true}
+                    delay={300}
+                    style={{ width: 160, height: 160 }}
                   />
-                ) : (
-                  <ImagePlus className="w-20 h-20 text-text-tertiary" />
                 )}
               </div>
-              <div className="font-medium text-lg mt-4">{editingProduct.name}</div>
+              <p
+                className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
+                style={{ opacity: productDeleted ? 1 : 0 }}
+              >
+                {t.formatMessage({
+                  id: 'productForm.success_deleted_heading'
+                })}
+              </p>
+              <p
+                className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
+                style={{ opacity: productDeleted ? 1 : 0 }}
+              >
+                {t.formatMessage({
+                  id: 'productForm.success_deleted_description'
+                })}
+              </p>
             </div>
           </Modal.Item>
-        )}
 
-        {error && (
+          <Modal.Footer>
+            <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+              {tCommon.formatMessage({
+                id: 'common.done'
+              })}
+            </button>
+          </Modal.Footer>
+        </Modal.Step>
+
+        {/* Step 4: Save success */}
+        <Modal.Step title={t.formatMessage({
+          id: 'productForm.title_updated'
+        })} hideBackButton className="modal-step--centered">
           <Modal.Item>
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
+            <div className="flex flex-col items-center text-center py-4">
+              <div style={{ width: 160, height: 160 }}>
+                {productSaved && (
+                  <LottiePlayer
+                    src="/animations/success.json"
+                    loop={false}
+                    autoplay={true}
+                    delay={300}
+                    style={{ width: 160, height: 160 }}
+                  />
+                )}
+              </div>
+              <p
+                className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
+                style={{ opacity: productSaved ? 1 : 0 }}
+              >
+                {t.formatMessage({
+                  id: 'productForm.success_updated_heading'
+                })}
+              </p>
+              <p
+                className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
+                style={{ opacity: productSaved ? 1 : 0 }}
+              >
+                {t.formatMessage({
+                  id: 'productForm.success_updated_description'
+                })}
+              </p>
             </div>
           </Modal.Item>
-        )}
 
-        <Modal.Item>
-          <StockStepper
-            value={newStockValue}
-            onChange={setNewStockValue}
-          />
-        </Modal.Item>
-
-        <Modal.Footer>
-          <Modal.CancelBackButton className="btn btn-secondary flex-1" disabled={isAdjusting}>
-            {tCommon('cancel')}
-          </Modal.CancelBackButton>
-          <button
-            type="button"
-            onClick={handleSaveAdjustment}
-            className="btn btn-primary flex-1"
-            disabled={isAdjusting || newStockValue === (editingProduct?.stock ?? 0)}
-          >
-            {isAdjusting ? <Spinner /> : tCommon('save')}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-
-      {/* Step 2: Delete confirmation */}
-      <Modal.Step title={t('title_delete_product')} backStep={0}>
-        <Modal.Item>
-          <p className="text-text-secondary">
-            {t('delete_confirm_text', { name: editingProduct?.name ?? '' })}
-          </p>
-        </Modal.Item>
-
-        <Modal.Footer>
-          <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
-            {tCommon('cancel')}
-          </Modal.GoToStepButton>
-          <DeleteButton onConfirm={handleDelete} isDeleting={isDeleting} />
-        </Modal.Footer>
-      </Modal.Step>
-
-      {/* Step 3: Delete success */}
-      <Modal.Step title={t('title_deleted')} hideBackButton className="modal-step--centered">
-        <Modal.Item>
-          <div className="flex flex-col items-center text-center py-4">
-            <div style={{ width: 160, height: 160 }}>
-              {productDeleted && (
-                <LottiePlayer
-                  src="/animations/error.json"
-                  loop={false}
-                  autoplay={true}
-                  delay={300}
-                  style={{ width: 160, height: 160 }}
-                />
-              )}
-            </div>
-            <p
-              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
-              style={{ opacity: productDeleted ? 1 : 0 }}
-            >
-              {t('success_deleted_heading')}
-            </p>
-            <p
-              className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
-              style={{ opacity: productDeleted ? 1 : 0 }}
-            >
-              {t('success_deleted_description')}
-            </p>
-          </div>
-        </Modal.Item>
-
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon('done')}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-
-      {/* Step 4: Save success */}
-      <Modal.Step title={t('title_updated')} hideBackButton className="modal-step--centered">
-        <Modal.Item>
-          <div className="flex flex-col items-center text-center py-4">
-            <div style={{ width: 160, height: 160 }}>
-              {productSaved && (
-                <LottiePlayer
-                  src="/animations/success.json"
-                  loop={false}
-                  autoplay={true}
-                  delay={300}
-                  style={{ width: 160, height: 160 }}
-                />
-              )}
-            </div>
-            <p
-              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
-              style={{ opacity: productSaved ? 1 : 0 }}
-            >
-              {t('success_updated_heading')}
-            </p>
-            <p
-              className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
-              style={{ opacity: productSaved ? 1 : 0 }}
-            >
-              {t('success_updated_description')}
-            </p>
-          </div>
-        </Modal.Item>
-
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon('done')}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-
-  </>
-  )
+          <Modal.Footer>
+            <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+              {tCommon.formatMessage({
+                id: 'common.done'
+              })}
+            </button>
+          </Modal.Footer>
+        </Modal.Step>
+      </Modal>
+    </>
+  );
 }

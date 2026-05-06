@@ -1,9 +1,9 @@
 'use client'
 
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl';
 
+import Image from '@/lib/Image'
 import { useEffect, useRef, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Upload, X } from 'lucide-react'
 import { Modal, Spinner } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
@@ -14,9 +14,9 @@ import { MAX_UPLOAD_SIZE } from '@/lib/storage-client'
 interface Props { isOpen: boolean; onClose: () => void }
 
 export function EditLogoModal({ isOpen, onClose }: Props) {
-  const t = useTranslations('manage')
-  const tCreate = useTranslations('createBusiness')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCreate = useIntl()
+  const tCommon = useIntl()
   const { business } = useBusiness()
   const { update, isSubmitting, error, reset } = useUpdateBusiness()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -61,11 +61,15 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
     e.target.value = ''
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      setUploadError(tCreate('logo_invalid_type'))
+      setUploadError(tCreate.formatMessage({
+        id: 'createBusiness.logo_invalid_type'
+      }))
       return
     }
     if (file.size > MAX_UPLOAD_SIZE) {
-      setUploadError(tCreate('logo_too_large'))
+      setUploadError(tCreate.formatMessage({
+        id: 'createBusiness.logo_too_large'
+      }))
       return
     }
     setPendingFile(file)
@@ -92,7 +96,9 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} onExitComplete={handleExitComplete}>
-      <Modal.Step title={t('edit_logo_title')} hideBackButton>
+      <Modal.Step title={t.formatMessage({
+        id: 'manage.edit_logo_title'
+      })} hideBackButton>
         <Modal.Item>
           <div className="flex justify-center">
             <div className="relative">
@@ -117,7 +123,9 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
                   type="button"
                   onClick={handleRemove}
                   className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center shadow-md hover:bg-error-hover transition-colors"
-                  aria-label={tCreate('logo_remove')}
+                  aria-label={tCreate.formatMessage({
+                    id: 'createBusiness.logo_remove'
+                  })}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -134,13 +142,19 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
           >
             <Upload className="w-5 h-5" />
             <span className="text-sm font-medium">
-              {displayPreview ? tCreate('logo_change_button') : tCreate('logo_upload_button')}
+              {displayPreview ? tCreate.formatMessage({
+                id: 'createBusiness.logo_change_button'
+              }) : tCreate.formatMessage({
+                id: 'createBusiness.logo_upload_button'
+              })}
             </span>
           </button>
           {uploadError ? (
             <p className="text-xs text-error text-center mt-2">{uploadError}</p>
           ) : (
-            <p className="text-xs text-text-tertiary text-center mt-2">{tCreate('logo_size_hint')}</p>
+            <p className="text-xs text-text-tertiary text-center mt-2">{tCreate.formatMessage({
+              id: 'createBusiness.logo_size_hint'
+            })}</p>
           )}
         </Modal.Item>
         {error && (
@@ -150,7 +164,9 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
         )}
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-            {tCommon('cancel')}
+            {tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <button
             type="button"
@@ -158,10 +174,12 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
             disabled={isSubmitting || !hasChanges}
             className="btn btn-primary flex-1"
           >
-            {isSubmitting ? <Spinner size="sm" /> : t('save')}
+            {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({
+              id: 'manage.save'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

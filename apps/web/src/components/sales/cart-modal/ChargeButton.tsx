@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl, type IntlShape } from 'react-intl';
 import { Spinner, useModal } from '@/components/ui'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -44,7 +44,7 @@ export function ChargeButton({
   setErrorMessageCode,
   canConfirm,
 }: ChargeButtonProps) {
-  const t = useTranslations('sales.cart')
+  const t = useIntl()
   const { formatCurrency } = useBusinessFormat()
   const translateApiMessage = useApiMessage()
   const { goToStep, lock, unlock } = useModal()
@@ -95,32 +95,34 @@ export function ChargeButton({
       {submitting ? (
         <Spinner />
       ) : (
-        <span>{t('modal_charge_button', { value: formatCurrency(cart.total) })}</span>
+        <span>{t.formatMessage({
+          id: 'sales.cart.modal_charge_button'
+        }, { value: formatCurrency(cart.total) })}</span>
       )}
     </button>
-  )
+  );
 }
 
 function translateError(
   err: unknown,
   translate: ReturnType<typeof useApiMessage>,
-  t: ReturnType<typeof useTranslations<'sales.cart'>>,
+  t: IntlShape,
 ): { message: string; code: string | undefined } {
   if (err instanceof ApiError) {
     const code = err.messageCode ?? undefined
     switch (err.messageCode) {
       case ApiMessageCode.SESSION_NOT_OPEN:
-        return { message: t('modal_error_session_closed'), code }
+        return { message: t.formatMessage({ id: 'sales.cart.modal_error_session_closed' }), code }
       case ApiMessageCode.SALE_INSUFFICIENT_STOCK:
-        return { message: t('modal_error_stock_changed'), code }
+        return { message: t.formatMessage({ id: 'sales.cart.modal_error_stock_changed' }), code }
       case ApiMessageCode.SALE_PRODUCT_NOT_FOUND:
       case ApiMessageCode.SALE_PRODUCT_INACTIVE:
-        return { message: t('modal_error_product_unavailable'), code }
+        return { message: t.formatMessage({ id: 'sales.cart.modal_error_product_unavailable' }), code }
       case ApiMessageCode.SALE_INVALID_DATE:
         // Defensive — server clock skew. Spec routes this to the generic
         // copy rather than the envelope translation since the apiMessages
         // text is server-instrumentation-shaped, not POS-facing.
-        return { message: t('modal_error_generic'), code }
+        return { message: t.formatMessage({ id: 'sales.cart.modal_error_generic' }), code }
       // Rate-limit (429) and offline-mutation envelopes have apiMessages.*
       // entries already; fall through to the envelope translator so the
       // user gets the localized "wait a moment" / "you're offline" copy.
@@ -128,8 +130,8 @@ function translateError(
         if (err.envelope) {
           return { message: translate(err.envelope), code }
         }
-        return { message: t('modal_error_generic'), code: undefined }
+        return { message: t.formatMessage({ id: 'sales.cart.modal_error_generic' }), code: undefined }
     }
   }
-  return { message: t('modal_error_generic'), code: undefined }
+  return { message: t.formatMessage({ id: 'sales.cart.modal_error_generic' }), code: undefined }
 }

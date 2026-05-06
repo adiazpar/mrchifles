@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useMemo, useState, type MouseEvent } from 'react'
-import { useTranslations } from 'next-intl'
 import { Minus, Plus } from 'lucide-react'
 import { Modal } from '@/components/ui'
 import { useProducts } from '@/contexts/products-context'
@@ -22,8 +22,8 @@ interface ViewCartModalProps {
 }
 
 export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
-  const t = useTranslations('sales.cart')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { products } = useProducts()
   const { formatCurrency } = useBusinessFormat()
 
@@ -72,13 +72,19 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
         setError('')
         setErrorMessageCode(undefined)
       }}
-      title={t('modal_title')}
+      title={t.formatMessage({
+        id: 'sales.cart.modal_title'
+      })}
     >
-      <Modal.Step title={t('modal_title')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'sales.cart.modal_title'
+      })}>
         {isEmpty ? (
           <Modal.Item>
             <p className="text-sm text-text-secondary text-center py-6">
-              {t('modal_empty')}
+              {t.formatMessage({
+                id: 'sales.cart.modal_empty'
+              })}
             </p>
           </Modal.Item>
         ) : (
@@ -107,7 +113,9 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
             <Modal.Item className="sticky bottom-0 -mx-5 -mb-5 px-5 pt-5 pb-5 bg-bg-surface">
               <div className="pt-5 border-t border-border flex items-center justify-between">
                 <span className="text-lg font-bold">
-                  {t('modal_subtotal_label')}
+                  {t.formatMessage({
+                    id: 'sales.cart.modal_subtotal_label'
+                  })}
                 </span>
                 <span className="text-lg font-bold tabular-nums">
                   {formatCurrency(cart.total)}
@@ -122,19 +130,24 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
             onClick={onClose}
             className="btn btn-secondary flex-1"
           >
-            {tCommon('cancel')}
+            {tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <Modal.NextButton
             className="btn btn-primary flex-1"
             disabled={isEmpty}
           >
-            {tCommon('confirm')}
+            {tCommon.formatMessage({
+              id: 'common.confirm'
+            })}
           </Modal.NextButton>
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 1: Payment. */}
-      <Modal.Step title={t('modal_payment_step_title')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'sales.cart.modal_payment_step_title'
+      })}>
         <PaymentStepContent
           total={cart.total}
           currency={currency}
@@ -152,7 +165,9 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
             className="btn btn-secondary flex-1"
             disabled={submitting}
           >
-            {tCommon('cancel')}
+            {tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <ChargeButton
             cart={cart}
@@ -168,17 +183,18 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
           />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 2: Success. */}
       <Modal.Step
-        title={t('modal_success_title')}
+        title={t.formatMessage({
+          id: 'sales.cart.modal_success_title'
+        })}
         hideBackButton
         className="modal-step--centered"
       >
         <SuccessStepContent confirmedSale={confirmedSale} onDone={onClose} />
       </Modal.Step>
     </Modal>
-  )
+  );
 }
 
 interface CartLineRowProps {
@@ -189,7 +205,7 @@ interface CartLineRowProps {
 }
 
 function CartLineRow({ line, product, cart, formatCurrency }: CartLineRowProps) {
-  const t = useTranslations('sales.cart')
+  const t = useIntl()
   const stockTotal = product?.stock ?? 0
   const atMaxQty = product != null && line.quantity >= stockTotal
   const lineTotal = line.unitPrice * line.quantity
@@ -208,7 +224,9 @@ function CartLineRow({ line, product, cart, formatCurrency }: CartLineRowProps) 
       <div className="flex items-center gap-1 flex-shrink-0">
         <QtyButton
           variant="danger"
-          ariaLabel={t('qty_decrease')}
+          ariaLabel={t.formatMessage({
+            id: 'sales.cart.qty_decrease'
+          })}
           onClick={(e) => {
             e.stopPropagation()
             cart.updateQty(line.productId, line.quantity - 1)
@@ -221,7 +239,9 @@ function CartLineRow({ line, product, cart, formatCurrency }: CartLineRowProps) 
         </span>
         <QtyButton
           variant="primary"
-          ariaLabel={t('qty_increase')}
+          ariaLabel={t.formatMessage({
+            id: 'sales.cart.qty_increase'
+          })}
           disabled={atMaxQty}
           onClick={(e) => {
             e.stopPropagation()
@@ -233,7 +253,7 @@ function CartLineRow({ line, product, cart, formatCurrency }: CartLineRowProps) 
         </QtyButton>
       </div>
     </div>
-  )
+  );
 }
 
 type QtyButtonVariant = 'primary' | 'danger'

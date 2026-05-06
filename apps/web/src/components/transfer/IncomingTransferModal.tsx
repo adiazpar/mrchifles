@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { ArrowRightLeft } from 'lucide-react'
 import { Modal, Spinner } from '@/components/ui'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
@@ -47,8 +47,8 @@ function useExpiryLabel(expiresAt: string | undefined): ExpiryLabel | null {
 }
 
 export function IncomingTransferModal({ isOpen, onClose }: Props) {
-  const tAccount = useTranslations('account')
-  const tManage = useTranslations('manage')
+  const tAccount = useIntl()
+  const tManage = useIntl()
   const {
     transfer,
     error,
@@ -70,18 +70,24 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
 
   const description = transfer
     ? transfer.fromUser
-      ? tAccount('incoming_transfer_description', {
+      ? tAccount.formatMessage({
+    id: 'account.incoming_transfer_description'
+  }, {
           name: transfer.fromUser.name,
           business: transfer.business.name,
         })
-      : tAccount('incoming_transfer_description_anonymous', {
+      : tAccount.formatMessage({
+    id: 'account.incoming_transfer_description_anonymous'
+  }, {
           business: transfer.business.name,
         })
     : ''
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <Modal.Step title={tAccount('incoming_transfer_heading')} hideBackButton>
+      <Modal.Step title={tAccount.formatMessage({
+        id: 'account.incoming_transfer_heading'
+      })} hideBackButton>
         <Modal.Item>
           <div
             className="p-3 rounded-lg flex items-start gap-3"
@@ -101,12 +107,16 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-warning">
-                {tAccount('incoming_transfer_heading')}
+                {tAccount.formatMessage({
+                  id: 'account.incoming_transfer_heading'
+                })}
               </p>
               <p className="text-xs text-text-secondary mt-1">{description}</p>
               {expiry && (
                 <p className="text-xs text-text-secondary mt-1">
-                  {tManage(expiry.key, expiry.values)}
+                  {tManage.formatMessage({
+                    id: 'manage.' + expiry.key
+                  }, expiry.values)}
                 </p>
               )}
             </div>
@@ -126,7 +136,9 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
             disabled={busy || !transfer}
             className="btn btn-secondary flex-1"
           >
-            {isDeclining ? <Spinner size="sm" /> : tAccount('incoming_transfer_decline')}
+            {isDeclining ? <Spinner size="sm" /> : tAccount.formatMessage({
+              id: 'account.incoming_transfer_decline'
+            })}
           </button>
           <button
             type="button"
@@ -134,10 +146,12 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
             disabled={busy || !transfer}
             className="btn btn-primary flex-1"
           >
-            {isAccepting ? <Spinner size="sm" /> : tAccount('incoming_transfer_accept')}
+            {isAccepting ? <Spinner size="sm" /> : tAccount.formatMessage({
+              id: 'account.incoming_transfer_accept'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

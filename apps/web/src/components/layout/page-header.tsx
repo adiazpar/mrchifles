@@ -1,11 +1,11 @@
 'use client'
 
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl';
 
+import Image from '@/lib/Image'
 import { useState, useEffect } from 'react'
 import { usePathname } from '@/lib/next-navigation-shim'
 import { Building2 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { getRouteConfig } from '@/lib/navigation'
 import { UserMenu } from './user-menu'
 import { useOptionalBusiness, type Business } from '@/contexts/business-context'
@@ -60,8 +60,8 @@ interface PageHeaderProps {
  * layer transitions move the entire chrome along with their layer.
  */
 export function PageHeader({ variant }: PageHeaderProps) {
-  const t = useTranslations()
-  const tNav = useTranslations('navigation')
+  const t = useIntl()
+  const tNav = useIntl()
   const pathname = usePathname()
   const businessContext = useOptionalBusiness()
   const [isScrolled, setIsScrolled] = useState(false)
@@ -107,10 +107,18 @@ export function PageHeader({ variant }: PageHeaderProps) {
 
   const config = getRouteConfig(pathname)
   const PAGE_TITLE_MAP: Record<string, string> = {
-    Home: tNav('home'),
-    Sales: tNav('sales'),
-    Products: tNav('products'),
-    Manage: tNav('manage'),
+    Home: tNav.formatMessage({
+      id: 'navigation.home'
+    }),
+    Sales: tNav.formatMessage({
+      id: 'navigation.sales'
+    }),
+    Products: tNav.formatMessage({
+      id: 'navigation.products'
+    }),
+    Manage: tNav.formatMessage({
+      id: 'navigation.manage'
+    }),
   }
   const basePageTitle = config.pageTitle
     ? (PAGE_TITLE_MAP[config.pageTitle] ?? config.pageTitle)
@@ -127,7 +135,9 @@ export function PageHeader({ variant }: PageHeaderProps) {
               <BusinessLogo business={business} />
             </div>
             <div className="page-header__titles--inline">
-              <h1 className="page-title">{business?.name || t('common.loading')}</h1>
+              <h1 className="page-title">{business?.name || t.formatMessage({
+                id: 'common.loading'
+              })}</h1>
               {basePageTitle && <p className="page-subtitle">{basePageTitle}</p>}
             </div>
           </div>
@@ -137,5 +147,5 @@ export function PageHeader({ variant }: PageHeaderProps) {
         <UserMenu />
       </div>
     </header>
-  )
+  );
 }

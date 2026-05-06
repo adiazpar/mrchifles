@@ -1,8 +1,8 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState } from 'react'
 import dynamic from '@/lib/next-dynamic-shim'
-import { useTranslations } from 'next-intl'
 import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Briefcase, ChevronRight, Clock, ImageIcon } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
@@ -51,9 +51,9 @@ const IncomingTransferModal = dynamic(
 )
 
 export function ManageView() {
-  const t = useTranslations('manage')
-  const tCreate = useTranslations('createBusiness')
-  const tAccount = useTranslations('account')
+  const t = useIntl()
+  const tCreate = useIntl()
+  const tAccount = useIntl()
   const { business, businessId, isOwner } = useBusiness()
   const { navigate } = usePageTransition()
   const { transfer: pendingTransfer } = usePendingTransferContext()
@@ -100,16 +100,19 @@ export function ManageView() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-warning">
-              {t('transfer_pending_heading')}
+              {t.formatMessage({
+                id: 'manage.transfer_pending_heading'
+              })}
             </div>
             <div className="text-xs text-text-secondary mt-0.5 truncate">
-              {t('transfer_pending_waiting', { recipient: pendingTransfer.toEmail })}
+              {t.formatMessage({
+                id: 'manage.transfer_pending_waiting'
+              }, { recipient: pendingTransfer.toEmail })}
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
         </button>
       )}
-
       {showIncomingTransferBanner && incomingTransfer && (
         <button
           type="button"
@@ -128,15 +131,21 @@ export function ManageView() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-warning">
-              {tAccount('incoming_transfer_heading')}
+              {tAccount.formatMessage({
+                id: 'account.incoming_transfer_heading'
+              })}
             </div>
             <div className="text-xs text-text-secondary mt-0.5 truncate">
               {incomingTransfer.fromUser
-                ? tAccount('incoming_transfer_description', {
+                ? tAccount.formatMessage({
+                id: 'account.incoming_transfer_description'
+              }, {
                     name: incomingTransfer.fromUser.name,
                     business: incomingTransfer.business.name,
                   })
-                : tAccount('incoming_transfer_description_anonymous', {
+                : tAccount.formatMessage({
+                id: 'account.incoming_transfer_description_anonymous'
+              }, {
                     business: incomingTransfer.business.name,
                   })}
             </div>
@@ -144,20 +153,25 @@ export function ManageView() {
           <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
         </button>
       )}
-
       <div>
-        <SettingsSectionHeader label={t('section_details')} noTopMargin />
+        <SettingsSectionHeader label={t.formatMessage({
+          id: 'manage.section_details'
+        })} noTopMargin />
         <div className="bg-bg-surface rounded-xl overflow-hidden">
           <SettingsRow
             icon={ImageIcon}
-            label={t('row_logo')}
+            label={t.formatMessage({
+              id: 'manage.row_logo'
+            })}
             onClick={isOwner ? () => setLogoOpen(true) : undefined}
             hideChevron={!isOwner}
           />
           <div className="settings-divider" />
           <SettingsRow
             icon={Building2}
-            label={t('row_name')}
+            label={t.formatMessage({
+              id: 'manage.row_name'
+            })}
             value={business.name}
             onClick={isOwner ? () => setNameOpen(true) : undefined}
             hideChevron={!isOwner}
@@ -165,24 +179,31 @@ export function ManageView() {
           <div className="settings-divider" />
           <SettingsRow
             icon={Briefcase}
-            label={t('row_type')}
-            value={business.type ? tCreate(`business_type_${business.type}`) : '—'}
+            label={t.formatMessage({
+              id: 'manage.row_type'
+            })}
+            value={business.type ? tCreate.formatMessage({
+              id: `createBusiness.business_type_${business.type}`
+            }) : '—'}
             onClick={isOwner ? () => setTypeOpen(true) : undefined}
             hideChevron={!isOwner}
           />
           <div className="settings-divider" />
           <SettingsRow
             icon={MapPin}
-            label={t('row_location')}
+            label={t.formatMessage({
+              id: 'manage.row_location'
+            })}
             value={`${business.locale} · ${business.currency}`}
             onClick={isOwner ? () => setLocationOpen(true) : undefined}
             hideChevron={!isOwner}
           />
         </div>
       </div>
-
       <div>
-        <SettingsSectionHeader label={t('section_shortcuts')} />
+        <SettingsSectionHeader label={t.formatMessage({
+          id: 'manage.section_shortcuts'
+        })} />
         <div className="caja-actions">
           <button
             type="button"
@@ -194,8 +215,12 @@ export function ManageView() {
               <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
             </div>
             <div className="caja-action-btn__text">
-              <span className="caja-action-btn__title">{t('shortcut_team')}</span>
-              <span className="caja-action-btn__desc">{t('shortcut_team_desc')}</span>
+              <span className="caja-action-btn__title">{t.formatMessage({
+                id: 'manage.shortcut_team'
+              })}</span>
+              <span className="caja-action-btn__desc">{t.formatMessage({
+                id: 'manage.shortcut_team_desc'
+              })}</span>
             </div>
           </button>
           <button
@@ -208,20 +233,27 @@ export function ManageView() {
               <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
             </div>
             <div className="caja-action-btn__text">
-              <span className="caja-action-btn__title">{t('shortcut_providers')}</span>
-              <span className="caja-action-btn__desc">{t('shortcut_providers_desc')}</span>
+              <span className="caja-action-btn__title">{t.formatMessage({
+                id: 'manage.shortcut_providers'
+              })}</span>
+              <span className="caja-action-btn__desc">{t.formatMessage({
+                id: 'manage.shortcut_providers_desc'
+              })}</span>
             </div>
           </button>
         </div>
       </div>
-
       <div>
-        <SettingsSectionHeader label={t('section_danger')} danger />
+        <SettingsSectionHeader label={t.formatMessage({
+          id: 'manage.section_danger'
+        })} danger />
         <div className="bg-bg-surface rounded-xl overflow-hidden">
           {!isOwner && (
             <SettingsRow
               icon={LogOut}
-              label={t('leave_business')}
+              label={t.formatMessage({
+                id: 'manage.leave_business'
+              })}
               danger
               onClick={() => setLeaveOpen(true)}
             />
@@ -230,7 +262,9 @@ export function ManageView() {
             <>
               <SettingsRow
                 icon={ArrowRightLeft}
-                label={t('transfer_ownership')}
+                label={t.formatMessage({
+                  id: 'manage.transfer_ownership'
+                })}
                 danger
                 disabled={Boolean(pendingTransfer)}
                 onClick={() => setTransferOpen(true)}
@@ -238,7 +272,9 @@ export function ManageView() {
               <div className="settings-divider" />
               <SettingsRow
                 icon={Trash2}
-                label={t('delete_business')}
+                label={t.formatMessage({
+                  id: 'manage.delete_business'
+                })}
                 danger
                 onClick={() => setDeleteOpen(true)}
               />
@@ -246,7 +282,6 @@ export function ManageView() {
           )}
         </div>
       </div>
-
       <EditNameModal isOpen={nameOpen} onClose={() => setNameOpen(false)} />
       <EditTypeModal isOpen={typeOpen} onClose={() => setTypeOpen(false)} />
       <EditLocationModal isOpen={locationOpen} onClose={() => setLocationOpen(false)} />
@@ -260,5 +295,5 @@ export function ManageView() {
         onClose={() => setIncomingTransferOpen(false)}
       />
     </main>
-  )
+  );
 }

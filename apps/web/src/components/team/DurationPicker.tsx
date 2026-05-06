@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { Modal } from '@/components/ui'
 import type { InviteDuration } from '@kasero/shared/auth'
 
@@ -12,16 +12,24 @@ export interface DurationPickerProps {
 }
 
 export function DurationPicker({ selected, onSelect }: DurationPickerProps) {
-  const t = useTranslations('team')
+  const t = useIntl()
   const labels: Record<InviteDuration, string> = {
-    '24h': t('invite_duration_24h'),
-    '7d': t('invite_duration_7d'),
-    '30d': t('invite_duration_30d'),
+    '24h': t.formatMessage({
+      id: 'team.invite_duration_24h'
+    }),
+    '7d': t.formatMessage({
+      id: 'team.invite_duration_7d'
+    }),
+    '30d': t.formatMessage({
+      id: 'team.invite_duration_30d'
+    }),
   }
 
   return (
     <Modal.Item>
-      <label className="label">{t('invite_duration_label')}</label>
+      <label className="label">{t.formatMessage({
+        id: 'team.invite_duration_label'
+      })}</label>
       <div className="grid grid-cols-3 gap-2">
         {DURATIONS.map((d) => (
           <button
@@ -39,5 +47,5 @@ export function DurationPicker({ selected, onSelect }: DurationPickerProps) {
         ))}
       </div>
     </Modal.Item>
-  )
+  );
 }

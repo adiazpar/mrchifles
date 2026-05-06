@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useProducts } from '@/contexts/products-context'
 import { useOrders } from '@/contexts/orders-context'
@@ -98,7 +98,7 @@ function isoToLocalDateOnly(iso: string | Date): string {
 export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
   const { businessId, providers, canDelete, canManage = false } = opts
 
-  const tOrders = useTranslations('orders')
+  const tOrders = useIntl()
   const translateApiMessage = useApiMessage()
   const { user } = useAuth()
   // Products come from the shared ProductsProvider. Refetching here keeps
@@ -212,12 +212,16 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
   // ===== Mutations =====
   const handleSaveOrder = useCallback(async (): Promise<boolean> => {
     if (orderItems.length === 0) {
-      setError(tOrders('error_add_at_least_one_product'))
+      setError(tOrders.formatMessage({
+        id: 'orders.error_add_at_least_one_product'
+      }))
       return false
     }
     const totalNum = parseFloat(orderTotal)
     if (isNaN(totalNum) || totalNum <= 0) {
-      setError(tOrders('error_enter_total_paid'))
+      setError(tOrders.formatMessage({
+        id: 'orders.error_enter_total_paid'
+      }))
       return false
     }
 
@@ -250,11 +254,15 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
         return true
       }
 
-      setError(tOrders('error_failed_to_save_order'))
+      setError(tOrders.formatMessage({
+        id: 'orders.error_failed_to_save_order'
+      }))
       return false
     } catch (err) {
       console.error('Error saving order:', err)
-      setError(tOrders('error_failed_to_save_order'))
+      setError(tOrders.formatMessage({
+        id: 'orders.error_failed_to_save_order'
+      }))
       return false
     } finally {
       setIsSavingOrder(false)
@@ -264,12 +272,16 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
   const handleSaveEditOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder) return false
     if (orderItems.length === 0) {
-      setError(tOrders('error_add_at_least_one_product'))
+      setError(tOrders.formatMessage({
+        id: 'orders.error_add_at_least_one_product'
+      }))
       return false
     }
     const totalNum = parseFloat(orderTotal)
     if (isNaN(totalNum) || totalNum <= 0) {
-      setError(tOrders('error_enter_total_paid'))
+      setError(tOrders.formatMessage({
+        id: 'orders.error_enter_total_paid'
+      }))
       return false
     }
 
@@ -297,7 +309,9 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
           setError(
             err.envelope
               ? translateApiMessage(err.envelope)
-              : tOrders('error_failed_to_save_order')
+              : tOrders.formatMessage({
+              id: 'orders.error_failed_to_save_order'
+            })
           )
           return false
         }
@@ -319,7 +333,9 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       return true
     } catch (err) {
       console.error('Error saving order:', err)
-      setError(tOrders('error_failed_to_save_order'))
+      setError(tOrders.formatMessage({
+        id: 'orders.error_failed_to_save_order'
+      }))
       return false
     } finally {
       setIsSavingOrder(false)
@@ -342,7 +358,9 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
           setError(
             err.envelope
               ? translateApiMessage(err.envelope)
-              : tOrders('error_failed_to_receive_order')
+              : tOrders.formatMessage({
+              id: 'orders.error_failed_to_receive_order'
+            })
           )
           return false
         }
@@ -370,7 +388,9 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       return true
     } catch (err) {
       console.error('Error receiving order:', err)
-      setError(tOrders('error_failed_to_receive_order'))
+      setError(tOrders.formatMessage({
+        id: 'orders.error_failed_to_receive_order'
+      }))
       return false
     } finally {
       setIsReceiving(false)
@@ -394,12 +414,16 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
         setError(
           err.envelope
             ? translateApiMessage(err.envelope)
-            : tOrders('error_failed_to_delete_order')
+            : tOrders.formatMessage({
+            id: 'orders.error_failed_to_delete_order'
+          })
         )
         return false
       }
       console.error('Error deleting order:', err)
-      setError(tOrders('error_failed_to_delete_order'))
+      setError(tOrders.formatMessage({
+        id: 'orders.error_failed_to_delete_order'
+      }))
       return false
     } finally {
       setIsDeletingOrder(false)

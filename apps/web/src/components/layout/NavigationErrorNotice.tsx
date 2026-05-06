@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { usePageTransition } from '@/contexts/page-transition-context'
 
 // Slim banner that surfaces a transient navigation error (e.g. when the
@@ -9,7 +9,7 @@ import { usePageTransition } from '@/contexts/page-transition-context'
 // string, so the notice always reflects the user's current language even
 // if they switch languages mid-session.
 export function NavigationErrorNotice() {
-  const t = useTranslations('navigation')
+  const t = useIntl()
   const { navigationError } = usePageTransition()
 
   if (!navigationError) return null

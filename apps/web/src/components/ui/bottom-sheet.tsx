@@ -1,9 +1,9 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { motion, AnimatePresence, useDragControls, type PanInfo } from 'framer-motion'
 
 interface BottomSheetProps {
@@ -38,7 +38,7 @@ function BottomSheetInner({
   title?: string
   children: ReactNode
 }) {
-  const t = useTranslations('common')
+  const t = useIntl()
   const sheetRef = useRef<HTMLDivElement>(null)
   const dragControls = useDragControls()
 
@@ -104,7 +104,9 @@ function BottomSheetInner({
               onClick={onClose}
               onPointerDown={(e) => e.stopPropagation()}
               className="bottom-sheet-close"
-              aria-label={t('close')}
+              aria-label={t.formatMessage({
+                id: 'common.close'
+              })}
             >
               <X size={20} />
             </button>
@@ -116,5 +118,5 @@ function BottomSheetInner({
         </div>
       </motion.div>
     </motion.div>
-  )
+  );
 }

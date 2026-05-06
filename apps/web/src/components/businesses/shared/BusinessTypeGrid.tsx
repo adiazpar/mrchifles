@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { BUSINESS_TYPES } from '@kasero/shared/locale-config'
 import type { BusinessType } from '@/hooks'
 import { BUSINESS_TYPE_ICONS, BUSINESS_TYPE_FALLBACK_EMOJIS } from './businessTypeIcons'
@@ -24,14 +24,26 @@ export interface BusinessTypeGridProps {
 }
 
 export function BusinessTypeGrid({ selected, onSelect }: BusinessTypeGridProps) {
-  const t = useTranslations('createBusiness')
+  const t = useIntl()
   const labels: Record<string, string> = {
-    food: t('business_type_food'),
-    retail: t('business_type_retail'),
-    services: t('business_type_services'),
-    wholesale: t('business_type_wholesale'),
-    manufacturing: t('business_type_manufacturing'),
-    other: t('business_type_other'),
+    food: t.formatMessage({
+      id: 'createBusiness.business_type_food'
+    }),
+    retail: t.formatMessage({
+      id: 'createBusiness.business_type_retail'
+    }),
+    services: t.formatMessage({
+      id: 'createBusiness.business_type_services'
+    }),
+    wholesale: t.formatMessage({
+      id: 'createBusiness.business_type_wholesale'
+    }),
+    manufacturing: t.formatMessage({
+      id: 'createBusiness.business_type_manufacturing'
+    }),
+    other: t.formatMessage({
+      id: 'createBusiness.business_type_other'
+    }),
   }
 
   return (

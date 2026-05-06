@@ -1,5 +1,6 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 /**
  * Product settings + categories store, shared across every page under
  * `/[businessId]/**`.
@@ -21,7 +22,6 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { useTranslations } from 'next-intl'
 import {
   apiRequest,
   apiPost,
@@ -124,7 +124,7 @@ export function ProductSettingsProvider({
   businessId: string
   children: React.ReactNode
 }) {
-  const t = useTranslations('productSettings')
+  const t = useIntl()
   const translateApiMessage = useApiMessage()
 
   const [categories, setCategoriesState] = useState<ProductCategory[]>(() => getCachedCategories(businessId) || [])
@@ -171,7 +171,9 @@ export function ProductSettingsProvider({
       setError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_load_categories'),
+          : t.formatMessage({
+          id: 'productSettings.error_failed_to_load_categories'
+        }),
       )
     } finally {
       setIsLoadingCategories(false)
@@ -189,7 +191,9 @@ export function ProductSettingsProvider({
       setError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_load_settings'),
+          : t.formatMessage({
+          id: 'productSettings.error_failed_to_load_settings'
+        }),
       )
     } finally {
       setIsLoadingSettings(false)
@@ -226,7 +230,9 @@ export function ProductSettingsProvider({
         setError(
           err instanceof ApiError && err.envelope
             ? translateApiMessage(err.envelope)
-            : t('error_failed_to_create_category'),
+            : t.formatMessage({
+            id: 'productSettings.error_failed_to_create_category'
+          }),
         )
         return null
       } finally {
@@ -252,7 +258,9 @@ export function ProductSettingsProvider({
         setError(
           err instanceof ApiError && err.envelope
             ? translateApiMessage(err.envelope)
-            : t('error_failed_to_update_category'),
+            : t.formatMessage({
+            id: 'productSettings.error_failed_to_update_category'
+          }),
         )
         return null
       } finally {
@@ -281,7 +289,9 @@ export function ProductSettingsProvider({
         setError(
           err instanceof ApiError && err.envelope
             ? translateApiMessage(err.envelope)
-            : t('error_failed_to_delete_category'),
+            : t.formatMessage({
+            id: 'productSettings.error_failed_to_delete_category'
+          }),
         )
         return false
       } finally {
@@ -315,7 +325,9 @@ export function ProductSettingsProvider({
         setError(
           err instanceof ApiError && err.envelope
             ? translateApiMessage(err.envelope)
-            : t('error_failed_to_reorder_categories'),
+            : t.formatMessage({
+            id: 'productSettings.error_failed_to_reorder_categories'
+          }),
         )
         return false
       } finally {
@@ -343,7 +355,9 @@ export function ProductSettingsProvider({
         setError(
           err instanceof ApiError && err.envelope
             ? translateApiMessage(err.envelope)
-            : t('error_failed_to_update_settings'),
+            : t.formatMessage({
+            id: 'productSettings.error_failed_to_update_settings'
+          }),
         )
         return null
       } finally {

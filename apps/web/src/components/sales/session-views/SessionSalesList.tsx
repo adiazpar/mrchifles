@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Modal, Spinner } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
@@ -40,7 +40,7 @@ export function SessionSalesList({
   sessionId,
   onSaleTap,
 }: SessionSalesListProps) {
-  const t = useTranslations('sales.session.active_sales_modal')
+  const t = useIntl()
   const { formatCurrency, formatTime } = useBusinessFormat()
 
   const [items, setItems] = useState<SaleProjection[]>([])
@@ -83,9 +83,11 @@ export function SessionSalesList({
   if (items.length === 0) {
     return (
       <Modal.Item>
-        <p className="text-sm text-text-tertiary text-center py-4">{t('empty')}</p>
+        <p className="text-sm text-text-tertiary text-center py-4">{t.formatMessage({
+          id: 'sales.session.active_sales_modal.empty'
+        })}</p>
       </Modal.Item>
-    )
+    );
   }
 
   return (
@@ -103,7 +105,9 @@ export function SessionSalesList({
           >
             <div className="flex flex-col items-start text-left">
               <span className="text-sm font-medium">
-                {t('sale_label', { number: s.saleNumber })}
+                {t.formatMessage({
+                  id: 'sales.session.active_sales_modal.sale_label'
+                }, { number: s.saleNumber })}
               </span>
               <span className="text-xs text-text-tertiary">
                 {formatTime(new Date(s.createdAt))} · {s.paymentMethod}
@@ -116,5 +120,5 @@ export function SessionSalesList({
         ))}
       </div>
     </Modal.Item>
-  )
+  );
 }

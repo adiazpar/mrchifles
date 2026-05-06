@@ -1,8 +1,8 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useCallback } from 'react'
 import { Crown, Building2 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import type { UseJoinBusinessReturn, CodeType } from '@/hooks'
@@ -12,8 +12,8 @@ interface JoinBusinessModalProps {
 }
 
 export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
-  const t = useTranslations('joinBusiness')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
 
   const {
     isOpen,
@@ -41,7 +41,9 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
       onExitComplete={handleExitComplete}
     >
       {/* Step 0: Code Input */}
-      <Modal.Step title={t('modal_title')} hideBackButton>
+      <Modal.Step title={t.formatMessage({
+        id: 'joinBusiness.modal_title'
+      })} hideBackButton>
         <CodeInputContent
           code={code}
           setCode={setCode}
@@ -57,7 +59,9 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
             className="btn btn-secondary flex-1"
             disabled={isValidating}
           >
-            {tCommon('cancel')}
+            {tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <ValidateButton
             code={code}
@@ -66,9 +70,12 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
           />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 1: Preview */}
-      <Modal.Step title={codeType === 'transfer' ? t('accept_ownership_title') : t('join_business_title')}>
+      <Modal.Step title={codeType === 'transfer' ? t.formatMessage({
+        id: 'joinBusiness.accept_ownership_title'
+      }) : t.formatMessage({
+        id: 'joinBusiness.join_business_title'
+      })}>
         <PreviewContent
           codeType={codeType}
           business={business}
@@ -83,7 +90,11 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
             className="btn btn-secondary flex-1"
             disabled={isJoining}
           >
-            {codeType === 'transfer' ? t('button_decline') : tCommon('cancel')}
+            {codeType === 'transfer' ? t.formatMessage({
+              id: 'joinBusiness.button_decline'
+            }) : tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <JoinButton
             codeType={codeType}
@@ -92,9 +103,12 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
           />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 2: Success */}
-      <Modal.Step title={codeType === 'transfer' ? t('success_transfer_title') : t('success_join_title')} hideBackButton className="modal-step--centered">
+      <Modal.Step title={codeType === 'transfer' ? t.formatMessage({
+        id: 'joinBusiness.success_transfer_title'
+      }) : t.formatMessage({
+        id: 'joinBusiness.success_join_title'
+      })} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <SuccessContent
             codeType={codeType}
@@ -104,7 +118,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
         </Modal.Item>
       </Modal.Step>
     </Modal>
-  )
+  );
 }
 
 // ============================================
@@ -127,13 +141,15 @@ function CodeInputContent({
   error,
   onTryAgain,
 }: CodeInputContentProps) {
-  const t = useTranslations('joinBusiness')
+  const t = useIntl()
 
   return (
     <>
       <Modal.Item>
         <p className="text-sm text-text-secondary text-center">
-          {t('code_input_subtitle')}
+          {t.formatMessage({
+            id: 'joinBusiness.code_input_subtitle'
+          })}
         </p>
       </Modal.Item>
       <Modal.Item>
@@ -141,7 +157,9 @@ function CodeInputContent({
           type="text"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder={t('code_placeholder')}
+          placeholder={t.formatMessage({
+            id: 'joinBusiness.code_placeholder'
+          })}
           maxLength={6}
           className="input text-center text-2xl tracking-widest font-mono"
           autoComplete="off"
@@ -158,7 +176,9 @@ function CodeInputContent({
               onClick={onTryAgain}
               className="block w-full mt-2 text-error font-medium underline"
             >
-              {t('try_again')}
+              {t.formatMessage({
+                id: 'joinBusiness.try_again'
+              })}
             </button>
           </div>
         </Modal.Item>
@@ -167,12 +187,14 @@ function CodeInputContent({
         <Modal.Item>
           <div className="flex items-center justify-center gap-2 text-text-secondary">
             <Spinner size="sm" />
-            <span className="text-sm">{t('validating_code')}</span>
+            <span className="text-sm">{t.formatMessage({
+              id: 'joinBusiness.validating_code'
+            })}</span>
           </div>
         </Modal.Item>
       )}
     </>
-  )
+  );
 }
 
 // ============================================
@@ -187,7 +209,7 @@ interface ValidateButtonProps {
 
 function ValidateButton({ code, isValidating, onValidate }: ValidateButtonProps) {
   const { goToStep } = useModal()
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
 
   const handleClick = useCallback(async () => {
     const success = await onValidate()
@@ -203,9 +225,11 @@ function ValidateButton({ code, isValidating, onValidate }: ValidateButtonProps)
       disabled={code.length < 6 || isValidating}
       className="btn btn-primary flex-1"
     >
-      {isValidating ? <Spinner size="sm" /> : tCommon('continue')}
+      {isValidating ? <Spinner size="sm" /> : tCommon.formatMessage({
+        id: 'common.continue'
+      })}
     </button>
-  )
+  );
 }
 
 // ============================================
@@ -221,11 +245,15 @@ interface PreviewContentProps {
 }
 
 function PreviewContent({ codeType, business, role, fromUser, isJoining }: PreviewContentProps) {
-  const t = useTranslations('joinBusiness')
+  const t = useIntl()
 
   const formatRole = (r: string) => {
-    if (r === 'partner') return t('role_partner')
-    if (r === 'employee') return t('role_employee')
+    if (r === 'partner') return t.formatMessage({
+      id: 'joinBusiness.role_partner'
+    });
+    if (r === 'employee') return t.formatMessage({
+      id: 'joinBusiness.role_employee'
+    });
     return r
   }
 
@@ -235,11 +263,15 @@ function PreviewContent({ codeType, business, role, fromUser, isJoining }: Previ
         <div className="flex flex-col items-center justify-center py-8 gap-3">
           <Spinner size="lg" />
           <p className="text-text-secondary">
-            {codeType === 'transfer' ? t('accepting_transfer') : t('joining_business')}
+            {codeType === 'transfer' ? t.formatMessage({
+              id: 'joinBusiness.accepting_transfer'
+            }) : t.formatMessage({
+              id: 'joinBusiness.joining_business'
+            })}
           </p>
         </div>
       </Modal.Item>
-    )
+    );
   }
 
   if (codeType === 'transfer' && business) {
@@ -252,16 +284,22 @@ function PreviewContent({ codeType, business, role, fromUser, isJoining }: Previ
             </div>
             <h3 className="text-lg font-semibold text-text-primary">{business.name}</h3>
             <p className="text-sm text-text-secondary mt-2">
-              <strong>{fromUser?.name || t('transfer_owner_fallback')}</strong>{' '}
-              {t('transfer_wants_to_transfer')}
+              <strong>{fromUser?.name || t.formatMessage({
+                id: 'joinBusiness.transfer_owner_fallback'
+              })}</strong>{' '}
+              {t.formatMessage({
+                id: 'joinBusiness.transfer_wants_to_transfer'
+              })}
             </p>
             <p className="text-xs text-text-tertiary mt-2">
-              {t('transfer_you_will_become_owner')}
+              {t.formatMessage({
+                id: 'joinBusiness.transfer_you_will_become_owner'
+              })}
             </p>
           </div>
         </Modal.Item>
       </>
-    )
+    );
   }
 
   if (codeType === 'invite' && business) {
@@ -274,12 +312,14 @@ function PreviewContent({ codeType, business, role, fromUser, isJoining }: Previ
             </div>
             <h3 className="text-lg font-semibold text-text-primary">{business.name}</h3>
             <p className="text-sm text-text-secondary mt-2">
-              {t('invite_you_will_join_as')} <strong>{formatRole(role || '')}</strong>
+              {t.formatMessage({
+                id: 'joinBusiness.invite_you_will_join_as'
+              })} <strong>{formatRole(role || '')}</strong>
             </p>
           </div>
         </Modal.Item>
       </>
-    )
+    );
   }
 
   return null
@@ -297,7 +337,7 @@ interface JoinButtonProps {
 
 function JoinButton({ codeType, isJoining, onJoin }: JoinButtonProps) {
   const { goToStep } = useModal()
-  const t = useTranslations('joinBusiness')
+  const t = useIntl()
 
   const handleClick = useCallback(async () => {
     const success = await onJoin()
@@ -316,12 +356,16 @@ function JoinButton({ codeType, isJoining, onJoin }: JoinButtonProps) {
       {isJoining ? (
         <Spinner size="sm" />
       ) : codeType === 'transfer' ? (
-        t('button_accept_transfer')
+        t.formatMessage({
+          id: 'joinBusiness.button_accept_transfer'
+        })
       ) : (
-        t('button_join_business')
+        t.formatMessage({
+          id: 'joinBusiness.button_join_business'
+        })
       )}
     </button>
-  )
+  );
 }
 
 // ============================================
@@ -335,7 +379,7 @@ interface SuccessContentProps {
 }
 
 function SuccessContent({ codeType, business, joinSuccess }: SuccessContentProps) {
-  const t = useTranslations('joinBusiness')
+  const t = useIntl()
   const businessName = business?.name || 'the business'
 
   return (
@@ -355,23 +399,33 @@ function SuccessContent({ codeType, business, joinSuccess }: SuccessContentProps
         className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
         style={{ opacity: joinSuccess ? 1 : 0 }}
       >
-        {codeType === 'transfer' ? t('success_transfer_heading') : t('success_join_heading')}
+        {codeType === 'transfer' ? t.formatMessage({
+          id: 'joinBusiness.success_transfer_heading'
+        }) : t.formatMessage({
+          id: 'joinBusiness.success_join_heading'
+        })}
       </p>
       <p
         className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
         style={{ opacity: joinSuccess ? 1 : 0 }}
       >
         {codeType === 'transfer'
-          ? t('success_transfer_description', { name: businessName })
-          : t('success_join_description', { name: businessName })
+          ? t.formatMessage({
+          id: 'joinBusiness.success_transfer_description'
+        }, { name: businessName })
+          : t.formatMessage({
+          id: 'joinBusiness.success_join_description'
+        }, { name: businessName })
         }
       </p>
       <p
         className="text-xs text-text-tertiary mt-3 transition-opacity duration-500 delay-300"
         style={{ opacity: joinSuccess ? 1 : 0 }}
       >
-        {t('redirecting')}
+        {t.formatMessage({
+          id: 'joinBusiness.redirecting'
+        })}
       </p>
     </div>
-  )
+  );
 }

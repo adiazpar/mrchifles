@@ -1,8 +1,8 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState, useCallback } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { useTranslations } from 'next-intl'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
 import { hapticSuccess } from '@/lib/haptics'
 import { useApiMessage } from '@/hooks/useApiMessage'
@@ -62,7 +62,7 @@ export interface UseJoinBusinessReturn {
 
 export function useJoinBusiness(): UseJoinBusinessReturn {
   const router = useRouter()
-  const t = useTranslations('joinBusiness')
+  const t = useIntl()
   const translateApiMessage = useApiMessage()
 
   // Modal state
@@ -135,7 +135,9 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
         setError(
           hasMessageEnvelope(data)
             ? translateApiMessage(data)
-            : t('error_invalid_code')
+            : t.formatMessage({
+            id: 'joinBusiness.error_invalid_code'
+          })
         )
         setIsValidating(false)
         return false
@@ -144,7 +146,9 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
       setError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_validate')
+          : t.formatMessage({
+          id: 'joinBusiness.error_failed_to_validate'
+        })
       )
       setIsValidating(false)
       return false
@@ -176,7 +180,9 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
       setError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_complete')
+          : t.formatMessage({
+          id: 'joinBusiness.error_failed_to_complete'
+        })
       )
       setIsJoining(false)
       return false

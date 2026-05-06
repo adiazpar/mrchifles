@@ -1,12 +1,12 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { Fragment, useState } from 'react'
 import { useParams } from 'react-router'
 import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig, Pencil, Trash2 } from 'lucide-react'
 import { Modal, Spinner, SwipeableRow } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { usePageTransition } from '@/contexts/page-transition-context'
-import { useTranslations } from 'next-intl'
 import { scrollToTop } from '@/lib/scroll'
 import {
   ORDER_SORT_OPTIONS,
@@ -100,25 +100,41 @@ export function OrdersTab({
   isModalOpen,
   isLoading = false,
 }: OrdersTabProps) {
-  const t = useTranslations('orders')
-  const tProducts = useTranslations('products')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tProducts = useIntl()
+  const tCommon = useIntl()
   const params = useParams<{ businessId: string }>()
   const { navigate } = usePageTransition()
   const [isSortSheetOpen, setSortSheetOpen] = useState(false)
 
   const sortLabels: Record<OrderSortOption, string> = {
-    date_desc: t('sort_date_desc'),
-    date_asc: t('sort_date_asc'),
-    total_desc: t('sort_total_desc'),
-    total_asc: t('sort_total_asc'),
+    date_desc: t.formatMessage({
+      id: 'orders.sort_date_desc'
+    }),
+    date_asc: t.formatMessage({
+      id: 'orders.sort_date_asc'
+    }),
+    total_desc: t.formatMessage({
+      id: 'orders.sort_total_desc'
+    }),
+    total_asc: t.formatMessage({
+      id: 'orders.sort_total_asc'
+    }),
   }
 
   const statusFilterLabels: Record<OrderStatusFilter, string> = {
-    all: t('filter_all'),
-    pending: t('filter_status_pending'),
-    received: t('filter_status_received'),
-    overdue: t('filter_status_overdue'),
+    all: t.formatMessage({
+      id: 'orders.filter_all'
+    }),
+    pending: t.formatMessage({
+      id: 'orders.filter_status_pending'
+    }),
+    received: t.formatMessage({
+      id: 'orders.filter_status_received'
+    }),
+    overdue: t.formatMessage({
+      id: 'orders.filter_status_overdue'
+    }),
   }
 
   return (
@@ -128,23 +144,30 @@ export function OrdersTab({
           {error}
         </div>
       )}
-
       {/* No products and no orders - show empty state */}
       {products.length === 0 && orders.length === 0 ? (
         <div className="empty-state-fill">
           <Clipboard className="empty-state-icon" />
-          <h3 className="empty-state-title">{t('empty_no_products_title')}</h3>
+          <h3 className="empty-state-title">{t.formatMessage({
+            id: 'orders.empty_no_products_title'
+          })}</h3>
           <p className="empty-state-description">
-            {t('empty_no_products_description')}
+            {t.formatMessage({
+              id: 'orders.empty_no_products_description'
+            })}
           </p>
         </div>
       ) : orders.length === 0 ? (
         /* Products exist but no orders yet */
-        <div className="empty-state-fill">
+        (<div className="empty-state-fill">
           <Clipboard className="empty-state-icon" />
-          <h3 className="empty-state-title">{t('empty_no_orders_title')}</h3>
+          <h3 className="empty-state-title">{t.formatMessage({
+            id: 'orders.empty_no_orders_title'
+          })}</h3>
           <p className="empty-state-description">
-            {t('empty_no_orders_description')}
+            {t.formatMessage({
+              id: 'orders.empty_no_orders_description'
+            })}
           </p>
           {canManage && (
             <button
@@ -154,19 +177,23 @@ export function OrdersTab({
               style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
             >
               <Plus className="w-4 h-4" />
-              {t('create_order_button')}
+              {t.formatMessage({
+                id: 'orders.create_order_button'
+              })}
             </button>
           )}
-        </div>
+        </div>)
       ) : (
         /* Orders exist - show search, filter, and list */
-        <>
+        (<>
           {/* Search Bar + Filter Button */}
           <div className="flex gap-2 items-stretch">
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder={t('search_placeholder')}
+                placeholder={t.formatMessage({
+                  id: 'orders.search_placeholder'
+                })}
                 value={searchQuery}
                 onChange={e => onSearchChange(e.target.value)}
                 className="input input-search w-full h-full"
@@ -177,7 +204,9 @@ export function OrdersTab({
                   type="button"
                   onClick={() => onSearchChange('')}
                   className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-                  aria-label={t('search_clear')}
+                  aria-label={t.formatMessage({
+                    id: 'orders.search_clear'
+                  })}
                 >
                   <X size={18} />
                 </button>
@@ -189,8 +218,12 @@ export function OrdersTab({
               aria-pressed={viewMode === 'completed'}
               aria-label={
                 viewMode === 'completed'
-                  ? t('toggle_showing_completed_aria')
-                  : t('toggle_show_completed_aria')
+                  ? t.formatMessage({
+                  id: 'orders.toggle_showing_completed_aria'
+                })
+                  : t.formatMessage({
+                  id: 'orders.toggle_show_completed_aria'
+                })
               }
               className={`btn btn-icon !rounded-full flex-shrink-0 ${
                 viewMode === 'completed'
@@ -204,19 +237,22 @@ export function OrdersTab({
               type="button"
               onClick={() => setSortSheetOpen(true)}
               className="btn btn-secondary btn-icon flex-shrink-0"
-              aria-label={t('sort_filter_aria')}
+              aria-label={t.formatMessage({
+                id: 'orders.sort_filter_aria'
+              })}
             >
               <ListFilter style={{ width: 18, height: 18 }} />
             </button>
           </div>
-
           {/* Orders List Card */}
           <div className="card p-4 space-y-4">
             {/* List Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-text-secondary">
-                  {t('order_count', { count: filteredOrders.length })}
+                  {t.formatMessage({
+                    id: 'orders.order_count'
+                  }, { count: filteredOrders.length })}
                 </span>
                 <span className="text-text-tertiary">&#183;</span>
                 <button
@@ -228,7 +264,9 @@ export function OrdersTab({
                   }}
                   className="text-sm text-brand hover:text-brand transition-colors"
                 >
-                  {t('providers_link')}
+                  {t.formatMessage({
+                    id: 'orders.providers_link'
+                  })}
                 </button>
               </div>
               {canManage && (
@@ -239,7 +277,9 @@ export function OrdersTab({
                   style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
                 >
                   <Plus style={{ width: 14, height: 14 }} />
-                  {tCommon('add')}
+                  {tCommon.formatMessage({
+                    id: 'common.add'
+                  })}
                 </button>
               )}
             </div>
@@ -257,10 +297,16 @@ export function OrdersTab({
                   {orders.some(o => (viewMode === 'completed'
                     ? getOrderDisplayStatus(o) === 'received'
                     : getOrderDisplayStatus(o) !== 'received'))
-                    ? t('no_results')
+                    ? t.formatMessage({
+                    id: 'orders.no_results'
+                  })
                     : viewMode === 'completed'
-                      ? t('empty_no_completed')
-                      : t('empty_no_active')}
+                      ? t.formatMessage({
+                    id: 'orders.empty_no_completed'
+                  })
+                      : t.formatMessage({
+                    id: 'orders.empty_no_active'
+                  })}
                 </p>
               </div>
             ) : (
@@ -275,14 +321,18 @@ export function OrdersTab({
                     ? [
                         ...(onReceiveOrder ? [{
                           icon: <CircleCheckBig size={20} />,
-                          label: t('action_receive'),
+                          label: t.formatMessage({
+                            id: 'orders.action_receive'
+                          }),
                           variant: 'info' as const,
                           disabled: alreadyReceived,
                           onClick: () => onReceiveOrder(order),
                         }] : []),
                         ...(canManage && onEditOrder ? [{
                           icon: <Pencil size={20} />,
-                          label: t('action_edit'),
+                          label: t.formatMessage({
+                            id: 'orders.action_edit'
+                          }),
                           variant: 'neutral' as const,
                           // Received orders are locked — no quantity / total /
                           // provider edits once stock has been posted.
@@ -291,7 +341,9 @@ export function OrdersTab({
                         }] : []),
                         ...(canManage && onDeleteOrder ? [{
                           icon: <Trash2 size={20} />,
-                          label: t('action_delete'),
+                          label: t.formatMessage({
+                            id: 'orders.action_delete'
+                          }),
                           variant: 'danger' as const,
                           // Received orders can't be deleted either — would
                           // require rolling back the stock changes they posted.
@@ -317,7 +369,6 @@ export function OrdersTab({
               </div>
             )}
           </div>
-
           {/* Back to top button */}
           {filteredOrders.length > 5 && (
             <button
@@ -326,21 +377,26 @@ export function OrdersTab({
               className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
             >
               <ChevronUp className="w-4 h-4" />
-              {tProducts('back_to_top')}
+              {tProducts.formatMessage({
+                id: 'products.back_to_top'
+              })}
             </button>
           )}
-        </>
+        </>)
       )}
-
       {/* Sort & Filter Modal */}
       <Modal
         isOpen={isSortSheetOpen}
         onClose={() => setSortSheetOpen(false)}
-        title={t('sort_filter_title')}
+        title={t.formatMessage({
+          id: 'orders.sort_filter_title'
+        })}
       >
         <Modal.Item>
           <div className="space-y-2">
-            <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('sort_by_label')}</span>
+            <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t.formatMessage({
+              id: 'orders.sort_by_label'
+            })}</span>
             <div className="space-y-1">
               {ORDER_SORT_OPTIONS.map(option => (
                 <button
@@ -369,7 +425,9 @@ export function OrdersTab({
         {viewMode === 'active' && (
           <Modal.Item>
             <div className="space-y-2">
-              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('filter_by_status_label')}</span>
+              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t.formatMessage({
+                id: 'orders.filter_by_status_label'
+              })}</span>
               <div className="space-y-1">
                 {(['all', 'pending', 'overdue'] as OrderStatusFilter[]).map(status => (
                   <button
@@ -401,10 +459,12 @@ export function OrdersTab({
             onClick={() => setSortSheetOpen(false)}
             className="btn btn-primary flex-1"
           >
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal>
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { Modal } from '@/components/ui'
 import { ThemeSelector } from './ThemeSelector'
 import { useTheme } from '@/hooks/useTheme'
@@ -17,13 +17,15 @@ export interface ThemeModalProps {
  * dismissing.
  */
 export function ThemeModal({ isOpen, onClose }: ThemeModalProps) {
-  const t = useTranslations('account')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { theme, setTheme, themeDescription } = useTheme()
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <Modal.Step title={t('theme_label')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'account.theme_label'
+      })}>
         <Modal.Item>
           <ThemeSelector
             theme={theme}
@@ -37,10 +39,12 @@ export function ThemeModal({ isOpen, onClose }: ThemeModalProps) {
             className="btn btn-primary flex-1"
             onClick={onClose}
           >
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { User as UserIcon, UserCircle } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { Modal, useModal, Spinner } from '@/components/ui'
 import { RoleCard } from './RoleCard'
 
@@ -16,35 +16,44 @@ export function RoleChangeContent({
   newRole,
   setNewRole,
 }: RoleChangeContentProps) {
-  const t = useTranslations('team')
+  const t = useIntl()
   return (
     <>
       <Modal.Item>
         <p className="text-sm text-text-secondary">
-          {t('role_change_description', { name: memberName })}
+          {t.formatMessage({
+            id: 'team.role_change_description'
+          }, { name: memberName })}
         </p>
       </Modal.Item>
-
       <Modal.Item>
         <div className="space-y-3">
           <RoleCard
             icon={<UserIcon className="w-5 h-5" />}
-            title={t('role_employee')}
-            description={t('role_employee_description')}
+            title={t.formatMessage({
+              id: 'team.role_employee'
+            })}
+            description={t.formatMessage({
+              id: 'team.role_employee_description'
+            })}
             selected={newRole === 'employee'}
             onClick={() => setNewRole('employee')}
           />
           <RoleCard
             icon={<UserCircle className="w-5 h-5" />}
-            title={t('role_partner')}
-            description={t('role_partner_description')}
+            title={t.formatMessage({
+              id: 'team.role_partner'
+            })}
+            description={t.formatMessage({
+              id: 'team.role_partner_description'
+            })}
             selected={newRole === 'partner'}
             onClick={() => setNewRole('partner')}
           />
         </div>
       </Modal.Item>
     </>
-  )
+  );
 }
 
 // Footer button for role change that handles navigation
@@ -59,7 +68,7 @@ export function RoleChangeSaveButton({
   isDisabled,
   onSubmit,
 }: RoleChangeSaveButtonProps) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   const handleSubmit = () => {
@@ -74,9 +83,11 @@ export function RoleChangeSaveButton({
       className="btn btn-primary flex-1"
       disabled={roleChangeLoading || isDisabled}
     >
-      {roleChangeLoading ? <Spinner /> : tCommon('save')}
+      {roleChangeLoading ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.save'
+      })}
     </button>
-  )
+  );
 }
 
 // Footer button for cancel/back navigation
@@ -85,7 +96,7 @@ export interface RoleChangeCancelButtonProps {
 }
 
 export function RoleChangeCancelButton({ disabled }: RoleChangeCancelButtonProps) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   return (
@@ -95,7 +106,9 @@ export function RoleChangeCancelButton({ disabled }: RoleChangeCancelButtonProps
       className="btn btn-secondary flex-1"
       disabled={disabled}
     >
-      {tCommon('cancel')}
+      {tCommon.formatMessage({
+        id: 'common.cancel'
+      })}
     </button>
-  )
+  );
 }

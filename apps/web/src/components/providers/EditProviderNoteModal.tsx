@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { Trash2 } from 'lucide-react'
 import { Spinner, Modal, useModal, ConfirmationAnimation } from '@/components/ui'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
@@ -18,7 +18,7 @@ interface SaveNoteButtonProps {
 
 function SaveNoteButton({ onSubmit, isSaving, disabled }: SaveNoteButtonProps) {
   const { goToStep } = useModal()
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
 
   // Optimistic: navigate to the save-success step before firing the API.
   const handleClick = () => {
@@ -33,9 +33,11 @@ function SaveNoteButton({ onSubmit, isSaving, disabled }: SaveNoteButtonProps) {
       className="btn btn-primary flex-1"
       disabled={disabled}
     >
-      {isSaving ? <Spinner /> : tCommon('save')}
+      {isSaving ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.save'
+      })}
     </button>
-  )
+  );
 }
 
 // ============================================
@@ -48,7 +50,7 @@ interface DeleteNoteButtonProps {
 }
 
 function DeleteNoteButton({ onConfirm, isDeleting }: DeleteNoteButtonProps) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   // Wait for the API to resolve so a failure lands us back on the form
@@ -66,9 +68,11 @@ function DeleteNoteButton({ onConfirm, isDeleting }: DeleteNoteButtonProps) {
       className="btn btn-danger flex-1"
       disabled={isDeleting}
     >
-      {isDeleting ? <Spinner /> : tCommon('delete')}
+      {isDeleting ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.delete'
+      })}
     </button>
-  )
+  );
 }
 
 // ============================================
@@ -122,8 +126,8 @@ export function EditProviderNoteModal({
   noteDeleted,
   onDelete,
 }: EditProviderNoteModalProps) {
-  const t = useTranslations('providers')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
 
   const isValid = title.trim().length > 0 && body.trim().length > 0
   const hasChanges = editingNote
@@ -140,11 +144,15 @@ export function EditProviderNoteModal({
       isOpen={isOpen}
       onClose={onClose}
       onExitComplete={onExitComplete}
-      title={t('note_modal_title_edit')}
+      title={t.formatMessage({
+        id: 'providers.note_modal_title_edit'
+      })}
       initialStep={initialStep}
     >
       {/* Step 0: edit form */}
-      <Modal.Step title={t('note_modal_title_edit')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'providers.note_modal_title_edit'
+      })}>
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
@@ -153,7 +161,9 @@ export function EditProviderNoteModal({
 
         <Modal.Item>
           <label htmlFor="edit-provider-note-title" className="label">
-            {t('note_title_label')} <span className="text-error">*</span>
+            {t.formatMessage({
+              id: 'providers.note_title_label'
+            })} <span className="text-error">*</span>
           </label>
           <input
             id="edit-provider-note-title"
@@ -161,7 +171,9 @@ export function EditProviderNoteModal({
             value={title}
             onChange={e => onTitleChange(e.target.value)}
             className="input"
-            placeholder={t('note_title_placeholder')}
+            placeholder={t.formatMessage({
+              id: 'providers.note_title_placeholder'
+            })}
             autoComplete="off"
             maxLength={NOTE_TITLE_MAX}
           />
@@ -169,7 +181,9 @@ export function EditProviderNoteModal({
 
         <Modal.Item>
           <label htmlFor="edit-provider-note-body" className="label">
-            {t('note_body_label')} <span className="text-error">*</span>
+            {t.formatMessage({
+              id: 'providers.note_body_label'
+            })} <span className="text-error">*</span>
           </label>
           <textarea
             id="edit-provider-note-body"
@@ -177,7 +191,9 @@ export function EditProviderNoteModal({
             onChange={e => onBodyChange(e.target.value)}
             className="input"
             rows={8}
-            placeholder={t('note_body_placeholder')}
+            placeholder={t.formatMessage({
+              id: 'providers.note_body_placeholder'
+            })}
             maxLength={NOTE_BODY_MAX}
           />
         </Modal.Item>
@@ -193,16 +209,19 @@ export function EditProviderNoteModal({
           />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 1: delete confirmation */}
       <Modal.Step
-        title={t('note_delete_confirm_title')}
+        title={t.formatMessage({
+          id: 'providers.note_delete_confirm_title'
+        })}
         backStep={openedAsDelete ? undefined : 0}
         hideBackButton={openedAsDelete}
       >
         <Modal.Item>
           <p className="text-text-secondary">
-            {t('note_delete_confirm_body', { title: editingNote?.title ?? '' })}
+            {t.formatMessage({
+              id: 'providers.note_delete_confirm_body'
+            }, { title: editingNote?.title ?? '' })}
           </p>
         </Modal.Item>
 
@@ -214,52 +233,70 @@ export function EditProviderNoteModal({
               className="btn btn-secondary flex-1"
               disabled={isDeleting}
             >
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </button>
           ) : (
             <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </Modal.GoToStepButton>
           )}
           <DeleteNoteButton onConfirm={onDelete} isDeleting={isDeleting} />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 2: delete success */}
-      <Modal.Step title={t('success_note_deleted_title')} hideBackButton>
+      <Modal.Step title={t.formatMessage({
+        id: 'providers.success_note_deleted_title'
+      })} hideBackButton>
         <Modal.Item>
           <ConfirmationAnimation
             type="error"
             triggered={noteDeleted}
-            title={t('success_note_deleted_heading')}
-            subtitle={t('success_note_deleted_subtitle')}
+            title={t.formatMessage({
+              id: 'providers.success_note_deleted_heading'
+            })}
+            subtitle={t.formatMessage({
+              id: 'providers.success_note_deleted_subtitle'
+            })}
           />
         </Modal.Item>
 
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 3: save success */}
-      <Modal.Step title={t('success_note_updated_title')} hideBackButton>
+      <Modal.Step title={t.formatMessage({
+        id: 'providers.success_note_updated_title'
+      })} hideBackButton>
         <Modal.Item>
           <ConfirmationAnimation
             type="success"
             triggered={noteSaved}
-            title={t('success_note_updated_heading')}
-            subtitle={t('success_note_updated_subtitle')}
+            title={t.formatMessage({
+              id: 'providers.success_note_updated_heading'
+            })}
+            subtitle={t.formatMessage({
+              id: 'providers.success_note_updated_subtitle'
+            })}
           />
         </Modal.Item>
 
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { REGIONS, getLocalesByRegion, getCurrencyConfig } from '@kasero/shared/locale-config'
 import type { Region } from '@kasero/shared/locale-config'
 
@@ -12,7 +12,7 @@ export interface LocalePickerProps {
 }
 
 export function LocalePicker({ value, onChange, showCurrency = true }: LocalePickerProps) {
-  const t = useTranslations('createBusiness')
+  const t = useIntl()
   const localesByRegion = getLocalesByRegion()
 
   // Derive currency from the selected locale
@@ -27,17 +27,29 @@ export function LocalePicker({ value, onChange, showCurrency = true }: LocalePic
   const currencyConfig = selectedLocale ? getCurrencyConfig(selectedLocale.currency) : null
 
   const regionLabels: Record<Region, string> = {
-    'North America': t('region_north_america'),
-    'Central America': t('region_central_america'),
-    'South America': t('region_south_america'),
-    'Caribbean': t('region_caribbean'),
-    'Europe': t('region_europe'),
+    'North America': t.formatMessage({
+      id: 'createBusiness.region_north_america'
+    }),
+    'Central America': t.formatMessage({
+      id: 'createBusiness.region_central_america'
+    }),
+    'South America': t.formatMessage({
+      id: 'createBusiness.region_south_america'
+    }),
+    'Caribbean': t.formatMessage({
+      id: 'createBusiness.region_caribbean'
+    }),
+    'Europe': t.formatMessage({
+      id: 'createBusiness.region_europe'
+    }),
   }
 
   return (
     <div>
       <label className="block text-sm font-medium text-text-primary mb-2">
-        {t('location_label')}
+        {t.formatMessage({
+          id: 'createBusiness.location_label'
+        })}
       </label>
       <select value={value} onChange={(e) => onChange(e.target.value)} className="input">
         {REGIONS.map((region) => (
@@ -52,10 +64,12 @@ export function LocalePicker({ value, onChange, showCurrency = true }: LocalePic
       </select>
       {showCurrency && currencyConfig && (
         <div className="flex items-center justify-between text-sm text-text-tertiary mt-2">
-          <span>{t('currency_label')}</span>
+          <span>{t.formatMessage({
+            id: 'createBusiness.currency_label'
+          })}</span>
           <span>{currencyConfig.symbol} {currencyConfig.name} ({currencyConfig.code})</span>
         </div>
       )}
     </div>
-  )
+  );
 }

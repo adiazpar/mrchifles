@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { Modal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -30,8 +30,8 @@ interface SuccessStepContentProps {
  * component scan rule, see modal-system.md).
  */
 export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContentProps) {
-  const t = useTranslations('sales.cart')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { formatCurrency } = useBusinessFormat()
 
   const showCashRows = confirmedSale?.method === 'cash'
@@ -59,7 +59,9 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
           </div>
           {confirmedSale && (
             <p className="text-lg font-semibold text-text-primary mt-4">
-              {t('modal_success_heading', { number: confirmedSale.saleNumber })}
+              {t.formatMessage({
+                id: 'sales.cart.modal_success_heading'
+              }, { number: confirmedSale.saleNumber })}
             </p>
           )}
         </div>
@@ -68,22 +70,32 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
         <Modal.Item>
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-text-secondary">{t('modal_success_method_label')}</span>
-              <span className="font-medium">{t(methodLabelKey)}</span>
+              <span className="text-text-secondary">{t.formatMessage({
+                id: 'sales.cart.modal_success_method_label'
+              })}</span>
+              <span className="font-medium">{t.formatMessage({
+                id: 'sales.cart.' + methodLabelKey
+              })}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-text-secondary">{t('modal_success_total_label')}</span>
+              <span className="text-text-secondary">{t.formatMessage({
+                id: 'sales.cart.modal_success_total_label'
+              })}</span>
               <span className="font-medium tabular-nums">{formatCurrency(confirmedSale.total)}</span>
             </div>
             {showCashRows && confirmedSale.tendered != null && (
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">{t('modal_success_tendered_label')}</span>
+                <span className="text-text-secondary">{t.formatMessage({
+                  id: 'sales.cart.modal_success_tendered_label'
+                })}</span>
                 <span className="font-medium tabular-nums">{formatCurrency(confirmedSale.tendered)}</span>
               </div>
             )}
             {showCashRows && confirmedSale.change != null && (
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">{t('modal_success_change_label')}</span>
+                <span className="text-text-secondary">{t.formatMessage({
+                  id: 'sales.cart.modal_success_change_label'
+                })}</span>
                 <span className="font-medium tabular-nums">{formatCurrency(confirmedSale.change)}</span>
               </div>
             )}
@@ -96,9 +108,11 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
           onClick={onDone}
           className="btn btn-primary flex-1"
         >
-          {tCommon('done')}
+          {tCommon.formatMessage({
+            id: 'common.done'
+          })}
         </button>
       </Modal.Footer>
     </>
-  )
+  );
 }

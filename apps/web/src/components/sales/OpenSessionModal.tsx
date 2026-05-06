@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Modal, PriceInput, Spinner, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
@@ -21,8 +21,8 @@ export function OpenSessionModal({
   onClose,
   previousCountedCash,
 }: OpenSessionModalProps) {
-  const t = useTranslations('sales.session.open_modal')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { openSession } = useSalesSessions()
   const translateApiMessage = useApiMessage()
 
@@ -47,11 +47,15 @@ export function OpenSessionModal({
         err instanceof ApiError &&
         err.messageCode === ApiMessageCode.SESSION_ALREADY_OPEN
       ) {
-        setError(t('error_already_open'))
+        setError(t.formatMessage({
+          id: 'sales.session.open_modal.error_already_open'
+        }))
       } else if (err instanceof ApiError && err.envelope) {
         setError(translateApiMessage(err.envelope))
       } else {
-        setError(tCommon('error'))
+        setError(tCommon.formatMessage({
+          id: 'common.error'
+        }))
       }
     } finally {
       setSubmitting(false)
@@ -70,15 +74,23 @@ export function OpenSessionModal({
         setOpened(false)
         setError('')
       }}
-      title={t('title')}
+      title={t.formatMessage({
+        id: 'sales.session.open_modal.title'
+      })}
     >
-      <Modal.Step title={t('title')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'sales.session.open_modal.title'
+      })}>
         <Modal.Item>
-          <p className="text-sm text-text-secondary">{t('description')}</p>
+          <p className="text-sm text-text-secondary">{t.formatMessage({
+            id: 'sales.session.open_modal.description'
+          })}</p>
         </Modal.Item>
         <Modal.Item>
           <label className="label" htmlFor="open-session-starting-cash">
-            {t('starting_cash')}
+            {t.formatMessage({
+              id: 'sales.session.open_modal.starting_cash'
+            })}
           </label>
           <PriceInput
             id="open-session-starting-cash"
@@ -87,7 +99,9 @@ export function OpenSessionModal({
             placeholder="0"
           />
           <p className="text-xs text-text-tertiary mt-2">
-            {t('starting_cash_helper')}
+            {t.formatMessage({
+              id: 'sales.session.open_modal.starting_cash_helper'
+            })}
           </p>
         </Modal.Item>
         <Modal.Footer>
@@ -97,13 +111,16 @@ export function OpenSessionModal({
             className="btn btn-secondary flex-1"
             disabled={submitting}
           >
-            {tCommon('cancel')}
+            {tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <ConfirmButton onConfirm={handleConfirm} submitting={submitting} />
         </Modal.Footer>
       </Modal.Step>
-
-      <Modal.Step title={t('title')} hideBackButton className="modal-step--centered">
+      <Modal.Step title={t.formatMessage({
+        id: 'sales.session.open_modal.title'
+      })} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -119,7 +136,9 @@ export function OpenSessionModal({
             </div>
             {opened ? (
               <p className="text-lg font-semibold text-text-primary mt-4">
-                {t('success_heading')}
+                {t.formatMessage({
+                  id: 'sales.session.open_modal.success_heading'
+                })}
               </p>
             ) : error ? (
               <p className="text-sm text-error mt-4">{error}</p>
@@ -135,17 +154,21 @@ export function OpenSessionModal({
               onClick={onClose}
               className="btn btn-primary flex-1"
             >
-              {tCommon('done')}
+              {tCommon.formatMessage({
+                id: 'common.done'
+              })}
             </button>
           ) : error ? (
             <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1">
-              {t('error_back')}
+              {t.formatMessage({
+                id: 'sales.session.open_modal.error_back'
+              })}
             </Modal.GoToStepButton>
           ) : null}
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }
 
 function ConfirmButton({
@@ -155,7 +178,7 @@ function ConfirmButton({
   onConfirm: (goToStep: (n: number) => void) => Promise<void>
   submitting: boolean
 }) {
-  const t = useTranslations('sales.session.open_modal')
+  const t = useIntl()
   const { goToStep } = useModal()
   return (
     <button
@@ -164,7 +187,9 @@ function ConfirmButton({
       className="btn btn-primary flex-1"
       disabled={submitting}
     >
-      {t('confirm')}
+      {t.formatMessage({
+        id: 'sales.session.open_modal.confirm'
+      })}
     </button>
-  )
+  );
 }

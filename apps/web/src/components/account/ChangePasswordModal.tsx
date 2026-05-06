@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState, useCallback } from 'react'
-import { useTranslations } from 'next-intl'
 import { Modal, Input, Spinner, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useApiMessage } from '@/hooks/useApiMessage'
@@ -18,8 +18,8 @@ export function ChangePasswordModal({
   onClose,
   onExitComplete,
 }: ChangePasswordModalProps) {
-  const t = useTranslations('account')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const translateApiMessage = useApiMessage()
 
   const [current, setCurrent] = useState('')
@@ -58,14 +58,18 @@ export function ChangePasswordModal({
         setError(
           hasMessageEnvelope(data)
             ? translateApiMessage(data)
-            : tCommon('error'),
+            : tCommon.formatMessage({
+            id: 'common.error'
+          }),
         )
         return false
       }
       return true
     } catch (err) {
       console.error('Change password error:', err)
-      setError(tCommon('error'))
+      setError(tCommon.formatMessage({
+        id: 'common.error'
+      }))
       return false
     } finally {
       setIsSaving(false)
@@ -85,7 +89,9 @@ export function ChangePasswordModal({
   // are populated and differ. Distinct from the save-time error shown above.
   const confirmHint =
     confirm.length > 0 && next.length > 0 && next !== confirm
-      ? t('password_mismatch')
+      ? t.formatMessage({
+      id: 'account.password_mismatch'
+    })
       : undefined
 
   return (
@@ -94,7 +100,9 @@ export function ChangePasswordModal({
       onClose={onClose}
       onExitComplete={handleExitComplete}
     >
-      <Modal.Step title={t('password_modal_title')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'account.password_modal_title'
+      })}>
         <Modal.Item>
           {error && (
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mb-4">
@@ -103,37 +111,51 @@ export function ChangePasswordModal({
           )}
 
           <Input
-            label={t('password_current_label')}
+            label={t.formatMessage({
+              id: 'account.password_current_label'
+            })}
             type="password"
             value={current}
             onChange={(e) => setCurrent(e.target.value)}
-            placeholder={t('password_current_placeholder')}
+            placeholder={t.formatMessage({
+              id: 'account.password_current_placeholder'
+            })}
             autoComplete="current-password"
             required
           />
 
           <div className="mt-4">
             <Input
-              label={t('password_new_label')}
+              label={t.formatMessage({
+                id: 'account.password_new_label'
+              })}
               type="password"
               value={next}
               onChange={(e) => setNext(e.target.value)}
-              placeholder={t('password_new_placeholder')}
+              placeholder={t.formatMessage({
+                id: 'account.password_new_placeholder'
+              })}
               autoComplete="new-password"
               required
             />
             <p className="text-xs text-text-tertiary mt-1">
-              {t('password_hint')}
+              {t.formatMessage({
+                id: 'account.password_hint'
+              })}
             </p>
           </div>
 
           <div className="mt-4">
             <Input
-              label={t('password_confirm_label')}
+              label={t.formatMessage({
+                id: 'account.password_confirm_label'
+              })}
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              placeholder={t('password_confirm_placeholder')}
+              placeholder={t.formatMessage({
+                id: 'account.password_confirm_placeholder'
+              })}
               autoComplete="new-password"
               required
             />
@@ -150,8 +172,9 @@ export function ChangePasswordModal({
           />
         </Modal.Footer>
       </Modal.Step>
-
-      <Modal.Step title={t('password_saved_heading')} hideBackButton className="modal-step--centered">
+      <Modal.Step title={t.formatMessage({
+        id: 'account.password_saved_heading'
+      })} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -164,10 +187,14 @@ export function ChangePasswordModal({
               />
             </div>
             <p className="text-lg font-semibold text-text-primary mt-4">
-              {t('password_saved_heading')}
+              {t.formatMessage({
+                id: 'account.password_saved_heading'
+              })}
             </p>
             <p className="text-sm text-text-tertiary mt-1">
-              {t('password_saved_description')}
+              {t.formatMessage({
+                id: 'account.password_saved_description'
+              })}
             </p>
           </div>
         </Modal.Item>
@@ -177,12 +204,14 @@ export function ChangePasswordModal({
             className="btn btn-primary flex-1"
             onClick={onClose}
           >
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }
 
 // ============================================================================
@@ -196,7 +225,7 @@ interface SavePasswordButtonProps {
 }
 
 function SavePasswordButton({ isValid, isSaving, onSave }: SavePasswordButtonProps) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   const handleClick = async () => {
@@ -213,7 +242,9 @@ function SavePasswordButton({ isValid, isSaving, onSave }: SavePasswordButtonPro
       onClick={handleClick}
       disabled={!isValid || isSaving}
     >
-      {isSaving ? <Spinner /> : tCommon('save')}
+      {isSaving ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.save'
+      })}
     </button>
-  )
+  );
 }

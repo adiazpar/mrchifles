@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { Spinner, useModal } from '@/components/ui'
 
 // Generate code button component with modal navigation
@@ -13,7 +13,7 @@ export function GenerateCodeButton({
   isGenerating,
   onGenerate,
 }: GenerateCodeButtonProps) {
-  const t = useTranslations('team')
+  const t = useIntl()
   const { goNext, lock, unlock } = useModal()
 
   const handleGenerate = async () => {
@@ -30,9 +30,11 @@ export function GenerateCodeButton({
       className="btn btn-primary flex-1"
       disabled={isGenerating}
     >
-      {isGenerating ? <Spinner /> : t('generate_code_button')}
+      {isGenerating ? <Spinner /> : t.formatMessage({
+        id: 'team.generate_code_button'
+      })}
     </button>
-  )
+  );
 }
 
 // Confirm delete code button component
@@ -47,7 +49,7 @@ export function ConfirmDeleteCodeButton({
   onDelete,
   successStep = 3,
 }: ConfirmDeleteCodeButtonProps) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   const handleClick = () => {
@@ -62,7 +64,9 @@ export function ConfirmDeleteCodeButton({
       className="btn btn-danger flex-1"
       disabled={isDeletingCode}
     >
-      {isDeletingCode ? <Spinner /> : tCommon('delete')}
+      {isDeletingCode ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.delete'
+      })}
     </button>
-  )
+  );
 }

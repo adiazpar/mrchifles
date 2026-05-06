@@ -1,6 +1,6 @@
+import { useIntl } from 'react-intl';
 import { useState, useCallback } from 'react'
 import { IonPage, IonContent } from '@ionic/react'
-import { useTranslations } from 'next-intl'
 import { useRouter, useSearchParams } from '@/lib/next-navigation-shim'
 import { Input, Spinner } from '@/components/ui'
 import { AuthLayout } from '@/components/auth'
@@ -18,7 +18,7 @@ function safeRedirect(raw: string | null): string {
   // Allow only paths that start with exactly one '/' followed by a
   // non-'/' non-'\\' character. This rejects '//host', '/\\host',
   // 'http://...', and the empty string.
-  return /^\/[^/\\]/.test(raw) ? raw : '/home'
+  return /^\/[^/\\]/.test(raw) ? raw : '/home';
 }
 
 export function LoginPage() {
@@ -31,8 +31,8 @@ export function LoginPage() {
   const redirect = safeRedirect(searchParams.get('redirect'))
   const { login } = useAuth()
   const { playEntry } = useAuthGate()
-  const t = useTranslations('auth')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -60,7 +60,9 @@ export function LoginPage() {
         // overlay during the transition and unmounted afterward.
         await playEntry(redirect)
       } catch {
-        setError(t('connection_error'))
+        setError(t.formatMessage({
+          id: 'auth.connection_error'
+        }))
         setIsLoading(false)
       }
     },
@@ -82,7 +84,9 @@ export function LoginPage() {
       <IonContent>
         <AuthLayout>
           <form onSubmit={handleSubmit} className="auth-main">
-            <h1 className="auth-heading">{t('heading_login')}</h1>
+            <h1 className="auth-heading">{t.formatMessage({
+              id: 'auth.heading_login'
+            })}</h1>
 
             {error && (
               <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
@@ -94,7 +98,9 @@ export function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('email_placeholder')}
+              placeholder={t.formatMessage({
+                id: 'auth.email_placeholder'
+              })}
               autoComplete="email"
               autoFocus
               required
@@ -104,7 +110,9 @@ export function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={t('password_placeholder')}
+              placeholder={t.formatMessage({
+                id: 'auth.password_placeholder'
+              })}
               autoComplete="current-password"
               required
             />
@@ -117,29 +125,39 @@ export function LoginPage() {
               {isLoading ? (
                 <>
                   <Spinner />
-                  <span className="sr-only">{t('logging_in')}</span>
+                  <span className="sr-only">{t.formatMessage({
+                    id: 'auth.logging_in'
+                  })}</span>
                 </>
               ) : (
-                t('continue_button')
+                t.formatMessage({
+                  id: 'auth.continue_button'
+                })
               )}
             </button>
           </form>
 
           <div className="auth-page-footer">
-            <div className="auth-or-divider">{tCommon('or')}</div>
+            <div className="auth-or-divider">{tCommon.formatMessage({
+              id: 'common.or'
+            })}</div>
             <button
               type="button"
               onClick={handleGoToRegister}
               className="btn btn-secondary btn-lg w-full"
             >
-              {t('register_button')}
+              {t.formatMessage({
+                id: 'auth.register_button'
+              })}
             </button>
             <p className="auth-version">
-              {t('version_label', { version: APP_VERSION })}
+              {t.formatMessage({
+                id: 'auth.version_label'
+              }, { version: APP_VERSION })}
             </p>
           </div>
         </AuthLayout>
       </IonContent>
     </IonPage>
-  )
+  );
 }

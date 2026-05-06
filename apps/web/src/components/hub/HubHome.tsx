@@ -1,11 +1,11 @@
 'use client'
 
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl';
 
+import Image from '@/lib/Image'
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { ChevronRight, X, Building2, ChefHat, HandHelping, Store, Boxes, Factory, Shapes, Plus, UserPlus } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
@@ -78,7 +78,7 @@ function HubHomeBody() {
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
   const [isLoading, setIsLoading] = useState(() => getCachedBusinessList().length === 0)
   const [searchQuery, setSearchQuery] = useState('')
-  const t = useTranslations('hub')
+  const t = useIntl()
 
   // Release the auth-gate's hold phase as soon as the hub has its data.
   // Safe to call repeatedly — markHubReady clears its resolver after the
@@ -154,14 +154,18 @@ function HubHomeBody() {
       <main className="hub-content space-y-4">
         <div className="empty-state-fill">
           <Building2 className="empty-state-icon" />
-          <h3 className="empty-state-title">{t('empty_state_title')}</h3>
+          <h3 className="empty-state-title">{t.formatMessage({
+            id: 'hub.empty_state_title'
+          })}</h3>
           <p className="empty-state-description">
-            {t('empty_state_description')}
+            {t.formatMessage({
+              id: 'hub.empty_state_description'
+            })}
           </p>
         </div>
         <HubActionCards onCreate={openCreateModal} onJoin={openJoinModal} />
       </main>
-    )
+    );
   }
 
   const getBusinessIcon = (business: Business) => {
@@ -226,7 +230,9 @@ function HubHomeBody() {
           <div className="flex-1 min-w-0">
             <span className="font-medium truncate block">{business.name}</span>
             <span className="text-xs text-text-tertiary mt-0.5 block">
-              {t('member_count', { count: business.memberCount })}
+              {t.formatMessage({
+                id: 'hub.member_count'
+              }, { count: business.memberCount })}
             </span>
           </div>
 
@@ -242,12 +248,13 @@ function HubHomeBody() {
   return (
     <main className="hub-content space-y-4">
       <HubActionCards onCreate={openCreateModal} onJoin={openJoinModal} />
-
       {/* Search Bar */}
       <div className="relative">
         <input
           type="text"
-          placeholder={t('search_placeholder')}
+          placeholder={t.formatMessage({
+            id: 'hub.search_placeholder'
+          })}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="input input-search w-full"
@@ -258,25 +265,31 @@ function HubHomeBody() {
             type="button"
             onClick={() => setSearchQuery('')}
             className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-            aria-label={t('search_clear')}
+            aria-label={t.formatMessage({
+              id: 'hub.search_clear'
+            })}
           >
             <X size={18} />
           </button>
         )}
       </div>
-
       {/* No search results */}
       {searchQuery && !hasFilteredResults && (
         <div className="text-center py-8 text-text-secondary">
-          <p>{t('no_results', { query: searchQuery })}</p>
+          <p>{t.formatMessage({
+            id: 'hub.no_results'
+          }, { query: searchQuery })}</p>
         </div>
       )}
-
       {ownedBusinesses.length > 0 && (
         <div className="card p-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-text-secondary">
-              {ownedBusinesses.length === 1 ? t('section_owned_singular') : t('section_owned_plural')}
+              {ownedBusinesses.length === 1 ? t.formatMessage({
+                id: 'hub.section_owned_singular'
+              }) : t.formatMessage({
+                id: 'hub.section_owned_plural'
+              })}
             </span>
           </div>
           <hr className="border-border" />
@@ -285,12 +298,15 @@ function HubHomeBody() {
           </div>
         </div>
       )}
-
       {joinedBusinesses.length > 0 && (
         <div className="card p-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-text-secondary">
-              {joinedBusinesses.length === 1 ? t('section_joined_singular') : t('section_joined_plural')}
+              {joinedBusinesses.length === 1 ? t.formatMessage({
+                id: 'hub.section_joined_singular'
+              }) : t.formatMessage({
+                id: 'hub.section_joined_plural'
+              })}
             </span>
           </div>
           <hr className="border-border" />
@@ -300,7 +316,7 @@ function HubHomeBody() {
         </div>
       )}
     </main>
-  )
+  );
 }
 
 interface HubActionCardsProps {
@@ -309,7 +325,7 @@ interface HubActionCardsProps {
 }
 
 function HubActionCards({ onCreate, onJoin }: HubActionCardsProps) {
-  const t = useTranslations('hub')
+  const t = useIntl()
   return (
     <div className="caja-actions">
       <button
@@ -322,8 +338,12 @@ function HubActionCards({ onCreate, onJoin }: HubActionCardsProps) {
           <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
         </div>
         <div className="caja-action-btn__text">
-          <span className="caja-action-btn__title">{t('action_create_title')}</span>
-          <span className="caja-action-btn__desc">{t('action_create_desc')}</span>
+          <span className="caja-action-btn__title">{t.formatMessage({
+            id: 'hub.action_create_title'
+          })}</span>
+          <span className="caja-action-btn__desc">{t.formatMessage({
+            id: 'hub.action_create_desc'
+          })}</span>
         </div>
       </button>
       <button
@@ -336,10 +356,14 @@ function HubActionCards({ onCreate, onJoin }: HubActionCardsProps) {
           <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
         </div>
         <div className="caja-action-btn__text">
-          <span className="caja-action-btn__title">{t('action_join_title')}</span>
-          <span className="caja-action-btn__desc">{t('action_join_desc')}</span>
+          <span className="caja-action-btn__title">{t.formatMessage({
+            id: 'hub.action_join_title'
+          })}</span>
+          <span className="caja-action-btn__desc">{t.formatMessage({
+            id: 'hub.action_join_desc'
+          })}</span>
         </div>
       </button>
     </div>
-  )
+  );
 }

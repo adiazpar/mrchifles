@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { memo } from 'react'
-import { useTranslations } from 'next-intl'
 import { Calendar, CircleCheckBig, CircleAlert, Clock, UserPlus, UserCheck, Truck } from 'lucide-react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getOrderDisplayStatus, type ExpandedOrder } from '@/lib/products'
@@ -28,7 +28,7 @@ export const OrderListItem = memo(function OrderListItem({
   onView,
   hideProviderRow = false,
 }: OrderListItemProps) {
-  const t = useTranslations('orders')
+  const t = useIntl()
   const { formatCurrency, formatDate } = useBusinessFormat()
   const items = order.expand?.['order_items(order)'] || []
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
@@ -40,9 +40,15 @@ export const OrderListItem = memo(function OrderListItem({
     overdue: { bg: '!bg-error-subtle', text: 'text-error' },
   }
   const statusLabel = {
-    pending: t('status_pending'),
-    received: t('status_received'),
-    overdue: t('status_overdue'),
+    pending: t.formatMessage({
+      id: 'orders.status_pending'
+    }),
+    received: t.formatMessage({
+      id: 'orders.status_received'
+    }),
+    overdue: t.formatMessage({
+      id: 'orders.status_overdue'
+    }),
   }
   const colors = statusColors[displayStatus]
 
@@ -83,7 +89,9 @@ export const OrderListItem = memo(function OrderListItem({
               {orderLabel}
             </span>
             <span className="text-xs text-text-tertiary mt-0.5 block">
-              {t('item_unit_count', { count: itemCount })}
+              {t.formatMessage({
+                id: 'orders.item_unit_count'
+              }, { count: itemCount })}
             </span>
           </div>
 
@@ -104,7 +112,9 @@ export const OrderListItem = memo(function OrderListItem({
             <Calendar className="w-4 h-4 text-text-tertiary" />
           </div>
           <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-            {t('ordered_on_label')}
+            {t.formatMessage({
+              id: 'orders.ordered_on_label'
+            })}
           </span>
           <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate tabular-nums">
             {formatDate(new Date(order.date))}
@@ -117,7 +127,9 @@ export const OrderListItem = memo(function OrderListItem({
               <UserPlus className="w-4 h-4 text-text-tertiary" />
             </div>
             <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-              {t('ordered_by_label')}
+              {t.formatMessage({
+                id: 'orders.ordered_by_label'
+              })}
             </span>
             <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
               {order.expand.createdByUser.name || order.expand.createdByUser.email}
@@ -131,7 +143,9 @@ export const OrderListItem = memo(function OrderListItem({
               <UserCheck className="w-4 h-4 text-text-tertiary" />
             </div>
             <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-              {t('received_by_label')}
+              {t.formatMessage({
+                id: 'orders.received_by_label'
+              })}
             </span>
             <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
               {order.expand.receivedByUser.name || order.expand.receivedByUser.email}
@@ -145,7 +159,9 @@ export const OrderListItem = memo(function OrderListItem({
               <Truck className="w-4 h-4 text-text-tertiary" />
             </div>
             <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-              {t('ordered_to_label')}
+              {t.formatMessage({
+                id: 'orders.ordered_to_label'
+              })}
             </span>
             <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
               {order.expand.provider.name}
@@ -154,5 +170,5 @@ export const OrderListItem = memo(function OrderListItem({
         )}
       </div>
     </div>
-  )
+  );
 })

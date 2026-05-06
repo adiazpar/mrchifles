@@ -1,9 +1,9 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { Fragment } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { Plus, Handshake, ShoppingCart, Pencil, Trash2 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { Spinner, SwipeableRow } from '@/components/ui'
 import { useProviderManagement } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
@@ -17,8 +17,8 @@ interface ProvidersDrilldownProps {
 
 export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
   const router = useRouter()
-  const t = useTranslations('providers')
-  const tNav = useTranslations('navigation')
+  const t = useIntl()
+  const tNav = useIntl()
 
   const { setOrders } = useOrders()
 
@@ -60,7 +60,9 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
 
   return (
     <>
-      <DrillDownHeader title={tNav('providers')} onBack={() => router.back()} />
+      <DrillDownHeader title={tNav.formatMessage({
+        id: 'navigation.providers'
+      })} onBack={() => router.back()} />
       {isLoading ? (
         <main className="page-loading">
           <Spinner className="spinner-lg" />
@@ -77,7 +79,9 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
             <div className="card p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-text-secondary">
-                  {t('count', { count: providers.length })}
+                  {t.formatMessage({
+                    id: 'providers.count'
+                  }, { count: providers.length })}
                 </span>
                 {canManage && (
                   <button
@@ -87,7 +91,9 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
                     style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
                   >
                     <Plus style={{ width: 14, height: 14 }} />
-                    {t('add_button')}
+                    {t.formatMessage({
+                      id: 'providers.add_button'
+                    })}
                   </button>
                 )}
               </div>
@@ -100,19 +106,25 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
                     ? [
                         {
                           icon: <ShoppingCart size={20} />,
-                          label: t('action_new_order'),
+                          label: t.formatMessage({
+                            id: 'providers.action_new_order'
+                          }),
                           variant: 'info' as const,
                           onClick: () => orderFlows.openNewOrder(provider.id),
                         },
                         {
                           icon: <Pencil size={20} />,
-                          label: t('action_edit'),
+                          label: t.formatMessage({
+                            id: 'providers.action_edit'
+                          }),
                           variant: 'neutral' as const,
                           onClick: () => handleOpenModal(provider),
                         },
                         {
                           icon: <Trash2 size={20} />,
-                          label: t('action_delete'),
+                          label: t.formatMessage({
+                            id: 'providers.action_delete'
+                          }),
                           variant: 'danger' as const,
                           onClick: () => handleOpenDelete(provider),
                         },
@@ -144,9 +156,13 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
           {providers.length === 0 && (
             <div className="empty-state-fill">
               <Handshake className="empty-state-icon" />
-              <h3 className="empty-state-title">{t('empty_title')}</h3>
+              <h3 className="empty-state-title">{t.formatMessage({
+                id: 'providers.empty_title'
+              })}</h3>
               <p className="empty-state-description">
-                {t('empty_description')}
+                {t.formatMessage({
+                  id: 'providers.empty_description'
+                })}
               </p>
               {canManage && (
                 <button
@@ -156,14 +172,15 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
                   style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
                 >
                   <Plus className="w-4 h-4" />
-                  {t('add_provider_button')}
+                  {t.formatMessage({
+                    id: 'providers.add_provider_button'
+                  })}
                 </button>
               )}
             </div>
           )}
         </main>
       )}
-
       <ProviderModal
         isOpen={isModalOpen}
         initialStep={modalInitialStep}
@@ -187,8 +204,7 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
         providerDeleted={providerDeleted}
         onDelete={handleDelete}
       />
-
       {orderFlows.modals}
     </>
-  )
+  );
 }

@@ -1,9 +1,9 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import { useMotionValue } from 'framer-motion'
-import { useTranslations } from 'next-intl'
 import {
   getLayerStack,
   getLayerKey,
@@ -76,7 +76,7 @@ type Entry = {
 export function LayerStack() {
   const pathname = usePathname() || '/'
   const router = useRouter()
-  const t = useTranslations()
+  const t = useIntl()
   const { pendingHref } = usePageTransition()
   const peelProgress = useMotionValue(0)
   const reducedMotion = prefersReducedMotion()
@@ -167,7 +167,9 @@ export function LayerStack() {
     router.back()
   }, [router])
 
-  const ariaLabel = t('common.detail')
+  const ariaLabel = t.formatMessage({
+    id: 'common.detail'
+  })
 
   // Pre-compute live count so per-entry props can determine isTop /
   // isUnderlay during the single render pass.

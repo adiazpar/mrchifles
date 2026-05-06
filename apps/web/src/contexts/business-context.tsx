@@ -1,5 +1,6 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import {
   createContext,
   useCallback,
@@ -10,7 +11,6 @@ import {
   type ReactNode,
 } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { useTranslations } from 'next-intl'
 import { useAuth } from './auth-context'
 import { usePageTransition } from './page-transition-context'
 import type { BusinessRole } from '@kasero/shared/business-role'
@@ -61,7 +61,7 @@ interface BusinessProviderProps {
 
 export function BusinessProvider({ children, businessId }: BusinessProviderProps) {
   const router = useRouter()
-  const t = useTranslations('business')
+  const t = useIntl()
   const { user, isLoading: authLoading } = useAuth()
   const { getCachedBusiness, setCachedBusiness } = usePageTransition()
   const [business, setBusiness] = useState<Business | null>(null)
@@ -103,11 +103,17 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
       })
     } catch (err) {
       if (err instanceof ApiError) {
-        if (err.statusCode === 404) { setError(t('error_not_found')); router.replace('/'); return }
-        if (err.statusCode === 403) { setError(t('error_no_access')); router.replace('/'); return }
+        if (err.statusCode === 404) { setError(t.formatMessage({
+          id: 'business.error_not_found'
+        })); router.replace('/'); return }
+        if (err.statusCode === 403) { setError(t.formatMessage({
+          id: 'business.error_no_access'
+        })); router.replace('/'); return }
       }
       console.error('Business access validation error:', err)
-      setError(t('error_failed_to_validate'))
+      setError(t.formatMessage({
+        id: 'business.error_failed_to_validate'
+      }))
     } finally {
       setIsLoading(false)
     }

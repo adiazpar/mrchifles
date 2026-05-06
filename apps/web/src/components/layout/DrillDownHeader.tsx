@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { ChevronLeft } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { UserMenu } from './user-menu'
 
 interface DrillDownHeaderProps {
@@ -12,7 +12,7 @@ interface DrillDownHeaderProps {
 }
 
 export function DrillDownHeader({ title, subtitle, onBack, showUserMenu = true }: DrillDownHeaderProps) {
-  const t = useTranslations()
+  const t = useIntl()
   return (
     <header className="page-header page-header--fixed page-header--three-col">
       <div className="page-header__content">
@@ -21,7 +21,9 @@ export function DrillDownHeader({ title, subtitle, onBack, showUserMenu = true }
           onClick={onBack}
           data-tap-feedback
           className="btn btn-secondary btn-icon flex-shrink-0"
-          aria-label={t('ui.page_header.go_back')}
+          aria-label={t.formatMessage({
+            id: 'ui.page_header.go_back'
+          })}
         >
           <ChevronLeft style={{ width: 20, height: 20 }} />
         </button>
@@ -34,5 +36,5 @@ export function DrillDownHeader({ title, subtitle, onBack, showUserMenu = true }
         {showUserMenu && <UserMenu />}
       </div>
     </header>
-  )
+  );
 }

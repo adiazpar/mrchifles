@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useRouter } from '@/lib/next-navigation-shim'
-import { useTranslations } from 'next-intl'
 import { Modal, Spinner } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { useLeaveBusiness } from '@/hooks/useLeaveBusiness'
@@ -9,8 +9,8 @@ import { useLeaveBusiness } from '@/hooks/useLeaveBusiness'
 interface Props { isOpen: boolean; onClose: () => void }
 
 export function LeaveBusinessModal({ isOpen, onClose }: Props) {
-  const t = useTranslations('manage')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const router = useRouter()
   const { business } = useBusiness()
   const { leave, isSubmitting, error, reset } = useLeaveBusiness()
@@ -22,10 +22,14 @@ export function LeaveBusinessModal({ isOpen, onClose }: Props) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} onExitComplete={reset}>
-      <Modal.Step title={t('leave_business')} hideBackButton>
+      <Modal.Step title={t.formatMessage({
+        id: 'manage.leave_business'
+      })} hideBackButton>
         <Modal.Item>
           <p className="text-sm text-text-secondary">
-            {t('leave_business_warning', { businessName: business?.name ?? '' })}
+            {t.formatMessage({
+              id: 'manage.leave_business_warning'
+            }, { businessName: business?.name ?? '' })}
           </p>
         </Modal.Item>
         {error && (
@@ -35,7 +39,9 @@ export function LeaveBusinessModal({ isOpen, onClose }: Props) {
         )}
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-            {tCommon('cancel')}
+            {tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <button
             type="button"
@@ -44,10 +50,12 @@ export function LeaveBusinessModal({ isOpen, onClose }: Props) {
             className="btn btn-primary flex-1"
             style={{ background: 'var(--color-error)' }}
           >
-            {isSubmitting ? <Spinner size="sm" /> : t('leave_business_button')}
+            {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({
+              id: 'manage.leave_business_button'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

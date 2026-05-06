@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Menu } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
@@ -9,7 +9,7 @@ import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { UserMenuContent } from './user-menu-content'
 
 export function UserMenu() {
-  const t = useTranslations('ui.user_menu')
+  const t = useIntl()
   const { user } = useAuth()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -26,7 +26,9 @@ export function UserMenu() {
           onClick={() => setMenuOpen(true)}
           data-tap-feedback
           className="btn btn-secondary btn-icon flex-shrink-0"
-          aria-label={t('open')}
+          aria-label={t.formatMessage({
+            id: 'ui.user_menu.open'
+          })}
         >
           <Menu style={{ width: 20, height: 20 }} />
         </button>
@@ -40,10 +42,12 @@ export function UserMenu() {
       <BottomSheet
         isOpen={menuOpen}
         onClose={handleClose}
-        title={t('title')}
+        title={t.formatMessage({
+          id: 'ui.user_menu.title'
+        })}
       >
         <UserMenuContent onAction={handleClose} />
       </BottomSheet>
     </>
-  )
+  );
 }

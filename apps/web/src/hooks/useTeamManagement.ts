@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
 import { apiRequest, apiPost, ApiError } from '@/lib/api-client'
@@ -111,7 +111,7 @@ interface ApiSuccessResponse {
 export function useTeamManagement({ businessId }: UseTeamManagementOptions): UseTeamManagementReturn {
   const { user } = useAuth()
   const { role } = useBusiness()
-  const t = useTranslations('team')
+  const t = useIntl()
   const translateApiMessage = useApiMessage()
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
@@ -159,7 +159,9 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
         setError(
           err instanceof ApiError && err.envelope
             ? translateApiMessage(err.envelope)
-            : t('error_failed_to_load')
+            : t.formatMessage({
+            id: 'team.error_failed_to_load'
+          })
         )
       } finally {
         setIsLoading(false)
@@ -227,7 +229,9 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       setError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_generate_code')
+          : t.formatMessage({
+          id: 'team.error_failed_to_generate_code'
+        })
       )
     } finally {
       setIsGenerating(false)
@@ -261,7 +265,9 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
     } catch (err) {
       console.error('Failed to copy:', err)
       // Show the code in an alert as last resort
-      alert(t('copy_fallback_alert', { code }))
+      alert(t.formatMessage({
+        id: 'team.copy_fallback_alert'
+      }, { code }))
     }
   }, [t])
 
@@ -307,7 +313,9 @@ export function useTeamManagement({ businessId }: UseTeamManagementOptions): Use
       setError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_regenerate_code')
+          : t.formatMessage({
+          id: 'team.error_failed_to_regenerate_code'
+        })
       )
     } finally {
       setIsGenerating(false)

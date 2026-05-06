@@ -1,4 +1,5 @@
-'use client'
+'use client';
+import { useIntl } from 'react-intl';
 
 import Image from '@/lib/Image'
 
@@ -33,7 +34,6 @@ function ChevronDownGlyph({ className }: { className?: string }) {
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { Product, Provider } from '@kasero/shared/types'
 import { getOrderDisplayStatus } from '@/lib/products'
@@ -112,7 +112,7 @@ export interface OrderDetailModalProps {
 // ============================================
 
 function GoToReceiveStepButton({ order, onInitialize }: { order: ExpandedOrder; onInitialize: (order: ExpandedOrder) => void }) {
-  const t = useTranslations('orders')
+  const t = useIntl()
   const { goToStep } = useModal()
 
   const handleClick = () => {
@@ -126,13 +126,15 @@ function GoToReceiveStepButton({ order, onInitialize }: { order: ExpandedOrder; 
       onClick={handleClick}
       className="btn btn-primary flex-1"
     >
-      {t('receive_button')}
+      {t.formatMessage({
+        id: 'orders.receive_button'
+      })}
     </button>
-  )
+  );
 }
 
 function GoToEditStepButton({ order, onInitialize }: { order: ExpandedOrder; onInitialize: (order: ExpandedOrder) => void }) {
-  const t = useTranslations('orders')
+  const t = useIntl()
   const { goToStep } = useModal()
 
   const handleClick = () => {
@@ -145,15 +147,17 @@ function GoToEditStepButton({ order, onInitialize }: { order: ExpandedOrder; onI
       type="button"
       onClick={handleClick}
       className="btn btn-secondary btn-icon"
-      title={t('edit_order_aria')}
+      title={t.formatMessage({
+        id: 'orders.edit_order_aria'
+      })}
     >
       <Pencil className="text-brand" style={{ width: 16, height: 16 }} />
     </button>
-  )
+  );
 }
 
 function ConfirmReceiveButton({ onReceive, isReceiving }: { onReceive: () => Promise<boolean>; isReceiving: boolean }) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   const handleClick = async () => {
@@ -170,14 +174,16 @@ function ConfirmReceiveButton({ onReceive, isReceiving }: { onReceive: () => Pro
       className="btn btn-primary flex-1"
       disabled={isReceiving}
     >
-      {isReceiving ? <Spinner /> : tCommon('confirm')}
+      {isReceiving ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.confirm'
+      })}
     </button>
-  )
+  );
 }
 
 
 function SaveEditOrderButton({ onSave, isSaving, disabled }: { onSave: () => Promise<boolean>; isSaving: boolean; disabled: boolean }) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   const handleClick = async () => {
@@ -194,13 +200,15 @@ function SaveEditOrderButton({ onSave, isSaving, disabled }: { onSave: () => Pro
       className="btn btn-primary flex-1"
       disabled={disabled}
     >
-      {isSaving ? <Spinner /> : tCommon('save')}
+      {isSaving ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.save'
+      })}
     </button>
-  )
+  );
 }
 
 function DeleteOrderButton({ onDelete, isDeleting }: { onDelete: () => Promise<boolean>; isDeleting: boolean }) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   const handleClick = async () => {
@@ -217,9 +225,11 @@ function DeleteOrderButton({ onDelete, isDeleting }: { onDelete: () => Promise<b
       className="btn btn-danger flex-1"
       disabled={isDeleting}
     >
-      {isDeleting ? <Spinner /> : tCommon('delete')}
+      {isDeleting ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.delete'
+      })}
     </button>
-  )
+  );
 }
 
 
@@ -266,8 +276,8 @@ export function OrderDetailModal({
   canDelete,
   canManage,
 }: OrderDetailModalProps) {
-  const t = useTranslations('orders')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { formatCurrency, formatDate } = useBusinessFormat()
   const params = useParams<{ businessId: string }>()
   const { navigate } = usePageTransition()
@@ -316,8 +326,12 @@ export function OrderDetailModal({
   // has stamped one on the row. Falls back to the generic label for any
   // legacy order still missing the column.
   const headingTitle = order.orderNumber != null
-    ? t('detail_title_with_ref', { number: order.orderNumber })
-    : t('detail_title')
+    ? t.formatMessage({
+    id: 'orders.detail_title_with_ref'
+  }, { number: order.orderNumber })
+    : t.formatMessage({
+    id: 'orders.detail_title'
+  })
 
   return (
     <Modal
@@ -362,20 +376,24 @@ export function OrderDetailModal({
             <Modal.Item>
               <div className="space-y-1">
                 <span className="text-xs font-medium uppercase tracking-wide text-warning">
-                  {t('variance_section_title')}
+                  {t.formatMessage({
+                    id: 'orders.variance_section_title'
+                  })}
                 </span>
                 {varianceItems.map(item => (
                   <div key={`variance-${item.id}`} className="flex items-center gap-2 text-sm text-warning">
                     <OrderItemIconCell productId={item.productId} />
                     <span className="truncate flex-1 min-w-0">{item.productName}</span>
                     <span className="flex-shrink-0">
-                      {t('variance_item_line', { ordered: item.quantity, received: item.receivedQuantity ?? 0 })}
+                      {t.formatMessage({
+                        id: 'orders.variance_item_line'
+                      }, { ordered: item.quantity, received: item.receivedQuantity ?? 0 })}
                     </span>
                   </div>
                 ))}
               </div>
             </Modal.Item>
-          )
+          );
         })()}
 
         {/* Divider */}
@@ -387,15 +405,25 @@ export function OrderDetailModal({
         <Modal.Item>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-text-tertiary">{t('total_label')}</span>
+              <span className="text-text-tertiary">{t.formatMessage({
+                id: 'orders.total_label'
+              })}</span>
               <span className="font-semibold">{formatCurrency(order.total)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-text-tertiary">{t('status_label')}</span>
+              <span className="text-text-tertiary">{t.formatMessage({
+                id: 'orders.status_label'
+              })}</span>
               {(() => {
                 const ds = getOrderDisplayStatus(order)
                 const colorMap = { pending: 'text-warning', received: 'text-success', overdue: 'text-error' }
-                const labelMap = { pending: t('status_pending'), received: t('status_received'), overdue: t('status_overdue') }
+                const labelMap = { pending: t.formatMessage({
+                  id: 'orders.status_pending'
+                }), received: t.formatMessage({
+                  id: 'orders.status_received'
+                }), overdue: t.formatMessage({
+                  id: 'orders.status_overdue'
+                }) }
                 return <span className={colorMap[ds]}>{labelMap[ds]}</span>
               })()}
             </div>
@@ -412,17 +440,23 @@ export function OrderDetailModal({
         <Modal.Item>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-text-tertiary">{t('ordered_on_label')}</span>
+              <span className="text-text-tertiary">{t.formatMessage({
+                id: 'orders.ordered_on_label'
+              })}</span>
               <span className="tabular-nums">{formatDate(new Date(order.date))}</span>
             </div>
             {order.expand?.createdByUser && (
               <div className="flex justify-between">
-                <span className="text-text-tertiary">{t('ordered_by_label')}</span>
+                <span className="text-text-tertiary">{t.formatMessage({
+                  id: 'orders.ordered_by_label'
+                })}</span>
                 <span>{order.expand.createdByUser.name || order.expand.createdByUser.email}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-text-tertiary">{t('ordered_to_label')}</span>
+              <span className="text-text-tertiary">{t.formatMessage({
+                id: 'orders.ordered_to_label'
+              })}</span>
               {order.providerId && order.expand?.provider?.name ? (
                 <button
                   type="button"
@@ -449,32 +483,42 @@ export function OrderDetailModal({
             </div>
             {order.estimatedArrival && order.status !== 'received' && (
               <div className="flex justify-between">
-                <span className="text-text-tertiary">{t('est_arrival_label')}</span>
+                <span className="text-text-tertiary">{t.formatMessage({
+                  id: 'orders.est_arrival_label'
+                })}</span>
                 <span className="tabular-nums">{formatDate(new Date(order.estimatedArrival))}</span>
               </div>
             )}
             {order.receivedDate && (
               <div className="flex justify-between">
-                <span className="text-text-tertiary">{t('received_date_label')}</span>
+                <span className="text-text-tertiary">{t.formatMessage({
+                  id: 'orders.received_date_label'
+                })}</span>
                 <span className="tabular-nums">{formatDate(new Date(order.receivedDate))}</span>
               </div>
             )}
             {order.expand?.receivedByUser && (
               <div className="flex justify-between">
-                <span className="text-text-tertiary">{t('received_by_label')}</span>
+                <span className="text-text-tertiary">{t.formatMessage({
+                  id: 'orders.received_by_label'
+                })}</span>
                 <span>{order.expand.receivedByUser.name || order.expand.receivedByUser.email}</span>
               </div>
             )}
             {order.receipt && (
               <div className="flex justify-between">
-                <span className="text-text-tertiary">{t('receipt_attached_label')}</span>
+                <span className="text-text-tertiary">{t.formatMessage({
+                  id: 'orders.receipt_attached_label'
+                })}</span>
                 <a
                   href={getReceiptUrl(order) || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-brand"
                 >
-                  {t('view_attachment')}
+                  {t.formatMessage({
+                    id: 'orders.view_attachment'
+                  })}
                 </a>
               </div>
             )}
@@ -503,15 +547,18 @@ export function OrderDetailModal({
               onClick={onClose}
               className="btn btn-primary flex-1"
             >
-              {tCommon('close')}
+              {tCommon.formatMessage({
+                id: 'common.close'
+              })}
             </button>
           </Modal.Footer>
         )}
       </Modal.Step>
-
       {/* Step 1: Edit Order */}
       <Modal.Step
-        title={t('edit_order_title')}
+        title={t.formatMessage({
+          id: 'orders.edit_order_title'
+        })}
         {...(openedFromSwipe ? { hideBackButton: true } : { backStep: 0 })}
       >
         {error && (
@@ -523,7 +570,9 @@ export function OrderDetailModal({
         {/* Product selection with quantities */}
         <Modal.Item>
           <p className="text-xs text-text-tertiary">
-            {t('products_selected', { count: orderItems.length })}
+            {t.formatMessage({
+              id: 'orders.products_selected'
+            }, { count: orderItems.length })}
           </p>
         </Modal.Item>
 
@@ -568,7 +617,9 @@ export function OrderDetailModal({
                     <div className="flex-1 min-w-0 text-left">
                       <span className="text-sm font-medium truncate block">{product.name}</span>
                       <span className={`text-xs ${isOutOfStock ? 'text-error' : 'text-text-tertiary'}`}>
-                        {t('item_unit_count', { count: stockValue })}
+                        {t.formatMessage({
+                          id: 'orders.item_unit_count'
+                        }, { count: stockValue })}
                       </span>
                     </div>
                   </button>
@@ -609,7 +660,7 @@ export function OrderDetailModal({
                     </div>
                   )}
                 </div>
-              )
+              );
             })}
           </div>
         </Modal.Item>
@@ -622,20 +673,30 @@ export function OrderDetailModal({
         <Modal.Item>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="editOrderTotal" className="label">{t('total_paid_label')} <span className="text-error">*</span></label>
+              <label htmlFor="editOrderTotal" className="label">{t.formatMessage({
+                id: 'orders.total_paid_label'
+              })} <span className="text-error">*</span></label>
               <div className="input-number-wrapper">
                 <PriceInput id="editOrderTotal" value={orderTotal} onValueChange={onOrderTotalChange} placeholder="0" />
                 <div className="input-number-spinners">
-                  <button type="button" className="input-number-spinner" onClick={() => { const c = parseFloat(orderTotal) || 0; onOrderTotalChange((c + 1).toFixed(2)) }} tabIndex={-1} aria-label={t('increase_total_aria')}><PlusGlyph /></button>
-                  <button type="button" className="input-number-spinner" onClick={() => { const c = parseFloat(orderTotal) || 0; onOrderTotalChange(Math.max(0, c - 1).toFixed(2)) }} tabIndex={-1} aria-label={t('decrease_total_aria')}><MinusGlyph /></button>
+                  <button type="button" className="input-number-spinner" onClick={() => { const c = parseFloat(orderTotal) || 0; onOrderTotalChange((c + 1).toFixed(2)) }} tabIndex={-1} aria-label={t.formatMessage({
+                    id: 'orders.increase_total_aria'
+                  })}><PlusGlyph /></button>
+                  <button type="button" className="input-number-spinner" onClick={() => { const c = parseFloat(orderTotal) || 0; onOrderTotalChange(Math.max(0, c - 1).toFixed(2)) }} tabIndex={-1} aria-label={t.formatMessage({
+                    id: 'orders.decrease_total_aria'
+                  })}><MinusGlyph /></button>
                 </div>
               </div>
             </div>
             <div>
-              <label htmlFor="editOrderProvider" className="label">{t('provider_label')}</label>
+              <label htmlFor="editOrderProvider" className="label">{t.formatMessage({
+                id: 'orders.provider_label'
+              })}</label>
               <div className="relative">
                 <select id="editOrderProvider" value={orderProvider} onChange={e => onOrderProviderChange(e.target.value)} className={`input w-full pr-10 ${!orderProvider ? 'text-text-tertiary' : ''}`} style={{ backgroundImage: 'none', WebkitAppearance: 'none', appearance: 'none' }}>
-                  <option value="">{t('provider_none')}</option>
+                  <option value="">{t.formatMessage({
+                    id: 'orders.provider_none'
+                  })}</option>
                   {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
                 <ChevronDownGlyph className="text-text-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -646,11 +707,15 @@ export function OrderDetailModal({
 
         {/* Estimated Arrival */}
         <Modal.Item>
-          <label className="label">{t('estimated_arrival_label')}</label>
+          <label className="label">{t.formatMessage({
+            id: 'orders.estimated_arrival_label'
+          })}</label>
           <div className="relative">
             <div className="input w-full flex items-center pointer-events-none">
               <span className={orderEstimatedArrival ? 'text-text-primary' : 'text-text-tertiary'}>
-                {orderEstimatedArrival ? formatDate(orderEstimatedArrival) : t('select_date_placeholder')}
+                {orderEstimatedArrival ? formatDate(orderEstimatedArrival) : t.formatMessage({
+                  id: 'orders.select_date_placeholder'
+                })}
               </span>
             </div>
             <input type="date" value={orderEstimatedArrival} onChange={e => onOrderEstimatedArrivalChange(e.target.value)} className="input absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
@@ -659,15 +724,21 @@ export function OrderDetailModal({
 
         {/* Receipt */}
         <Modal.Item>
-          <label className="label">{t('receipt_label')}</label>
+          <label className="label">{t.formatMessage({
+            id: 'orders.receipt_label'
+          })}</label>
           <input ref={editReceiptInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf" onChange={async e => {
             setEditReceiptError('')
             const file = e.target.files?.[0]
             e.target.value = ''
             if (!file) return
             const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
-            if (!isHeic && !ACCEPTED_RECEIPT_TYPES.includes(file.type)) { setEditReceiptError(t('receipt_invalid_type')); return }
-            if (file.size > MAX_RECEIPT_BYTES) { setEditReceiptError(t('receipt_too_large')); return }
+            if (!isHeic && !ACCEPTED_RECEIPT_TYPES.includes(file.type)) { setEditReceiptError(t.formatMessage({
+              id: 'orders.receipt_invalid_type'
+            })); return }
+            if (file.size > MAX_RECEIPT_BYTES) { setEditReceiptError(t.formatMessage({
+              id: 'orders.receipt_too_large'
+            })); return }
             onOrderReceiptFileChange(file)
             if (isHeic) {
               try { const fd = new FormData(); fd.append('file', file); const data = await apiPostForm<{ data?: { image?: string } }>('/api/convert-heic', fd); if (data.data?.image) { onOrderReceiptPreviewChange(data.data.image) } else { onOrderReceiptPreviewChange(null) } } catch { onOrderReceiptPreviewChange(null) }
@@ -677,22 +748,28 @@ export function OrderDetailModal({
             <div className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
               {orderReceiptPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={orderReceiptPreview} alt="" className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
+                (<img src={orderReceiptPreview} alt="" className="w-10 h-10 rounded-md object-cover flex-shrink-0" />)
               ) : (
                 <div className="w-10 h-10 rounded-md bg-bg-surface flex items-center justify-center flex-shrink-0"><ImagePlus className="w-5 h-5 text-text-tertiary" /></div>
               )}
               <span className="text-sm text-text-secondary truncate flex-1 min-w-0">{orderReceiptFile.name}</span>
-              <button type="button" onClick={() => { onOrderReceiptFileChange(null); onOrderReceiptPreviewChange(null); if (editReceiptInputRef.current) editReceiptInputRef.current.value = '' }} className="p-1 text-error hover:text-error transition-colors flex-shrink-0" aria-label={tCommon('remove')}>
+              <button type="button" onClick={() => { onOrderReceiptFileChange(null); onOrderReceiptPreviewChange(null); if (editReceiptInputRef.current) editReceiptInputRef.current.value = '' }} className="p-1 text-error hover:text-error transition-colors flex-shrink-0" aria-label={tCommon.formatMessage({
+                id: 'common.remove'
+              })}>
                 <Trash2 style={{ width: 16, height: 16 }} />
               </button>
             </div>
           ) : (
             <button type="button" onClick={() => editReceiptInputRef.current?.click()} className="image-upload-zone">
               <ImagePlus className="w-6 h-6 text-text-tertiary" />
-              <span className="text-sm text-text-tertiary mt-2">{t('receipt_attach_placeholder')}</span>
+              <span className="text-sm text-text-tertiary mt-2">{t.formatMessage({
+                id: 'orders.receipt_attach_placeholder'
+              })}</span>
             </button>
           )}
-          <p className="text-xs text-text-tertiary mt-2">{t('receipt_hint')}</p>
+          <p className="text-xs text-text-tertiary mt-2">{t.formatMessage({
+            id: 'orders.receipt_hint'
+          })}</p>
           {editReceiptError && (
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mt-2">{editReceiptError}</div>
           )}
@@ -701,11 +778,15 @@ export function OrderDetailModal({
         <Modal.Footer>
           {openedFromSwipe ? (
             <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </button>
           ) : (
             <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1">
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </Modal.GoToStepButton>
           )}
           <SaveEditOrderButton
@@ -721,9 +802,10 @@ export function OrderDetailModal({
           />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 2: Edit Success */}
-      <Modal.Step title={t('edit_order_success_title')} hideBackButton className="modal-step--centered">
+      <Modal.Step title={t.formatMessage({
+        id: 'orders.edit_order_success_title'
+      })} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -741,13 +823,17 @@ export function OrderDetailModal({
               className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: editOrderSaved ? 1 : 0 }}
             >
-              {t('edit_order_success_heading')}
+              {t.formatMessage({
+                id: 'orders.edit_order_success_heading'
+              })}
             </p>
             <p
               className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: editOrderSaved ? 1 : 0 }}
             >
-              {t('edit_order_success_description')}
+              {t.formatMessage({
+                id: 'orders.edit_order_success_description'
+              })}
             </p>
           </div>
         </Modal.Item>
@@ -757,14 +843,17 @@ export function OrderDetailModal({
             onClick={onClose}
             className="btn btn-primary flex-1"
           >
-            {tCommon('close')}
+            {tCommon.formatMessage({
+              id: 'common.close'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 3: Receive Order - Confirmation */}
       <Modal.Step
-        title={t('receive_order_title')}
+        title={t.formatMessage({
+          id: 'orders.receive_order_title'
+        })}
         {...(openedFromSwipe ? { hideBackButton: true } : { backStep: 0 })}
       >
         {/* Products list */}
@@ -789,15 +878,21 @@ export function OrderDetailModal({
         <Modal.Item>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-text-tertiary">{t('total_label')}</span>
+              <span className="text-text-tertiary">{t.formatMessage({
+                id: 'orders.total_label'
+              })}</span>
               <span className="font-semibold">{formatCurrency(order.total)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-text-tertiary">{t('provider_label')}</span>
+              <span className="text-text-tertiary">{t.formatMessage({
+                id: 'orders.provider_label'
+              })}</span>
               <span>{order.expand?.provider?.name || '-'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-text-tertiary">{t('arrival_date_label')}</span>
+              <span className="text-text-tertiary">{t.formatMessage({
+                id: 'orders.arrival_date_label'
+              })}</span>
               <span>{formatDate(new Date())}</span>
             </div>
           </div>
@@ -805,25 +900,32 @@ export function OrderDetailModal({
 
         {/* Confirmation hint */}
         <Modal.Item>
-          <p className="text-sm text-text-tertiary">{t('receive_confirm_description')}</p>
+          <p className="text-sm text-text-tertiary">{t.formatMessage({
+            id: 'orders.receive_confirm_description'
+          })}</p>
         </Modal.Item>
 
         <Modal.Footer>
           {openedFromSwipe ? (
             <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </button>
           ) : (
             <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1">
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </Modal.GoToStepButton>
           )}
           <ConfirmReceiveButton onReceive={onReceiveOrder} isReceiving={isReceiving} />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 4: Receive Success */}
-      <Modal.Step title={t('receive_success_title')} hideBackButton className="modal-step--centered">
+      <Modal.Step title={t.formatMessage({
+        id: 'orders.receive_success_title'
+      })} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -841,13 +943,17 @@ export function OrderDetailModal({
               className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: orderReceived ? 1 : 0 }}
             >
-              {t('receive_success_heading')}
+              {t.formatMessage({
+                id: 'orders.receive_success_heading'
+              })}
             </p>
             <p
               className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: orderReceived ? 1 : 0 }}
             >
-              {t('receive_success_description')}
+              {t.formatMessage({
+                id: 'orders.receive_success_description'
+              })}
             </p>
           </div>
         </Modal.Item>
@@ -858,37 +964,51 @@ export function OrderDetailModal({
             onClick={onClose}
             className="btn btn-primary flex-1"
           >
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 5: Delete Confirmation */}
       <Modal.Step
-        title={t('delete_order_title')}
+        title={t.formatMessage({
+          id: 'orders.delete_order_title'
+        })}
         {...(openedFromSwipe ? { hideBackButton: true } : { backStep: 0 })}
       >
         <Modal.Item>
           <p className="text-text-secondary">
-            {tCommon('delete')} <strong>{t('delete_item_name', { date: formatDate(new Date(order.date)) })}</strong>? {t('delete_cannot_be_undone')}
+            {tCommon.formatMessage({
+              id: 'common.delete'
+            })} <strong>{t.formatMessage({
+            id: 'orders.delete_item_name'
+          }, { date: formatDate(new Date(order.date)) })}</strong>? {t.formatMessage({
+            id: 'orders.delete_cannot_be_undone'
+          })}
           </p>
         </Modal.Item>
         <Modal.Footer>
           {openedFromSwipe ? (
             <button type="button" onClick={onClose} className="btn btn-secondary flex-1" disabled={isDeleting}>
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </button>
           ) : (
             <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </Modal.GoToStepButton>
           )}
           <DeleteOrderButton onDelete={onDeleteOrder} isDeleting={isDeleting} />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 6: Delete Success */}
-      <Modal.Step title={t('delete_success_title')} hideBackButton className="modal-step--centered">
+      <Modal.Step title={t.formatMessage({
+        id: 'orders.delete_success_title'
+      })} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -906,13 +1026,17 @@ export function OrderDetailModal({
               className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
               style={{ opacity: orderDeleted ? 1 : 0 }}
             >
-              {t('delete_success_heading')}
+              {t.formatMessage({
+                id: 'orders.delete_success_heading'
+              })}
             </p>
             <p
               className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
               style={{ opacity: orderDeleted ? 1 : 0 }}
             >
-              {t('delete_success_description')}
+              {t.formatMessage({
+                id: 'orders.delete_success_description'
+              })}
             </p>
           </div>
         </Modal.Item>
@@ -923,10 +1047,12 @@ export function OrderDetailModal({
             onClick={onClose}
             className="btn btn-primary flex-1"
           >
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

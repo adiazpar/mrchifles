@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 
 export interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg'
@@ -8,7 +8,7 @@ export interface SpinnerProps {
 }
 
 export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
-  const t = useTranslations('ui.spinner')
+  const t = useIntl()
 
   const sizeClasses: Record<string, string> = {
     sm: '',
@@ -20,9 +20,13 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
     <div
       className={`spinner ${sizeClasses[size]} ${className}`}
       role="status"
-      aria-label={t('loading')}
+      aria-label={t.formatMessage({
+        id: 'ui.spinner.loading'
+      })}
     >
-      <span className="sr-only">{t('loading')}</span>
+      <span className="sr-only">{t.formatMessage({
+        id: 'ui.spinner.loading'
+      })}</span>
     </div>
-  )
+  );
 }

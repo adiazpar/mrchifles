@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { Sun, Moon, Monitor } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -28,17 +28,25 @@ export function ThemeSelector({
   onThemeChange,
   description,
 }: ThemeSelectorProps) {
-  const t = useTranslations('account')
+  const t = useIntl()
 
   const themeLabels: Record<Theme, string> = {
-    light: t('theme_light'),
-    dark: t('theme_dark'),
-    system: t('theme_system'),
+    light: t.formatMessage({
+      id: 'account.theme_light'
+    }),
+    dark: t.formatMessage({
+      id: 'account.theme_dark'
+    }),
+    system: t.formatMessage({
+      id: 'account.theme_system'
+    }),
   }
 
   return (
     <div className="space-y-3">
-      <span className="text-sm font-medium text-text-secondary block">{t('theme_label')}</span>
+      <span className="text-sm font-medium text-text-secondary block">{t.formatMessage({
+        id: 'account.theme_label'
+      })}</span>
       <div className="theme-options">
         {(Object.keys(THEME_ICONS) as Theme[]).map((key) => {
           const Icon = THEME_ICONS[key]
@@ -71,5 +79,5 @@ export function ThemeSelector({
       </div>
       <p className="text-xs text-text-tertiary">{description}</p>
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { Trash2 } from 'lucide-react'
 import { Spinner, Modal, useModal, ConfirmationAnimation } from '@/components/ui'
 import type { Provider } from '@kasero/shared/types'
@@ -17,7 +17,7 @@ interface SaveProviderButtonProps {
 
 function SaveProviderButton({ onSubmit, isSaving, disabled }: SaveProviderButtonProps) {
   const { goToStep } = useModal()
-  const t = useTranslations('providers')
+  const t = useIntl()
 
   // Optimistic navigation: jump to the success step first, fire the API
   // in the background. If the save fails the parent will surface the
@@ -34,9 +34,11 @@ function SaveProviderButton({ onSubmit, isSaving, disabled }: SaveProviderButton
       className="btn btn-primary flex-1"
       disabled={disabled}
     >
-      {isSaving ? <Spinner /> : t('save_button')}
+      {isSaving ? <Spinner /> : t.formatMessage({
+        id: 'providers.save_button'
+      })}
     </button>
-  )
+  );
 }
 
 // ============================================
@@ -49,7 +51,7 @@ interface DeleteProviderButtonProps {
 }
 
 function DeleteProviderButton({ onConfirm, isDeleting }: DeleteProviderButtonProps) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   // Wait for the API response so a failure lands the user back on the
@@ -67,9 +69,11 @@ function DeleteProviderButton({ onConfirm, isDeleting }: DeleteProviderButtonPro
       className="btn btn-danger flex-1"
       disabled={isDeleting}
     >
-      {isDeleting ? <Spinner /> : tCommon('delete')}
+      {isDeleting ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.delete'
+      })}
     </button>
-  )
+  );
 }
 
 // ============================================
@@ -135,8 +139,8 @@ export function ProviderModal({
   providerDeleted,
   onDelete,
 }: ProviderModalProps) {
-  const t = useTranslations('providers')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const isFormValid = name.trim().length > 0
   const showDeleteAction = !!editingProvider && canDelete
   // Mirrors OrderDetailModal: when the modal was opened directly at the
@@ -161,10 +165,18 @@ export function ProviderModal({
       initialStep={initialStep}
       onClose={onClose}
       onExitComplete={onExitComplete}
-      title={editingProvider ? t('modal_title_edit') : t('modal_title_add')}
+      title={editingProvider ? t.formatMessage({
+        id: 'providers.modal_title_edit'
+      }) : t.formatMessage({
+        id: 'providers.modal_title_add'
+      })}
     >
       {/* Step 0: Form */}
-      <Modal.Step title={editingProvider ? t('modal_title_edit') : t('modal_title_add')}>
+      <Modal.Step title={editingProvider ? t.formatMessage({
+        id: 'providers.modal_title_edit'
+      }) : t.formatMessage({
+        id: 'providers.modal_title_add'
+      })}>
         {error && (
           <Modal.Item>
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
@@ -173,7 +185,9 @@ export function ProviderModal({
 
         <Modal.Item>
           <label htmlFor="provider-name" className="label">
-            {t('name_label')} <span className="text-error">*</span>
+            {t.formatMessage({
+              id: 'providers.name_label'
+            })} <span className="text-error">*</span>
           </label>
           <input
             id="provider-name"
@@ -181,14 +195,18 @@ export function ProviderModal({
             value={name}
             onChange={e => onNameChange(e.target.value)}
             className="input"
-            placeholder={t('name_placeholder')}
+            placeholder={t.formatMessage({
+              id: 'providers.name_placeholder'
+            })}
             autoComplete="off"
             maxLength={80}
           />
         </Modal.Item>
 
         <Modal.Item>
-          <label htmlFor="provider-phone" className="label">{t('phone_label')}</label>
+          <label htmlFor="provider-phone" className="label">{t.formatMessage({
+            id: 'providers.phone_label'
+          })}</label>
           <input
             id="provider-phone"
             type="tel"
@@ -200,7 +218,9 @@ export function ProviderModal({
         </Modal.Item>
 
         <Modal.Item>
-          <label htmlFor="provider-email" className="label">{t('email_label')}</label>
+          <label htmlFor="provider-email" className="label">{t.formatMessage({
+            id: 'providers.email_label'
+          })}</label>
           <input
             id="provider-email"
             type="email"
@@ -214,8 +234,12 @@ export function ProviderModal({
         <Modal.Item>
           <div className="flex items-center justify-between py-2">
             <div>
-              <span className="label mb-0">{t('active_label')}</span>
-              <p className="text-xs text-text-tertiary mt-0.5">{t('active_description')}</p>
+              <span className="label mb-0">{t.formatMessage({
+                id: 'providers.active_label'
+              })}</span>
+              <p className="text-xs text-text-tertiary mt-0.5">{t.formatMessage({
+                id: 'providers.active_description'
+              })}</p>
             </div>
             <input
               type="checkbox"
@@ -239,70 +263,97 @@ export function ProviderModal({
           />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 1: Delete confirmation */}
       <Modal.Step
-        title={t('delete_provider_confirm_title')}
+        title={t.formatMessage({
+          id: 'providers.delete_provider_confirm_title'
+        })}
         {...(openedFromSwipe ? { hideBackButton: true } : { backStep: 0 })}
       >
         <Modal.Item>
           <p className="text-text-secondary">
-            {t('delete_provider_confirm_body', { name: editingProvider?.name ?? '' })}
+            {t.formatMessage({
+              id: 'providers.delete_provider_confirm_body'
+            }, { name: editingProvider?.name ?? '' })}
           </p>
         </Modal.Item>
 
         <Modal.Footer>
           {openedFromSwipe ? (
             <button type="button" onClick={onClose} className="btn btn-secondary flex-1" disabled={isDeleting}>
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </button>
           ) : (
             <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </Modal.GoToStepButton>
           )}
           <DeleteProviderButton onConfirm={onDelete} isDeleting={isDeleting} />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 2: Delete success */}
-      <Modal.Step title={t('success_deleted_title')} hideBackButton>
+      <Modal.Step title={t.formatMessage({
+        id: 'providers.success_deleted_title'
+      })} hideBackButton>
         <Modal.Item>
           <ConfirmationAnimation
             type="error"
             triggered={providerDeleted}
-            title={t('success_deleted_heading')}
-            subtitle={t('success_deleted_subtitle')}
+            title={t.formatMessage({
+              id: 'providers.success_deleted_heading'
+            })}
+            subtitle={t.formatMessage({
+              id: 'providers.success_deleted_subtitle'
+            })}
           />
         </Modal.Item>
 
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 3: Save success */}
       <Modal.Step
-        title={editingProvider ? t('success_updated_title') : t('success_added_title')}
+        title={editingProvider ? t.formatMessage({
+          id: 'providers.success_updated_title'
+        }) : t.formatMessage({
+          id: 'providers.success_added_title'
+        })}
         hideBackButton
       >
         <Modal.Item>
           <ConfirmationAnimation
             type="success"
             triggered={providerSaved}
-            title={editingProvider ? t('success_updated_heading') : t('success_added_heading')}
-            subtitle={editingProvider ? t('success_updated_subtitle') : t('success_added_subtitle')}
+            title={editingProvider ? t.formatMessage({
+              id: 'providers.success_updated_heading'
+            }) : t.formatMessage({
+              id: 'providers.success_added_heading'
+            })}
+            subtitle={editingProvider ? t.formatMessage({
+              id: 'providers.success_updated_subtitle'
+            }) : t.formatMessage({
+              id: 'providers.success_added_subtitle'
+            })}
           />
         </Modal.Item>
 
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

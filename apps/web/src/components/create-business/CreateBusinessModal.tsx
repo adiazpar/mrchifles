@@ -1,10 +1,10 @@
 'use client'
 
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl';
 
+import Image from '@/lib/Image'
 import { useCallback, useRef, useState } from 'react'
 import { Upload, X } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { Modal, Spinner, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import type { UseCreateBusinessReturn, BusinessType } from '@/hooks'
@@ -21,8 +21,8 @@ interface CreateBusinessModalProps {
 }
 
 export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps) {
-  const t = useTranslations('createBusiness')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
 
   const {
     isOpen,
@@ -50,7 +50,9 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
       onExitComplete={handleExitComplete}
     >
       {/* Step 0: Business Name */}
-      <Modal.Step title={t('modal_title')} hideBackButton>
+      <Modal.Step title={t.formatMessage({
+        id: 'createBusiness.modal_title'
+      })} hideBackButton>
         <NameContent name={formData.name} setName={setName} />
         <Modal.Footer>
           <button
@@ -58,23 +60,27 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
             onClick={handleClose}
             className="btn btn-secondary flex-1"
           >
-            {tCommon('cancel')}
+            {tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <NextStepButton disabled={!isNameValid} />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 1: Business Type */}
-      <Modal.Step title={t('step_type_title')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'createBusiness.step_type_title'
+      })}>
         <TypeContent type={formData.type} setType={setType} />
         <Modal.Footer>
           <Modal.BackButton className="btn btn-secondary flex-1" />
           <NextStepButton disabled={!isTypeValid} />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 2: Location (also sets currency) */}
-      <Modal.Step title={t('step_location_title')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'createBusiness.step_location_title'
+      })}>
         <LocaleContent
           locale={formData.locale}
           setLocale={setLocale}
@@ -84,9 +90,10 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
           <NextStepButton />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 3: Logo Upload */}
-      <Modal.Step title={t('step_logo_title')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'createBusiness.step_logo_title'
+      })}>
         <LogoUploadContent
           businessType={formData.type}
           logoPreview={formData.logoPreview}
@@ -101,9 +108,10 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
           />
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 4: Success */}
-      <Modal.Step title={t('step_success_title')} hideBackButton className="modal-step--centered">
+      <Modal.Step title={t.formatMessage({
+        id: 'createBusiness.step_success_title'
+      })} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <SuccessContent
             createdBusiness={createdBusiness}
@@ -124,12 +132,14 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
             onClick={handleClose}
             className="btn btn-primary flex-1"
           >
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }
 
 // ============================================
@@ -142,16 +152,20 @@ interface NameContentProps {
 }
 
 function NameContent({ name, setName }: NameContentProps) {
-  const t = useTranslations('createBusiness')
+  const t = useIntl()
 
   return (
     <>
       <Modal.Item>
         <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          {t('step_indicator', { current: 1, total: 4 })}
+          {t.formatMessage({
+            id: 'createBusiness.step_indicator'
+          }, { current: 1, total: 4 })}
         </div>
         <p className="text-sm text-text-secondary text-center">
-          {t('step_name_subtitle')}
+          {t.formatMessage({
+            id: 'createBusiness.step_name_subtitle'
+          })}
         </p>
       </Modal.Item>
       <Modal.Item>
@@ -159,14 +173,16 @@ function NameContent({ name, setName }: NameContentProps) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={t('name_placeholder')}
+          placeholder={t.formatMessage({
+            id: 'createBusiness.name_placeholder'
+          })}
           maxLength={100}
           className="input"
           autoComplete="off"
         />
       </Modal.Item>
     </>
-  )
+  );
 }
 
 // ============================================
@@ -179,23 +195,27 @@ interface TypeContentProps {
 }
 
 function TypeContent({ type, setType }: TypeContentProps) {
-  const t = useTranslations('createBusiness')
+  const t = useIntl()
 
   return (
     <>
       <Modal.Item>
         <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          {t('step_indicator', { current: 2, total: 4 })}
+          {t.formatMessage({
+            id: 'createBusiness.step_indicator'
+          }, { current: 2, total: 4 })}
         </div>
         <p className="text-sm text-text-secondary text-center">
-          {t('step_type_subtitle')}
+          {t.formatMessage({
+            id: 'createBusiness.step_type_subtitle'
+          })}
         </p>
       </Modal.Item>
       <Modal.Item>
         <BusinessTypeGrid selected={type} onSelect={setType} />
       </Modal.Item>
     </>
-  )
+  );
 }
 
 // ============================================
@@ -208,23 +228,27 @@ interface LocaleContentProps {
 }
 
 function LocaleContent({ locale, setLocale }: LocaleContentProps) {
-  const t = useTranslations('createBusiness')
+  const t = useIntl()
 
   return (
     <>
       <Modal.Item>
         <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          {t('step_indicator', { current: 3, total: 4 })}
+          {t.formatMessage({
+            id: 'createBusiness.step_indicator'
+          }, { current: 3, total: 4 })}
         </div>
         <p className="text-sm text-text-secondary text-center mb-2">
-          {t('step_location_subtitle')}
+          {t.formatMessage({
+            id: 'createBusiness.step_location_subtitle'
+          })}
         </p>
       </Modal.Item>
       <Modal.Item>
         <LocalePicker value={locale} onChange={setLocale} />
       </Modal.Item>
     </>
-  )
+  );
 }
 
 // ============================================
@@ -255,7 +279,7 @@ function LogoUploadContent({
   setLogoFile,
   clearLogo,
 }: LogoUploadContentProps) {
-  const t = useTranslations('createBusiness')
+  const t = useIntl()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
@@ -267,11 +291,15 @@ function LogoUploadContent({
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      setUploadError(t('logo_invalid_type'))
+      setUploadError(t.formatMessage({
+        id: 'createBusiness.logo_invalid_type'
+      }))
       return
     }
     if (file.size > MAX_UPLOAD_SIZE) {
-      setUploadError(t('logo_too_large'))
+      setUploadError(t.formatMessage({
+        id: 'createBusiness.logo_too_large'
+      }))
       return
     }
     setLogoFile(file)
@@ -281,10 +309,14 @@ function LogoUploadContent({
     <>
       <Modal.Item>
         <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          {t('step_indicator', { current: 4, total: 4 })}
+          {t.formatMessage({
+            id: 'createBusiness.step_indicator'
+          }, { current: 4, total: 4 })}
         </div>
         <p className="text-sm text-text-secondary text-center">
-          {t('step_logo_subtitle')}
+          {t.formatMessage({
+            id: 'createBusiness.step_logo_subtitle'
+          })}
         </p>
       </Modal.Item>
       <Modal.Item>
@@ -309,7 +341,9 @@ function LogoUploadContent({
                 type="button"
                 onClick={clearLogo}
                 className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center shadow-md hover:bg-error-hover transition-colors"
-                aria-label={t('logo_remove')}
+                aria-label={t.formatMessage({
+                  id: 'createBusiness.logo_remove'
+                })}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -317,7 +351,6 @@ function LogoUploadContent({
           </div>
         </div>
       </Modal.Item>
-
       <Modal.Item>
         <input
           ref={fileInputRef}
@@ -333,19 +366,25 @@ function LogoUploadContent({
         >
           <Upload className="w-5 h-5" />
           <span className="text-sm font-medium">
-            {logoPreview ? t('logo_change_button') : t('logo_upload_button')}
+            {logoPreview ? t.formatMessage({
+              id: 'createBusiness.logo_change_button'
+            }) : t.formatMessage({
+              id: 'createBusiness.logo_upload_button'
+            })}
           </span>
         </button>
         {uploadError ? (
           <p className="text-xs text-error text-center mt-2">{uploadError}</p>
         ) : (
           <p className="text-xs text-text-tertiary text-center mt-2">
-            {t('logo_size_hint')}
+            {t.formatMessage({
+              id: 'createBusiness.logo_size_hint'
+            })}
           </p>
         )}
       </Modal.Item>
     </>
-  )
+  );
 }
 
 // ============================================
@@ -354,7 +393,7 @@ function LogoUploadContent({
 
 function NextStepButton({ disabled = false }: { disabled?: boolean }) {
   const { goNext } = useModal()
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
 
   return (
     <button
@@ -363,9 +402,11 @@ function NextStepButton({ disabled = false }: { disabled?: boolean }) {
       disabled={disabled}
       className="btn btn-primary flex-1"
     >
-      {tCommon('continue')}
+      {tCommon.formatMessage({
+        id: 'common.continue'
+      })}
     </button>
-  )
+  );
 }
 
 interface CreateButtonProps {
@@ -375,7 +416,7 @@ interface CreateButtonProps {
 
 function CreateButton({ isCreating, onCreate }: CreateButtonProps) {
   const { goToStep } = useModal()
-  const t = useTranslations('createBusiness')
+  const t = useIntl()
 
   const handleClick = useCallback(async () => {
     const success = await onCreate()
@@ -391,9 +432,11 @@ function CreateButton({ isCreating, onCreate }: CreateButtonProps) {
       disabled={isCreating}
       className="btn btn-primary flex-1"
     >
-      {isCreating ? <Spinner size="sm" /> : t('button_create')}
+      {isCreating ? <Spinner size="sm" /> : t.formatMessage({
+        id: 'createBusiness.button_create'
+      })}
     </button>
-  )
+  );
 }
 
 // ============================================
@@ -407,7 +450,7 @@ interface SuccessContentProps {
 }
 
 function SuccessContent({ createdBusiness, createSuccess, icon }: SuccessContentProps) {
-  const t = useTranslations('createBusiness')
+  const t = useIntl()
 
   return (
     <div className="flex flex-col items-center text-center py-4">
@@ -426,15 +469,19 @@ function SuccessContent({ createdBusiness, createSuccess, icon }: SuccessContent
         className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
         style={{ opacity: createSuccess ? 1 : 0 }}
       >
-        {t('step_success_heading')}
+        {t.formatMessage({
+          id: 'createBusiness.step_success_heading'
+        })}
       </p>
       <p
         className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
         style={{ opacity: createSuccess ? 1 : 0 }}
       >
         {icon && <span className="mr-1">{icon}</span>}
-        {t('step_success_description', { name: createdBusiness?.name || 'Your business' })}
+        {t.formatMessage({
+          id: 'createBusiness.step_success_description'
+        }, { name: createdBusiness?.name || 'Your business' })}
       </p>
     </div>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { ApiError, apiRequest } from '@/lib/api-client'
 import { CACHE_KEYS, scopedCache } from '@/hooks/useSessionCache'
 import { useApiMessage } from '@/hooks/useApiMessage'
@@ -27,7 +27,7 @@ interface UseSalesAggregateResult {
  * SalesContext / SalesSessionsContext pattern.
  */
 export function useSalesAggregate(businessId: string): UseSalesAggregateResult {
-  const t = useTranslations('sales.reports')
+  const t = useIntl()
   const translateApiMessage = useApiMessage()
   const cache = useRef(
     scopedCache<SalesAggregateResponse>(CACHE_KEYS.SALES_AGGREGATE, businessId),
@@ -64,7 +64,9 @@ export function useSalesAggregate(businessId: string): UseSalesAggregateResult {
       if (err instanceof ApiError && err.envelope) {
         setError(translateApiMessage(err.envelope))
       } else {
-        setError(t('error_load_failed'))
+        setError(t.formatMessage({
+          id: 'sales.reports.error_load_failed'
+        }))
       }
     } finally {
       setIsLoading(false)

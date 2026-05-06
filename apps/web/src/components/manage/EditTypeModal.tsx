@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Modal, Spinner } from '@/components/ui'
 import { BusinessTypeGrid } from '@/components/businesses/shared'
 import { useBusiness } from '@/contexts/business-context'
@@ -11,8 +11,8 @@ import type { BusinessType } from '@/hooks'
 interface Props { isOpen: boolean; onClose: () => void }
 
 export function EditTypeModal({ isOpen, onClose }: Props) {
-  const t = useTranslations('manage')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { business } = useBusiness()
   const { update, isSubmitting, error, reset } = useUpdateBusiness()
   const [selected, setSelected] = useState<BusinessType | null>(business?.type ?? null)
@@ -31,7 +31,9 @@ export function EditTypeModal({ isOpen, onClose }: Props) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} onExitComplete={handleExitComplete}>
-      <Modal.Step title={t('edit_type_title')} hideBackButton>
+      <Modal.Step title={t.formatMessage({
+        id: 'manage.edit_type_title'
+      })} hideBackButton>
         <Modal.Item>
           <BusinessTypeGrid selected={selected} onSelect={setSelected} />
         </Modal.Item>
@@ -42,7 +44,9 @@ export function EditTypeModal({ isOpen, onClose }: Props) {
         )}
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-            {tCommon('cancel')}
+            {tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <button
             type="button"
@@ -50,10 +54,12 @@ export function EditTypeModal({ isOpen, onClose }: Props) {
             disabled={isSubmitting || !selected || selected === business?.type}
             className="btn btn-primary flex-1"
           >
-            {isSubmitting ? <Spinner size="sm" /> : t('save')}
+            {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({
+              id: 'manage.save'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

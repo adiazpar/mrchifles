@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { ShoppingCart } from 'lucide-react'
 import { haptic } from '@/lib/haptics'
 import type { UseCartResult } from '@/hooks/useCart'
@@ -12,7 +12,7 @@ interface CartSheetProps {
 }
 
 export function CartSheet({ cart }: CartSheetProps) {
-  const t = useTranslations('sales.cart')
+  const t = useIntl()
   const [open, setOpen] = useState(false)
 
   const itemCount = cart.lines.reduce((acc, l) => acc + l.quantity, 0)
@@ -35,7 +35,9 @@ export function CartSheet({ cart }: CartSheetProps) {
           }}
         >
           <ShoppingCart />
-          <span>{t('view_cart', { count: itemCount })}</span>
+          <span>{t.formatMessage({
+            id: 'sales.cart.view_cart'
+          }, { count: itemCount })}</span>
         </button>
       </div>
       <ViewCartModal
@@ -44,5 +46,5 @@ export function CartSheet({ cart }: CartSheetProps) {
         cart={cart}
       />
     </>
-  )
+  );
 }

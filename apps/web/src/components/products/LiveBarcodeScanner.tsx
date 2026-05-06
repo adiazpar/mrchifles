@@ -1,9 +1,9 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useEffect, useId, useRef, useState } from 'react'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { X } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { isBarcodeFormat } from '@kasero/shared/barcodes'
 import type { BarcodeFormat } from '@kasero/shared/types'
 
@@ -61,7 +61,7 @@ export function LiveBarcodeScanner({
   onError,
   onSwitchToFilePicker,
 }: LiveBarcodeScannerProps) {
-  const t = useTranslations('barcode')
+  const t = useIntl()
   // Sanitize React's useId() into a valid HTML id.
   const reactId = useId().replace(/:/g, '')
   const hostIdRef = useRef(`live-barcode-scanner-${reactId}`)
@@ -74,15 +74,31 @@ export function LiveBarcodeScanner({
 
   // Stash translated error strings in refs so the async effect can access
   // them without being in its dependency array.
-  const errGenericRef = useRef(t('scanner_error_generic'))
-  const errPermissionRef = useRef(t('scanner_error_permission'))
-  const errNotFoundRef = useRef(t('scanner_error_not_found'))
-  const errInUseRef = useRef(t('scanner_error_in_use'))
+  const errGenericRef = useRef(t.formatMessage({
+    id: 'barcode.scanner_error_generic'
+  }))
+  const errPermissionRef = useRef(t.formatMessage({
+    id: 'barcode.scanner_error_permission'
+  }))
+  const errNotFoundRef = useRef(t.formatMessage({
+    id: 'barcode.scanner_error_not_found'
+  }))
+  const errInUseRef = useRef(t.formatMessage({
+    id: 'barcode.scanner_error_in_use'
+  }))
   useEffect(() => {
-    errGenericRef.current = t('scanner_error_generic')
-    errPermissionRef.current = t('scanner_error_permission')
-    errNotFoundRef.current = t('scanner_error_not_found')
-    errInUseRef.current = t('scanner_error_in_use')
+    errGenericRef.current = t.formatMessage({
+      id: 'barcode.scanner_error_generic'
+    })
+    errPermissionRef.current = t.formatMessage({
+      id: 'barcode.scanner_error_permission'
+    })
+    errNotFoundRef.current = t.formatMessage({
+      id: 'barcode.scanner_error_not_found'
+    })
+    errInUseRef.current = t.formatMessage({
+      id: 'barcode.scanner_error_in_use'
+    })
   })
 
   // Stash callbacks in refs so the start-scanner effect can run exactly
@@ -240,7 +256,9 @@ export function LiveBarcodeScanner({
       style={overlayStyle}
       role="dialog"
       aria-modal="true"
-      aria-label={t('scanner_aria_label')}
+      aria-label={t.formatMessage({
+        id: 'barcode.scanner_aria_label'
+      })}
     >
       {/*
         Video host — html5-qrcode injects nested wrapper divs around a
@@ -274,17 +292,17 @@ export function LiveBarcodeScanner({
         }
       `}</style>
       <div id={hostIdRef.current} className="absolute inset-0" />
-
       {/* Close button — top-right corner, floats above everything */}
       <button
         type="button"
         onClick={onCancel}
         className="absolute top-3 right-3 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-text-inverse backdrop-blur-sm transition-colors hover:bg-black/80"
-        aria-label={t('scanner_cancel_aria')}
+        aria-label={t.formatMessage({
+          id: 'barcode.scanner_cancel_aria'
+        })}
       >
         <X className="w-5 h-5" />
       </button>
-
       {/* Scanning frame — centered scan box with corner brackets and a
           horizontal laser line running through the middle. The box defines
           the visual scan target, while the underlying camera still scans
@@ -306,12 +324,13 @@ export function LiveBarcodeScanner({
           </div>
         </div>
       )}
-
       {/* Footer instruction + optional file-picker fallback */}
       {status === 'scanning' && (
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
           <p className="text-text-inverse text-center text-sm pointer-events-none">
-            {t('scanner_instruction')}
+            {t.formatMessage({
+              id: 'barcode.scanner_instruction'
+            })}
           </p>
           {onSwitchToFilePicker && (
             <div className="mt-2 text-center">
@@ -320,20 +339,22 @@ export function LiveBarcodeScanner({
                 onClick={onSwitchToFilePicker}
                 className="text-text-inverse/80 text-xs underline underline-offset-2 hover:text-text-inverse transition-colors"
               >
-                {t('scanner_choose_file')}
+                {t.formatMessage({
+                  id: 'barcode.scanner_choose_file'
+                })}
               </button>
             </div>
           )}
         </div>
       )}
-
       {/* Starting state */}
       {status === 'starting' && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <p className="text-text-inverse text-sm">{t('scanner_starting')}</p>
+          <p className="text-text-inverse text-sm">{t.formatMessage({
+            id: 'barcode.scanner_starting'
+          })}</p>
         </div>
       )}
-
       {/* Error state — message plus the same "Choose a file instead"
           escape hatch so the user isn't stranded when the camera fails. */}
       {status === 'error' && (
@@ -345,11 +366,13 @@ export function LiveBarcodeScanner({
               onClick={onSwitchToFilePicker}
               className="text-text-inverse/90 text-sm underline underline-offset-2 hover:text-text-inverse transition-colors"
             >
-              {t('scanner_choose_file')}
+              {t.formatMessage({
+                id: 'barcode.scanner_choose_file'
+              })}
             </button>
           )}
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { useSalesAggregate } from '@/hooks/useSalesAggregate'
 import { DailyRevenueCard } from './DailyRevenueCard'
 import { RecentSessionsCard } from './RecentSessionsCard'
@@ -17,7 +17,7 @@ interface SalesReportsProps {
  * vertical stack. Owns the aggregate fetch + loading/error states.
  */
 export function SalesReports({ businessId }: SalesReportsProps) {
-  const t = useTranslations('sales.reports')
+  const t = useIntl()
   const { data, isLoaded, error, refetch } = useSalesAggregate(businessId)
 
   if (error && !isLoaded) {
@@ -30,12 +30,14 @@ export function SalesReports({ businessId }: SalesReportsProps) {
             onClick={() => void refetch()}
             className="font-medium underline whitespace-nowrap"
           >
-            {t('error_retry')}
+            {t.formatMessage({
+              id: 'sales.reports.error_retry'
+            })}
           </button>
         </div>
         <RecentSessionsCard />
       </div>
-    )
+    );
   }
 
   if (!isLoaded || !data) {

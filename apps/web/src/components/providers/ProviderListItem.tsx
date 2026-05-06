@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { ChevronRight } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import type { Provider } from '@kasero/shared/types'
 
 export function getProviderInitials(name: string): string {
@@ -18,7 +18,7 @@ export interface ProviderListItemProps {
 }
 
 export function ProviderListItem({ provider, onClick }: ProviderListItemProps) {
-  const t = useTranslations('providers')
+  const t = useIntl()
   return (
     <div
       className="list-item-clickable"
@@ -38,17 +38,23 @@ export function ProviderListItem({ provider, onClick }: ProviderListItemProps) {
       <div className="flex-1 min-w-0">
         <span className="font-medium truncate block">{provider.name}</span>
         <span className="text-xs text-text-tertiary mt-0.5 block">
-          {provider.phone || t('no_phone')}
+          {provider.phone || t.formatMessage({
+            id: 'providers.no_phone'
+          })}
         </span>
       </div>
       <div className="flex items-center justify-center">
         <span className={`text-xs font-medium ${provider.active ? 'text-success' : 'text-error'}`}>
-          {provider.active ? t('status_active') : t('status_inactive')}
+          {provider.active ? t.formatMessage({
+            id: 'providers.status_active'
+          }) : t.formatMessage({
+            id: 'providers.status_inactive'
+          })}
         </span>
       </div>
       <div className="text-text-tertiary ml-2 flex items-center">
         <ChevronRight className="w-5 h-5" />
       </div>
     </div>
-  )
+  );
 }

@@ -1,9 +1,9 @@
 'use client'
 
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl';
 
+import Image from '@/lib/Image'
 import { useMemo } from 'react'
-import { useTranslations } from 'next-intl'
 import { Package } from 'lucide-react'
 import { useProducts } from '@/contexts/products-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -17,7 +17,7 @@ interface TopProductsCardProps {
 }
 
 export function TopProductsCard({ entries }: TopProductsCardProps) {
-  const t = useTranslations('sales.reports')
+  const t = useIntl()
   const { products } = useProducts()
   const { formatCurrency } = useBusinessFormat()
 
@@ -31,11 +31,15 @@ export function TopProductsCard({ entries }: TopProductsCardProps) {
 
   return (
     <div className="card p-4 space-y-4">
-      <div className="text-sm text-text-secondary">{t('top_products_title')}</div>
+      <div className="text-sm text-text-secondary">{t.formatMessage({
+        id: 'sales.reports.top_products_title'
+      })}</div>
       <hr className="border-border" />
       {entries.length === 0 ? (
         <p className="text-sm text-text-tertiary text-center py-2">
-          {t('top_products_empty')}
+          {t.formatMessage({
+            id: 'sales.reports.top_products_empty'
+          })}
         </p>
       ) : (
         <div className="space-y-3">
@@ -65,7 +69,9 @@ export function TopProductsCard({ entries }: TopProductsCardProps) {
                     {formatCurrency(entry.revenue)}
                   </span>
                   <span className="text-xs text-text-tertiary tabular-nums flex-shrink-0 w-16 text-right">
-                    {t('top_products_qty', { count: entry.quantity })}
+                    {t.formatMessage({
+                      id: 'sales.reports.top_products_qty'
+                    }, { count: entry.quantity })}
                   </span>
                 </div>
                 <div className="ml-[60px]">
@@ -77,12 +83,12 @@ export function TopProductsCard({ entries }: TopProductsCardProps) {
                   </div>
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function renderIcon(product: Product, iconUrl: string | null) {

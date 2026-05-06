@@ -1,12 +1,12 @@
 'use client'
 
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl';
 
+import Image from '@/lib/Image'
 import { Fragment, memo, useMemo } from 'react'
 import { X, Plus, ChevronUp, ChevronRight, Loader2, Tags, ListFilter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff, Printer } from 'lucide-react'
 import { Modal, SwipeableRow } from '@/components/ui'
 import { printBarcodeLabel } from '@/lib/barcode-print'
-import { useTranslations } from 'next-intl'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -99,17 +99,31 @@ export function ProductsTab({
   scanBusy,
   scanHiddenInput,
 }: ProductsTabProps) {
-  const t = useTranslations('products')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
 
   const sortLabels: Record<SortPreference, string> = {
-    name_asc: t('sort_name_asc'),
-    name_desc: t('sort_name_desc'),
-    price_asc: t('sort_price_asc'),
-    price_desc: t('sort_price_desc'),
-    category: t('sort_category'),
-    stock_asc: t('sort_stock_asc'),
-    stock_desc: t('sort_stock_desc'),
+    name_asc: t.formatMessage({
+      id: 'products.sort_name_asc'
+    }),
+    name_desc: t.formatMessage({
+      id: 'products.sort_name_desc'
+    }),
+    price_asc: t.formatMessage({
+      id: 'products.sort_price_asc'
+    }),
+    price_desc: t.formatMessage({
+      id: 'products.sort_price_desc'
+    }),
+    category: t.formatMessage({
+      id: 'products.sort_category'
+    }),
+    stock_asc: t.formatMessage({
+      id: 'products.sort_stock_asc'
+    }),
+    stock_desc: t.formatMessage({
+      id: 'products.sort_stock_desc'
+    }),
   }
 
   // Look up category name by ID in O(1). Without this map, rendering a
@@ -134,162 +148,187 @@ export function ProductsTab({
             {error}
           </div>
         )}
-
-        {/* Search, Filter, and List Header - only show when products exist */}
-        {products.length > 0 && (
-          <>
-            {/* Search Bar + Scan + Sort & Filter Buttons */}
-            <div className="flex gap-2 items-stretch">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  placeholder={t('search_placeholder')}
-                  value={searchQuery}
-                  onChange={e => onSearchChange(e.target.value)}
-                  className="input input-search w-full h-full"
-                  style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => onSearchChange('')}
-                    className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-                    aria-label={t('search_clear')}
-                  >
-                    <X size={18} />
-                  </button>
-                )}
-              </div>
-              {onScanClick && (
+      {/* Search, Filter, and List Header - only show when products exist */}
+      {products.length > 0 && (
+        <>
+          {/* Search Bar + Scan + Sort & Filter Buttons */}
+          <div className="flex gap-2 items-stretch">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder={t.formatMessage({
+                  id: 'products.search_placeholder'
+                })}
+                value={searchQuery}
+                onChange={e => onSearchChange(e.target.value)}
+                className="input input-search w-full h-full"
+                style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
+              />
+              {searchQuery && (
                 <button
                   type="button"
-                  onClick={onScanClick}
-                  disabled={scanBusy}
-                  className="btn btn-secondary btn-icon flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label={t('scan_aria')}
+                  onClick={() => onSearchChange('')}
+                  className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
+                  aria-label={t.formatMessage({
+                    id: 'products.search_clear'
+                  })}
                 >
-                  {scanBusy ? (
-                    <Loader2 className="w-[18px] h-[18px] animate-spin" />
-                  ) : (
-                    <ScanLine size={18} />
-                  )}
+                  <X size={18} />
                 </button>
               )}
+            </div>
+            {onScanClick && (
               <button
                 type="button"
-                onClick={() => onSortSheetOpenChange(true)}
-                className="btn btn-secondary btn-icon flex-shrink-0"
-                aria-label={t('sort_filter_aria')}
+                onClick={onScanClick}
+                disabled={scanBusy}
+                className="btn btn-secondary btn-icon flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label={t.formatMessage({
+                  id: 'products.scan_aria'
+                })}
               >
-                <ListFilter style={{ width: 18, height: 18 }} />
+                {scanBusy ? (
+                  <Loader2 className="w-[18px] h-[18px] animate-spin" />
+                ) : (
+                  <ScanLine size={18} />
+                )}
               </button>
-            </div>
-            {scanHiddenInput}
+            )}
+            <button
+              type="button"
+              onClick={() => onSortSheetOpenChange(true)}
+              className="btn btn-secondary btn-icon flex-shrink-0"
+              aria-label={t.formatMessage({
+                id: 'products.sort_filter_aria'
+              })}
+            >
+              <ListFilter style={{ width: 18, height: 18 }} />
+            </button>
+          </div>
+          {scanHiddenInput}
 
-            {/* Product List Card */}
-            <div className="card p-4 space-y-4">
-              {/* List Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-text-secondary">
-                    {t('product_count', { count: filteredProducts.length })}
-                  </span>
-                  <span className="text-text-tertiary">&#183;</span>
-                  {canManage && (
-                    <button
-                      type="button"
-                      onClick={onOpenSettings}
-                      className="text-sm text-brand hover:text-brand transition-colors"
-                    >
-                      {t('settings_link')}
-                    </button>
-                  )}
-                </div>
+          {/* Product List Card */}
+          <div className="card p-4 space-y-4">
+            {/* List Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-text-secondary">
+                  {t.formatMessage({
+                    id: 'products.product_count'
+                  }, { count: filteredProducts.length })}
+                </span>
+                <span className="text-text-tertiary">&#183;</span>
                 {canManage && (
                   <button
                     type="button"
-                    onClick={onAddProduct}
-                    className="btn btn-primary"
-                    style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
+                    onClick={onOpenSettings}
+                    className="text-sm text-brand hover:text-brand transition-colors"
                   >
-                    <Plus style={{ width: 14, height: 14 }} />
-                    {t('add_button')}
+                    {t.formatMessage({
+                      id: 'products.settings_link'
+                    })}
                   </button>
                 )}
               </div>
-
-              <hr className="border-border" />
-
-              {/* Product List */}
-              {filteredProducts.length === 0 ? (
-                <div className="text-center py-8 text-text-secondary">
-                  <p>{t('no_results')}</p>
-                </div>
-              ) : (
-                <div className="list-divided">
-                  {filteredProducts.map((product, i) => (
-                    <Fragment key={product.id}>
-                      {i > 0 && <hr className="list-divider" />}
-                      <ProductListItem
-                        product={product}
-                        categoryName={getCategoryName(product.categoryId)}
-                        onEdit={onEditProduct}
-                        onView={onViewProduct}
-                        onAdjustInventory={onAdjustInventory}
-                        onToggleActive={onToggleActive}
-                        canModify={canModify}
-                      />
-                    </Fragment>
-                  ))}
-                </div>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={onAddProduct}
+                  className="btn btn-primary"
+                  style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
+                >
+                  <Plus style={{ width: 14, height: 14 }} />
+                  {t.formatMessage({
+                    id: 'products.add_button'
+                  })}
+                </button>
               )}
             </div>
 
-            {/* Back to top button */}
-            {filteredProducts.length > 5 && (
-              <button
-                type="button"
-                onClick={() => scrollToTop()}
-                className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
-              >
-                <ChevronUp className="w-4 h-4" />
-                {t('back_to_top')}
-              </button>
-            )}
-          </>
-        )}
+            <hr className="border-border" />
 
-        {/* Empty state - no products at all */}
-        {products.length === 0 && (
-          <div className="empty-state-fill">
-            <Tags className="empty-state-icon" />
-            <h3 className="empty-state-title">{t('empty_state_title')}</h3>
-            <p className="empty-state-description">
-              {t('empty_state_description')}
-            </p>
-            {canManage && (
-              <button
-                type="button"
-                onClick={onAddProduct}
-                className="btn btn-primary mt-4"
-                style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
-              >
-                <Plus className="w-4 h-4" />
-                {t('empty_state_button')}
-              </button>
+            {/* Product List */}
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-8 text-text-secondary">
+                <p>{t.formatMessage({
+                  id: 'products.no_results'
+                })}</p>
+              </div>
+            ) : (
+              <div className="list-divided">
+                {filteredProducts.map((product, i) => (
+                  <Fragment key={product.id}>
+                    {i > 0 && <hr className="list-divider" />}
+                    <ProductListItem
+                      product={product}
+                      categoryName={getCategoryName(product.categoryId)}
+                      onEdit={onEditProduct}
+                      onView={onViewProduct}
+                      onAdjustInventory={onAdjustInventory}
+                      onToggleActive={onToggleActive}
+                      canModify={canModify}
+                    />
+                  </Fragment>
+                ))}
+              </div>
             )}
           </div>
-        )}
 
+          {/* Back to top button */}
+          {filteredProducts.length > 5 && (
+            <button
+              type="button"
+              onClick={() => scrollToTop()}
+              className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <ChevronUp className="w-4 h-4" />
+              {t.formatMessage({
+                id: 'products.back_to_top'
+              })}
+            </button>
+          )}
+        </>
+      )}
+      {/* Empty state - no products at all */}
+      {products.length === 0 && (
+        <div className="empty-state-fill">
+          <Tags className="empty-state-icon" />
+          <h3 className="empty-state-title">{t.formatMessage({
+            id: 'products.empty_state_title'
+          })}</h3>
+          <p className="empty-state-description">
+            {t.formatMessage({
+              id: 'products.empty_state_description'
+            })}
+          </p>
+          {canManage && (
+            <button
+              type="button"
+              onClick={onAddProduct}
+              className="btn btn-primary mt-4"
+              style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
+            >
+              <Plus className="w-4 h-4" />
+              {t.formatMessage({
+                id: 'products.empty_state_button'
+              })}
+            </button>
+          )}
+        </div>
+      )}
       {/* Sort & Filter Modal */}
       <Modal
         isOpen={isSortSheetOpen}
         onClose={() => onSortSheetOpenChange(false)}
-        title={t('sort_filter_title')}
+        title={t.formatMessage({
+          id: 'products.sort_filter_title'
+        })}
       >
         <Modal.Item>
             <div className="space-y-2">
-              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('sort_by_label')}</span>
+              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t.formatMessage({
+                id: 'products.sort_by_label'
+              })}</span>
               <div className="space-y-1">
                 {SORT_OPTIONS.map(option => (
                   <button
@@ -318,7 +357,9 @@ export function ProductsTab({
         {availableFilters.length > 0 && (
           <Modal.Item>
               <div className="space-y-2">
-                <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t('filter_by_category_label')}</span>
+                <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t.formatMessage({
+                  id: 'products.filter_by_category_label'
+                })}</span>
                 <div className="space-y-1">
                   <button
                     type="button"
@@ -326,7 +367,9 @@ export function ProductsTab({
                     className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
                   >
                     <span className={selectedFilter === 'all' ? 'font-medium text-brand' : 'text-text-primary'}>
-                      {t('filter_all')}
+                      {t.formatMessage({
+                        id: 'products.filter_all'
+                      })}
                     </span>
                     {selectedFilter === 'all' && (
                       <span className="w-5 h-5 text-brand">
@@ -366,12 +409,14 @@ export function ProductsTab({
             onClick={() => onSortSheetOpenChange(false)}
             className="btn btn-primary flex-1"
           >
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal>
     </div>
-  )
+  );
 }
 
 // ============================================
@@ -397,7 +442,7 @@ const ProductListItem = memo(function ProductListItem({
   onToggleActive,
   canModify = false,
 }: ProductListItemProps) {
-  const t = useTranslations('products')
+  const t = useIntl()
   const { formatCurrency } = useBusinessFormat()
   const iconUrl = getProductIconUrl(product)
   const stockValue = product.stock ?? 0
@@ -416,13 +461,17 @@ const ProductListItem = memo(function ProductListItem({
     ? [
         {
           icon: <SlidersHorizontal size={20} />,
-          label: t('action_inventory'),
+          label: t.formatMessage({
+            id: 'products.action_inventory'
+          }),
           variant: 'info' as const,
           onClick: () => onAdjustInventory(product),
         },
         {
           icon: <Printer size={20} />,
-          label: t('action_print'),
+          label: t.formatMessage({
+            id: 'products.action_print'
+          }),
           variant: 'warning' as const,
           disabled: !hasBarcode,
           onClick: () => printBarcodeLabel({
@@ -433,7 +482,11 @@ const ProductListItem = memo(function ProductListItem({
         },
         {
           icon: isActive ? <EyeOff size={20} /> : <Eye size={20} />,
-          label: isActive ? t('action_disable') : t('action_enable'),
+          label: isActive ? t.formatMessage({
+            id: 'products.action_disable'
+          }) : t.formatMessage({
+            id: 'products.action_enable'
+          }),
           variant: 'neutral' as const,
           onClick: () => onToggleActive(product),
         },
@@ -495,7 +548,9 @@ const ProductListItem = memo(function ProductListItem({
               {formatCurrency(product.price)}
             </span>
             <span className={`text-xs mt-0.5 block ${isLowStock && product.active ? 'text-error' : 'text-text-tertiary'}`}>
-              {t('units_count', { count: stockValue })}
+              {t.formatMessage({
+                id: 'products.units_count'
+              }, { count: stockValue })}
             </span>
           </div>
 
@@ -518,5 +573,5 @@ const ProductListItem = memo(function ProductListItem({
         </div>
       </div>
     </SwipeableRow>
-  )
+  );
 })

@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Modal, Spinner } from '@/components/ui'
 import { LocalePicker } from '@/components/businesses/shared'
 import { useBusiness } from '@/contexts/business-context'
@@ -10,8 +10,8 @@ import { useUpdateBusiness } from '@/hooks/useUpdateBusiness'
 interface Props { isOpen: boolean; onClose: () => void }
 
 export function EditLocationModal({ isOpen, onClose }: Props) {
-  const t = useTranslations('manage')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { business } = useBusiness()
   const { update, isSubmitting, error, reset } = useUpdateBusiness()
   const [locale, setLocale] = useState(business?.locale ?? 'en-US')
@@ -30,7 +30,9 @@ export function EditLocationModal({ isOpen, onClose }: Props) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} onExitComplete={handleExitComplete}>
-      <Modal.Step title={t('edit_location_title')} hideBackButton>
+      <Modal.Step title={t.formatMessage({
+        id: 'manage.edit_location_title'
+      })} hideBackButton>
         <Modal.Item>
           <LocalePicker value={locale} onChange={setLocale} />
         </Modal.Item>
@@ -41,7 +43,9 @@ export function EditLocationModal({ isOpen, onClose }: Props) {
         )}
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-            {tCommon('cancel')}
+            {tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <button
             type="button"
@@ -49,10 +53,12 @@ export function EditLocationModal({ isOpen, onClose }: Props) {
             disabled={isSubmitting || locale === business?.locale}
             className="btn btn-primary flex-1"
           >
-            {isSubmitting ? <Spinner size="sm" /> : t('save')}
+            {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({
+              id: 'manage.save'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

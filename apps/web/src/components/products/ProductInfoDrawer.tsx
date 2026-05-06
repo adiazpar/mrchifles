@@ -1,8 +1,8 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import Image from '@/lib/Image'
 import { ImagePlus } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { Modal } from '@/components/ui'
 import { BarcodeDisplay } from './BarcodeDisplay'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -37,8 +37,8 @@ export function ProductInfoDrawer({
   product,
   categories,
 }: ProductInfoDrawerProps) {
-  const t = useTranslations('products')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
 
   // Render nothing if no product is set. The parent's open-state is
   // typically gated on `!!product`, so this branch only fires during the
@@ -47,7 +47,9 @@ export function ProductInfoDrawer({
 
   const iconUrl = getProductIconUrl(product)
   const categoryName =
-    categories.find(c => c.id === product.categoryId)?.name ?? t('uncategorized')
+    categories.find(c => c.id === product.categoryId)?.name ?? t.formatMessage({
+      id: 'products.uncategorized'
+    })
   const formatLabel =
     product.barcodeFormat ? BARCODE_FORMAT_LABELS[product.barcodeFormat] : null
 
@@ -56,7 +58,9 @@ export function ProductInfoDrawer({
       isOpen={isOpen}
       onClose={onClose}
       onExitComplete={onExitComplete}
-      title={t('info_drawer_title')}
+      title={t.formatMessage({
+        id: 'products.info_drawer_title'
+      })}
     >
       <Modal.Item>
         <div className="flex flex-col items-center py-6">
@@ -83,7 +87,6 @@ export function ProductInfoDrawer({
           <div className="text-sm text-text-tertiary mt-1 text-center">{categoryName}</div>
         </div>
       </Modal.Item>
-
       <Modal.Item>
         {product.barcode && product.barcodeFormat ? (
           <div className="flex flex-col items-center gap-3">
@@ -97,16 +100,19 @@ export function ProductInfoDrawer({
           </div>
         ) : (
           <p className="text-center text-sm text-text-tertiary">
-            {t('info_drawer_no_barcode')}
+            {t.formatMessage({
+              id: 'products.info_drawer_no_barcode'
+            })}
           </p>
         )}
       </Modal.Item>
-
       <Modal.Footer>
         <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-          {tCommon('close')}
+          {tCommon.formatMessage({
+            id: 'common.close'
+          })}
         </button>
       </Modal.Footer>
     </Modal>
-  )
+  );
 }

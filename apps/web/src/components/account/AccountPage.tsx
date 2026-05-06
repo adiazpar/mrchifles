@@ -1,9 +1,9 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState } from 'react'
 import dynamic from '@/lib/next-dynamic-shim'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { useTranslations } from 'next-intl'
 import {
   Palette,
   KeyRound,
@@ -62,8 +62,8 @@ export function AccountPage() {
   const { user, isLoading } = useAuth()
   const { playExit } = useAuthGate()
   const router = useRouter()
-  const t = useTranslations('account')
-  const tNav = useTranslations('navigation')
+  const t = useIntl()
+  const tNav = useIntl()
   const { theme } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
@@ -77,12 +77,14 @@ export function AccountPage() {
   if (isLoading) {
     return (
       <>
-        <DrillDownHeader title={tNav('account')} onBack={() => router.back()} />
+        <DrillDownHeader title={tNav.formatMessage({
+          id: 'navigation.account'
+        })} onBack={() => router.back()} />
         <main className="page-loading">
           <Spinner className="spinner-lg" />
         </main>
       </>
-    )
+    );
   }
 
   if (!user) {
@@ -90,7 +92,9 @@ export function AccountPage() {
     return null
   }
 
-  const themeLabel = t(`theme_${theme}`)
+  const themeLabel = t.formatMessage({
+    id: `account.theme_${theme}`
+  })
 
   const handleLogout = async () => {
     await playExit('/login')
@@ -98,7 +102,9 @@ export function AccountPage() {
 
   return (
     <>
-      <DrillDownHeader title={tNav('account')} onBack={() => router.back()} />
+      <DrillDownHeader title={tNav.formatMessage({
+        id: 'navigation.account'
+      })} onBack={() => router.back()} />
       <main className="page-content space-y-4">
         {/* Profile header card — tappable, opens the edit profile modal */}
       <button
@@ -113,11 +119,11 @@ export function AccountPage() {
         >
           {user.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
+            (<img
               src={user.avatar}
               alt=""
               className="w-14 h-14 rounded-full object-cover"
-            />
+            />)
           ) : (
             <span className="text-xl font-semibold">
               {getUserInitials(user.name)}
@@ -153,15 +159,21 @@ export function AccountPage() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-warning">
-              {t('incoming_transfer_heading')}
+              {t.formatMessage({
+                id: 'account.incoming_transfer_heading'
+              })}
             </div>
             <div className="text-xs text-text-secondary mt-0.5 truncate">
               {incomingTransfer.fromUser
-                ? t('incoming_transfer_description', {
+                ? t.formatMessage({
+                id: 'account.incoming_transfer_description'
+              }, {
                     name: incomingTransfer.fromUser.name,
                     business: incomingTransfer.business.name,
                   })
-                : t('incoming_transfer_description_anonymous', {
+                : t.formatMessage({
+                id: 'account.incoming_transfer_description_anonymous'
+              }, {
                     business: incomingTransfer.business.name,
                   })}
             </div>
@@ -172,11 +184,15 @@ export function AccountPage() {
 
       {/* Preferences */}
       <div>
-        <SettingsSectionHeader label={t('section_preferences')} />
+        <SettingsSectionHeader label={t.formatMessage({
+          id: 'account.section_preferences'
+        })} />
         <div className="bg-bg-surface rounded-xl overflow-hidden">
           <SettingsRow
             icon={Palette}
-            label={t('row_theme')}
+            label={t.formatMessage({
+              id: 'account.row_theme'
+            })}
             value={themeLabel}
             onClick={() => setIsThemeModalOpen(true)}
           />
@@ -187,11 +203,15 @@ export function AccountPage() {
 
       {/* Security */}
       <div>
-        <SettingsSectionHeader label={t('section_security')} />
+        <SettingsSectionHeader label={t.formatMessage({
+          id: 'account.section_security'
+        })} />
         <div className="bg-bg-surface rounded-xl overflow-hidden">
           <SettingsRow
             icon={KeyRound}
-            label={t('row_change_password')}
+            label={t.formatMessage({
+              id: 'account.row_change_password'
+            })}
             onClick={() => setIsPasswordModalOpen(true)}
           />
         </div>
@@ -199,17 +219,23 @@ export function AccountPage() {
 
       {/* Support */}
       <div>
-        <SettingsSectionHeader label={t('section_support')} />
+        <SettingsSectionHeader label={t.formatMessage({
+          id: 'account.section_support'
+        })} />
         <div className="bg-bg-surface rounded-xl overflow-hidden">
           <SettingsRow
             icon={Info}
-            label={t('row_about')}
+            label={t.formatMessage({
+              id: 'account.row_about'
+            })}
             onClick={() => setIsAboutModalOpen(true)}
           />
           <div className="settings-divider" />
           <SettingsRow
             icon={CircleHelp}
-            label={t('row_contact_support')}
+            label={t.formatMessage({
+              id: 'account.row_contact_support'
+            })}
             onClick={() => setIsSupportModalOpen(true)}
           />
         </div>
@@ -217,18 +243,24 @@ export function AccountPage() {
 
       {/* Danger zone */}
       <div>
-        <SettingsSectionHeader label={t('section_danger_zone')} danger />
+        <SettingsSectionHeader label={t.formatMessage({
+          id: 'account.section_danger_zone'
+        })} danger />
         <div className="bg-bg-surface rounded-xl overflow-hidden">
           <SettingsRow
             icon={LogOut}
-            label={t('row_logout')}
+            label={t.formatMessage({
+              id: 'account.row_logout'
+            })}
             onClick={handleLogout}
             danger
           />
           <div className="settings-divider" />
           <SettingsRow
             icon={UserX}
-            label={t('row_delete_account')}
+            label={t.formatMessage({
+              id: 'account.row_delete_account'
+            })}
             onClick={() => setIsDeleteModalOpen(true)}
             danger
           />
@@ -265,5 +297,5 @@ export function AccountPage() {
       />
       </main>
     </>
-  )
+  );
 }

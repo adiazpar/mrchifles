@@ -1,9 +1,9 @@
 'use client'
 
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl';
 
+import Image from '@/lib/Image'
 import { useEffect, useMemo, useState, type MouseEvent } from 'react'
-import { useTranslations } from 'next-intl'
 import { Loader2, Minus, Package, Plus, ScanLine, X } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { useProducts } from '@/contexts/products-context'
@@ -20,10 +20,10 @@ interface ProductPickerProps {
 }
 
 export function ProductPicker({ cart }: ProductPickerProps) {
-  const t = useTranslations('sales.cart')
-  const tSales = useTranslations('sales')
-  const tProducts = useTranslations('products')
-  const tToast = useTranslations('sales.toast')
+  const t = useIntl()
+  const tSales = useIntl()
+  const tProducts = useIntl()
+  const tToast = useIntl()
   const { business } = useBusiness()
   const { products, ensureLoaded } = useProducts()
   const { formatCurrency } = useBusinessFormat()
@@ -64,7 +64,9 @@ export function ProductPicker({ cart }: ProductPickerProps) {
         const stock = product.stock ?? 0
         const current = cart.lines.find((l) => l.productId === product.id)?.quantity ?? 0
         if (stock <= 0 || current >= stock) {
-          alert(t('out_of_stock'))
+          alert(t.formatMessage({
+            id: 'sales.cart.out_of_stock'
+          }))
           return
         }
         cart.addLine(product)
@@ -74,13 +76,17 @@ export function ProductPicker({ cart }: ProductPickerProps) {
     } catch {
       /* fall through to no-match */
     }
-    alert(tToast('no_barcode_match'))
+    alert(tToast.formatMessage({
+      id: 'sales.toast.no_barcode_match'
+    }))
   }
 
   const { open: openScanner, busy: scanBusy, hiddenInput: scanHiddenInput } =
     useBarcodeScan({
       onResult: handleScanResult,
-      onError: () => alert(tToast('no_barcode_match')),
+      onError: () => alert(tToast.formatMessage({
+        id: 'sales.toast.no_barcode_match'
+      })),
     })
 
   return (
@@ -99,7 +105,9 @@ export function ProductPicker({ cart }: ProductPickerProps) {
         <div className="relative flex-1">
           <input
             type="text"
-            placeholder={tSales('search_placeholder')}
+            placeholder={tSales.formatMessage({
+              id: 'sales.search_placeholder'
+            })}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input input-search w-full h-full"
@@ -116,7 +124,9 @@ export function ProductPicker({ cart }: ProductPickerProps) {
               type="button"
               onClick={() => setSearch('')}
               className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-              aria-label={tProducts('search_clear')}
+              aria-label={tProducts.formatMessage({
+                id: 'products.search_clear'
+              })}
             >
               <X size={18} />
             </button>
@@ -127,7 +137,9 @@ export function ProductPicker({ cart }: ProductPickerProps) {
           onClick={openScanner}
           disabled={scanBusy}
           className="btn btn-secondary btn-icon flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label={tSales('scan_barcode_aria')}
+          aria-label={tSales.formatMessage({
+            id: 'sales.scan_barcode_aria'
+          })}
         >
           {scanBusy ? (
             <Loader2 className="w-[18px] h-[18px] animate-spin" />
@@ -205,13 +217,14 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                   </div>
                 </div>
               </div>
-
               {/* Row 2: out-of-stock label OR qty stepper. The plus
                   button is also HTML-disabled at qty >= stock so the
                   user can't add more than the available inventory. */}
               {outOfStock ? (
                 <div className="text-xs text-text-tertiary text-center h-8 flex items-center justify-center">
-                  {t('out_of_stock')}
+                  {t.formatMessage({
+                    id: 'sales.cart.out_of_stock'
+                  })}
                 </div>
               ) : (
                 <div
@@ -222,7 +235,9 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                   <QtyButton
                     active={isSelected}
                     variant="danger"
-                    ariaLabel={t('qty_decrease')}
+                    ariaLabel={t.formatMessage({
+                      id: 'sales.cart.qty_decrease'
+                    })}
                     disabled={!isSelected}
                     onClick={(e) => {
                       e.stopPropagation()
@@ -237,7 +252,9 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                   <QtyButton
                     active={isSelected}
                     variant="primary"
-                    ariaLabel={t('qty_increase')}
+                    ariaLabel={t.formatMessage({
+                      id: 'sales.cart.qty_increase'
+                    })}
                     disabled={!isSelected || atMaxQty}
                     onClick={(e) => {
                       e.stopPropagation()
@@ -250,7 +267,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
                 </div>
               )}
             </div>
-          )
+          );
         })}
         </div>
         {/* Sentinel: clears the floating View Cart FAB at page-body
@@ -259,7 +276,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
         <div aria-hidden="true" className="shrink-0 h-20" />
       </div>
     </div>
-  )
+  );
 }
 
 function renderProductIcon(product: Product, iconUrl: string | null) {

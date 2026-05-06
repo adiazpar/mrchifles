@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { PaymentSplit } from '@kasero/shared/types/sales-aggregate'
 
@@ -21,8 +21,8 @@ interface Segment {
  * segment). Legend on the right with swatch + label + amount + percent.
  */
 export function PaymentSplitCard({ split }: PaymentSplitCardProps) {
-  const t = useTranslations('sales.reports')
-  const tMethod = useTranslations('sales.cart')
+  const t = useIntl()
+  const tMethod = useIntl()
   const { formatCurrency } = useBusinessFormat()
 
   const total = split.cash + split.card + split.other
@@ -35,11 +35,15 @@ export function PaymentSplitCard({ split }: PaymentSplitCardProps) {
 
   return (
     <div className="card p-4 space-y-4">
-      <div className="text-sm text-text-secondary">{t('payment_split_title')}</div>
+      <div className="text-sm text-text-secondary">{t.formatMessage({
+        id: 'sales.reports.payment_split_title'
+      })}</div>
       <hr className="border-border" />
       {total === 0 ? (
         <p className="text-sm text-text-tertiary text-center py-4">
-          {t('payment_split_no_data')}
+          {t.formatMessage({
+            id: 'sales.reports.payment_split_no_data'
+          })}
         </p>
       ) : (
         <div className="grid grid-cols-[auto_1fr] gap-4 items-center">
@@ -53,7 +57,9 @@ export function PaymentSplitCard({ split }: PaymentSplitCardProps) {
                     className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ background: seg.color }}
                   />
-                  <span className="flex-1 truncate">{tMethod(seg.i18nKey)}</span>
+                  <span className="flex-1 truncate">{tMethod.formatMessage({
+                    id: 'sales.cart.' + seg.i18nKey
+                  })}</span>
                   <span className="text-text-secondary tabular-nums">
                     {formatCurrency(seg.amount)}
                   </span>
@@ -61,13 +67,13 @@ export function PaymentSplitCard({ split }: PaymentSplitCardProps) {
                     {pct}%
                   </span>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
 interface DonutProps {

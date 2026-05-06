@@ -1,9 +1,9 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { Link } from 'react-router-dom'
 import { useCallback } from 'react'
 import { usePathname } from '@/lib/next-navigation-shim'
-import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
@@ -23,7 +23,7 @@ interface UserMenuContentProps {
  * Language and theme preferences now live on the account settings page.
  */
 export function UserMenuContent({ onAction, showHeader = true }: UserMenuContentProps) {
-  const t = useTranslations('ui.user_menu')
+  const t = useIntl()
   const { user } = useAuth()
   const { playExit } = useAuthGate()
   const { navigate } = usePageTransition()
@@ -63,11 +63,11 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
               // Avatar is a small base64 data URL — Next/Image with its width/
               // height requirements adds no benefit over a plain <img> here.
               // eslint-disable-next-line @next/next/no-img-element
-              <img
+              (<img
                 src={user.avatar}
                 alt={user.name}
                 className="user-menu-avatar-img"
-              />
+              />)
             ) : (
               getUserInitials(user.name)
             )}
@@ -78,7 +78,6 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           </div>
         </div>
       )}
-
       {/* Menu Items */}
       <div className="user-menu-items">
         {isBusinessContext && (
@@ -88,7 +87,9 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
             onClick={(e) => handleLinkClick(e, '/')}
           >
             <Building2 />
-            <span>{t('business_hub')}</span>
+            <span>{t.formatMessage({
+              id: 'ui.user_menu.business_hub'
+            })}</span>
             <ChevronRight className="user-menu-item-arrow" />
           </Link>
         )}
@@ -113,7 +114,9 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           }}
         >
           <Settings />
-          <span>{t('account_settings')}</span>
+          <span>{t.formatMessage({
+            id: 'ui.user_menu.account_settings'
+          })}</span>
           <span className="user-menu-item-trailing">
             {incomingTransfer && (
               <span
@@ -131,7 +134,9 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           onClick={(e) => handleLinkClick(e, '/support')}
         >
           <CircleHelp />
-          <span>{t('support')}</span>
+          <span>{t.formatMessage({
+            id: 'ui.user_menu.support'
+          })}</span>
           <ChevronRight className="user-menu-item-arrow" />
         </Link>
 
@@ -141,9 +146,11 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
           onClick={handleLogout}
         >
           <LogOut />
-          <span>{t('log_out')}</span>
+          <span>{t.formatMessage({
+            id: 'ui.user_menu.log_out'
+          })}</span>
         </button>
       </div>
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 
 // Slim banner pinned to the top of the screen when the browser reports
@@ -18,7 +18,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 // The transient navigation-error notice sits at the same layer so the
 // most-recent banner wins for stack order.
 export function OfflineBadge() {
-  const t = useTranslations('network')
+  const t = useIntl()
   const isOnline = useOnlineStatus()
 
   if (isOnline) return null
@@ -28,7 +28,9 @@ export function OfflineBadge() {
       role="status"
       className="fixed top-0 inset-x-0 z-[160] px-4 py-1.5 text-xs text-center bg-neutral-800 text-text-inverse shadow-sm pointer-events-none"
     >
-      {t('offline_banner')}
+      {t.formatMessage({
+        id: 'network.offline_banner'
+      })}
     </div>
-  )
+  );
 }

@@ -10,9 +10,11 @@ vi.mock('@/lib/next-navigation-shim', () => ({
   useSearchParams: () => new URLSearchParams(),
 }))
 
-vi.mock('next-intl', () => ({
-  useTranslations: () => (k: string) => k,
-  useLocale: () => 'en-US',
+vi.mock('react-intl', () => ({
+  useIntl: () => ({
+    locale: 'en-US',
+    formatMessage: ({ id }: { id: string }) => id,
+  }),
 }))
 
 vi.mock('@/contexts/page-transition-context', () => ({

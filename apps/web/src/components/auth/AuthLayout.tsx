@@ -1,5 +1,5 @@
+import { useIntl } from 'react-intl';
 import type { ReactNode } from 'react'
-import { useTranslations } from 'next-intl'
 import Image from '@/lib/Image'
 
 // Ported from the original Next.js auth layout (apps/api/src/app/(auth)/layout.tsx
@@ -18,14 +18,16 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children }: AuthLayoutProps) {
-  const t = useTranslations('auth')
+  const t = useIntl()
   return (
     <div className="flex-1 flex flex-col">
       <div className="auth-container">
         <div className="auth-logo">
           <Image
             src="/icon-source.png"
-            alt={t('logo_alt')}
+            alt={t.formatMessage({
+              id: 'auth.logo_alt'
+            })}
             width={96}
             height={96}
             priority
@@ -34,5 +36,5 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         {children}
       </div>
     </div>
-  )
+  );
 }

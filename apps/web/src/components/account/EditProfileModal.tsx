@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useTranslations } from 'next-intl'
 import { Upload, X } from 'lucide-react'
 import { Modal, Input, Spinner, useModal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
@@ -18,8 +18,8 @@ export interface EditProfileModalProps {
 }
 
 export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfileModalProps) {
-  const t = useTranslations('account')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { user, refreshUser } = useAuth()
   const translateApiMessage = useApiMessage()
 
@@ -52,11 +52,15 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
       event.target.value = ''
 
       if (!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type)) {
-        setError(t('profile_avatar_invalid_type'))
+        setError(t.formatMessage({
+          id: 'account.profile_avatar_invalid_type'
+        }))
         return
       }
       if (file.size > MAX_UPLOAD_SIZE) {
-        setError(t('profile_avatar_too_large'))
+        setError(t.formatMessage({
+          id: 'account.profile_avatar_too_large'
+        }))
         return
       }
       try {
@@ -65,7 +69,9 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
         setError('')
       } catch (err) {
         console.error('Avatar read error:', err)
-        setError(tCommon('error'))
+        setError(tCommon.formatMessage({
+          id: 'common.error'
+        }))
       }
     },
     [t, tCommon],
@@ -89,12 +95,16 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
         setError(
           err.envelope
             ? translateApiMessage(err.envelope)
-            : tCommon('error'),
+            : tCommon.formatMessage({
+            id: 'common.error'
+          }),
         )
         return false
       }
       console.error('Profile save error:', err)
-      setError(tCommon('error'))
+      setError(tCommon.formatMessage({
+        id: 'common.error'
+      }))
       return false
     } finally {
       setIsSaving(false)
@@ -118,7 +128,9 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} onExitComplete={handleExitComplete}>
-      <Modal.Step title={t('profile_modal_title')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'account.profile_modal_title'
+      })}>
         <Modal.Item>
           {error && (
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mb-4">
@@ -136,7 +148,7 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
                 >
                   {avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={avatar} alt="" className="w-24 h-24 object-cover" />
+                    (<img src={avatar} alt="" className="w-24 h-24 object-cover" />)
                   ) : (
                     <span className="text-3xl font-semibold">
                       {getUserInitials(name || user?.name || '')}
@@ -148,7 +160,9 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
                     type="button"
                     onClick={handleRemoveAvatar}
                     className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center shadow-md hover:bg-error-hover transition-colors"
-                    aria-label={t('profile_avatar_remove')}
+                    aria-label={t.formatMessage({
+                      id: 'account.profile_avatar_remove'
+                    })}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -169,18 +183,28 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
             >
               <Upload className="w-5 h-5" />
               <span className="text-sm font-medium">
-                {avatar ? t('profile_avatar_change') : t('profile_avatar_upload')}
+                {avatar ? t.formatMessage({
+                  id: 'account.profile_avatar_change'
+                }) : t.formatMessage({
+                  id: 'account.profile_avatar_upload'
+                })}
               </span>
             </button>
-            <p className="text-xs text-text-tertiary text-center mt-2">{t('profile_avatar_hint')}</p>
+            <p className="text-xs text-text-tertiary text-center mt-2">{t.formatMessage({
+              id: 'account.profile_avatar_hint'
+            })}</p>
           </div>
 
           {/* Name */}
           <Input
-            label={t('profile_name_label')}
+            label={t.formatMessage({
+              id: 'account.profile_name_label'
+            })}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={t('profile_name_placeholder')}
+            placeholder={t.formatMessage({
+              id: 'account.profile_name_placeholder'
+            })}
             autoComplete="name"
             required
           />
@@ -188,7 +212,9 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
           {/* Email (read-only) */}
           <div className="mt-4">
             <Input
-              label={t('profile_email_label')}
+              label={t.formatMessage({
+                id: 'account.profile_email_label'
+              })}
               value={user?.email ?? ''}
               disabled
               readOnly
@@ -204,8 +230,9 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
           />
         </Modal.Footer>
       </Modal.Step>
-
-      <Modal.Step title={t('profile_saved_heading')} hideBackButton className="modal-step--centered">
+      <Modal.Step title={t.formatMessage({
+        id: 'account.profile_saved_heading'
+      })} hideBackButton className="modal-step--centered">
         <Modal.Item>
           <div className="flex flex-col items-center text-center py-4">
             <div style={{ width: 160, height: 160 }}>
@@ -218,21 +245,27 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
               />
             </div>
             <p className="text-lg font-semibold text-text-primary mt-4">
-              {t('profile_saved_heading')}
+              {t.formatMessage({
+                id: 'account.profile_saved_heading'
+              })}
             </p>
             <p className="text-sm text-text-tertiary mt-1">
-              {t('profile_saved_description')}
+              {t.formatMessage({
+                id: 'account.profile_saved_description'
+              })}
             </p>
           </div>
         </Modal.Item>
         <Modal.Footer>
           <button type="button" className="btn btn-primary flex-1" onClick={onClose}>
-            {tCommon('done')}
+            {tCommon.formatMessage({
+              id: 'common.done'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }
 
 // ============================================================================
@@ -247,7 +280,7 @@ interface SaveProfileButtonProps {
 }
 
 function SaveProfileButton({ isValid, hasChanges, isSaving, onSave }: SaveProfileButtonProps) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   const handleClick = async () => {
@@ -264,7 +297,9 @@ function SaveProfileButton({ isValid, hasChanges, isSaving, onSave }: SaveProfil
       onClick={handleClick}
       disabled={!isValid || !hasChanges || isSaving}
     >
-      {isSaving ? <Spinner /> : tCommon('save')}
+      {isSaving ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.save'
+      })}
     </button>
-  )
+  );
 }

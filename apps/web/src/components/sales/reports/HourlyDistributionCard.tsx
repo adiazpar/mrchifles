@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import type { HourlyEntry } from '@kasero/shared/types/sales-aggregate'
 
 interface HourlyDistributionCardProps {
@@ -14,18 +14,22 @@ interface HourlyDistributionCardProps {
  * an aligned 4-column grid below the bar row.
  */
 export function HourlyDistributionCard({ entries }: HourlyDistributionCardProps) {
-  const t = useTranslations('sales.reports')
+  const t = useIntl()
 
   const max = entries.reduce((m, e) => (e.total > m ? e.total : m), 0)
   const peakIdx = entries.findIndex((e) => e.total === max && max > 0)
 
   return (
     <div className="card p-4 space-y-4">
-      <div className="text-sm text-text-secondary">{t('hourly_title')}</div>
+      <div className="text-sm text-text-secondary">{t.formatMessage({
+        id: 'sales.reports.hourly_title'
+      })}</div>
       <hr className="border-border" />
       {max === 0 ? (
         <p className="text-sm text-text-tertiary text-center py-4">
-          {t('hourly_no_data')}
+          {t.formatMessage({
+            id: 'sales.reports.hourly_no_data'
+          })}
         </p>
       ) : (
         <>
@@ -49,13 +53,21 @@ export function HourlyDistributionCard({ entries }: HourlyDistributionCardProps)
             })}
           </div>
           <div className="grid grid-cols-4 text-xs text-text-tertiary">
-            <span className="text-left">{t('hourly_label_12am')}</span>
-            <span className="text-left">{t('hourly_label_6am')}</span>
-            <span className="text-left">{t('hourly_label_12pm')}</span>
-            <span className="text-left">{t('hourly_label_6pm')}</span>
+            <span className="text-left">{t.formatMessage({
+              id: 'sales.reports.hourly_label_12am'
+            })}</span>
+            <span className="text-left">{t.formatMessage({
+              id: 'sales.reports.hourly_label_6am'
+            })}</span>
+            <span className="text-left">{t.formatMessage({
+              id: 'sales.reports.hourly_label_12pm'
+            })}</span>
+            <span className="text-left">{t.formatMessage({
+              id: 'sales.reports.hourly_label_6pm'
+            })}</span>
           </div>
         </>
       )}
     </div>
-  )
+  );
 }

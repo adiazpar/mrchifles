@@ -1,12 +1,12 @@
 // src/components/ui/modal/ModalButtons.tsx
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { useModalContext, useModal } from './ModalContext'
 import type { ModalButtonProps } from './types'
 
 export function ModalBackButton({ children, className = '', disabled, onClick }: ModalButtonProps) {
-  const t = useTranslations('common')
+  const t = useIntl()
   const ctx = useModalContext()
   const { goBack, goToStep, isLocked, isTransitioning, isFirstStep, _currentStepBackStep } = ctx
 
@@ -27,13 +27,15 @@ export function ModalBackButton({ children, className = '', disabled, onClick }:
       onClick={handleClick}
       disabled={disabled || isLocked || isTransitioning || isFirstStep}
     >
-      {children || t('back')}
+      {children || t.formatMessage({
+        id: 'common.back'
+      })}
     </button>
-  )
+  );
 }
 
 export function ModalNextButton({ children, className = '', disabled, onClick }: ModalButtonProps) {
-  const t = useTranslations('common')
+  const t = useIntl()
   const { goNext, isLocked, isTransitioning, isLastStep } = useModal()
 
   const handleClick = () => {
@@ -48,9 +50,11 @@ export function ModalNextButton({ children, className = '', disabled, onClick }:
       onClick={handleClick}
       disabled={disabled || isLocked || isTransitioning || isLastStep}
     >
-      {children || t('next')}
+      {children || t.formatMessage({
+        id: 'common.next'
+      })}
     </button>
-  )
+  );
 }
 
 interface GoToStepButtonProps extends ModalButtonProps {
@@ -90,7 +94,7 @@ export function ModalCancelBackButton({
   onCancel,
   onClick,
 }: CancelBackButtonProps) {
-  const t = useTranslations('common')
+  const t = useIntl()
   const ctx = useModalContext()
   const { goBack, goToStep, isLocked, isTransitioning, isFirstStep, _currentStepBackStep, _currentStepOnBackStep } = ctx
 
@@ -123,7 +127,11 @@ export function ModalCancelBackButton({
       onClick={handleClick}
       disabled={disabled || isLocked || isTransitioning}
     >
-      {children || (isFirstStep ? t('cancel') : t('back'))}
+      {children || (isFirstStep ? t.formatMessage({
+        id: 'common.cancel'
+      }) : t.formatMessage({
+        id: 'common.back'
+      }))}
     </button>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations, useLocale } from 'next-intl'
+import { useIntl } from 'react-intl';
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { DailyRevenueEntry } from '@kasero/shared/types/sales-aggregate'
 
@@ -15,17 +15,19 @@ interface DailyRevenueCardProps {
  * provider-detail monthly-spend chart pattern.
  */
 export function DailyRevenueCard({ entries }: DailyRevenueCardProps) {
-  const t = useTranslations('sales.reports')
+  const t = useIntl()
   const { formatCurrency } = useBusinessFormat()
   // Day-of-week label is LANGUAGE, not formatting — use the user's UI locale
   // so an English UI doesn't show "Lun/Mar/Mié" for a Spanish-locale business.
-  const userLocale = useLocale()
+  const userLocale = t.locale
 
   const max = entries.reduce((m, e) => (e.total > m ? e.total : m), 0)
 
   return (
     <div className="card p-4 space-y-4">
-      <div className="text-sm text-text-secondary">{t('daily_revenue_title')}</div>
+      <div className="text-sm text-text-secondary">{t.formatMessage({
+        id: 'sales.reports.daily_revenue_title'
+      })}</div>
       <hr className="border-border" />
       <div className="flex items-stretch gap-2 h-36">
         {entries.map((entry, idx) => {
@@ -75,5 +77,5 @@ export function DailyRevenueCard({ entries }: DailyRevenueCardProps) {
         })}
       </div>
     </div>
-  )
+  );
 }

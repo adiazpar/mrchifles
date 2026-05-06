@@ -1,10 +1,10 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useRouter, usePathname } from '@/lib/next-navigation-shim'
 import { useParams } from 'react-router'
-import { useTranslations } from 'next-intl'
 import { getNavItems, getPrefetchRoutes } from '@/lib/navigation'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { useOptionalBusiness } from '@/contexts/business-context'
@@ -12,7 +12,7 @@ import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 
 export function MobileNav() {
-  const tNav = useTranslations('navigation')
+  const tNav = useIntl()
   const pathname = usePathname()
   const router = useRouter()
   const params = useParams<{ businessId: string }>()
@@ -23,10 +23,18 @@ export function MobileNav() {
   const { transfer: incomingTransfer } = useIncomingTransferContext()
 
   const NAV_LABEL_MAP: Record<string, string> = {
-    home: tNav('home'),
-    sales: tNav('sales'),
-    products: tNav('products'),
-    manage: tNav('manage'),
+    home: tNav.formatMessage({
+      id: 'navigation.home'
+    }),
+    sales: tNav.formatMessage({
+      id: 'navigation.sales'
+    }),
+    products: tNav.formatMessage({
+      id: 'navigation.products'
+    }),
+    manage: tNav.formatMessage({
+      id: 'navigation.manage'
+    }),
   }
 
   const navItems = useMemo(

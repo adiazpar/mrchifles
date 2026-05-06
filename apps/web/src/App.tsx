@@ -1,7 +1,7 @@
 import { IonApp, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, setupIonicReact } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
 import { Route, Switch } from 'react-router-dom'
-import { NextIntlClientProvider } from 'next-intl'
+import { IntlProvider } from 'react-intl'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { LoginPage } from '@/routes/LoginPage'
@@ -15,8 +15,9 @@ setupIonicReact({ mode: 'ios' })
 // context, page transitions, drill-down stacks, etc.) land in later
 // migration phases:
 //   - Phase 5.2 (DONE): login/register pages mounted at /login and /register
-//   - Phase 6:   IntlProvider with locale switching, codemod next-intl ->
-//                react-intl, useApiMessage adapter
+//   - Phase 6.2 (DONE): codemod next-intl -> react-intl across consumers
+//   - Phase 6.3:  AppIntlProvider with locale switching, useApiMessage
+//                 adapter, full removal of next-intl dependency
 //   - Phase 7-12: hub, account, business tabs, drill-downs
 //
 // AuthProvider + AuthGateProvider are wired so login/register can call
@@ -24,16 +25,16 @@ setupIonicReact({ mode: 'ios' })
 // providers because AuthContext uses useRouter() internally (via the
 // next-navigation-shim that wraps react-router's useHistory).
 //
-// next-intl is mounted as a temporary placeholder. The current intl
-// surface in the ported code calls useTranslations() everywhere. Phase
-// 6 codemods these calls to react-intl and the next-intl dep gets
-// removed. Until then, NextIntlClientProvider with the en-US message
-// bundle keeps the moved code from throwing at runtime.
+// react-intl's IntlProvider is mounted with a hardcoded en-US bundle as
+// a temporary shim. Phase 6.3 replaces this with an AppIntlProvider that
+// reads the active locale from AuthContext and reactively swaps the
+// message bundle. Until then, this keeps the codemodded
+// `intl.formatMessage(...)` calls from throwing at runtime.
 export function App() {
   return (
     <IonApp>
       <IonReactRouter>
-        <NextIntlClientProvider locale={DEFAULT_LOCALE} messages={enMessages}>
+        <IntlProvider locale={DEFAULT_LOCALE} defaultLocale={DEFAULT_LOCALE} messages={enMessages}>
           <AuthProvider>
             <AuthGateProvider>
               <Switch>
@@ -64,7 +65,7 @@ export function App() {
               </Switch>
             </AuthGateProvider>
           </AuthProvider>
-        </NextIntlClientProvider>
+        </IntlProvider>
       </IonReactRouter>
     </IonApp>
   )

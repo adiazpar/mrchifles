@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Clock } from 'lucide-react'
 import { Modal, Spinner } from '@/components/ui'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
@@ -52,8 +52,8 @@ function useExpiryLabel(expiresAt: string | undefined): ExpiryLabel | null {
 }
 
 export function CancelTransferModal({ isOpen, onClose }: Props) {
-  const t = useTranslations('manage')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { transfer, cancel, isCancelling, error } = usePendingTransferContext()
   const expiry = useExpiryLabel(transfer?.expiresAt)
 
@@ -72,7 +72,9 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <Modal.Step title={t('transfer_pending_heading')} hideBackButton>
+      <Modal.Step title={t.formatMessage({
+        id: 'manage.transfer_pending_heading'
+      })} hideBackButton>
         <Modal.Item>
           <div
             className="p-3 rounded-lg flex items-start gap-3"
@@ -93,12 +95,18 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-warning">
                 {transfer
-                  ? t('transfer_pending_waiting', { recipient: transfer.toEmail })
-                  : t('transfer_pending_heading')}
+                  ? t.formatMessage({
+                  id: 'manage.transfer_pending_waiting'
+                }, { recipient: transfer.toEmail })
+                  : t.formatMessage({
+                  id: 'manage.transfer_pending_heading'
+                })}
               </p>
               {expiry && (
                 <p className="text-xs text-text-secondary mt-1">
-                  {t(expiry.key, expiry.values)}
+                  {t.formatMessage({
+                    id: 'manage.' + expiry.key
+                  }, expiry.values)}
                 </p>
               )}
             </div>
@@ -118,7 +126,9 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
             disabled={isCancelling}
             className="btn btn-secondary flex-1"
           >
-            {tCommon('cancel')}
+            {tCommon.formatMessage({
+              id: 'common.cancel'
+            })}
           </button>
           <button
             type="button"
@@ -127,10 +137,12 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
             className="btn btn-primary flex-1"
             style={{ background: 'var(--color-error)' }}
           >
-            {isCancelling ? <Spinner size="sm" /> : t('transfer_withdraw')}
+            {isCancelling ? <Spinner size="sm" /> : t.formatMessage({
+              id: 'manage.transfer_withdraw'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }

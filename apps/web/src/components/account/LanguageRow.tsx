@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { Languages, ChevronRight } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/auth-context'
 import { LOCALES, SUPPORTED_LOCALES, resolveTranslationLocale, type SupportedLocale } from '@/i18n/config'
 
@@ -16,7 +16,7 @@ import { LOCALES, SUPPORTED_LOCALES, resolveTranslationLocale, type SupportedLoc
  * on all platforms (iOS Safari in particular).
  */
 export function LanguageRow() {
-  const t = useTranslations('account')
+  const t = useIntl()
   const { user, changeLanguage } = useAuth()
 
   if (!user) return null
@@ -35,12 +35,16 @@ export function LanguageRow() {
     <div className="settings-row relative cursor-pointer">
       <Languages className="w-5 h-5 flex-shrink-0 text-text-secondary" />
       <span className="flex-1 text-left text-base font-medium text-text-primary">
-        {t('row_language')}
+        {t.formatMessage({
+          id: 'account.row_language'
+        })}
       </span>
       <span className="text-sm text-text-tertiary">{currentLabel}</span>
       <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
       <select
-        aria-label={t('row_language')}
+        aria-label={t.formatMessage({
+          id: 'account.row_language'
+        })}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         value={currentLanguage}
         onChange={handleChange}
@@ -52,5 +56,5 @@ export function LanguageRow() {
         ))}
       </select>
     </div>
-  )
+  );
 }

@@ -1,4 +1,5 @@
-'use client'
+'use client';
+import { useIntl } from 'react-intl';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import dynamic from '@/lib/next-dynamic-shim'
@@ -52,7 +53,6 @@ import { useProviders } from '@/contexts/providers-context'
 import { useProducts } from '@/contexts/products-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { scrollToTop } from '@/lib/scroll'
-import { useTranslations } from 'next-intl'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import type { Product, SortPreference, ProductCategory } from '@kasero/shared/types'
 import {
@@ -118,7 +118,7 @@ function AddProductModalWrapper({
   checkBarcodeExists,
   defaultCategoryId,
 }: AddProductModalWrapperProps) {
-  const tProductForm = useTranslations('productForm')
+  const tProductForm = useIntl()
   const pendingActionRef = useRef<(() => void) | null>(null)
   const {
     barcode,
@@ -140,7 +140,9 @@ function AddProductModalWrapper({
     if (trimmed) {
       const existingName = await checkBarcodeExists(trimmed)
       if (existingName) {
-        setError(tProductForm('barcode_already_used', { name: existingName }))
+        setError(tProductForm.formatMessage({
+          id: 'productForm.barcode_already_used'
+        }, { name: existingName }))
         return
       }
     }
@@ -279,9 +281,9 @@ function EditProductModalWrapper({
 }
 
 export function ProductsView() {
-  const t = useTranslations('products')
-  const tOrders = useTranslations('orders')
-  const tProductForm = useTranslations('productForm')
+  const t = useIntl()
+  const tOrders = useIntl()
+  const tProductForm = useIntl()
   const translateApiMessage = useApiMessage()
   const { user } = useAuth()
   const { canManage, businessId } = useBusiness()
@@ -622,7 +624,9 @@ export function ProductsView() {
       if (err instanceof ApiError && err.envelope) {
         throw new Error(translateApiMessage(err.envelope))
       }
-      throw new Error(tProductForm('failed_to_delete'))
+      throw new Error(tProductForm.formatMessage({
+        id: 'productForm.failed_to_delete'
+      }))
     }
   }, [businessId, setProducts, translateApiMessage, tProductForm])
 
@@ -727,7 +731,9 @@ export function ProductsView() {
         setSearchQuery(value)
       }
     } catch {
-      setError(tOrders('error_unable_to_lookup_barcode'))
+      setError(tOrders.formatMessage({
+        id: 'orders.error_unable_to_lookup_barcode'
+      }))
     }
   }, [businessId, handleOpenEdit, setError, setSearchQuery, tOrders])
 
@@ -808,7 +814,9 @@ export function ProductsView() {
             }}
             className={`section-tab ${activeTab === 'products' ? 'section-tab-active' : ''}`}
           >
-            {t('tab_products')}
+            {t.formatMessage({
+              id: 'products.tab_products'
+            })}
           </button>
           <button
             type="button"
@@ -819,7 +827,9 @@ export function ProductsView() {
             }}
             className={`section-tab ${activeTab === 'orders' ? 'section-tab-active' : ''}`}
           >
-            {t('tab_orders')}
+            {t.formatMessage({
+              id: 'products.tab_orders'
+            })}
           </button>
         </div>
 
@@ -893,7 +903,6 @@ export function ProductsView() {
           </TabContainer.Tab>
         </TabContainer>
       </main>
-
       {/* Product Modals - shared form context, only one open at a time */}
       <ProductFormProvider defaultCategoryId={settings?.defaultCategoryId}>
         <AddProductModalWrapper
@@ -940,7 +949,6 @@ export function ProductsView() {
         product={viewingProduct}
         categories={categories}
       />
-
       {/* Product Settings Modal */}
       <ProductSettingsModal
         isOpen={isSettingsModalOpen}
@@ -966,9 +974,8 @@ export function ProductsView() {
         error={settingsError}
         onClearError={clearSettingsError}
       />
-
       {/* New Order + Order Detail modals (encapsulated in useOrderFlows) */}
       {orderFlows.modals}
     </>
-  )
+  );
 }

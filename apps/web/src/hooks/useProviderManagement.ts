@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useTranslations } from 'next-intl'
 import { useBusiness } from '@/contexts/business-context'
 import { useProviders } from '@/contexts/providers-context'
 import { canManageBusiness } from '@kasero/shared/business-role'
@@ -72,7 +72,7 @@ interface UseProviderManagementReturn {
 
 export function useProviderManagement({ businessId, setOrders }: UseProviderManagementOptions): UseProviderManagementReturn {
   const { role } = useBusiness()
-  const t = useTranslations('providers')
+  const t = useIntl()
   const translateApiMessage = useApiMessage()
 
   // Data comes from the shared providers store so mutations anywhere in
@@ -181,7 +181,9 @@ export function useProviderManagement({ businessId, setOrders }: UseProviderMana
 
   const handleSubmit = useCallback(async (): Promise<boolean> => {
     if (!name.trim()) {
-      setError(t('error_name_required'))
+      setError(t.formatMessage({
+        id: 'providers.error_name_required'
+      }))
       return false
     }
 
@@ -219,7 +221,9 @@ export function useProviderManagement({ businessId, setOrders }: UseProviderMana
       setError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_save')
+          : t.formatMessage({
+          id: 'providers.error_failed_to_save'
+        })
       )
       return false
     } finally {
@@ -257,7 +261,9 @@ export function useProviderManagement({ businessId, setOrders }: UseProviderMana
       setError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t('error_failed_to_delete')
+          : t.formatMessage({
+          id: 'providers.error_failed_to_delete'
+        })
       )
       return false
     } finally {

@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { RefreshCw } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { Badge, Spinner, Modal } from '@/components/ui'
 import type { InviteRole } from '@kasero/shared/types'
 
@@ -22,19 +22,27 @@ export function CodeGeneratedContent({
   isGenerating,
   onRegenerate,
 }: CodeGeneratedContentProps) {
-  const t = useTranslations('team')
+  const t = useIntl()
 
   const roleLabels: Record<InviteRole, string> = {
-    partner: t('role_partner'),
-    employee: t('role_employee'),
+    partner: t.formatMessage({
+      id: 'team.role_partner'
+    }),
+    employee: t.formatMessage({
+      id: 'team.role_employee'
+    }),
   }
 
   const msRemaining = expiresAt.getTime() - Date.now()
   const hours = Math.max(0, Math.round(msRemaining / (60 * 60 * 1000)))
   const days = Math.round(msRemaining / (24 * 60 * 60 * 1000))
   const label = hours < 24
-    ? t('code_valid_hours', { hours })
-    : t('code_valid_days_n', { days })
+    ? t.formatMessage({
+    id: 'team.code_valid_hours'
+  }, { hours })
+    : t.formatMessage({
+    id: 'team.code_valid_days_n'
+  }, { days })
 
   return (
     <Modal.Item>
@@ -50,7 +58,9 @@ export function CodeGeneratedContent({
           <div className="flex justify-center mb-3">
             <div className="invite-qr-box">
               {/* eslint-disable-next-line @next/next/no-img-element -- Data URL for QR code, no optimization benefit */}
-              <img src={qrDataUrl} alt={t('qr_alt')} />
+              <img src={qrDataUrl} alt={t.formatMessage({
+                id: 'team.qr_alt'
+              })} />
             </div>
           </div>
         )}
@@ -72,16 +82,20 @@ export function CodeGeneratedContent({
           {isGenerating ? (
             <>
               <Spinner />
-              <span>{t('regenerating')}</span>
+              <span>{t.formatMessage({
+                id: 'team.regenerating'
+              })}</span>
             </>
           ) : (
             <>
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>{t('regenerate_code_button')}</span>
+              <span>{t.formatMessage({
+                id: 'team.regenerate_code_button'
+              })}</span>
             </>
           )}
         </button>
       </div>
     </Modal.Item>
-  )
+  );
 }

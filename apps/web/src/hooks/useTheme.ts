@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useEffect, useCallback, useSyncExternalStore } from 'react'
-import { useTranslations } from 'next-intl'
 import { applyThemeColorMeta } from '@/lib/theme-color'
 
 export type Theme = 'light' | 'dark' | 'system'
@@ -62,7 +62,7 @@ interface UseThemeReturn {
 }
 
 export function useTheme(): UseThemeReturn {
-  const t = useTranslations('account')
+  const t = useIntl()
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   const setTheme = useCallback((next: Theme) => {
@@ -89,6 +89,8 @@ export function useTheme(): UseThemeReturn {
   return {
     theme,
     setTheme,
-    themeDescription: t(`theme_description_${theme}`),
-  }
+    themeDescription: t.formatMessage({
+      id: `account.theme_description_${theme}`
+    }),
+  };
 }

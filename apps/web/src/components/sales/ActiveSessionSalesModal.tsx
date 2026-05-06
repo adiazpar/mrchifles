@@ -1,7 +1,7 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Modal, useModal } from '@/components/ui'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { SessionSalesList } from './session-views/SessionSalesList'
@@ -18,8 +18,8 @@ export function ActiveSessionSalesModal({
   onClose,
   businessId,
 }: ActiveSessionSalesModalProps) {
-  const t = useTranslations('sales.session.active_sales_modal')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { currentSession } = useSalesSessions()
 
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null)
@@ -29,9 +29,13 @@ export function ActiveSessionSalesModal({
       isOpen={isOpen}
       onClose={onClose}
       onExitComplete={() => setSelectedSaleId(null)}
-      title={t('title')}
+      title={t.formatMessage({
+        id: 'sales.session.active_sales_modal.title'
+      })}
     >
-      <Modal.Step title={t('title')}>
+      <Modal.Step title={t.formatMessage({
+        id: 'sales.session.active_sales_modal.title'
+      })}>
         <SessionSalesListWithNav
           businessId={businessId}
           sessionId={currentSession?.id ?? null}
@@ -40,23 +44,28 @@ export function ActiveSessionSalesModal({
         />
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon('close')}
+            {tCommon.formatMessage({
+              id: 'common.close'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
-
       {/* Step 1: Sale receipt detail. Always-rendered per modal-system
           rules; gates content on selectedSaleId. */}
-      <Modal.Step title={t('detail_title', { number: 0 })}>
+      <Modal.Step title={t.formatMessage({
+        id: 'sales.session.active_sales_modal.detail_title'
+      }, { number: 0 })}>
         <SaleDetailContent businessId={businessId} saleId={selectedSaleId} />
         <Modal.Footer>
           <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon('close')}
+            {tCommon.formatMessage({
+              id: 'common.close'
+            })}
           </button>
         </Modal.Footer>
       </Modal.Step>
     </Modal>
-  )
+  );
 }
 
 interface SessionSalesListWithNavProps {

@@ -1,9 +1,9 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { Fragment } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { Plus, Check, Copy, Trash2 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { Spinner, Modal, ConfirmationAnimation, useModal } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useTeamManagement } from '@/hooks'
@@ -33,7 +33,7 @@ function GenerateOrConfirmButton({
   selectedRole: 'partner' | 'employee'
   onGenerate: () => Promise<void>
 }) {
-  const t = useTranslations('team')
+  const t = useIntl()
   const { goToStep, lock, unlock } = useModal()
 
   const handleClick = async () => {
@@ -54,9 +54,11 @@ function GenerateOrConfirmButton({
       disabled={isGenerating}
       onClick={handleClick}
     >
-      {isGenerating ? <Spinner /> : t('generate_code_button')}
+      {isGenerating ? <Spinner /> : t.formatMessage({
+        id: 'team.generate_code_button'
+      })}
     </button>
-  )
+  );
 }
 
 function ConfirmGenerateButton({
@@ -66,7 +68,7 @@ function ConfirmGenerateButton({
   isGenerating: boolean
   onGenerate: () => Promise<void>
 }) {
-  const t = useTranslations('team')
+  const t = useIntl()
   const { goToStep, lock, unlock } = useModal()
 
   const handleClick = async () => {
@@ -83,9 +85,11 @@ function ConfirmGenerateButton({
       disabled={isGenerating}
       onClick={handleClick}
     >
-      {isGenerating ? <Spinner /> : t('partner_warning_confirm')}
+      {isGenerating ? <Spinner /> : t.formatMessage({
+        id: 'team.partner_warning_confirm'
+      })}
     </button>
-  )
+  );
 }
 
 function RoleChangeSaveOrConfirmButton({
@@ -99,7 +103,7 @@ function RoleChangeSaveOrConfirmButton({
   newRole: 'partner' | 'employee'
   onSubmit: () => Promise<boolean>
 }) {
-  const tCommon = useTranslations('common')
+  const tCommon = useIntl()
   const { goToStep } = useModal()
 
   const handleClick = () => {
@@ -118,9 +122,11 @@ function RoleChangeSaveOrConfirmButton({
       className="btn btn-primary flex-1"
       disabled={roleChangeLoading || isDisabled}
     >
-      {roleChangeLoading ? <Spinner /> : tCommon('save')}
+      {roleChangeLoading ? <Spinner /> : tCommon.formatMessage({
+        id: 'common.save'
+      })}
     </button>
-  )
+  );
 }
 
 function ConfirmRoleChangeButton({
@@ -130,7 +136,7 @@ function ConfirmRoleChangeButton({
   roleChangeLoading: boolean
   onSubmit: () => Promise<boolean>
 }) {
-  const t = useTranslations('team')
+  const t = useIntl()
   const { goToStep } = useModal()
 
   const handleClick = () => {
@@ -145,9 +151,11 @@ function ConfirmRoleChangeButton({
       className="btn btn-primary flex-1"
       disabled={roleChangeLoading}
     >
-      {roleChangeLoading ? <Spinner /> : t('partner_warning_confirm')}
+      {roleChangeLoading ? <Spinner /> : t.formatMessage({
+        id: 'team.partner_warning_confirm'
+      })}
     </button>
-  )
+  );
 }
 
 function ConfirmRemoveMemberButton({
@@ -157,7 +165,7 @@ function ConfirmRemoveMemberButton({
   removeLoading: boolean
   onSubmit: () => Promise<void>
 }) {
-  const t = useTranslations('team')
+  const t = useIntl()
   return (
     <button
       type="button"
@@ -165,16 +173,18 @@ function ConfirmRemoveMemberButton({
       disabled={removeLoading}
       onClick={() => void onSubmit()}
     >
-      {removeLoading ? <Spinner /> : t('remove_confirm')}
+      {removeLoading ? <Spinner /> : t.formatMessage({
+        id: 'team.remove_confirm'
+      })}
     </button>
-  )
+  );
 }
 
 export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
   const router = useRouter()
-  const t = useTranslations('team')
-  const tCommon = useTranslations('common')
-  const tNav = useTranslations('navigation')
+  const t = useIntl()
+  const tCommon = useIntl()
+  const tNav = useIntl()
   const { user } = useAuth()
 
   const {
@@ -221,7 +231,9 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
 
   return (
     <>
-      <DrillDownHeader title={tNav('team')} onBack={() => router.back()} />
+      <DrillDownHeader title={tNav.formatMessage({
+        id: 'navigation.team'
+      })} onBack={() => router.back()} />
       {isLoading ? (
         <main className="page-loading">
           <Spinner className="spinner-lg" />
@@ -237,7 +249,9 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
           <div className="card p-4 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-text-secondary">
-                {t('member_count', { count: teamMembers.length })}
+                {t.formatMessage({
+                  id: 'team.member_count'
+                }, { count: teamMembers.length })}
               </span>
               {canManageTeam && (
                 <button
@@ -247,7 +261,9 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
                   style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
                 >
                   <Plus style={{ width: 14, height: 14 }} />
-                  {t('add_member_button')}
+                  {t.formatMessage({
+                    id: 'team.add_member_button'
+                  })}
                 </button>
               )}
             </div>
@@ -272,7 +288,9 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
             <div className="card p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-text-secondary">
-                  {t('active_code_count', { count: inviteCodes.length })}
+                  {t.formatMessage({
+                    id: 'team.active_code_count'
+                  }, { count: inviteCodes.length })}
                 </span>
               </div>
 
@@ -293,14 +311,15 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
           )}
         </main>
       )}
-
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onExitComplete={handleModalExitComplete}
         initialStep={newCode ? 1 : 0}
       >
-        <Modal.Step title={t('step_add_member')}>
+        <Modal.Step title={t.formatMessage({
+          id: 'team.step_add_member'
+        })}>
           <DurationPicker
             selected={selectedDuration}
             onSelect={setSelectedDuration}
@@ -319,7 +338,9 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
           </Modal.Footer>
         </Modal.Step>
 
-        <Modal.Step title={t('step_code_generated')} hideBackButton>
+        <Modal.Step title={t.formatMessage({
+          id: 'team.step_code_generated'
+        })} hideBackButton>
           {newCode && (
             <CodeGeneratedContent
               selectedRole={selectedRole}
@@ -331,7 +352,9 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
             />
           )}
           <Modal.Footer>
-            <Modal.GoToStepButton step={2} className="btn btn-secondary btn-icon" title={t('step_delete_code')}>
+            <Modal.GoToStepButton step={2} className="btn btn-secondary btn-icon" title={t.formatMessage({
+              id: 'team.step_delete_code'
+            })}>
               <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
             </Modal.GoToStepButton>
             <button
@@ -350,20 +373,28 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
               onClick={handleCloseModal}
               className="btn btn-primary flex-1"
             >
-              {tCommon('done')}
+              {tCommon.formatMessage({
+                id: 'common.done'
+              })}
             </button>
           </Modal.Footer>
         </Modal.Step>
 
-        <Modal.Step title={t('step_delete_code')} backStep={1}>
+        <Modal.Step title={t.formatMessage({
+          id: 'team.step_delete_code'
+        })} backStep={1}>
           <Modal.Item>
             <p className="text-text-secondary">
-              {t('delete_code_description', { code: newCode ?? '' })}
+              {t.formatMessage({
+                id: 'team.delete_code_description'
+              }, { code: newCode ?? '' })}
             </p>
           </Modal.Item>
           <Modal.Footer>
             <Modal.GoToStepButton step={1} className="btn btn-secondary flex-1" disabled={isDeletingCode}>
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </Modal.GoToStepButton>
             <ConfirmDeleteCodeButton
               isDeletingCode={isDeletingCode}
@@ -372,13 +403,19 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
           </Modal.Footer>
         </Modal.Step>
 
-        <Modal.Step title={t('step_code_deleted')} hideBackButton>
+        <Modal.Step title={t.formatMessage({
+          id: 'team.step_code_deleted'
+        })} hideBackButton>
           <Modal.Item>
             <ConfirmationAnimation
               type="error"
               triggered={codeDeleted}
-              title={t('code_deleted_heading')}
-              subtitle={t('code_deleted_description')}
+              title={t.formatMessage({
+                id: 'team.code_deleted_heading'
+              })}
+              subtitle={t.formatMessage({
+                id: 'team.code_deleted_description'
+              })}
             />
           </Modal.Item>
           <Modal.Footer>
@@ -387,19 +424,29 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
               onClick={handleCloseModal}
               className="btn btn-primary flex-1"
             >
-              {tCommon('close')}
+              {tCommon.formatMessage({
+                id: 'common.close'
+              })}
             </button>
           </Modal.Footer>
         </Modal.Step>
 
-        <Modal.Step title={t('step_partner_warning')} backStep={0}>
+        <Modal.Step title={t.formatMessage({
+          id: 'team.step_partner_warning'
+        })} backStep={0}>
           <Modal.Item>
-            <h3 className="text-lg font-semibold text-text-primary">{t('partner_warning_heading')}</h3>
-            <p className="text-sm text-text-secondary mt-2">{t('partner_warning_body')}</p>
+            <h3 className="text-lg font-semibold text-text-primary">{t.formatMessage({
+              id: 'team.partner_warning_heading'
+            })}</h3>
+            <p className="text-sm text-text-secondary mt-2">{t.formatMessage({
+              id: 'team.partner_warning_body'
+            })}</p>
           </Modal.Item>
           <Modal.Footer>
             <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isGenerating}>
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </Modal.GoToStepButton>
             <ConfirmGenerateButton
               isGenerating={isGenerating}
@@ -408,14 +455,17 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
           </Modal.Footer>
         </Modal.Step>
       </Modal>
-
       <Modal
         isOpen={isUserModalOpen}
         onClose={handleCloseUserModal}
         onExitComplete={handleUserModalExitComplete}
       >
         <Modal.Step
-          title={selectedMember?.id === user?.id ? t('step_your_profile') : t('step_manage_member')}
+          title={selectedMember?.id === user?.id ? t.formatMessage({
+            id: 'team.step_your_profile'
+          }) : t.formatMessage({
+            id: 'team.step_manage_member'
+          })}
           hideBackButton
         >
           {selectedMember && (
@@ -429,7 +479,9 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
           )}
         </Modal.Step>
 
-        <Modal.Step title={t('step_change_role')} backStep={0}>
+        <Modal.Step title={t.formatMessage({
+          id: 'team.step_change_role'
+        })} backStep={0}>
           {selectedMember && (
             <RoleChangeContent
               memberName={selectedMember.name}
@@ -448,14 +500,22 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
           </Modal.Footer>
         </Modal.Step>
 
-        <Modal.Step title={t('step_partner_warning')} backStep={1}>
+        <Modal.Step title={t.formatMessage({
+          id: 'team.step_partner_warning'
+        })} backStep={1}>
           <Modal.Item>
-            <h3 className="text-lg font-semibold text-text-primary">{t('partner_warning_heading')}</h3>
-            <p className="text-sm text-text-secondary mt-2">{t('partner_warning_body')}</p>
+            <h3 className="text-lg font-semibold text-text-primary">{t.formatMessage({
+              id: 'team.partner_warning_heading'
+            })}</h3>
+            <p className="text-sm text-text-secondary mt-2">{t.formatMessage({
+              id: 'team.partner_warning_body'
+            })}</p>
           </Modal.Item>
           <Modal.Footer>
             <Modal.GoToStepButton step={1} className="btn btn-secondary flex-1" disabled={roleChangeLoading}>
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </Modal.GoToStepButton>
             <ConfirmRoleChangeButton
               roleChangeLoading={roleChangeLoading}
@@ -464,20 +524,28 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
           </Modal.Footer>
         </Modal.Step>
 
-        <Modal.Step title={t('step_remove_member')} backStep={0}>
+        <Modal.Step title={t.formatMessage({
+          id: 'team.step_remove_member'
+        })} backStep={0}>
           {selectedMember && (
             <Modal.Item>
               <h3 className="text-lg font-semibold text-text-primary">
-                {t('remove_warning_heading', { name: selectedMember.name })}
+                {t.formatMessage({
+                  id: 'team.remove_warning_heading'
+                }, { name: selectedMember.name })}
               </h3>
               <p className="text-sm text-text-secondary mt-2">
-                {t('remove_warning_body', { name: selectedMember.name })}
+                {t.formatMessage({
+                  id: 'team.remove_warning_body'
+                }, { name: selectedMember.name })}
               </p>
             </Modal.Item>
           )}
           <Modal.Footer>
             <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={removeLoading}>
-              {tCommon('cancel')}
+              {tCommon.formatMessage({
+                id: 'common.cancel'
+              })}
             </Modal.GoToStepButton>
             <ConfirmRemoveMemberButton
               removeLoading={removeLoading}
@@ -490,5 +558,5 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
         </Modal.Step>
       </Modal>
     </>
-  )
+  );
 }

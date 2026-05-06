@@ -1,8 +1,8 @@
 'use client'
 
+import { useIntl } from 'react-intl';
 import { useCallback, useEffect } from 'react'
 import { Plus, ScanLine } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 import { useModal } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
@@ -18,7 +18,7 @@ import type { BarcodeSource } from '@kasero/shared/types'
  * Footer (Skip / Continue) is provided by the parent Modal.Step.
  */
 export function AiBarcodeStepBody() {
-  const t = useTranslations('barcode')
+  const t = useIntl()
   const {
     barcode,
     barcodeFormat,
@@ -32,13 +32,21 @@ export function AiBarcodeStepBody() {
   const getBarcodeSourceLabel = (source: BarcodeSource | null): string => {
     switch (source) {
       case 'scanned':
-        return t('source_scanned')
+        return t.formatMessage({
+          id: 'barcode.source_scanned'
+        });
       case 'generated':
-        return t('source_generated')
+        return t.formatMessage({
+          id: 'barcode.source_generated'
+        });
       case 'manual':
-        return t('source_manual')
+        return t.formatMessage({
+          id: 'barcode.source_manual'
+        });
       default:
-        return t('source_na')
+        return t.formatMessage({
+          id: 'barcode.source_na'
+        });
     }
   }
 
@@ -86,21 +94,25 @@ export function AiBarcodeStepBody() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-text-secondary text-center">
-        {t('ai_barcode_intro')}
+        {t.formatMessage({
+          id: 'barcode.ai_barcode_intro'
+        })}
       </p>
-
       <div className="rounded-xl border border-border bg-bg-muted p-4 h-44 flex items-center justify-center text-center overflow-hidden">
         <BarcodeDisplay value={barcode} format={barcodeFormat} />
       </div>
-
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           {barcode ? (
             <div className="text-sm text-text-secondary">
-              {`${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : t('source_na')} · ${getBarcodeSourceLabel(barcodeSource)}`}
+              {`${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : t.formatMessage({
+                id: 'barcode.source_na'
+              })} · ${getBarcodeSourceLabel(barcodeSource)}`}
             </div>
           ) : (
-            <div className="text-sm text-text-tertiary">{t('no_barcode')}</div>
+            <div className="text-sm text-text-tertiary">{t.formatMessage({
+              id: 'barcode.no_barcode'
+            })}</div>
           )}
         </div>
 
@@ -110,12 +122,12 @@ export function AiBarcodeStepBody() {
           disabled={!barcode}
           className="text-sm text-error hover:text-error transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
         >
-          {t('reset_button')}
+          {t.formatMessage({
+            id: 'barcode.reset_button'
+          })}
         </button>
       </div>
-
       {scanHiddenInput}
-
       <div className="flex gap-4 justify-center">
         <button
           type="button"
@@ -124,7 +136,11 @@ export function AiBarcodeStepBody() {
           className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--info"
         >
           <span className="icon-stack-btn__icon"><ScanLine size={28} /></span>
-          <span className="icon-stack-btn__label">{scanBusy ? t('scan_reading') : t('scan_button')}</span>
+          <span className="icon-stack-btn__label">{scanBusy ? t.formatMessage({
+            id: 'barcode.scan_reading'
+          }) : t.formatMessage({
+            id: 'barcode.scan_button'
+          })}</span>
         </button>
         <button
           type="button"
@@ -132,9 +148,11 @@ export function AiBarcodeStepBody() {
           className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--success"
         >
           <span className="icon-stack-btn__icon"><Plus size={28} /></span>
-          <span className="icon-stack-btn__label">{t('generate_button')}</span>
+          <span className="icon-stack-btn__label">{t.formatMessage({
+            id: 'barcode.generate_button'
+          })}</span>
         </button>
       </div>
     </div>
-  )
+  );
 }

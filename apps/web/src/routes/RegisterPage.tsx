@@ -1,6 +1,6 @@
+import { useIntl } from 'react-intl';
 import { useState, useCallback } from 'react'
 import { IonPage, IonContent } from '@ionic/react'
-import { useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { Input, Spinner } from '@/components/ui'
 import { AuthLayout } from '@/components/auth'
@@ -10,8 +10,8 @@ import { APP_VERSION } from '@/lib/version'
 
 export function RegisterPage() {
   const router = useRouter()
-  const t = useTranslations('auth')
-  const tCommon = useTranslations('common')
+  const t = useIntl()
+  const tCommon = useIntl()
   const { register } = useAuth()
   const { playEntry } = useAuthGate()
 
@@ -28,12 +28,16 @@ export function RegisterPage() {
       setError('')
 
       if (password !== passwordConfirm) {
-        setError(t('passwords_dont_match'))
+        setError(t.formatMessage({
+          id: 'auth.passwords_dont_match'
+        }))
         return
       }
 
       if (password.length < 8) {
-        setError(t('password_too_short'))
+        setError(t.formatMessage({
+          id: 'auth.password_too_short'
+        }))
         return
       }
 
@@ -53,7 +57,9 @@ export function RegisterPage() {
         // isLoading on success — see login page for reasoning.
         await playEntry('/')
       } catch {
-        setError(t('connection_error'))
+        setError(t.formatMessage({
+          id: 'auth.connection_error'
+        }))
         setIsLoading(false)
       }
     },
@@ -72,7 +78,9 @@ export function RegisterPage() {
       <IonContent>
         <AuthLayout>
           <form onSubmit={handleSubmit} className="auth-main">
-            <h1 className="auth-heading">{t('heading_register')}</h1>
+            <h1 className="auth-heading">{t.formatMessage({
+              id: 'auth.heading_register'
+            })}</h1>
 
             {error && (
               <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
@@ -84,7 +92,9 @@ export function RegisterPage() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={t('name_placeholder')}
+              placeholder={t.formatMessage({
+                id: 'auth.name_placeholder'
+              })}
               autoComplete="name"
               autoFocus
               required
@@ -94,7 +104,9 @@ export function RegisterPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('email_placeholder')}
+              placeholder={t.formatMessage({
+                id: 'auth.email_placeholder'
+              })}
               autoComplete="email"
               required
             />
@@ -103,7 +115,9 @@ export function RegisterPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={t('password_new_placeholder')}
+              placeholder={t.formatMessage({
+                id: 'auth.password_new_placeholder'
+              })}
               autoComplete="new-password"
               required
             />
@@ -112,7 +126,9 @@ export function RegisterPage() {
               type="password"
               value={passwordConfirm}
               onChange={(e) => setPasswordConfirm(e.target.value)}
-              placeholder={t('password_confirm_placeholder')}
+              placeholder={t.formatMessage({
+                id: 'auth.password_confirm_placeholder'
+              })}
               autoComplete="new-password"
               required
             />
@@ -125,29 +141,39 @@ export function RegisterPage() {
               {isLoading ? (
                 <>
                   <Spinner />
-                  <span className="sr-only">{t('creating_account')}</span>
+                  <span className="sr-only">{t.formatMessage({
+                    id: 'auth.creating_account'
+                  })}</span>
                 </>
               ) : (
-                t('register_button')
+                t.formatMessage({
+                  id: 'auth.register_button'
+                })
               )}
             </button>
           </form>
 
           <div className="auth-page-footer">
-            <div className="auth-or-divider">{tCommon('or')}</div>
+            <div className="auth-or-divider">{tCommon.formatMessage({
+              id: 'common.or'
+            })}</div>
             <button
               type="button"
               onClick={handleGoToLogin}
               className="btn btn-secondary btn-lg w-full"
             >
-              {t('login_button')}
+              {t.formatMessage({
+                id: 'auth.login_button'
+              })}
             </button>
             <p className="auth-version">
-              {t('version_label', { version: APP_VERSION })}
+              {t.formatMessage({
+                id: 'auth.version_label'
+              }, { version: APP_VERSION })}
             </p>
           </div>
         </AuthLayout>
       </IonContent>
     </IonPage>
-  )
+  );
 }
