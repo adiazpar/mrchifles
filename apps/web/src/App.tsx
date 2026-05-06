@@ -65,34 +65,66 @@ export function App() {
                   inset: 0` and sits at z-index --z-auth-gate (250),
                   above modals and below toasts. */}
               <AuthGateOverlay />
+              {/* Use Route children syntax (NOT `component={...}`) so
+                  IonRouterOutlet's stack-based animation can keep the
+                  outgoing IonPage mounted during transitions. The
+                  `component` prop unmounts and remounts on every render,
+                  which Ionic's outlet treats as a fresh page (no
+                  animation) and which can cause empty-outlet flashes
+                  on first paint. */}
               <IonRouterOutlet>
-                <Route exact path="/login" component={LoginPage} />
-                <Route exact path="/register" component={RegisterPage} />
+                <Route exact path="/login">
+                  <LoginPage />
+                </Route>
+                <Route exact path="/register">
+                  <RegisterPage />
+                </Route>
                 {/* Account (drill-down off the Hub). Auth gating and
                     its feature providers live inside AccountPage. The
                     `/account` route is matched before `/` so the
                     exact-match Hub never swallows it. */}
-                <Route exact path="/account" component={AccountPage} />
+                <Route exact path="/account">
+                  <AccountPage />
+                </Route>
                 {/* Join (QR-code deep-link landing pad). Thin redirector
                     that forwards `?code=ABC` to `/?code=ABC` so the Hub's
                     JoinBusinessProvider can pick it up. Mounted before
                     `/` so the exact-match Hub never swallows it. */}
-                <Route exact path="/join" component={JoinPage} />
+                <Route exact path="/join">
+                  <JoinPage />
+                </Route>
                 {/* Hub home (post-login landing page). Auth gating and
                     its tree of feature providers live inside HubPage
                     rather than App.tsx so future per-route guards stay
                     co-located with the route they protect. */}
-                <Route exact path="/" component={HubPage} />
+                <Route exact path="/">
+                  <HubPage />
+                </Route>
                 {/* Business tabs shell (`/:businessId/*`). Catch-all that
                     must remain LAST in the outlet — `/:businessId`
-                    matches anything, so any literal route declared after
-                    it would be unreachable. The layout owns its own
-                    `IonTabs` + nested `IonRouterOutlet` and all
-                    per-business data providers (BusinessProvider,
-                    OrdersProvider, ProductsProvider, etc.). NOT `exact`
-                    because the inner outlet matches sub-paths like
-                    `/<id>/home`. */}
-                <Route path="/:businessId" component={BusinessTabsLayout} />
+                    matches anything else, so any literal route declared
+                    after it would be unreachable. NOT `exact` because
+                    the inner outlet matches sub-paths like `/<id>/home`.
+
+                    The path-to-regexp constraint `[A-Za-z0-9_-]{9,}` is
+                    REQUIRED. Without it, IonRouterOutlet's internal
+                    matcher selects `/:businessId` over the more specific
+                    `/login`, `/register`, etc. routes (Ionic's outlet is
+                    not strict-Switch-first-match), which makes those
+                    pages render BusinessTabsLayout's reserved-paths
+                    bail-out (null) instead of LoginPage/etc. — producing
+                    a blank screen at the auth boundary.
+
+                    The constraint excludes reserved words by length:
+                    real businessIds are 21-char nanoids (alphabet
+                    [A-Za-z0-9_-]); the longest reserved word `register`
+                    is 8 chars. Requiring 9+ matches every legit
+                    businessId and rejects every named top-level route.
+                    path-to-regexp v6 doesn't support inline lookaheads,
+                    which is why we don't use a name-based exclusion. */}
+                <Route path="/:businessId([A-Za-z0-9_-]{9,})">
+                  <BusinessTabsLayout />
+                </Route>
               </IonRouterOutlet>
             </AuthGateProvider>
           </AuthProvider>
