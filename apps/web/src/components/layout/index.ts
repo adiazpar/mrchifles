@@ -1,7 +1,6 @@
 export { AuthGateOverlay } from './auth-gate-overlay'
 export { DevServiceWorkerCleanup } from './dev-service-worker-cleanup'
 export { IOSStartupImages } from './ios-startup-images'
-export { MobileNav } from './mobile-nav'
 export { PageHeader } from './page-header'
 export { TapFeedbackProvider } from './tap-feedback-provider'
 export { UserMenu } from './user-menu'
