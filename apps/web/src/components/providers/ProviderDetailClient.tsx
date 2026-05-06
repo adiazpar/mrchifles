@@ -31,7 +31,6 @@ import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useBusiness } from '@/contexts/business-context'
 import { canManageBusiness } from '@kasero/shared/business-role'
-import { DrillDownHeader } from '@/components/layout/DrillDownHeader'
 import { formatRelative } from '@/lib/formatRelative'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { getProductIconUrl } from '@/lib/utils'
@@ -49,6 +48,19 @@ export interface ProviderDetailClientProps {
   businessId: string
   providerId: string
 }
+
+/**
+ * Legacy in-view header (`DrillDownHeader`) was stripped during the
+ * Vite + Ionic migration: the wrapping `IonHeader` + `IonBackButton`
+ * inside `ProviderDetailPage` provides the title and back affordance now,
+ * matching the same pattern used by `ProvidersDrilldown` and
+ * `TeamDrilldown`. The route component hoists the provider lookup
+ * (`useProviders().providers.find(...)`) so the `IonTitle` can render
+ * the provider name even before this component finishes its detail
+ * fetch. `useRouter()` is retained because it still drives the tab
+ * URL state (`router.replace`) and the post-delete redirect
+ * (`router.push`) — only the back affordance moved out.
+ */
 
 type DetailTab = 'summary' | 'history' | 'notes'
 
@@ -69,7 +81,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const userLocale = t.locale
   const translateApiMessage = useApiMessage()
   const { role } = useBusiness()
-  const tNav = useIntl()
   const canManage = canManageBusiness(role)
 
   // Tab state — initialized from the URL so browser back/forward and
@@ -445,31 +456,21 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   if (isLoading) {
     return (
-      <>
-        <DrillDownHeader title="" subtitle={tNav.formatMessage({
-          id: 'navigation.providers'
-        })} onBack={() => router.back()} />
-        <main className="page-loading">
-          <Spinner className="spinner-lg" />
-        </main>
-      </>
+      <main className="page-loading">
+        <Spinner className="spinner-lg" />
+      </main>
     );
   }
 
   if (error || !provider) {
     return (
-      <>
-        <DrillDownHeader title={provider?.name ?? ''} subtitle={tNav.formatMessage({
-          id: 'navigation.providers'
-        })} onBack={() => router.back()} />
-        <main className="page-content">
-          <div className="p-4 bg-error-subtle text-error rounded-lg">
-            {error || t.formatMessage({
-              id: 'providers.error_failed_to_load'
-            })}
-          </div>
-        </main>
-      </>
+      <main className="page-content">
+        <div className="p-4 bg-error-subtle text-error rounded-lg">
+          {error || t.formatMessage({
+            id: 'providers.error_failed_to_load'
+          })}
+        </div>
+      </main>
     );
   }
 
@@ -514,9 +515,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   return (
     <>
-      <DrillDownHeader title={provider.name} subtitle={tNav.formatMessage({
-        id: 'navigation.providers'
-      })} onBack={() => router.back()} />
       <main className="page-content space-y-4">
         {/* ============== Identity Header ==============
             Top row: avatar + name/status. Tappable for managers — opens
