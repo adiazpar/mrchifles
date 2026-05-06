@@ -3,6 +3,7 @@ import { IonReactRouter } from '@ionic/react-router'
 import { Route } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
+import { AuthGateOverlay } from '@/components/layout/auth-gate-overlay'
 import { AppIntlProvider } from '@/i18n/AppIntlProvider'
 import { AccountPage } from '@/routes/AccountPage'
 import { BusinessTabsLayout } from '@/routes/BusinessTabsLayout'
@@ -42,6 +43,16 @@ export function App() {
         <AuthProvider>
           <AppIntlProvider>
             <AuthGateProvider>
+              {/* AuthGateOverlay is the brand-specific full-viewport
+                  logo+fade choreography for auth-boundary transitions
+                  (login/register -> hub, logout -> login). It must be
+                  a descendant of AuthGateProvider so useAuthGate()
+                  resolves, and a SIBLING of IonRouterOutlet so it
+                  survives route changes (it's not a route). The
+                  overlay positions itself with `position: fixed;
+                  inset: 0` and sits at z-index --z-auth-gate (250),
+                  above modals and below toasts. */}
+              <AuthGateOverlay />
               <IonRouterOutlet>
                 <Route exact path="/login" component={LoginPage} />
                 <Route exact path="/register" component={RegisterPage} />
