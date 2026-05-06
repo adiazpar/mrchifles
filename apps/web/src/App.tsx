@@ -6,6 +6,7 @@ import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { AppIntlProvider } from '@/i18n/AppIntlProvider'
 import { AccountPage } from '@/routes/AccountPage'
 import { HubPage } from '@/routes/HubPage'
+import { JoinPage } from '@/routes/JoinPage'
 import { LoginPage } from '@/routes/LoginPage'
 import { RegisterPage } from '@/routes/RegisterPage'
 
@@ -45,6 +46,13 @@ export function App() {
                     exact-match Hub never swallows it. */}
                 <Route exact path="/account">
                   <AccountPage />
+                </Route>
+                {/* Join (QR-code deep-link landing pad). Thin redirector
+                    that forwards `?code=ABC` to `/?code=ABC` so the Hub's
+                    JoinBusinessProvider can pick it up. Mounted before
+                    `/` so the exact-match Hub never swallows it. */}
+                <Route exact path="/join">
+                  <JoinPage />
                 </Route>
                 {/* Hub home (post-login landing page). Auth gating and
                     its tree of feature providers live inside HubPage
