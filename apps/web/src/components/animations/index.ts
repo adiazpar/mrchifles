@@ -1,0 +1,1 @@
+export { LottiePlayerDynamic } from './LottiePlayerDynamic'
