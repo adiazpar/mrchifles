@@ -53,9 +53,13 @@ function computeGreetingKey(): GreetingKey {
 export function HubPage() {
   const { user, isLoading: authLoading } = useAuth()
 
-  if (authLoading) {
-    return (
-      <IonPage>
+  if (!authLoading && !user) {
+    return <Redirect to="/login" />
+  }
+
+  return (
+    <IonPage>
+      {authLoading ? (
         <IonContent>
           {/* Full-viewport centered spinner. `IonContent` provides a
               scroll container with height: 100% set internally, so
@@ -67,24 +71,18 @@ export function HubPage() {
             <IonSpinner name="crescent" />
           </div>
         </IonContent>
-      </IonPage>
-    )
-  }
-
-  if (!user) {
-    return <Redirect to="/login" />
-  }
-
-  return (
-    <PageTransitionProvider>
-      <JoinBusinessProvider>
-        <CreateBusinessProvider>
-          <IncomingTransferProvider>
-            <HubPageChrome />
-          </IncomingTransferProvider>
-        </CreateBusinessProvider>
-      </JoinBusinessProvider>
-    </PageTransitionProvider>
+      ) : (
+        <PageTransitionProvider>
+          <JoinBusinessProvider>
+            <CreateBusinessProvider>
+              <IncomingTransferProvider>
+                <HubPageChrome />
+              </IncomingTransferProvider>
+            </CreateBusinessProvider>
+          </JoinBusinessProvider>
+        </PageTransitionProvider>
+      )}
+    </IonPage>
   )
 }
 
@@ -103,7 +101,7 @@ function HubPageChrome() {
       : null
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar>
           <div className="flex items-center justify-between w-full px-2">
@@ -119,6 +117,6 @@ function HubPageChrome() {
       <IonContent>
         <HubHome />
       </IonContent>
-    </IonPage>
+    </>
   )
 }

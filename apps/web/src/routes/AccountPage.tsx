@@ -39,45 +39,29 @@ export function AccountPage() {
   const { user, isLoading: authLoading } = useAuth()
   const intl = useIntl()
 
-  // Until auth resolves, render the chrome with an empty body. Avoids
-  // a flash of unauthenticated redirect during initial /me probe.
-  if (authLoading) {
-    return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonButtons slot="start">
-              <IonBackButton defaultHref="/" />
-            </IonButtons>
-            <IonTitle>{intl.formatMessage({ id: 'navigation.account' })}</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent />
-      </IonPage>
-    )
-  }
-
-  if (!user) {
+  if (!authLoading && !user) {
     return <Redirect to="/login" />
   }
 
   return (
-    <PageTransitionProvider>
-      <IncomingTransferProvider>
-        <IonPage>
-          <IonHeader>
-            <IonToolbar>
-              <IonButtons slot="start">
-                <IonBackButton defaultHref="/" />
-              </IonButtons>
-              <IonTitle>{intl.formatMessage({ id: 'navigation.account' })}</IonTitle>
-            </IonToolbar>
-          </IonHeader>
-          <IonContent>
-            <AccountPageContent />
-          </IonContent>
-        </IonPage>
-      </IncomingTransferProvider>
-    </PageTransitionProvider>
+    <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonButtons slot="start">
+            <IonBackButton defaultHref="/" />
+          </IonButtons>
+          <IonTitle>{intl.formatMessage({ id: 'navigation.account' })}</IonTitle>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent>
+        {!authLoading && (
+          <PageTransitionProvider>
+            <IncomingTransferProvider>
+              <AccountPageContent />
+            </IncomingTransferProvider>
+          </PageTransitionProvider>
+        )}
+      </IonContent>
+    </IonPage>
   )
 }

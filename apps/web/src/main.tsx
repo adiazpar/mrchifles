@@ -39,12 +39,10 @@ import './styles/index.css'
 
 import { setupIonicReact } from '@ionic/react'
 
-setupIonicReact({
-  // iOS-style chrome (peel-back gestures, slide animations) on every platform.
-  // Web users on Android/desktop will still see the iOS feel, which is the
-  // intended UX consistency for Kasero.
-  mode: 'ios',
-})
+// iOS-style chrome on every platform for UX consistency.
+// `swipeBackEnabled: false` disables Ionic's swipe-to-go-back gesture
+// app-wide; navigation is via IonBackButton instead.
+setupIonicReact({ mode: 'ios', swipeBackEnabled: false })
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 root.render(

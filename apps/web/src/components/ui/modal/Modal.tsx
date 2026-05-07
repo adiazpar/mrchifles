@@ -43,7 +43,7 @@ import { useIntl } from 'react-intl';
 import React, { useState, useEffect, useRef, Children, isValidElement, ReactElement } from 'react'
 import { createPortal } from 'react-dom'
 import { X, ChevronLeft } from 'lucide-react'
-import { motion, AnimatePresence, useDragControls, type PanInfo } from 'framer-motion'
+import { motion, AnimatePresence, useDragControls, useReducedMotion, type PanInfo } from 'framer-motion'
 import { ModalProvider, useModalContext } from './ModalContext'
 import { ModalStep } from './ModalStep'
 import { ModalItem } from './ModalItem'
@@ -55,6 +55,12 @@ import { hasComponentMarker } from './types'
 // Drag-to-dismiss thresholds. Either condition triggers close on dragEnd.
 const DRAG_DISTANCE_RATIO = 0.30  // close if dragged > 30% of drawer height
 const DRAG_VELOCITY_PX_S = 600    // close if released with > 600 px/s downward fling
+
+// iOS UISheetPresentationController curve. A tween (not a spring) — keeps
+// the slide free of overshoot, which is the spec'd iOS sheet behavior and
+// avoids the spring-on-spring jitter when a drag-release settles back.
+const SHEET_EASE = [0.32, 0.72, 0, 1] as const
+const SHEET_DURATION = 0.28
 
 // Internal header component (needs context). Renders the notch row + button row.
 // The entire header is the drag surface; buttons stop pointerdown propagation.
@@ -250,13 +256,14 @@ function injectItemIndices(children: React.ReactNode): React.ReactNode {
 // Backdrop — owns the dim overlay below the safe-area-inset-top. The drawer
 // fills the remainder of the viewport, so there's no separate tap-zone.
 function ModalBackdrop({ children }: { children: React.ReactNode }) {
+  const reduceMotion = useReducedMotion()
   return (
     <motion.div
       className="modal-backdrop"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
+      transition={{ duration: reduceMotion ? 0 : 0.2 }}
       role="dialog"
       aria-modal="true"
     >
@@ -287,6 +294,7 @@ function ModalInner({
   const { _onClose } = ctx
   const dragControls = useDragControls()
   const drawerRef = useRef<HTMLDivElement>(null)
+  const reduceMotion = useReducedMotion()
 
   // ESC key handler — depend on _onClose (stable per phase/lock change) instead
   // of the whole context value to avoid re-attaching the listener on every
@@ -325,15 +333,19 @@ function ModalInner({
     <motion.div
       className="modal"
       ref={drawerRef}
-      initial={{ y: '100%' }}
+      initial={reduceMotion ? false : { y: '100%' }}
       animate={{ y: 0 }}
-      exit={{ y: '100%', opacity: 0 }}
-      transition={{ type: 'spring', damping: 35, stiffness: 300 }}
+      exit={reduceMotion ? { opacity: 0 } : { y: '100%', opacity: 0 }}
+      transition={reduceMotion ? { duration: 0 } : { duration: SHEET_DURATION, ease: SHEET_EASE }}
+      style={{ willChange: 'transform' }}
       drag="y"
       dragListener={false}
       dragControls={dragControls}
       dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={{ top: 0, bottom: 0.2 }}
+      // Bottom elastic at 1 → 1:1 drag-down (matches the native iOS sheet
+      // feel). 0.2 produced a rubber-band that visibly fought iOS's own
+      // overscroll bounce.
+      dragElastic={{ top: 0, bottom: 1 }}
       onDragEnd={handleDragEnd}
       onClick={(e) => e.stopPropagation()}
     >

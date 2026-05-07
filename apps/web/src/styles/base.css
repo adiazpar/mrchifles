@@ -234,6 +234,12 @@ html {
      iOS PWA splash dismisses in dark mode. The inline theme script in
      index.html narrows this to the resolved value via inline style. */
   color-scheme: light dark;
+  /* Suppress iOS standalone-PWA native edge-swipe-back. The app uses
+     IonBackButton for navigation; horizontal swipes are not a gesture.
+     Vertical scrolling and pinch-to-zoom still work. Local opt-in
+     (e.g. a swipeable carousel) should set `touch-action: pan-x` on
+     that specific element. */
+  touch-action: pan-y;
 }
 
 body {
