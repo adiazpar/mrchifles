@@ -2,7 +2,15 @@
 
 import { useIntl } from 'react-intl';
 import { useState } from 'react'
-import { IonRippleEffect } from '@ionic/react'
+import {
+  IonCard,
+  IonCardContent,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonNote,
+  IonSpinner,
+} from '@ionic/react'
 import dynamic from '@/lib/next-dynamic-shim'
 import { useRouter } from '@/lib/next-navigation-shim'
 import {
@@ -18,11 +26,8 @@ import {
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
-import { Spinner } from '@/components/ui'
 import { useTheme } from '@/hooks/useTheme'
 import { getUserInitials } from '@kasero/shared/auth'
-import { SettingsRow } from '@/components/account/SettingsRow'
-import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 import { LanguageRow } from '@/components/account/LanguageRow'
 
 // Every modal on this page is closed by default and only needed on user
@@ -70,7 +75,7 @@ export function AccountPageContent() {
   const { user, isLoading } = useAuth()
   const { playExit } = useAuthGate()
   const router = useRouter()
-  const t = useIntl()
+  const intl = useIntl()
   const { theme } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
@@ -83,10 +88,10 @@ export function AccountPageContent() {
 
   if (isLoading) {
     return (
-      <main className="page-loading">
-        <Spinner className="spinner-lg" />
-      </main>
-    );
+      <div className="flex h-full items-center justify-center">
+        <IonSpinner name="crescent" />
+      </div>
+    )
   }
 
   if (!user) {
@@ -94,7 +99,7 @@ export function AccountPageContent() {
     return null
   }
 
-  const themeLabel = t.formatMessage({
+  const themeLabel = intl.formatMessage({
     id: `account.theme_${theme}`
   })
 
@@ -104,165 +109,144 @@ export function AccountPageContent() {
 
   return (
     <>
-      <main className="page-content space-y-4">
+      <div className="py-6 space-y-8">
         {/* Profile header card — tappable, opens the edit profile modal */}
-      <button
-        type="button"
-        onClick={() => setIsProfileModalOpen(true)}
-        className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left ion-activatable ripple-parent"
-      >
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-          style={{ backgroundColor: 'var(--color-brand-subtle)', color: 'var(--color-text-brand)' }}
-        >
-          {user.avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            (<img
-              src={user.avatar}
-              alt=""
-              className="w-14 h-14 rounded-full object-cover"
-            />)
-          ) : (
-            <span className="text-xl font-semibold">
-              {getUserInitials(user.name)}
-            </span>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-base font-semibold text-text-primary truncate">
-            {user.name}
-          </div>
-          <div className="text-sm text-text-tertiary truncate">
-            {user.email}
-          </div>
-        </div>
-        <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-        <IonRippleEffect />
-      </button>
-
-      {incomingTransfer && (
-        <button
-          type="button"
-          onClick={() => setIsTransferModalOpen(true)}
-          className="card banner-semantic banner-semantic--warning w-full p-3 flex items-center gap-3 text-left ion-activatable ripple-parent"
-        >
-          <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{
-              backgroundColor:
-                'color-mix(in oklab, var(--color-warning) 22%, transparent)',
-            }}
-          >
-            <ArrowRightLeft className="w-5 h-5 text-warning" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-warning">
-              {t.formatMessage({
-                id: 'account.incoming_transfer_heading'
-              })}
+        <IonCard button onClick={() => setIsProfileModalOpen(true)} className="mx-4">
+          <IonCardContent className="flex items-center gap-4">
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+              style={{ backgroundColor: 'var(--color-brand-subtle)', color: 'var(--color-text-brand)' }}
+            >
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt=""
+                  className="w-14 h-14 rounded-full object-cover"
+                />
+              ) : (
+                <span className="text-xl font-semibold">
+                  {getUserInitials(user.name)}
+                </span>
+              )}
             </div>
-            <div className="text-xs text-text-secondary mt-0.5 truncate">
-              {incomingTransfer.fromUser
-                ? t.formatMessage({
-                id: 'account.incoming_transfer_description'
-              }, {
-                    name: incomingTransfer.fromUser.name,
-                    business: incomingTransfer.business.name,
-                  })
-                : t.formatMessage({
-                id: 'account.incoming_transfer_description_anonymous'
-              }, {
-                    business: incomingTransfer.business.name,
-                  })}
+            <div className="flex-1 min-w-0">
+              <div className="text-base font-semibold text-text-primary truncate">
+                {user.name}
+              </div>
+              <div className="text-sm text-text-tertiary truncate">
+                {user.email}
+              </div>
             </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-          <IonRippleEffect />
-        </button>
-      )}
+            <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+          </IonCardContent>
+        </IonCard>
 
-      {/* Preferences */}
-      <div>
-        <SettingsSectionHeader label={t.formatMessage({
-          id: 'account.section_preferences'
-        })} />
-        <div className="bg-bg-surface rounded-xl overflow-hidden">
-          <SettingsRow
-            icon={Palette}
-            label={t.formatMessage({
-              id: 'account.row_theme'
-            })}
-            value={themeLabel}
-            onClick={() => setIsThemeModalOpen(true)}
-          />
-          <div className="settings-divider" />
-          <LanguageRow />
+        {/* Incoming transfer banner */}
+        {incomingTransfer && (
+          <IonCard button onClick={() => setIsTransferModalOpen(true)} className="mx-4">
+            <IonCardContent className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'var(--color-warning-subtle)' }}
+              >
+                <ArrowRightLeft className="w-5 h-5 text-warning" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-warning">
+                  {intl.formatMessage({ id: 'account.incoming_transfer_heading' })}
+                </div>
+                <div className="text-xs text-text-secondary mt-0.5 truncate">
+                  {incomingTransfer.fromUser
+                    ? intl.formatMessage(
+                        { id: 'account.incoming_transfer_description' },
+                        {
+                          name: incomingTransfer.fromUser.name,
+                          business: incomingTransfer.business.name,
+                        }
+                      )
+                    : intl.formatMessage(
+                        { id: 'account.incoming_transfer_description_anonymous' },
+                        { business: incomingTransfer.business.name }
+                      )}
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+            </IonCardContent>
+          </IonCard>
+        )}
+
+        {/* Preferences */}
+        <div>
+          <h2 className="text-base font-semibold text-text-primary mb-2 px-4">
+            {intl.formatMessage({ id: 'account.section_preferences' })}
+          </h2>
+          <IonList inset lines="full">
+            <IonItem button detail onClick={() => setIsThemeModalOpen(true)}>
+              <Palette slot="start" className="text-text-secondary w-5 h-5" />
+              <IonLabel>
+                <h3>{intl.formatMessage({ id: 'account.row_theme' })}</h3>
+              </IonLabel>
+              <IonNote slot="end">{themeLabel}</IonNote>
+            </IonItem>
+            <LanguageRow />
+          </IonList>
         </div>
-      </div>
 
-      {/* Security */}
-      <div>
-        <SettingsSectionHeader label={t.formatMessage({
-          id: 'account.section_security'
-        })} />
-        <div className="bg-bg-surface rounded-xl overflow-hidden">
-          <SettingsRow
-            icon={KeyRound}
-            label={t.formatMessage({
-              id: 'account.row_change_password'
-            })}
-            onClick={() => setIsPasswordModalOpen(true)}
-          />
+        {/* Security */}
+        <div>
+          <h2 className="text-base font-semibold text-text-primary mb-2 px-4">
+            {intl.formatMessage({ id: 'account.section_security' })}
+          </h2>
+          <IonList inset lines="full">
+            <IonItem button detail onClick={() => setIsPasswordModalOpen(true)}>
+              <KeyRound slot="start" className="text-text-secondary w-5 h-5" />
+              <IonLabel>
+                <h3>{intl.formatMessage({ id: 'account.row_change_password' })}</h3>
+              </IonLabel>
+            </IonItem>
+          </IonList>
         </div>
-      </div>
 
-      {/* Support */}
-      <div>
-        <SettingsSectionHeader label={t.formatMessage({
-          id: 'account.section_support'
-        })} />
-        <div className="bg-bg-surface rounded-xl overflow-hidden">
-          <SettingsRow
-            icon={Info}
-            label={t.formatMessage({
-              id: 'account.row_about'
-            })}
-            onClick={() => setIsAboutModalOpen(true)}
-          />
-          <div className="settings-divider" />
-          <SettingsRow
-            icon={CircleHelp}
-            label={t.formatMessage({
-              id: 'account.row_contact_support'
-            })}
-            onClick={() => setIsSupportModalOpen(true)}
-          />
+        {/* Support */}
+        <div>
+          <h2 className="text-base font-semibold text-text-primary mb-2 px-4">
+            {intl.formatMessage({ id: 'account.section_support' })}
+          </h2>
+          <IonList inset lines="full">
+            <IonItem button detail onClick={() => setIsAboutModalOpen(true)}>
+              <Info slot="start" className="text-text-secondary w-5 h-5" />
+              <IonLabel>
+                <h3>{intl.formatMessage({ id: 'account.row_about' })}</h3>
+              </IonLabel>
+            </IonItem>
+            <IonItem button detail onClick={() => setIsSupportModalOpen(true)}>
+              <CircleHelp slot="start" className="text-text-secondary w-5 h-5" />
+              <IonLabel>
+                <h3>{intl.formatMessage({ id: 'account.row_contact_support' })}</h3>
+              </IonLabel>
+            </IonItem>
+          </IonList>
         </div>
-      </div>
 
-      {/* Danger zone */}
-      <div>
-        <SettingsSectionHeader label={t.formatMessage({
-          id: 'account.section_danger_zone'
-        })} danger />
-        <div className="bg-bg-surface rounded-xl overflow-hidden">
-          <SettingsRow
-            icon={LogOut}
-            label={t.formatMessage({
-              id: 'account.row_logout'
-            })}
-            onClick={handleLogout}
-            danger
-          />
-          <div className="settings-divider" />
-          <SettingsRow
-            icon={UserX}
-            label={t.formatMessage({
-              id: 'account.row_delete_account'
-            })}
-            onClick={() => setIsDeleteModalOpen(true)}
-            danger
-          />
+        {/* Danger zone */}
+        <div>
+          <h2 className="text-base font-semibold text-error mb-2 px-4">
+            {intl.formatMessage({ id: 'account.section_danger_zone' })}
+          </h2>
+          <IonList inset lines="full">
+            <IonItem button detail onClick={handleLogout}>
+              <LogOut slot="start" className="text-error w-5 h-5" />
+              <IonLabel color="danger">
+                <h3>{intl.formatMessage({ id: 'account.row_logout' })}</h3>
+              </IonLabel>
+            </IonItem>
+            <IonItem button detail onClick={() => setIsDeleteModalOpen(true)}>
+              <UserX slot="start" className="text-error w-5 h-5" />
+              <IonLabel color="danger">
+                <h3>{intl.formatMessage({ id: 'account.row_delete_account' })}</h3>
+              </IonLabel>
+            </IonItem>
+          </IonList>
         </div>
       </div>
 
@@ -294,7 +278,6 @@ export function AccountPageContent() {
         isOpen={isTransferModalOpen}
         onClose={() => setIsTransferModalOpen(false)}
       />
-      </main>
     </>
-  );
+  )
 }
