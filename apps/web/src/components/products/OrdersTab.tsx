@@ -1,10 +1,11 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import { useParams } from 'react-router'
 import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig, Pencil, Trash2 } from 'lucide-react'
-import { Modal, Spinner, SwipeableRow } from '@/components/ui'
+import { IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonList, IonSpinner } from '@ionic/react'
+import { Modal } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { scrollToTop } from '@/lib/scroll'
@@ -100,45 +101,43 @@ export function OrdersTab({
   isModalOpen,
   isLoading = false,
 }: OrdersTabProps) {
-  const t = useIntl()
-  const tProducts = useIntl()
-  const tCommon = useIntl()
+  const intl = useIntl()
   const params = useParams<{ businessId: string }>()
   const { navigate } = usePageTransition()
   const [isSortSheetOpen, setSortSheetOpen] = useState(false)
 
   const sortLabels: Record<OrderSortOption, string> = {
-    date_desc: t.formatMessage({
+    date_desc: intl.formatMessage({
       id: 'orders.sort_date_desc'
     }),
-    date_asc: t.formatMessage({
+    date_asc: intl.formatMessage({
       id: 'orders.sort_date_asc'
     }),
-    total_desc: t.formatMessage({
+    total_desc: intl.formatMessage({
       id: 'orders.sort_total_desc'
     }),
-    total_asc: t.formatMessage({
+    total_asc: intl.formatMessage({
       id: 'orders.sort_total_asc'
     }),
   }
 
   const statusFilterLabels: Record<OrderStatusFilter, string> = {
-    all: t.formatMessage({
+    all: intl.formatMessage({
       id: 'orders.filter_all'
     }),
-    pending: t.formatMessage({
+    pending: intl.formatMessage({
       id: 'orders.filter_status_pending'
     }),
-    received: t.formatMessage({
+    received: intl.formatMessage({
       id: 'orders.filter_status_received'
     }),
-    overdue: t.formatMessage({
+    overdue: intl.formatMessage({
       id: 'orders.filter_status_overdue'
     }),
   }
 
   return (
-    <div className="page-body space-y-4">
+    <div className="space-y-4">
       {error && !isModalOpen && (
         <div className="p-4 bg-error-subtle text-error rounded-lg">
           {error}
@@ -146,52 +145,46 @@ export function OrdersTab({
       )}
       {/* No products and no orders - show empty state */}
       {products.length === 0 && orders.length === 0 ? (
-        <div className="empty-state-fill">
-          <Clipboard className="empty-state-icon" />
-          <h3 className="empty-state-title">{t.formatMessage({
-            id: 'orders.empty_no_products_title'
-          })}</h3>
-          <p className="empty-state-description">
-            {t.formatMessage({
-              id: 'orders.empty_no_products_description'
-            })}
+        <div className="flex flex-col items-center justify-center px-6 pt-12 pb-8 text-center">
+          <Clipboard className="w-16 h-16 text-text-tertiary mb-5" />
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
+            {intl.formatMessage({ id: 'orders.empty_no_products_title' })}
+          </h2>
+          <p className="text-sm text-text-secondary mb-6 max-w-xs">
+            {intl.formatMessage({ id: 'orders.empty_no_products_description' })}
           </p>
         </div>
       ) : orders.length === 0 ? (
         /* Products exist but no orders yet */
-        (<div className="empty-state-fill">
-          <Clipboard className="empty-state-icon" />
-          <h3 className="empty-state-title">{t.formatMessage({
-            id: 'orders.empty_no_orders_title'
-          })}</h3>
-          <p className="empty-state-description">
-            {t.formatMessage({
-              id: 'orders.empty_no_orders_description'
-            })}
+        <div className="flex flex-col items-center justify-center px-6 pt-12 pb-8 text-center">
+          <Clipboard className="w-16 h-16 text-text-tertiary mb-5" />
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
+            {intl.formatMessage({ id: 'orders.empty_no_orders_title' })}
+          </h2>
+          <p className="text-sm text-text-secondary mb-6 max-w-xs">
+            {intl.formatMessage({ id: 'orders.empty_no_orders_description' })}
           </p>
           {canManage && (
             <button
               type="button"
               onClick={onNewOrder}
-              className="btn btn-primary mt-4"
+              className="btn btn-primary"
               style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
             >
               <Plus className="w-4 h-4" />
-              {t.formatMessage({
-                id: 'orders.create_order_button'
-              })}
+              {intl.formatMessage({ id: 'orders.create_order_button' })}
             </button>
           )}
-        </div>)
+        </div>
       ) : (
         /* Orders exist - show search, filter, and list */
-        (<>
+        <>
           {/* Search Bar + Filter Button */}
           <div className="flex gap-2 items-stretch">
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder={t.formatMessage({
+                placeholder={intl.formatMessage({
                   id: 'orders.search_placeholder'
                 })}
                 value={searchQuery}
@@ -204,7 +197,7 @@ export function OrdersTab({
                   type="button"
                   onClick={() => onSearchChange('')}
                   className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-                  aria-label={t.formatMessage({
+                  aria-label={intl.formatMessage({
                     id: 'orders.search_clear'
                   })}
                 >
@@ -218,12 +211,8 @@ export function OrdersTab({
               aria-pressed={viewMode === 'completed'}
               aria-label={
                 viewMode === 'completed'
-                  ? t.formatMessage({
-                  id: 'orders.toggle_showing_completed_aria'
-                })
-                  : t.formatMessage({
-                  id: 'orders.toggle_show_completed_aria'
-                })
+                  ? intl.formatMessage({ id: 'orders.toggle_showing_completed_aria' })
+                  : intl.formatMessage({ id: 'orders.toggle_show_completed_aria' })
               }
               className={`btn btn-icon !rounded-full flex-shrink-0 ${
                 viewMode === 'completed'
@@ -237,7 +226,7 @@ export function OrdersTab({
               type="button"
               onClick={() => setSortSheetOpen(true)}
               className="btn btn-secondary btn-icon flex-shrink-0"
-              aria-label={t.formatMessage({
+              aria-label={intl.formatMessage({
                 id: 'orders.sort_filter_aria'
               })}
             >
@@ -245,12 +234,12 @@ export function OrdersTab({
             </button>
           </div>
           {/* Orders List Card */}
-          <div className="card p-4 space-y-4">
+          <div className="bg-bg-surface rounded-2xl p-4 space-y-4">
             {/* List Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-text-secondary">
-                  {t.formatMessage({
+                  {intl.formatMessage({
                     id: 'orders.order_count'
                   }, { count: filteredOrders.length })}
                 </span>
@@ -264,7 +253,7 @@ export function OrdersTab({
                   }}
                   className="text-sm text-brand hover:text-brand transition-colors"
                 >
-                  {t.formatMessage({
+                  {intl.formatMessage({
                     id: 'orders.providers_link'
                   })}
                 </button>
@@ -277,19 +266,17 @@ export function OrdersTab({
                   style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
                 >
                   <Plus style={{ width: 14, height: 14 }} />
-                  {tCommon.formatMessage({
+                  {intl.formatMessage({
                     id: 'common.add'
                   })}
                 </button>
               )}
             </div>
 
-            <hr className="border-border" />
-
             {/* Orders List */}
             {isLoading && filteredOrders.length === 0 ? (
               <div className="flex justify-center py-8">
-                <Spinner />
+                <IonSpinner name="crescent" />
               </div>
             ) : filteredOrders.length === 0 ? (
               <div className="text-center py-8 text-text-secondary">
@@ -297,21 +284,15 @@ export function OrdersTab({
                   {orders.some(o => (viewMode === 'completed'
                     ? getOrderDisplayStatus(o) === 'received'
                     : getOrderDisplayStatus(o) !== 'received'))
-                    ? t.formatMessage({
-                    id: 'orders.no_results'
-                  })
+                    ? intl.formatMessage({ id: 'orders.no_results' })
                     : viewMode === 'completed'
-                      ? t.formatMessage({
-                    id: 'orders.empty_no_completed'
-                  })
-                      : t.formatMessage({
-                    id: 'orders.empty_no_active'
-                  })}
+                      ? intl.formatMessage({ id: 'orders.empty_no_completed' })
+                      : intl.formatMessage({ id: 'orders.empty_no_active' })}
                 </p>
               </div>
             ) : (
-              <div className="list-divided">
-                {filteredOrders.map((order, i) => {
+              <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
+                {filteredOrders.map((order) => {
                   const alreadyReceived = getOrderDisplayStatus(order) === 'received'
                   // Receive is available to any active member (employees
                   // included) — receiving incoming inventory is normal floor
@@ -320,19 +301,13 @@ export function OrdersTab({
                   const swipeActions = viewMode !== 'completed'
                     ? [
                         ...(onReceiveOrder ? [{
-                          icon: <CircleCheckBig size={20} />,
-                          label: t.formatMessage({
-                            id: 'orders.action_receive'
-                          }),
-                          variant: 'info' as const,
+                          label: intl.formatMessage({ id: 'orders.action_receive' }),
+                          variant: 'success' as const,
                           disabled: alreadyReceived,
                           onClick: () => onReceiveOrder(order),
                         }] : []),
                         ...(canManage && onEditOrder ? [{
-                          icon: <Pencil size={20} />,
-                          label: t.formatMessage({
-                            id: 'orders.action_edit'
-                          }),
+                          label: intl.formatMessage({ id: 'orders.action_edit' }),
                           variant: 'neutral' as const,
                           // Received orders are locked — no quantity / total /
                           // provider edits once stock has been posted.
@@ -340,11 +315,8 @@ export function OrdersTab({
                           onClick: () => onEditOrder(order),
                         }] : []),
                         ...(canManage && onDeleteOrder ? [{
-                          icon: <Trash2 size={20} />,
-                          label: t.formatMessage({
-                            id: 'orders.action_delete'
-                          }),
-                          variant: 'danger' as const,
+                          label: intl.formatMessage({ id: 'orders.action_delete' }),
+                          variant: 'destructive' as const,
                           // Received orders can't be deleted either — would
                           // require rolling back the stock changes they posted.
                           disabled: !canDelete || alreadyReceived,
@@ -352,21 +324,34 @@ export function OrdersTab({
                         }] : []),
                       ]
                     : []
-                  const hasSwipeActions = swipeActions.length > 0
                   return (
-                    <Fragment key={order.id}>
-                      {i > 0 && <hr className="list-divider" />}
-                      {hasSwipeActions ? (
-                        <SwipeableRow actions={swipeActions}>
-                          <OrderListItem order={order} onView={onViewOrder} />
-                        </SwipeableRow>
-                      ) : (
+                    <IonItemSliding key={order.id}>
+                      <IonItem lines="none">
                         <OrderListItem order={order} onView={onViewOrder} />
+                      </IonItem>
+                      {swipeActions.length > 0 && (
+                        <IonItemOptions side="end">
+                          {swipeActions.map((action, index) => (
+                            <IonItemOption
+                              key={index}
+                              color={
+                                action.variant === 'destructive' ? 'danger'
+                                  : action.variant === 'success' ? 'success'
+                                  : action.variant === 'warning' ? 'warning'
+                                  : 'medium'
+                              }
+                              disabled={action.disabled}
+                              onClick={() => action.onClick()}
+                            >
+                              {action.label}
+                            </IonItemOption>
+                          ))}
+                        </IonItemOptions>
                       )}
-                    </Fragment>
+                    </IonItemSliding>
                   )
                 })}
-              </div>
+              </IonList>
             )}
           </div>
           {/* Back to top button */}
@@ -377,24 +362,24 @@ export function OrdersTab({
               className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
             >
               <ChevronUp className="w-4 h-4" />
-              {tProducts.formatMessage({
+              {intl.formatMessage({
                 id: 'products.back_to_top'
               })}
             </button>
           )}
-        </>)
+        </>
       )}
       {/* Sort & Filter Modal */}
       <Modal
         isOpen={isSortSheetOpen}
         onClose={() => setSortSheetOpen(false)}
-        title={t.formatMessage({
+        title={intl.formatMessage({
           id: 'orders.sort_filter_title'
         })}
       >
         <Modal.Item>
           <div className="space-y-2">
-            <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t.formatMessage({
+            <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{intl.formatMessage({
               id: 'orders.sort_by_label'
             })}</span>
             <div className="space-y-1">
@@ -425,7 +410,7 @@ export function OrdersTab({
         {viewMode === 'active' && (
           <Modal.Item>
             <div className="space-y-2">
-              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t.formatMessage({
+              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{intl.formatMessage({
                 id: 'orders.filter_by_status_label'
               })}</span>
               <div className="space-y-1">
@@ -459,7 +444,7 @@ export function OrdersTab({
             onClick={() => setSortSheetOpen(false)}
             className="btn btn-primary flex-1"
           >
-            {tCommon.formatMessage({
+            {intl.formatMessage({
               id: 'common.done'
             })}
           </button>

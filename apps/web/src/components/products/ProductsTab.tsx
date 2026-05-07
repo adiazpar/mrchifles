@@ -4,8 +4,9 @@ import { useIntl } from 'react-intl';
 
 import Image from '@/lib/Image'
 import { Fragment, memo, useMemo } from 'react'
-import { X, Plus, ChevronUp, ChevronRight, Loader2, Tags, ListFilter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff, Printer } from 'lucide-react'
-import { Modal, SwipeableRow } from '@/components/ui'
+import { X, Plus, ChevronUp, Loader2, Tags, ListFilter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff, Printer } from 'lucide-react'
+import { IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList } from '@ionic/react'
+import { Modal } from '@/components/ui'
 import { printBarcodeLabel } from '@/lib/barcode-print'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getProductIconUrl } from '@/lib/utils'
@@ -99,29 +100,28 @@ export function ProductsTab({
   scanBusy,
   scanHiddenInput,
 }: ProductsTabProps) {
-  const t = useIntl()
-  const tCommon = useIntl()
+  const intl = useIntl()
 
   const sortLabels: Record<SortPreference, string> = {
-    name_asc: t.formatMessage({
+    name_asc: intl.formatMessage({
       id: 'products.sort_name_asc'
     }),
-    name_desc: t.formatMessage({
+    name_desc: intl.formatMessage({
       id: 'products.sort_name_desc'
     }),
-    price_asc: t.formatMessage({
+    price_asc: intl.formatMessage({
       id: 'products.sort_price_asc'
     }),
-    price_desc: t.formatMessage({
+    price_desc: intl.formatMessage({
       id: 'products.sort_price_desc'
     }),
-    category: t.formatMessage({
+    category: intl.formatMessage({
       id: 'products.sort_category'
     }),
-    stock_asc: t.formatMessage({
+    stock_asc: intl.formatMessage({
       id: 'products.sort_stock_asc'
     }),
-    stock_desc: t.formatMessage({
+    stock_desc: intl.formatMessage({
       id: 'products.sort_stock_desc'
     }),
   }
@@ -142,12 +142,12 @@ export function ProductsTab({
   }
 
   return (
-    <div className="page-body space-y-4">
+    <div className="space-y-4">
       {error && !isModalOpen && (
-          <div className="p-4 bg-error-subtle text-error rounded-lg">
-            {error}
-          </div>
-        )}
+        <div className="p-4 bg-error-subtle text-error rounded-lg">
+          {error}
+        </div>
+      )}
       {/* Search, Filter, and List Header - only show when products exist */}
       {products.length > 0 && (
         <>
@@ -156,7 +156,7 @@ export function ProductsTab({
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder={t.formatMessage({
+                placeholder={intl.formatMessage({
                   id: 'products.search_placeholder'
                 })}
                 value={searchQuery}
@@ -169,7 +169,7 @@ export function ProductsTab({
                   type="button"
                   onClick={() => onSearchChange('')}
                   className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-                  aria-label={t.formatMessage({
+                  aria-label={intl.formatMessage({
                     id: 'products.search_clear'
                   })}
                 >
@@ -183,7 +183,7 @@ export function ProductsTab({
                 onClick={onScanClick}
                 disabled={scanBusy}
                 className="btn btn-secondary btn-icon flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label={t.formatMessage({
+                aria-label={intl.formatMessage({
                   id: 'products.scan_aria'
                 })}
               >
@@ -198,7 +198,7 @@ export function ProductsTab({
               type="button"
               onClick={() => onSortSheetOpenChange(true)}
               className="btn btn-secondary btn-icon flex-shrink-0"
-              aria-label={t.formatMessage({
+              aria-label={intl.formatMessage({
                 id: 'products.sort_filter_aria'
               })}
             >
@@ -208,12 +208,12 @@ export function ProductsTab({
           {scanHiddenInput}
 
           {/* Product List Card */}
-          <div className="card p-4 space-y-4">
+          <div className="bg-bg-surface rounded-2xl p-4 space-y-4">
             {/* List Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-text-secondary">
-                  {t.formatMessage({
+                  {intl.formatMessage({
                     id: 'products.product_count'
                   }, { count: filteredProducts.length })}
                 </span>
@@ -224,7 +224,7 @@ export function ProductsTab({
                     onClick={onOpenSettings}
                     className="text-sm text-brand hover:text-brand transition-colors"
                   >
-                    {t.formatMessage({
+                    {intl.formatMessage({
                       id: 'products.settings_link'
                     })}
                   </button>
@@ -238,27 +238,24 @@ export function ProductsTab({
                   style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
                 >
                   <Plus style={{ width: 14, height: 14 }} />
-                  {t.formatMessage({
+                  {intl.formatMessage({
                     id: 'products.add_button'
                   })}
                 </button>
               )}
             </div>
 
-            <hr className="border-border" />
-
             {/* Product List */}
             {filteredProducts.length === 0 ? (
               <div className="text-center py-8 text-text-secondary">
-                <p>{t.formatMessage({
+                <p>{intl.formatMessage({
                   id: 'products.no_results'
                 })}</p>
               </div>
             ) : (
-              <div className="list-divided">
-                {filteredProducts.map((product, i) => (
+              <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
+                {filteredProducts.map((product) => (
                   <Fragment key={product.id}>
-                    {i > 0 && <hr className="list-divider" />}
                     <ProductListItem
                       product={product}
                       categoryName={getCategoryName(product.categoryId)}
@@ -270,7 +267,7 @@ export function ProductsTab({
                     />
                   </Fragment>
                 ))}
-              </div>
+              </IonList>
             )}
           </div>
 
@@ -282,7 +279,7 @@ export function ProductsTab({
               className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
             >
               <ChevronUp className="w-4 h-4" />
-              {t.formatMessage({
+              {intl.formatMessage({
                 id: 'products.back_to_top'
               })}
             </button>
@@ -291,27 +288,23 @@ export function ProductsTab({
       )}
       {/* Empty state - no products at all */}
       {products.length === 0 && (
-        <div className="empty-state-fill">
-          <Tags className="empty-state-icon" />
-          <h3 className="empty-state-title">{t.formatMessage({
-            id: 'products.empty_state_title'
-          })}</h3>
-          <p className="empty-state-description">
-            {t.formatMessage({
-              id: 'products.empty_state_description'
-            })}
+        <div className="flex flex-col items-center justify-center px-6 pt-12 pb-8 text-center">
+          <Tags className="w-16 h-16 text-text-tertiary mb-5" />
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
+            {intl.formatMessage({ id: 'products.empty_state_title' })}
+          </h2>
+          <p className="text-sm text-text-secondary mb-6 max-w-xs">
+            {intl.formatMessage({ id: 'products.empty_state_description' })}
           </p>
           {canManage && (
             <button
               type="button"
               onClick={onAddProduct}
-              className="btn btn-primary mt-4"
+              className="btn btn-primary"
               style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
             >
               <Plus className="w-4 h-4" />
-              {t.formatMessage({
-                id: 'products.empty_state_button'
-              })}
+              {intl.formatMessage({ id: 'products.empty_state_button' })}
             </button>
           )}
         </div>
@@ -320,27 +313,76 @@ export function ProductsTab({
       <Modal
         isOpen={isSortSheetOpen}
         onClose={() => onSortSheetOpenChange(false)}
-        title={t.formatMessage({
+        title={intl.formatMessage({
           id: 'products.sort_filter_title'
         })}
       >
         <Modal.Item>
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{intl.formatMessage({
+              id: 'products.sort_by_label'
+            })}</span>
+            <div className="space-y-1">
+              {SORT_OPTIONS.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => onSortChange(option.value)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
+                >
+                  <span className={sortBy === option.value ? 'font-medium text-brand' : 'text-text-primary'}>
+                    {sortLabels[option.value]}
+                  </span>
+                  {sortBy === option.value && (
+                    <span className="w-5 h-5 text-brand">
+                      <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Modal.Item>
+
+        {/* Filter Section */}
+        {availableFilters.length > 0 && (
+          <Modal.Item>
             <div className="space-y-2">
-              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t.formatMessage({
-                id: 'products.sort_by_label'
+              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{intl.formatMessage({
+                id: 'products.filter_by_category_label'
               })}</span>
               <div className="space-y-1">
-                {SORT_OPTIONS.map(option => (
+                <button
+                  type="button"
+                  onClick={() => onFilterChange('all')}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
+                >
+                  <span className={selectedFilter === 'all' ? 'font-medium text-brand' : 'text-text-primary'}>
+                    {intl.formatMessage({
+                      id: 'products.filter_all'
+                    })}
+                  </span>
+                  {selectedFilter === 'all' && (
+                    <span className="w-5 h-5 text-brand">
+                      <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+                {availableFilters.map(filter => (
                   <button
-                    key={option.value}
+                    key={filter}
                     type="button"
-                    onClick={() => onSortChange(option.value)}
+                    onClick={() => onFilterChange(filter)}
                     className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
                   >
-                    <span className={sortBy === option.value ? 'font-medium text-brand' : 'text-text-primary'}>
-                      {sortLabels[option.value]}
+                    <span className={selectedFilter === filter ? 'font-medium text-brand' : 'text-text-primary'}>
+                      {getFilterLabel(filter, categories)}
                     </span>
-                    {sortBy === option.value && (
+                    {selectedFilter === filter && (
                       <span className="w-5 h-5 text-brand">
                         <svg viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -352,56 +394,7 @@ export function ProductsTab({
               </div>
             </div>
           </Modal.Item>
-
-        {/* Filter Section */}
-        {availableFilters.length > 0 && (
-          <Modal.Item>
-              <div className="space-y-2">
-                <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{t.formatMessage({
-                  id: 'products.filter_by_category_label'
-                })}</span>
-                <div className="space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => onFilterChange('all')}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
-                  >
-                    <span className={selectedFilter === 'all' ? 'font-medium text-brand' : 'text-text-primary'}>
-                      {t.formatMessage({
-                        id: 'products.filter_all'
-                      })}
-                    </span>
-                    {selectedFilter === 'all' && (
-                      <span className="w-5 h-5 text-brand">
-                        <svg viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </span>
-                    )}
-                  </button>
-                  {availableFilters.map(filter => (
-                    <button
-                      key={filter}
-                      type="button"
-                      onClick={() => onFilterChange(filter)}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
-                    >
-                      <span className={selectedFilter === filter ? 'font-medium text-brand' : 'text-text-primary'}>
-                        {getFilterLabel(filter, categories)}
-                      </span>
-                      {selectedFilter === filter && (
-                        <span className="w-5 h-5 text-brand">
-                          <svg viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </Modal.Item>
-          )}
+        )}
 
         <Modal.Footer>
           <button
@@ -409,7 +402,7 @@ export function ProductsTab({
             onClick={() => onSortSheetOpenChange(false)}
             className="btn btn-primary flex-1"
           >
-            {tCommon.formatMessage({
+            {intl.formatMessage({
               id: 'common.done'
             })}
           </button>
@@ -442,7 +435,7 @@ const ProductListItem = memo(function ProductListItem({
   onToggleActive,
   canModify = false,
 }: ProductListItemProps) {
-  const t = useIntl()
+  const intl = useIntl()
   const { formatCurrency } = useBusinessFormat()
   const iconUrl = getProductIconUrl(product)
   const stockValue = product.stock ?? 0
@@ -461,7 +454,7 @@ const ProductListItem = memo(function ProductListItem({
     ? [
         {
           icon: <SlidersHorizontal size={20} />,
-          label: t.formatMessage({
+          label: intl.formatMessage({
             id: 'products.action_inventory'
           }),
           variant: 'info' as const,
@@ -469,7 +462,7 @@ const ProductListItem = memo(function ProductListItem({
         },
         {
           icon: <Printer size={20} />,
-          label: t.formatMessage({
+          label: intl.formatMessage({
             id: 'products.action_print'
           }),
           variant: 'warning' as const,
@@ -482,9 +475,9 @@ const ProductListItem = memo(function ProductListItem({
         },
         {
           icon: isActive ? <EyeOff size={20} /> : <Eye size={20} />,
-          label: isActive ? t.formatMessage({
+          label: isActive ? intl.formatMessage({
             id: 'products.action_disable'
-          }) : t.formatMessage({
+          }) : intl.formatMessage({
             id: 'products.action_enable'
           }),
           variant: 'neutral' as const,
@@ -499,79 +492,55 @@ const ProductListItem = memo(function ProductListItem({
   const activate = canModify ? () => onEdit(product) : (onView ? () => onView(product) : undefined)
 
   return (
-    <SwipeableRow actions={swipeActions}>
-      <div
-        className={`list-item-clickable ${hasBarcode ? 'items-start' : ''}`}
-        onClick={activate}
-        onKeyDown={activate ? (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            activate()
+    <IonItemSliding>
+      <IonItem button={!!activate} detail={!!activate} onClick={activate}>
+        <div slot="start" className="w-10 h-10 rounded-xl bg-bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {iconUrl && isPresetIcon(iconUrl)
+            ? (() => { const p = getPresetIcon(iconUrl); return p ? <p.icon size={24} className="text-text-primary" /> : null })()
+            : iconUrl
+              ? <Image src={iconUrl} alt={product.name} width={40} height={40} className="object-cover" unoptimized />
+              : <ImagePlus className="w-5 h-5 text-text-tertiary" />
           }
-        } : undefined}
-        tabIndex={activate ? 0 : undefined}
-        role={activate ? 'button' : undefined}
-      >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3">
-          {/* Product Icon */}
-          <div className="product-list-image">
-            {iconUrl && isPresetIcon(iconUrl) ? (
-              (() => { const p = getPresetIcon(iconUrl); return p ? <p.icon size={24} className="text-text-primary" /> : null })()
-            ) : iconUrl ? (
-              <Image
-                src={iconUrl}
-                alt={product.name}
-                width={40}
-                height={40}
-                className="product-list-image-img"
-                unoptimized
-              />
-            ) : (
-              <ImagePlus className="w-5 h-5 text-text-tertiary" />
-            )}
-          </div>
-
-          {/* Product Info */}
-          <div className="flex-1 min-w-0">
-            <span className={`font-medium truncate block ${!product.active ? 'text-text-tertiary' : ''}`}>
-              {product.name}
-            </span>
-            <span className="text-xs text-text-tertiary mt-0.5 block">
-              {categoryName}
-            </span>
-          </div>
-
-          {/* Price and Stock */}
-          <div className="text-right flex-shrink-0">
-            <span className={`font-medium block ${!product.active ? 'text-text-tertiary' : 'text-text-primary'}`}>
-              {formatCurrency(product.price)}
-            </span>
-            <span className={`text-xs mt-0.5 block ${isLowStock && product.active ? 'text-error' : 'text-text-tertiary'}`}>
-              {t.formatMessage({
-                id: 'products.units_count'
-              }, { count: stockValue })}
-            </span>
-          </div>
-
-          {/* Chevron */}
-          <div className="text-text-tertiary ml-2 flex-shrink-0">
-            <ChevronRight className="w-5 h-5" />
-          </div>
         </div>
-
-        {hasBarcode && (
-          <div className="mt-3 flex items-center gap-3 text-left">
-            <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <ScanLine className="w-4 h-4 text-text-tertiary" />
+        <IonLabel>
+          <h3 className={!product.active ? 'text-text-tertiary' : undefined}>{product.name}</h3>
+          <p>{categoryName}</p>
+          {hasBarcode && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-text-tertiary">
+              <ScanLine className="w-4 h-4 flex-shrink-0" />
+              <span className="break-all">{product.barcode}</span>
             </div>
-            <span className="text-xs text-text-tertiary break-all block min-w-0">
-              {product.barcode}
-            </span>
+          )}
+        </IonLabel>
+        <div slot="end" className="text-right flex-shrink-0 mr-2">
+          <div className={`font-medium ${!product.active ? 'text-text-tertiary' : 'text-text-primary'}`}>
+            {formatCurrency(product.price)}
           </div>
-        )}
+          <div className={`text-xs mt-0.5 ${isLowStock && product.active ? 'text-error' : 'text-text-tertiary'}`}>
+            {intl.formatMessage({
+              id: 'products.units_count'
+            }, { count: stockValue })}
+          </div>
         </div>
-      </div>
-    </SwipeableRow>
+      </IonItem>
+      {swipeActions.length > 0 && (
+        <IonItemOptions side="end">
+          {swipeActions.map((action, index) => (
+            <IonItemOption
+              key={index}
+              color={
+                action.variant === 'destructive' ? 'danger'
+                  : action.variant === 'success' ? 'success'
+                  : action.variant === 'warning' ? 'warning'
+                  : 'medium'
+              }
+              onClick={() => action.onClick()}
+            >
+              {action.label}
+            </IonItemOption>
+          ))}
+        </IonItemOptions>
+      )}
+    </IonItemSliding>
   );
 })
