@@ -12,8 +12,11 @@ import {
   IonItemOption,
   IonItemOptions,
   IonItemSliding,
+  IonLabel,
   IonList,
   IonRippleEffect,
+  IonSegment,
+  IonSegmentButton,
   IonSpinner,
 } from '@ionic/react'
 import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2 } from 'lucide-react'
@@ -582,20 +585,16 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             pattern: a section-tabs bar driving a swipeable TabContainer.
             The tab is persisted in the URL so browser back/forward and
             tab reloads restore the user's position. */}
-        <div className="section-tabs">
+        <IonSegment
+          value={activeTab}
+          onIonChange={(e) => handleTabChange(e.detail.value as DetailTab)}
+        >
           {DETAIL_TAB_IDS.map(id => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => handleTabChange(id)}
-              className={`section-tab ${activeTab === id ? 'section-tab-active' : ''}`}
-            >
-              {intl.formatMessage({
-                id: `providers.tab_${id}`
-              })}
-            </button>
+            <IonSegmentButton key={id} value={id}>
+              <IonLabel>{intl.formatMessage({ id: `providers.tab_${id}` })}</IonLabel>
+            </IonSegmentButton>
           ))}
-        </div>
+        </IonSegment>
 
         <TabContainer
           activeTab={activeTab}

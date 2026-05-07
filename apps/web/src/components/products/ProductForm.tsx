@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Minus, ImagePlus } from 'lucide-react'
 import { BarcodeFields } from './BarcodeFields'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
+import { IonLabel, IonSegment, IonSegmentButton } from '@ionic/react'
 import { TabContainer, PriceInput } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import type { ProductCategory } from '@kasero/shared/types'
@@ -55,26 +56,18 @@ export function ProductForm({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="section-tabs section-tabs--modal modal-step-item">
-        <button
-          type="button"
-          onClick={() => setActiveTab('details')}
-          className={`section-tab ${activeTab === 'details' ? 'section-tab-active' : ''}`}
-        >
-          {t.formatMessage({
-            id: 'productForm.tab_details'
-          })}
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('barcode')}
-          className={`section-tab ${activeTab === 'barcode' ? 'section-tab-active' : ''}`}
-        >
-          {t.formatMessage({
-            id: 'productForm.tab_barcode'
-          })}
-        </button>
-      </div>
+      <IonSegment
+        value={activeTab}
+        onIonChange={(e) => setActiveTab(e.detail.value as 'details' | 'barcode')}
+        className="modal-step-item"
+      >
+        <IonSegmentButton value="details">
+          <IonLabel>{t.formatMessage({ id: 'productForm.tab_details' })}</IonLabel>
+        </IonSegmentButton>
+        <IonSegmentButton value="barcode">
+          <IonLabel>{t.formatMessage({ id: 'productForm.tab_barcode' })}</IonLabel>
+        </IonSegmentButton>
+      </IonSegment>
       <TabContainer
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as 'details' | 'barcode')}

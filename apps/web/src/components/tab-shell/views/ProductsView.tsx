@@ -8,7 +8,7 @@ import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
 import { useProductFilters, useProductSettings } from '@/hooks'
 import { TabContainer } from '@/components/ui'
-import { IonSpinner } from '@ionic/react'
+import { IonLabel, IonSegment, IonSegmentButton, IonSpinner } from '@ionic/react'
 // Tabs render on mount so they stay static. Add/edit/settings modals are
 // closed by default and open on user action; dynamic import keeps their
 // bundle (plus framer-motion's Reorder in ProductSettingsModal) out of
@@ -805,34 +805,22 @@ export function ProductsView() {
     <>
       <div className="px-4 py-6 space-y-4">
         {/* Section Tabs */}
-        <div className="section-tabs">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('products')
-              setError('')
-              router.replace(urlForTab('products'), { scroll: false })
-            }}
-            className={`section-tab ${activeTab === 'products' ? 'section-tab-active' : ''}`}
-          >
-            {t.formatMessage({
-              id: 'products.tab_products'
-            })}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('orders')
-              setError('')
-              router.replace(urlForTab('orders'), { scroll: false })
-            }}
-            className={`section-tab ${activeTab === 'orders' ? 'section-tab-active' : ''}`}
-          >
-            {t.formatMessage({
-              id: 'products.tab_orders'
-            })}
-          </button>
-        </div>
+        <IonSegment
+          value={activeTab}
+          onIonChange={(e) => {
+            const tab = e.detail.value as PageTab
+            setActiveTab(tab)
+            setError('')
+            router.replace(urlForTab(tab), { scroll: false })
+          }}
+        >
+          <IonSegmentButton value="products">
+            <IonLabel>{t.formatMessage({ id: 'products.tab_products' })}</IonLabel>
+          </IonSegmentButton>
+          <IonSegmentButton value="orders">
+            <IonLabel>{t.formatMessage({ id: 'products.tab_orders' })}</IonLabel>
+          </IonSegmentButton>
+        </IonSegment>
 
         <TabContainer
           activeTab={activeTab}

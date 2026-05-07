@@ -112,7 +112,7 @@
 @media (hover: hover) {
   .modal-back:hover:not(:disabled),
   .modal-close:hover:not(:disabled) {
-    background: var(--color-bg-subtle);
+    background: var(--color-bg-muted);
   }
 }
 
