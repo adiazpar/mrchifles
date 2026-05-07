@@ -222,7 +222,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsLoading(false)
     }
-  }, [businessId, providerId, ensureActiveOrdersLoaded, ensureCompletedOrdersLoaded, ensureProvidersLoaded, ensureProductsLoaded, t, translateApiMessage])
+  }, [businessId, providerId, ensureActiveOrdersLoaded, ensureCompletedOrdersLoaded, ensureProvidersLoaded, ensureProductsLoaded, intl, translateApiMessage])
 
   useEffect(() => { loadAll() }, [loadAll])
 
@@ -273,7 +273,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsSaving(false)
     }
-  }, [businessId, providerId, name, phone, email, active, setProviders, t, translateApiMessage])
+  }, [businessId, providerId, name, phone, email, active, setProviders, intl, translateApiMessage])
 
   // ===== Notes =====
   // The list lives on `provider.notes` (seeded from the detail GET). Each
@@ -344,7 +344,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsSavingNote(false)
     }
-  }, [businessId, providerId, noteTitle, noteBody, applyNotesUpdate, t, translateApiMessage])
+  }, [businessId, providerId, noteTitle, noteBody, applyNotesUpdate, intl, translateApiMessage])
 
   const handleUpdateNote = useCallback(async (): Promise<boolean> => {
     if (!editingNoteId) return false
@@ -370,7 +370,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsSavingNote(false)
     }
-  }, [businessId, providerId, editingNoteId, noteTitle, noteBody, applyNotesUpdate, t, translateApiMessage])
+  }, [businessId, providerId, editingNoteId, noteTitle, noteBody, applyNotesUpdate, intl, translateApiMessage])
 
   const handleDeleteNote = useCallback(async (): Promise<boolean> => {
     if (!editingNoteId) return false
@@ -395,7 +395,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsDeletingNote(false)
     }
-  }, [businessId, providerId, editingNoteId, applyNotesUpdate, t, translateApiMessage])
+  }, [businessId, providerId, editingNoteId, applyNotesUpdate, intl, translateApiMessage])
 
   // ===== Delete provider =====
   // Returns true on successful delete, which lets the modal navigate to the
@@ -437,7 +437,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsDeleting(false)
     }
-  }, [businessId, providerId, setOrders, setProviders, t, translateApiMessage])
+  }, [businessId, providerId, setOrders, setProviders, intl, translateApiMessage])
 
   // ===== Typical items =====
   // Hide the whole section until the provider has at least 3 orders —

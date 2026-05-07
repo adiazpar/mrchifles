@@ -529,9 +529,8 @@ const ProductListItem = memo(function ProductListItem({
             <IonItemOption
               key={index}
               color={
-                action.variant === 'destructive' ? 'danger'
-                  : action.variant === 'success' ? 'success'
-                  : action.variant === 'warning' ? 'warning'
+                action.variant === 'warning' ? 'warning'
+                  : action.variant === 'info' ? 'primary'
                   : 'medium'
               }
               onClick={() => action.onClick()}

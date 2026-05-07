@@ -337,7 +337,6 @@ export function OrdersTab({
                               color={
                                 action.variant === 'destructive' ? 'danger'
                                   : action.variant === 'success' ? 'success'
-                                  : action.variant === 'warning' ? 'warning'
                                   : 'medium'
                               }
                               disabled={action.disabled}
