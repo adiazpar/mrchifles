@@ -144,7 +144,7 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
               <div className="relative">
                 <div
                   className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden"
-                  style={{ backgroundColor: 'var(--brand-100)', color: 'var(--brand-700)' }}
+                  style={{ backgroundColor: 'var(--color-brand-subtle)', color: 'var(--color-text-brand)' }}
                 >
                   {avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element

@@ -113,7 +113,7 @@ export function AccountPageContent() {
       >
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-          style={{ backgroundColor: 'var(--brand-100)', color: 'var(--brand-700)' }}
+          style={{ backgroundColor: 'var(--color-brand-subtle)', color: 'var(--color-text-brand)' }}
         >
           {user.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element

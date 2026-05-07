@@ -22,7 +22,7 @@
 /* Border color change on hover (NOT shadow/lift) */
 @media (hover: hover) {
   .card-interactive:hover {
-    border-color: var(--brand-300);
+    border-color: var(--color-brand);
   }
 }
 
@@ -748,8 +748,8 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background: var(--brand-100);
-  color: var(--brand-700);
+  background: var(--color-brand-subtle);
+  color: var(--color-text-brand);
   display: flex;
   align-items: center;
   justify-content: center;

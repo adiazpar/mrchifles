@@ -103,9 +103,9 @@
   --radius-full: 9999px;
 
   /* ===== Shadows (Soft, single-layer, terracotta-tinted) ===== */
-  --shadow-sm: 0 1px 3px rgba(217, 119, 87, 0.08);
-  --shadow-md: 0 4px 12px rgba(217, 119, 87, 0.10);
-  --shadow-lg: 0 12px 32px rgba(217, 119, 87, 0.12);
+  --shadow-sm: 0 1px 3px rgba(var(--color-brand-rgb), 0.08);
+  --shadow-md: 0 4px 12px rgba(var(--color-brand-rgb), 0.10);
+  --shadow-lg: 0 12px 32px rgba(var(--color-brand-rgb), 0.12);
   --shadow-xl: 0 24px 48px rgba(28, 25, 23, 0.16);
 
   /* ===== Animation Tokens ===== */
