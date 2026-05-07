@@ -38,6 +38,10 @@
 
   --color-border: var(--color-border);
   --color-border-hover: var(--color-border-hover);
+
+  /* Typography — both resolve to Nunito Sans (defined in base.css) */
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
 }
 
 /* Reset coexistence: Ionic provides its own base styles; Tailwind preflight
