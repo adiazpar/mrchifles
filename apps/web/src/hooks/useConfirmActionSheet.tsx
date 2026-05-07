@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState, type ReactNode } from 'react'
 import { IonActionSheet } from '@ionic/react'
 
 interface ConfirmOptions {
@@ -10,7 +10,7 @@ interface ConfirmOptions {
 
 interface UseConfirmActionSheetReturn {
   confirm: (opts: ConfirmOptions) => Promise<boolean>
-  actionSheet: JSX.Element
+  actionSheet: ReactNode
   _dispatchForTest?: (action: 'destructive' | 'cancel') => void
 }
 
@@ -19,6 +19,11 @@ export function useConfirmActionSheet(): UseConfirmActionSheetReturn {
   const resolverRef = useRef<((v: boolean) => void) | null>(null)
 
   const confirm = useCallback((next: ConfirmOptions) => {
+    // Double-call guard: if a confirm is already in flight (e.g. user
+    // double-tapped a delete button before the sheet animated in), the
+    // second call resolves to false rather than overwriting the first
+    // resolver — which would otherwise leave the first promise hanging.
+    if (resolverRef.current !== null) return Promise.resolve(false)
     return new Promise<boolean>((resolve) => {
       resolverRef.current = resolve
       setOpts(next)
