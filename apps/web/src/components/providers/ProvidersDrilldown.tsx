@@ -1,10 +1,16 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { Fragment } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { Plus, Handshake, ShoppingCart, Pencil, Trash2 } from 'lucide-react'
-import { Spinner, SwipeableRow } from '@/components/ui'
+import { Plus, Handshake } from 'lucide-react'
+import {
+  IonItem,
+  IonItemOption,
+  IonItemOptions,
+  IonItemSliding,
+  IonList,
+  IonSpinner,
+} from '@ionic/react'
 import { useProviderManagement } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
@@ -20,7 +26,7 @@ interface ProvidersDrilldownProps {
  */
 export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
   const router = useRouter()
-  const t = useIntl()
+  const intl = useIntl()
 
   const { setOrders } = useOrders()
 
@@ -63,11 +69,11 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
   return (
     <>
       {isLoading ? (
-        <main className="page-loading">
-          <Spinner className="spinner-lg" />
-        </main>
+        <div className="flex items-center justify-center h-full">
+          <IonSpinner name="crescent" />
+        </div>
       ) : (
-        <main className="page-content space-y-6">
+        <div className="px-4 py-6 space-y-6">
           {error && !isModalOpen && (
             <div className="p-4 bg-error-subtle text-error rounded-lg">
               {error}
@@ -75,10 +81,10 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
           )}
 
           {providers.length > 0 && (
-            <div className="card p-4 space-y-4">
+            <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-text-secondary">
-                  {t.formatMessage({
+                  {intl.formatMessage({
                     id: 'providers.count'
                   }, { count: providers.length })}
                 </span>
@@ -90,7 +96,7 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
                     style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
                   >
                     <Plus style={{ width: 14, height: 14 }} />
-                    {t.formatMessage({
+                    {intl.formatMessage({
                       id: 'providers.add_button'
                     })}
                   </button>
@@ -99,67 +105,71 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
 
               <hr className="border-border" />
 
-              <div className="list-divided">
-                {sortedProviders.map((provider, i) => {
+              <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
+                {sortedProviders.map((provider) => {
                   const swipeActions = canManage
                     ? [
                         {
-                          icon: <ShoppingCart size={20} />,
-                          label: t.formatMessage({
+                          label: intl.formatMessage({
                             id: 'providers.action_new_order'
                           }),
-                          variant: 'info' as const,
+                          color: 'primary' as const,
                           onClick: () => orderFlows.openNewOrder(provider.id),
                         },
                         {
-                          icon: <Pencil size={20} />,
-                          label: t.formatMessage({
+                          label: intl.formatMessage({
                             id: 'providers.action_edit'
                           }),
-                          variant: 'neutral' as const,
+                          color: 'medium' as const,
                           onClick: () => handleOpenModal(provider),
                         },
                         {
-                          icon: <Trash2 size={20} />,
-                          label: t.formatMessage({
+                          label: intl.formatMessage({
                             id: 'providers.action_delete'
                           }),
-                          variant: 'danger' as const,
+                          color: 'danger' as const,
                           onClick: () => handleOpenDelete(provider),
                         },
                       ]
                     : []
                   return (
-                    <Fragment key={provider.id}>
-                      {i > 0 && <hr className="list-divider" />}
-                      {swipeActions.length > 0 ? (
-                        <SwipeableRow actions={swipeActions}>
-                          <ProviderListItem
-                            provider={provider}
-                            onClick={() => router.push(`/${businessId}/providers/${provider.id}`)}
-                          />
-                        </SwipeableRow>
-                      ) : (
+                    <IonItemSliding key={provider.id}>
+                      <IonItem lines="full">
                         <ProviderListItem
                           provider={provider}
                           onClick={() => router.push(`/${businessId}/providers/${provider.id}`)}
                         />
+                      </IonItem>
+                      {swipeActions.length > 0 && (
+                        <IonItemOptions side="end">
+                          {swipeActions.map((action) => (
+                            <IonItemOption
+                              key={action.label}
+                              color={action.color}
+                              onClick={action.onClick}
+                            >
+                              {action.label}
+                            </IonItemOption>
+                          ))}
+                        </IonItemOptions>
                       )}
-                    </Fragment>
+                    </IonItemSliding>
                   )
                 })}
-              </div>
+              </IonList>
             </div>
           )}
 
           {providers.length === 0 && (
-            <div className="empty-state-fill">
-              <Handshake className="empty-state-icon" />
-              <h3 className="empty-state-title">{t.formatMessage({
-                id: 'providers.empty_title'
-              })}</h3>
-              <p className="empty-state-description">
-                {t.formatMessage({
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Handshake className="w-16 h-16 text-text-tertiary mb-5" />
+              <h3 className="text-lg font-semibold text-text-primary mb-2">
+                {intl.formatMessage({
+                  id: 'providers.empty_title'
+                })}
+              </h3>
+              <p className="text-sm text-text-secondary max-w-xs">
+                {intl.formatMessage({
                   id: 'providers.empty_description'
                 })}
               </p>
@@ -171,14 +181,14 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
                   style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
                 >
                   <Plus className="w-4 h-4" />
-                  {t.formatMessage({
+                  {intl.formatMessage({
                     id: 'providers.add_provider_button'
                   })}
                 </button>
               )}
             </div>
           )}
-        </main>
+        </div>
       )}
       <ProviderModal
         isOpen={isModalOpen}
