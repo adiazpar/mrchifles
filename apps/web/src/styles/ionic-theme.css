@@ -16,8 +16,8 @@
   --ion-color-primary-rgb: var(--color-brand-rgb);
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: var(--brand-700);
-  --ion-color-primary-tint: var(--brand-300);
+  --ion-color-primary-shade: #B85A3C;
+  --ion-color-primary-tint: #E89B7F;
 
   /* ===== Success (green) ===== */
   --ion-color-success: var(--color-success);
@@ -67,6 +67,16 @@
    * Mapping them to the brand neutral palette keeps modals, popovers, and
    * scrollbars on-brand without per-component overrides. */
   --ion-border-color: var(--color-border);
+
+  /* ===== Pillowy radii ===== */
+  --ion-card-border-radius: var(--radius-xl);          /* 16px */
+  --ion-item-border-radius: var(--radius-lg);          /* 14px */
+
+  /* ===== Item / list spacing (pillowy + 56px touch target) ===== */
+  --ion-item-min-height: var(--touch-target-min);      /* 56px */
+
+  /* ===== Font family for all Ionic primitives ===== */
+  --ion-font-family: var(--font-body);
 }
 
 /* ===== Dark mode bridge ===== */
@@ -168,4 +178,32 @@ ion-tab-button ion-label {
 
 ion-tab-button ion-icon {
   font-size: 28px;
+}
+
+/* ===== IonButton pill shape =====
+ * The spec calls for primary action buttons to be fully pill-shaped.
+ * We default all <ion-button> to the pill radius; callers that need a
+ * non-pill shape (icon-only, secondary square buttons) override with
+ * --border-radius inline or with a class. */
+ion-button {
+  --border-radius: var(--radius-full);
+  --padding-top: var(--space-3);
+  --padding-bottom: var(--space-3);
+  --padding-start: var(--space-5);
+  --padding-end: var(--space-5);
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  --transition: filter var(--duration-fast) ease-out;
+}
+
+ion-button.button-disabled {
+  opacity: 0.5;
+}
+
+/* Icon-only buttons stay square-ish (round-rect), not pill. */
+ion-button[fill="clear"][shape="round"],
+ion-button.icon-only {
+  --border-radius: var(--radius-md);
 }
