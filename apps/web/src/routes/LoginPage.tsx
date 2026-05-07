@@ -1,8 +1,7 @@
 import { useIntl } from 'react-intl';
 import { useState, useCallback } from 'react'
-import { IonPage, IonContent } from '@ionic/react'
+import { IonPage, IonContent, IonList, IonItem, IonInput, IonButton, IonSpinner } from '@ionic/react'
 import { useRouter, useSearchParams } from '@/lib/next-navigation-shim'
-import { Input, Spinner } from '@/components/ui'
 import { AuthLayout } from '@/components/auth'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
@@ -31,8 +30,7 @@ export function LoginPage() {
   const redirect = safeRedirect(searchParams.get('redirect'))
   const { login } = useAuth()
   const { playEntry } = useAuthGate()
-  const t = useIntl()
-  const tCommon = useIntl()
+  const intl = useIntl()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -60,13 +58,13 @@ export function LoginPage() {
         // overlay during the transition and unmounted afterward.
         await playEntry(redirect)
       } catch {
-        setError(t.formatMessage({
+        setError(intl.formatMessage({
           id: 'auth.connection_error'
         }))
         setIsLoading(false)
       }
     },
-    [email, password, redirect, login, playEntry, t]
+    [email, password, redirect, login, playEntry, intl]
   )
 
   // Originally usePageTransition().navigate('/register'); the
@@ -83,77 +81,68 @@ export function LoginPage() {
     <IonPage>
       <IonContent>
         <AuthLayout>
-          <form onSubmit={handleSubmit} className="auth-main">
-            <h1 className="auth-heading">{t.formatMessage({
-              id: 'auth.heading_login'
-            })}</h1>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <h1 className="text-3xl font-bold text-text-primary mb-2 text-center">
+              {intl.formatMessage({ id: 'auth.heading_login' })}
+            </h1>
 
             {error && (
-              <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+              <div className="p-3 bg-error-subtle text-error text-sm rounded-xl">
                 {error}
               </div>
             )}
 
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t.formatMessage({
-                id: 'auth.email_placeholder'
-              })}
-              autoComplete="email"
-              autoFocus
-              required
-            />
+            <IonList lines="full" inset>
+              <IonItem>
+                <IonInput
+                  type="email"
+                  label={intl.formatMessage({ id: 'auth.email_placeholder' })}
+                  labelPlacement="floating"
+                  value={email}
+                  onIonInput={(e) => setEmail(e.detail.value ?? '')}
+                  autocomplete="email"
+                  autofocus
+                  required
+                />
+              </IonItem>
+              <IonItem>
+                <IonInput
+                  type="password"
+                  label={intl.formatMessage({ id: 'auth.password_placeholder' })}
+                  labelPlacement="floating"
+                  value={password}
+                  onIonInput={(e) => setPassword(e.detail.value ?? '')}
+                  autocomplete="current-password"
+                  required
+                />
+              </IonItem>
+            </IonList>
 
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t.formatMessage({
-                id: 'auth.password_placeholder'
-              })}
-              autoComplete="current-password"
-              required
-            />
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg w-full"
-              disabled={isLoading}
-            >
+            <IonButton expand="block" type="submit" disabled={isLoading}>
               {isLoading ? (
-                <>
-                  <Spinner />
-                  <span className="sr-only">{t.formatMessage({
-                    id: 'auth.logging_in'
-                  })}</span>
-                </>
+                <IonSpinner name="crescent" />
               ) : (
-                t.formatMessage({
-                  id: 'auth.continue_button'
-                })
+                intl.formatMessage({ id: 'auth.continue_button' })
               )}
-            </button>
+            </IonButton>
           </form>
 
-          <div className="auth-page-footer">
-            <div className="auth-or-divider">{tCommon.formatMessage({
-              id: 'common.or'
-            })}</div>
-            <button
-              type="button"
-              onClick={handleGoToRegister}
-              className="btn btn-secondary btn-lg w-full"
-            >
-              {t.formatMessage({
-                id: 'auth.register_button'
-              })}
-            </button>
-            <p className="auth-version">
-              {t.formatMessage({
-                id: 'auth.version_label'
-              }, { version: APP_VERSION })}
+          <div className="mt-6">
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-bg-base px-4 text-sm text-text-tertiary">
+                  {intl.formatMessage({ id: 'common.or' })}
+                </span>
+              </div>
+            </div>
+            <IonButton expand="block" fill="outline" type="button" onClick={handleGoToRegister}>
+              {intl.formatMessage({ id: 'auth.register_button' })}
+            </IonButton>
+            <p className="text-xs text-text-tertiary text-center mt-6">
+              {intl.formatMessage({ id: 'auth.version_label' }, { version: APP_VERSION })}
             </p>
           </div>
         </AuthLayout>
