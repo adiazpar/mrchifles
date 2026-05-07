@@ -148,45 +148,42 @@
 
 /* ===== Dark Mode ===== */
 .dark {
-  --color-bg-base: #0F0F0F;
-  --color-bg-surface: #171717;
-  --color-bg-elevated: #1E1E1E;
-  --color-bg-muted: #1E1E1E;
+  /* Backgrounds */
+  --color-bg-base: #0C0A09;
+  --color-bg-surface: #1C1917;
+  --color-bg-elevated: #292524;
+  --color-bg-muted: #1C1917;
 
-  --color-brand: #38BDF8;
-  --color-brand-hover: #7DD3FC;
-  --color-brand-subtle: rgba(14, 165, 233, 0.15);
-  /* Dark-mode brand RGB triplet (#38BDF8). */
-  --color-brand-rgb: 56, 189, 248;
+  /* Brand (lifted for contrast on dark surfaces) */
+  --color-brand: #E89B7F;
+  --color-brand-hover: #D97757;
+  --color-brand-subtle: rgba(217, 119, 87, 0.15);
+  --color-brand-rgb: 232, 155, 127;
 
-  --color-text-primary: #F5F5F5;
-  --color-text-secondary: #A3A3A3;
-  --color-text-tertiary: #737373;
+  /* Text Hierarchy */
+  --color-text-primary: #FAFAF9;
+  --color-text-secondary: #A8A29E;
+  --color-text-tertiary: #78716C;
+  --color-text-inverse: #1C1917;
+  --color-text-brand: #E89B7F;
 
-  --color-border: #262626;
-  --color-border-hover: #383838;
+  /* Borders */
+  --color-border: #292524;
+  --color-border-hover: #44403C;
 
-  /* Semantic colors - lighter/brighter for dark backgrounds */
-  --color-success: #4ADE80;
-  --color-success-subtle: rgba(74, 222, 128, 0.15);
+  /* Semantic colors — lighter for dark backgrounds */
+  --color-success: #84CC16;
+  --color-success-subtle: rgba(132, 204, 22, 0.15);
   --color-warning: #EAB308;
   --color-warning-subtle: rgba(234, 179, 8, 0.15);
   --color-error: #F87171;
   --color-error-subtle: rgba(248, 113, 113, 0.15);
 
-  /* Dark mode dual-layer shadows */
-  --shadow-sm:
-    0 1px 2px rgba(0, 0, 0, 0.25),
-    0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-md:
-    0 2px 4px rgba(0, 0, 0, 0.3),
-    0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg:
-    0 4px 6px rgba(0, 0, 0, 0.35),
-    0 10px 24px rgba(0, 0, 0, 0.3);
-  --shadow-xl:
-    0 8px 10px rgba(0, 0, 0, 0.35),
-    0 20px 40px rgba(0, 0, 0, 0.4);
+  /* Dark mode shadows (deeper, near-black) */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.7);
 }
 
 /* ==========================================================================
