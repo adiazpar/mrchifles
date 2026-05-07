@@ -53,6 +53,15 @@ export default defineConfig(({ mode }) => {
       port: webPort,
       host: true,
       https: httpsConfig,
+      // Vite's HMR WebSocket upgrade enforces a Host allowlist that is
+      // stricter than the one applied to regular HTTP requests; without
+      // explicit entries, upgrades from LAN/Tailscale hostnames get
+      // rejected with 400 even though page loads succeed.
+      allowedHosts: ['localhost', '.ts.net'],
+      hmr: {
+        clientPort: webPort,
+        protocol: httpsConfig ? 'wss' : 'ws',
+      },
       proxy: {
         '/api': {
           target: apiTarget,
