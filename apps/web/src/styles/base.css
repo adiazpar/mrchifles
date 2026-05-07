@@ -11,9 +11,7 @@
 :root {
   /* ===== Typography =====
      Fonts are loaded via the <link> tags in index.html (Google Fonts:
-     DM Sans + IBM Plex Sans). The Next.js `next/font/google` injection
-     of --font-dm-sans / --font-ibm-plex is gone with the App-Router
-     migration; these values now name the families directly. */
+     Nunito Sans). These values name the family directly. */
   --font-display: 'Nunito Sans', system-ui, -apple-system, sans-serif;
   --font-body: 'Nunito Sans', system-ui, -apple-system, sans-serif;
 
