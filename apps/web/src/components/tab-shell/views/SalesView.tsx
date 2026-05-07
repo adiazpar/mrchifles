@@ -42,28 +42,25 @@ export function SalesView() {
   )
 
   return (
-    <main className="page-content" style={{ minHeight: 0 }}>
-      <div className="page-body relative">
-        {sessionOpen ? (
-          <>
-            {statsCard}
-            <div className="flex-1 min-h-0 pt-4 flex flex-col">
-              <ProductPicker cart={cart} />
-            </div>
-            <CartSheet cart={cart} />
-          </>
-        ) : (
-          /* No session: header + reports scroll together inside one
-             overflow container so the SalesStatsCard slides up out of
-             view as the user explores the report cards below. */
-          <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hidden">
-            {statsCard}
-            <div className="pt-4">
-              <SalesReports businessId={businessId} />
-            </div>
+    <>
+      {sessionOpen ? (
+        // POS workspace layout: pinned stats + product grid + bottom cart sheet.
+        // relative keeps CartSheet's absolute bottom-0 anchored to this container.
+        // No outer padding — children handle their own padding to avoid double-margins.
+        <div className="relative flex h-full flex-col">
+          {statsCard}
+          <div className="flex-1 min-h-0 pt-4 flex flex-col">
+            <ProductPicker cart={cart} />
           </div>
-        )}
-      </div>
+          <CartSheet cart={cart} />
+        </div>
+      ) : (
+        // Reports browse mode: vertically-scrollable column. IonContent owns scroll.
+        <div className="px-4 py-6 space-y-4">
+          {statsCard}
+          <SalesReports businessId={businessId} />
+        </div>
+      )}
       <CloseSessionConfirmModal
         isOpen={closeModalOpen}
         onClose={() => setCloseModalOpen(false)}
@@ -76,6 +73,6 @@ export function SalesView() {
         onClose={() => setOpenModalOpen(false)}
         previousCountedCash={salesSessions.sessions[0]?.countedCash ?? null}
       />
-    </main>
+    </>
   )
 }

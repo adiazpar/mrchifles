@@ -16,8 +16,8 @@
   --ion-color-primary-rgb: var(--color-brand-rgb);
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: var(--brand-700);
-  --ion-color-primary-tint: var(--brand-300);
+  --ion-color-primary-shade: #B85A3C;
+  --ion-color-primary-tint: #E89B7F;
 
   /* ===== Success (green) ===== */
   --ion-color-success: var(--color-success);
@@ -67,6 +67,16 @@
    * Mapping them to the brand neutral palette keeps modals, popovers, and
    * scrollbars on-brand without per-component overrides. */
   --ion-border-color: var(--color-border);
+
+  /* ===== Pillowy radii ===== */
+  --ion-card-border-radius: var(--radius-xl);          /* 16px */
+  --ion-item-border-radius: var(--radius-lg);          /* 14px */
+
+  /* ===== Item / list spacing (pillowy + 56px touch target) ===== */
+  --ion-item-min-height: var(--touch-target-min);      /* 56px */
+
+  /* ===== Font family for all Ionic primitives ===== */
+  --ion-font-family: var(--font-body);
 }
 
 /* ===== Dark mode bridge ===== */
@@ -168,4 +178,46 @@ ion-tab-button ion-label {
 
 ion-tab-button ion-icon {
   font-size: 28px;
+}
+
+/* ===== IonButton pill shape =====
+ * The spec calls for primary action buttons to be fully pill-shaped. We
+ * apply pill radius + generous padding to every <ion-button> EXCEPT
+ * fill="clear" — that variant is reserved for IonBackButton and toolbar
+ * icon slots (chevron + icon-only buttons), which inherit Ionic's
+ * built-in defaults and would look wrong rendered as pills with brand
+ * padding. Callers that need a non-pill solid/outline button override
+ * --border-radius inline:
+ *   <IonButton style={{ '--border-radius': 'var(--radius-md)' } as React.CSSProperties}>
+ *
+ * Font family is inherited from --ion-font-family (set on :root above);
+ * no inline override needed here.
+ *
+ * Hover brightness mirrors the legacy .btn-primary filter: brightness(0.92)
+ * — touch devices skip this via @media (hover: hover).
+ *
+ * TODO (Phase E): in dark mode, --ion-color-primary-tint resolves to the
+ * same lifted terracotta as --color-brand, which collapses the focus-state
+ * differentiation. Decide whether to add a .dark { --ion-color-primary-tint: ...; }
+ * override or accept the collapse. */
+ion-button:not([fill="clear"]) {
+  --border-radius: var(--radius-full);
+  --padding-top: var(--space-3);
+  --padding-bottom: var(--space-3);
+  --padding-start: var(--space-5);
+  --padding-end: var(--space-5);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (hover: hover) {
+  ion-button:not([fill="clear"]):hover {
+    filter: brightness(0.92);
+    transition: filter var(--duration-fast) ease-out;
+  }
+}
+
+ion-button.button-disabled {
+  opacity: 0.5;
 }

@@ -1,8 +1,7 @@
 import { useIntl } from 'react-intl';
 import { useState, useCallback } from 'react'
-import { IonPage, IonContent } from '@ionic/react'
+import { IonPage, IonContent, IonList, IonItem, IonInput, IonButton, IonSpinner } from '@ionic/react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { Input, Spinner } from '@/components/ui'
 import { AuthLayout } from '@/components/auth'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
@@ -10,8 +9,7 @@ import { APP_VERSION } from '@/lib/version'
 
 export function RegisterPage() {
   const router = useRouter()
-  const t = useIntl()
-  const tCommon = useIntl()
+  const intl = useIntl()
   const { register } = useAuth()
   const { playEntry } = useAuthGate()
 
@@ -28,14 +26,14 @@ export function RegisterPage() {
       setError('')
 
       if (password !== passwordConfirm) {
-        setError(t.formatMessage({
+        setError(intl.formatMessage({
           id: 'auth.passwords_dont_match'
         }))
         return
       }
 
       if (password.length < 8) {
-        setError(t.formatMessage({
+        setError(intl.formatMessage({
           id: 'auth.password_too_short'
         }))
         return
@@ -57,13 +55,13 @@ export function RegisterPage() {
         // isLoading on success — see login page for reasoning.
         await playEntry('/')
       } catch {
-        setError(t.formatMessage({
+        setError(intl.formatMessage({
           id: 'auth.connection_error'
         }))
         setIsLoading(false)
       }
     },
-    [email, password, passwordConfirm, name, register, playEntry, t]
+    [email, password, passwordConfirm, name, register, playEntry, intl]
   )
 
   // Originally usePageTransition().navigate('/login'). See LoginPage for
@@ -77,99 +75,90 @@ export function RegisterPage() {
     <IonPage>
       <IonContent>
         <AuthLayout>
-          <form onSubmit={handleSubmit} className="auth-main">
-            <h1 className="auth-heading">{t.formatMessage({
-              id: 'auth.heading_register'
-            })}</h1>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <h1 className="text-3xl font-bold text-text-primary mb-2 text-center">
+              {intl.formatMessage({ id: 'auth.heading_register' })}
+            </h1>
 
             {error && (
-              <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+              <div className="p-3 bg-error-subtle text-error text-sm rounded-xl">
                 {error}
               </div>
             )}
 
-            <Input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t.formatMessage({
-                id: 'auth.name_placeholder'
-              })}
-              autoComplete="name"
-              autoFocus
-              required
-            />
+            <IonList lines="full" inset>
+              <IonItem>
+                <IonInput
+                  type="text"
+                  label={intl.formatMessage({ id: 'auth.name_placeholder' })}
+                  labelPlacement="floating"
+                  value={name}
+                  onIonInput={(e) => setName(e.detail.value ?? '')}
+                  autocomplete="name"
+                  autofocus
+                  required
+                />
+              </IonItem>
+              <IonItem>
+                <IonInput
+                  type="email"
+                  label={intl.formatMessage({ id: 'auth.email_placeholder' })}
+                  labelPlacement="floating"
+                  value={email}
+                  onIonInput={(e) => setEmail(e.detail.value ?? '')}
+                  autocomplete="email"
+                  required
+                />
+              </IonItem>
+              <IonItem>
+                <IonInput
+                  type="password"
+                  label={intl.formatMessage({ id: 'auth.password_new_placeholder' })}
+                  labelPlacement="floating"
+                  value={password}
+                  onIonInput={(e) => setPassword(e.detail.value ?? '')}
+                  autocomplete="new-password"
+                  required
+                />
+              </IonItem>
+              <IonItem>
+                <IonInput
+                  type="password"
+                  label={intl.formatMessage({ id: 'auth.password_confirm_placeholder' })}
+                  labelPlacement="floating"
+                  value={passwordConfirm}
+                  onIonInput={(e) => setPasswordConfirm(e.detail.value ?? '')}
+                  autocomplete="new-password"
+                  required
+                />
+              </IonItem>
+            </IonList>
 
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t.formatMessage({
-                id: 'auth.email_placeholder'
-              })}
-              autoComplete="email"
-              required
-            />
-
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t.formatMessage({
-                id: 'auth.password_new_placeholder'
-              })}
-              autoComplete="new-password"
-              required
-            />
-
-            <Input
-              type="password"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              placeholder={t.formatMessage({
-                id: 'auth.password_confirm_placeholder'
-              })}
-              autoComplete="new-password"
-              required
-            />
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg w-full"
-              disabled={isLoading}
-            >
+            <IonButton expand="block" type="submit" disabled={isLoading}>
               {isLoading ? (
-                <>
-                  <Spinner />
-                  <span className="sr-only">{t.formatMessage({
-                    id: 'auth.creating_account'
-                  })}</span>
-                </>
+                <IonSpinner name="crescent" />
               ) : (
-                t.formatMessage({
-                  id: 'auth.register_button'
-                })
+                intl.formatMessage({ id: 'auth.register_button' })
               )}
-            </button>
+            </IonButton>
           </form>
 
-          <div className="auth-page-footer">
-            <div className="auth-or-divider">{tCommon.formatMessage({
-              id: 'common.or'
-            })}</div>
-            <button
-              type="button"
-              onClick={handleGoToLogin}
-              className="btn btn-secondary btn-lg w-full"
-            >
-              {t.formatMessage({
-                id: 'auth.login_button'
-              })}
-            </button>
-            <p className="auth-version">
-              {t.formatMessage({
-                id: 'auth.version_label'
-              }, { version: APP_VERSION })}
+          <div className="mt-6">
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-bg-base px-4 text-sm text-text-tertiary">
+                  {intl.formatMessage({ id: 'common.or' })}
+                </span>
+              </div>
+            </div>
+            <IonButton expand="block" fill="outline" type="button" onClick={handleGoToLogin}>
+              {intl.formatMessage({ id: 'auth.login_button' })}
+            </IonButton>
+            <p className="text-xs text-text-tertiary text-center mt-6">
+              {intl.formatMessage({ id: 'auth.version_label' }, { version: APP_VERSION })}
             </p>
           </div>
         </AuthLayout>

@@ -6,9 +6,21 @@ import Image from '@/lib/Image'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import type { ReactNode } from 'react'
-import { IonRippleEffect } from '@ionic/react'
-import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2, CircleCheckBig } from 'lucide-react'
-import { Spinner, SwipeableRow, TabContainer } from '@/components/ui'
+import {
+  IonCard,
+  IonItem,
+  IonItemOption,
+  IonItemOptions,
+  IonItemSliding,
+  IonLabel,
+  IonList,
+  IonRippleEffect,
+  IonSegment,
+  IonSegmentButton,
+  IonSpinner,
+} from '@ionic/react'
+import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2 } from 'lucide-react'
+import { TabContainer } from '@/components/ui'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import {
   ProviderModal,
@@ -72,12 +84,11 @@ function isDetailTab(value: string | null): value is DetailTab {
 export function ProviderDetailClient({ businessId, providerId }: ProviderDetailClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const t = useIntl()
-  const tOrders = useIntl()
+  const intl = useIntl()
   const { formatCurrencyCompact } = useBusinessFormat()
   // Relative time ("3 days ago") is LANGUAGE, not formatting — use user UI
   // locale, not business locale, so an English UI doesn't show "hace 3 días".
-  const userLocale = t.locale
+  const userLocale = intl.locale
   const translateApiMessage = useApiMessage()
   const { role } = useBusiness()
   const canManage = canManageBusiness(role)
@@ -204,14 +215,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t.formatMessage({
+          : intl.formatMessage({
           id: 'providers.error_failed_to_load'
         })
       )
     } finally {
       setIsLoading(false)
     }
-  }, [businessId, providerId, ensureActiveOrdersLoaded, ensureCompletedOrdersLoaded, ensureProvidersLoaded, ensureProductsLoaded, t, translateApiMessage])
+  }, [businessId, providerId, ensureActiveOrdersLoaded, ensureCompletedOrdersLoaded, ensureProvidersLoaded, ensureProductsLoaded, intl, translateApiMessage])
 
   useEffect(() => { loadAll() }, [loadAll])
 
@@ -228,7 +239,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   }
 
   const handleSaveEdit = useCallback(async (): Promise<boolean> => {
-    if (!name.trim()) { setEditError(t.formatMessage({
+    if (!name.trim()) { setEditError(intl.formatMessage({
       id: 'providers.error_name_required'
     })); return false }
     setIsSaving(true)
@@ -254,7 +265,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setEditError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t.formatMessage({
+          : intl.formatMessage({
           id: 'providers.error_failed_to_save'
         })
       )
@@ -262,7 +273,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsSaving(false)
     }
-  }, [businessId, providerId, name, phone, email, active, setProviders, t, translateApiMessage])
+  }, [businessId, providerId, name, phone, email, active, setProviders, intl, translateApiMessage])
 
   // ===== Notes =====
   // The list lives on `provider.notes` (seeded from the detail GET). Each
@@ -325,7 +336,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setNoteError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t.formatMessage({
+          : intl.formatMessage({
           id: 'providers.error_failed_to_save'
         })
       )
@@ -333,7 +344,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsSavingNote(false)
     }
-  }, [businessId, providerId, noteTitle, noteBody, applyNotesUpdate, t, translateApiMessage])
+  }, [businessId, providerId, noteTitle, noteBody, applyNotesUpdate, intl, translateApiMessage])
 
   const handleUpdateNote = useCallback(async (): Promise<boolean> => {
     if (!editingNoteId) return false
@@ -351,7 +362,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setNoteError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t.formatMessage({
+          : intl.formatMessage({
           id: 'providers.error_failed_to_save'
         })
       )
@@ -359,7 +370,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsSavingNote(false)
     }
-  }, [businessId, providerId, editingNoteId, noteTitle, noteBody, applyNotesUpdate, t, translateApiMessage])
+  }, [businessId, providerId, editingNoteId, noteTitle, noteBody, applyNotesUpdate, intl, translateApiMessage])
 
   const handleDeleteNote = useCallback(async (): Promise<boolean> => {
     if (!editingNoteId) return false
@@ -376,7 +387,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setNoteError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t.formatMessage({
+          : intl.formatMessage({
           id: 'providers.error_failed_to_delete'
         })
       )
@@ -384,7 +395,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsDeletingNote(false)
     }
-  }, [businessId, providerId, editingNoteId, applyNotesUpdate, t, translateApiMessage])
+  }, [businessId, providerId, editingNoteId, applyNotesUpdate, intl, translateApiMessage])
 
   // ===== Delete provider =====
   // Returns true on successful delete, which lets the modal navigate to the
@@ -418,7 +429,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setEditError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : t.formatMessage({
+          : intl.formatMessage({
           id: 'providers.error_failed_to_delete'
         })
       )
@@ -426,7 +437,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     } finally {
       setIsDeleting(false)
     }
-  }, [businessId, providerId, setOrders, setProviders, t, translateApiMessage])
+  }, [businessId, providerId, setOrders, setProviders, intl, translateApiMessage])
 
   // ===== Typical items =====
   // Hide the whole section until the provider has at least 3 orders —
@@ -455,21 +466,21 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   if (isLoading) {
     return (
-      <main className="page-loading">
-        <Spinner className="spinner-lg" />
-      </main>
+      <div className="flex items-center justify-center h-full">
+        <IonSpinner name="crescent" />
+      </div>
     );
   }
 
   if (error || !provider) {
     return (
-      <main className="page-content">
+      <div className="px-4 py-6">
         <div className="p-4 bg-error-subtle text-error rounded-lg">
-          {error || t.formatMessage({
+          {error || intl.formatMessage({
             id: 'providers.error_failed_to_load'
           })}
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -491,9 +502,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               provider.active ? 'text-success' : 'text-error'
             }`}
           >
-            {provider.active ? t.formatMessage({
+            {provider.active ? intl.formatMessage({
               id: 'providers.status_active'
-            }) : t.formatMessage({
+            }) : intl.formatMessage({
               id: 'providers.status_inactive'
             })}
           </span>
@@ -501,7 +512,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             <>
               <span className="text-text-tertiary flex-shrink-0">&#183;</span>
               <span className="text-text-tertiary truncate">
-                {t.formatMessage({
+                {intl.formatMessage({
                   id: 'providers.since_date'
                 }, { date: formatMonthYear(provider.createdAt, userLocale) })}
               </span>
@@ -514,7 +525,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   return (
     <>
-      <main className="page-content space-y-4">
+      <div className="px-4 py-6 space-y-4">
         {/* ============== Identity Header ==============
             Top row: avatar + name/status. Tappable for managers — opens
             the edit modal, mirroring the account-page profile card. For
@@ -525,7 +536,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             <button
               type="button"
               onClick={openEdit}
-              aria-label={t.formatMessage({
+              aria-label={intl.formatMessage({
                 id: 'providers.edit_provider_aria'
               })}
               className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left ion-activatable ripple-parent"
@@ -549,7 +560,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               >
                 <Plus />
                 <span className="truncate">
-                  {t.formatMessage({
+                  {intl.formatMessage({
                     id: 'providers.new_order_button'
                   })}
                 </span>
@@ -562,7 +573,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               className="btn btn-primary flex-1 min-w-0"
             >
               <Phone />
-              <span className="truncate">{t.formatMessage({
+              <span className="truncate">{intl.formatMessage({
                 id: 'providers.contact_button'
               })}</span>
             </button>
@@ -574,20 +585,16 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             pattern: a section-tabs bar driving a swipeable TabContainer.
             The tab is persisted in the URL so browser back/forward and
             tab reloads restore the user's position. */}
-        <div className="section-tabs">
+        <IonSegment
+          value={activeTab}
+          onIonChange={(e) => handleTabChange(e.detail.value as DetailTab)}
+        >
           {DETAIL_TAB_IDS.map(id => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => handleTabChange(id)}
-              className={`section-tab ${activeTab === id ? 'section-tab-active' : ''}`}
-            >
-              {t.formatMessage({
-                id: `providers.tab_${id}`
-              })}
-            </button>
+            <IonSegmentButton key={id} value={id}>
+              <IonLabel>{intl.formatMessage({ id: `providers.tab_${id}` })}</IonLabel>
+            </IonSegmentButton>
           ))}
-        </div>
+        </IonSegment>
 
         <TabContainer
           activeTab={activeTab}
@@ -607,39 +614,38 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                 {/* Overdue orders banner — jumps the user to the History
                     tab so they can see which orders need attention. */}
                 {overdueCount > 0 && (
-                  <button
-                    type="button"
+                  <IonCard
+                    button
                     onClick={() => handleTabChange('history')}
-                    className="card banner-semantic banner-semantic--error w-full p-4 flex items-center gap-3 text-left ion-activatable ripple-parent"
+                    color="danger"
+                    className="m-0 ion-activatable ripple-parent"
                   >
-                    {/* Icon chip — uses color-mix on the error token so it
-                        reads as a darker red against the error-subtle
-                        banner (Tailwind's /alpha modifiers don't work on
-                        the app's plain var(...) color tokens). */}
-                    <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{
-                        backgroundColor:
-                          'color-mix(in oklab, var(--color-error) 22%, transparent)',
-                      }}
-                    >
-                      <Bell className="w-5 h-5 text-error" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-error">
-                        {t.formatMessage({
-                          id: 'providers.overdue_banner_title'
-                        }, { count: overdueCount })}
+                    <div className="flex items-center gap-3 p-4">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{
+                          backgroundColor:
+                            'color-mix(in oklab, var(--color-error) 22%, transparent)',
+                        }}
+                      >
+                        <Bell className="w-5 h-5 text-error" />
                       </div>
-                      <div className="text-xs text-text-secondary mt-0.5">
-                        {t.formatMessage({
-                          id: 'providers.overdue_banner_subtitle'
-                        })}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-error">
+                          {intl.formatMessage({
+                            id: 'providers.overdue_banner_title'
+                          }, { count: overdueCount })}
+                        </div>
+                        <div className="text-xs text-text-secondary mt-0.5">
+                          {intl.formatMessage({
+                            id: 'providers.overdue_banner_subtitle'
+                          })}
+                        </div>
                       </div>
+                      <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
                     </div>
-                    <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
                     <IonRippleEffect />
-                  </button>
+                  </IonCard>
                 )}
 
                 {/* Stats — two side-by-side cards. Both are left-aligned
@@ -649,9 +655,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     and the breakdown as a visual reinforcement. */}
                 <div className="grid grid-cols-2 gap-3 items-stretch">
                   {/* ---- GASTO TOTAL / Total Spent ---- */}
-                  <div className="card p-4 flex flex-col gap-1">
+                  <div className="bg-bg-surface rounded-2xl p-4 flex flex-col gap-1">
                     <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary">
-                      {t.formatMessage({
+                      {intl.formatMessage({
                         id: 'providers.stat_total_spent'
                       })}
                     </div>
@@ -660,17 +666,17 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     </div>
                     <div className="text-xs text-text-tertiary tabular-nums mt-auto pt-2">
                       {metrics.orderCount === 0
-                        ? t.formatMessage({
+                        ? intl.formatMessage({
                         id: 'providers.stat_never_ordered'
                       })
                         : metrics.cadenceDays != null
-                          ? t.formatMessage({
+                          ? intl.formatMessage({
                         id: 'providers.stat_total_spent_subtext_with_cadence'
                       }, {
                               count: metrics.orderCount,
                               days: metrics.cadenceDays,
                             })
-                          : t.formatMessage({
+                          : intl.formatMessage({
                         id: 'providers.stat_total_spent_subtext_orders_only'
                       }, {
                               count: metrics.orderCount,
@@ -685,9 +691,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       a subset of the provider's orders — otherwise the
                       breakdown denominator already communicates sample
                       size. */}
-                  <div className="card p-4 flex flex-col gap-1">
+                  <div className="bg-bg-surface rounded-2xl p-4 flex flex-col gap-1">
                     <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary">
-                      {t.formatMessage({
+                      {intl.formatMessage({
                         id: 'providers.stat_reliability_label'
                       })}
                     </div>
@@ -699,13 +705,13 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                         <div className="mt-1">
                           <ReliabilityBar
                             percent={metrics.reliability.percent}
-                            ariaLabel={t.formatMessage({
+                            ariaLabel={intl.formatMessage({
                               id: 'providers.stat_reliability_label'
                             }) + ': ' + metrics.reliability.percent + '%'}
                           />
                         </div>
                         <div className="text-xs text-text-tertiary tabular-nums mt-auto pt-2">
-                          {t.formatMessage({
+                          {intl.formatMessage({
                             id: 'providers.stat_reliability_breakdown'
                           }, {
                             onTime: metrics.reliability.onTime,
@@ -714,7 +720,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                           {metrics.reliability.windowSize < metrics.orderCount && (
                             <>
                               {' · '}
-                              {t.formatMessage({
+                              {intl.formatMessage({
                                 id: 'providers.stat_reliability_window'
                               }, {
                                 count: metrics.reliability.windowSize,
@@ -725,7 +731,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       </>
                     ) : (
                       <div className="text-sm text-text-tertiary mt-1">
-                        {t.formatMessage({
+                        {intl.formatMessage({
                           id: 'providers.stat_reliability_insufficient'
                         })}
                       </div>
@@ -733,9 +739,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   </div>
                 </div>
 
-                <div className="card p-4 space-y-4">
+                <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
                   <div className="text-sm text-text-secondary">
-                    {t.formatMessage({
+                    {intl.formatMessage({
                       id: 'providers.typical_items_title'
                     })}
                   </div>
@@ -747,7 +753,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                         const iconUrl = product ? getProductIconUrl(product) : null
                         return (
                           <div key={item.key} className="flex items-center gap-3">
-                            <div className="product-list-image">
+                            <div className="w-10 h-10 rounded-xl bg-bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
                               {iconUrl && isPresetIcon(iconUrl) ? (
                                 (() => {
                                   const p = getPresetIcon(iconUrl)
@@ -759,7 +765,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                                   alt={item.name}
                                   width={48}
                                   height={48}
-                                  className="product-list-image-img"
+                                  className="w-full h-full object-cover"
                                   unoptimized
                                 />
                               ) : (
@@ -771,7 +777,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                                 {item.name}
                               </div>
                               <div className="text-xs text-text-tertiary mt-0.5 tabular-nums">
-                                {t.formatMessage({
+                                {intl.formatMessage({
                                   id: 'providers.typical_items_subtitle'
                                 }, {
                                   units: item.totalUnits,
@@ -785,7 +791,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     </div>
                   ) : (
                     <p className="text-sm text-text-tertiary text-center py-2">
-                      {t.formatMessage({
+                      {intl.formatMessage({
                         id: 'providers.typical_items_empty'
                       })}
                     </p>
@@ -798,9 +804,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     months render as thin stubs so the time axis stays
                     consistent. The current-month bar uses the brand
                     color; past months are muted. */}
-                <div className="card p-4 space-y-4">
+                <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
                   <div className="text-sm text-text-secondary">
-                    {t.formatMessage({
+                    {intl.formatMessage({
                       id: 'providers.monthly_spend_title'
                     })}
                   </div>
@@ -861,14 +867,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               to:" metadata row is suppressed because the whole page is
               already about one provider — the row would be redundant. */}
           <TabContainer.Tab id="history">
-            <div className="card p-4 space-y-4">
+            <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-text-secondary">{t.formatMessage({
+                <span className="text-text-secondary">{intl.formatMessage({
                   id: 'providers.order_history_title'
                 })}</span>
                 {hasOrders && (
                   <div className="text-text-tertiary">
-                    {tOrders.formatMessage({
+                    {intl.formatMessage({
                       id: 'orders.order_count'
                     }, { count: providerOrders.length })}
                     <span className="mx-1.5">&#183;</span>
@@ -880,45 +886,44 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               <hr className="border-border" />
 
               {!hasOrders ? (
-                <p className="text-sm text-text-tertiary text-center py-6">
-                  {t.formatMessage({
-                    id: 'providers.order_history_empty'
-                  })}
-                </p>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <p className="text-sm text-text-secondary">
+                    {intl.formatMessage({
+                      id: 'providers.order_history_empty'
+                    })}
+                  </p>
+                </div>
               ) : (
-                <div className="list-divided">
-                  {providerOrders.map((order, i) => {
+                <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
+                  {providerOrders.map((order) => {
                     const alreadyReceived = getOrderDisplayStatus(order) === 'received'
                     // Same semantic ordering as the Products page Orders tab.
                     // Receive is available to any active member; Edit + Delete
                     // are manager-only.
                     const swipeActions = [
                       {
-                        icon: <CircleCheckBig size={20} />,
-                        label: tOrders.formatMessage({
+                        label: intl.formatMessage({
                           id: 'orders.action_receive'
                         }),
-                        variant: 'info' as const,
+                        color: 'primary' as const,
                         disabled: alreadyReceived,
                         onClick: () => orderFlows.openOrderDetail(order, 'receive'),
                       },
                       ...(canManage ? [
                         {
-                          icon: <Pencil size={20} />,
-                          label: tOrders.formatMessage({
+                          label: intl.formatMessage({
                             id: 'orders.action_edit'
                           }),
-                          variant: 'neutral' as const,
+                          color: 'medium' as const,
                           // Received orders are locked — no edits once stock posted.
                           disabled: alreadyReceived,
                           onClick: () => orderFlows.openOrderDetail(order, 'edit'),
                         },
                         {
-                          icon: <Trash2 size={20} />,
-                          label: tOrders.formatMessage({
+                          label: intl.formatMessage({
                             id: 'orders.action_delete'
                           }),
-                          variant: 'danger' as const,
+                          color: 'danger' as const,
                           // Received orders can't be deleted either — would
                           // require rolling back the stock changes they posted.
                           disabled: alreadyReceived,
@@ -927,19 +932,30 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       ] : []),
                     ]
                     return (
-                      <Fragment key={order.id}>
-                        {i > 0 && <hr className="list-divider" />}
-                        <SwipeableRow actions={swipeActions}>
+                      <IonItemSliding key={order.id}>
+                        <IonItem lines="full">
                           <OrderListItem
                             order={order}
                             onView={() => orderFlows.openOrderDetail(order)}
                             hideProviderRow
                           />
-                        </SwipeableRow>
-                      </Fragment>
+                        </IonItem>
+                        <IonItemOptions side="end">
+                          {swipeActions.map((action) => (
+                            <IonItemOption
+                              key={action.label}
+                              color={action.color}
+                              disabled={action.disabled}
+                              onClick={action.onClick}
+                            >
+                              {action.label}
+                            </IonItemOption>
+                          ))}
+                        </IonItemOptions>
+                      </IonItemSliding>
                     )
                   })}
-                </div>
+                </IonList>
               )}
             </div>
           </TabContainer.Tab>
@@ -953,17 +969,17 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               so the card's dimensions don't jump when a note is first
               added. Actions are hidden entirely for non-managers. */}
           <TabContainer.Tab id="notes">
-            <div className="card p-4 space-y-4">
+            <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
               {/* Header row — label on the left, X/5 count on the right.
                   Mirrors the other Summary cards' header pattern. */}
               <div className="flex items-center justify-between gap-3 text-sm">
                 <span className="text-text-secondary">
-                  {t.formatMessage({
+                  {intl.formatMessage({
                     id: 'providers.notes_card_header'
                   })}
                 </span>
                 <span className="text-text-tertiary tabular-nums flex-shrink-0">
-                  {t.formatMessage({
+                  {intl.formatMessage({
                     id: 'providers.notes_count_label'
                   }, {
                     count: notesCount,
@@ -981,11 +997,13 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   subtitle, body below — no hairline between header and
                   body, just spacing. */}
               {notesCount === 0 ? (
-                <p className="text-sm text-text-tertiary italic">
-                  {t.formatMessage({
-                    id: 'providers.notes_empty'
-                  })}
-                </p>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <p className="text-sm text-text-secondary">
+                    {intl.formatMessage({
+                      id: 'providers.notes_empty'
+                    })}
+                  </p>
+                </div>
               ) : (
                 <div className="list-divided">
                   {notes.map((note, i) => (
@@ -998,7 +1016,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                               {note.title}
                             </div>
                             <div className="text-xs text-text-tertiary mt-0.5">
-                              {t.formatMessage({
+                              {intl.formatMessage({
                                 id: 'providers.note_edited_on'
                               }, {
                                 date: formatRelative(note.updatedAt, userLocale),
@@ -1011,7 +1029,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                                 type="button"
                                 onClick={() => openEditNote(note)}
                                 className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
-                                aria-label={t.formatMessage({
+                                aria-label={intl.formatMessage({
                                   id: 'providers.note_edit_aria'
                                 })}
                               >
@@ -1021,7 +1039,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                                 type="button"
                                 onClick={() => openDeleteNote(note)}
                                 className="p-1 text-error hover:text-error transition-colors"
-                                aria-label={t.formatMessage({
+                                aria-label={intl.formatMessage({
                                   id: 'providers.note_delete_aria'
                                 })}
                               >
@@ -1059,7 +1077,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       }}
                     >
                       <Plus style={{ width: 14, height: 14 }} />
-                      {t.formatMessage({
+                      {intl.formatMessage({
                         id: 'providers.add_note_button'
                       })}
                     </button>
@@ -1070,7 +1088,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           </TabContainer.Tab>
         </TabContainer>
 
-      </main>
+      </div>
       {/* ============== Edit modal ==============
           Hosts the delete flow as extra modal steps (see ProviderModal).
           When the modal has finished closing after a successful delete we
@@ -1161,7 +1179,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       <BottomSheet
         isOpen={isContactSheetOpen}
         onClose={() => setContactSheetOpen(false)}
-        title={t.formatMessage({
+        title={intl.formatMessage({
           id: 'providers.contact_sheet_title'
         }, { name: provider.name })}
       >
@@ -1170,7 +1188,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             <ContactSheetRow
               icon={<Phone className="w-5 h-5" />}
               iconColorClass="text-warning"
-              label={t.formatMessage({
+              label={intl.formatMessage({
                 id: 'providers.action_call'
               })}
               value={provider.phone}
@@ -1182,7 +1200,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             <ContactSheetRow
               icon={<MessageCircle className="w-5 h-5" />}
               iconColorClass="text-success"
-              label={t.formatMessage({
+              label={intl.formatMessage({
                 id: 'providers.action_whatsapp'
               })}
               value={provider.phone}
@@ -1195,7 +1213,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             <ContactSheetRow
               icon={<Mail className="w-5 h-5" />}
               iconColorClass="text-text-primary"
-              label={t.formatMessage({
+              label={intl.formatMessage({
                 id: 'providers.action_email'
               })}
               value={provider.email}

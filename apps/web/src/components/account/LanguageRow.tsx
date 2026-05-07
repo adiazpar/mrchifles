@@ -1,22 +1,25 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { Languages, ChevronRight } from 'lucide-react'
+import { Languages } from 'lucide-react'
+import { IonItem, IonLabel, IonNote } from '@ionic/react'
 import { useAuth } from '@/contexts/auth-context'
 import { LOCALES, SUPPORTED_LOCALES, resolveTranslationLocale, type SupportedLocale } from '@/i18n/config'
 
 /**
  * Language row with a full-size invisible native <select> overlay.
  *
- * The visible row shows icon + label + current language + chevron (same
- * shape as every other settings row). An absolutely-positioned <select>
- * with opacity: 0 covers the entire row, so ANY click on the row hits
- * the select directly and triggers the OS native picker. This avoids
- * the unreliable <label>-forwarding behavior that doesn't open pickers
- * on all platforms (iOS Safari in particular).
+ * The visible row shows icon + label + current language (via IonNote slot="end").
+ * An absolutely-positioned <select> with opacity: 0 covers the entire row, so
+ * ANY click on the row hits the select directly and triggers the OS native
+ * picker. This avoids the unreliable <label>-forwarding behavior that doesn't
+ * open pickers on all platforms (iOS Safari in particular).
+ *
+ * Renders as an IonItem so it fits naturally inside an IonList alongside
+ * other settings rows.
  */
 export function LanguageRow() {
-  const t = useIntl()
+  const intl = useIntl()
   const { user, changeLanguage } = useAuth()
 
   if (!user) return null
@@ -32,19 +35,14 @@ export function LanguageRow() {
   }
 
   return (
-    <div className="settings-row relative cursor-pointer">
-      <Languages className="w-5 h-5 flex-shrink-0 text-text-secondary" />
-      <span className="flex-1 text-left text-base font-medium text-text-primary">
-        {t.formatMessage({
-          id: 'account.row_language'
-        })}
-      </span>
-      <span className="text-sm text-text-tertiary">{currentLabel}</span>
-      <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+    <IonItem detail className="relative">
+      <Languages slot="start" className="w-5 h-5 text-text-secondary" />
+      <IonLabel>
+        <h3>{intl.formatMessage({ id: 'account.row_language' })}</h3>
+      </IonLabel>
+      <IonNote slot="end">{currentLabel}</IonNote>
       <select
-        aria-label={t.formatMessage({
-          id: 'account.row_language'
-        })}
+        aria-label={intl.formatMessage({ id: 'account.row_language' })}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         value={currentLanguage}
         onChange={handleChange}
@@ -55,6 +53,6 @@ export function LanguageRow() {
           </option>
         ))}
       </select>
-    </div>
-  );
+    </IonItem>
+  )
 }

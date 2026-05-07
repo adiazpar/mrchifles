@@ -2,15 +2,13 @@
 
 import { useIntl } from 'react-intl';
 import { useState } from 'react'
-import { IonRippleEffect } from '@ionic/react'
+import { IonCard, IonCardContent, IonItem, IonLabel, IonList, IonNote } from '@ionic/react'
 import dynamic from '@/lib/next-dynamic-shim'
 import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Briefcase, ChevronRight, Clock, ImageIcon } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
-import { SettingsRow } from '@/components/account/SettingsRow'
-import { SettingsSectionHeader } from '@/components/account/SettingsSectionHeader'
 // Every modal below is closed by default; dynamic imports keep the modal
 // code out of the initial manage-page chunk until the user opens one.
 
@@ -52,9 +50,7 @@ const IncomingTransferModal = dynamic(
 )
 
 export function ManageView() {
-  const t = useIntl()
-  const tCreate = useIntl()
-  const tAccount = useIntl()
+  const intl = useIntl()
   const { business, businessId, isOwner } = useBusiness()
   const { navigate } = usePageTransition()
   const { transfer: pendingTransfer } = usePendingTransferContext()
@@ -82,206 +78,185 @@ export function ManageView() {
   if (!business || !businessId) return null
 
   return (
-    <main className="page-content space-y-4">
+    <div className="px-4 py-6 space-y-6">
       {isOwner && pendingTransfer && (
-        <button
-          type="button"
-          onClick={() => setCancelTransferOpen(true)}
-          className="card banner-semantic banner-semantic--warning w-full p-4 flex items-center gap-3 text-left ion-activatable ripple-parent"
-        >
-          <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{
-              backgroundColor:
-                'color-mix(in oklab, var(--color-warning) 22%, transparent)',
-            }}
-          >
-            <Clock className="w-5 h-5 text-warning" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-warning">
-              {t.formatMessage({
-                id: 'manage.transfer_pending_heading'
-              })}
+        <IonCard button onClick={() => setCancelTransferOpen(true)} className="m-0">
+          <IonCardContent className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-warning-subtle">
+              <Clock className="w-5 h-5 text-warning" />
             </div>
-            <div className="text-xs text-text-secondary mt-0.5 truncate">
-              {t.formatMessage({
-                id: 'manage.transfer_pending_waiting'
-              }, { recipient: pendingTransfer.toEmail })}
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-warning">
+                {intl.formatMessage({ id: 'manage.transfer_pending_heading' })}
+              </div>
+              <div className="text-xs text-text-secondary mt-0.5 truncate">
+                {intl.formatMessage(
+                  { id: 'manage.transfer_pending_waiting' },
+                  { recipient: pendingTransfer.toEmail },
+                )}
+              </div>
             </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-          <IonRippleEffect />
-        </button>
+            <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+          </IonCardContent>
+        </IonCard>
       )}
       {showIncomingTransferBanner && incomingTransfer && (
-        <button
-          type="button"
-          onClick={() => setIncomingTransferOpen(true)}
-          className="card banner-semantic banner-semantic--warning w-full p-4 flex items-center gap-3 text-left ion-activatable ripple-parent"
-        >
-          <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{
-              backgroundColor:
-                'color-mix(in oklab, var(--color-warning) 22%, transparent)',
-            }}
-          >
-            <ArrowRightLeft className="w-5 h-5 text-warning" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-warning">
-              {tAccount.formatMessage({
-                id: 'account.incoming_transfer_heading'
-              })}
+        <IonCard button onClick={() => setIncomingTransferOpen(true)} className="m-0">
+          <IonCardContent className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-warning-subtle">
+              <ArrowRightLeft className="w-5 h-5 text-warning" />
             </div>
-            <div className="text-xs text-text-secondary mt-0.5 truncate">
-              {incomingTransfer.fromUser
-                ? tAccount.formatMessage({
-                id: 'account.incoming_transfer_description'
-              }, {
-                    name: incomingTransfer.fromUser.name,
-                    business: incomingTransfer.business.name,
-                  })
-                : tAccount.formatMessage({
-                id: 'account.incoming_transfer_description_anonymous'
-              }, {
-                    business: incomingTransfer.business.name,
-                  })}
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-warning">
+                {intl.formatMessage({ id: 'account.incoming_transfer_heading' })}
+              </div>
+              <div className="text-xs text-text-secondary mt-0.5 truncate">
+                {incomingTransfer.fromUser
+                  ? intl.formatMessage(
+                      { id: 'account.incoming_transfer_description' },
+                      {
+                        name: incomingTransfer.fromUser.name,
+                        business: incomingTransfer.business.name,
+                      },
+                    )
+                  : intl.formatMessage(
+                      { id: 'account.incoming_transfer_description_anonymous' },
+                      { business: incomingTransfer.business.name },
+                    )}
+              </div>
             </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-          <IonRippleEffect />
-        </button>
+            <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+          </IonCardContent>
+        </IonCard>
       )}
       <div>
-        <SettingsSectionHeader label={t.formatMessage({
-          id: 'manage.section_details'
-        })} noTopMargin />
-        <div className="bg-bg-surface rounded-xl overflow-hidden">
-          <SettingsRow
-            icon={ImageIcon}
-            label={t.formatMessage({
-              id: 'manage.row_logo'
-            })}
+        <h2 className="text-base font-semibold text-text-primary mb-2 px-4">
+          {intl.formatMessage({ id: 'manage.section_details' })}
+        </h2>
+        <IonList inset lines="full">
+          <IonItem
+            button={isOwner}
+            detail={isOwner}
             onClick={isOwner ? () => setLogoOpen(true) : undefined}
-            hideChevron={!isOwner}
-          />
-          <div className="settings-divider" />
-          <SettingsRow
-            icon={Building2}
-            label={t.formatMessage({
-              id: 'manage.row_name'
-            })}
-            value={business.name}
+          >
+            <ImageIcon slot="start" className="text-text-secondary w-5 h-5" />
+            <IonLabel>
+              <h3>{intl.formatMessage({ id: 'manage.row_logo' })}</h3>
+            </IonLabel>
+          </IonItem>
+          <IonItem
+            button={isOwner}
+            detail={isOwner}
             onClick={isOwner ? () => setNameOpen(true) : undefined}
-            hideChevron={!isOwner}
-          />
-          <div className="settings-divider" />
-          <SettingsRow
-            icon={Briefcase}
-            label={t.formatMessage({
-              id: 'manage.row_type'
-            })}
-            value={business.type ? tCreate.formatMessage({
-              id: `createBusiness.business_type_${business.type}`
-            }) : '—'}
+          >
+            <Building2 slot="start" className="text-text-secondary w-5 h-5" />
+            <IonLabel>
+              <h3>{intl.formatMessage({ id: 'manage.row_name' })}</h3>
+            </IonLabel>
+            <IonNote slot="end">{business.name}</IonNote>
+          </IonItem>
+          <IonItem
+            button={isOwner}
+            detail={isOwner}
             onClick={isOwner ? () => setTypeOpen(true) : undefined}
-            hideChevron={!isOwner}
-          />
-          <div className="settings-divider" />
-          <SettingsRow
-            icon={MapPin}
-            label={t.formatMessage({
-              id: 'manage.row_location'
-            })}
-            value={`${business.locale} · ${business.currency}`}
+          >
+            <Briefcase slot="start" className="text-text-secondary w-5 h-5" />
+            <IonLabel>
+              <h3>{intl.formatMessage({ id: 'manage.row_type' })}</h3>
+            </IonLabel>
+            <IonNote slot="end">
+              {business.type
+                ? intl.formatMessage({ id: `createBusiness.business_type_${business.type}` })
+                : '—'}
+            </IonNote>
+          </IonItem>
+          <IonItem
+            button={isOwner}
+            detail={isOwner}
             onClick={isOwner ? () => setLocationOpen(true) : undefined}
-            hideChevron={!isOwner}
-          />
+          >
+            <MapPin slot="start" className="text-text-secondary w-5 h-5" />
+            <IonLabel>
+              <h3>{intl.formatMessage({ id: 'manage.row_location' })}</h3>
+            </IonLabel>
+            <IonNote slot="end">{`${business.locale} · ${business.currency}`}</IonNote>
+          </IonItem>
+        </IonList>
+      </div>
+      <div>
+        <h2 className="text-base font-semibold text-text-primary mb-2 px-4">
+          {intl.formatMessage({ id: 'manage.section_shortcuts' })}
+        </h2>
+        <div className="space-y-3">
+          <IonCard button onClick={() => slideTo(`/${businessId}/team`)} className="m-0">
+            <IonCardContent className="flex items-start gap-4 py-5">
+              <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
+                <Users className="w-6 h-6 text-brand" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-base font-semibold text-text-primary">
+                  {intl.formatMessage({ id: 'manage.shortcut_team' })}
+                </div>
+                <div className="text-sm text-text-secondary mt-1">
+                  {intl.formatMessage({ id: 'manage.shortcut_team_desc' })}
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 mt-1" />
+            </IonCardContent>
+          </IonCard>
+          <IonCard button onClick={() => slideTo(`/${businessId}/providers`)} className="m-0">
+            <IonCardContent className="flex items-start gap-4 py-5">
+              <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
+                <Handshake className="w-6 h-6 text-brand" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-base font-semibold text-text-primary">
+                  {intl.formatMessage({ id: 'manage.shortcut_providers' })}
+                </div>
+                <div className="text-sm text-text-secondary mt-1">
+                  {intl.formatMessage({ id: 'manage.shortcut_providers_desc' })}
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 mt-1" />
+            </IonCardContent>
+          </IonCard>
         </div>
       </div>
       <div>
-        <SettingsSectionHeader label={t.formatMessage({
-          id: 'manage.section_shortcuts'
-        })} />
-        <div className="caja-actions">
-          <button
-            type="button"
-            onClick={() => slideTo(`/${businessId}/team`)}
-            className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
-          >
-            <div className="flex items-start justify-between w-full">
-              <Users className="caja-action-btn__icon text-brand" />
-              <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-            </div>
-            <div className="caja-action-btn__text">
-              <span className="caja-action-btn__title">{t.formatMessage({
-                id: 'manage.shortcut_team'
-              })}</span>
-              <span className="caja-action-btn__desc">{t.formatMessage({
-                id: 'manage.shortcut_team_desc'
-              })}</span>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => slideTo(`/${businessId}/providers`)}
-            className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
-          >
-            <div className="flex items-start justify-between w-full">
-              <Handshake className="caja-action-btn__icon text-brand" />
-              <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-            </div>
-            <div className="caja-action-btn__text">
-              <span className="caja-action-btn__title">{t.formatMessage({
-                id: 'manage.shortcut_providers'
-              })}</span>
-              <span className="caja-action-btn__desc">{t.formatMessage({
-                id: 'manage.shortcut_providers_desc'
-              })}</span>
-            </div>
-          </button>
-        </div>
-      </div>
-      <div>
-        <SettingsSectionHeader label={t.formatMessage({
-          id: 'manage.section_danger'
-        })} danger />
-        <div className="bg-bg-surface rounded-xl overflow-hidden">
+        <h2 className="text-base font-semibold text-error mb-2 px-4">
+          {intl.formatMessage({ id: 'manage.section_danger' })}
+        </h2>
+        <IonList inset lines="full">
           {!isOwner && (
-            <SettingsRow
-              icon={LogOut}
-              label={t.formatMessage({
-                id: 'manage.leave_business'
-              })}
-              danger
-              onClick={() => setLeaveOpen(true)}
-            />
+            <IonItem button detail onClick={() => setLeaveOpen(true)}>
+              <LogOut slot="start" className="text-error w-5 h-5" />
+              <IonLabel color="danger">
+                <h3>{intl.formatMessage({ id: 'manage.leave_business' })}</h3>
+              </IonLabel>
+            </IonItem>
           )}
           {isOwner && (
             <>
-              <SettingsRow
-                icon={ArrowRightLeft}
-                label={t.formatMessage({
-                  id: 'manage.transfer_ownership'
-                })}
-                danger
+              <IonItem
+                button
+                detail
                 disabled={Boolean(pendingTransfer)}
                 onClick={() => setTransferOpen(true)}
-              />
-              <div className="settings-divider" />
-              <SettingsRow
-                icon={Trash2}
-                label={t.formatMessage({
-                  id: 'manage.delete_business'
-                })}
-                danger
-                onClick={() => setDeleteOpen(true)}
-              />
+              >
+                <ArrowRightLeft slot="start" className="text-error w-5 h-5" />
+                <IonLabel color="danger">
+                  <h3>{intl.formatMessage({ id: 'manage.transfer_ownership' })}</h3>
+                </IonLabel>
+              </IonItem>
+              <IonItem button detail onClick={() => setDeleteOpen(true)}>
+                <Trash2 slot="start" className="text-error w-5 h-5" />
+                <IonLabel color="danger">
+                  <h3>{intl.formatMessage({ id: 'manage.delete_business' })}</h3>
+                </IonLabel>
+              </IonItem>
             </>
           )}
-        </div>
+        </IonList>
       </div>
       <EditNameModal isOpen={nameOpen} onClose={() => setNameOpen(false)} />
       <EditTypeModal isOpen={typeOpen} onClose={() => setTypeOpen(false)} />
@@ -295,6 +270,6 @@ export function ManageView() {
         isOpen={incomingTransferOpen}
         onClose={() => setIncomingTransferOpen(false)}
       />
-    </main>
+    </div>
   );
 }

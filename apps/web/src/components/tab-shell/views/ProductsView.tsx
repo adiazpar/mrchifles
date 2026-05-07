@@ -7,7 +7,8 @@ import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-s
 import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
 import { useProductFilters, useProductSettings } from '@/hooks'
-import { Spinner, TabContainer } from '@/components/ui'
+import { TabContainer } from '@/components/ui'
+import { IonLabel, IonSegment, IonSegmentButton, IonSpinner } from '@ionic/react'
 // Tabs render on mount so they stay static. Add/edit/settings modals are
 // closed by default and open on user action; dynamic import keeps their
 // bundle (plus framer-motion's Reorder in ProductSettingsModal) out of
@@ -794,44 +795,32 @@ export function ProductsView() {
 
   if (isLoading) {
     return (
-      <main className="page-loading">
-        <Spinner className="spinner-lg" />
-      </main>
+      <div className="flex h-full items-center justify-center">
+        <IonSpinner name="crescent" />
+      </div>
     )
   }
 
   return (
     <>
-      <main className="page-content space-y-4">
+      <div className="px-4 py-6 space-y-4">
         {/* Section Tabs */}
-        <div className="section-tabs">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('products')
-              setError('')
-              router.replace(urlForTab('products'), { scroll: false })
-            }}
-            className={`section-tab ${activeTab === 'products' ? 'section-tab-active' : ''}`}
-          >
-            {t.formatMessage({
-              id: 'products.tab_products'
-            })}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('orders')
-              setError('')
-              router.replace(urlForTab('orders'), { scroll: false })
-            }}
-            className={`section-tab ${activeTab === 'orders' ? 'section-tab-active' : ''}`}
-          >
-            {t.formatMessage({
-              id: 'products.tab_orders'
-            })}
-          </button>
-        </div>
+        <IonSegment
+          value={activeTab}
+          onIonChange={(e) => {
+            const tab = e.detail.value as PageTab
+            setActiveTab(tab)
+            setError('')
+            router.replace(urlForTab(tab), { scroll: false })
+          }}
+        >
+          <IonSegmentButton value="products">
+            <IonLabel>{t.formatMessage({ id: 'products.tab_products' })}</IonLabel>
+          </IonSegmentButton>
+          <IonSegmentButton value="orders">
+            <IonLabel>{t.formatMessage({ id: 'products.tab_orders' })}</IonLabel>
+          </IonSegmentButton>
+        </IonSegment>
 
         <TabContainer
           activeTab={activeTab}
@@ -902,7 +891,7 @@ export function ProductsView() {
             />
           </TabContainer.Tab>
         </TabContainer>
-      </main>
+      </div>
       {/* Product Modals - shared form context, only one open at a time */}
       <ProductFormProvider defaultCategoryId={settings?.defaultCategoryId}>
         <AddProductModalWrapper
