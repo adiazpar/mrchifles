@@ -5,15 +5,23 @@ import { useIntl } from 'react-intl';
 import Image from '@/lib/Image'
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { ChevronRight, X, Building2, ChefHat, HandHelping, Store, Boxes, Factory, Shapes, Plus, UserPlus } from 'lucide-react'
+import { ChevronRight, Building2, ChefHat, HandHelping, Store, Boxes, Factory, Shapes, Plus, UserPlus } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { useCreateBusinessModal } from '@/contexts/create-business-context'
 import { useJoinBusinessModal } from '@/contexts/join-business-context'
-import { Spinner } from '@/components/ui'
 import { fetchDeduped } from '@/lib/fetch'
 import { createSessionCache, CACHE_KEYS } from '@/hooks'
+import {
+  IonCard,
+  IonCardContent,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonSearchbar,
+  IonSpinner,
+} from '@ionic/react'
 
 type BusinessType = 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other'
 
@@ -76,7 +84,7 @@ function HubHomeBody() {
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
   const [isLoading, setIsLoading] = useState(() => getCachedBusinessList().length === 0)
   const [searchQuery, setSearchQuery] = useState('')
-  const t = useIntl()
+  const intl = useIntl()
 
   // Release the auth-gate's hold phase as soon as the hub has its data.
   // Safe to call repeatedly — markHubReady clears its resolver after the
@@ -141,29 +149,29 @@ function HubHomeBody() {
 
   if (authLoading || isLoading) {
     return (
-      <main className="page-loading">
-        <Spinner className="spinner-lg" />
-      </main>
+      <div className="flex h-full items-center justify-center">
+        <IonSpinner name="crescent" />
+      </div>
     )
   }
 
   if (!hasBusinesses) {
     return (
-      <main className="hub-content space-y-4">
-        <div className="empty-state-fill">
-          <Building2 className="empty-state-icon" />
-          <h3 className="empty-state-title">{t.formatMessage({
-            id: 'hub.empty_state_title'
-          })}</h3>
-          <p className="empty-state-description">
-            {t.formatMessage({
-              id: 'hub.empty_state_description'
-            })}
+      <>
+        <div className="flex flex-col items-center justify-center px-6 pt-12 pb-8 text-center">
+          <Building2 className="w-16 h-16 text-text-tertiary mb-5" />
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
+            {intl.formatMessage({ id: 'hub.empty_state_title' })}
+          </h2>
+          <p className="text-sm text-text-secondary mb-6 max-w-xs">
+            {intl.formatMessage({ id: 'hub.empty_state_description' })}
           </p>
         </div>
-        <HubActionCards onCreate={openCreateModal} onJoin={openJoinModal} />
-      </main>
-    );
+        <div className="px-4">
+          <HubActionCards onCreate={openCreateModal} onJoin={openJoinModal} />
+        </div>
+      </>
+    )
   }
 
   const getBusinessIcon = (business: Business) => {
@@ -204,117 +212,70 @@ function HubHomeBody() {
   }
 
   const renderBusinessItem = (business: Business) => (
-    <div
+    <IonItem
       key={business.id}
-      className="list-item-clickable"
+      button
+      detail
       onClick={() => handleEnterBusiness(business.id)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          handleEnterBusiness(business.id)
-        }
-      }}
-      tabIndex={0}
-      role="button"
     >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3">
-          {/* Business Icon */}
-          <div className="product-list-image">
-            {getBusinessIcon(business)}
-          </div>
-
-          {/* Business Info */}
-          <div className="flex-1 min-w-0">
-            <span className="font-medium truncate block">{business.name}</span>
-            <span className="text-xs text-text-tertiary mt-0.5 block">
-              {t.formatMessage({
-                id: 'hub.member_count'
-              }, { count: business.memberCount })}
-            </span>
-          </div>
-
-          {/* Chevron */}
-          <div className="text-text-tertiary ml-2 flex-shrink-0">
-            <ChevronRight className="w-5 h-5" />
-          </div>
-        </div>
+      <div slot="start" className="w-10 h-10 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0 overflow-hidden">
+        {getBusinessIcon(business)}
       </div>
-    </div>
+      <IonLabel>
+        <h3>{business.name}</h3>
+        <p>
+          {intl.formatMessage(
+            { id: 'hub.member_count' },
+            { count: business.memberCount }
+          )}
+        </p>
+      </IonLabel>
+    </IonItem>
   )
 
   return (
-    <main className="hub-content space-y-4">
+    <div className="px-4 py-6 space-y-6">
       <HubActionCards onCreate={openCreateModal} onJoin={openJoinModal} />
-      {/* Search Bar */}
-      <div className="relative">
-        <input
-          type="text"
-          placeholder={t.formatMessage({
-            id: 'hub.search_placeholder'
-          })}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="input input-search w-full"
-          style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery('')}
-            className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-            aria-label={t.formatMessage({
-              id: 'hub.search_clear'
-            })}
-          >
-            <X size={18} />
-          </button>
-        )}
-      </div>
-      {/* No search results */}
+      <IonSearchbar
+        value={searchQuery}
+        onIonInput={(e) => setSearchQuery(e.detail.value ?? '')}
+        placeholder={intl.formatMessage({ id: 'hub.search_placeholder' })}
+        showClearButton="focus"
+        className="px-0"
+      />
       {searchQuery && !hasFilteredResults && (
-        <div className="text-center py-8 text-text-secondary">
-          <p>{t.formatMessage({
-            id: 'hub.no_results'
-          }, { query: searchQuery })}</p>
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <p className="text-sm text-text-secondary">
+            {intl.formatMessage({ id: 'hub.no_results' }, { query: searchQuery })}
+          </p>
         </div>
       )}
       {ownedBusinesses.length > 0 && (
-        <div className="card p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-text-secondary">
-              {ownedBusinesses.length === 1 ? t.formatMessage({
-                id: 'hub.section_owned_singular'
-              }) : t.formatMessage({
-                id: 'hub.section_owned_plural'
-              })}
-            </span>
-          </div>
-          <hr className="border-border" />
-          <div>
+        <div>
+          <h2 className="text-base font-semibold text-text-primary mb-2 px-1">
+            {ownedBusinesses.length === 1
+              ? intl.formatMessage({ id: 'hub.section_owned_singular' })
+              : intl.formatMessage({ id: 'hub.section_owned_plural' })}
+          </h2>
+          <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
             {ownedBusinesses.map(renderBusinessItem)}
-          </div>
+          </IonList>
         </div>
       )}
       {joinedBusinesses.length > 0 && (
-        <div className="card p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-text-secondary">
-              {joinedBusinesses.length === 1 ? t.formatMessage({
-                id: 'hub.section_joined_singular'
-              }) : t.formatMessage({
-                id: 'hub.section_joined_plural'
-              })}
-            </span>
-          </div>
-          <hr className="border-border" />
-          <div>
+        <div>
+          <h2 className="text-base font-semibold text-text-primary mb-2 px-1">
+            {joinedBusinesses.length === 1
+              ? intl.formatMessage({ id: 'hub.section_joined_singular' })
+              : intl.formatMessage({ id: 'hub.section_joined_plural' })}
+          </h2>
+          <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
             {joinedBusinesses.map(renderBusinessItem)}
-          </div>
+          </IonList>
         </div>
       )}
-    </main>
-  );
+    </div>
+  )
 }
 
 interface HubActionCardsProps {
@@ -323,45 +284,41 @@ interface HubActionCardsProps {
 }
 
 function HubActionCards({ onCreate, onJoin }: HubActionCardsProps) {
-  const t = useIntl()
+  const intl = useIntl()
   return (
-    <div className="caja-actions">
-      <button
-        type="button"
-        onClick={onCreate}
-        className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
-      >
-        <div className="flex items-start justify-between w-full">
-          <Plus className="caja-action-btn__icon text-brand" />
-          <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-        </div>
-        <div className="caja-action-btn__text">
-          <span className="caja-action-btn__title">{t.formatMessage({
-            id: 'hub.action_create_title'
-          })}</span>
-          <span className="caja-action-btn__desc">{t.formatMessage({
-            id: 'hub.action_create_desc'
-          })}</span>
-        </div>
-      </button>
-      <button
-        type="button"
-        onClick={onJoin}
-        className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
-      >
-        <div className="flex items-start justify-between w-full">
-          <UserPlus className="caja-action-btn__icon text-brand" />
-          <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-        </div>
-        <div className="caja-action-btn__text">
-          <span className="caja-action-btn__title">{t.formatMessage({
-            id: 'hub.action_join_title'
-          })}</span>
-          <span className="caja-action-btn__desc">{t.formatMessage({
-            id: 'hub.action_join_desc'
-          })}</span>
-        </div>
-      </button>
+    <div className="space-y-3">
+      <IonCard button onClick={onCreate} className="m-0">
+        <IonCardContent className="flex items-start gap-4 py-5">
+          <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
+            <Plus className="w-6 h-6 text-brand" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-base font-semibold text-text-primary">
+              {intl.formatMessage({ id: 'hub.action_create_title' })}
+            </div>
+            <div className="text-sm text-text-secondary mt-1">
+              {intl.formatMessage({ id: 'hub.action_create_desc' })}
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 mt-1" />
+        </IonCardContent>
+      </IonCard>
+      <IonCard button onClick={onJoin} className="m-0">
+        <IonCardContent className="flex items-start gap-4 py-5">
+          <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
+            <UserPlus className="w-6 h-6 text-brand" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-base font-semibold text-text-primary">
+              {intl.formatMessage({ id: 'hub.action_join_title' })}
+            </div>
+            <div className="text-sm text-text-secondary mt-1">
+              {intl.formatMessage({ id: 'hub.action_join_desc' })}
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 mt-1" />
+        </IonCardContent>
+      </IonCard>
     </div>
-  );
+  )
 }
