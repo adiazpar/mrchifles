@@ -1,0 +1,219 @@
+'use client'
+
+import { useIntl } from 'react-intl';
+import { useRouter } from '@/lib/next-navigation-shim'
+import { Plus, Handshake } from 'lucide-react'
+import {
+  IonItem,
+  IonItemOption,
+  IonItemOptions,
+  IonItemSliding,
+  IonList,
+  IonSpinner,
+} from '@ionic/react'
+import { useProviderManagement } from '@/hooks'
+import { useOrderFlows } from '@/hooks/useOrderFlows'
+import { useOrders } from '@/contexts/orders-context'
+import { ProviderListItem, ProviderModal } from '@/components/providers'
+
+interface ProvidersDrilldownProps {
+  businessId: string
+}
+
+/**
+ * The wrapping `IonHeader` + `IonBackButton` inside `ProvidersTab`
+ * provides the title and back affordance for this view.
+ */
+export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
+  const router = useRouter()
+  const intl = useIntl()
+
+  const { setOrders } = useOrders()
+
+  const {
+    providers,
+    sortedProviders,
+    isLoading,
+    error,
+    canManage,
+    isModalOpen,
+    modalInitialStep,
+    editingProvider,
+    isSaving,
+    providerSaved,
+    isDeleting,
+    providerDeleted,
+    name,
+    setName,
+    phone,
+    setPhone,
+    email,
+    setEmail,
+    active,
+    setActive,
+    handleOpenModal,
+    handleOpenDelete,
+    handleCloseModal,
+    handleModalExitComplete,
+    handleSubmit,
+    handleDelete,
+  } = useProviderManagement({ businessId, setOrders })
+
+  const orderFlows = useOrderFlows({
+    businessId,
+    providers,
+    canDelete: canManage,
+    canManage,
+  })
+
+  return (
+    <>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <IonSpinner name="crescent" />
+        </div>
+      ) : (
+        <div className="px-4 py-6 space-y-6">
+          {error && !isModalOpen && (
+            <div className="p-4 bg-error-subtle text-error rounded-lg">
+              {error}
+            </div>
+          )}
+
+          {providers.length > 0 && (
+            <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-text-secondary">
+                  {intl.formatMessage({
+                    id: 'providers.count'
+                  }, { count: providers.length })}
+                </span>
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => handleOpenModal()}
+                    className="btn btn-primary"
+                    style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
+                  >
+                    <Plus style={{ width: 14, height: 14 }} />
+                    {intl.formatMessage({
+                      id: 'providers.add_button'
+                    })}
+                  </button>
+                )}
+              </div>
+
+              <hr className="border-border" />
+
+              <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
+                {sortedProviders.map((provider) => {
+                  const swipeActions = canManage
+                    ? [
+                        {
+                          label: intl.formatMessage({
+                            id: 'providers.action_new_order'
+                          }),
+                          color: 'primary' as const,
+                          onClick: () => orderFlows.openNewOrder(provider.id),
+                        },
+                        {
+                          label: intl.formatMessage({
+                            id: 'providers.action_edit'
+                          }),
+                          color: 'medium' as const,
+                          onClick: () => handleOpenModal(provider),
+                        },
+                        {
+                          label: intl.formatMessage({
+                            id: 'providers.action_delete'
+                          }),
+                          color: 'danger' as const,
+                          onClick: () => handleOpenDelete(provider),
+                        },
+                      ]
+                    : []
+                  return (
+                    <IonItemSliding key={provider.id}>
+                      <IonItem lines="full">
+                        <ProviderListItem
+                          provider={provider}
+                          onClick={() => router.push(`/${businessId}/providers/${provider.id}`)}
+                        />
+                      </IonItem>
+                      {swipeActions.length > 0 && (
+                        <IonItemOptions side="end">
+                          {swipeActions.map((action) => (
+                            <IonItemOption
+                              key={action.label}
+                              color={action.color}
+                              onClick={action.onClick}
+                            >
+                              {action.label}
+                            </IonItemOption>
+                          ))}
+                        </IonItemOptions>
+                      )}
+                    </IonItemSliding>
+                  )
+                })}
+              </IonList>
+            </div>
+          )}
+
+          {providers.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Handshake className="w-16 h-16 text-text-tertiary mb-5" />
+              <h3 className="text-lg font-semibold text-text-primary mb-2">
+                {intl.formatMessage({
+                  id: 'providers.empty_title'
+                })}
+              </h3>
+              <p className="text-sm text-text-secondary max-w-xs">
+                {intl.formatMessage({
+                  id: 'providers.empty_description'
+                })}
+              </p>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => handleOpenModal()}
+                  className="btn btn-primary mt-4"
+                  style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
+                >
+                  <Plus className="w-4 h-4" />
+                  {intl.formatMessage({
+                    id: 'providers.add_provider_button'
+                  })}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      <ProviderModal
+        isOpen={isModalOpen}
+        initialStep={modalInitialStep}
+        onClose={handleCloseModal}
+        onExitComplete={handleModalExitComplete}
+        name={name}
+        onNameChange={setName}
+        phone={phone}
+        onPhoneChange={setPhone}
+        email={email}
+        onEmailChange={setEmail}
+        active={active}
+        onActiveChange={setActive}
+        editingProvider={editingProvider}
+        isSaving={isSaving}
+        error={error}
+        providerSaved={providerSaved}
+        onSubmit={handleSubmit}
+        canDelete={canManage}
+        isDeleting={isDeleting}
+        providerDeleted={providerDeleted}
+        onDelete={handleDelete}
+      />
+      {orderFlows.modals}
+    </>
+  );
+}

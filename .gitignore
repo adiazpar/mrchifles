@@ -53,6 +53,7 @@ drizzle/
 
 # Local media uploads (dev only)
 public/media/
+apps/*/public/media/
 # Git worktrees
 .worktrees/
 
@@ -65,5 +66,20 @@ public/sw.js
 public/sw.js.map
 public/swe-worker-*.js
 public/swe-worker-*.js.map
+apps/*/public/sw.js
+apps/*/public/sw.js.map
+apps/*/public/swe-worker-*.js
+apps/*/public/swe-worker-*.js.map
 
 certificates
+
+# Monorepo build outputs
+apps/*/dist/
+apps/*/.next/
+apps/*/node_modules/
+packages/*/dist/
+packages/*/node_modules/
+
+# Per-app env files
+apps/*/.env.local
+apps/*/.env.*.local

@@ -1,0 +1,325 @@
+/* ==========================================================================
+   Irvin POS - Design System
+   Typography-focused, animation-enhanced, mobile-first PWA
+   Philosophy: Non-blocking delight - speed AND beauty
+   ========================================================================== */
+
+/* ==========================================================================
+   CSS Custom Properties (Design Tokens)
+   ========================================================================== */
+
+:root {
+  /* ===== Typography =====
+     Fonts are loaded via the <link> tags in index.html (Google Fonts:
+     Nunito Sans). These values name the family directly. */
+  --font-display: 'Nunito Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Nunito Sans', system-ui, -apple-system, sans-serif;
+
+  /* Size Scale (Two-Pixel Rule) */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+
+  /* Hero Typography - for balance displays and key numbers */
+  --text-hero: clamp(2.5rem, 8vw, 4rem);
+
+  /* ===== Brand: Terracotta (Warm) ===== */
+  --color-brand: #D97757;
+  --color-brand-hover: #B85A3C;
+  --color-brand-subtle: #FBF1EC;
+  /* RGB triplet for #D97757 — exposed so Ionic can build rgba(...)
+     shadows and tints from --ion-color-primary-rgb. */
+  --color-brand-rgb: 217, 119, 87;
+
+  /* ===== Neutral Palette (Warm Stone) ===== */
+  --neutral-50: #FAFAF9;
+  --neutral-100: #F5F5F4;
+  --neutral-200: #E7E5E4;
+  --neutral-300: #D6D3D1;
+  --neutral-400: #A8A29E;
+  --neutral-500: #78716C;
+  --neutral-600: #57534E;
+  --neutral-700: #44403C;
+  --neutral-800: #292524;
+  --neutral-900: #1C1917;
+
+  /* ===== Semantic Mappings - Light Mode ===== */
+
+  /* Backgrounds */
+  --color-bg-base: #FAFAF9;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-muted: #F5F5F4;
+
+  /* Text Hierarchy */
+  --color-text-primary: #1C1917;
+  --color-text-secondary: #57534E;
+  --color-text-tertiary: #A8A29E;
+  --color-text-inverse: #FAFAF9;
+  --color-text-brand: #B85A3C;
+
+  /* Borders */
+  --color-border: #E7E5E4;
+  --color-border-hover: #D6D3D1;
+
+  /* Payment Methods (kept — domain colors, not brand) */
+  --color-yape: #6B21A8;
+  --color-yape-subtle: #F3E8FF;
+
+  --color-pos: #EA580C;
+  --color-pos-subtle: #FFF7ED;
+
+  /* Semantic Colors */
+  --color-success: #65A30D;
+  --color-success-subtle: #ECFCCB;
+  --color-warning: #CA8A04;
+  --color-warning-subtle: #FEF9C3;
+  --color-error: #DC2626;
+  --color-error-subtle: #FEE2E2;
+
+  /* ===== Spacing ===== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ===== Border Radius (Pillowy) ===== */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+
+  /* ===== Shadows (Soft, single-layer, terracotta-tinted) ===== */
+  --shadow-sm: 0 1px 3px rgba(var(--color-brand-rgb), 0.08);
+  --shadow-md: 0 4px 12px rgba(var(--color-brand-rgb), 0.10);
+  --shadow-lg: 0 12px 32px rgba(var(--color-brand-rgb), 0.12);
+  --shadow-xl: 0 24px 48px rgba(28, 25, 23, 0.16);
+
+  /* ===== Animation Tokens ===== */
+  /* Easing curves */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Durations - consolidated animation timing */
+  --duration-instant: 100ms;  /* Button press feedback */
+  --duration-fast: 120ms;     /* Micro-interactions (hover, focus) */
+  --duration-normal: 200ms;   /* Modal/sheet animations */
+  --duration-medium: 350ms;   /* Content transitions (images, progress) */
+  --duration-slow: 600ms;     /* Page-level transitions (navbar, headers) */
+
+  /* ===== Z-Index ===== */
+  --z-dropdown: 50;
+  --z-sticky: 100;
+  --z-overlay: 150;
+  --z-modal-backdrop: 200;
+  --z-modal: 210;
+  --z-auth-gate: 250;
+  --z-toast: 300;
+  --z-tooltip: 400;
+
+  /* ===== Layout =====
+     --mobile-nav-height matches Ionic's default iOS IonTabBar height
+     (Ionic itself uses 50px on iOS + safe-area-inset; we keep the
+     historical 80px so chrome offsets — page-content padding-bottom,
+     LiveBarcodeScanner positioning — match the visual height of the
+     IonTabBar plus its safe-area inset on a real device). */
+  --mobile-nav-height: 80px;
+  --header-height: 80px;
+  --page-padding: 16px;
+  --touch-target-min: 56px;
+
+  /* Mobile-only viewport constraint (iPhone Pro Max: 430-440px) */
+  --max-viewport-width: 440px;
+}
+
+/* ===== Dark Mode ===== */
+.dark {
+  /* Backgrounds */
+  --color-bg-base: #0C0A09;
+  --color-bg-surface: #1C1917;
+  --color-bg-elevated: #292524;
+  --color-bg-muted: #1C1917;
+
+  /* Brand (lifted for contrast on dark surfaces) */
+  --color-brand: #E89B7F;
+  --color-brand-hover: #D97757;
+  --color-brand-subtle: rgba(217, 119, 87, 0.15);
+  --color-brand-rgb: 232, 155, 127;
+
+  /* Text Hierarchy */
+  --color-text-primary: #FAFAF9;
+  --color-text-secondary: #A8A29E;
+  --color-text-tertiary: #78716C;
+  --color-text-inverse: #1C1917;
+  --color-text-brand: #E89B7F;
+
+  /* Borders */
+  --color-border: #292524;
+  --color-border-hover: #44403C;
+
+  /* Semantic colors — lighter for dark backgrounds */
+  --color-success: #84CC16;
+  --color-success-subtle: rgba(132, 204, 22, 0.15);
+  --color-warning: #EAB308;
+  --color-warning-subtle: rgba(234, 179, 8, 0.15);
+  --color-error: #F87171;
+  --color-error-subtle: rgba(248, 113, 113, 0.15);
+
+  /* Dark mode shadows (deeper, near-black) */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.7);
+}
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  /* Prevent body scroll - only inner containers should scroll */
+  height: 100%;
+  overflow: clip;
+  /* Background for larger screens (outside mobile viewport) */
+  background-color: #000000;
+  /* Tell the engine we support both schemes so the WebView's default
+     canvas matches the active theme — prevents a white flash when the
+     iOS PWA splash dismisses in dark mode. The inline theme script in
+     index.html narrows this to the resolved value via inline style. */
+  color-scheme: light dark;
+  /* Suppress iOS standalone-PWA native edge-swipe-back. The app uses
+     IonBackButton for navigation; horizontal swipes are not a gesture.
+     Vertical scrolling and pinch-to-zoom still work. Local opt-in
+     (e.g. a swipeable carousel) should set `touch-action: pan-x` on
+     that specific element. */
+  touch-action: pan-y;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-base);
+  /* Fixed height with dvh for mobile browser chrome */
+  height: 100dvh;
+  height: 100vh; /* Fallback for older browsers */
+  overflow: clip;
+  /* Mobile-only constraint - center on larger screens */
+  max-width: var(--max-viewport-width);
+  margin-inline: auto;
+}
+
+/* Support for dvh - modern browsers */
+@supports (height: 100dvh) {
+  body {
+    height: 100dvh;
+  }
+}
+
+/* Element base styles. Wrapped in `@layer base` (Tailwind v4's base layer)
+   so that Tailwind utilities — which live in `@layer utilities` — can
+   override them. Without this layering, an unlayered `h2 { font-size:
+   var(--text-3xl) }` rule beats any `.text-xs` Tailwind utility on the
+   same element, because unlayered rules always win against layered
+   ones in CSS cascade. That's why <h2 className="text-xs ..."> was
+   rendering as a 1.875rem heading. */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--color-text-primary);
+  }
+
+  h1 { font-size: var(--text-4xl); font-weight: 700; }
+  h2 { font-size: var(--text-3xl); }
+  h3 { font-size: var(--text-2xl); }
+  h4 { font-size: var(--text-xl); }
+
+  p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+}
+
+/* NOTE: Tailwind v4 design-token registration (`@theme inline`) is
+   declared in index.css alongside `@import "tailwindcss"`. Tailwind's
+   CSS plugin only collects `@theme` blocks from the same CSS file as
+   the `@import` directive — putting them here would silently skip
+   utility generation. */
+
+a {
+  color: var(--color-brand);
+  text-decoration: none;
+  transition: color var(--duration-fast) ease-out;
+}
+
+@media (hover: hover) {
+  a:hover {
+    color: var(--color-brand-hover);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Focus States (Accessibility) */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: var(--color-brand-subtle);
+  color: var(--color-text-primary);
+}
+
+/* Custom scrollbar (subtle) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-hover);
+}

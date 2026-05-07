@@ -1,0 +1,1220 @@
+/* ==========================================================================
+ Interactive Components
+ Cards, List Items, Navigation, Tabs, Layout Components
+ ========================================================================== */
+
+/* ===== Cards (Minimal) ===== */
+.card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.card-bordered {
+  border: 1.5px solid var(--color-border);
+}
+
+.card-interactive {
+  cursor: pointer;
+  transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
+}
+
+/* Border color change on hover (NOT shadow/lift) */
+@media (hover: hover) {
+  .card-interactive:hover {
+    border-color: var(--color-brand);
+  }
+}
+
+/* ===== Ripple Parent =====
+   Container for <IonRippleEffect>. The Ionic ripple host uses
+   `position: absolute; inset: 0`, so the parent must establish a
+   positioning context AND clip the ripple to its rounded edges.
+   Apply alongside `ion-activatable` on any custom button/card surface
+   that should host the native Ionic ripple. */
+.ripple-parent {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-padding {
+  padding: var(--space-4);
+}
+
+.card-padding-lg {
+  padding: var(--space-6);
+}
+
+.card-header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card-body {
+  padding: var(--space-4);
+}
+
+/* ===== Semantic Banners =====
+   Tappable card-style alerts whose bg is a tint of a semantic color.
+   On hover/active the tint drops from 10% to 6% and the banner scales
+   to 0.94. Press feedback comes from native :active + Ionic ripple via
+   <IonRippleEffect>. No border — the tint is the surface. Modifier
+   classes (`--warning`, `--error`, etc.) set --banner-color. */
+.banner-semantic {
+  background: color-mix(in oklab, var(--banner-color) 10%, transparent);
+  border: none;
+  transition: background var(--duration-fast) ease-out,
+              transform var(--duration-instant) ease-out;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .banner-semantic:hover {
+    background: color-mix(in oklab, var(--banner-color) 6%, transparent);
+  }
+}
+
+.banner-semantic:active {
+  background: color-mix(in oklab, var(--banner-color) 6%, transparent);
+  transform: scale(0.94);
+}
+
+.banner-semantic--warning { --banner-color: var(--color-warning); }
+.banner-semantic--error { --banner-color: var(--color-error); }
+
+.card-footer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-muted);
+}
+
+/* ===== Badges (Simple Pill) ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: 1.4;
+  border-radius: var(--radius-full);
+}
+
+.badge-default {
+  background: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+}
+
+.badge-brand {
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+}
+
+.badge-success {
+  background: var(--color-success-subtle);
+  color: var(--color-success);
+}
+
+.badge-warning {
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+}
+
+.badge-error {
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+}
+
+.badge-yape {
+  background: var(--color-yape-subtle);
+  color: var(--color-yape);
+}
+
+.badge-pos {
+  background: var(--color-pos-subtle);
+  color: var(--color-pos);
+}
+
+/* ===== Avatar ===== */
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+}
+
+/* ===== Mobile Bottom Navigation =====
+ * position: absolute (relative to its parent .layer), NOT fixed. Fixed
+ * inside a transformed ancestor triggers iOS Safari compositor bugs
+ * (descendants render twice or in wrong place). Layers ARE transformed
+ * via Framer Motion, so chrome inside must avoid position:fixed. */
+.mobile-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0));
+  background: var(--color-bg-surface);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  z-index: var(--z-sticky);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.mobile-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--duration-fast) ease-out,
+              transform var(--duration-fast) ease-out;
+  padding: var(--space-2);
+  position: relative;
+  min-height: var(--touch-target-min);
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav-item:active {
+  transform: scale(0.94);
+}
+
+.mobile-nav-item.active {
+  color: var(--color-brand);
+}
+
+@media (hover: hover) {
+  .mobile-nav-item:hover {
+    color: var(--color-brand);
+  }
+}
+
+.mobile-nav-icon {
+  width: 28px;
+  height: 28px;
+}
+
+/* ===== Icon-stack button =====
+   A button shaped as a circular icon over a small text label. Used in two
+   places today: SwipeableRow's revealed actions, and the Scan / Generate /
+   Print row inside the product-modal barcode tabs. The visual is identical
+   in both contexts so the CSS lives in one place; layout containers around
+   it differ (swipe rows pin to the right edge inside `.swipeable-row-slot`,
+   the barcode tabs sit in a left-aligned flex row). */
+.swipeable-row-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.icon-stack-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--duration-fast) ease-out;
+}
+
+.icon-stack-btn__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+}
+
+/* Larger size for surfaces with more breathing room (e.g. the barcode-tab
+   row, where each button stretches to a full grid cell via `flex-1`). The
+   button can stretch to fill the cell, but the circle stays a fixed size
+   so it never deforms into a pill. */
+.icon-stack-btn--lg .icon-stack-btn__icon {
+  width: 64px;
+  height: 64px;
+}
+
+.icon-stack-btn--lg .icon-stack-btn__label {
+  font-size: 13px;
+}
+
+.icon-stack-btn:active {
+  transform: scale(0.94);
+}
+
+/* Label is decoupled from the icon's tint — it always renders as secondary
+   text so the color semantics read from the icon, not from the whole
+   button. */
+.icon-stack-btn__label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.icon-stack-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.icon-stack-btn:disabled .icon-stack-btn__icon,
+.icon-stack-btn:disabled .icon-stack-btn__label {
+  color: var(--color-text-tertiary);
+}
+
+.icon-stack-btn:disabled:active {
+  transform: none;
+}
+
+/* Variant classes are composed dynamically (e.g. SwipeableRow.tsx builds
+   `icon-stack-btn--${variant}`), so a literal grep won't find every call
+   site — do NOT remove these in a "dead CSS" audit. Every variant keeps
+   the same muted background; semantic color is carried only by the icon. */
+.icon-stack-btn--neutral .icon-stack-btn__icon {
+  background: var(--color-bg-muted);
+  color: var(--color-text-primary);
+}
+
+.icon-stack-btn--info .icon-stack-btn__icon {
+  background: var(--color-bg-muted);
+  color: var(--color-brand);
+}
+
+.icon-stack-btn--success .icon-stack-btn__icon {
+  background: var(--color-bg-muted);
+  color: var(--color-success);
+}
+
+.icon-stack-btn--pos .icon-stack-btn__icon {
+  background: var(--color-bg-muted);
+  color: var(--color-pos);
+}
+
+.icon-stack-btn--warning .icon-stack-btn__icon {
+  background: var(--color-bg-muted);
+  color: var(--color-warning);
+}
+
+.icon-stack-btn--danger .icon-stack-btn__icon {
+  background: var(--color-bg-muted);
+  color: var(--color-error);
+}
+
+/* The list item inside a swipeable row carries an opaque page-colored
+   background so the action layer behind it is fully covered once the row
+   has snapped back. Without this, any mid-animation artifact on the
+   action buttons (scale/opacity glitches from press scale(0.94) composing
+   with the reveal transform) bleeds through the row at rest. */
+.swipeable-row .list-item-clickable {
+  background: var(--color-bg-surface);
+}
+
+/* Applied imperatively while a tap on an already-open row is being
+   suppressed. Overrides the `:hover` / `:active` backgrounds on the
+   inner list-item-clickable so there's no background flash during the
+   close animation. Kept as pure CSS (higher-specificity override, no
+   pointer-events manipulation) so the click-suppression event flow on
+   motion.div isn't disturbed. Keeps the opaque page bg from the
+   `.swipeable-row .list-item-clickable` rule above. */
+.swipeable-row--suppress-interactive .list-item-clickable,
+.swipeable-row--suppress-interactive .list-item-clickable:hover,
+.swipeable-row--suppress-interactive .list-item-clickable:active {
+  background: var(--color-bg-surface);
+}
+
+.swipeable-row--suppress-interactive .list-item,
+.swipeable-row--suppress-interactive .list-item:hover {
+  background: transparent;
+}
+
+/* ===== Hub Content ===== */
+.hub-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: var(--page-padding);
+  /* Account for fixed header at top and mobile nav at bottom */
+  padding-top: calc(var(--header-height) + var(--page-padding) + env(safe-area-inset-top, 0));
+  padding-bottom: calc(var(--mobile-nav-height) + var(--space-6) + env(safe-area-inset-bottom, 0));
+}
+
+/* ===== Page title ===== */
+/* Lone survivor of the deleted PageHeader component — still consumed by
+ * HubPage.tsx for the brand title in the Ionic toolbar.
+ */
+.page-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+
+/* ===== Flexbox Layout System ===== */
+/* Replaces calc()-based height calculations with flex inheritance */
+
+/* Page content - scrollable area with padding */
+.page-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: var(--page-padding);
+  /* Account for fixed header at top and mobile nav at bottom */
+  padding-top: calc(var(--header-height) + var(--page-padding) + env(safe-area-inset-top, 0));
+  padding-bottom: calc(var(--mobile-nav-height) + var(--space-6) + env(safe-area-inset-bottom, 0));
+}
+
+
+/* Page body - content area that fills remaining space (after tabs if present) */
+.page-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Empty state that fills available space - NO calc() needed */
+.empty-state-fill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  text-align: center;
+}
+
+/* ===== Floating Action Button ===== */
+.fab {
+  position: fixed;
+  bottom: calc(var(--mobile-nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0));
+  right: var(--space-4);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--color-brand);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: transform var(--duration-fast) ease-out, box-shadow var(--duration-fast) ease-out, filter var(--duration-fast) ease-out;
+  z-index: var(--z-sticky);
+}
+
+
+@media (hover: hover) {
+  .fab:hover {
+    filter: brightness(0.92);
+    box-shadow: var(--shadow-xl);
+  }
+}
+
+.fab:active {
+  filter: brightness(0.88);
+  transform: scale(0.94);
+}
+
+.payment-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 2px solid transparent;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  min-height: 64px;
+  transition: transform var(--duration-instant) ease-out, filter var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out;
+  color: white;
+}
+
+@media (hover: hover) {
+  .payment-btn:hover {
+    filter: brightness(0.92);
+  }
+}
+
+.payment-btn:active {
+  filter: brightness(0.88);
+  transform: scale(0.94);
+}
+
+.payment-btn.selected {
+  border-color: white;
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+}
+
+.empty-state-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-3);
+}
+
+.empty-state-title {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.empty-state-description {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  max-width: 240px;
+}
+
+.toast {
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-4);
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ===== Table ===== */
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table th {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-muted);
+}
+
+.table tbody tr {
+  transition: background var(--duration-fast) ease-out;
+}
+
+@media (hover: hover) {
+  .table tbody tr:hover {
+    background: var(--color-bg-muted);
+  }
+}
+
+/* ===== Spinner ===== */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-brand);
+  border-radius: var(--radius-full);
+  animation: spin 0.7s linear infinite;
+}
+
+.spinner-lg {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+/* ===== Page Loading State ===== */
+/* Used by component-level loading branches that render inside an IonContent.
+   IonContent's slot is block, not flex, so `flex: 1` collapses to 0 height
+   and the spinner pins to the top. Use explicit `height: 100%` instead so
+   the centering works against the IonContent scroll container. */
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  /* Padding kept for components still rendering outside an IonContent (legacy
+     drill-down branches). Inside IonContent these vars compose harmlessly with
+     the native safe-area handling. */
+  padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0));
+  padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0));
+}
+
+/* ===== Dropdown ===== */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
+  cursor: pointer;
+}
+
+.dropdown-content {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  width: 100%;
+  min-width: 200px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+/* ===== Invite Success State ===== */
+.invite-success-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.invite-qr-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--space-3);
+}
+
+.invite-qr-box img {
+  width: 140px;
+  height: 140px;
+}
+
+.invite-regenerate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  transition: color var(--duration-fast) ease-out;
+}
+
+@media (hover: hover) {
+  .invite-regenerate:hover:not(:disabled) {
+    color: var(--color-text-secondary);
+  }
+}
+
+.invite-regenerate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Auth Layout =====
+ * CSS Grid with `1fr auto 1fr` rows gives us three regions:
+ *
+ *   Row 1 (1fr)   — logo, vertically centered in the space above the form
+ *   Row 2 (auto)  — form + tagline + primary CTA (its own natural height)
+ *   Row 3 (1fr)   — page footer (secondary CTA + version), bottom-aligned
+ *
+ * Row 1 and Row 3 are equal height, so the form sits in the exact
+ * vertical center of the viewport (symmetric padding), and the logo is
+ * automatically centered in its region. The layout renders the logo in
+ * row 1; each page renders its own .auth-main (row 2) and
+ * .auth-page-footer (row 3) so slot APIs aren't needed.
+ */
+.auth-container {
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  justify-items: center;
+  /* Horizontal uses --page-padding to match the rest of the app's
+   * fixed side rail. Vertical uses --space-6 — auth pages have no
+   * header/nav so there's no system chrome to clear. */
+  padding: var(--space-6) var(--page-padding);
+  background: var(--color-bg-base);
+}
+
+.auth-logo {
+  align-self: center;
+}
+
+.auth-main {
+  align-self: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.auth-heading {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-primary);
+}
+
+/* Extra breathing room between the last form field and the primary CTA
+ * so the submit button reads as a distinct action, not another field
+ * in the list. Combined with the gap above, the total separation is
+ * space-3 (12px) + space-4 (16px) = 28px. */
+.auth-main > button[type='submit'] {
+  margin-top: var(--space-4);
+}
+
+.auth-page-footer {
+  align-self: end;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.auth-or-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.auth-or-divider::before,
+.auth-or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.auth-version {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+/* ===== User Menu ===== */
+.user-menu-content {
+  min-width: 200px;
+}
+
+.user-menu-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.user-menu-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--color-brand-subtle);
+  color: var(--color-text-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--text-base);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.user-menu-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-menu-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-menu-name {
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-menu-email {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-menu-items {
+  padding: var(--space-2) 0;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  width: 100%;
+  text-align: left;
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: background var(--duration-fast) ease-out;
+}
+
+@media (hover: hover) {
+  .user-menu-item:hover {
+    background: var(--color-bg-muted);
+    text-decoration: none;
+  }
+}
+
+.user-menu-item:active {
+  background: var(--color-bg-muted);
+}
+
+.user-menu-item svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+
+.user-menu-item-arrow {
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+}
+
+/* Override the generic 20px icon size for the trailing chevron so it
+   renders at size-4 (16px) to match the rest of the app. The compound
+   `.user-menu-item svg` selector outranks a plain `.user-menu-item-arrow`
+   rule, so we qualify the selector here. */
+.user-menu-item svg.user-menu-item-arrow {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* The badge + chevron group on the right of a user-menu item. Takes
+   over the `margin-left: auto` slot so the chevron itself can stay
+   neutral, and keeps the badge adjacent to the chevron. */
+.user-menu-item-trailing {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.user-menu-item-trailing .user-menu-item-arrow {
+  margin-left: 0;
+}
+
+.user-menu-item-danger,
+.user-menu-item-danger svg {
+  color: var(--color-error);
+}
+
+/* ===== Account Settings ===== */
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .settings-row:hover {
+    background: var(--color-bg-muted);
+  }
+}
+
+.settings-row:active {
+  background: var(--color-bg-muted);
+}
+
+.settings-row:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0 var(--space-4);
+}
+
+/* Theme selector */
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-bg-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--duration-fast) ease-out;
+}
+
+@media (hover: hover) {
+  .theme-option:hover:not(.theme-option-active) {
+    border-color: var(--color-border-hover);
+    background: var(--color-bg-muted);
+  }
+}
+
+.theme-option-active {
+  border-color: var(--color-brand);
+  background: var(--color-brand-subtle);
+}
+
+.theme-option-preview {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-option-preview-light {
+  background: #FFFFFF;
+  border-color: var(--neutral-200);
+}
+
+.theme-option-preview-dark {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+.theme-option-preview-system {
+  background: linear-gradient(135deg, #FFFFFF 50%, #1E293B 50%);
+  border-color: var(--neutral-300);
+}
+
+.theme-option-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+/* ===== Section Tabs (Page-level navigation) ===== */
+.section-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-base);
+  /* Sticky below the fixed header */
+  position: sticky;
+  top: calc(var(--header-height) + env(safe-area-inset-top, 0));
+  z-index: 10;
+}
+
+/* Modal variant - no sticky positioning, no top padding on tabs */
+.section-tabs--modal {
+  position: static;
+  background: transparent;
+}
+
+.section-tabs--modal .section-tab {
+  padding-top: 0;
+}
+
+.section-tab {
+  flex: 1;
+  /* min-width: 0 lets flex actually honor the equal share — without it,
+     long labels (e.g. "Estadísticas") expand past their slot because the
+     default min-width is auto, pushing the whole row out of its container. */
+  min-width: 0;
+  padding: var(--space-3) var(--space-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease-out, transform var(--duration-instant) ease-out;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+@media (hover: hover) {
+  .section-tab:hover:not(.section-tab-active) {
+    color: var(--color-text-primary);
+    background: var(--color-bg-muted);
+  }
+}
+
+.section-tab-active {
+  color: var(--color-brand);
+  border-bottom-color: var(--color-brand);
+}
+
+/* ===== Product List Image =====
+   Uses --color-bg-base so the icon tile is distinct from both the
+   surrounding surface (card/modal bg) AND the hover bg (--color-bg-muted).
+   Stays the same shade at rest and on hover — no swap, no flicker. */
+.product-list-image {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--color-bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+}
+
+.product-list-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Clickable list item (mobile-friendly hover) */
+.list-item-clickable {
+display: flex;
+align-items: center;
+gap: var(--space-3);
+padding: var(--space-3);
+border-radius: var(--radius-lg);
+cursor: pointer;
+transition: background var(--duration-fast) ease-out;
+-webkit-tap-highlight-color: transparent;
+}
+
+/* Variant: no horizontal padding (for use inside cards) */
+.list-item-clickable.list-item-flat {
+padding-left: 0;
+padding-right: 0;
+border-radius: 0;
+}
+
+@media (hover: hover) {
+  .list-item-clickable:hover {
+    background: var(--color-bg-muted);
+  }
+}
+
+.list-item-clickable:active {
+background: var(--color-bg-muted);
+}
+
+/* Non-clickable list item (has hover effects but no cursor change) */
+.list-item {
+display: flex;
+align-items: center;
+gap: var(--space-3);
+padding: var(--space-3);
+border-radius: var(--radius-lg);
+transition: background var(--duration-fast) ease-out;
+}
+
+@media (hover: hover) {
+  .list-item:hover {
+    background: var(--color-bg-muted);
+  }
+}
+
+/* Divided list container — renders an explicit hairline between adjacent
+   children with outside breathing room on both sides of the line. The
+   separator is a standalone element so the space around it is real outside
+   space, not inner padding, and inner row padding is untouched. */
+.list-divided > .list-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin-block: var(--space-3);
+  border: 0;
+}
+
+/* ===== Balance Hero Container ===== */
+.balance-hero-container {
+position: relative;
+padding: var(--space-6);
+border-radius: var(--radius-2xl);
+background: var(--color-bg-surface);
+border: 1px solid var(--color-border);
+overflow: hidden;
+}
+
+/* Status row inside balance hero */
+.balance-hero__status-row {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: var(--space-4);
+position: relative;
+z-index: 1;
+}
+
+.balance-hero__status {
+font-size: var(--text-xs);
+font-weight: 500;
+text-transform: uppercase;
+letter-spacing: 0.05em;
+color: var(--color-success);
+}
+
+.balance-hero__status--closed {
+color: var(--color-error);
+}
+
+.balance-hero__timestamp {
+font-size: var(--text-xs);
+color: var(--color-text-tertiary);
+}
+
+/* ===== Caja Action Buttons ===== */
+.caja-actions {
+display: flex;
+gap: var(--space-2);
+}
+
+/* Stacked variant - full width buttons stacked vertically */
+.caja-actions--stacked {
+flex-direction: column;
+gap: var(--space-3);
+}
+
+.caja-action-btn {
+flex: 1;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: var(--space-1);
+padding: var(--space-3) var(--space-2);
+border-radius: var(--radius-lg);
+border: 1px solid var(--color-border);
+background: var(--color-bg-surface);
+color: var(--color-text-secondary);
+font-size: var(--text-xs);
+font-weight: 500;
+cursor: pointer;
+transition: transform var(--duration-instant) ease-out, filter var(--duration-fast) ease-out, background var(--duration-fast) ease-out;
+}
+
+.caja-action-btn:disabled {
+opacity: 0.4;
+cursor: not-allowed;
+}
+
+@media (hover: hover) {
+.caja-action-btn:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+}
+
+.caja-action-btn:active:not(:disabled) {
+filter: brightness(0.88);
+transform: scale(0.94);
+}
+
+.caja-action-btn__icon {
+width: 22px;
+height: 22px;
+}
+
+/* Large stacked variant - column layout with centered content */
+.caja-action-btn--large {
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: var(--space-3);
+padding: var(--space-5) var(--space-4);
+text-align: center;
+}
+
+.caja-action-btn--large .caja-action-btn__icon {
+width: 36px;
+height: 36px;
+}
+
+.caja-action-btn--large .caja-action-btn__text {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: var(--space-1);
+}
+
+.caja-action-btn--large .caja-action-btn__title {
+font-size: var(--text-base);
+font-weight: 600;
+color: var(--color-text-primary);
+}
+
+.caja-action-btn--large .caja-action-btn__desc {
+font-size: var(--text-sm);
+font-weight: 400;
+color: var(--color-text-tertiary);
+line-height: 1.4;
+}
+
+/* Left-aligned variant - icon and text align to the start */
+.caja-action-btn--align-start {
+align-items: flex-start;
+text-align: left;
+}
+
+.caja-action-btn--align-start .caja-action-btn__text {
+align-items: flex-start;
+}

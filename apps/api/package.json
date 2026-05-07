@@ -1,0 +1,63 @@
+{
+  "name": "@kasero/api",
+  "version": "0.1.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port ${API_PORT:-8000} --experimental-https --experimental-https-key ./certificates/tailscale-dev.key --experimental-https-cert ./certificates/tailscale-dev.crt",
+    "build": "next build",
+    "start": "next start",
+    "start:local": "next build && node scripts/start-https.mjs",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "db:push": "npx drizzle-kit push --force",
+    "db:push:prod": "DRIZZLE_ENV=production npx drizzle-kit push",
+    "db:studio": "npx drizzle-kit studio",
+    "i18n:translate": "tsx scripts/i18n-translate.ts",
+    "splash:generate": "node scripts/generate-ios-splash.mjs",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "@fal-ai/client": "^1.9.4",
+    "@kasero/shared": "*",
+    "@libsql/client": "^0.17.2",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
+    "bcryptjs": "^3.0.3",
+    "drizzle-orm": "^0.45.1",
+    "heic-convert": "^2.1.0",
+    "jose": "^6.2.2",
+    "nanoid": "^5.1.7",
+    "next": "^15.5.12",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "server-only": "^0.0.1",
+    "sharp": "^0.34.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.88.0",
+    "@eslint/js": "^9.39.2",
+    "@next/eslint-plugin-next": "^16.1.6",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "dotenv": "^17.3.1",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "jsdom": "^29.0.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.55.0",
+    "vitest": "^4.1.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

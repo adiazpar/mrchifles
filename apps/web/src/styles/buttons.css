@@ -1,0 +1,120 @@
+/* ==========================================================================
+   Button Styles
+   ========================================================================== */
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: transform var(--duration-instant) ease-out, filter var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
+  touch-action: manipulation;
+  user-select: none;
+  min-height: var(--touch-target-min);
+}
+
+.btn svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* Luminance shift hover (NOT translateY) */
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    filter: brightness(0.92);
+    text-decoration: none;
+    color: inherit;
+  }
+}
+
+.btn:active:not(:disabled) {
+  filter: brightness(0.88);
+  transform: scale(0.94);
+  text-decoration: none;
+}
+
+/* Real disabled state — flat muted fill with low-emphasis text instead
+   of a 50% opacity ghost. Higher specificity than the variant rules
+   (`.btn:disabled` = 1 class + 1 pseudo-class, vs `.btn-primary` = 1
+   class), so it overrides primary/danger fills and the secondary
+   text color without per-variant rules. SVGs inherit the muted color
+   via `currentColor`. */
+.btn:disabled {
+  background: var(--color-bg-muted);
+  color: var(--color-text-tertiary);
+  border-color: transparent;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+
+.btn-primary {
+  background: var(--color-brand);
+  color: white;
+  border-radius: var(--radius-full);
+}
+
+@media (hover: hover) {
+  .btn-primary:hover:not(:disabled) {
+    color: white;
+  }
+}
+
+.btn-secondary {
+  background: var(--color-bg-muted);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-full);
+}
+
+@media (hover: hover) {
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-brand-subtle);
+    color: var(--color-text-primary);
+    filter: none;
+  }
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+@media (hover: hover) {
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--color-bg-muted);
+    color: var(--color-text-primary);
+    filter: none;
+  }
+}
+
+.btn-danger {
+  background: var(--color-error);
+  color: white;
+  border-radius: var(--radius-full);
+}
+
+/* Icon-only button (square) */
+.btn-icon {
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  min-height: unset;
+  padding: 0;
+  justify-content: center;
+}
+
+.btn-lg {
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-lg);
+  min-height: 56px;
+}
