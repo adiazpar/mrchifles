@@ -113,10 +113,7 @@ export function AccountPageContent() {
         {/* Profile header card — tappable, opens the edit profile modal */}
         <IonCard button onClick={() => setIsProfileModalOpen(true)} className="mx-4">
           <IonCardContent className="flex items-center gap-4">
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-              style={{ backgroundColor: 'var(--color-brand-subtle)', color: 'var(--color-text-brand)' }}
-            >
+            <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-brand-subtle text-text-brand">
               {user.avatar ? (
                 <img
                   src={user.avatar}
@@ -145,10 +142,7 @@ export function AccountPageContent() {
         {incomingTransfer && (
           <IonCard button onClick={() => setIsTransferModalOpen(true)} className="mx-4">
             <IonCardContent className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'var(--color-warning-subtle)' }}
-              >
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-warning-subtle">
                 <ArrowRightLeft className="w-5 h-5 text-warning" />
               </div>
               <div className="flex-1 min-w-0">

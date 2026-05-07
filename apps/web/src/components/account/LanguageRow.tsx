@@ -35,7 +35,7 @@ export function LanguageRow() {
   }
 
   return (
-    <IonItem className="relative">
+    <IonItem detail className="relative">
       <Languages slot="start" className="w-5 h-5 text-text-secondary" />
       <IonLabel>
         <h3>{intl.formatMessage({ id: 'account.row_language' })}</h3>
