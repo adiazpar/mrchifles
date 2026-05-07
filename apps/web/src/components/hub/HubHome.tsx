@@ -286,6 +286,8 @@ interface HubActionCardsProps {
 function HubActionCards({ onCreate, onJoin }: HubActionCardsProps) {
   const intl = useIntl()
   return (
+    // m-0 overrides Ionic's :host default margin (16px inline / 24px block)
+    // so the parent's space-y-3 controls the gap between the two cards.
     <div className="space-y-3">
       <IonCard button onClick={onCreate} className="m-0">
         <IonCardContent className="flex items-start gap-4 py-5">
