@@ -1,24 +1,15 @@
 'use client'
+import { useIntl } from 'react-intl'
 
-import { useIntl } from 'react-intl';
-
-// Client component because TabShell mounts views from a 'use client'
-// boundary. The original Server Component used `getTranslations` from
-// next-intl/server; here it's resolved at render time via react-intl's
-// useIntl. Same translated string. The bundle cost is trivial (one
-// short stub).
 export function HomeView() {
-  const t = useIntl()
-
+  const intl = useIntl()
   return (
-    <main className="page-content">
-      <div className="page-body">
-        <div className="flex items-center justify-center h-64 border border-dashed border-border rounded-xl">
-          <p className="text-text-secondary">{t.formatMessage({
-            id: 'home.coming_soon'
-          })}</p>
-        </div>
+    <div className="px-4 py-6">
+      <div className="flex flex-col items-center justify-center h-64 border border-dashed border-border rounded-2xl text-center px-6">
+        <p className="text-sm text-text-secondary">
+          {intl.formatMessage({ id: 'home.coming_soon' })}
+        </p>
       </div>
-    </main>
-  );
+    </div>
+  )
 }
