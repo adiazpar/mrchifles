@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { useState, useEffect, useRef } from 'react'
 import { Plus, ChevronRight, GripVertical, Trash2, Pencil } from 'lucide-react'
 import { Reorder, useDragControls } from 'framer-motion'
-import { Spinner } from '@/components/ui'
+import { IonSpinner, IonButton } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { SORT_OPTIONS } from '@/lib/products'
@@ -78,16 +78,14 @@ function SaveCategoryButton({ name, editingCategory, onSave, isSaving, onSetComp
   }
 
   return (
-    <button
-      type="button"
+    <IonButton
       onClick={handleSave}
-      className="btn btn-primary flex-1"
       disabled={isSaving || !isValid || !hasChanges}
     >
-      {isSaving ? <Spinner /> : tCommon.formatMessage({
+      {isSaving ? <IonSpinner name="crescent" /> : tCommon.formatMessage({
         id: 'common.save'
       })}
-    </button>
+    </IonButton>
   );
 }
 
@@ -233,16 +231,15 @@ function DeleteCategoryButton({ onDelete, isDeleting, onSetCompleted, onSetMessa
   }
 
   return (
-    <button
-      type="button"
+    <IonButton
+      color="danger"
       onClick={handleDelete}
-      className="btn btn-danger flex-1"
       disabled={isDeleting}
     >
-      {isDeleting ? <Spinner /> : tCommon.formatMessage({
+      {isDeleting ? <IonSpinner name="crescent" /> : tCommon.formatMessage({
         id: 'common.delete'
       })}
-    </button>
+    </IonButton>
   );
 }
 
@@ -393,39 +390,37 @@ export function ProductSettingsModal({
     switch (step) {
       case 'main':
         return (
-          <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
+          <IonButton fill="outline" onClick={onClose}>
             {tCommon.formatMessage({ id: 'common.cancel' })}
-          </button>
+          </IonButton>
         )
 
       case 'categories':
         return (
           <>
-            <button type="button" onClick={() => setStep('main')} className="btn btn-secondary flex-1">
+            <IonButton fill="outline" onClick={() => setStep('main')}>
               {tCommon.formatMessage({ id: 'common.back' })}
-            </button>
-            <button
-              type="button"
+            </IonButton>
+            <IonButton
               onClick={() => {
                 setEditingCategory(null)
                 setCategoryName('')
                 setActionCompleted(false)
                 setStep('add-edit-category')
               }}
-              className="btn btn-primary flex-1"
             >
               <Plus style={{ width: 16, height: 16 }} />
               {t.formatMessage({ id: 'productSettings.add_category_button' })}
-            </button>
+            </IonButton>
           </>
         )
 
       case 'add-edit-category':
         return (
           <>
-            <button type="button" onClick={() => setStep('categories')} className="btn btn-secondary flex-1">
+            <IonButton fill="outline" onClick={() => setStep('categories')}>
               {tCommon.formatMessage({ id: 'common.back' })}
-            </button>
+            </IonButton>
             <SaveCategoryButton
               name={categoryName}
               editingCategory={editingCategory}
@@ -441,9 +436,9 @@ export function ProductSettingsModal({
       case 'delete-category':
         return (
           <>
-            <button type="button" onClick={() => setStep('categories')} className="btn btn-secondary flex-1">
+            <IonButton fill="outline" onClick={() => setStep('categories')}>
               {tCommon.formatMessage({ id: 'common.cancel' })}
-            </button>
+            </IonButton>
             <DeleteCategoryButton
               onDelete={handleDeleteCategory}
               isDeleting={isDeletingCategory}
@@ -456,8 +451,7 @@ export function ProductSettingsModal({
 
       case 'category-success':
         return (
-          <button
-            type="button"
+          <IonButton
             onClick={() => {
               setEditingCategory(null)
               setDeletingCategory(null)
@@ -465,21 +459,18 @@ export function ProductSettingsModal({
               setActionCompleted(false)
               setStep('categories')
             }}
-            className="btn btn-primary flex-1"
           >
             {tCommon.formatMessage({ id: 'common.done' })}
-          </button>
+          </IonButton>
         )
 
       case 'preferences':
         return (
           <>
-            <button type="button" onClick={() => setStep('main')} className="btn btn-secondary flex-1">
+            <IonButton fill="outline" onClick={() => setStep('main')}>
               {tCommon.formatMessage({ id: 'common.back' })}
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary flex-1"
+            </IonButton>
+            <IonButton
               disabled={isSavingSettings || (localDefaultCategoryId === defaultCategoryId && localSortPreference === sortPreference)}
               onClick={() => {
                 onUpdateSettings({
@@ -489,7 +480,7 @@ export function ProductSettingsModal({
               }}
             >
               {tCommon.formatMessage({ id: 'common.save' })}
-            </button>
+            </IonButton>
           </>
         )
     }
@@ -502,6 +493,7 @@ export function ProductSettingsModal({
       title={getTitle()}
       onBack={getBackHandler()}
       footer={renderFooter()}
+      noSwipeDismiss
     >
       {/* Step: main */}
       {step === 'main' && (

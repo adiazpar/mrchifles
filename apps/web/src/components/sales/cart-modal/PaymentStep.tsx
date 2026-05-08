@@ -1,6 +1,7 @@
 'use client'
 
 import { useIntl } from 'react-intl';
+import { IonButton } from '@ionic/react'
 import { PriceInput } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
@@ -206,18 +207,8 @@ interface QuickBillButtonProps {
 
 function QuickBillButton({ label, onClick }: QuickBillButtonProps) {
   return (
-    <button
-      type="button"
-      className="btn btn-secondary whitespace-nowrap"
-      style={{
-        minHeight: 'unset',
-        height: 36,
-        padding: '0 var(--space-3)',
-        fontSize: 'var(--text-sm)',
-      }}
-      onClick={onClick}
-    >
+    <IonButton fill="outline" size="small" onClick={onClick}>
       {label}
-    </button>
+    </IonButton>
   )
 }

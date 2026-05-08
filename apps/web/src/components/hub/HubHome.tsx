@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl';
 import Image from '@/lib/Image'
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { ChevronRight, Building2, ChefHat, HandHelping, Store, Boxes, Factory, Shapes, Plus, UserPlus } from 'lucide-react'
+import { ChevronRight, Building2, ChefHat, HandHelping, Store, Boxes, Factory, Shapes, Plus, UserPlus, SearchX } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
@@ -208,7 +208,7 @@ function HubHomeBody() {
     }
 
     // Ultimate fallback
-    return <Building2 className="w-5 h-5 text-brand" />
+    return <Building2 className="w-6 h-6 text-brand" />
   }
 
   const renderBusinessItem = (business: Business) => (
@@ -245,6 +245,7 @@ function HubHomeBody() {
       />
       {searchQuery && !hasFilteredResults && (
         <div className="flex flex-col items-center justify-center py-8 text-center">
+          <SearchX className="w-10 h-10 text-text-tertiary mb-3" />
           <p className="text-sm text-text-secondary">
             {intl.formatMessage({ id: 'hub.no_results' }, { query: searchQuery })}
           </p>
@@ -252,7 +253,7 @@ function HubHomeBody() {
       )}
       {ownedBusinesses.length > 0 && (
         <div>
-          <h2 className="text-base font-semibold text-text-primary mb-2 px-1">
+          <h2 className="text-base font-semibold text-text-primary mb-2 px-0">
             {ownedBusinesses.length === 1
               ? intl.formatMessage({ id: 'hub.section_owned_singular' })
               : intl.formatMessage({ id: 'hub.section_owned_plural' })}
@@ -264,7 +265,7 @@ function HubHomeBody() {
       )}
       {joinedBusinesses.length > 0 && (
         <div>
-          <h2 className="text-base font-semibold text-text-primary mb-2 px-1">
+          <h2 className="text-base font-semibold text-text-primary mb-2 px-0">
             {joinedBusinesses.length === 1
               ? intl.formatMessage({ id: 'hub.section_joined_singular' })
               : intl.formatMessage({ id: 'hub.section_joined_plural' })}
@@ -302,7 +303,7 @@ function HubActionCards({ onCreate, onJoin }: HubActionCardsProps) {
               {intl.formatMessage({ id: 'hub.action_create_desc' })}
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 mt-1" />
+          <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
         </IonCardContent>
       </IonCard>
       <IonCard button onClick={onJoin} className="m-0">
@@ -318,7 +319,7 @@ function HubActionCards({ onCreate, onJoin }: HubActionCardsProps) {
               {intl.formatMessage({ id: 'hub.action_join_desc' })}
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 mt-1" />
+          <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
         </IonCardContent>
       </IonCard>
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import React, { useRef, useCallback } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { Product, Provider } from '@kasero/shared/types'
@@ -134,16 +134,23 @@ export function OrderDetailModal({
     onExitComplete()
   }, [onClose, onExitComplete])
 
+  // Stable root thunks — all hooks must run before any early return.
+  // useCallback with [] so IonNav never remounts the step stack due to a new
+  // function reference on every parent render.
+  const editOrderStepRoot = useCallback(() => <EditOrderStep />, [])
+  const receiveOrderStepRoot = useCallback(() => <ReceiveOrderStep />, [])
+  const deleteOrderStepRoot = useCallback(() => <DeleteOrderConfirmStep />, [])
+  const overviewStepRoot = useCallback(() => <OrderOverviewStep />, [])
+
   if (!order) return null
 
   // Resolve which step component is the IonNav root based on initialStep.
   // 0 = overview, 1 = edit, 3 = receive, 5 = delete
-  function getRootStep() {
-    if (initialStep === 1) return () => <EditOrderStep />
-    if (initialStep === 3) return () => <ReceiveOrderStep />
-    if (initialStep === 5) return () => <DeleteOrderConfirmStep />
-    return () => <OrderOverviewStep />
-  }
+  let rootStep: () => React.ReactElement
+  if (initialStep === 1) rootStep = editOrderStepRoot
+  else if (initialStep === 3) rootStep = receiveOrderStepRoot
+  else if (initialStep === 5) rootStep = deleteOrderStepRoot
+  else rootStep = overviewStepRoot
 
   const callbacks: OrderDetailCallbacks = {
     onClose,
@@ -188,7 +195,7 @@ export function OrderDetailModal({
     <OrderDetailCallbacksContext.Provider value={callbacks}>
       <OrderNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={getRootStep()} />
+          <IonNav ref={navRef} root={rootStep} swipeGesture={false} />
         </ModalShell>
       </OrderNavRefContext.Provider>
     </OrderDetailCallbacksContext.Provider>

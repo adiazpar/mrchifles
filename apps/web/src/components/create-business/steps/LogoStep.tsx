@@ -10,10 +10,10 @@ import {
   IonButtons,
   IonBackButton,
   IonButton,
+  IonSpinner,
 } from '@ionic/react'
 import { Upload, X } from 'lucide-react'
 import Image from '@/lib/Image'
-import { Spinner } from '@/components/ui'
 import {
   BUSINESS_TYPE_ICONS,
   BUSINESS_TYPE_FALLBACK_EMOJIS,
@@ -174,7 +174,7 @@ export function LogoStep() {
             onClick={handleCreate}
           >
             {isCreating ? (
-              <Spinner size="sm" />
+              <IonSpinner name="crescent" />
             ) : (
               t.formatMessage({ id: 'createBusiness.button_create' })
             )}

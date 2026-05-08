@@ -8,18 +8,23 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { Spinner, StockStepper } from '@/components/ui'
+import { StockStepper } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
+import { useApiMessage } from '@/hooks/useApiMessage'
+import { ApiError } from '@/lib/api-client'
 
 export function AdjustInventoryStep() {
   const t = useIntl()
   const navRef = useProductNavRef()
   const { onSaveAdjustment } = useEditProductCallbacks()
+  const translateApiMessage = useApiMessage()
   const {
     editingProduct,
     iconPreview,
@@ -40,11 +45,15 @@ export function AdjustInventoryStep() {
         expectedStockValue: editingProduct.stock ?? 0,
       })
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t.formatMessage({ id: 'productForm.failed_to_save' }),
-      )
+      if (err instanceof ApiError && err.envelope) {
+        setError(translateApiMessage(err.envelope))
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : t.formatMessage({ id: 'productForm.failed_to_save' }),
+        )
+      }
     }
   }
 
@@ -99,22 +108,19 @@ export function AdjustInventoryStep() {
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
-            <button
-              type="button"
+            <IonButton
+              fill="outline"
               onClick={() => navRef.current?.pop()}
-              className="btn btn-secondary flex-1"
               disabled={isAdjusting}
             >
               {t.formatMessage({ id: 'common.cancel' })}
-            </button>
-            <button
-              type="button"
+            </IonButton>
+            <IonButton
               onClick={handleSave}
-              className="btn btn-primary flex-1"
               disabled={isAdjusting || newStockValue === (editingProduct?.stock ?? 0)}
             >
-              {isAdjusting ? <Spinner /> : t.formatMessage({ id: 'common.save' })}
-            </button>
+              {isAdjusting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

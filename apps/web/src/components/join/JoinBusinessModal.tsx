@@ -3,7 +3,8 @@
 import { useIntl } from 'react-intl';
 import { useState, useEffect, useCallback } from 'react'
 import { Crown, Building2 } from 'lucide-react'
-import { ModalShell, Spinner } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import type { UseJoinBusinessReturn, CodeType } from '@/hooks'
 
@@ -31,6 +32,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
     handleValidateCode,
     handleJoinOrAccept,
     handleTryAgain,
+    handleSuccessDone,
     isJoining,
     joinSuccess,
   } = joinBusiness
@@ -79,51 +81,53 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
   const footer =
     step === 'code' ? (
       <>
-        <button
-          type="button"
+        <IonButton
+          fill="outline"
           onClick={onClose}
-          className="btn btn-secondary flex-1"
           disabled={isValidating}
+          className="flex-1"
         >
           {t.formatMessage({ id: 'common.cancel' })}
-        </button>
-        <button
-          type="button"
+        </IonButton>
+        <IonButton
           onClick={handleValidate}
           disabled={code.length < 6 || isValidating}
-          className="btn btn-primary flex-1"
+          className="flex-1"
         >
-          {isValidating ? <Spinner size="sm" /> : t.formatMessage({ id: 'common.continue' })}
-        </button>
+          {isValidating ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.continue' })}
+        </IonButton>
       </>
     ) : step === 'preview' ? (
       <>
-        <button
-          type="button"
+        <IonButton
+          fill="outline"
           onClick={onClose}
-          className="btn btn-secondary flex-1"
           disabled={isJoining}
+          className="flex-1"
         >
           {codeType === 'transfer'
             ? t.formatMessage({ id: 'joinBusiness.button_decline' })
             : t.formatMessage({ id: 'common.cancel' })}
-        </button>
-        <button
-          type="button"
+        </IonButton>
+        <IonButton
           onClick={handleJoin}
           disabled={isJoining}
-          className="btn btn-primary flex-1"
+          className="flex-1"
         >
           {isJoining ? (
-            <Spinner size="sm" />
+            <IonSpinner name="crescent" />
           ) : codeType === 'transfer' ? (
             t.formatMessage({ id: 'joinBusiness.button_accept_transfer' })
           ) : (
             t.formatMessage({ id: 'joinBusiness.button_join_business' })
           )}
-        </button>
+        </IonButton>
       </>
-    ) : undefined
+    ) : (
+      <IonButton expand="block" onClick={handleSuccessDone} className="flex-1">
+        {t.formatMessage({ id: 'common.continue' })}
+      </IonButton>
+    )
 
   return (
     <ModalShell
@@ -132,6 +136,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
       title={title}
       onBack={onBack}
       footer={footer}
+      noSwipeDismiss
     >
       {step === 'code' && (
         <CodeInputContent
@@ -217,7 +222,7 @@ function CodeInputContent({
       )}
       {isValidating && (
         <div className="flex items-center justify-center gap-2 text-text-secondary">
-          <Spinner size="sm" />
+          <IonSpinner name="crescent" />
           <span className="text-sm">{t.formatMessage({ id: 'joinBusiness.validating_code' })}</span>
         </div>
       )}
@@ -249,7 +254,7 @@ function PreviewContent({ codeType, business, role, fromUser, isJoining }: Previ
   if (isJoining) {
     return (
       <div className="flex flex-col items-center justify-center py-8 gap-3 p-4">
-        <Spinner size="lg" />
+        <IonSpinner name="crescent" className="w-8 h-8" />
         <p className="text-text-secondary">
           {codeType === 'transfer'
             ? t.formatMessage({ id: 'joinBusiness.accepting_transfer' })
@@ -337,12 +342,6 @@ function SuccessContent({ codeType, business, joinSuccess }: SuccessContentProps
         {codeType === 'transfer'
           ? t.formatMessage({ id: 'joinBusiness.success_transfer_description' }, { name: businessName })
           : t.formatMessage({ id: 'joinBusiness.success_join_description' }, { name: businessName })}
-      </p>
-      <p
-        className="text-xs text-text-tertiary mt-3 transition-opacity duration-500 delay-300"
-        style={{ opacity: joinSuccess ? 1 : 0 }}
-      >
-        {t.formatMessage({ id: 'joinBusiness.redirecting' })}
       </p>
     </div>
   )

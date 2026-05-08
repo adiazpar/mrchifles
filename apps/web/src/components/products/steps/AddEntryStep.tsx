@@ -9,8 +9,10 @@ import {
   IonFooter,
   IonButtons,
   IonButton,
+  IonCard,
+  IonCardContent,
 } from '@ionic/react'
-import { Sparkles, UserPlus, FileScan, FileSpreadsheet } from 'lucide-react'
+import { Sparkles, UserPlus, FileScan, FileSpreadsheet, ChevronRight } from 'lucide-react'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
 import { AiPhotoStep } from './AiPhotoStep'
 import { FormStep } from './FormStep'
@@ -59,32 +61,34 @@ export function AddEntryStep() {
             </linearGradient>
           </defs>
         </svg>
-        <div className="caja-actions caja-actions--stacked">
-          <div className="caja-actions">
-            <button
-              type="button"
-              onClick={goToAiPhoto}
-              className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
-            >
-              <Sparkles className="caja-action-btn__icon" color={`url(#${gradientId})`} />
-              <div className="caja-action-btn__text">
-                <span className="caja-action-btn__title">{t.formatMessage({ id: 'productForm.snap_to_add_title' })}</span>
-                <span className="caja-action-btn__desc">{t.formatMessage({ id: 'productForm.snap_to_add_desc' })}</span>
-              </div>
-            </button>
+        <div className="space-y-3">
+          <div className="space-y-3">
+            <IonCard button onClick={goToAiPhoto} className="m-0">
+              <IonCardContent className="flex items-start gap-4 py-5">
+                <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-6 h-6" color={`url(#${gradientId})`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-semibold text-text-primary">{t.formatMessage({ id: 'productForm.snap_to_add_title' })}</div>
+                  <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.snap_to_add_desc' })}</div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
+              </IonCardContent>
+            </IonCard>
 
-            <button
-              type="button"
-              disabled
-              className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
-              title={t.formatMessage({ id: 'productForm.add_from_document_desc' })}
-            >
-              <FileScan className="caja-action-btn__icon" color={`url(#${gradientId})`} />
-              <div className="caja-action-btn__text">
-                <span className="caja-action-btn__title">{t.formatMessage({ id: 'productForm.add_from_document_title' })}</span>
-                <span className="caja-action-btn__desc">{t.formatMessage({ id: 'productForm.add_from_document_desc' })}</span>
+            {/* Disabled card — plain div avoids IonCard shadow-DOM pointer-events leak */}
+            <div className="m-0 opacity-40 pointer-events-none rounded-lg border border-[var(--color-border)] bg-[var(--ion-card-background,var(--color-bg-card,#fff))]">
+              <div className="flex items-start gap-4 py-5 px-4">
+                <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
+                  <FileScan className="w-6 h-6" color={`url(#${gradientId})`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-semibold text-text-primary">{t.formatMessage({ id: 'productForm.add_from_document_title' })}</div>
+                  <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.add_from_document_desc' })}</div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
               </div>
-            </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-3" aria-hidden="true">
@@ -95,31 +99,33 @@ export function AddEntryStep() {
             <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
           </div>
 
-          <div className="caja-actions">
-            <button
-              type="button"
-              onClick={goToManual}
-              className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
-            >
-              <UserPlus className="caja-action-btn__icon text-text-secondary" />
-              <div className="caja-action-btn__text">
-                <span className="caja-action-btn__title">{t.formatMessage({ id: 'productForm.add_manually_title' })}</span>
-                <span className="caja-action-btn__desc">{t.formatMessage({ id: 'productForm.add_manually_desc' })}</span>
-              </div>
-            </button>
+          <div className="space-y-3">
+            <IonCard button onClick={goToManual} className="m-0">
+              <IonCardContent className="flex items-start gap-4 py-5">
+                <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
+                  <UserPlus className="w-6 h-6 text-text-secondary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-semibold text-text-primary">{t.formatMessage({ id: 'productForm.add_manually_title' })}</div>
+                  <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.add_manually_desc' })}</div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
+              </IonCardContent>
+            </IonCard>
 
-            <button
-              type="button"
-              disabled
-              className="caja-action-btn caja-action-btn--large caja-action-btn--align-start"
-              title={t.formatMessage({ id: 'productForm.import_file_desc' })}
-            >
-              <FileSpreadsheet className="caja-action-btn__icon text-text-tertiary" />
-              <div className="caja-action-btn__text">
-                <span className="caja-action-btn__title">{t.formatMessage({ id: 'productForm.import_file_title' })}</span>
-                <span className="caja-action-btn__desc">{t.formatMessage({ id: 'productForm.import_file_desc' })}</span>
+            {/* Disabled card — plain div avoids IonCard shadow-DOM pointer-events leak */}
+            <div className="m-0 opacity-40 pointer-events-none rounded-lg border border-[var(--color-border)] bg-[var(--ion-card-background,var(--color-bg-card,#fff))]">
+              <div className="flex items-start gap-4 py-5 px-4">
+                <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
+                  <FileSpreadsheet className="w-6 h-6 text-text-tertiary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-semibold text-text-primary">{t.formatMessage({ id: 'productForm.import_file_title' })}</div>
+                  <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.import_file_desc' })}</div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
               </div>
-            </button>
+            </div>
           </div>
         </div>
       </IonContent>

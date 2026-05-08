@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl';
 import Image from '@/lib/Image'
 import { Fragment, memo, useMemo } from 'react'
 import { X, Plus, ChevronUp, Loader2, Tags, ListFilter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff, Printer } from 'lucide-react'
-import { IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList } from '@ionic/react'
+import { IonButton, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { printBarcodeLabel } from '@/lib/barcode-print'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -178,11 +178,11 @@ export function ProductsTab({
               )}
             </div>
             {onScanClick && (
-              <button
-                type="button"
+              <IonButton
+                fill="outline"
+                shape="round"
                 onClick={onScanClick}
                 disabled={scanBusy}
-                className="btn btn-secondary btn-icon flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label={intl.formatMessage({
                   id: 'products.scan_aria'
                 })}
@@ -192,18 +192,18 @@ export function ProductsTab({
                 ) : (
                   <ScanLine size={18} />
                 )}
-              </button>
+              </IonButton>
             )}
-            <button
-              type="button"
+            <IonButton
+              fill="outline"
+              shape="round"
               onClick={() => onSortSheetOpenChange(true)}
-              className="btn btn-secondary btn-icon flex-shrink-0"
               aria-label={intl.formatMessage({
                 id: 'products.sort_filter_aria'
               })}
             >
               <ListFilter style={{ width: 18, height: 18 }} />
-            </button>
+            </IonButton>
           </div>
           {scanHiddenInput}
 
@@ -231,17 +231,12 @@ export function ProductsTab({
                 )}
               </div>
               {canManage && (
-                <button
-                  type="button"
-                  onClick={onAddProduct}
-                  className="btn btn-primary"
-                  style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
-                >
+                <IonButton onClick={onAddProduct} size="small" shape="round">
                   <Plus style={{ width: 14, height: 14 }} />
                   {intl.formatMessage({
                     id: 'products.add_button'
                   })}
-                </button>
+                </IonButton>
               )}
             </div>
 
@@ -297,15 +292,10 @@ export function ProductsTab({
             {intl.formatMessage({ id: 'products.empty_state_description' })}
           </p>
           {canManage && (
-            <button
-              type="button"
-              onClick={onAddProduct}
-              className="btn btn-primary"
-              style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
-            >
+            <IonButton onClick={onAddProduct} size="small">
               <Plus className="w-4 h-4" />
               {intl.formatMessage({ id: 'products.empty_state_button' })}
-            </button>
+            </IonButton>
           )}
         </div>
       )}
@@ -318,15 +308,11 @@ export function ProductsTab({
         })}
         variant="half"
         footer={
-          <button
-            type="button"
-            onClick={() => onSortSheetOpenChange(false)}
-            className="btn btn-primary flex-1"
-          >
+          <IonButton onClick={() => onSortSheetOpenChange(false)}>
             {intl.formatMessage({
               id: 'common.done'
             })}
-          </button>
+          </IonButton>
         }
       >
         <div className="modal-step-item">
@@ -512,7 +498,7 @@ const ProductListItem = memo(function ProductListItem({
             </div>
           )}
         </IonLabel>
-        <div slot="end" className="text-right flex-shrink-0 mr-2">
+        <div slot="end" className="text-right flex-shrink-0 mr-3">
           <div className={`font-medium ${!product.active ? 'text-text-tertiary' : 'text-text-primary'}`}>
             {formatCurrency(product.price)}
           </div>

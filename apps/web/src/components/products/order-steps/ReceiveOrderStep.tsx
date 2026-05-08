@@ -9,10 +9,11 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
-import { Spinner } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -112,22 +113,20 @@ export function ReceiveOrderStep() {
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
             {openedFromSwipe ? (
-              <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
+              <IonButton fill="outline" onClick={onClose}>
                 {t.formatMessage({ id: 'common.cancel' })}
-              </button>
+              </IonButton>
             ) : (
-              <button type="button" onClick={() => navRef.current?.pop()} className="btn btn-secondary flex-1">
+              <IonButton fill="outline" onClick={() => navRef.current?.pop()}>
                 {t.formatMessage({ id: 'common.cancel' })}
-              </button>
+              </IonButton>
             )}
-            <button
-              type="button"
+            <IonButton
               onClick={handleReceive}
-              className="btn btn-primary flex-1"
               disabled={isReceiving}
             >
-              {isReceiving ? <Spinner /> : t.formatMessage({ id: 'common.confirm' })}
-            </button>
+              {isReceiving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.confirm' })}
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

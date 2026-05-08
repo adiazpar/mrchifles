@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { useState } from 'react'
 import { useParams } from 'react-router'
 import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig, Pencil, Trash2 } from 'lucide-react'
-import { IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonList, IonSpinner } from '@ionic/react'
+import { IonButton, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonList, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { usePageTransition } from '@/contexts/page-transition-context'
@@ -165,15 +165,10 @@ export function OrdersTab({
             {intl.formatMessage({ id: 'orders.empty_no_orders_description' })}
           </p>
           {canManage && (
-            <button
-              type="button"
-              onClick={onNewOrder}
-              className="btn btn-primary"
-              style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
-            >
+            <IonButton onClick={onNewOrder} size="small">
               <Plus className="w-4 h-4" />
               {intl.formatMessage({ id: 'orders.create_order_button' })}
-            </button>
+            </IonButton>
           )}
         </div>
       ) : (
@@ -205,8 +200,9 @@ export function OrdersTab({
                 </button>
               )}
             </div>
-            <button
-              type="button"
+            <IonButton
+              fill={viewMode === 'completed' ? 'solid' : 'outline'}
+              shape="round"
               onClick={() => onViewModeChange(viewMode === 'completed' ? 'active' : 'completed')}
               aria-pressed={viewMode === 'completed'}
               aria-label={
@@ -214,24 +210,19 @@ export function OrdersTab({
                   ? intl.formatMessage({ id: 'orders.toggle_showing_completed_aria' })
                   : intl.formatMessage({ id: 'orders.toggle_show_completed_aria' })
               }
-              className={`btn btn-icon !rounded-full flex-shrink-0 ${
-                viewMode === 'completed'
-                  ? 'border-brand bg-brand-subtle text-brand'
-                  : 'btn-secondary'
-              }`}
             >
               <CircleCheckBig style={{ width: 18, height: 18 }} />
-            </button>
-            <button
-              type="button"
+            </IonButton>
+            <IonButton
+              fill="outline"
+              shape="round"
               onClick={() => setSortSheetOpen(true)}
-              className="btn btn-secondary btn-icon flex-shrink-0"
               aria-label={intl.formatMessage({
                 id: 'orders.sort_filter_aria'
               })}
             >
               <ListFilter style={{ width: 18, height: 18 }} />
-            </button>
+            </IonButton>
           </div>
           {/* Orders List Card */}
           <div className="bg-bg-surface rounded-2xl p-4 space-y-4">
@@ -259,17 +250,12 @@ export function OrdersTab({
                 </button>
               </div>
               {canManage && (
-                <button
-                  type="button"
-                  onClick={onNewOrder}
-                  className="btn btn-primary"
-                  style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
-                >
+                <IonButton onClick={onNewOrder} size="small" shape="round">
                   <Plus style={{ width: 14, height: 14 }} />
                   {intl.formatMessage({
                     id: 'common.add'
                   })}
-                </button>
+                </IonButton>
               )}
             </div>
 
@@ -377,15 +363,11 @@ export function OrdersTab({
         })}
         variant="half"
         footer={
-          <button
-            type="button"
-            onClick={() => setSortSheetOpen(false)}
-            className="btn btn-primary flex-1"
-          >
+          <IonButton onClick={() => setSortSheetOpen(false)}>
             {intl.formatMessage({
               id: 'common.done'
             })}
-          </button>
+          </IonButton>
         }
       >
         <div className="modal-step-item">

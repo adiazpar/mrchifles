@@ -1,6 +1,5 @@
-import { useEffect } from 'react'
 import { useIntl } from 'react-intl'
-import { IonPage, IonContent } from '@ionic/react'
+import { IonButton, IonPage, IonContent } from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useCreateBusinessCtx } from '../CreateBusinessModal'
 
@@ -8,16 +7,6 @@ export function SuccessStep() {
   const t = useIntl()
   const { createdBusiness, createSuccess, formData, handleClose, handleExitComplete, error } =
     useCreateBusinessCtx()
-
-  // Auto-close after the success animation plays.
-  useEffect(() => {
-    if (!createSuccess) return
-    const timer = setTimeout(() => {
-      handleClose()
-      handleExitComplete()
-    }, 2500)
-    return () => clearTimeout(timer)
-  }, [createSuccess, handleClose, handleExitComplete])
 
   return (
     <IonPage>
@@ -58,16 +47,16 @@ export function SuccessStep() {
             </div>
           )}
 
-          <button
-            type="button"
+          <IonButton
+            expand="block"
             onClick={() => {
               handleClose()
               handleExitComplete()
             }}
-            className="btn btn-primary mt-6 w-full"
+            className="mt-6 w-full"
           >
             {t.formatMessage({ id: 'common.done' })}
-          </button>
+          </IonButton>
         </div>
       </IonContent>
     </IonPage>

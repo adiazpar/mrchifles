@@ -33,6 +33,24 @@ export function SalesView() {
 
   const sessionOpen = Boolean(salesSessions.currentSession)
 
+  // Layout flip is deferred while either session-modal is open. Without this,
+  // the underlying layout swaps from reports → POS the moment `currentSession`
+  // updates inside `openSession()` — which happens DURING the modal's success
+  // step. ProductPicker + CartSheet would then mount while the modal is still
+  // showing the Lottie celebration; if anything in that mount path threw, the
+  // whole tree (including the modal) would unmount, leaving the IonModal
+  // backdrop orphaned in <body>. That presents as "blank screen + bricked
+  // taps" on iOS Safari (no error boundary used to be in place either).
+  //
+  // Locking the layout to its pre-modal value during the modal's lifecycle
+  // means the layout flip happens only after the modal has fully dismissed.
+  // ErrorBoundary in App.tsx is the fallback if anything still goes wrong.
+  const displaySessionOpen = openModalOpen
+    ? false
+    : closeModalOpen
+      ? true
+      : sessionOpen
+
   const statsCard = (
     <SalesStatsCard
       sessionOpen={sessionOpen}
@@ -43,11 +61,14 @@ export function SalesView() {
 
   return (
     <>
-      {sessionOpen ? (
+      {displaySessionOpen ? (
         // POS workspace layout: pinned stats + product grid + bottom cart sheet.
         // relative keeps CartSheet's absolute bottom-0 anchored to this container.
         // No outer padding — children handle their own padding to avoid double-margins.
-        <div className="relative flex h-full flex-col">
+        // Explicit `key` forces clean unmount/remount instead of in-place reconciliation
+        // when the layout flips, so React doesn't try to diff a reports-shaped subtree
+        // into a POS-shaped one mid-commit.
+        <div key="pos" className="relative flex h-full flex-col">
           {statsCard}
           <div className="flex-1 min-h-0 pt-4 flex flex-col">
             <ProductPicker cart={cart} />
@@ -56,7 +77,7 @@ export function SalesView() {
         </div>
       ) : (
         // Reports browse mode: vertically-scrollable column. IonContent owns scroll.
-        <div className="px-4 py-6 space-y-4">
+        <div key="reports" className="px-4 py-6 space-y-4">
           {statsCard}
           <SalesReports businessId={businessId} />
         </div>

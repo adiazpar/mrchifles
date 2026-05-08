@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import {
   IonModal,
   IonHeader,
@@ -34,6 +34,18 @@ interface ModalShellProps {
    * own IonContent per step, and nesting it inside IonContent breaks the layout.
    */
   rawContent?: boolean
+  /**
+   * Disables sheet swipe-to-dismiss. Drops the `0` snap point from the
+   * breakpoints array and removes the drag handle so the modal can ONLY be
+   * dismissed via an explicit close/cancel/done button. Required for any
+   * Pattern 1 modal that contains an IonInput AND a Lottie/celebration
+   * success step — when iOS dismisses the keyboard mid-step-transition,
+   * the resulting visualViewport resize can make Ionic's sheet gesture
+   * snap to the `0` breakpoint and auto-dismiss the modal, leaving the
+   * backdrop attached and the app feeling bricked. See ionic-team/ionic-framework
+   * issues #23878, #25245, #30144.
+   */
+  noSwipeDismiss?: boolean
 }
 
 /**
@@ -45,9 +57,13 @@ interface ModalShellProps {
  *   - Pattern 1: own a `step` state in the consumer; conditionally render
  *     different bodies; pass `onBack` to surface a back button when not on
  *     the first step.
- *   - Pattern 2: pass `<IonNav root={() => <FirstStep />} />` as `children`.
- *     Each step component renders its own IonHeader/IonContent. Generally
- *     omit `title` here — IonNav stack handles its own headers per step.
+ *   - Pattern 2: pass `<IonNav swipeGesture={false} root={StepComponent} />`
+ *     as `children` and set `rawContent`. The `swipeGesture={false}` is
+ *     CRITICAL: IonNav installs its own swipe-back gesture by default, which
+ *     fights IonModal's sheet-drag gesture for every touchstart. With both
+ *     active, the drag gesture wins and swallows all taps inside the modal.
+ *     Disabling IonNav's swipe-back keeps the modal's drag-down-to-dismiss
+ *     working. In-stack back navigation uses the IonBackButton instead.
  */
 export function ModalShell({
   isOpen,
@@ -58,9 +74,40 @@ export function ModalShell({
   footer,
   children,
   rawContent = false,
+  noSwipeDismiss = false,
 }: ModalShellProps) {
-  const breakpoints = variant === 'full' ? [0, 1] : [0, 0.5, 1]
-  const initialBreakpoint = variant === 'full' ? 1 : 0.5
+  // Sheet-mode is a property of `breakpoints` AND `initialBreakpoint` BOTH being
+  // defined — see @ionic/core modal.js: `isSheetModal = breakpoints !== undefined
+  // && initialBreakpoint !== undefined`. When sheet-mode is on, IonModal attaches
+  // a `KEYBOARD_DID_OPEN` listener (modal.js:474) that briefly disables the sheet
+  // gesture to work around a webview-resize bug — but the matching keyboard-DOWN
+  // path leaves the gesture in "free-scroll" mode, which on iOS makes the sheet
+  // snap-to-0 (dismiss) when an IonInput unmounts mid-step transition. The result
+  // is the modal auto-dismisses while a Lottie success step is rendering, and the
+  // backdrop can stick → app feels bricked.
+  //
+  // To kill this entirely, `noSwipeDismiss` makes BOTH breakpoints AND
+  // initialBreakpoint undefined, which flips `isSheetModal` to false. The modal
+  // becomes a regular IonModal: iOS-style fullscreen card animation, no sheet
+  // gesture, no keyboard-coupled gesture handler. Pattern 2 (`rawContent` +
+  // IonNav) is non-sheet for the same reason — IonNav owns its own per-step
+  // layout. Pattern 0 / 1 modals without `noSwipeDismiss` keep the sheet.
+  //
+  // The breakpoints array is memoized so passing a fresh reference on every
+  // parent render doesn't make IonModal re-evaluate its gesture mid-animation.
+  const breakpoints = useMemo<number[] | undefined>(() => {
+    if (rawContent || noSwipeDismiss) return undefined
+    return variant === 'full' ? [0, 1] : [0, 0.5, 1]
+  }, [rawContent, variant, noSwipeDismiss])
+  const initialBreakpoint =
+    rawContent || noSwipeDismiss
+      ? undefined
+      : variant === 'full'
+        ? 1
+        : 0.5
+  // Suppress the drag handle when swipe-dismiss is disabled — the handle
+  // implies draggability and is misleading if the user can't drag away.
+  const showHandle = !rawContent && !noSwipeDismiss
 
   return (
     <IonModal
@@ -68,7 +115,7 @@ export function ModalShell({
       onDidDismiss={onClose}
       breakpoints={breakpoints}
       initialBreakpoint={initialBreakpoint}
-      handle
+      handle={showHandle}
     >
       {title !== undefined && (
         <IonHeader>

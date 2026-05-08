@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { ModalShell, PriceInput, Spinner } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ModalShell, PriceInput } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
@@ -86,38 +87,24 @@ export function OpenSessionModal({
   // Step 0 footer — enter starting cash
   const step0Footer = (
     <>
-      <button
-        type="button"
-        onClick={onClose}
-        className="btn btn-secondary flex-1"
-        disabled={submitting}
-      >
+      <IonButton fill="outline" onClick={onClose} disabled={submitting}>
         {tCommon.formatMessage({ id: 'common.cancel' })}
-      </button>
-      <button
-        type="button"
-        onClick={handleConfirm}
-        className="btn btn-primary flex-1"
-        disabled={submitting}
-      >
+      </IonButton>
+      <IonButton onClick={handleConfirm} disabled={submitting}>
         {t.formatMessage({ id: 'sales.session.open_modal.confirm' })}
-      </button>
+      </IonButton>
     </>
   )
 
   // Step 1 footer — success or error
   const step1Footer = opened ? (
-    <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+    <IonButton onClick={onClose}>
       {tCommon.formatMessage({ id: 'common.done' })}
-    </button>
+    </IonButton>
   ) : error ? (
-    <button
-      type="button"
-      onClick={() => setStep(0)}
-      className="btn btn-secondary flex-1"
-    >
+    <IonButton fill="outline" onClick={() => setStep(0)}>
       {t.formatMessage({ id: 'sales.session.open_modal.error_back' })}
-    </button>
+    </IonButton>
   ) : null
 
   const footer = step === 0 ? step0Footer : step1Footer
@@ -129,6 +116,7 @@ export function OpenSessionModal({
       title={title}
       onBack={step === 1 && error ? () => setStep(0) : undefined}
       footer={footer}
+      noSwipeDismiss
     >
       {/* Step 0 — enter starting cash */}
       {step === 0 && (
@@ -172,7 +160,7 @@ export function OpenSessionModal({
           ) : error ? (
             <p className="text-sm text-error mt-4">{error}</p>
           ) : (
-            <Spinner />
+            <IonSpinner name="crescent" />
           )}
         </div>
       )}

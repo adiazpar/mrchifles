@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, X } from 'lucide-react'
-import { Input, Spinner } from '@/components/ui'
+import { IonButton, IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
@@ -105,7 +105,6 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
       await apiPatch('/api/auth/profile', { name: name.trim(), avatar })
       await refreshUser()
       setStep('success')
-      setTimeout(onClose, 1500)
     } catch (err) {
       if (err instanceof ApiError) {
         setError(
@@ -137,14 +136,20 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
   ])
 
   const saveButton = (
-    <button
-      type="button"
-      className="btn btn-primary flex-1"
+    <IonButton
+      expand="block"
       onClick={handleSave}
       disabled={!isValid || !hasChanges || isSaving}
+      className="flex-1"
     >
-      {isSaving ? <Spinner /> : tCommon.formatMessage({ id: 'common.save' })}
-    </button>
+      {isSaving ? <IonSpinner name="crescent" /> : tCommon.formatMessage({ id: 'common.save' })}
+    </IonButton>
+  )
+
+  const doneButton = (
+    <IonButton expand="block" onClick={onClose} className="flex-1">
+      {tCommon.formatMessage({ id: 'common.done' })}
+    </IonButton>
   )
 
   return (
@@ -152,7 +157,8 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
       isOpen={isOpen}
       onClose={onClose}
       title={step === 'form' ? t.formatMessage({ id: 'account.profile_modal_title' }) : ''}
-      footer={step === 'form' ? saveButton : undefined}
+      footer={step === 'form' ? saveButton : doneButton}
+      noSwipeDismiss
     >
       {step === 'form' && (
         <>
@@ -219,31 +225,28 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
             })}</p>
           </div>
 
-          {/* Name */}
-          <Input
-            label={t.formatMessage({
-              id: 'account.profile_name_label'
-            })}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t.formatMessage({
-              id: 'account.profile_name_placeholder'
-            })}
-            autoComplete="name"
-            required
-          />
-
-          {/* Email (read-only) */}
-          <div className="mt-4">
-            <Input
-              label={t.formatMessage({
-                id: 'account.profile_email_label'
-              })}
-              value={user?.email ?? ''}
-              disabled
-              readOnly
-            />
-          </div>
+          {/* Name + Email */}
+          <IonList lines="full" inset>
+            <IonItem>
+              <IonInput
+                label={t.formatMessage({ id: 'account.profile_name_label' })}
+                labelPlacement="floating"
+                value={name}
+                onIonInput={(e) => setName(e.detail.value ?? '')}
+                autocomplete="name"
+                required
+              />
+            </IonItem>
+            <IonItem>
+              <IonInput
+                label={t.formatMessage({ id: 'account.profile_email_label' })}
+                labelPlacement="floating"
+                value={user?.email ?? ''}
+                disabled
+                readonly
+              />
+            </IonItem>
+          </IonList>
         </>
       )}
 

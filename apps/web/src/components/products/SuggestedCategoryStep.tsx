@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { useState, useEffect } from 'react'
-import { Spinner, TabContainer } from '@/components/ui'
+import { IonSpinner, IonButton } from '@ionic/react'
+import { TabContainer } from '@/components/ui'
 import type { ProductCategory } from '@kasero/shared/types'
 
 export interface SuggestedCategoryStepProps {
@@ -103,16 +104,15 @@ export function SuggestedCategoryStep({
           </div>
         )}
 
-        <button
-          type="button"
+        <IonButton
+          expand="block"
           onClick={handleCreate}
           disabled={isCreating || !name.trim()}
-          className="btn btn-primary w-full"
         >
-          {isCreating ? <Spinner /> : t.formatMessage({
+          {isCreating ? <IonSpinner name="crescent" /> : t.formatMessage({
             id: 'aiPipeline.create_and_continue'
           })}
-        </button>
+        </IonButton>
 
         {categories.length > 0 && (
           <>

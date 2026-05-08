@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useIntl } from 'react-intl';
-import { Spinner, ConfirmationAnimation } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ConfirmationAnimation } from '@/components/ui'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
 
@@ -54,38 +55,37 @@ export function AddProviderNoteModal({
   const isValid = title.trim().length > 0 && body.trim().length > 0
 
   // Optimistic: jump to success immediately, fire the API in the background.
-  // If it fails the parent surfaces the error on reopen.
+  // If it fails the parent surfaces the error on reopen. The user dismisses
+  // the success step manually via the Done button — never auto-close.
   const handleSave = () => {
     setStep('success')
     onSubmit()
-    setTimeout(onClose, 1500)
   }
 
   const formFooter = (
     <>
-      <button
-        type="button"
+      <IonButton
+        fill="outline"
         onClick={onClose}
-        className="btn btn-secondary flex-1"
         disabled={isSaving}
+        className="flex-1"
       >
         {t.formatMessage({ id: 'common.cancel' })}
-      </button>
-      <button
-        type="button"
+      </IonButton>
+      <IonButton
         onClick={handleSave}
-        className="btn btn-primary flex-1"
         disabled={isSaving || !isValid}
+        className="flex-1"
       >
-        {isSaving ? <Spinner /> : t.formatMessage({ id: 'common.save' })}
-      </button>
+        {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
+      </IonButton>
     </>
   )
 
   const successFooter = (
-    <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+    <IonButton expand="block" onClick={onClose} className="flex-1">
       {t.formatMessage({ id: 'common.done' })}
-    </button>
+    </IonButton>
   )
 
   return (
@@ -94,6 +94,7 @@ export function AddProviderNoteModal({
       onClose={onClose}
       title={step === 'form' ? t.formatMessage({ id: 'providers.note_modal_title_add' }) : ''}
       footer={step === 'form' ? formFooter : successFooter}
+      noSwipeDismiss
     >
       {step === 'form' && (
         <>

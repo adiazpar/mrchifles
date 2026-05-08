@@ -62,17 +62,19 @@ export function EditProductModal({
     canDelete,
   }
 
+  // Stable root thunks — useCallback with [] so IonNav never remounts the
+  // step stack due to a new function reference on every parent render.
+  const adjustStepRoot = useCallback(() => <AdjustInventoryStep />, [])
+  const editFormStepRoot = useCallback(() => <EditFormStep />, [])
+
   // When initialStep is 1, start at AdjustInventoryStep directly.
-  const rootComponent =
-    initialStep === 1
-      ? () => <AdjustInventoryStep />
-      : () => <EditFormStep />
+  const rootComponent = initialStep === 1 ? adjustStepRoot : editFormStepRoot
 
   return (
     <EditProductCallbacksContext.Provider value={callbacks}>
       <ProductNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={rootComponent} />
+          <IonNav ref={navRef} root={rootComponent} swipeGesture={false} />
         </ModalShell>
       </ProductNavRefContext.Provider>
     </EditProductCallbacksContext.Provider>

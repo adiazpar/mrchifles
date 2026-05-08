@@ -1,7 +1,21 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import Lottie, { LottieRefCurrentProps } from 'lottie-react'
+import LottieReact, { type LottieRefCurrentProps } from 'lottie-react'
+
+// `lottie-react`'s package.json declares `"browser": "build/index.umd.js"`.
+// Vite's resolver prefers the `browser` field over `module`, so it pulls in
+// the UMD build. The prebundled wrapper at
+// `apps/web/node_modules/.vite/deps/lottie-react.js` ends with
+// `export default require_index_umd()`, which is the entire UMD namespace
+// object — `{ default: <component>, useLottie, useLottieInteractivity,
+// LottiePlayer }`, NOT the React component. As a result `import Lottie from
+// 'lottie-react'` resolves to the namespace, and JSX rendering `<Lottie />`
+// throws "Element type is invalid ... got: object". Unwrap once, here.
+// (The fallback `?? LottieReact` keeps this safe if a future Vite/lottie-react
+// release fixes the package and the default export becomes the component.)
+const Lottie = ((LottieReact as unknown) as { default?: typeof LottieReact })
+  .default ?? LottieReact
 
 export interface LottiePlayerProps {
   src: string

@@ -65,7 +65,24 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': {
           target: apiTarget,
-          changeOrigin: true,
+          // Do NOT set `changeOrigin: true`. With it on, http-proxy
+          // rewrites the Host header to match the target ("localhost:8000")
+          // before forwarding. The API server's `request.url` is then
+          // built from "localhost:8000", but the Origin header (preserved
+          // by the proxy) still says "<tailscale-host>:3000". The CSRF
+          // middleware (apps/api/src/lib/api-middleware.ts → enforceSameOrigin)
+          // compares `URL(request.url).origin` against the Origin header
+          // and rejects the mismatch with FORBIDDEN. Login/register/invite
+          // routes are bare `export async function POST` (no wrapper), so
+          // they bypass the check — but every withAuth/withBusinessAuth
+          // POST (sales sessions, products, providers, orders, etc.)
+          // breaks on Tailscale device testing.
+          //
+          // Keeping the original Host header lets the API server see the
+          // real Tailscale hostname, which matches the Origin, and the
+          // CSRF check passes. SSL verification is disabled below so the
+          // Vite-cert-vs-Tailscale-cert mismatch on the inner connection
+          // doesn't matter.
           secure: false,
         },
       },

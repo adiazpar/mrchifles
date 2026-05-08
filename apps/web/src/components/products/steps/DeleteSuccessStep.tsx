@@ -1,5 +1,5 @@
 import { useIntl } from 'react-intl'
-import { IonPage, IonContent, IonFooter, IonToolbar } from '@ionic/react'
+import { IonPage, IonContent, IonFooter, IonToolbar, IonButton } from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useEditProductCallbacks } from './ProductNavContext'
@@ -46,9 +46,9 @@ export function DeleteSuccessStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button type="button" onClick={handleDone} className="btn btn-primary w-full">
+          <IonButton expand="block" onClick={handleDone}>
             {t.formatMessage({ id: 'common.done' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

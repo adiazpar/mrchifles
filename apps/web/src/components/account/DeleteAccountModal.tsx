@@ -4,7 +4,8 @@ import { useIntl } from 'react-intl';
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { AlertTriangle } from 'lucide-react'
-import { ModalShell, Input, Spinner } from '@/components/ui'
+import { IonButton, IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError, apiRequest } from '@/lib/api-client'
@@ -141,22 +142,24 @@ export function DeleteAccountModal({
   }, [canDelete, user, confirmEmail, currentPassword, logout, router, translateApiMessage, tCommon])
 
   const footer = isBlocked ? (
-    <button
-      type="button"
-      className="btn btn-secondary flex-1"
+    <IonButton
+      fill="outline"
+      expand="block"
       onClick={onClose}
+      className="flex-1"
     >
       {tCommon.formatMessage({ id: 'common.close' })}
-    </button>
+    </IonButton>
   ) : (
-    <button
-      type="button"
-      className="btn btn-danger flex-1"
+    <IonButton
+      color="danger"
+      expand="block"
       onClick={handleDelete}
       disabled={!canDelete}
+      className="flex-1"
     >
-      {isDeleting ? <Spinner /> : t.formatMessage({ id: 'account.delete_button' })}
-    </button>
+      {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'account.delete_button' })}
+    </IonButton>
   )
 
   return (
@@ -175,7 +178,7 @@ export function DeleteAccountModal({
 
         {isCheckLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
-            <Spinner className="spinner-lg" />
+            <IonSpinner name="crescent" className="w-8 h-8" />
             <p className="text-sm text-text-tertiary">
               {t.formatMessage({ id: 'account.delete_loading_check' })}
             </p>
@@ -270,24 +273,30 @@ function ConfirmState({
           {t.formatMessage({ id: 'account.delete_warning_description' })}
         </p>
       </div>
-      <Input
-        label={t.formatMessage({ id: 'account.delete_confirm_label' })}
-        value={confirmEmail}
-        onChange={(e) => onConfirmEmailChange(e.target.value)}
-        placeholder={email || t.formatMessage({ id: 'account.delete_confirm_placeholder' })}
-        autoComplete="off"
-        type="email"
-        required
-      />
-      <Input
-        label={t.formatMessage({ id: 'account.delete_password_label' })}
-        value={currentPassword}
-        onChange={(e) => onCurrentPasswordChange(e.target.value)}
-        placeholder={t.formatMessage({ id: 'account.delete_password_placeholder' })}
-        autoComplete="current-password"
-        type="password"
-        required
-      />
+      <IonList lines="full" inset>
+        <IonItem>
+          <IonInput
+            type="email"
+            label={t.formatMessage({ id: 'account.delete_confirm_label' })}
+            labelPlacement="floating"
+            value={confirmEmail}
+            onIonInput={(e) => onConfirmEmailChange(e.detail.value ?? '')}
+            autocomplete="off"
+            required
+          />
+        </IonItem>
+        <IonItem>
+          <IonInput
+            type="password"
+            label={t.formatMessage({ id: 'account.delete_password_label' })}
+            labelPlacement="floating"
+            value={currentPassword}
+            onIonInput={(e) => onCurrentPasswordChange(e.detail.value ?? '')}
+            autocomplete="current-password"
+            required
+          />
+        </IonItem>
+      </IonList>
     </div>
   )
 }

@@ -9,10 +9,12 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import Image from '@/lib/Image'
-import { Spinner, PriceInput } from '@/components/ui'
+import { PriceInput } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -108,9 +110,9 @@ export function EditOrderStep() {
           <IonTitle>{t.formatMessage({ id: 'orders.edit_order_title' })}</IonTitle>
           {openedFromSwipe && (
             <IonButtons slot="end">
-              <button type="button" onClick={onClose} className="btn-text">
+              <IonButton fill="clear" onClick={onClose}>
                 {t.formatMessage({ id: 'common.cancel' })}
-              </button>
+              </IonButton>
             </IonButtons>
           )}
         </IonToolbar>
@@ -304,22 +306,20 @@ export function EditOrderStep() {
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
             {openedFromSwipe ? (
-              <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
+              <IonButton fill="outline" onClick={onClose}>
                 {t.formatMessage({ id: 'common.cancel' })}
-              </button>
+              </IonButton>
             ) : (
-              <button type="button" onClick={() => navRef.current?.pop()} className="btn btn-secondary flex-1">
+              <IonButton fill="outline" onClick={() => navRef.current?.pop()}>
                 {t.formatMessage({ id: 'common.cancel' })}
-              </button>
+              </IonButton>
             )}
-            <button
-              type="button"
+            <IonButton
               onClick={handleSave}
-              className="btn btn-primary flex-1"
               disabled={isDisabled}
             >
-              {isSaving ? <Spinner /> : t.formatMessage({ id: 'common.save' })}
-            </button>
+              {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

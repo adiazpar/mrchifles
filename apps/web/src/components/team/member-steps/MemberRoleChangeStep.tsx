@@ -8,8 +8,9 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
+  IonButton,
 } from '@ionic/react'
-import { Spinner } from '@/components/ui'
 import { RoleChangeContent } from '../RoleChangeStep'
 import { useMemberNavRef, useMemberCallbacks } from './MemberNavContext'
 import { MemberPartnerWarningStep } from './MemberPartnerWarningStep'
@@ -58,22 +59,19 @@ export function MemberRoleChangeStep() {
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
-            <button
-              type="button"
+            <IonButton
+              fill="outline"
               onClick={() => navRef.current?.pop()}
-              className="btn btn-secondary flex-1"
               disabled={roleChangeLoading}
             >
               {t.formatMessage({ id: 'common.cancel' })}
-            </button>
-            <button
-              type="button"
+            </IonButton>
+            <IonButton
               onClick={handleSave}
-              className="btn btn-primary flex-1"
               disabled={roleChangeLoading || isDisabled}
             >
-              {roleChangeLoading ? <Spinner /> : t.formatMessage({ id: 'common.save' })}
-            </button>
+              {roleChangeLoading ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

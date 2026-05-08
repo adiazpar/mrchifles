@@ -8,12 +8,13 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { Spinner } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useOrderNavRef, useNewOrderCallbacks } from './OrderNavContext'
 import { NewOrderSuccessStep } from './NewOrderSuccessStep'
@@ -119,14 +120,13 @@ export function ConfirmOrderStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
+          <IonButton
+            expand="block"
             onClick={handleConfirm}
-            className="btn btn-primary w-full"
             disabled={isSaving}
           >
-            {isSaving ? <Spinner /> : t.formatMessage({ id: 'common.confirm' })}
-          </button>
+            {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.confirm' })}
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

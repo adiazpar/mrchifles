@@ -3,7 +3,8 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { ArrowRightLeft } from 'lucide-react'
-import { ModalShell, Spinner } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 
 interface Props {
@@ -85,26 +86,25 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
 
   const footer = (
     <>
-      <button
-        type="button"
+      <IonButton
+        fill="outline"
         onClick={handleDecline}
         disabled={busy || !transfer}
-        className="btn btn-secondary flex-1"
+        className="flex-1"
       >
-        {isDeclining ? <Spinner size="sm" /> : tAccount.formatMessage({
+        {isDeclining ? <IonSpinner name="crescent" /> : tAccount.formatMessage({
           id: 'account.incoming_transfer_decline'
         })}
-      </button>
-      <button
-        type="button"
+      </IonButton>
+      <IonButton
         onClick={handleAccept}
         disabled={busy || !transfer}
-        className="btn btn-primary flex-1"
+        className="flex-1"
       >
-        {isAccepting ? <Spinner size="sm" /> : tAccount.formatMessage({
+        {isAccepting ? <IonSpinner name="crescent" /> : tAccount.formatMessage({
           id: 'account.incoming_transfer_accept'
         })}
-      </button>
+      </IonButton>
     </>
   )
 

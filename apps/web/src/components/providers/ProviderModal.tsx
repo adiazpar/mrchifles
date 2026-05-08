@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useIntl } from 'react-intl';
 import { Trash2 } from 'lucide-react'
-import { Spinner, ConfirmationAnimation } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ConfirmationAnimation } from '@/components/ui'
 import { ModalShell } from '@/components/ui/modal-shell'
 import type { Provider } from '@kasero/shared/types'
 
@@ -110,10 +111,10 @@ export function ProviderModal({
     : true
 
   // Optimistic save: jump to success immediately, fire API in background.
+  // The user dismisses the success step manually via the Done button.
   const handleSave = () => {
     setStep('save-success')
     onSubmit()
-    setTimeout(onClose, 1500)
   }
 
   // Await the delete API — navigate on result so a failure shows the error on the form.
@@ -121,7 +122,6 @@ export function ProviderModal({
     const ok = await onDelete()
     if (ok) {
       setStep('delete-success')
-      setTimeout(onClose, 1500)
     } else {
       setStep('form')
     }
@@ -140,23 +140,22 @@ export function ProviderModal({
     footer = (
       <>
         {showDeleteAction && (
-          <button
-            type="button"
+          <IonButton
+            fill="clear"
+            shape="round"
             onClick={() => setStep('delete-confirm')}
-            className="btn btn-secondary btn-icon"
             aria-label={t.formatMessage({ id: 'common.delete' })}
           >
             <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
-          </button>
+          </IonButton>
         )}
-        <button
-          type="button"
+        <IonButton
           onClick={handleSave}
-          className="btn btn-primary flex-1"
           disabled={isSaving || !isFormValid || !hasChanges}
+          className="flex-1"
         >
-          {isSaving ? <Spinner /> : t.formatMessage({ id: 'providers.save_button' })}
-        </button>
+          {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'providers.save_button' })}
+        </IonButton>
       </>
     )
   } else if (step === 'delete-confirm') {
@@ -164,22 +163,22 @@ export function ProviderModal({
     onBack = openedFromSwipe ? undefined : () => setStep('form')
     footer = (
       <>
-        <button
-          type="button"
+        <IonButton
+          fill="outline"
           onClick={openedFromSwipe ? onClose : () => setStep('form')}
-          className="btn btn-secondary flex-1"
           disabled={isDeleting}
+          className="flex-1"
         >
           {t.formatMessage({ id: 'common.cancel' })}
-        </button>
-        <button
-          type="button"
+        </IonButton>
+        <IonButton
+          color="danger"
           onClick={handleDelete}
-          className="btn btn-danger flex-1"
           disabled={isDeleting}
+          className="flex-1"
         >
-          {isDeleting ? <Spinner /> : t.formatMessage({ id: 'common.delete' })}
-        </button>
+          {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
+        </IonButton>
       </>
     )
   } else {
@@ -187,9 +186,9 @@ export function ProviderModal({
     modalTitle = ''
     onBack = undefined
     footer = (
-      <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+      <IonButton expand="block" onClick={onClose} className="flex-1">
         {t.formatMessage({ id: 'common.done' })}
-      </button>
+      </IonButton>
     )
   }
 
@@ -200,6 +199,7 @@ export function ProviderModal({
       title={modalTitle}
       onBack={onBack}
       footer={footer}
+      noSwipeDismiss
     >
       {step === 'form' && (
         <>

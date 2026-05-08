@@ -8,8 +8,8 @@ import {
   IonFooter,
   IonButtons,
   IonButton,
+  IonSpinner,
 } from '@ionic/react'
-import { Spinner } from '@/components/ui'
 import { DurationPicker } from '../DurationPicker'
 import { RoleSelectionContent } from '../RoleSelectionContent'
 import { useInviteNavRef, useInviteCallbacks } from './InviteNavContext'
@@ -68,14 +68,13 @@ export function InviteRoleStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
-            className="btn btn-primary w-full"
+          <IonButton
+            expand="block"
             disabled={isGenerating}
             onClick={handleNext}
           >
-            {isGenerating ? <Spinner /> : t.formatMessage({ id: 'team.generate_code_button' })}
-          </button>
+            {isGenerating ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'team.generate_code_button' })}
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

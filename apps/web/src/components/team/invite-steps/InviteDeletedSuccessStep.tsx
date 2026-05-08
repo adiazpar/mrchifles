@@ -6,6 +6,7 @@ import {
   IonTitle,
   IonContent,
   IonFooter,
+  IonButton,
 } from '@ionic/react'
 import { ConfirmationAnimation } from '@/components/ui'
 import { useInviteCallbacks } from './InviteNavContext'
@@ -33,13 +34,9 @@ export function InviteDeletedSuccessStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn btn-primary w-full"
-          >
+          <IonButton expand="block" onClick={onClose}>
             {t.formatMessage({ id: 'common.close' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

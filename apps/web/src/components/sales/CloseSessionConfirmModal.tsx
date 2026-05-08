@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useMemo, useState } from 'react'
-import { ModalShell, PriceInput, Spinner } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ModalShell, PriceInput } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useSales } from '@/contexts/sales-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
@@ -113,60 +114,36 @@ export function CloseSessionConfirmModal({
   // Step 0 footer — count drawer
   const step0Footer = (
     <>
-      <button
-        type="button"
-        onClick={onClose}
-        className="btn btn-secondary flex-1"
-        disabled={submitting}
-      >
+      <IonButton fill="outline" onClick={onClose} disabled={submitting}>
         {tCommon.formatMessage({ id: 'common.cancel' })}
-      </button>
-      <button
-        type="button"
-        onClick={handleNext}
-        className="btn btn-primary flex-1"
-        disabled={submitting}
-      >
+      </IonButton>
+      <IonButton onClick={handleNext} disabled={submitting}>
         {t.formatMessage({ id: 'sales.session.close_modal.next' })}
-      </button>
+      </IonButton>
     </>
   )
 
   // Step 1 footer — variance review
   const step1Footer = (
     <>
-      <button
-        type="button"
-        onClick={() => setStep(0)}
-        className="btn btn-secondary flex-1"
-        disabled={submitting}
-      >
+      <IonButton fill="outline" onClick={() => setStep(0)} disabled={submitting}>
         {tCommon.formatMessage({ id: 'common.back' })}
-      </button>
-      <button
-        type="button"
-        onClick={handleConfirm}
-        className="btn btn-danger flex-1"
-        disabled={submitting}
-      >
+      </IonButton>
+      <IonButton color="danger" onClick={handleConfirm} disabled={submitting}>
         {t.formatMessage({ id: 'sales.session.close_modal.confirm' })}
-      </button>
+      </IonButton>
     </>
   )
 
   // Step 2 footer — success or error
   const step2Footer = closed ? (
-    <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+    <IonButton onClick={onClose}>
       {tCommon.formatMessage({ id: 'common.done' })}
-    </button>
+    </IonButton>
   ) : error ? (
-    <button
-      type="button"
-      onClick={() => setStep(1)}
-      className="btn btn-secondary flex-1"
-    >
+    <IonButton fill="outline" onClick={() => setStep(1)}>
       {t.formatMessage({ id: 'sales.session.close_modal.error_back' })}
-    </button>
+    </IonButton>
   ) : null
 
   const footer = step === 0 ? step0Footer : step === 1 ? step1Footer : step2Footer
@@ -178,6 +155,7 @@ export function CloseSessionConfirmModal({
       title={title}
       onBack={step === 1 ? () => setStep(0) : undefined}
       footer={footer}
+      noSwipeDismiss
     >
       {/* Step 0 — count drawer */}
       {step === 0 && (
@@ -254,7 +232,7 @@ export function CloseSessionConfirmModal({
           ) : error ? (
             <p className="text-sm text-error mt-4">{error}</p>
           ) : (
-            <Spinner />
+            <IonSpinner name="crescent" />
           )}
         </div>
       )}

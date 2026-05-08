@@ -9,6 +9,7 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonButton,
 } from '@ionic/react'
 import { CalendarClock, ChevronDown, ImageIcon, ImagePlus, Minus, Plus, Trash2 } from 'lucide-react'
 import { PriceInput } from '@/components/ui'
@@ -235,14 +236,13 @@ export function OrderDetailsStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
+          <IonButton
+            expand="block"
             onClick={() => navRef.current?.push(() => <ConfirmOrderStep />)}
-            className="btn btn-primary w-full"
             disabled={!orderTotal || parseFloat(orderTotal) <= 0}
           >
             {t.formatMessage({ id: 'orders.review_button' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

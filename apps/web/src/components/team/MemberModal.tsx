@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { User, UserRole } from '@kasero/shared/types'
@@ -74,11 +74,15 @@ export function MemberModal({
     onRemoveMember,
   }
 
+  // Stable root thunk — defined outside render via useCallback so IonNav never
+  // sees a new function reference between re-renders and avoids remounting.
+  const detailsStepRoot = useCallback(() => <MemberDetailsStep />, [])
+
   return (
     <MemberCallbacksContext.Provider value={callbacks}>
       <MemberNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={() => <MemberDetailsStep />} />
+          <IonNav ref={navRef} root={detailsStepRoot} swipeGesture={false} />
         </ModalShell>
       </MemberNavRefContext.Provider>
     </MemberCallbacksContext.Provider>

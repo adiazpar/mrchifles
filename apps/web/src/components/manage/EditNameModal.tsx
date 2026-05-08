@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { ModalShell } from '@/components/ui/modal-shell'
-import { Spinner } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { useBusiness } from '@/contexts/business-context'
 import { useUpdateBusiness } from '@/hooks/useUpdateBusiness'
 
@@ -35,14 +35,14 @@ export function EditNameModal({ isOpen, onClose }: Props) {
   }
 
   const footer = (
-    <button
-      type="button"
+    <IonButton
+      expand="block"
       onClick={handleSave}
       disabled={isSubmitting || !name.trim()}
-      className="btn btn-primary flex-1"
+      className="flex-1"
     >
-      {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({ id: 'manage.save' })}
-    </button>
+      {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.save' })}
+    </IonButton>
   )
 
   return (
