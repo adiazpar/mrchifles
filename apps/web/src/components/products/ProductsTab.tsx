@@ -512,7 +512,7 @@ const ProductListItem = memo(function ProductListItem({
             </div>
           )}
         </IonLabel>
-        <div slot="end" className="text-right flex-shrink-0 mr-2">
+        <div slot="end" className="text-right flex-shrink-0 mr-3">
           <div className={`font-medium ${!product.active ? 'text-text-tertiary' : 'text-text-primary'}`}>
             {formatCurrency(product.price)}
           </div>

@@ -621,13 +621,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     className="m-0 ion-activatable ripple-parent"
                   >
                     <div className="flex items-center gap-3 p-4">
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{
-                          backgroundColor:
-                            'color-mix(in oklab, var(--color-error) 22%, transparent)',
-                        }}
-                      >
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
                         <Bell className="w-5 h-5 text-error" />
                       </div>
                       <div className="flex-1 min-w-0">

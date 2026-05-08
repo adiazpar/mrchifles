@@ -60,6 +60,7 @@ export function ProductForm({
         value={activeTab}
         onIonChange={(e) => setActiveTab(e.detail.value as 'details' | 'barcode')}
         className="modal-step-item"
+        mode="md"
       >
         <IonSegmentButton value="details">
           <IonLabel>{t.formatMessage({ id: 'productForm.tab_details' })}</IonLabel>
