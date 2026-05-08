@@ -58,28 +58,37 @@ function enforceSameOrigin(request: NextRequest): NextResponse | null {
     // server-to-server call. Reject with 403 — legitimate clients
     // can re-issue with the proper header set automatically by the
     // browser.
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('[csrf] reject reason=missing-origin-and-referer', {
-        method: request.method,
-        url: request.url,
-        host: request.headers.get('host'),
-      })
-    }
     return errorResponse(ApiMessageCode.FORBIDDEN, 403)
   }
-  const allowedOrigin = new URL(request.url).origin
+
+  // Build the expected origin from the request's user-facing host, NOT
+  // from `new URL(request.url).origin`. In Next.js's Edge runtime,
+  // `request.url` reflects the API server's actual binding (e.g.
+  // `https://localhost:8000`), not the host the browser actually
+  // talked to. In Vercel production, the user hits the public domain
+  // and Vercel rewrites internally; X-Forwarded-Host carries the
+  // public hostname. In Vite dev with a Tailscale device, Vite forwards
+  // requests to localhost:8000 but preserves the original Host header
+  // (we explicitly disabled changeOrigin for this reason). Either way,
+  // the host the BROWSER thinks it's talking to is what the Origin
+  // header reflects, and that's what we must compare against.
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+  if (!host) {
+    return errorResponse(ApiMessageCode.FORBIDDEN, 403)
+  }
+  // Protocol: prefer X-Forwarded-Proto (set by Vercel and most proxies);
+  // fall back to the request's actual protocol, which matches the
+  // server's listening protocol. In dev with HTTPS Tailscale certs, the
+  // listener is https; in plain localhost dev, it's http; both match the
+  // proxy's external scheme because Vite serves on the same protocol it
+  // proxies through.
+  const protocol = request.headers.get('x-forwarded-proto')
+    ?? new URL(request.url).protocol.replace(':', '')
+  const allowedOrigin = `${protocol}://${host}`
+
   // Use startsWith on Origin (which has no trailing path) and a
   // strict origin-prefix match on Referer (which may include path).
   if (!origin.startsWith(allowedOrigin)) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('[csrf] reject reason=origin-mismatch', {
-        method: request.method,
-        url: request.url,
-        host: request.headers.get('host'),
-        origin,
-        allowedOrigin,
-      })
-    }
     return errorResponse(ApiMessageCode.FORBIDDEN, 403)
   }
   return null
