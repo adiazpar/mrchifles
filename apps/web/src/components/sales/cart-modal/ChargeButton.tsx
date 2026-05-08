@@ -1,7 +1,7 @@
 'use client'
 
 import { useIntl, type IntlShape } from 'react-intl';
-import { Spinner, useModal } from '@/components/ui'
+import { Spinner } from '@/components/ui'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useSales } from '@/contexts/sales-context'
@@ -24,6 +24,9 @@ interface ChargeButtonProps {
   setError: (message: string) => void
   setErrorMessageCode: (code: string | undefined) => void
   canConfirm: boolean
+  onGoToSuccess: () => void
+  onLock: () => void
+  onUnlock: () => void
 }
 
 /**
@@ -43,11 +46,13 @@ export function ChargeButton({
   setError,
   setErrorMessageCode,
   canConfirm,
+  onGoToSuccess,
+  onLock,
+  onUnlock,
 }: ChargeButtonProps) {
   const t = useIntl()
   const { formatCurrency } = useBusinessFormat()
   const translateApiMessage = useApiMessage()
-  const { goToStep, lock, unlock } = useModal()
   const sales = useSales()
 
   const tendered = parseFloat(tenderedStr) || 0
@@ -57,7 +62,7 @@ export function ChargeButton({
     setSubmitting(true)
     setError('')
     setErrorMessageCode(undefined)
-    lock()
+    onLock()
     try {
       const sale = await sales.commitSale({
         items: cart.lines.map((l) => ({
@@ -74,14 +79,14 @@ export function ChargeButton({
         tendered: isCash ? tendered : null,
         change: isCash ? roundToCurrencyDecimals(tendered - sale.total, currency) : null,
       })
-      goToStep(2)
+      onGoToSuccess()
     } catch (err) {
       const { message, code } = translateError(err, translateApiMessage, t)
       setError(message)
       setErrorMessageCode(code)
     } finally {
       setSubmitting(false)
-      unlock()
+      onUnlock()
     }
   }
 

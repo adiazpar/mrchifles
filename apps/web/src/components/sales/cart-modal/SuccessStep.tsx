@@ -1,7 +1,6 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { Modal } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { PaymentMethod } from '@kasero/shared/types/sale'
@@ -21,13 +20,9 @@ interface SuccessStepContentProps {
 }
 
 /**
- * Content-only Modal.Items + Modal.Footer for the cart-payment success
- * step. Lottie is gated on confirmedSale != null so it only mounts after
- * the API has actually landed (matches OpenSessionModal's `opened` gate).
- *
- * Returns multiple Modal.* siblings — must be invoked as direct children
- * of a Modal.Step, never wrapped in a div or other component (compound
- * component scan rule, see modal-system.md).
+ * Content for the cart-payment success step. Lottie is gated on
+ * confirmedSale != null so it only mounts after the API has actually
+ * landed (matches OpenSessionModal's `opened` gate).
  */
 export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContentProps) {
   const t = useIntl()
@@ -44,7 +39,7 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
 
   return (
     <>
-      <Modal.Item>
+      <div className="modal-step-item">
         <div className="flex flex-col items-center text-center py-4">
           <div style={{ width: 160, height: 160 }}>
             {confirmedSale && (
@@ -65,9 +60,9 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
             </p>
           )}
         </div>
-      </Modal.Item>
+      </div>
       {confirmedSale && methodLabelKey && (
-        <Modal.Item>
+        <div className="modal-step-item">
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-text-secondary">{t.formatMessage({
@@ -100,9 +95,9 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
               </div>
             )}
           </div>
-        </Modal.Item>
+        </div>
       )}
-      <Modal.Footer>
+      <div className="modal-footer-item">
         <button
           type="button"
           onClick={onDone}
@@ -112,7 +107,7 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
             id: 'common.done'
           })}
         </button>
-      </Modal.Footer>
+      </div>
     </>
   );
 }
