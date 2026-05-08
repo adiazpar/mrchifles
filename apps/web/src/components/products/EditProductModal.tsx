@@ -74,7 +74,7 @@ export function EditProductModal({
     <EditProductCallbacksContext.Provider value={callbacks}>
       <ProductNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={rootComponent} />
+          <IonNav ref={navRef} root={rootComponent} swipeGesture={false} />
         </ModalShell>
       </ProductNavRefContext.Provider>
     </EditProductCallbacksContext.Provider>

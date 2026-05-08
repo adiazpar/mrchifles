@@ -56,7 +56,7 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
     <CreateBusinessContext.Provider value={createBusiness}>
       <NavRefContext.Provider value={navRef}>
         <ModalShell isOpen={isOpen} onClose={onClose} rawContent>
-          <IonNav ref={navRef} root={nameStepRoot} />
+          <IonNav ref={navRef} root={nameStepRoot} swipeGesture={false} />
         </ModalShell>
       </NavRefContext.Provider>
     </CreateBusinessContext.Provider>

@@ -82,7 +82,7 @@ export function MemberModal({
     <MemberCallbacksContext.Provider value={callbacks}>
       <MemberNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={detailsStepRoot} />
+          <IonNav ref={navRef} root={detailsStepRoot} swipeGesture={false} />
         </ModalShell>
       </MemberNavRefContext.Provider>
     </MemberCallbacksContext.Provider>

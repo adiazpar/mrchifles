@@ -45,12 +45,13 @@ interface ModalShellProps {
  *   - Pattern 1: own a `step` state in the consumer; conditionally render
  *     different bodies; pass `onBack` to surface a back button when not on
  *     the first step.
- *   - Pattern 2: pass `<IonNav root={StepComponent} />` as `children` and
- *     set `rawContent`. IonNav manages its own per-step IonContent and its
- *     own swipe-back gesture. ModalShell must NOT set breakpoints or the
- *     drag handle when rawContent is true — the sheet drag gesture and
- *     IonNav's touch gesture compete for every touchstart event on real
- *     devices, causing all taps inside the modal to be silently swallowed.
+ *   - Pattern 2: pass `<IonNav swipeGesture={false} root={StepComponent} />`
+ *     as `children` and set `rawContent`. The `swipeGesture={false}` is
+ *     CRITICAL: IonNav installs its own swipe-back gesture by default, which
+ *     fights IonModal's sheet-drag gesture for every touchstart. With both
+ *     active, the drag gesture wins and swallows all taps inside the modal.
+ *     Disabling IonNav's swipe-back keeps the modal's drag-down-to-dismiss
+ *     working. In-stack back navigation uses the IonBackButton instead.
  */
 export function ModalShell({
   isOpen,
@@ -62,12 +63,8 @@ export function ModalShell({
   children,
   rawContent = false,
 }: ModalShellProps) {
-  // Pattern 2 (rawContent + IonNav): no breakpoints, no drag handle.
-  // IonModal's sheet-drag gesture and IonNav's swipe-back gesture both attach
-  // to the modal container. On real devices they compete for touchstart events
-  // and the drag gesture wins, swallowing every tap inside the modal.
-  const breakpoints = rawContent ? undefined : (variant === 'full' ? [0, 1] : [0, 0.5, 1])
-  const initialBreakpoint = rawContent ? undefined : (variant === 'full' ? 1 : 0.5)
+  const breakpoints = variant === 'full' ? [0, 1] : [0, 0.5, 1]
+  const initialBreakpoint = variant === 'full' ? 1 : 0.5
 
   return (
     <IonModal
@@ -75,7 +72,7 @@ export function ModalShell({
       onDidDismiss={onClose}
       breakpoints={breakpoints}
       initialBreakpoint={initialBreakpoint}
-      handle={!rawContent}
+      handle
     >
       {title !== undefined && (
         <IonHeader>

@@ -83,7 +83,7 @@ export function AddProductModal({
     <AddProductCallbacksContext.Provider value={callbacks}>
       <ProductNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={entryStepRoot} />
+          <IonNav ref={navRef} root={entryStepRoot} swipeGesture={false} />
         </ModalShell>
       </ProductNavRefContext.Provider>
     </AddProductCallbacksContext.Provider>

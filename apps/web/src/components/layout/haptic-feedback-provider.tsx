@@ -13,6 +13,8 @@ const HAPTIC_TARGET_SELECTOR = [
   'ion-fab-button',
   'ion-back-button',
   'ion-item[button]',
+  'ion-card[button]',
+  'ion-segment-button',
   '.btn',
   '.fab',
   '.payment-btn',

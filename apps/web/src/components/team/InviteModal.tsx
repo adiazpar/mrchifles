@@ -100,7 +100,7 @@ export function InviteModal({
     <InviteCallbacksContext.Provider value={callbacks}>
       <InviteNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={rootComponent} />
+          <IonNav ref={navRef} root={rootComponent} swipeGesture={false} />
         </ModalShell>
       </InviteNavRefContext.Provider>
     </InviteCallbacksContext.Provider>

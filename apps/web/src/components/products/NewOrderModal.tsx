@@ -132,7 +132,7 @@ export function NewOrderModal({
     <NewOrderCallbacksContext.Provider value={callbacks}>
       <OrderNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={selectProductsRoot} />
+          <IonNav ref={navRef} root={selectProductsRoot} swipeGesture={false} />
         </ModalShell>
       </OrderNavRefContext.Provider>
     </NewOrderCallbacksContext.Provider>
