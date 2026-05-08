@@ -1,0 +1,56 @@
+import { useIntl } from 'react-intl'
+import { IonPage, IonContent, IonFooter, IonToolbar } from '@ionic/react'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
+import { useProductForm } from '@/contexts/product-form-context'
+import { useAddProductCallbacks } from './ProductNavContext'
+
+export function AddSuccessStep() {
+  const t = useIntl()
+  const { productSaved } = useProductForm()
+  const { onClose, onExitComplete } = useAddProductCallbacks()
+
+  function handleDone() {
+    onClose()
+    onExitComplete()
+  }
+
+  return (
+    <IonPage>
+      <IonContent>
+        <div className="flex flex-col items-center justify-center text-center h-full px-6 py-8">
+          <div style={{ width: 160, height: 160 }}>
+            {productSaved && (
+              <LottiePlayer
+                src="/animations/success.json"
+                loop={false}
+                autoplay={true}
+                delay={300}
+                style={{ width: 160, height: 160 }}
+              />
+            )}
+          </div>
+          <p
+            className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
+            style={{ opacity: productSaved ? 1 : 0 }}
+          >
+            {t.formatMessage({ id: 'productForm.success_created_heading' })}
+          </p>
+          <p
+            className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
+            style={{ opacity: productSaved ? 1 : 0 }}
+          >
+            {t.formatMessage({ id: 'productForm.success_created_description' })}
+          </p>
+        </div>
+      </IonContent>
+
+      <IonFooter>
+        <IonToolbar className="ion-padding-horizontal">
+          <button type="button" onClick={handleDone} className="btn btn-primary w-full">
+            {t.formatMessage({ id: 'common.done' })}
+          </button>
+        </IonToolbar>
+      </IonFooter>
+    </IonPage>
+  )
+}
