@@ -30,7 +30,6 @@ import './styles/buttons.css'
 import './styles/forms.css'
 import './styles/interactive.css'
 import './styles/animations.css'
-import './styles/modal.css'
 import './styles/auth-gate.css'
 import './styles/utilities.css'
 

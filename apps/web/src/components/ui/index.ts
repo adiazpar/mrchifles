@@ -7,9 +7,6 @@ export type { BadgeProps } from './badge'
 export { Spinner } from './spinner'
 export type { SpinnerProps } from './spinner'
 
-export { Modal, useModal } from './modal'
-export type { ModalProps } from './modal'
-
 export { StockStepper } from './stock-stepper'
 
 export { ConfirmationAnimation } from './ConfirmationAnimation'
