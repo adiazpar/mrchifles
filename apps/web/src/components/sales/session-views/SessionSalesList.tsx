@@ -2,7 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { Modal, Spinner } from '@/components/ui'
+import { Spinner } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
 import { apiRequest } from '@/lib/api-client'
@@ -27,10 +27,9 @@ interface SessionSalesListProps {
 }
 
 /**
- * Content-only Modal.Items for the per-session sales list. Fetches
+ * Content-only step component for the per-session sales list. Fetches
  * /api/businesses/[businessId]/sales-sessions/[sessionId]/sales when
- * the sessionId changes. Returns Modal.Item siblings via a fragment —
- * must be invoked as direct children of a Modal.Step.
+ * the sessionId changes.
  *
  * Shared between ActiveSessionSalesModal (current session) and
  * SessionHistoryModal (historic session drill-down).
@@ -72,26 +71,26 @@ export function SessionSalesList({
 
   if (loading) {
     return (
-      <Modal.Item>
+      <div className="modal-step-item">
         <div className="flex items-center justify-center py-6">
           <Spinner />
         </div>
-      </Modal.Item>
+      </div>
     )
   }
 
   if (items.length === 0) {
     return (
-      <Modal.Item>
+      <div className="modal-step-item">
         <p className="text-sm text-text-tertiary text-center py-4">{t.formatMessage({
           id: 'sales.session.active_sales_modal.empty'
         })}</p>
-      </Modal.Item>
+      </div>
     );
   }
 
   return (
-    <Modal.Item>
+    <div className="modal-step-item">
       <div className="space-y-2">
         {items.map((s) => (
           <button
@@ -119,6 +118,6 @@ export function SessionSalesList({
           </button>
         ))}
       </div>
-    </Modal.Item>
+    </div>
   );
 }
