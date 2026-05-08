@@ -110,9 +110,9 @@ export function EditOrderStep() {
           <IonTitle>{t.formatMessage({ id: 'orders.edit_order_title' })}</IonTitle>
           {openedFromSwipe && (
             <IonButtons slot="end">
-              <button type="button" onClick={onClose} className="btn-text">
+              <IonButton fill="clear" onClick={onClose}>
                 {t.formatMessage({ id: 'common.cancel' })}
-              </button>
+              </IonButton>
             </IonButtons>
           )}
         </IonToolbar>
