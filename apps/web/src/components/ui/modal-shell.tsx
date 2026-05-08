@@ -59,7 +59,6 @@ export function ModalShell({
       breakpoints={breakpoints}
       initialBreakpoint={initialBreakpoint}
       handle
-      keepContentsMounted
     >
       {title !== undefined && (
         <IonHeader>
