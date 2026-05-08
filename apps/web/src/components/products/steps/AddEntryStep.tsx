@@ -76,8 +76,9 @@ export function AddEntryStep() {
               </IonCardContent>
             </IonCard>
 
-            <IonCard className="m-0 opacity-40 pointer-events-none" title={t.formatMessage({ id: 'productForm.add_from_document_desc' })}>
-              <IonCardContent className="flex items-start gap-4 py-5">
+            {/* Disabled card — plain div avoids IonCard shadow-DOM pointer-events leak */}
+            <div className="m-0 opacity-40 pointer-events-none rounded-lg border border-[var(--color-border)] bg-[var(--ion-card-background,var(--color-bg-card,#fff))]">
+              <div className="flex items-start gap-4 py-5 px-4">
                 <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
                   <FileScan className="w-6 h-6" color={`url(#${gradientId})`} />
                 </div>
@@ -86,8 +87,8 @@ export function AddEntryStep() {
                   <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.add_from_document_desc' })}</div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
-              </IonCardContent>
-            </IonCard>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-3" aria-hidden="true">
@@ -112,8 +113,9 @@ export function AddEntryStep() {
               </IonCardContent>
             </IonCard>
 
-            <IonCard className="m-0 opacity-40 pointer-events-none" title={t.formatMessage({ id: 'productForm.import_file_desc' })}>
-              <IonCardContent className="flex items-start gap-4 py-5">
+            {/* Disabled card — plain div avoids IonCard shadow-DOM pointer-events leak */}
+            <div className="m-0 opacity-40 pointer-events-none rounded-lg border border-[var(--color-border)] bg-[var(--ion-card-background,var(--color-bg-card,#fff))]">
+              <div className="flex items-start gap-4 py-5 px-4">
                 <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
                   <FileSpreadsheet className="w-6 h-6 text-text-tertiary" />
                 </div>
@@ -122,8 +124,8 @@ export function AddEntryStep() {
                   <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.import_file_desc' })}</div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
-              </IonCardContent>
-            </IonCard>
+              </div>
+            </div>
           </div>
         </div>
       </IonContent>

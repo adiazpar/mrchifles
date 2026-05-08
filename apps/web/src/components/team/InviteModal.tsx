@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { InviteRole } from '@kasero/shared/types'
@@ -84,11 +84,17 @@ export function InviteModal({
     codeDeleted,
   }
 
+  // Stable root thunks — defined outside render so IonNav never sees a new
+  // function reference between re-renders and avoids remounting the step stack.
+  // useCallback with [] is safe because IonNav only reads `root` on mount; the
+  // initial value of `newCode` at open-time is already baked into which thunk
+  // InviteModal picks (see below), and the context provides live values.
+  const codeStepRoot = useCallback(() => <InviteCodeStep />, [])
+  const roleStepRoot = useCallback(() => <InviteRoleStep />, [])
+
   // If there's already a code (opened from existing invite code list item),
   // start on the code view; otherwise start on role selection.
-  const rootComponent = newCode
-    ? () => <InviteCodeStep />
-    : () => <InviteRoleStep />
+  const rootComponent = newCode ? codeStepRoot : roleStepRoot
 
   return (
     <InviteCallbacksContext.Provider value={callbacks}>

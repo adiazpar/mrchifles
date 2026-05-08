@@ -75,11 +75,15 @@ export function AddProductModal({
     onClearPendingPhoto,
   }
 
+  // Stable root thunk — useCallback with [] so IonNav never remounts the step
+  // stack due to a new function reference produced on every parent render.
+  const entryStepRoot = useCallback(() => <AddEntryStep />, [])
+
   return (
     <AddProductCallbacksContext.Provider value={callbacks}>
       <ProductNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={() => <AddEntryStep />} />
+          <IonNav ref={navRef} root={entryStepRoot} />
         </ModalShell>
       </ProductNavRefContext.Provider>
     </AddProductCallbacksContext.Provider>

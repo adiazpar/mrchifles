@@ -48,11 +48,15 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
     handleExitComplete()
   }, [handleClose, handleExitComplete])
 
+  // Stable root thunk — useCallback with [] so IonNav never remounts the step
+  // stack due to a new function reference produced on every parent render.
+  const nameStepRoot = useCallback(() => <NameStep />, [])
+
   return (
     <CreateBusinessContext.Provider value={createBusiness}>
       <NavRefContext.Provider value={navRef}>
         <ModalShell isOpen={isOpen} onClose={onClose} rawContent>
-          <IonNav ref={navRef} root={() => <NameStep />} />
+          <IonNav ref={navRef} root={nameStepRoot} />
         </ModalShell>
       </NavRefContext.Provider>
     </CreateBusinessContext.Provider>

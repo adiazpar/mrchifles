@@ -45,9 +45,12 @@ interface ModalShellProps {
  *   - Pattern 1: own a `step` state in the consumer; conditionally render
  *     different bodies; pass `onBack` to surface a back button when not on
  *     the first step.
- *   - Pattern 2: pass `<IonNav root={() => <FirstStep />} />` as `children`.
- *     Each step component renders its own IonHeader/IonContent. Generally
- *     omit `title` here — IonNav stack handles its own headers per step.
+ *   - Pattern 2: pass `<IonNav root={StepComponent} />` as `children` and
+ *     set `rawContent`. IonNav manages its own per-step IonContent and its
+ *     own swipe-back gesture. ModalShell must NOT set breakpoints or the
+ *     drag handle when rawContent is true — the sheet drag gesture and
+ *     IonNav's touch gesture compete for every touchstart event on real
+ *     devices, causing all taps inside the modal to be silently swallowed.
  */
 export function ModalShell({
   isOpen,
@@ -59,8 +62,12 @@ export function ModalShell({
   children,
   rawContent = false,
 }: ModalShellProps) {
-  const breakpoints = variant === 'full' ? [0, 1] : [0, 0.5, 1]
-  const initialBreakpoint = variant === 'full' ? 1 : 0.5
+  // Pattern 2 (rawContent + IonNav): no breakpoints, no drag handle.
+  // IonModal's sheet-drag gesture and IonNav's swipe-back gesture both attach
+  // to the modal container. On real devices they compete for touchstart events
+  // and the drag gesture wins, swallowing every tap inside the modal.
+  const breakpoints = rawContent ? undefined : (variant === 'full' ? [0, 1] : [0, 0.5, 1])
+  const initialBreakpoint = rawContent ? undefined : (variant === 'full' ? 1 : 0.5)
 
   return (
     <IonModal
@@ -68,7 +75,7 @@ export function ModalShell({
       onDidDismiss={onClose}
       breakpoints={breakpoints}
       initialBreakpoint={initialBreakpoint}
-      handle
+      handle={!rawContent}
     >
       {title !== undefined && (
         <IonHeader>

@@ -124,11 +124,15 @@ export function NewOrderModal({
     onSaveOrder,
   }
 
+  // Stable root thunk — useCallback with [] so IonNav never remounts the step
+  // stack due to a new function reference produced on every parent render.
+  const selectProductsRoot = useCallback(() => <SelectProductsStep />, [])
+
   return (
     <NewOrderCallbacksContext.Provider value={callbacks}>
       <OrderNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={() => <SelectProductsStep />} />
+          <IonNav ref={navRef} root={selectProductsRoot} />
         </ModalShell>
       </OrderNavRefContext.Provider>
     </NewOrderCallbacksContext.Provider>

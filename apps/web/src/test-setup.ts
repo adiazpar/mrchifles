@@ -26,6 +26,17 @@ import React from 'react'
  * All other @ionic/react exports are forwarded from the real module so
  * existing tests (IonApp, IonHeader, IonToolbar, IonTitle, IonContent,
  * IonFooter, IonButtons, IonIcon, useIonRouter, etc.) are unaffected.
+ *
+ * WARNING — Pattern 2 modal coverage gap:
+ * IonNav is also a Stencil web component that JSDOM cannot initialize. The
+ * mock above does NOT replace IonNav, so Pattern 2 modals (those that pass
+ * `rawContent` and render an IonNav inside ModalShell — AddProductModal,
+ * EditProductModal, NewOrderModal, OrderDetailModal, InviteModal,
+ * MemberModal, CreateBusinessModal) will not render their step content in
+ * vitest at all. This means gesture conflicts, shadow-DOM pointer-events
+ * leaks, and IonNav root-thunk stability bugs are invisible to vitest.
+ * Integration testing of Pattern 2 modals must happen on a real device or
+ * in a Playwright/WebdriverIO test that runs the actual Stencil runtime.
  */
 vi.mock('@ionic/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@ionic/react')>()
