@@ -63,8 +63,16 @@ export function ModalShell({
   children,
   rawContent = false,
 }: ModalShellProps) {
-  const breakpoints = variant === 'full' ? [0, 1] : [0, 0.5, 1]
-  const initialBreakpoint = variant === 'full' ? 1 : 0.5
+  // Pattern 2 (rawContent + IonNav): omit breakpoints, initialBreakpoint, and
+  // handle entirely. IonModal's sheet-drag gesture attaches when breakpoints is
+  // set, and on real devices it wins the touchstart race against every element
+  // inside the modal — including buttons in IonNav steps — silently swallowing
+  // taps. IonNav provides its own fullscreen layout per step; no sheet handle
+  // is needed. Pattern 0 / Pattern 1 modals keep the drag-down-to-dismiss
+  // sheet behaviour.
+  const breakpoints = rawContent ? undefined : (variant === 'full' ? [0, 1] : [0, 0.5, 1])
+  const initialBreakpoint = rawContent ? undefined : (variant === 'full' ? 1 : 0.5)
+  const showHandle = !rawContent
 
   return (
     <IonModal
@@ -72,7 +80,7 @@ export function ModalShell({
       onDidDismiss={onClose}
       breakpoints={breakpoints}
       initialBreakpoint={initialBreakpoint}
-      handle
+      handle={showHandle}
     >
       {title !== undefined && (
         <IonHeader>

@@ -602,18 +602,20 @@ export function ProductsView() {
     } catch (err) {
       console.warn('Error saving product:', err)
       if (err instanceof ApiError) {
-        // Prefer the legacy `error` string when the server sent one; otherwise
-        // keep the old hardcoded fallback. We don't have translateApiMessage
-        // in this callsite, so envelope-only errors fall back to the generic
-        // message (matching pre-migration behavior).
-        throw new Error(err.data.error || 'Failed to save product')
+        // Use the structured envelope message when available (e.g.
+        // PRODUCT_FORBIDDEN_NOT_MANAGER) so the user sees the real reason,
+        // not a generic fallback.
+        if (err.envelope) {
+          throw new Error(translateApiMessage(err.envelope))
+        }
+        throw new Error(err.data.error || tProductForm.formatMessage({ id: 'productForm.failed_to_save' }))
       }
       if (err instanceof Error) {
         throw err
       }
-      throw new Error('Failed to save product')
+      throw new Error(tProductForm.formatMessage({ id: 'productForm.failed_to_save' }))
     }
-  }, [businessId, setProducts])
+  }, [businessId, setProducts, translateApiMessage, tProductForm])
 
   const handleDeleteProduct = useCallback(async (productId: string): Promise<boolean> => {
     try {

@@ -17,11 +17,14 @@ import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { StockStepper } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
+import { useApiMessage } from '@/hooks/useApiMessage'
+import { ApiError } from '@/lib/api-client'
 
 export function AdjustInventoryStep() {
   const t = useIntl()
   const navRef = useProductNavRef()
   const { onSaveAdjustment } = useEditProductCallbacks()
+  const translateApiMessage = useApiMessage()
   const {
     editingProduct,
     iconPreview,
@@ -42,11 +45,15 @@ export function AdjustInventoryStep() {
         expectedStockValue: editingProduct.stock ?? 0,
       })
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t.formatMessage({ id: 'productForm.failed_to_save' }),
-      )
+      if (err instanceof ApiError && err.envelope) {
+        setError(translateApiMessage(err.envelope))
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : t.formatMessage({ id: 'productForm.failed_to_save' }),
+        )
+      }
     }
   }
 
