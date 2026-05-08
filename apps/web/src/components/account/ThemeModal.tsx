@@ -1,7 +1,7 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { Modal } from '@/components/ui'
+import { ModalShell } from '@/components/ui/modal-shell'
 import { ThemeSelector } from './ThemeSelector'
 import { useTheme } from '@/hooks/useTheme'
 
@@ -18,33 +18,19 @@ export interface ThemeModalProps {
  */
 export function ThemeModal({ isOpen, onClose }: ThemeModalProps) {
   const t = useIntl()
-  const tCommon = useIntl()
   const { theme, setTheme, themeDescription } = useTheme()
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <Modal.Step title={t.formatMessage({
-        id: 'account.theme_label'
-      })}>
-        <Modal.Item>
-          <ThemeSelector
-            theme={theme}
-            onThemeChange={setTheme}
-            description={themeDescription}
-          />
-        </Modal.Item>
-        <Modal.Footer>
-          <button
-            type="button"
-            className="btn btn-primary flex-1"
-            onClick={onClose}
-          >
-            {tCommon.formatMessage({
-              id: 'common.done'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t.formatMessage({ id: 'account.theme_label' })}
+    >
+      <ThemeSelector
+        theme={theme}
+        onThemeChange={setTheme}
+        description={themeDescription}
+      />
+    </ModalShell>
+  )
 }

@@ -3,7 +3,8 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { Clock } from 'lucide-react'
-import { Modal, Spinner } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 
 interface Props {
@@ -70,79 +71,76 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
     // closes the modal. On failure, `error` populates and we stay open.
   }
 
+  const footer = (
+    <>
+      <IonButton
+        fill="outline"
+        onClick={onClose}
+        disabled={isCancelling}
+        className="flex-1"
+      >
+        {tCommon.formatMessage({ id: 'common.cancel' })}
+      </IonButton>
+      <IonButton
+        color="danger"
+        onClick={handleCancelTransfer}
+        disabled={isCancelling || !transfer}
+        className="flex-1"
+      >
+        {isCancelling ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.transfer_withdraw' })}
+      </IonButton>
+    </>
+  )
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <Modal.Step title={t.formatMessage({
-        id: 'manage.transfer_pending_heading'
-      })} hideBackButton>
-        <Modal.Item>
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t.formatMessage({ id: 'manage.transfer_pending_heading' })}
+      footer={footer}
+    >
+      <div className="px-4 pt-4 pb-4 flex flex-col gap-3">
+        <div
+          className="p-3 rounded-lg flex items-start gap-3"
+          style={{
+            backgroundColor:
+              'color-mix(in oklab, var(--color-warning) 10%, transparent)',
+          }}
+        >
           <div
-            className="p-3 rounded-lg flex items-start gap-3"
+            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{
               backgroundColor:
-                'color-mix(in oklab, var(--color-warning) 10%, transparent)',
+                'color-mix(in oklab, var(--color-warning) 22%, transparent)',
             }}
           >
-            <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{
-                backgroundColor:
-                  'color-mix(in oklab, var(--color-warning) 22%, transparent)',
-              }}
-            >
-              <Clock className="w-5 h-5 text-warning" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-warning">
-                {transfer
-                  ? t.formatMessage({
-                  id: 'manage.transfer_pending_waiting'
-                }, { recipient: transfer.toEmail })
-                  : t.formatMessage({
-                  id: 'manage.transfer_pending_heading'
-                })}
-              </p>
-              {expiry && (
-                <p className="text-xs text-text-secondary mt-1">
-                  {t.formatMessage({
-                    id: 'manage.' + expiry.key
-                  }, expiry.values)}
-                </p>
-              )}
-            </div>
+            <Clock className="w-5 h-5 text-warning" />
           </div>
-        </Modal.Item>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-warning">
+              {transfer
+                ? t.formatMessage(
+                    { id: 'manage.transfer_pending_waiting' },
+                    { recipient: transfer.toEmail }
+                  )
+                : t.formatMessage({ id: 'manage.transfer_pending_heading' })}
+            </p>
+            {expiry && (
+              <p className="text-xs text-text-secondary mt-1">
+                {t.formatMessage(
+                  { id: 'manage.' + expiry.key },
+                  expiry.values
+                )}
+              </p>
+            )}
+          </div>
+        </div>
         {error && (
-          <Modal.Item>
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
-          </Modal.Item>
+          <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
+            {error}
+          </div>
         )}
-        <Modal.Footer>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isCancelling}
-            className="btn btn-secondary flex-1"
-          >
-            {tCommon.formatMessage({
-              id: 'common.cancel'
-            })}
-          </button>
-          <button
-            type="button"
-            onClick={handleCancelTransfer}
-            disabled={isCancelling || !transfer}
-            className="btn btn-primary flex-1"
-            style={{ background: 'var(--color-error)' }}
-          >
-            {isCancelling ? <Spinner size="sm" /> : t.formatMessage({
-              id: 'manage.transfer_withdraw'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
+      </div>
+    </ModalShell>
+  )
 }

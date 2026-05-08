@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
-import { Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
 
 /**
  * ContentGuard - Protects page content while allowing the layout shell to render.
@@ -30,7 +30,7 @@ export function ContentGuard({ children }: { children: React.ReactNode }) {
   if (authLoading || businessLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Spinner size="lg" />
+        <IonSpinner name="crescent" className="w-8 h-8" />
       </div>
     )
   }
@@ -39,7 +39,7 @@ export function ContentGuard({ children }: { children: React.ReactNode }) {
   if (!user) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Spinner size="lg" />
+        <IonSpinner name="crescent" className="w-8 h-8" />
       </div>
     )
   }
@@ -48,7 +48,7 @@ export function ContentGuard({ children }: { children: React.ReactNode }) {
   if (businessError) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Spinner size="lg" />
+        <IonSpinner name="crescent" className="w-8 h-8" />
       </div>
     )
   }

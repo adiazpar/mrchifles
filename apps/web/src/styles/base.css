@@ -67,13 +67,6 @@
   --color-border: #E7E5E4;
   --color-border-hover: #D6D3D1;
 
-  /* Payment Methods (kept — domain colors, not brand) */
-  --color-yape: #6B21A8;
-  --color-yape-subtle: #F3E8FF;
-
-  --color-pos: #EA580C;
-  --color-pos-subtle: #FFF7ED;
-
   /* Semantic Colors */
   --color-success: #65A30D;
   --color-success-subtle: #ECFCCB;
@@ -157,6 +150,9 @@
   /* Brand (lifted for contrast on dark surfaces) */
   --color-brand: #E89B7F;
   --color-brand-hover: #D97757;
+  /* Anchored to base brand RGB (217, 119, 87) so subtle backgrounds
+     read consistently across modes — selected-state highlights stay
+     visually consistent with light. Intentional, not an oversight. */
   --color-brand-subtle: rgba(217, 119, 87, 0.15);
   --color-brand-rgb: 232, 155, 127;
 

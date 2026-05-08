@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { Modal, Spinner } from '@/components/ui'
+import { ModalShell } from '@/components/ui/modal-shell'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { BusinessTypeGrid } from '@/components/businesses/shared'
 import { useBusiness } from '@/contexts/business-context'
 import { useUpdateBusiness } from '@/hooks/useUpdateBusiness'
@@ -12,7 +13,6 @@ interface Props { isOpen: boolean; onClose: () => void }
 
 export function EditTypeModal({ isOpen, onClose }: Props) {
   const t = useIntl()
-  const tCommon = useIntl()
   const { business } = useBusiness()
   const { update, isSubmitting, error, reset } = useUpdateBusiness()
   const [selected, setSelected] = useState<BusinessType | null>(business?.type ?? null)
@@ -21,7 +21,13 @@ export function EditTypeModal({ isOpen, onClose }: Props) {
     if (isOpen) setSelected(business?.type ?? null)
   }, [isOpen, business?.type])
 
-  const handleExitComplete = () => { setSelected(null); reset() }
+  // Reset hook state (and selection) after the dismissal animation completes
+  useEffect(() => {
+    if (!isOpen) {
+      const timer = setTimeout(() => { setSelected(null); reset() }, 250)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, reset])
 
   const handleSave = async () => {
     if (!selected || selected === business?.type) { onClose(); return }
@@ -29,37 +35,28 @@ export function EditTypeModal({ isOpen, onClose }: Props) {
     if (ok) onClose()
   }
 
+  const footer = (
+    <IonButton
+      expand="block"
+      onClick={handleSave}
+      disabled={isSubmitting || !selected || selected === business?.type}
+      className="flex-1"
+    >
+      {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.save' })}
+    </IonButton>
+  )
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} onExitComplete={handleExitComplete}>
-      <Modal.Step title={t.formatMessage({
-        id: 'manage.edit_type_title'
-      })} hideBackButton>
-        <Modal.Item>
-          <BusinessTypeGrid selected={selected} onSelect={setSelected} />
-        </Modal.Item>
-        {error && (
-          <Modal.Item>
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
-          </Modal.Item>
-        )}
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.cancel'
-            })}
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSubmitting || !selected || selected === business?.type}
-            className="btn btn-primary flex-1"
-          >
-            {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({
-              id: 'manage.save'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t.formatMessage({ id: 'manage.edit_type_title' })}
+      footer={footer}
+    >
+      <BusinessTypeGrid selected={selected} onSelect={setSelected} />
+      {error && (
+        <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mt-3">{error}</div>
+      )}
+    </ModalShell>
+  )
 }

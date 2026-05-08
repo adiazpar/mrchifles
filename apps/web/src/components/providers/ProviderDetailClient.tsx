@@ -7,6 +7,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import type { ReactNode } from 'react'
 import {
+  IonButton,
   IonCard,
   IonItem,
   IonItemOption,
@@ -21,7 +22,7 @@ import {
 } from '@ionic/react'
 import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2 } from 'lucide-react'
 import { TabContainer } from '@/components/ui'
-import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { ModalShell } from '@/components/ui'
 import {
   ProviderModal,
   AddProviderNoteModal,
@@ -553,30 +554,28 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
           <div className="flex items-center gap-2">
             {canManage && (
-              <button
-                type="button"
+              <IonButton
                 onClick={() => orderFlows.openNewOrder(providerId)}
-                className="btn btn-primary flex-1 min-w-0"
+                className="flex-1 min-w-0"
               >
-                <Plus />
+                <Plus slot="start" />
                 <span className="truncate">
                   {intl.formatMessage({
                     id: 'providers.new_order_button'
                   })}
                 </span>
-              </button>
+              </IonButton>
             )}
-            <button
-              type="button"
+            <IonButton
               onClick={() => setContactSheetOpen(true)}
               disabled={!provider.phone && !provider.email}
-              className="btn btn-primary flex-1 min-w-0"
+              className="flex-1 min-w-0"
             >
-              <Phone />
+              <Phone slot="start" />
               <span className="truncate">{intl.formatMessage({
                 id: 'providers.contact_button'
               })}</span>
-            </button>
+            </IonButton>
           </div>
         </div>
 
@@ -621,13 +620,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     className="m-0 ion-activatable ripple-parent"
                   >
                     <div className="flex items-center gap-3 p-4">
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{
-                          backgroundColor:
-                            'color-mix(in oklab, var(--color-error) 22%, transparent)',
-                        }}
-                      >
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
                         <Bell className="w-5 h-5 text-error" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -1063,24 +1056,18 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                 <>
                   <hr className="border-border" />
                   <div className="flex justify-end">
-                    <button
-                      type="button"
+                    <IonButton
+                      fill="outline"
+                      size="small"
+                      shape="round"
                       onClick={openAddNote}
                       disabled={atNotesLimit}
-                      className="btn btn-secondary"
-                      style={{
-                        fontSize: 'var(--text-sm)',
-                        padding: 'var(--space-2) var(--space-4)',
-                        minHeight: 'unset',
-                        gap: 'var(--space-2)',
-                        borderRadius: 'var(--radius-full)',
-                      }}
                     >
-                      <Plus style={{ width: 14, height: 14 }} />
+                      <Plus slot="start" style={{ width: 14, height: 14 }} />
                       {intl.formatMessage({
                         id: 'providers.add_note_button'
                       })}
-                    </button>
+                    </IonButton>
                   </div>
                 </>
               )}
@@ -1176,12 +1163,13 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           Tapping a row fires the native handler (tel:, mailto:, wa.me) and
           closes the sheet so returning to the app doesn't land back inside
           an open overlay. Rows for missing contact fields are omitted. */}
-      <BottomSheet
+      <ModalShell
         isOpen={isContactSheetOpen}
         onClose={() => setContactSheetOpen(false)}
         title={intl.formatMessage({
           id: 'providers.contact_sheet_title'
         }, { name: provider.name })}
+        variant="half"
       >
         <div className="py-2">
           {provider.phone && (
@@ -1222,7 +1210,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             />
           )}
         </div>
-      </BottomSheet>
+      </ModalShell>
       {/* ============== Order flows (new order + order detail/edit/receive/delete) ============== */}
       {orderFlows.modals}
     </>

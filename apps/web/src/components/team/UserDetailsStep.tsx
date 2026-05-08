@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { memo } from 'react'
 import { Link } from 'react-router-dom'
-import { Modal, useModal } from '@/components/ui'
+import { IonButton } from '@ionic/react'
 import { getUserInitials } from '@kasero/shared/auth'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { User, UserRole } from '@kasero/shared/types'
@@ -15,6 +15,8 @@ export interface UserDetailsStepProps {
   canManageTeam: boolean
   callerRole: UserRole | null
   onToggleStatus: () => void
+  onChangeRole: () => void
+  onRemoveMember: () => void
 }
 
 export const UserDetailsStep = memo(function UserDetailsStep({
@@ -23,9 +25,10 @@ export const UserDetailsStep = memo(function UserDetailsStep({
   canManageTeam,
   callerRole,
   onToggleStatus,
+  onChangeRole,
+  onRemoveMember,
 }: UserDetailsStepProps) {
   const t = useIntl()
-  const { goToStep } = useModal()
   const { formatDate } = useBusinessFormat()
   const isSelf = member.id === currentUser?.id
   // Partner-on-partner guard mirrors the server-side check in
@@ -49,7 +52,7 @@ export const UserDetailsStep = memo(function UserDetailsStep({
 
   return (
     <>
-      <Modal.Item>
+      <div className="mb-4">
         {/* Member header */}
         <div className="flex items-center gap-3">
           <div className="avatar w-11 h-11 text-sm overflow-hidden">
@@ -79,8 +82,8 @@ export const UserDetailsStep = memo(function UserDetailsStep({
             </div>
           </div>
         </div>
-      </Modal.Item>
-      <Modal.Item>
+      </div>
+      <div className="mb-4">
         {/* Member details */}
         <div className="space-y-3 p-4 bg-bg-muted rounded-lg">
           {member.email && (
@@ -104,15 +107,15 @@ export const UserDetailsStep = memo(function UserDetailsStep({
             </span>
           </div>
         </div>
-      </Modal.Item>
+      </div>
       {isManageable && (
-        <Modal.Item>
+        <div className="mb-4">
           <div className="space-y-3">
             {/* Change role button */}
-            <button
-              type="button"
-              onClick={() => goToStep(1)}
-              className="btn btn-secondary w-full justify-start gap-3"
+            <IonButton
+              fill="outline"
+              expand="block"
+              onClick={onChangeRole}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -120,17 +123,14 @@ export const UserDetailsStep = memo(function UserDetailsStep({
               <span>{t.formatMessage({
                 id: 'team.change_role_button'
               })}</span>
-            </button>
+            </IonButton>
 
             {/* Toggle status button */}
-            <button
-              type="button"
+            <IonButton
+              fill={member.status === 'active' ? 'clear' : 'outline'}
+              color={member.status === 'active' ? 'danger' : undefined}
+              expand="block"
               onClick={onToggleStatus}
-              className={`btn w-full justify-start gap-3 ${
-                member.status === 'active'
-                  ? 'btn-ghost text-error hover:bg-error-subtle'
-                  : 'btn-secondary'
-              }`}
             >
               {member.status === 'active' ? (
                 <>
@@ -151,13 +151,14 @@ export const UserDetailsStep = memo(function UserDetailsStep({
                   })}</span>
                 </>
               )}
-            </button>
+            </IonButton>
 
             {/* Remove from business button */}
-            <button
-              type="button"
-              onClick={() => goToStep(3)}
-              className="btn btn-ghost text-error hover:bg-error-subtle w-full justify-start gap-3"
+            <IonButton
+              fill="clear"
+              color="danger"
+              expand="block"
+              onClick={onRemoveMember}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H22M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -165,7 +166,7 @@ export const UserDetailsStep = memo(function UserDetailsStep({
               <span>{t.formatMessage({
                 id: 'team.remove_member_button'
               })}</span>
-            </button>
+            </IonButton>
 
             {/* Status explanation */}
             {member.status === 'disabled' && (
@@ -176,11 +177,11 @@ export const UserDetailsStep = memo(function UserDetailsStep({
               </p>
             )}
           </div>
-        </Modal.Item>
+        </div>
       )}
       {/* Self view hint */}
       {isSelf && (
-        <Modal.Item>
+        <div>
           <p className="text-xs text-text-tertiary text-center">
             {t.formatMessage({
               id: 'team.account_settings_hint'
@@ -191,7 +192,7 @@ export const UserDetailsStep = memo(function UserDetailsStep({
               })}
             </Link>.
           </p>
-        </Modal.Item>
+        </div>
       )}
     </>
   );

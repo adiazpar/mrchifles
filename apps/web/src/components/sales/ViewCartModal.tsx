@@ -1,9 +1,10 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { useMemo, useState, type MouseEvent } from 'react'
+import { useMemo, useState, useCallback, type MouseEvent } from 'react'
+import { IonButton } from '@ionic/react'
 import { Minus, Plus } from 'lucide-react'
-import { Modal } from '@/components/ui'
+import { ModalShell } from '@/components/ui/modal-shell'
 import { useProducts } from '@/contexts/products-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
@@ -20,6 +21,8 @@ interface ViewCartModalProps {
   onClose: () => void
   cart: UseCartResult
 }
+
+type CartStep = 0 | 1 | 2
 
 export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
   const t = useIntl()
@@ -41,6 +44,8 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
   const { business } = useBusiness()
   const currency = business?.currency ?? 'USD'
 
+  const [step, setStep] = useState<CartStep>(0)
+  const [isLocked, setIsLocked] = useState(false)
   const [methodId, setMethodId] = useState<PaymentMethod>('cash')
   const [tenderedStr, setTenderedStr] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
@@ -57,97 +62,136 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
     cart.total > 0 &&
     tenderedSufficient
 
+  const resetState = useCallback(() => {
+    setStep(0)
+    setIsLocked(false)
+    setMethodId('cash')
+    setTenderedStr('')
+    setSubmitting(false)
+    setConfirmedSale(null)
+    setError('')
+    setErrorMessageCode(undefined)
+  }, [])
+
+  const handleClose = () => {
+    if (isLocked) return
+    onClose()
+    setTimeout(() => {
+      if (confirmedSale != null) {
+        cart.clear()
+      }
+      resetState()
+    }, 250)
+  }
+
+  const handleBack = () => {
+    if (isLocked || step === 0) return
+    if (step === 1) setStep(0)
+  }
+
+  // Step 0 title
+  const cartTitle = t.formatMessage({ id: 'sales.cart.modal_title' })
+  // Step 1 title
+  const paymentTitle = t.formatMessage({ id: 'sales.cart.modal_payment_step_title' })
+  // Step 2 title
+  const successTitle = t.formatMessage({ id: 'sales.cart.modal_success_title' })
+
+  const title = step === 0 ? cartTitle : step === 1 ? paymentTitle : successTitle
+
+  // Footer for step 0 (cart view)
+  const cartFooter = (
+    <>
+      <IonButton fill="outline" onClick={handleClose}>
+        {tCommon.formatMessage({ id: 'common.cancel' })}
+      </IonButton>
+      <IonButton disabled={isEmpty} onClick={() => setStep(1)}>
+        {tCommon.formatMessage({ id: 'common.confirm' })}
+      </IonButton>
+    </>
+  )
+
+  // Footer for step 1 (payment)
+  const paymentFooter = (
+    <>
+      <IonButton fill="outline" onClick={handleClose} disabled={submitting}>
+        {tCommon.formatMessage({ id: 'common.cancel' })}
+      </IonButton>
+      <ChargeButton
+        cart={cart}
+        currency={currency}
+        methodId={methodId}
+        tenderedStr={tenderedStr}
+        submitting={submitting}
+        setSubmitting={setSubmitting}
+        setConfirmedSale={setConfirmedSale}
+        setError={setError}
+        setErrorMessageCode={setErrorMessageCode}
+        canConfirm={canConfirm}
+        onGoToSuccess={() => setStep(2)}
+        onLock={() => setIsLocked(true)}
+        onUnlock={() => setIsLocked(false)}
+      />
+    </>
+  )
+
+  const footer = step === 0 ? cartFooter : step === 1 ? paymentFooter : undefined
+
   return (
-    <Modal
+    <ModalShell
       isOpen={isOpen}
-      onClose={onClose}
-      onExitComplete={() => {
-        if (confirmedSale != null) {
-          cart.clear()
-        }
-        setMethodId('cash')
-        setTenderedStr('')
-        setSubmitting(false)
-        setConfirmedSale(null)
-        setError('')
-        setErrorMessageCode(undefined)
-      }}
-      title={t.formatMessage({
-        id: 'sales.cart.modal_title'
-      })}
+      onClose={handleClose}
+      title={title}
+      onBack={step === 1 ? handleBack : undefined}
+      footer={footer}
+      noSwipeDismiss
     >
-      <Modal.Step title={t.formatMessage({
-        id: 'sales.cart.modal_title'
-      })}>
-        {isEmpty ? (
-          <Modal.Item>
+      {/* Step 0: Cart view */}
+      {step === 0 && (
+        <>
+          {isEmpty ? (
             <p className="text-sm text-text-secondary text-center py-6">
-              {t.formatMessage({
-                id: 'sales.cart.modal_empty'
-              })}
+              {t.formatMessage({ id: 'sales.cart.modal_empty' })}
             </p>
-          </Modal.Item>
-        ) : (
-          <>
-            <Modal.Item>
-              <div className="flex flex-col gap-6">
-                {cart.lines.map((line) => (
-                  <CartLineRow
-                    key={line.productId}
-                    line={line}
-                    product={productById.get(line.productId)}
-                    cart={cart}
-                    formatCurrency={formatCurrency}
-                  />
-                ))}
+          ) : (
+            <>
+              <div className="modal-step-item">
+                <div className="flex flex-col gap-6">
+                  {cart.lines.map((line) => (
+                    <CartLineRow
+                      key={line.productId}
+                      line={line}
+                      product={productById.get(line.productId)}
+                      cart={cart}
+                      formatCurrency={formatCurrency}
+                    />
+                  ))}
+                </div>
               </div>
-            </Modal.Item>
-            {/* Sticky bottom subtotal: only the product list above
-                scrolls inside the step body. The outer's negative
-                margins overrun the modal-body's padding so the
-                bg-bg-surface masks content scrolling behind it
-                edge-to-edge (matching the footer wrapper). The inner
-                div carries the divider so the border sits flush with
-                the standard modal-item horizontal inset, not the
-                edge-to-edge surface. */}
-            <Modal.Item className="sticky bottom-0 -mx-5 -mb-5 px-5 pt-5 pb-5 bg-bg-surface">
-              <div className="pt-5 border-t border-border flex items-center justify-between">
-                <span className="text-lg font-bold">
-                  {t.formatMessage({
-                    id: 'sales.cart.modal_subtotal_label'
-                  })}
-                </span>
-                <span className="text-lg font-bold tabular-nums">
-                  {formatCurrency(cart.total)}
-                </span>
+              {/* Sticky bottom subtotal: only the product list above
+                  scrolls inside the step body. The outer's negative
+                  margins overrun the modal-body's padding so the
+                  bg-bg-surface masks content scrolling behind it
+                  edge-to-edge (matching the footer wrapper). The inner
+                  div carries the divider so the border sits flush with
+                  the standard modal-item horizontal inset, not the
+                  edge-to-edge surface. */}
+              <div className="modal-step-item sticky bottom-0 -mx-5 -mb-5 px-5 pt-5 pb-5 bg-bg-surface">
+                <div className="pt-5 border-t border-border flex items-center justify-between">
+                  <span className="text-lg font-bold">
+                    {t.formatMessage({ id: 'sales.cart.modal_subtotal_label' })}
+                  </span>
+                  <span className="text-lg font-bold tabular-nums">
+                    {formatCurrency(cart.total)}
+                  </span>
+                </div>
               </div>
-            </Modal.Item>
-          </>
-        )}
-        <Modal.Footer>
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn btn-secondary flex-1"
-          >
-            {tCommon.formatMessage({
-              id: 'common.cancel'
-            })}
-          </button>
-          <Modal.NextButton
-            className="btn btn-primary flex-1"
-            disabled={isEmpty}
-          >
-            {tCommon.formatMessage({
-              id: 'common.confirm'
-            })}
-          </Modal.NextButton>
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 1: Payment. */}
-      <Modal.Step title={t.formatMessage({
-        id: 'sales.cart.modal_payment_step_title'
-      })}>
+            </>
+          )}
+        </>
+      )}
+
+      {/* Step 1: Payment */}
+      {step === 1 && (
         <PaymentStepContent
           total={cart.total}
           currency={currency}
@@ -157,43 +201,15 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
           setTenderedStr={setTenderedStr}
           error={error}
           errorMessageCode={errorMessageCode}
+          onGoToCart={() => setStep(0)}
         />
-        <Modal.Footer>
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn btn-secondary flex-1"
-            disabled={submitting}
-          >
-            {tCommon.formatMessage({
-              id: 'common.cancel'
-            })}
-          </button>
-          <ChargeButton
-            cart={cart}
-            currency={currency}
-            methodId={methodId}
-            tenderedStr={tenderedStr}
-            submitting={submitting}
-            setSubmitting={setSubmitting}
-            setConfirmedSale={setConfirmedSale}
-            setError={setError}
-            setErrorMessageCode={setErrorMessageCode}
-            canConfirm={canConfirm}
-          />
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 2: Success. */}
-      <Modal.Step
-        title={t.formatMessage({
-          id: 'sales.cart.modal_success_title'
-        })}
-        hideBackButton
-        className="modal-step--centered"
-      >
-        <SuccessStepContent confirmedSale={confirmedSale} onDone={onClose} />
-      </Modal.Step>
-    </Modal>
+      )}
+
+      {/* Step 2: Success */}
+      {step === 2 && (
+        <SuccessStepContent confirmedSale={confirmedSale} onDone={handleClose} />
+      )}
+    </ModalShell>
   );
 }
 
@@ -275,7 +291,7 @@ function QtyButton({
   return (
     <button
       type="button"
-      className={`btn border-2 border-transparent bg-transparent ${
+      className={`cursor-pointer select-none transition-colors border-2 border-transparent bg-transparent ${
         disabled ? '' : activeColor
       }`}
       style={{

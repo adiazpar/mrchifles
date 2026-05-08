@@ -1,8 +1,9 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { useMemo, useState } from 'react'
-import { Modal, PriceInput, Spinner, useModal } from '@/components/ui'
+import { useEffect, useMemo, useState } from 'react'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ModalShell, PriceInput } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useSales } from '@/contexts/sales-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
@@ -20,6 +21,8 @@ interface CloseSessionConfirmModalProps {
   onCloseComplete?: () => void
 }
 
+type Step = 0 | 1 | 2
+
 export function CloseSessionConfirmModal({
   isOpen,
   onClose,
@@ -33,10 +36,25 @@ export function CloseSessionConfirmModal({
   const { currentSession, closeSession } = useSalesSessions()
   const translateApiMessage = useApiMessage()
 
+  const [step, setStep] = useState<Step>(0)
   const [countedCashStr, setCountedCashStr] = useState<string>('0')
   const [submitting, setSubmitting] = useState(false)
   const [closed, setClosed] = useState(false)
   const [error, setError] = useState('')
+
+  // Reset state after the modal exit animation completes.
+  useEffect(() => {
+    if (!isOpen) {
+      const t = setTimeout(() => {
+        setStep(0)
+        setCountedCashStr('0')
+        setSubmitting(false)
+        setClosed(false)
+        setError('')
+      }, 250)
+      return () => clearTimeout(t)
+    }
+  }, [isOpen])
 
   const currency = business?.currency ?? 'USD'
 
@@ -57,18 +75,18 @@ export function CloseSessionConfirmModal({
     return { transactions, totalRevenue, avgTicket, cashSales, expected, counted, variance }
   }, [currentSession, sales.sales, countedCashStr, currency])
 
-  const handleNext = async (goToStep: (n: number) => void) => {
+  const handleNext = async () => {
     haptic()
     // Refetch sales to ensure freshness for the variance reveal.
     await sales.refetch()
-    goToStep(1)
+    setStep(1)
   }
 
-  const handleConfirm = async (goToStep: (n: number) => void) => {
+  const handleConfirm = async () => {
     haptic()
     setError('')
     setSubmitting(true)
-    goToStep(2)
+    setStep(2)
     try {
       const counted = parseFloat(countedCashStr) || 0
       await closeSession({ countedCash: counted })
@@ -91,29 +109,59 @@ export function CloseSessionConfirmModal({
     }
   }
 
+  const title = t.formatMessage({ id: 'sales.session.close_modal.title' })
+
+  // Step 0 footer — count drawer
+  const step0Footer = (
+    <>
+      <IonButton fill="outline" onClick={onClose} disabled={submitting}>
+        {tCommon.formatMessage({ id: 'common.cancel' })}
+      </IonButton>
+      <IonButton onClick={handleNext} disabled={submitting}>
+        {t.formatMessage({ id: 'sales.session.close_modal.next' })}
+      </IonButton>
+    </>
+  )
+
+  // Step 1 footer — variance review
+  const step1Footer = (
+    <>
+      <IonButton fill="outline" onClick={() => setStep(0)} disabled={submitting}>
+        {tCommon.formatMessage({ id: 'common.back' })}
+      </IonButton>
+      <IonButton color="danger" onClick={handleConfirm} disabled={submitting}>
+        {t.formatMessage({ id: 'sales.session.close_modal.confirm' })}
+      </IonButton>
+    </>
+  )
+
+  // Step 2 footer — success or error
+  const step2Footer = closed ? (
+    <IonButton onClick={onClose}>
+      {tCommon.formatMessage({ id: 'common.done' })}
+    </IonButton>
+  ) : error ? (
+    <IonButton fill="outline" onClick={() => setStep(1)}>
+      {t.formatMessage({ id: 'sales.session.close_modal.error_back' })}
+    </IonButton>
+  ) : null
+
+  const footer = step === 0 ? step0Footer : step === 1 ? step1Footer : step2Footer
+
   return (
-    <Modal
+    <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      onExitComplete={() => {
-        setCountedCashStr('0')
-        setSubmitting(false)
-        setClosed(false)
-        setError('')
-      }}
-      title={t.formatMessage({
-        id: 'sales.session.close_modal.title'
-      })}
+      title={title}
+      onBack={step === 1 ? () => setStep(0) : undefined}
+      footer={footer}
+      noSwipeDismiss
     >
       {/* Step 0 — count drawer */}
-      <Modal.Step title={t.formatMessage({
-        id: 'sales.session.close_modal.title'
-      })}>
-        <Modal.Item>
+      {step === 0 && (
+        <>
           <label className="label" htmlFor="close-session-counted-cash">
-            {t.formatMessage({
-              id: 'sales.session.close_modal.counted_label'
-            })}
+            {t.formatMessage({ id: 'sales.session.close_modal.counted_label' })}
           </label>
           <PriceInput
             id="close-session-counted-cash"
@@ -121,145 +169,75 @@ export function CloseSessionConfirmModal({
             onValueChange={setCountedCashStr}
             placeholder="0"
           />
-          <p className="text-xs text-text-tertiary mt-2">{t.formatMessage({
-            id: 'sales.session.close_modal.count_helper'
-          })}</p>
-        </Modal.Item>
-        <Modal.Footer>
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn btn-secondary flex-1"
-            disabled={submitting}
-          >
-            {tCommon.formatMessage({
-              id: 'common.cancel'
-            })}
-          </button>
-          <NextButton onNext={handleNext} disabled={submitting} />
-        </Modal.Footer>
-      </Modal.Step>
+          <p className="text-xs text-text-tertiary mt-2">
+            {t.formatMessage({ id: 'sales.session.close_modal.count_helper' })}
+          </p>
+        </>
+      )}
+
       {/* Step 1 — review (variance reveal) */}
-      <Modal.Step title={t.formatMessage({
-        id: 'sales.session.close_modal.title'
-      })} backStep={0}>
-        {sessionStats && (
-          <>
-            <Modal.Item>
-              <div className="text-xs uppercase tracking-wide text-text-tertiary mb-2">
-                {t.formatMessage({
-                  id: 'sales.session.close_modal.summary_heading'
-                })}
-              </div>
-              <div className="space-y-2 text-sm">
-                <Row label={t.formatMessage({
-                  id: 'sales.session.close_modal.transactions_label'
-                })} value={sessionStats.transactions.toString()} />
-                <Row
-                  label={t.formatMessage({
-                    id: 'sales.session.close_modal.revenue_label'
-                  })}
-                  value={formatCurrency(sessionStats.totalRevenue)}
-                  valueClass="font-semibold"
-                />
-                <Row
-                  label={t.formatMessage({
-                    id: 'sales.session.close_modal.avg_ticket_label'
-                  })}
-                  value={sessionStats.avgTicket !== null ? formatCurrency(sessionStats.avgTicket) : '—'}
-                />
-              </div>
-            </Modal.Item>
-            <Modal.Item>
-              <div className="border-t border-dashed border-border" />
-            </Modal.Item>
-            <Modal.Item>
-              <div className="text-xs uppercase tracking-wide text-text-tertiary mb-2">
-                {t.formatMessage({
-                  id: 'sales.session.close_modal.recon_heading'
-                })}
-              </div>
-              <div className="space-y-2 text-sm">
-                <Row label={t.formatMessage({
-                  id: 'sales.session.close_modal.starting_cash'
-                })} value={formatCurrency(currentSession?.startingCash ?? 0)} />
-                <Row label={t.formatMessage({
-                  id: 'sales.session.close_modal.cash_sales'
-                })} value={formatCurrency(sessionStats.cashSales)} />
-                <Row label={t.formatMessage({
-                  id: 'sales.session.close_modal.expected'
-                })} value={formatCurrency(sessionStats.expected)} valueClass="font-semibold" />
-                <Row label={t.formatMessage({
-                  id: 'sales.session.close_modal.counted'
-                })} value={formatCurrency(sessionStats.counted)} />
-                <Row
-                  label={t.formatMessage({
-                    id: 'sales.session.close_modal.variance'
-                  })}
-                  value={formatCurrency(sessionStats.variance)}
-                  valueClass={`font-semibold ${sessionStats.variance === 0 ? 'text-success' : 'text-error'}`}
-                />
-              </div>
-            </Modal.Item>
-          </>
-        )}
-        <Modal.Footer>
-          <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={submitting}>
-            {tCommon.formatMessage({
-              id: 'common.back'
-            })}
-          </Modal.GoToStepButton>
-          <ConfirmCloseButton onConfirm={handleConfirm} submitting={submitting} />
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 2 — success */}
-      <Modal.Step title={t.formatMessage({
-        id: 'sales.session.close_modal.title'
-      })} hideBackButton className="modal-step--centered">
-        <Modal.Item>
-          <div className="flex flex-col items-center text-center py-4">
-            <div style={{ width: 160, height: 160 }}>
-              {closed && (
-                <LottiePlayer
-                  src="/animations/success.json"
-                  loop={false}
-                  autoplay={true}
-                  delay={300}
-                  style={{ width: 160, height: 160 }}
-                />
-              )}
-            </div>
-            {closed ? (
-              <p className="text-lg font-semibold text-text-primary mt-4">
-                {t.formatMessage({
-                  id: 'sales.session.close_modal.success_heading'
-                })}
-              </p>
-            ) : error ? (
-              <p className="text-sm text-error mt-4">{error}</p>
-            ) : (
-              <Spinner />
+      {step === 1 && sessionStats && (
+        <>
+          <div className="text-xs uppercase tracking-wide text-text-tertiary mb-2">
+            {t.formatMessage({ id: 'sales.session.close_modal.summary_heading' })}
+          </div>
+          <div className="space-y-2 text-sm mb-4">
+            <Row label={t.formatMessage({ id: 'sales.session.close_modal.transactions_label' })} value={sessionStats.transactions.toString()} />
+            <Row
+              label={t.formatMessage({ id: 'sales.session.close_modal.revenue_label' })}
+              value={formatCurrency(sessionStats.totalRevenue)}
+              valueClass="font-semibold"
+            />
+            <Row
+              label={t.formatMessage({ id: 'sales.session.close_modal.avg_ticket_label' })}
+              value={sessionStats.avgTicket !== null ? formatCurrency(sessionStats.avgTicket) : '—'}
+            />
+          </div>
+          <div className="border-t border-dashed border-border mb-4" />
+          <div className="text-xs uppercase tracking-wide text-text-tertiary mb-2">
+            {t.formatMessage({ id: 'sales.session.close_modal.recon_heading' })}
+          </div>
+          <div className="space-y-2 text-sm">
+            <Row label={t.formatMessage({ id: 'sales.session.close_modal.starting_cash' })} value={formatCurrency(currentSession?.startingCash ?? 0)} />
+            <Row label={t.formatMessage({ id: 'sales.session.close_modal.cash_sales' })} value={formatCurrency(sessionStats.cashSales)} />
+            <Row label={t.formatMessage({ id: 'sales.session.close_modal.expected' })} value={formatCurrency(sessionStats.expected)} valueClass="font-semibold" />
+            <Row label={t.formatMessage({ id: 'sales.session.close_modal.counted' })} value={formatCurrency(sessionStats.counted)} />
+            <Row
+              label={t.formatMessage({ id: 'sales.session.close_modal.variance' })}
+              value={formatCurrency(sessionStats.variance)}
+              valueClass={`font-semibold ${sessionStats.variance === 0 ? 'text-success' : 'text-error'}`}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Step 2 — success/error/loading */}
+      {step === 2 && (
+        <div className="flex flex-col items-center text-center py-4">
+          <div style={{ width: 160, height: 160 }}>
+            {closed && (
+              <LottiePlayer
+                src="/animations/success.json"
+                loop={false}
+                autoplay={true}
+                delay={300}
+                style={{ width: 160, height: 160 }}
+              />
             )}
           </div>
-        </Modal.Item>
-        <Modal.Footer>
           {closed ? (
-            <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-              {tCommon.formatMessage({
-                id: 'common.done'
-              })}
-            </button>
+            <p className="text-lg font-semibold text-text-primary mt-4">
+              {t.formatMessage({ id: 'sales.session.close_modal.success_heading' })}
+            </p>
           ) : error ? (
-            <Modal.GoToStepButton step={1} className="btn btn-secondary flex-1">
-              {t.formatMessage({
-                id: 'sales.session.close_modal.error_back'
-              })}
-            </Modal.GoToStepButton>
-          ) : null}
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
+            <p className="text-sm text-error mt-4">{error}</p>
+          ) : (
+            <IonSpinner name="crescent" />
+          )}
+        </div>
+      )}
+    </ModalShell>
+  )
 }
 
 function Row({
@@ -277,50 +255,4 @@ function Row({
       <span className={`tabular-nums ${valueClass ?? ''}`}>{value}</span>
     </div>
   )
-}
-
-function NextButton({
-  onNext,
-  disabled,
-}: {
-  onNext: (goToStep: (n: number) => void) => Promise<void>
-  disabled: boolean
-}) {
-  const t = useIntl()
-  const { goToStep } = useModal()
-  return (
-    <button
-      type="button"
-      onClick={() => onNext(goToStep)}
-      className="btn btn-primary flex-1"
-      disabled={disabled}
-    >
-      {t.formatMessage({
-        id: 'sales.session.close_modal.next'
-      })}
-    </button>
-  );
-}
-
-function ConfirmCloseButton({
-  onConfirm,
-  submitting,
-}: {
-  onConfirm: (goToStep: (n: number) => void) => Promise<void>
-  submitting: boolean
-}) {
-  const t = useIntl()
-  const { goToStep } = useModal()
-  return (
-    <button
-      type="button"
-      onClick={() => onConfirm(goToStep)}
-      className="btn btn-danger flex-1"
-      disabled={submitting}
-    >
-      {t.formatMessage({
-        id: 'sales.session.close_modal.confirm'
-      })}
-    </button>
-  );
 }

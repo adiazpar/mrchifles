@@ -3,7 +3,8 @@
 import { useIntl } from 'react-intl';
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, X } from 'lucide-react'
-import { Modal, Input, Spinner, useModal } from '@/components/ui'
+import { IonButton, IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
@@ -23,14 +24,14 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
   const { user, refreshUser } = useAuth()
   const translateApiMessage = useApiMessage()
 
-  // Form state lives in the modal component (not in a sub-component) so
-  // Modal.Step / Modal.Footer stay direct children of <Modal>, per the
-  // modal system's "direct children only" rule.
   const [name, setName] = useState(user?.name ?? '')
   const [avatar, setAvatar] = useState<string | null>(user?.avatar ?? null)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Step state: 'form' → 'success'
+  const [step, setStep] = useState<'form' | 'success'>('form')
 
   // Sync local state when the user loads or after refreshUser()
   useEffect(() => {
@@ -39,6 +40,20 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
       setAvatar(user.avatar ?? null)
     }
   }, [user])
+
+  // Reset to form step after the dismissal animation plays so the form
+  // doesn't flash back into view while the modal is still sliding away.
+  useEffect(() => {
+    if (!isOpen) {
+      const t = setTimeout(() => {
+        setStep('form')
+        setError('')
+        setIsSaving(false)
+        onExitComplete?.()
+      }, 250)
+      return () => clearTimeout(t)
+    }
+  }, [isOpen, onExitComplete])
 
   const hasChanges =
     user !== null &&
@@ -82,14 +97,14 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
     setError('')
   }
 
-  const handleSave = useCallback(async (): Promise<boolean> => {
-    if (!isValid || !hasChanges || isSaving) return false
+  const handleSave = useCallback(async () => {
+    if (!isValid || !hasChanges || isSaving) return
     setIsSaving(true)
     setError('')
     try {
       await apiPatch('/api/auth/profile', { name: name.trim(), avatar })
       await refreshUser()
-      return true
+      setStep('success')
     } catch (err) {
       if (err instanceof ApiError) {
         setError(
@@ -99,13 +114,12 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
             id: 'common.error'
           }),
         )
-        return false
+        return
       }
       console.error('Profile save error:', err)
       setError(tCommon.formatMessage({
         id: 'common.error'
       }))
-      return false
     } finally {
       setIsSaving(false)
     }
@@ -118,20 +132,36 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
     refreshUser,
     translateApiMessage,
     tCommon,
+    onClose,
   ])
 
-  const handleExitComplete = useCallback(() => {
-    setError('')
-    setIsSaving(false)
-    onExitComplete?.()
-  }, [onExitComplete])
+  const saveButton = (
+    <IonButton
+      expand="block"
+      onClick={handleSave}
+      disabled={!isValid || !hasChanges || isSaving}
+      className="flex-1"
+    >
+      {isSaving ? <IonSpinner name="crescent" /> : tCommon.formatMessage({ id: 'common.save' })}
+    </IonButton>
+  )
+
+  const doneButton = (
+    <IonButton expand="block" onClick={onClose} className="flex-1">
+      {tCommon.formatMessage({ id: 'common.done' })}
+    </IonButton>
+  )
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} onExitComplete={handleExitComplete}>
-      <Modal.Step title={t.formatMessage({
-        id: 'account.profile_modal_title'
-      })}>
-        <Modal.Item>
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title={step === 'form' ? t.formatMessage({ id: 'account.profile_modal_title' }) : ''}
+      footer={step === 'form' ? saveButton : doneButton}
+      noSwipeDismiss
+    >
+      {step === 'form' && (
+        <>
           {error && (
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mb-4">
               {error}
@@ -195,111 +225,50 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
             })}</p>
           </div>
 
-          {/* Name */}
-          <Input
-            label={t.formatMessage({
-              id: 'account.profile_name_label'
-            })}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t.formatMessage({
-              id: 'account.profile_name_placeholder'
-            })}
-            autoComplete="name"
-            required
-          />
+          {/* Name + Email */}
+          <IonList lines="full" inset>
+            <IonItem>
+              <IonInput
+                label={t.formatMessage({ id: 'account.profile_name_label' })}
+                labelPlacement="floating"
+                value={name}
+                onIonInput={(e) => setName(e.detail.value ?? '')}
+                autocomplete="name"
+                required
+              />
+            </IonItem>
+            <IonItem>
+              <IonInput
+                label={t.formatMessage({ id: 'account.profile_email_label' })}
+                labelPlacement="floating"
+                value={user?.email ?? ''}
+                disabled
+                readonly
+              />
+            </IonItem>
+          </IonList>
+        </>
+      )}
 
-          {/* Email (read-only) */}
-          <div className="mt-4">
-            <Input
-              label={t.formatMessage({
-                id: 'account.profile_email_label'
-              })}
-              value={user?.email ?? ''}
-              disabled
-              readOnly
+      {step === 'success' && (
+        <div className="flex flex-col items-center text-center py-4">
+          <div style={{ width: 160, height: 160 }}>
+            <LottiePlayer
+              src="/animations/success.json"
+              loop={false}
+              autoplay={true}
+              delay={300}
+              style={{ width: 160, height: 160 }}
             />
           </div>
-        </Modal.Item>
-        <Modal.Footer>
-          <SaveProfileButton
-            isValid={isValid}
-            hasChanges={hasChanges}
-            isSaving={isSaving}
-            onSave={handleSave}
-          />
-        </Modal.Footer>
-      </Modal.Step>
-      <Modal.Step title={t.formatMessage({
-        id: 'account.profile_saved_heading'
-      })} hideBackButton className="modal-step--centered">
-        <Modal.Item>
-          <div className="flex flex-col items-center text-center py-4">
-            <div style={{ width: 160, height: 160 }}>
-              <LottiePlayer
-                src="/animations/success.json"
-                loop={false}
-                autoplay={true}
-                delay={300}
-                style={{ width: 160, height: 160 }}
-              />
-            </div>
-            <p className="text-lg font-semibold text-text-primary mt-4">
-              {t.formatMessage({
-                id: 'account.profile_saved_heading'
-              })}
-            </p>
-            <p className="text-sm text-text-tertiary mt-1">
-              {t.formatMessage({
-                id: 'account.profile_saved_description'
-              })}
-            </p>
-          </div>
-        </Modal.Item>
-        <Modal.Footer>
-          <button type="button" className="btn btn-primary flex-1" onClick={onClose}>
-            {tCommon.formatMessage({
-              id: 'common.done'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
-}
-
-// ============================================================================
-// SAVE BUTTON (uses useModal for step navigation)
-// ============================================================================
-
-interface SaveProfileButtonProps {
-  isValid: boolean
-  hasChanges: boolean
-  isSaving: boolean
-  onSave: () => Promise<boolean>
-}
-
-function SaveProfileButton({ isValid, hasChanges, isSaving, onSave }: SaveProfileButtonProps) {
-  const tCommon = useIntl()
-  const { goToStep } = useModal()
-
-  const handleClick = async () => {
-    const ok = await onSave()
-    if (ok) {
-      goToStep(1)
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      className="btn btn-primary flex-1"
-      onClick={handleClick}
-      disabled={!isValid || !hasChanges || isSaving}
-    >
-      {isSaving ? <Spinner /> : tCommon.formatMessage({
-        id: 'common.save'
-      })}
-    </button>
-  );
+          <p className="text-lg font-semibold text-text-primary mt-4">
+            {t.formatMessage({ id: 'account.profile_saved_heading' })}
+          </p>
+          <p className="text-sm text-text-tertiary mt-1">
+            {t.formatMessage({ id: 'account.profile_saved_description' })}
+          </p>
+        </div>
+      )}
+    </ModalShell>
+  )
 }

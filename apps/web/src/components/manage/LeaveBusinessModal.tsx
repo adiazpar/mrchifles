@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { useRouter } from '@/lib/next-navigation-shim'
-import { Modal, Spinner } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { useLeaveBusiness } from '@/hooks/useLeaveBusiness'
 
@@ -20,42 +21,40 @@ export function LeaveBusinessModal({ isOpen, onClose }: Props) {
     if (ok) { onClose(); router.push('/') }
   }
 
+  const footer = (
+    <>
+      <IonButton fill="outline" onClick={onClose} className="flex-1">
+        {tCommon.formatMessage({ id: 'common.cancel' })}
+      </IonButton>
+      <IonButton
+        color="danger"
+        onClick={handleLeave}
+        disabled={isSubmitting}
+        className="flex-1"
+      >
+        {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.leave_business_button' })}
+      </IonButton>
+    </>
+  )
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} onExitComplete={reset}>
-      <Modal.Step title={t.formatMessage({
-        id: 'manage.leave_business'
-      })} hideBackButton>
-        <Modal.Item>
-          <p className="text-sm text-text-secondary">
-            {t.formatMessage({
-              id: 'manage.leave_business_warning'
-            }, { businessName: business?.name ?? '' })}
-          </p>
-        </Modal.Item>
+    <ModalShell
+      isOpen={isOpen}
+      onClose={() => { reset(); onClose() }}
+      title={t.formatMessage({ id: 'manage.leave_business' })}
+      footer={footer}
+    >
+      <div className="px-4 pt-4 pb-4 flex flex-col gap-3">
+        <p className="text-sm text-text-secondary">
+          {t.formatMessage(
+            { id: 'manage.leave_business_warning' },
+            { businessName: business?.name ?? '' }
+          )}
+        </p>
         {error && (
-          <Modal.Item>
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
-          </Modal.Item>
+          <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
         )}
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.cancel'
-            })}
-          </button>
-          <button
-            type="button"
-            onClick={handleLeave}
-            disabled={isSubmitting}
-            className="btn btn-primary flex-1"
-            style={{ background: 'var(--color-error)' }}
-          >
-            {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({
-              id: 'manage.leave_business_button'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
+      </div>
+    </ModalShell>
+  )
 }

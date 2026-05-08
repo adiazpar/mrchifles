@@ -4,6 +4,7 @@ import { useIntl } from 'react-intl';
 import { useRouter } from '@/lib/next-navigation-shim'
 import { Plus, Handshake } from 'lucide-react'
 import {
+  IonButton,
   IonItem,
   IonItemOption,
   IonItemOptions,
@@ -89,17 +90,16 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
                   }, { count: providers.length })}
                 </span>
                 {canManage && (
-                  <button
-                    type="button"
+                  <IonButton
+                    size="small"
+                    shape="round"
                     onClick={() => handleOpenModal()}
-                    className="btn btn-primary"
-                    style={{ fontSize: 'var(--text-sm)', padding: 'var(--space-2) var(--space-4)', minHeight: 'unset', gap: 'var(--space-2)', borderRadius: 'var(--radius-full)' }}
                   >
-                    <Plus style={{ width: 14, height: 14 }} />
+                    <Plus slot="start" style={{ width: 14, height: 14 }} />
                     {intl.formatMessage({
                       id: 'providers.add_button'
                     })}
-                  </button>
+                  </IonButton>
                 )}
               </div>
 
@@ -174,17 +174,16 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
                 })}
               </p>
               {canManage && (
-                <button
-                  type="button"
+                <IonButton
+                  size="small"
                   onClick={() => handleOpenModal()}
-                  className="btn btn-primary mt-4"
-                  style={{ fontSize: 'var(--text-sm)', padding: '10px var(--space-5)', minHeight: 'unset', gap: 'var(--space-2)' }}
+                  className="mt-4"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus slot="start" className="w-4 h-4" />
                   {intl.formatMessage({
                     id: 'providers.add_provider_button'
                   })}
-                </button>
+                </IonButton>
               )}
             </div>
           )}

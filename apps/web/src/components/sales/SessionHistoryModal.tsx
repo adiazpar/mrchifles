@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useMemo, useState } from 'react'
-import { Modal, useModal } from '@/components/ui'
+import { IonButton } from '@ionic/react'
+import { ModalShell } from '@/components/ui/modal-shell'
 import { useBusiness } from '@/contexts/business-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -15,17 +16,19 @@ interface SessionHistoryModalProps {
   onClose: () => void
 }
 
+type Step = 0 | 1 | 2
+
 export function SessionHistoryModal({
   isOpen,
   onClose,
 }: SessionHistoryModalProps) {
   const t = useIntl()
-  const tCommon = useIntl()
   const { business } = useBusiness()
   const { sessions, loadMore, ensureLoaded } = useSalesSessions()
   const { formatCurrency, formatDate, formatTime } = useBusinessFormat()
   const businessId = business?.id ?? ''
 
+  const [step, setStep] = useState<Step>(0)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null)
 
@@ -39,31 +42,60 @@ export function SessionHistoryModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
+  const handleClose = () => {
+    onClose()
+    setTimeout(() => {
+      setStep(0)
+      setSelectedSessionId(null)
+      setSelectedSaleId(null)
+    }, 250)
+  }
+
+  const handleBack = () => {
+    if (step === 2) setStep(1)
+    else if (step === 1) setStep(0)
+  }
+
+  let title: string
+  if (step === 0) {
+    title = t.formatMessage({ id: 'sales.session.history_modal.title' })
+  } else if (step === 1) {
+    title = selectedSession
+      ? t.formatMessage(
+          { id: 'sales.session.history_modal.sales_step_title' },
+          { date: formatDate(new Date(selectedSession.openedAt)) },
+        )
+      : t.formatMessage(
+          { id: 'sales.session.history_modal.sales_step_title' },
+          { date: '' },
+        )
+  } else {
+    title = t.formatMessage({ id: 'sales.session.history_modal.detail_step_title' })
+  }
+
+  const loadMoreFooter =
+    step === 0 && sessions.length > 0 ? (
+      <IonButton fill="outline" onClick={() => void loadMore()}>
+        {t.formatMessage({ id: 'sales.session.history_modal.load_more' })}
+      </IonButton>
+    ) : undefined
+
   return (
-    <Modal
+    <ModalShell
       isOpen={isOpen}
-      onClose={onClose}
-      onExitComplete={() => {
-        setSelectedSessionId(null)
-        setSelectedSaleId(null)
-      }}
-      title={t.formatMessage({
-        id: 'sales.session.history_modal.title'
-      })}
+      onClose={handleClose}
+      title={title}
+      onBack={step > 0 ? handleBack : undefined}
+      footer={loadMoreFooter}
     >
-      {/* Step 0: List of closed sessions. Tapping a card drills into
-          step 1 (sales for that session). */}
-      <Modal.Step title={t.formatMessage({
-        id: 'sales.session.history_modal.title'
-      })}>
-        {sessions.length === 0 ? (
-          <Modal.Item>
-            <p className="text-sm text-text-tertiary text-center py-4">{t.formatMessage({
-              id: 'sales.session.history_modal.empty'
-            })}</p>
-          </Modal.Item>
-        ) : (
-          <Modal.Item>
+      {/* Step 0: List of closed sessions */}
+      {step === 0 && (
+        <>
+          {sessions.length === 0 ? (
+            <p className="text-sm text-text-tertiary text-center py-4">
+              {t.formatMessage({ id: 'sales.session.history_modal.empty' })}
+            </p>
+          ) : (
             <div className="space-y-3">
               {sessions.map((s) => (
                 <SessionRow
@@ -76,74 +108,32 @@ export function SessionHistoryModal({
                     haptic()
                     setSelectedSessionId(s.id)
                     setSelectedSaleId(null)
+                    setStep(1)
                   }}
                 />
               ))}
             </div>
-          </Modal.Item>
-        )}
-        <Modal.Footer>
-          {sessions.length > 0 && (
-            <button
-              type="button"
-              onClick={() => void loadMore()}
-              className="btn btn-secondary flex-1"
-            >
-              {t.formatMessage({
-                id: 'sales.session.history_modal.load_more'
-              })}
-            </button>
           )}
-          <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.close'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 1: Sales for the selected session. Always-rendered per
-          modal-system rules; gates content on selectedSessionId. */}
-      <Modal.Step
-        title={
-          selectedSession
-            ? t.formatMessage({
-            id: 'sales.session.history_modal.sales_step_title'
-          }, {
-                date: formatDate(new Date(selectedSession.openedAt)),
-              })
-            : t.formatMessage({
-            id: 'sales.session.history_modal.sales_step_title'
-          }, { date: '' })
-        }
-      >
-        <SessionSalesListWithNav
+        </>
+      )}
+
+      {/* Step 1: Sales for the selected session */}
+      {step === 1 && (
+        <SessionSalesList
           businessId={businessId}
           sessionId={selectedSessionId}
-          setSelectedSaleId={setSelectedSaleId}
-          targetStep={2}
+          onSaleTap={(id) => {
+            setSelectedSaleId(id)
+            setStep(2)
+          }}
         />
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.close'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 2: Sale receipt detail. */}
-      <Modal.Step title={t.formatMessage({
-        id: 'sales.session.history_modal.detail_step_title'
-      })}>
+      )}
+
+      {/* Step 2: Sale receipt detail */}
+      {step === 2 && (
         <SaleDetailContent businessId={businessId} saleId={selectedSaleId} />
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.close'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
+      )}
+    </ModalShell>
   );
 }
 
@@ -170,15 +160,11 @@ function SessionRow({
   onTap,
 }: SessionRowProps) {
   const t = useIntl()
-  const { goToStep } = useModal()
 
   return (
     <button
       type="button"
-      onClick={() => {
-        onTap()
-        goToStep(1)
-      }}
+      onClick={onTap}
       className="w-full text-left rounded-lg border border-border p-3 transition-colors hover:bg-bg-base"
     >
       <div className="flex justify-between text-xs text-text-tertiary mb-2">
@@ -210,32 +196,6 @@ function SessionRow({
       </div>
     </button>
   );
-}
-
-interface SessionSalesListWithNavProps {
-  businessId: string
-  sessionId: string | null
-  setSelectedSaleId: (id: string) => void
-  targetStep: number
-}
-
-function SessionSalesListWithNav({
-  businessId,
-  sessionId,
-  setSelectedSaleId,
-  targetStep,
-}: SessionSalesListWithNavProps) {
-  const { goToStep } = useModal()
-  return (
-    <SessionSalesList
-      businessId={businessId}
-      sessionId={sessionId}
-      onSaleTap={(id) => {
-        setSelectedSaleId(id)
-        goToStep(targetStep)
-      }}
-    />
-  )
 }
 
 function Stat({

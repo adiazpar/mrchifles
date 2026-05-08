@@ -3,6 +3,7 @@ import { IonReactRouter } from '@ionic/react-router'
 import { Route, Switch } from 'react-router-dom'
 
 import { AuthGateOverlay } from '@/components/layout/auth-gate-overlay'
+import { ErrorBoundary } from '@/components/layout/error-boundary'
 import { HapticFeedbackProvider } from '@/components/layout/haptic-feedback-provider'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { AuthProvider } from '@/contexts/auth-context'
@@ -25,27 +26,29 @@ import { RegisterPage } from '@/routes/RegisterPage'
 export function App() {
   return (
     <IonApp>
-      <IonReactRouter>
-        <AppIntlProvider>
-          <AuthProvider>
-            <AuthGateProvider>
-              <HapticFeedbackProvider />
-              <AuthGateOverlay />
-              <Switch>
-                <Route exact path="/login">
-                  <LoginPage />
-                </Route>
-                <Route exact path="/register">
-                  <RegisterPage />
-                </Route>
-                <Route>
-                  <AuthenticatedShell />
-                </Route>
-              </Switch>
-            </AuthGateProvider>
-          </AuthProvider>
-        </AppIntlProvider>
-      </IonReactRouter>
+      <ErrorBoundary>
+        <IonReactRouter>
+          <AppIntlProvider>
+            <AuthProvider>
+              <AuthGateProvider>
+                <HapticFeedbackProvider />
+                <AuthGateOverlay />
+                <Switch>
+                  <Route exact path="/login">
+                    <LoginPage />
+                  </Route>
+                  <Route exact path="/register">
+                    <RegisterPage />
+                  </Route>
+                  <Route>
+                    <AuthenticatedShell />
+                  </Route>
+                </Switch>
+              </AuthGateProvider>
+            </AuthProvider>
+          </AppIntlProvider>
+        </IonReactRouter>
+      </ErrorBoundary>
     </IonApp>
   )
 }

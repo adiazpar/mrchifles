@@ -1,83 +1,20 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useIntl } from 'react-intl';
 import { Trash2 } from 'lucide-react'
-import { Spinner, Modal, useModal, ConfirmationAnimation } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ConfirmationAnimation } from '@/components/ui'
+import { ModalShell } from '@/components/ui/modal-shell'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
 import type { ProviderNote } from '@kasero/shared/types'
 
-// ============================================
-// SAVE BUTTON
-// ============================================
+// Step indices
+type Step = 'form' | 'delete-confirm' | 'delete-success' | 'save-success'
 
-interface SaveNoteButtonProps {
-  onSubmit: () => Promise<boolean>
-  isSaving: boolean
-  disabled: boolean
+function initialStepFromProp(prop: 0 | 1): Step {
+  return prop === 1 ? 'delete-confirm' : 'form'
 }
-
-function SaveNoteButton({ onSubmit, isSaving, disabled }: SaveNoteButtonProps) {
-  const { goToStep } = useModal()
-  const tCommon = useIntl()
-
-  // Optimistic: navigate to the save-success step before firing the API.
-  const handleClick = () => {
-    goToStep(3)
-    onSubmit()
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="btn btn-primary flex-1"
-      disabled={disabled}
-    >
-      {isSaving ? <Spinner /> : tCommon.formatMessage({
-        id: 'common.save'
-      })}
-    </button>
-  );
-}
-
-// ============================================
-// DELETE BUTTON
-// ============================================
-
-interface DeleteNoteButtonProps {
-  onConfirm: () => Promise<boolean>
-  isDeleting: boolean
-}
-
-function DeleteNoteButton({ onConfirm, isDeleting }: DeleteNoteButtonProps) {
-  const tCommon = useIntl()
-  const { goToStep } = useModal()
-
-  // Wait for the API to resolve so a failure lands us back on the form
-  // step with the error visible instead of showing the success animation.
-  const handleClick = async () => {
-    const ok = await onConfirm()
-    if (ok) goToStep(2)
-    else goToStep(0)
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="btn btn-danger flex-1"
-      disabled={isDeleting}
-    >
-      {isDeleting ? <Spinner /> : tCommon.formatMessage({
-        id: 'common.delete'
-      })}
-    </button>
-  );
-}
-
-// ============================================
-// PROPS
-// ============================================
 
 export interface EditProviderNoteModalProps {
   isOpen: boolean
@@ -104,10 +41,6 @@ export interface EditProviderNoteModalProps {
   onDelete: () => Promise<boolean>
 }
 
-// ============================================
-// COMPONENT
-// ============================================
-
 export function EditProviderNoteModal({
   isOpen,
   onClose,
@@ -127,176 +60,189 @@ export function EditProviderNoteModal({
   onDelete,
 }: EditProviderNoteModalProps) {
   const t = useIntl()
-  const tCommon = useIntl()
+
+  const [step, setStep] = useState<Step>(initialStepFromProp(initialStep))
+
+  // Sync step when the modal opens at a different initialStep.
+  useEffect(() => {
+    if (isOpen) {
+      setStep(initialStepFromProp(initialStep))
+    }
+  }, [isOpen, initialStep])
+
+  // Reset step state after the modal dismissal animation completes.
+  // Also fire onExitComplete so the parent can clear its own state.
+  useEffect(() => {
+    if (!isOpen) {
+      const timer = setTimeout(() => {
+        setStep(initialStepFromProp(initialStep))
+        onExitComplete()
+      }, 250)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, initialStep, onExitComplete])
 
   const isValid = title.trim().length > 0 && body.trim().length > 0
   const hasChanges = editingNote
     ? title.trim() !== editingNote.title.trim() || body.trim() !== editingNote.body.trim()
     : false
-  // True when the modal was opened directly from a note row's trash
-  // icon. In that flow the delete-confirm step has no meaningful "edit"
-  // step to return to, so Cancel and the header back-arrow should
-  // close the modal instead of dropping the user into the edit form.
+
+  // True when the modal was opened directly from a note row's trash icon.
+  // In that flow cancel/back should close the modal instead of returning to the form.
   const openedAsDelete = initialStep === 1
 
+  // Optimistic save: jump to success immediately, fire API in background.
+  // The user dismisses the success step manually via the Done button.
+  const handleSave = () => {
+    setStep('save-success')
+    onSubmit()
+  }
+
+  // Await the delete API — navigate on result so a failure shows the error on the form.
+  const handleDelete = async () => {
+    const ok = await onDelete()
+    if (ok) {
+      setStep('delete-success')
+    } else {
+      setStep('form')
+    }
+  }
+
+  // Derive title and back/footer for each step.
+  let modalTitle: string
+  let onBack: (() => void) | undefined
+  let footer: React.ReactNode
+
+  if (step === 'form') {
+    modalTitle = t.formatMessage({ id: 'providers.note_modal_title_edit' })
+    onBack = undefined
+    footer = (
+      <>
+        <IonButton
+          fill="clear"
+          shape="round"
+          onClick={() => setStep('delete-confirm')}
+          aria-label={t.formatMessage({ id: 'common.delete' })}
+        >
+          <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
+        </IonButton>
+        <IonButton
+          onClick={handleSave}
+          disabled={isSaving || !isValid || !hasChanges}
+          className="flex-1"
+        >
+          {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
+        </IonButton>
+      </>
+    )
+  } else if (step === 'delete-confirm') {
+    modalTitle = t.formatMessage({ id: 'providers.note_delete_confirm_title' })
+    onBack = openedAsDelete ? undefined : () => setStep('form')
+    footer = (
+      <>
+        <IonButton
+          fill="outline"
+          onClick={openedAsDelete ? onClose : () => setStep('form')}
+          disabled={isDeleting}
+          className="flex-1"
+        >
+          {t.formatMessage({ id: 'common.cancel' })}
+        </IonButton>
+        <IonButton
+          color="danger"
+          onClick={handleDelete}
+          disabled={isDeleting}
+          className="flex-1"
+        >
+          {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
+        </IonButton>
+      </>
+    )
+  } else {
+    // delete-success or save-success
+    modalTitle = ''
+    onBack = undefined
+    footer = (
+      <IonButton expand="block" onClick={onClose} className="flex-1">
+        {t.formatMessage({ id: 'common.done' })}
+      </IonButton>
+    )
+  }
+
   return (
-    <Modal
+    <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      onExitComplete={onExitComplete}
-      title={t.formatMessage({
-        id: 'providers.note_modal_title_edit'
-      })}
-      initialStep={initialStep}
+      title={modalTitle}
+      onBack={onBack}
+      footer={footer}
+      noSwipeDismiss
     >
-      {/* Step 0: edit form */}
-      <Modal.Step title={t.formatMessage({
-        id: 'providers.note_modal_title_edit'
-      })}>
-        {error && (
-          <Modal.Item>
+      {step === 'form' && (
+        <>
+          {error && (
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
-          </Modal.Item>
-        )}
-
-        <Modal.Item>
-          <label htmlFor="edit-provider-note-title" className="label">
-            {t.formatMessage({
-              id: 'providers.note_title_label'
-            })} <span className="text-error">*</span>
-          </label>
-          <input
-            id="edit-provider-note-title"
-            type="text"
-            value={title}
-            onChange={e => onTitleChange(e.target.value)}
-            className="input"
-            placeholder={t.formatMessage({
-              id: 'providers.note_title_placeholder'
-            })}
-            autoComplete="off"
-            maxLength={NOTE_TITLE_MAX}
-          />
-        </Modal.Item>
-
-        <Modal.Item>
-          <label htmlFor="edit-provider-note-body" className="label">
-            {t.formatMessage({
-              id: 'providers.note_body_label'
-            })} <span className="text-error">*</span>
-          </label>
-          <textarea
-            id="edit-provider-note-body"
-            value={body}
-            onChange={e => onBodyChange(e.target.value)}
-            className="input"
-            rows={8}
-            placeholder={t.formatMessage({
-              id: 'providers.note_body_placeholder'
-            })}
-            maxLength={NOTE_BODY_MAX}
-          />
-        </Modal.Item>
-
-        <Modal.Footer>
-          <Modal.GoToStepButton step={1} className="btn btn-secondary btn-icon">
-            <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
-          </Modal.GoToStepButton>
-          <SaveNoteButton
-            onSubmit={onSubmit}
-            isSaving={isSaving}
-            disabled={isSaving || !isValid || !hasChanges}
-          />
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 1: delete confirmation */}
-      <Modal.Step
-        title={t.formatMessage({
-          id: 'providers.note_delete_confirm_title'
-        })}
-        backStep={openedAsDelete ? undefined : 0}
-        hideBackButton={openedAsDelete}
-      >
-        <Modal.Item>
-          <p className="text-text-secondary">
-            {t.formatMessage({
-              id: 'providers.note_delete_confirm_body'
-            }, { title: editingNote?.title ?? '' })}
-          </p>
-        </Modal.Item>
-
-        <Modal.Footer>
-          {openedAsDelete ? (
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn-secondary flex-1"
-              disabled={isDeleting}
-            >
-              {tCommon.formatMessage({
-                id: 'common.cancel'
-              })}
-            </button>
-          ) : (
-            <Modal.GoToStepButton step={0} className="btn btn-secondary flex-1" disabled={isDeleting}>
-              {tCommon.formatMessage({
-                id: 'common.cancel'
-              })}
-            </Modal.GoToStepButton>
           )}
-          <DeleteNoteButton onConfirm={onDelete} isDeleting={isDeleting} />
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 2: delete success */}
-      <Modal.Step title={t.formatMessage({
-        id: 'providers.success_note_deleted_title'
-      })} hideBackButton>
-        <Modal.Item>
-          <ConfirmationAnimation
-            type="error"
-            triggered={noteDeleted}
-            title={t.formatMessage({
-              id: 'providers.success_note_deleted_heading'
-            })}
-            subtitle={t.formatMessage({
-              id: 'providers.success_note_deleted_subtitle'
-            })}
-          />
-        </Modal.Item>
 
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.done'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 3: save success */}
-      <Modal.Step title={t.formatMessage({
-        id: 'providers.success_note_updated_title'
-      })} hideBackButton>
-        <Modal.Item>
-          <ConfirmationAnimation
-            type="success"
-            triggered={noteSaved}
-            title={t.formatMessage({
-              id: 'providers.success_note_updated_heading'
-            })}
-            subtitle={t.formatMessage({
-              id: 'providers.success_note_updated_subtitle'
-            })}
-          />
-        </Modal.Item>
+          <div>
+            <label htmlFor="edit-provider-note-title" className="label">
+              {t.formatMessage({ id: 'providers.note_title_label' })} <span className="text-error">*</span>
+            </label>
+            <input
+              id="edit-provider-note-title"
+              type="text"
+              value={title}
+              onChange={e => onTitleChange(e.target.value)}
+              className="input"
+              placeholder={t.formatMessage({ id: 'providers.note_title_placeholder' })}
+              autoComplete="off"
+              maxLength={NOTE_TITLE_MAX}
+            />
+          </div>
 
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.done'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
+          <div>
+            <label htmlFor="edit-provider-note-body" className="label">
+              {t.formatMessage({ id: 'providers.note_body_label' })} <span className="text-error">*</span>
+            </label>
+            <textarea
+              id="edit-provider-note-body"
+              value={body}
+              onChange={e => onBodyChange(e.target.value)}
+              className="input"
+              rows={8}
+              placeholder={t.formatMessage({ id: 'providers.note_body_placeholder' })}
+              maxLength={NOTE_BODY_MAX}
+            />
+          </div>
+        </>
+      )}
+
+      {step === 'delete-confirm' && (
+        <p className="text-text-secondary">
+          {t.formatMessage(
+            { id: 'providers.note_delete_confirm_body' },
+            { title: editingNote?.title ?? '' }
+          )}
+        </p>
+      )}
+
+      {step === 'delete-success' && (
+        <ConfirmationAnimation
+          type="error"
+          triggered={noteDeleted}
+          title={t.formatMessage({ id: 'providers.success_note_deleted_heading' })}
+          subtitle={t.formatMessage({ id: 'providers.success_note_deleted_subtitle' })}
+        />
+      )}
+
+      {step === 'save-success' && (
+        <ConfirmationAnimation
+          type="success"
+          triggered={noteSaved}
+          title={t.formatMessage({ id: 'providers.success_note_updated_heading' })}
+          subtitle={t.formatMessage({ id: 'providers.success_note_updated_subtitle' })}
+        />
+      )}
+    </ModalShell>
+  )
 }

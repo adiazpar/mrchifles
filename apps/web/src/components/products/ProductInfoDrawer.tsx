@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import Image from '@/lib/Image'
 import { ImagePlus } from 'lucide-react'
-import { Modal } from '@/components/ui'
+import { ModalShell } from '@/components/ui/modal-shell'
 import { BarcodeDisplay } from './BarcodeDisplay'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { getProductIconUrl } from '@/lib/utils'
@@ -38,7 +38,6 @@ export function ProductInfoDrawer({
   categories,
 }: ProductInfoDrawerProps) {
   const t = useIntl()
-  const tCommon = useIntl()
 
   // Render nothing if no product is set. The parent's open-state is
   // typically gated on `!!product`, so this branch only fires during the
@@ -54,40 +53,37 @@ export function ProductInfoDrawer({
     product.barcodeFormat ? BARCODE_FORMAT_LABELS[product.barcodeFormat] : null
 
   return (
-    <Modal
+    <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      onExitComplete={onExitComplete}
       title={t.formatMessage({
         id: 'products.info_drawer_title'
       })}
     >
-      <Modal.Item>
-        <div className="flex flex-col items-center py-6">
-          <div className="w-56 h-56 rounded-3xl overflow-hidden flex items-center justify-center bg-bg-muted">
-            {iconUrl && isPresetIcon(iconUrl) ? (
-              (() => {
-                const p = getPresetIcon(iconUrl)
-                return p ? <p.icon size={120} className="text-text-primary" /> : null
-              })()
-            ) : iconUrl ? (
-              <Image
-                src={iconUrl}
-                alt={product.name}
-                width={224}
-                height={224}
-                className="object-cover w-full h-full"
-                unoptimized
-              />
-            ) : (
-              <ImagePlus className="w-20 h-20 text-text-tertiary" />
-            )}
-          </div>
-          <div className="font-medium text-lg mt-4 text-center">{product.name}</div>
-          <div className="text-sm text-text-tertiary mt-1 text-center">{categoryName}</div>
+      <div className="flex flex-col items-center py-6">
+        <div className="w-56 h-56 rounded-3xl overflow-hidden flex items-center justify-center bg-bg-muted">
+          {iconUrl && isPresetIcon(iconUrl) ? (
+            (() => {
+              const p = getPresetIcon(iconUrl)
+              return p ? <p.icon size={120} className="text-text-primary" /> : null
+            })()
+          ) : iconUrl ? (
+            <Image
+              src={iconUrl}
+              alt={product.name}
+              width={224}
+              height={224}
+              className="object-cover w-full h-full"
+              unoptimized
+            />
+          ) : (
+            <ImagePlus className="w-20 h-20 text-text-tertiary" />
+          )}
         </div>
-      </Modal.Item>
-      <Modal.Item>
+        <div className="font-medium text-lg mt-4 text-center">{product.name}</div>
+        <div className="text-sm text-text-tertiary mt-1 text-center">{categoryName}</div>
+      </div>
+      <div className="modal-step-item">
         {product.barcode && product.barcodeFormat ? (
           <div className="flex flex-col items-center gap-3">
             <BarcodeDisplay value={product.barcode} format={product.barcodeFormat} />
@@ -105,14 +101,7 @@ export function ProductInfoDrawer({
             })}
           </p>
         )}
-      </Modal.Item>
-      <Modal.Footer>
-        <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-          {tCommon.formatMessage({
-            id: 'common.close'
-          })}
-        </button>
-      </Modal.Footer>
-    </Modal>
+      </div>
+    </ModalShell>
   );
 }

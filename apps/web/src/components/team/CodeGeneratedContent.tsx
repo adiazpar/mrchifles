@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { RefreshCw } from 'lucide-react'
-import { Badge, Spinner, Modal } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
+import { Badge } from '@/components/ui'
 import type { InviteRole } from '@kasero/shared/types'
 
 export interface CodeGeneratedContentProps {
@@ -45,8 +46,7 @@ export function CodeGeneratedContent({
   }, { days })
 
   return (
-    <Modal.Item>
-      <div className="invite-success-compact">
+    <div className="invite-success-compact">
         {/* Role badge and expiry */}
         <div className="flex items-center justify-center gap-3 mb-3">
           <Badge variant="brand">{roleLabels[selectedRole]}</Badge>
@@ -81,7 +81,7 @@ export function CodeGeneratedContent({
         >
           {isGenerating ? (
             <>
-              <Spinner />
+              <IonSpinner name="crescent" />
               <span>{t.formatMessage({
                 id: 'team.regenerating'
               })}</span>
@@ -95,7 +95,6 @@ export function CodeGeneratedContent({
             </>
           )}
         </button>
-      </div>
-    </Modal.Item>
+    </div>
   );
 }

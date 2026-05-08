@@ -3,7 +3,6 @@
 import { useIntl } from 'react-intl';
 import { useCallback, useEffect } from 'react'
 import { Plus, ScanLine } from 'lucide-react'
-import { useModal } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { generateInternalProductBarcode, getBarcodeFormatLabel } from '@kasero/shared/barcodes'
@@ -50,18 +49,17 @@ export function AiBarcodeStepBody() {
     }
   }
 
-  const { currentStep } = useModal()
-
-  // Clear any existing barcode state when entering this step so the user
-  // starts with a clean slate every time.
+  // Clear any existing barcode state when this step mounts so the user
+  // starts with a clean slate every time. In IonNav-land each step is
+  // mounted fresh on push, so running on mount (empty deps) is equivalent
+  // to the old currentStep === 2 guard.
   useEffect(() => {
-    if (currentStep === 2) {
-      setBarcode('')
-      setBarcodeFormat(null)
-      setBarcodeSource(null)
-      setError('')
-    }
-  }, [currentStep, setBarcode, setBarcodeFormat, setBarcodeSource, setError])
+    setBarcode('')
+    setBarcodeFormat(null)
+    setBarcodeSource(null)
+    setError('')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleClear = useCallback(() => {
     setBarcode('')
@@ -133,10 +131,12 @@ export function AiBarcodeStepBody() {
           type="button"
           onClick={handleScanClick}
           disabled={scanBusy}
-          className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--info"
+          className="flex flex-col items-center gap-1.5 cursor-pointer select-none transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-default disabled:active:scale-100"
         >
-          <span className="icon-stack-btn__icon"><ScanLine size={28} /></span>
-          <span className="icon-stack-btn__label">{scanBusy ? t.formatMessage({
+          <span className="flex items-center justify-center w-16 h-16 rounded-full bg-bg-muted text-brand">
+            <ScanLine size={28} />
+          </span>
+          <span className="text-[13px] font-medium text-text-secondary">{scanBusy ? t.formatMessage({
             id: 'barcode.scan_reading'
           }) : t.formatMessage({
             id: 'barcode.scan_button'
@@ -145,10 +145,12 @@ export function AiBarcodeStepBody() {
         <button
           type="button"
           onClick={handleGenerate}
-          className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--success"
+          className="flex flex-col items-center gap-1.5 cursor-pointer select-none transition-transform active:scale-95"
         >
-          <span className="icon-stack-btn__icon"><Plus size={28} /></span>
-          <span className="icon-stack-btn__label">{t.formatMessage({
+          <span className="flex items-center justify-center w-16 h-16 rounded-full bg-bg-muted text-success">
+            <Plus size={28} />
+          </span>
+          <span className="text-[13px] font-medium text-text-secondary">{t.formatMessage({
             id: 'barcode.generate_button'
           })}</span>
         </button>

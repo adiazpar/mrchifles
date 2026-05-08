@@ -1,39 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useIntl } from 'react-intl';
-import { Spinner, Modal, useModal, ConfirmationAnimation } from '@/components/ui'
+import { IonButton, IonSpinner } from '@ionic/react'
+import { ConfirmationAnimation } from '@/components/ui'
+import { ModalShell } from '@/components/ui/modal-shell'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
-
-interface SaveNoteButtonProps {
-  onSubmit: () => Promise<boolean>
-  isSaving: boolean
-  disabled: boolean
-}
-
-function SaveNoteButton({ onSubmit, isSaving, disabled }: SaveNoteButtonProps) {
-  const { goToStep } = useModal()
-  const tCommon = useIntl()
-
-  // Optimistic: jump to the success step immediately, fire the API in
-  // the background. If it fails the parent surfaces the error on reopen.
-  const handleClick = () => {
-    goToStep(1)
-    onSubmit()
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="btn btn-primary flex-1"
-      disabled={disabled}
-    >
-      {isSaving ? <Spinner /> : tCommon.formatMessage({
-        id: 'common.save'
-      })}
-    </button>
-  );
-}
 
 export interface AddProviderNoteModalProps {
   isOpen: boolean
@@ -65,111 +37,112 @@ export function AddProviderNoteModal({
   onSubmit,
 }: AddProviderNoteModalProps) {
   const t = useIntl()
-  const tCommon = useIntl()
+
+  const [step, setStep] = useState<'form' | 'success'>('form')
+
+  // Reset step state after the modal dismissal animation completes.
+  // Also fire onExitComplete so the parent can clear its form state.
+  useEffect(() => {
+    if (!isOpen) {
+      const timer = setTimeout(() => {
+        setStep('form')
+        onExitComplete()
+      }, 250)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, onExitComplete])
 
   const isValid = title.trim().length > 0 && body.trim().length > 0
 
+  // Optimistic: jump to success immediately, fire the API in the background.
+  // If it fails the parent surfaces the error on reopen. The user dismisses
+  // the success step manually via the Done button — never auto-close.
+  const handleSave = () => {
+    setStep('success')
+    onSubmit()
+  }
+
+  const formFooter = (
+    <>
+      <IonButton
+        fill="outline"
+        onClick={onClose}
+        disabled={isSaving}
+        className="flex-1"
+      >
+        {t.formatMessage({ id: 'common.cancel' })}
+      </IonButton>
+      <IonButton
+        onClick={handleSave}
+        disabled={isSaving || !isValid}
+        className="flex-1"
+      >
+        {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
+      </IonButton>
+    </>
+  )
+
+  const successFooter = (
+    <IonButton expand="block" onClick={onClose} className="flex-1">
+      {t.formatMessage({ id: 'common.done' })}
+    </IonButton>
+  )
+
   return (
-    <Modal
+    <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      onExitComplete={onExitComplete}
-      title={t.formatMessage({
-        id: 'providers.note_modal_title_add'
-      })}
+      title={step === 'form' ? t.formatMessage({ id: 'providers.note_modal_title_add' }) : ''}
+      footer={step === 'form' ? formFooter : successFooter}
+      noSwipeDismiss
     >
-      {/* Step 0: form */}
-      <Modal.Step title={t.formatMessage({
-        id: 'providers.note_modal_title_add'
-      })}>
-        {error && (
-          <Modal.Item>
+      {step === 'form' && (
+        <>
+          {error && (
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
-          </Modal.Item>
-        )}
+          )}
 
-        <Modal.Item>
-          <label htmlFor="provider-note-title" className="label">
-            {t.formatMessage({
-              id: 'providers.note_title_label'
-            })} <span className="text-error">*</span>
-          </label>
-          <input
-            id="provider-note-title"
-            type="text"
-            value={title}
-            onChange={e => onTitleChange(e.target.value)}
-            className="input"
-            placeholder={t.formatMessage({
-              id: 'providers.note_title_placeholder'
-            })}
-            autoComplete="off"
-            maxLength={NOTE_TITLE_MAX}
-          />
-        </Modal.Item>
+          <div>
+            <label htmlFor="provider-note-title" className="label">
+              {t.formatMessage({ id: 'providers.note_title_label' })} <span className="text-error">*</span>
+            </label>
+            <input
+              id="provider-note-title"
+              type="text"
+              value={title}
+              onChange={e => onTitleChange(e.target.value)}
+              className="input"
+              placeholder={t.formatMessage({ id: 'providers.note_title_placeholder' })}
+              autoComplete="off"
+              maxLength={NOTE_TITLE_MAX}
+            />
+          </div>
 
-        <Modal.Item>
-          <label htmlFor="provider-note-body" className="label">
-            {t.formatMessage({
-              id: 'providers.note_body_label'
-            })} <span className="text-error">*</span>
-          </label>
-          <textarea
-            id="provider-note-body"
-            value={body}
-            onChange={e => onBodyChange(e.target.value)}
-            className="input"
-            rows={8}
-            placeholder={t.formatMessage({
-              id: 'providers.note_body_placeholder'
-            })}
-            maxLength={NOTE_BODY_MAX}
-          />
-        </Modal.Item>
+          <div>
+            <label htmlFor="provider-note-body" className="label">
+              {t.formatMessage({ id: 'providers.note_body_label' })} <span className="text-error">*</span>
+            </label>
+            <textarea
+              id="provider-note-body"
+              value={body}
+              onChange={e => onBodyChange(e.target.value)}
+              className="input"
+              rows={8}
+              placeholder={t.formatMessage({ id: 'providers.note_body_placeholder' })}
+              maxLength={NOTE_BODY_MAX}
+            />
+          </div>
+        </>
+      )}
 
-        <Modal.Footer>
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn btn-secondary flex-1"
-            disabled={isSaving}
-          >
-            {tCommon.formatMessage({
-              id: 'common.cancel'
-            })}
-          </button>
-          <SaveNoteButton
-            onSubmit={onSubmit}
-            isSaving={isSaving}
-            disabled={isSaving || !isValid}
-          />
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 1: save success */}
-      <Modal.Step title={t.formatMessage({
-        id: 'providers.success_note_added_title'
-      })} hideBackButton>
-        <Modal.Item>
-          <ConfirmationAnimation
-            type="success"
-            triggered={noteSaved}
-            title={t.formatMessage({
-              id: 'providers.success_note_added_heading'
-            })}
-            subtitle={t.formatMessage({
-              id: 'providers.success_note_added_subtitle'
-            })}
-          />
-        </Modal.Item>
-
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.done'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
+      {step === 'success' && (
+        <ConfirmationAnimation
+          type="success"
+          triggered={noteSaved}
+          title={t.formatMessage({ id: 'providers.success_note_added_heading' })}
+          subtitle={t.formatMessage({ id: 'providers.success_note_added_subtitle' })}
+        />
+      )}
+    </ModalShell>
+  )
 }

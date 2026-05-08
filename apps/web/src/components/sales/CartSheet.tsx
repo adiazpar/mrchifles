@@ -2,6 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useState } from 'react'
+import { IonButton } from '@ionic/react'
 import { ShoppingCart } from 'lucide-react'
 import { haptic } from '@/lib/haptics'
 import type { UseCartResult } from '@/hooks/useCart'
@@ -25,9 +26,8 @@ export function CartSheet({ cart }: CartSheetProps) {
   return (
     <>
       <div className="absolute bottom-0 left-0 right-0">
-        <button
-          type="button"
-          className="btn btn-primary w-full"
+        <IonButton
+          expand="block"
           disabled={isEmpty}
           onClick={() => {
             haptic()
@@ -38,7 +38,7 @@ export function CartSheet({ cart }: CartSheetProps) {
           <span>{t.formatMessage({
             id: 'sales.cart.view_cart'
           }, { count: itemCount })}</span>
-        </button>
+        </IonButton>
       </div>
       <ViewCartModal
         isOpen={open}

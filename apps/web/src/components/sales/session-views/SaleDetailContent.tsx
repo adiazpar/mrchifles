@@ -2,7 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { Modal, Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { apiRequest } from '@/lib/api-client'
 import type { Sale } from '@kasero/shared/types/sale'
@@ -15,9 +15,8 @@ interface SaleDetailContentProps {
 /**
  * Receipt-format detail for a single sale. Fetches the full Sale
  * (with line items) from /api/businesses/[businessId]/sales/[id] when
- * saleId changes. Returns Modal.Item siblings via a fragment — must
- * be invoked as direct children of a Modal.Step. Receipt layout
- * mirrors OrderDetailModal: items list → dashed divider → totals.
+ * saleId changes. Receipt layout mirrors OrderDetailModal:
+ * items list → dashed divider → totals.
  *
  * Used by both ActiveSessionSalesModal (current session sales) and
  * SessionHistoryModal (historic session sales).
@@ -58,23 +57,23 @@ export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps
 
   if (!saleId || loading) {
     return (
-      <Modal.Item>
+      <div className="modal-step-item">
         <div className="flex items-center justify-center py-6">
-          <Spinner />
+          <IonSpinner name="crescent" />
         </div>
-      </Modal.Item>
+      </div>
     )
   }
 
   if (error || !sale) {
     return (
-      <Modal.Item>
+      <div className="modal-step-item">
         <p className="text-sm text-error text-center py-4">
           {error || tMethod.formatMessage({
             id: 'sales.cart.modal_error_generic'
           })}
         </p>
-      </Modal.Item>
+      </div>
     );
   }
 
@@ -82,7 +81,7 @@ export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps
 
   return (
     <>
-      <Modal.Item>
+      <div className="modal-step-item">
         <div className="space-y-2">
           {sale.items.map((item, idx) => (
             <div
@@ -104,11 +103,11 @@ export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps
             </div>
           ))}
         </div>
-      </Modal.Item>
-      <Modal.Item>
+      </div>
+      <div className="modal-step-item">
         <div className="border-t border-dashed border-border" />
-      </Modal.Item>
-      <Modal.Item>
+      </div>
+      <div className="modal-step-item">
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-text-tertiary">{t.formatMessage({
@@ -133,7 +132,7 @@ export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps
             <span>{formatTime(new Date(sale.createdAt))}</span>
           </div>
         </div>
-      </Modal.Item>
+      </div>
     </>
   );
 }

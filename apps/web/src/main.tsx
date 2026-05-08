@@ -26,11 +26,9 @@ import './styles/base.css'
 import './styles/ionic-theme.css'
 
 // 4. Component-level brand CSS, layered on top of the brand tokens.
-import './styles/buttons.css'
 import './styles/forms.css'
 import './styles/interactive.css'
 import './styles/animations.css'
-import './styles/modal.css'
 import './styles/auth-gate.css'
 import './styles/utilities.css'
 

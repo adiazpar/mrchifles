@@ -3,6 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useState } from 'react'
 import { History, Receipt } from 'lucide-react'
+import { IonButton } from '@ionic/react'
 import { useBusiness } from '@/contexts/business-context'
 import { useSales } from '@/contexts/sales-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
@@ -126,10 +127,9 @@ export function SalesStatsCard({
                 compact-state Close Session footprint. Both follow the
                 canonical .btn framework. */}
             <div className="flex items-center justify-between mt-4">
-              <button
-                type="button"
-                className="btn btn-secondary btn-icon"
-                style={{ borderRadius: 'var(--radius-full)' }}
+              <IonButton
+                fill="outline"
+                shape="round"
                 aria-label={tAction.formatMessage({
                   id: 'sales.action.history'
                 })}
@@ -139,20 +139,21 @@ export function SalesStatsCard({
                 }}
               >
                 <History />
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary w-1/2"
-                disabled={!canManage}
-                onClick={() => {
-                  haptic()
-                  onOpenSession()
-                }}
-              >
-                <span>{tAction.formatMessage({
-                  id: 'sales.action.open_session'
-                })}</span>
-              </button>
+              </IonButton>
+              <div className="w-1/2">
+                <IonButton
+                  expand="block"
+                  disabled={!canManage}
+                  onClick={() => {
+                    haptic()
+                    onOpenSession()
+                  }}
+                >
+                  <span>{tAction.formatMessage({
+                    id: 'sales.action.open_session'
+                  })}</span>
+                </IonButton>
+              </div>
             </div>
           </div>
         </div>
@@ -179,10 +180,9 @@ export function SalesStatsCard({
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <button
-                type="button"
-                className="btn btn-secondary btn-icon"
-                style={{ borderRadius: 'var(--radius-full)' }}
+              <IonButton
+                fill="outline"
+                shape="round"
                 aria-label={tAction.formatMessage({
                   id: 'sales.action.view_session_sales'
                 })}
@@ -192,20 +192,22 @@ export function SalesStatsCard({
                 }}
               >
                 <Receipt className="text-success" />
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger w-1/2"
-                disabled={!canManage}
-                onClick={() => {
-                  haptic()
-                  onRequestCloseSession()
-                }}
-              >
-                <span>{tAction.formatMessage({
-                  id: 'sales.action.close_session'
-                })}</span>
-              </button>
+              </IonButton>
+              <div className="w-1/2">
+                <IonButton
+                  expand="block"
+                  color="danger"
+                  disabled={!canManage}
+                  onClick={() => {
+                    haptic()
+                    onRequestCloseSession()
+                  }}
+                >
+                  <span>{tAction.formatMessage({
+                    id: 'sales.action.close_session'
+                  })}</span>
+                </IonButton>
+              </div>
             </div>
           </div>
         </div>

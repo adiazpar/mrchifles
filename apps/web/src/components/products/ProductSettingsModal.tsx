@@ -4,7 +4,8 @@ import { useIntl } from 'react-intl';
 import { useState, useEffect, useRef } from 'react'
 import { Plus, ChevronRight, GripVertical, Trash2, Pencil } from 'lucide-react'
 import { Reorder, useDragControls } from 'framer-motion'
-import { Spinner, Modal, useModal } from '@/components/ui'
+import { IonSpinner, IonButton } from '@ionic/react'
+import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { SORT_OPTIONS } from '@/lib/products'
 import type { ProductCategory, SortPreference } from '@kasero/shared/types'
@@ -40,6 +41,12 @@ export interface ProductSettingsModalProps {
 }
 
 // ============================================
+// STEP TYPE
+// ============================================
+
+type Step = 'main' | 'categories' | 'add-edit-category' | 'delete-category' | 'category-success' | 'preferences'
+
+// ============================================
 // BUTTON COMPONENTS
 // ============================================
 
@@ -50,12 +57,12 @@ interface SaveCategoryButtonProps {
   isSaving: boolean
   onSetCompleted: (v: boolean) => void
   onSetMessage: (v: string) => void
+  onGoToSuccess: () => void
 }
 
-function SaveCategoryButton({ name, editingCategory, onSave, isSaving, onSetCompleted, onSetMessage }: SaveCategoryButtonProps) {
+function SaveCategoryButton({ name, editingCategory, onSave, isSaving, onSetCompleted, onSetMessage, onGoToSuccess }: SaveCategoryButtonProps) {
   const t = useIntl()
   const tCommon = useIntl()
-  const { goToStep } = useModal()
   const isValid = name.trim().length > 0
   const hasChanges = editingCategory ? name.trim() !== editingCategory.name : true
 
@@ -66,21 +73,19 @@ function SaveCategoryButton({ name, editingCategory, onSave, isSaving, onSetComp
     }) : t.formatMessage({
       id: 'productSettings.category_created'
     }))
-    goToStep(4)
+    onGoToSuccess()
     onSave()
   }
 
   return (
-    <button
-      type="button"
+    <IonButton
       onClick={handleSave}
-      className="btn btn-primary flex-1"
       disabled={isSaving || !isValid || !hasChanges}
     >
-      {isSaving ? <Spinner /> : tCommon.formatMessage({
+      {isSaving ? <IonSpinner name="crescent" /> : tCommon.formatMessage({
         id: 'common.save'
       })}
-    </button>
+    </IonButton>
   );
 }
 
@@ -89,6 +94,7 @@ interface DeleteCategoryButtonProps {
   isDeleting: boolean
   onSetCompleted: (v: boolean) => void
   onSetMessage: (v: string) => void
+  onGoToSuccess: () => void
 }
 
 // ============================================
@@ -167,7 +173,6 @@ interface SortableCategoryListProps {
 }
 
 function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteCategory }: SortableCategoryListProps) {
-  const { goToStep } = useModal()
   // Local mirror of the ordered list. framer-motion's Reorder.Group calls
   // onReorder repeatedly during the drag gesture with the intermediate
   // ordering, so we track it locally and only persist the final order once
@@ -199,14 +204,8 @@ function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteC
         <SortableCategoryItem
           key={category.id}
           category={category}
-          onEditClick={() => {
-            onEditCategory(category)
-            goToStep(2)
-          }}
-          onDeleteClick={() => {
-            onDeleteCategory(category)
-            goToStep(3)
-          }}
+          onEditClick={() => onEditCategory(category)}
+          onDeleteClick={() => onDeleteCategory(category)}
           onDragEnd={handleDragEnd}
         />
       ))}
@@ -218,31 +217,29 @@ function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteC
 // BUTTON COMPONENTS (continued)
 // ============================================
 
-function DeleteCategoryButton({ onDelete, isDeleting, onSetCompleted, onSetMessage }: DeleteCategoryButtonProps) {
+function DeleteCategoryButton({ onDelete, isDeleting, onSetCompleted, onSetMessage, onGoToSuccess }: DeleteCategoryButtonProps) {
   const t = useIntl()
   const tCommon = useIntl()
-  const { goToStep } = useModal()
 
   const handleDelete = () => {
     onSetCompleted(true)
     onSetMessage(t.formatMessage({
       id: 'productSettings.category_deleted'
     }))
-    goToStep(4)
+    onGoToSuccess()
     onDelete()
   }
 
   return (
-    <button
-      type="button"
+    <IonButton
+      color="danger"
       onClick={handleDelete}
-      className="btn btn-danger flex-1"
       disabled={isDeleting}
     >
-      {isDeleting ? <Spinner /> : tCommon.formatMessage({
+      {isDeleting ? <IonSpinner name="crescent" /> : tCommon.formatMessage({
         id: 'common.delete'
       })}
-    </button>
+    </IonButton>
   );
 }
 
@@ -297,7 +294,10 @@ export function ProductSettingsModal({
     }),
   }
 
-  // Local state for form
+  // Step state
+  const [step, setStep] = useState<Step>('main')
+
+  // Local form state
   const [categoryName, setCategoryName] = useState('')
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null)
   const [deletingCategory, setDeletingCategory] = useState<ProductCategory | null>(null)
@@ -317,19 +317,25 @@ export function ProductSettingsModal({
     setLocalSortPreference(sortPreference)
   }, [sortPreference])
 
-  // Reset form state when modal closes
+  // Reset all state after the dismissal animation plays so the modal doesn't
+  // flash back to a stale step while it is still sliding away.
   useEffect(() => {
     if (!isOpen) {
-      setCategoryName('')
-      setEditingCategory(null)
-      setDeletingCategory(null)
-      setActionCompleted(false)
-      setActionMessage('')
-      setLocalDefaultCategoryId(defaultCategoryId)
-      setLocalSortPreference(sortPreference)
-      onClearError()
+      const timer = setTimeout(() => {
+        setStep('main')
+        setCategoryName('')
+        setEditingCategory(null)
+        setDeletingCategory(null)
+        setActionCompleted(false)
+        setActionMessage('')
+        setLocalDefaultCategoryId(defaultCategoryId)
+        setLocalSortPreference(sortPreference)
+        onClearError()
+        onExitComplete?.()
+      }, 250)
+      return () => clearTimeout(timer)
     }
-  }, [isOpen, onClearError, defaultCategoryId, sortPreference])
+  }, [isOpen, onClearError, onExitComplete, defaultCategoryId, sortPreference])
 
   // Handle category save (create or update)
   const handleSaveCategory = async () => {
@@ -354,22 +360,147 @@ export function ProductSettingsModal({
     return 0
   }
 
+  // Derive back handler and title based on current step
+  const getTitle = (): string => {
+    switch (step) {
+      case 'main': return t.formatMessage({ id: 'productSettings.title' })
+      case 'categories': return t.formatMessage({ id: 'productSettings.categories_title' })
+      case 'add-edit-category': return editingCategory
+        ? t.formatMessage({ id: 'productSettings.edit_category_title' })
+        : t.formatMessage({ id: 'productSettings.add_category_title' })
+      case 'delete-category': return t.formatMessage({ id: 'productSettings.delete_category_title' })
+      case 'category-success': return tCommon.formatMessage({ id: 'common.done' })
+      case 'preferences': return t.formatMessage({ id: 'productSettings.preferences_title' })
+    }
+  }
+
+  const getBackHandler = (): (() => void) | undefined => {
+    switch (step) {
+      case 'main': return undefined
+      case 'categories': return () => setStep('main')
+      case 'add-edit-category': return () => setStep('categories')
+      case 'delete-category': return () => setStep('categories')
+      case 'category-success': return undefined
+      case 'preferences': return () => setStep('main')
+    }
+  }
+
+  // Footer content per step
+  const renderFooter = (): React.ReactNode => {
+    switch (step) {
+      case 'main':
+        return (
+          <IonButton fill="outline" onClick={onClose}>
+            {tCommon.formatMessage({ id: 'common.cancel' })}
+          </IonButton>
+        )
+
+      case 'categories':
+        return (
+          <>
+            <IonButton fill="outline" onClick={() => setStep('main')}>
+              {tCommon.formatMessage({ id: 'common.back' })}
+            </IonButton>
+            <IonButton
+              onClick={() => {
+                setEditingCategory(null)
+                setCategoryName('')
+                setActionCompleted(false)
+                setStep('add-edit-category')
+              }}
+            >
+              <Plus style={{ width: 16, height: 16 }} />
+              {t.formatMessage({ id: 'productSettings.add_category_button' })}
+            </IonButton>
+          </>
+        )
+
+      case 'add-edit-category':
+        return (
+          <>
+            <IonButton fill="outline" onClick={() => setStep('categories')}>
+              {tCommon.formatMessage({ id: 'common.back' })}
+            </IonButton>
+            <SaveCategoryButton
+              name={categoryName}
+              editingCategory={editingCategory}
+              onSave={handleSaveCategory}
+              isSaving={isCreatingCategory || isUpdatingCategory}
+              onSetCompleted={setActionCompleted}
+              onSetMessage={setActionMessage}
+              onGoToSuccess={() => setStep('category-success')}
+            />
+          </>
+        )
+
+      case 'delete-category':
+        return (
+          <>
+            <IonButton fill="outline" onClick={() => setStep('categories')}>
+              {tCommon.formatMessage({ id: 'common.cancel' })}
+            </IonButton>
+            <DeleteCategoryButton
+              onDelete={handleDeleteCategory}
+              isDeleting={isDeletingCategory}
+              onSetCompleted={setActionCompleted}
+              onSetMessage={setActionMessage}
+              onGoToSuccess={() => setStep('category-success')}
+            />
+          </>
+        )
+
+      case 'category-success':
+        return (
+          <IonButton
+            onClick={() => {
+              setEditingCategory(null)
+              setDeletingCategory(null)
+              setCategoryName('')
+              setActionCompleted(false)
+              setStep('categories')
+            }}
+          >
+            {tCommon.formatMessage({ id: 'common.done' })}
+          </IonButton>
+        )
+
+      case 'preferences':
+        return (
+          <>
+            <IonButton fill="outline" onClick={() => setStep('main')}>
+              {tCommon.formatMessage({ id: 'common.back' })}
+            </IonButton>
+            <IonButton
+              disabled={isSavingSettings || (localDefaultCategoryId === defaultCategoryId && localSortPreference === sortPreference)}
+              onClick={() => {
+                onUpdateSettings({
+                  defaultCategoryId: localDefaultCategoryId,
+                  sortPreference: localSortPreference,
+                })
+              }}
+            >
+              {tCommon.formatMessage({ id: 'common.save' })}
+            </IonButton>
+          </>
+        )
+    }
+  }
+
   return (
-    <Modal
+    <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      onExitComplete={onExitComplete}
-      title={t.formatMessage({
-        id: 'productSettings.title'
-      })}
+      title={getTitle()}
+      onBack={getBackHandler()}
+      footer={renderFooter()}
+      noSwipeDismiss
     >
-      {/* Step 0: Main menu */}
-      <Modal.Step title={t.formatMessage({
-        id: 'productSettings.title'
-      })} hideBackButton>
-        <Modal.Item>
-          <Modal.GoToStepButton
-            step={1}
+      {/* Step: main */}
+      {step === 'main' && (
+        <>
+          <button
+            type="button"
+            onClick={() => setStep('categories')}
             className="list-item-clickable list-item-flat w-full text-left"
           >
             <div className="flex-1 min-w-0">
@@ -383,9 +514,10 @@ export function ProductSettingsModal({
               </span>
             </div>
             <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
-          </Modal.GoToStepButton>
-          <Modal.GoToStepButton
-            step={5}
+          </button>
+          <button
+            type="button"
+            onClick={() => setStep('preferences')}
             className="list-item-clickable list-item-flat w-full text-left"
           >
             <div className="flex-1 min-w-0">
@@ -399,90 +531,52 @@ export function ProductSettingsModal({
               </span>
             </div>
             <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
-          </Modal.GoToStepButton>
-        </Modal.Item>
+          </button>
+        </>
+      )}
 
-        <Modal.Footer>
-          <Modal.CancelBackButton />
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 1: Categories list */}
-      <Modal.Step title={t.formatMessage({
-        id: 'productSettings.categories_title'
-      })} backStep={0}>
-        {error && (
-          <Modal.Item>
+      {/* Step: categories */}
+      {step === 'categories' && (
+        <>
+          {error && (
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
               {error}
             </div>
-          </Modal.Item>
-        )}
-
-        <Modal.Item>
+          )}
           {categories.length === 0 ? (
             <div className="text-center py-8 text-text-secondary">
-              <p>{t.formatMessage({
-                id: 'productSettings.no_categories'
-              })}</p>
+              <p>{t.formatMessage({ id: 'productSettings.no_categories' })}</p>
             </div>
           ) : (
-          <SortableCategoryList
-            categories={categories}
-            onReorder={onReorderCategories}
-            onEditCategory={(category) => {
-              setEditingCategory(category)
-              setCategoryName(category.name)
-              setActionCompleted(false)
-            }}
-            onDeleteCategory={(category) => {
-              setDeletingCategory(category)
-              setActionCompleted(false)
-            }}
-          />
+            <SortableCategoryList
+              categories={categories}
+              onReorder={onReorderCategories}
+              onEditCategory={(category) => {
+                setEditingCategory(category)
+                setCategoryName(category.name)
+                setActionCompleted(false)
+                setStep('add-edit-category')
+              }}
+              onDeleteCategory={(category) => {
+                setDeletingCategory(category)
+                setActionCompleted(false)
+                setStep('delete-category')
+              }}
+            />
           )}
-        </Modal.Item>
+        </>
+      )}
 
-        <Modal.Footer>
-          <Modal.CancelBackButton className="btn btn-secondary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.back'
-            })}
-          </Modal.CancelBackButton>
-          <Modal.GoToStepButton
-            step={2}
-            onClick={() => {
-              setEditingCategory(null)
-              setCategoryName('')
-              setActionCompleted(false)
-            }}
-            className="btn btn-primary flex-1"
-          >
-            <Plus style={{ width: 16, height: 16 }} />
-            {t.formatMessage({
-              id: 'productSettings.add_category_button'
-            })}
-          </Modal.GoToStepButton>
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 2: Add/Edit category */}
-      <Modal.Step title={editingCategory ? t.formatMessage({
-        id: 'productSettings.edit_category_title'
-      }) : t.formatMessage({
-        id: 'productSettings.add_category_title'
-      })} backStep={1}>
-        {error && (
-          <Modal.Item>
+      {/* Step: add-edit-category */}
+      {step === 'add-edit-category' && (
+        <>
+          {error && (
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
               {error}
             </div>
-          </Modal.Item>
-        )}
-
-        <Modal.Item>
+          )}
           <label htmlFor="category-name" className="label">
-            {t.formatMessage({
-              id: 'productSettings.category_name_label'
-            })} <span className="text-error">*</span>
+            {t.formatMessage({ id: 'productSettings.category_name_label' })} <span className="text-error">*</span>
           </label>
           <input
             id="category-name"
@@ -490,181 +584,98 @@ export function ProductSettingsModal({
             value={categoryName}
             onChange={e => setCategoryName(e.target.value)}
             className="input"
-            placeholder={t.formatMessage({
-              id: 'productSettings.category_name_placeholder'
-            })}
+            placeholder={t.formatMessage({ id: 'productSettings.category_name_placeholder' })}
             autoComplete="off"
           />
-        </Modal.Item>
+        </>
+      )}
 
-        <Modal.Footer>
-          <Modal.CancelBackButton className="btn btn-secondary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.back'
-            })}
-          </Modal.CancelBackButton>
-          <SaveCategoryButton
-            name={categoryName}
-            editingCategory={editingCategory}
-            onSave={handleSaveCategory}
-            isSaving={isCreatingCategory || isUpdatingCategory}
-            onSetCompleted={setActionCompleted}
-            onSetMessage={setActionMessage}
-          />
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 3: Delete category confirmation */}
-      <Modal.Step title={t.formatMessage({
-        id: 'productSettings.delete_category_title'
-      })} backStep={1}>
-        <Modal.Item>
-          <p className="text-text-secondary">
-            {t.formatMessage({
-              id: 'productSettings.delete_category_confirm'
-            }, { name: deletingCategory?.name ?? '' })}
-            {getCategoryProductCount(deletingCategory?.id || '') > 0 && (
-              <span className="block mt-2 text-sm text-warning">
-                {t.formatMessage({
-                  id: 'productSettings.delete_category_warning'
-                })}
-              </span>
+      {/* Step: delete-category */}
+      {step === 'delete-category' && (
+        <p className="text-text-secondary">
+          {t.formatMessage({
+            id: 'productSettings.delete_category_confirm'
+          }, { name: deletingCategory?.name ?? '' })}
+          {getCategoryProductCount(deletingCategory?.id || '') > 0 && (
+            <span className="block mt-2 text-sm text-warning">
+              {t.formatMessage({ id: 'productSettings.delete_category_warning' })}
+            </span>
+          )}
+        </p>
+      )}
+
+      {/* Step: category-success */}
+      {step === 'category-success' && (
+        <div className="flex flex-col items-center text-center py-4">
+          <div style={{ width: 160, height: 160 }}>
+            {actionCompleted && (
+              <LottiePlayer
+                src="/animations/success.json"
+                loop={false}
+                autoplay={true}
+                delay={300}
+                style={{ width: 160, height: 160 }}
+              />
             )}
+          </div>
+          <p
+            className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
+            style={{ opacity: actionCompleted ? 1 : 0 }}
+          >
+            {actionMessage}
           </p>
-        </Modal.Item>
+        </div>
+      )}
 
-        <Modal.Footer>
-          <Modal.GoToStepButton step={1} className="btn btn-secondary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.cancel'
-            })}
-          </Modal.GoToStepButton>
-          <DeleteCategoryButton
-            onDelete={handleDeleteCategory}
-            isDeleting={isDeletingCategory}
-            onSetCompleted={setActionCompleted}
-            onSetMessage={setActionMessage}
-          />
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 4: Success */}
-      <Modal.Step title={tCommon.formatMessage({
-        id: 'common.done'
-      })} hideBackButton className="modal-step--centered">
-        <Modal.Item>
-          <div className="flex flex-col items-center text-center py-4">
-            <div style={{ width: 160, height: 160 }}>
-              {actionCompleted && (
-                <LottiePlayer
-                  src="/animations/success.json"
-                  loop={false}
-                  autoplay={true}
-                  delay={300}
-                  style={{ width: 160, height: 160 }}
-                />
-              )}
-            </div>
-            <p
-              className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
-              style={{ opacity: actionCompleted ? 1 : 0 }}
+      {/* Step: preferences */}
+      {step === 'preferences' && (
+        <>
+          <div>
+            <label htmlFor="default-category" className="label">{t.formatMessage({
+              id: 'productSettings.default_category_label'
+            })}</label>
+            <select
+              id="default-category"
+              value={localDefaultCategoryId || ''}
+              onChange={(e) => setLocalDefaultCategoryId(e.target.value || null)}
+              className={`input ${!localDefaultCategoryId ? 'select-placeholder' : ''}`}
             >
-              {actionMessage}
+              <option value="">{t.formatMessage({
+                id: 'productSettings.default_category_none'
+              })}</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-text-tertiary mt-1">
+              {t.formatMessage({ id: 'productSettings.default_category_hint' })}
             </p>
           </div>
-        </Modal.Item>
 
-        <Modal.Footer>
-          <Modal.GoToStepButton
-            step={1}
-            onClick={() => {
-              setEditingCategory(null)
-              setDeletingCategory(null)
-              setCategoryName('')
-              setActionCompleted(false)
-            }}
-            className="btn btn-primary flex-1"
-          >
-            {tCommon.formatMessage({
-              id: 'common.done'
-            })}
-          </Modal.GoToStepButton>
-        </Modal.Footer>
-      </Modal.Step>
-      {/* Step 5: Preferences */}
-      <Modal.Step title={t.formatMessage({
-        id: 'productSettings.preferences_title'
-      })} backStep={0}>
-        <Modal.Item>
-          <label htmlFor="default-category" className="label">{t.formatMessage({
-            id: 'productSettings.default_category_label'
-          })}</label>
-          <select
-            id="default-category"
-            value={localDefaultCategoryId || ''}
-            onChange={(e) => setLocalDefaultCategoryId(e.target.value || null)}
-            className={`input ${!localDefaultCategoryId ? 'select-placeholder' : ''}`}
-          >
-            <option value="">{t.formatMessage({
-              id: 'productSettings.default_category_none'
-            })}</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-text-tertiary mt-1">
-            {t.formatMessage({
-              id: 'productSettings.default_category_hint'
-            })}
-          </p>
-        </Modal.Item>
-
-        <Modal.Item>
-          <label htmlFor="sort-preference" className="label">{t.formatMessage({
-            id: 'productSettings.sort_preference_label'
-          })}</label>
-          <select
-            id="sort-preference"
-            value={localSortPreference}
-            onChange={(e) => setLocalSortPreference(e.target.value as SortPreference)}
-            className="input"
-          >
-            {SORT_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
-                {sortLabels[option.value]}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-text-tertiary mt-1">
-            {t.formatMessage({
-              id: 'productSettings.sort_preference_hint'
-            })}
-          </p>
-        </Modal.Item>
-
-        <Modal.Footer>
-          <Modal.CancelBackButton className="btn btn-secondary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.back'
-            })}
-          </Modal.CancelBackButton>
-          <button
-            type="button"
-            className="btn btn-primary flex-1"
-            disabled={isSavingSettings || (localDefaultCategoryId === defaultCategoryId && localSortPreference === sortPreference)}
-            onClick={() => {
-              onUpdateSettings({
-                defaultCategoryId: localDefaultCategoryId,
-                sortPreference: localSortPreference,
-              })
-            }}
-          >
-            {tCommon.formatMessage({
-              id: 'common.save'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
+          <div className="mt-4">
+            <label htmlFor="sort-preference" className="label">{t.formatMessage({
+              id: 'productSettings.sort_preference_label'
+            })}</label>
+            <select
+              id="sort-preference"
+              value={localSortPreference}
+              onChange={(e) => setLocalSortPreference(e.target.value as SortPreference)}
+              className="input"
+            >
+              {SORT_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {sortLabels[option.value]}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-text-tertiary mt-1">
+              {t.formatMessage({ id: 'productSettings.sort_preference_hint' })}
+            </p>
+          </div>
+        </>
+      )}
+    </ModalShell>
   );
 }
