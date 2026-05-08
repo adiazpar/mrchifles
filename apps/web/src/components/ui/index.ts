@@ -18,3 +18,5 @@ export { TabContainer } from './TabContainer'
 
 export { PriceInput } from './PriceInput'
 export type { PriceInputProps } from './PriceInput'
+
+export { ModalShell } from './modal-shell'
