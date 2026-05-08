@@ -35,10 +35,22 @@ const redis =
 // Refuse to start in Vercel production without Upstash creds. Without
 // Redis, every Lambda has its own in-memory counter — so the effective
 // rate limit is `limit * concurrency` and brute-force protection is a
-// myth. We gate on VERCEL_ENV (set only on Vercel runtime) instead of
-// NODE_ENV so a local `next build` for typecheck doesn't trip this on
-// machines that don't have prod env wired up.
-if (process.env.VERCEL_ENV === 'production' && !redis) {
+// myth.
+//
+// We gate on:
+//   - VERCEL_ENV === 'production' so non-Vercel contexts (local build,
+//     CI, vitest) don't trip this without Upstash creds.
+//   - NEXT_PHASE !== 'phase-production-build' so Vercel's `next build`
+//     "Collecting page data" step — which runs every route module's
+//     top-level code with VERCEL_ENV=production — completes even when
+//     Upstash env vars haven't been wired up yet. NEXT_PHASE is unset
+//     in the serverless runtime, so the safety still fires on the first
+//     real request to a misconfigured prod Lambda.
+if (
+  process.env.VERCEL_ENV === 'production' &&
+  process.env.NEXT_PHASE !== 'phase-production-build' &&
+  !redis
+) {
   throw new Error(
     'Rate-limit backend misconfiguration: UPSTASH_REDIS_REST_URL and ' +
       'UPSTASH_REDIS_REST_TOKEN are required in production. The in-memory ' +
