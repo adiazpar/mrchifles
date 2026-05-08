@@ -10,6 +10,7 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import Image from '@/lib/Image'
@@ -305,22 +306,20 @@ export function EditOrderStep() {
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
             {openedFromSwipe ? (
-              <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
+              <IonButton fill="outline" onClick={onClose}>
                 {t.formatMessage({ id: 'common.cancel' })}
-              </button>
+              </IonButton>
             ) : (
-              <button type="button" onClick={() => navRef.current?.pop()} className="btn btn-secondary flex-1">
+              <IonButton fill="outline" onClick={() => navRef.current?.pop()}>
                 {t.formatMessage({ id: 'common.cancel' })}
-              </button>
+              </IonButton>
             )}
-            <button
-              type="button"
+            <IonButton
               onClick={handleSave}
-              className="btn btn-primary flex-1"
               disabled={isDisabled}
             >
               {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
-            </button>
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

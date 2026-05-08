@@ -8,6 +8,7 @@ import {
   IonContent,
   IonFooter,
   IonButtons,
+  IonButton,
 } from '@ionic/react'
 import { CodeGeneratedContent } from '../CodeGeneratedContent'
 import { useInviteNavRef, useInviteCallbacks } from './InviteNavContext'
@@ -55,18 +56,18 @@ export function InviteCodeStep() {
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
-            <button
-              type="button"
+            <IonButton
+              fill="outline"
+              shape="round"
               onClick={() => navRef.current?.push(() => <InviteDeleteCodeStep />)}
-              className="btn btn-secondary btn-icon"
               aria-label={t.formatMessage({ id: 'team.step_delete_code' })}
             >
               <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
-            </button>
-            <button
-              type="button"
+            </IonButton>
+            <IonButton
+              fill="outline"
+              shape="round"
               onClick={() => newCode && onCopyCode(newCode)}
-              className="btn btn-secondary btn-icon"
               aria-label={t.formatMessage({ id: 'common.copy' })}
             >
               {copyFeedback === newCode ? (
@@ -74,14 +75,10 @@ export function InviteCodeStep() {
               ) : (
                 <Copy style={{ width: 16, height: 16 }} />
               )}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn-primary flex-1"
-            >
+            </IonButton>
+            <IonButton onClick={onClose}>
               {t.formatMessage({ id: 'common.done' })}
-            </button>
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

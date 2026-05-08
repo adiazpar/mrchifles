@@ -2,6 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useMemo, useState } from 'react'
+import { IonButton } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { useBusiness } from '@/contexts/business-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
@@ -74,13 +75,9 @@ export function SessionHistoryModal({
 
   const loadMoreFooter =
     step === 0 && sessions.length > 0 ? (
-      <button
-        type="button"
-        onClick={() => void loadMore()}
-        className="btn btn-secondary flex-1"
-      >
+      <IonButton fill="outline" onClick={() => void loadMore()}>
         {t.formatMessage({ id: 'sales.session.history_modal.load_more' })}
-      </button>
+      </IonButton>
     ) : undefined
 
   return (

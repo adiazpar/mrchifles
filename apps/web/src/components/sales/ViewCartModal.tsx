@@ -2,6 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useMemo, useState, useCallback, type MouseEvent } from 'react'
+import { IonButton } from '@ionic/react'
 import { Minus, Plus } from 'lucide-react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { useProducts } from '@/contexts/products-context'
@@ -100,35 +101,21 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
   // Footer for step 0 (cart view)
   const cartFooter = (
     <>
-      <button
-        type="button"
-        onClick={handleClose}
-        className="btn btn-secondary flex-1"
-      >
+      <IonButton fill="outline" onClick={handleClose}>
         {tCommon.formatMessage({ id: 'common.cancel' })}
-      </button>
-      <button
-        type="button"
-        className="btn btn-primary flex-1"
-        disabled={isEmpty}
-        onClick={() => setStep(1)}
-      >
+      </IonButton>
+      <IonButton disabled={isEmpty} onClick={() => setStep(1)}>
         {tCommon.formatMessage({ id: 'common.confirm' })}
-      </button>
+      </IonButton>
     </>
   )
 
   // Footer for step 1 (payment)
   const paymentFooter = (
     <>
-      <button
-        type="button"
-        onClick={handleClose}
-        className="btn btn-secondary flex-1"
-        disabled={submitting}
-      >
+      <IonButton fill="outline" onClick={handleClose} disabled={submitting}>
         {tCommon.formatMessage({ id: 'common.cancel' })}
-      </button>
+      </IonButton>
       <ChargeButton
         cart={cart}
         currency={currency}

@@ -9,6 +9,7 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useOrderNavRef, useOrderDetailCallbacks } from './OrderNavContext'
@@ -60,22 +61,21 @@ export function DeleteOrderConfirmStep() {
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
             {openedFromSwipe ? (
-              <button type="button" onClick={onClose} className="btn btn-secondary flex-1" disabled={isDeleting}>
+              <IonButton fill="outline" onClick={onClose} disabled={isDeleting}>
                 {t.formatMessage({ id: 'common.cancel' })}
-              </button>
+              </IonButton>
             ) : (
-              <button type="button" onClick={() => navRef.current?.pop()} className="btn btn-secondary flex-1" disabled={isDeleting}>
+              <IonButton fill="outline" onClick={() => navRef.current?.pop()} disabled={isDeleting}>
                 {t.formatMessage({ id: 'common.cancel' })}
-              </button>
+              </IonButton>
             )}
-            <button
-              type="button"
+            <IonButton
+              color="danger"
               onClick={handleDelete}
-              className="btn btn-danger flex-1"
               disabled={isDeleting}
             >
               {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
-            </button>
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

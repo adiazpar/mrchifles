@@ -9,6 +9,7 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
@@ -100,22 +101,19 @@ export function AdjustInventoryStep() {
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
-            <button
-              type="button"
+            <IonButton
+              fill="outline"
               onClick={() => navRef.current?.pop()}
-              className="btn btn-secondary flex-1"
               disabled={isAdjusting}
             >
               {t.formatMessage({ id: 'common.cancel' })}
-            </button>
-            <button
-              type="button"
+            </IonButton>
+            <IonButton
               onClick={handleSave}
-              className="btn btn-primary flex-1"
               disabled={isAdjusting || newStockValue === (editingProduct?.stock ?? 0)}
             >
               {isAdjusting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
-            </button>
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

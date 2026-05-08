@@ -9,6 +9,7 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { useMemberNavRef, useMemberCallbacks } from './MemberNavContext'
 
@@ -46,22 +47,19 @@ export function MemberPartnerWarningStep() {
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
-            <button
-              type="button"
+            <IonButton
+              fill="outline"
               onClick={() => navRef.current?.pop()}
-              className="btn btn-secondary flex-1"
               disabled={roleChangeLoading}
             >
               {t.formatMessage({ id: 'common.cancel' })}
-            </button>
-            <button
-              type="button"
+            </IonButton>
+            <IonButton
               onClick={handleConfirm}
-              className="btn btn-primary flex-1"
               disabled={roleChangeLoading}
             >
               {roleChangeLoading ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'team.partner_warning_confirm' })}
-            </button>
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

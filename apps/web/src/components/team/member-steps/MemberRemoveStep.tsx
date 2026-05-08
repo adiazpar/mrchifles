@@ -9,6 +9,7 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { useMemberNavRef, useMemberCallbacks } from './MemberNavContext'
 
@@ -45,22 +46,20 @@ export function MemberRemoveStep() {
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
-            <button
-              type="button"
+            <IonButton
+              fill="outline"
               onClick={() => navRef.current?.pop()}
-              className="btn btn-secondary flex-1"
               disabled={removeLoading}
             >
               {t.formatMessage({ id: 'common.cancel' })}
-            </button>
-            <button
-              type="button"
+            </IonButton>
+            <IonButton
+              color="danger"
               onClick={handleRemove}
-              className="btn btn-danger flex-1"
               disabled={removeLoading}
             >
               {removeLoading ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'team.remove_confirm' })}
-            </button>
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

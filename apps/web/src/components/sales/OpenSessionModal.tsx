@@ -2,7 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { IonSpinner } from '@ionic/react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell, PriceInput } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
@@ -87,38 +87,24 @@ export function OpenSessionModal({
   // Step 0 footer — enter starting cash
   const step0Footer = (
     <>
-      <button
-        type="button"
-        onClick={onClose}
-        className="btn btn-secondary flex-1"
-        disabled={submitting}
-      >
+      <IonButton fill="outline" onClick={onClose} disabled={submitting}>
         {tCommon.formatMessage({ id: 'common.cancel' })}
-      </button>
-      <button
-        type="button"
-        onClick={handleConfirm}
-        className="btn btn-primary flex-1"
-        disabled={submitting}
-      >
+      </IonButton>
+      <IonButton onClick={handleConfirm} disabled={submitting}>
         {t.formatMessage({ id: 'sales.session.open_modal.confirm' })}
-      </button>
+      </IonButton>
     </>
   )
 
   // Step 1 footer — success or error
   const step1Footer = opened ? (
-    <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+    <IonButton onClick={onClose}>
       {tCommon.formatMessage({ id: 'common.done' })}
-    </button>
+    </IonButton>
   ) : error ? (
-    <button
-      type="button"
-      onClick={() => setStep(0)}
-      className="btn btn-secondary flex-1"
-    >
+    <IonButton fill="outline" onClick={() => setStep(0)}>
       {t.formatMessage({ id: 'sales.session.open_modal.error_back' })}
-    </button>
+    </IonButton>
   ) : null
 
   const footer = step === 0 ? step0Footer : step1Footer

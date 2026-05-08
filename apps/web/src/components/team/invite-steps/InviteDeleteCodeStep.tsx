@@ -8,6 +8,7 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonButton,
 } from '@ionic/react'
 import { ConfirmationAnimation } from '@/components/ui'
 import { useInviteNavRef, useInviteCallbacks } from './InviteNavContext'
@@ -45,22 +46,20 @@ export function InviteDeleteCodeStep() {
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
-            <button
-              type="button"
+            <IonButton
+              fill="outline"
               onClick={() => navRef.current?.pop()}
-              className="btn btn-secondary flex-1"
               disabled={isDeletingCode}
             >
               {t.formatMessage({ id: 'common.cancel' })}
-            </button>
-            <button
-              type="button"
+            </IonButton>
+            <IonButton
+              color="danger"
               onClick={handleDelete}
-              className="btn btn-danger flex-1"
               disabled={isDeletingCode}
             >
               {t.formatMessage({ id: 'common.delete' })}
-            </button>
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

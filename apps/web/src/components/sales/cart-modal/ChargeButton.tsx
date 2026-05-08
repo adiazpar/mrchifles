@@ -1,7 +1,7 @@
 'use client'
 
 import { useIntl, type IntlShape } from 'react-intl';
-import { IonSpinner } from '@ionic/react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useSales } from '@/contexts/sales-context'
@@ -91,12 +91,7 @@ export function ChargeButton({
   }
 
   return (
-    <button
-      type="button"
-      className="btn btn-primary flex-1"
-      disabled={!canConfirm}
-      onClick={handleClick}
-    >
+    <IonButton disabled={!canConfirm} onClick={handleClick}>
       {submitting ? (
         <IonSpinner name="crescent" />
       ) : (
@@ -104,7 +99,7 @@ export function ChargeButton({
           id: 'sales.cart.modal_charge_button'
         }, { value: formatCurrency(cart.total) })}</span>
       )}
-    </button>
+    </IonButton>
   );
 }
 

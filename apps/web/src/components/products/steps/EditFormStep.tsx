@@ -117,31 +117,29 @@ export function EditFormStep() {
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
             {canDelete && (
-              <button
-                type="button"
+              <IonButton
+                fill="outline"
+                shape="round"
                 onClick={() => navRef.current?.push(() => <DeleteConfirmStep />)}
-                className="btn btn-secondary btn-icon"
                 aria-label={t.formatMessage({ id: 'productForm.title_delete_product' })}
               >
                 <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
-              </button>
+              </IonButton>
             )}
-            <button
-              type="button"
+            <IonButton
+              fill="outline"
+              shape="round"
               onClick={() => navRef.current?.push(() => <AdjustInventoryStep />)}
-              className="btn btn-secondary btn-icon"
               aria-label={t.formatMessage({ id: 'productForm.title_adjust_inventory' })}
             >
               <SlidersHorizontal className="text-brand" style={{ width: 16, height: 16 }} />
-            </button>
-            <button
-              type="button"
+            </IonButton>
+            <IonButton
               onClick={handleSave}
-              className="btn btn-primary flex-1"
               disabled={isSaving || !isFormValid || !hasChanges}
             >
               {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
-            </button>
+            </IonButton>
           </div>
         </IonToolbar>
       </IonFooter>

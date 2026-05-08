@@ -9,6 +9,7 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
@@ -119,14 +120,13 @@ export function ConfirmOrderStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
+          <IonButton
+            expand="block"
             onClick={handleConfirm}
-            className="btn btn-primary w-full"
             disabled={isSaving}
           >
             {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.confirm' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

@@ -9,6 +9,7 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonButton,
 } from '@ionic/react'
 import { Plus, ScanLine } from 'lucide-react'
 import { useProductForm } from '@/contexts/product-form-context'
@@ -159,15 +160,15 @@ export function AiBarcodeStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
+          <IonButton
+            expand="block"
+            fill={hasBarcode ? 'solid' : 'outline'}
             onClick={handleContinue}
-            className={`${hasBarcode ? 'btn btn-primary' : 'btn btn-secondary'} w-full`}
           >
             {hasBarcode
               ? t.formatMessage({ id: 'productForm.continue_button' })
               : t.formatMessage({ id: 'productForm.skip_for_now' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

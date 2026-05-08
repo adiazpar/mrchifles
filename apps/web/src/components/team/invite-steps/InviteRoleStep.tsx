@@ -68,14 +68,13 @@ export function InviteRoleStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
-            className="btn btn-primary w-full"
+          <IonButton
+            expand="block"
             disabled={isGenerating}
             onClick={handleNext}
           >
             {isGenerating ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'team.generate_code_button' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

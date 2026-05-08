@@ -1,6 +1,7 @@
 'use client'
 
 import { useIntl } from 'react-intl';
+import { IonButton } from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { PaymentMethod } from '@kasero/shared/types/sale'
@@ -98,15 +99,11 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
         </div>
       )}
       <div className="modal-footer-item">
-        <button
-          type="button"
-          onClick={onDone}
-          className="btn btn-primary flex-1"
-        >
+        <IonButton expand="block" onClick={onDone}>
           {tCommon.formatMessage({
             id: 'common.done'
           })}
-        </button>
+        </IonButton>
       </div>
     </>
   );

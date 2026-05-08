@@ -240,47 +240,45 @@ export function OrderOverviewStep() {
           <IonToolbar className="ion-padding-horizontal">
             <div className="flex gap-2">
               {canDelete && (
-                <button
-                  type="button"
+                <IonButton
+                  fill="outline"
+                  shape="round"
                   onClick={() => navRef.current?.push(() => <DeleteOrderConfirmStep />)}
-                  className="btn btn-secondary btn-icon"
                   aria-label={t.formatMessage({ id: 'orders.delete_order_title' })}
                 >
                   <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
-                </button>
+                </IonButton>
               )}
               {canManage && (
-                <button
-                  type="button"
+                <IonButton
+                  fill="outline"
+                  shape="round"
                   onClick={() => {
                     onInitializeEditForm(order)
                     navRef.current?.push(() => <EditOrderStep />)
                   }}
-                  className="btn btn-secondary btn-icon"
-                  title={t.formatMessage({ id: 'orders.edit_order_aria' })}
+                  aria-label={t.formatMessage({ id: 'orders.edit_order_aria' })}
                 >
                   <Pencil className="text-brand" style={{ width: 16, height: 16 }} />
-                </button>
+                </IonButton>
               )}
-              <button
-                type="button"
+              <IonButton
                 onClick={() => {
                   onInitializeReceiveQuantities(order)
                   navRef.current?.push(() => <ReceiveOrderStep />)
                 }}
-                className="btn btn-primary flex-1"
               >
                 {t.formatMessage({ id: 'orders.receive_button' })}
-              </button>
+              </IonButton>
             </div>
           </IonToolbar>
         </IonFooter>
       ) : (
         <IonFooter>
           <IonToolbar className="ion-padding-horizontal">
-            <button type="button" onClick={handleClose} className="btn btn-primary w-full">
+            <IonButton expand="block" onClick={handleClose}>
               {t.formatMessage({ id: 'common.close' })}
-            </button>
+            </IonButton>
           </IonToolbar>
         </IonFooter>
       )}

@@ -8,6 +8,7 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonButton,
 } from '@ionic/react'
 import { useProductForm } from '@/contexts/product-form-context'
 import { SuggestedCategoryStep } from '../SuggestedCategoryStep'
@@ -58,13 +59,13 @@ export function SuggestedCategoryStepWrapper() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
+          <IonButton
+            fill="outline"
+            expand="block"
             onClick={goToForm}
-            className="btn btn-secondary w-full"
           >
             {t.formatMessage({ id: 'productForm.skip_for_now' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

@@ -9,6 +9,7 @@ import {
   IonButtons,
   IonBackButton,
   IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { hapticSuccess } from '@/lib/haptics'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
@@ -108,14 +109,13 @@ export function FormStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
+          <IonButton
+            expand="block"
             onClick={handleSave}
-            className="btn btn-primary w-full"
             disabled={isSaving || !isFormValid || !hasChanges}
           >
             {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

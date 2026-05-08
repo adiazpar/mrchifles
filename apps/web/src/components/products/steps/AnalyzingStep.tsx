@@ -8,6 +8,7 @@ import {
   IonContent,
   IonFooter,
   IonSpinner,
+  IonButton,
 } from '@ionic/react'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
@@ -74,13 +75,13 @@ export function AnalyzingStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
+          <IonButton
+            fill="outline"
+            expand="block"
             onClick={handleCancel}
-            className="btn btn-secondary w-full"
           >
             {t.formatMessage({ id: 'common.cancel' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

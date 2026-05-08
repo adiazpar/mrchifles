@@ -2,6 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { User as UserIcon, UserCircle } from 'lucide-react'
+import { IonButton } from '@ionic/react'
 import { RoleCard } from './RoleCard'
 
 export interface RoleChangeContentProps {
@@ -70,14 +71,12 @@ export function RoleChangeSaveButton({
 }: RoleChangeSaveButtonProps) {
   const tCommon = useIntl()
   return (
-    <button
-      type="button"
+    <IonButton
       onClick={onSave}
-      className="btn btn-primary flex-1"
       disabled={roleChangeLoading || isDisabled}
     >
       {tCommon.formatMessage({ id: 'common.save' })}
-    </button>
+    </IonButton>
   );
 }
 
@@ -89,13 +88,12 @@ export interface RoleChangeCancelButtonProps {
 export function RoleChangeCancelButton({ disabled, onCancel }: RoleChangeCancelButtonProps) {
   const tCommon = useIntl()
   return (
-    <button
-      type="button"
+    <IonButton
+      fill="outline"
       onClick={onCancel}
-      className="btn btn-secondary flex-1"
       disabled={disabled}
     >
       {tCommon.formatMessage({ id: 'common.cancel' })}
-    </button>
+    </IonButton>
   );
 }

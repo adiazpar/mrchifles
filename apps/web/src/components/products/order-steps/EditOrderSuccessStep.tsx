@@ -1,5 +1,5 @@
 import { useIntl } from 'react-intl'
-import { IonPage, IonContent, IonFooter, IonToolbar } from '@ionic/react'
+import { IonPage, IonContent, IonFooter, IonToolbar, IonButton } from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useOrderDetailCallbacks } from './OrderNavContext'
 
@@ -44,9 +44,9 @@ export function EditOrderSuccessStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button type="button" onClick={handleClose} className="btn btn-primary w-full">
+          <IonButton expand="block" onClick={handleClose}>
             {t.formatMessage({ id: 'common.close' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>

@@ -86,11 +86,11 @@ export function SelectProductsStep() {
               </button>
             )}
           </div>
-          <button
-            type="button"
+          <IonButton
+            fill="outline"
+            shape="round"
             onClick={() => { setScanError(''); openScanner() }}
             disabled={scanBusy}
-            className="btn btn-secondary btn-icon flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={t.formatMessage({ id: 'orders.scan_button_aria' })}
           >
             {scanBusy ? (
@@ -98,7 +98,7 @@ export function SelectProductsStep() {
             ) : (
               <ScanLine size={18} />
             )}
-          </button>
+          </IonButton>
         </div>
         {scanHiddenInput}
         {scanError && (
@@ -240,14 +240,13 @@ export function SelectProductsStep() {
 
       <IonFooter>
         <IonToolbar className="ion-padding-horizontal">
-          <button
-            type="button"
+          <IonButton
+            expand="block"
             onClick={() => navRef.current?.push(() => <OrderDetailsStep />)}
-            className="btn btn-primary w-full"
             disabled={orderItems.length === 0}
           >
             {t.formatMessage({ id: 'common.continue' })}
-          </button>
+          </IonButton>
         </IonToolbar>
       </IonFooter>
     </IonPage>
