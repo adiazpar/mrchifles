@@ -143,6 +143,7 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
       title={title}
       onBack={step === 1 ? handleBack : undefined}
       footer={footer}
+      noSwipeDismiss
     >
       {/* Step 0: Cart view */}
       {step === 0 && (

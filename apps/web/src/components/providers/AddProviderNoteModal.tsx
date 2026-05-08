@@ -55,11 +55,11 @@ export function AddProviderNoteModal({
   const isValid = title.trim().length > 0 && body.trim().length > 0
 
   // Optimistic: jump to success immediately, fire the API in the background.
-  // If it fails the parent surfaces the error on reopen.
+  // If it fails the parent surfaces the error on reopen. The user dismisses
+  // the success step manually via the Done button — never auto-close.
   const handleSave = () => {
     setStep('success')
     onSubmit()
-    setTimeout(onClose, 1500)
   }
 
   const formFooter = (
@@ -94,6 +94,7 @@ export function AddProviderNoteModal({
       onClose={onClose}
       title={step === 'form' ? t.formatMessage({ id: 'providers.note_modal_title_add' }) : ''}
       footer={step === 'form' ? formFooter : successFooter}
+      noSwipeDismiss
     >
       {step === 'form' && (
         <>

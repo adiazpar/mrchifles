@@ -298,7 +298,6 @@
   "joinBusiness.success_join_heading": "ようこそ",
   "joinBusiness.success_transfer_description": "あなたは {name} のオーナーになりました",
   "joinBusiness.success_join_description": "{name} に参加しました",
-  "joinBusiness.redirecting": "リダイレクト中...",
   "joinBusiness.copy_code_title": "コードをコピー",
   "joinBusiness.copied": "コピーしました",
   "joinBusiness.copy_invitation": "招待コードをコピー",

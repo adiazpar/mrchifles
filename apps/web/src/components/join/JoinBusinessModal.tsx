@@ -32,6 +32,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
     handleValidateCode,
     handleJoinOrAccept,
     handleTryAgain,
+    handleSuccessDone,
     isJoining,
     joinSuccess,
   } = joinBusiness
@@ -122,7 +123,11 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
           )}
         </IonButton>
       </>
-    ) : undefined
+    ) : (
+      <IonButton expand="block" onClick={handleSuccessDone} className="flex-1">
+        {t.formatMessage({ id: 'common.continue' })}
+      </IonButton>
+    )
 
   return (
     <ModalShell
@@ -131,6 +136,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
       title={title}
       onBack={onBack}
       footer={footer}
+      noSwipeDismiss
     >
       {step === 'code' && (
         <CodeInputContent
@@ -336,12 +342,6 @@ function SuccessContent({ codeType, business, joinSuccess }: SuccessContentProps
         {codeType === 'transfer'
           ? t.formatMessage({ id: 'joinBusiness.success_transfer_description' }, { name: businessName })
           : t.formatMessage({ id: 'joinBusiness.success_join_description' }, { name: businessName })}
-      </p>
-      <p
-        className="text-xs text-text-tertiary mt-3 transition-opacity duration-500 delay-300"
-        style={{ opacity: joinSuccess ? 1 : 0 }}
-      >
-        {t.formatMessage({ id: 'joinBusiness.redirecting' })}
       </p>
     </div>
   )

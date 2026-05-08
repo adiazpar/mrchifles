@@ -147,6 +147,7 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
       title={titlesByStep[step]}
       onBack={onBack}
       footer={footer}
+      noSwipeDismiss
     >
       {/* Step 0: pick recipient */}
       {step === 'form' && (

@@ -54,6 +54,12 @@ export interface UseJoinBusinessReturn {
   handleValidateCode: () => Promise<boolean>
   handleJoinOrAccept: () => Promise<boolean>
   handleTryAgain: () => void
+  /**
+   * Called when the user dismisses the success step. Closes the modal and
+   * routes to the joined/transferred business. Never called automatically —
+   * Lottie success states must wait for the user to tap Done.
+   */
+  handleSuccessDone: () => void
 
   // Join state
   isJoining: boolean
@@ -82,6 +88,7 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
   // Join state
   const [isJoining, setIsJoining] = useState(false)
   const [joinSuccess, setJoinSuccess] = useState(false)
+  const [joinedBusinessId, setJoinedBusinessId] = useState<string | null>(null)
 
   const resetState = useCallback(() => {
     setCode('')
@@ -93,6 +100,7 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
     setIsValidating(false)
     setIsJoining(false)
     setJoinSuccess(false)
+    setJoinedBusinessId(null)
   }, [])
 
   const handleOpen = useCallback(() => {
@@ -169,12 +177,8 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
       })
 
       setJoinSuccess(true)
+      setJoinedBusinessId(data.businessId ?? null)
       hapticSuccess()
-      // Redirect to the business after a brief delay
-      setTimeout(() => {
-        setIsOpen(false)
-        router.push(`/${data.businessId}/home`)
-      }, 1500)
       return true
     } catch (err) {
       setError(
@@ -187,7 +191,14 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
       setIsJoining(false)
       return false
     }
-  }, [code, codeType, router, t, translateApiMessage])
+  }, [code, codeType, t, translateApiMessage])
+
+  const handleSuccessDone = useCallback(() => {
+    setIsOpen(false)
+    if (joinedBusinessId) {
+      router.push(`/${joinedBusinessId}/home`)
+    }
+  }, [joinedBusinessId, router])
 
   const handleTryAgain = useCallback(() => {
     setCode('')
@@ -221,6 +232,7 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
     handleValidateCode,
     handleJoinOrAccept,
     handleTryAgain,
+    handleSuccessDone,
 
     // Join state
     isJoining,

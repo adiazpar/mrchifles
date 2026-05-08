@@ -86,7 +86,6 @@ export function ChangePasswordModal({
         return
       }
       setStep('success')
-      setTimeout(onClose, 1500)
     } catch (err) {
       console.error('Change password error:', err)
       setError(tCommon.formatMessage({
@@ -115,12 +114,19 @@ export function ChangePasswordModal({
     </IonButton>
   )
 
+  const doneButton = (
+    <IonButton expand="block" onClick={onClose} className="flex-1">
+      {tCommon.formatMessage({ id: 'common.done' })}
+    </IonButton>
+  )
+
   return (
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
       title={step === 'form' ? t.formatMessage({ id: 'account.password_modal_title' }) : ''}
-      footer={step === 'form' ? saveButton : undefined}
+      footer={step === 'form' ? saveButton : doneButton}
+      noSwipeDismiss
     >
       {step === 'form' && (
         <>

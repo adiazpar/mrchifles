@@ -493,6 +493,7 @@ export function ProductSettingsModal({
       title={getTitle()}
       onBack={getBackHandler()}
       footer={renderFooter()}
+      noSwipeDismiss
     >
       {/* Step: main */}
       {step === 'main' && (

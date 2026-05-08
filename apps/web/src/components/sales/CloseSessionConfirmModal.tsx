@@ -155,6 +155,7 @@ export function CloseSessionConfirmModal({
       title={title}
       onBack={step === 1 ? () => setStep(0) : undefined}
       footer={footer}
+      noSwipeDismiss
     >
       {/* Step 0 — count drawer */}
       {step === 0 && (

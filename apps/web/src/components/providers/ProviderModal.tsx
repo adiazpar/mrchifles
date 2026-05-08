@@ -111,10 +111,10 @@ export function ProviderModal({
     : true
 
   // Optimistic save: jump to success immediately, fire API in background.
+  // The user dismisses the success step manually via the Done button.
   const handleSave = () => {
     setStep('save-success')
     onSubmit()
-    setTimeout(onClose, 1500)
   }
 
   // Await the delete API — navigate on result so a failure shows the error on the form.
@@ -122,7 +122,6 @@ export function ProviderModal({
     const ok = await onDelete()
     if (ok) {
       setStep('delete-success')
-      setTimeout(onClose, 1500)
     } else {
       setStep('form')
     }
@@ -200,6 +199,7 @@ export function ProviderModal({
       title={modalTitle}
       onBack={onBack}
       footer={footer}
+      noSwipeDismiss
     >
       {step === 'form' && (
         <>

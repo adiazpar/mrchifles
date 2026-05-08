@@ -116,6 +116,7 @@ export function OpenSessionModal({
       title={title}
       onBack={step === 1 && error ? () => setStep(0) : undefined}
       footer={footer}
+      noSwipeDismiss
     >
       {/* Step 0 — enter starting cash */}
       {step === 0 && (
