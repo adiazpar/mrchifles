@@ -21,7 +21,7 @@ import {
 } from '@ionic/react'
 import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2 } from 'lucide-react'
 import { TabContainer } from '@/components/ui'
-import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { ModalShell } from '@/components/ui'
 import {
   ProviderModal,
   AddProviderNoteModal,
@@ -1176,12 +1176,13 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           Tapping a row fires the native handler (tel:, mailto:, wa.me) and
           closes the sheet so returning to the app doesn't land back inside
           an open overlay. Rows for missing contact fields are omitted. */}
-      <BottomSheet
+      <ModalShell
         isOpen={isContactSheetOpen}
         onClose={() => setContactSheetOpen(false)}
         title={intl.formatMessage({
           id: 'providers.contact_sheet_title'
         }, { name: provider.name })}
+        variant="half"
       >
         <div className="py-2">
           {provider.phone && (
@@ -1222,7 +1223,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             />
           )}
         </div>
-      </BottomSheet>
+      </ModalShell>
       {/* ============== Order flows (new order + order detail/edit/receive/delete) ============== */}
       {orderFlows.modals}
     </>

@@ -6,7 +6,7 @@ import { IonRippleEffect } from '@ionic/react'
 import { Menu } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
-import { BottomSheet } from '@/components/ui/bottom-sheet'
+import { ModalShell } from '@/components/ui'
 import { UserMenuContent } from './user-menu-content'
 
 export function UserMenu() {
@@ -40,15 +40,16 @@ export function UserMenu() {
           />
         )}
       </span>
-      <BottomSheet
+      <ModalShell
         isOpen={menuOpen}
         onClose={handleClose}
         title={t.formatMessage({
           id: 'ui.user_menu.title'
         })}
+        variant="half"
       >
         <UserMenuContent onAction={handleClose} />
-      </BottomSheet>
+      </ModalShell>
     </>
   );
 }
