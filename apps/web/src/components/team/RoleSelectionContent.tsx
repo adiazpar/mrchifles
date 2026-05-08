@@ -2,7 +2,6 @@
 
 import { useIntl } from 'react-intl';
 import { User as UserIcon, UserCircle } from 'lucide-react'
-import { Modal } from '@/components/ui'
 import { RoleCard } from './RoleCard'
 import type { InviteRole } from '@kasero/shared/types'
 
@@ -17,7 +16,7 @@ export function RoleSelectionContent({
 }: RoleSelectionContentProps) {
   const t = useIntl()
   return (
-    <Modal.Item>
+    <div>
       <label className="label">{t.formatMessage({
         id: 'team.new_member_role_label'
       })}</label>
@@ -45,6 +44,6 @@ export function RoleSelectionContent({
           onClick={() => setSelectedRole('partner')}
         />
       </div>
-    </Modal.Item>
+    </div>
   );
 }

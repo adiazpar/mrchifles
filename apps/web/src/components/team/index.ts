@@ -27,17 +27,14 @@ export type {
   RoleChangeCancelButtonProps,
 } from './RoleChangeStep'
 
-export {
-  GenerateCodeButton,
-  ConfirmDeleteCodeButton,
-} from './InviteModalButtons'
-export type {
-  GenerateCodeButtonProps,
-  ConfirmDeleteCodeButtonProps,
-} from './InviteModalButtons'
-
 export { TeamMemberListItem } from './TeamMemberListItem'
 export type { TeamMemberListItemProps } from './TeamMemberListItem'
 
 export { InviteCodeListItem } from './InviteCodeListItem'
 export type { InviteCodeListItemProps } from './InviteCodeListItem'
+
+export { InviteModal } from './InviteModal'
+export type { InviteModalProps } from './InviteModal'
+
+export { MemberModal } from './MemberModal'
+export type { MemberModalProps } from './MemberModal'

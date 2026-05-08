@@ -1,7 +1,6 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { Modal } from '@/components/ui'
 import type { InviteDuration } from '@kasero/shared/auth'
 
 const DURATIONS: InviteDuration[] = ['24h', '7d', '30d']
@@ -26,7 +25,7 @@ export function DurationPicker({ selected, onSelect }: DurationPickerProps) {
   }
 
   return (
-    <Modal.Item>
+    <div className="mb-4">
       <label className="label">{t.formatMessage({
         id: 'team.invite_duration_label'
       })}</label>
@@ -46,6 +45,6 @@ export function DurationPicker({ selected, onSelect }: DurationPickerProps) {
           </button>
         ))}
       </div>
-    </Modal.Item>
+    </div>
   );
 }
