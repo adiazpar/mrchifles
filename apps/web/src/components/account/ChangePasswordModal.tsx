@@ -1,8 +1,9 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { useState, useCallback } from 'react'
-import { Modal, Input, Spinner, useModal } from '@/components/ui'
+import { useState, useCallback, useEffect } from 'react'
+import { Input, Spinner } from '@/components/ui'
+import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { hasMessageEnvelope } from '@kasero/shared/api-messages'
@@ -28,6 +29,26 @@ export function ChangePasswordModal({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Step state: 'form' → 'success'
+  const [step, setStep] = useState<'form' | 'success'>('form')
+
+  // Reset to form step after the dismissal animation plays so the form
+  // doesn't flash back into view while the modal is still sliding away.
+  useEffect(() => {
+    if (!isOpen) {
+      const timer = setTimeout(() => {
+        setStep('form')
+        setCurrent('')
+        setNext('')
+        setConfirm('')
+        setError('')
+        setIsSaving(false)
+        onExitComplete?.()
+      }, 250)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, onExitComplete])
+
   const PASSWORD_MIN = 8
   const PASSWORD_REGEX_UPPER = /[A-Z]/
   const PASSWORD_REGEX_DIGIT = /[0-9]/
@@ -40,8 +61,8 @@ export function ChangePasswordModal({
   const hasCurrent = current.length > 0
   const isValid = hasCurrent && hasMinLen && hasUpper && hasDigit && passwordsMatch && notSameAsOld
 
-  const handleSave = useCallback(async (): Promise<boolean> => {
-    if (!isValid || isSaving) return false
+  const handleSave = useCallback(async () => {
+    if (!isValid || isSaving) return
     setIsSaving(true)
     setError('')
     try {
@@ -62,48 +83,47 @@ export function ChangePasswordModal({
             id: 'common.error'
           }),
         )
-        return false
+        return
       }
-      return true
+      setStep('success')
+      setTimeout(onClose, 1500)
     } catch (err) {
       console.error('Change password error:', err)
       setError(tCommon.formatMessage({
         id: 'common.error'
       }))
-      return false
     } finally {
       setIsSaving(false)
     }
-  }, [isValid, isSaving, current, next, translateApiMessage, tCommon])
-
-  const handleExitComplete = useCallback(() => {
-    setCurrent('')
-    setNext('')
-    setConfirm('')
-    setError('')
-    setIsSaving(false)
-    onExitComplete?.()
-  }, [onExitComplete])
+  }, [isValid, isSaving, current, next, translateApiMessage, tCommon, onClose])
 
   // Client-side "passwords don't match" hint, shown only when both fields
   // are populated and differ. Distinct from the save-time error shown above.
   const confirmHint =
     confirm.length > 0 && next.length > 0 && next !== confirm
-      ? t.formatMessage({
-      id: 'account.password_mismatch'
-    })
+      ? t.formatMessage({ id: 'account.password_mismatch' })
       : undefined
 
+  const saveButton = (
+    <button
+      type="button"
+      className="btn btn-primary flex-1"
+      onClick={handleSave}
+      disabled={!isValid || isSaving}
+    >
+      {isSaving ? <Spinner /> : tCommon.formatMessage({ id: 'common.save' })}
+    </button>
+  )
+
   return (
-    <Modal
+    <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      onExitComplete={handleExitComplete}
+      title={step === 'form' ? t.formatMessage({ id: 'account.password_modal_title' }) : ''}
+      footer={step === 'form' ? saveButton : undefined}
     >
-      <Modal.Step title={t.formatMessage({
-        id: 'account.password_modal_title'
-      })}>
-        <Modal.Item>
+      {step === 'form' && (
+        <>
           {error && (
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mb-4">
               {error}
@@ -163,88 +183,28 @@ export function ChangePasswordModal({
               <p className="text-xs text-error mt-1">{confirmHint}</p>
             )}
           </div>
-        </Modal.Item>
-        <Modal.Footer>
-          <SavePasswordButton
-            isValid={isValid}
-            isSaving={isSaving}
-            onSave={handleSave}
-          />
-        </Modal.Footer>
-      </Modal.Step>
-      <Modal.Step title={t.formatMessage({
-        id: 'account.password_saved_heading'
-      })} hideBackButton className="modal-step--centered">
-        <Modal.Item>
-          <div className="flex flex-col items-center text-center py-4">
-            <div style={{ width: 160, height: 160 }}>
-              <LottiePlayer
-                src="/animations/success.json"
-                loop={false}
-                autoplay={true}
-                delay={300}
-                style={{ width: 160, height: 160 }}
-              />
-            </div>
-            <p className="text-lg font-semibold text-text-primary mt-4">
-              {t.formatMessage({
-                id: 'account.password_saved_heading'
-              })}
-            </p>
-            <p className="text-sm text-text-tertiary mt-1">
-              {t.formatMessage({
-                id: 'account.password_saved_description'
-              })}
-            </p>
+        </>
+      )}
+
+      {step === 'success' && (
+        <div className="flex flex-col items-center text-center py-4">
+          <div style={{ width: 160, height: 160 }}>
+            <LottiePlayer
+              src="/animations/success.json"
+              loop={false}
+              autoplay={true}
+              delay={300}
+              style={{ width: 160, height: 160 }}
+            />
           </div>
-        </Modal.Item>
-        <Modal.Footer>
-          <button
-            type="button"
-            className="btn btn-primary flex-1"
-            onClick={onClose}
-          >
-            {tCommon.formatMessage({
-              id: 'common.done'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
-}
-
-// ============================================================================
-// SAVE BUTTON
-// ============================================================================
-
-interface SavePasswordButtonProps {
-  isValid: boolean
-  isSaving: boolean
-  onSave: () => Promise<boolean>
-}
-
-function SavePasswordButton({ isValid, isSaving, onSave }: SavePasswordButtonProps) {
-  const tCommon = useIntl()
-  const { goToStep } = useModal()
-
-  const handleClick = async () => {
-    const ok = await onSave()
-    if (ok) {
-      goToStep(1)
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      className="btn btn-primary flex-1"
-      onClick={handleClick}
-      disabled={!isValid || isSaving}
-    >
-      {isSaving ? <Spinner /> : tCommon.formatMessage({
-        id: 'common.save'
-      })}
-    </button>
-  );
+          <p className="text-lg font-semibold text-text-primary mt-4">
+            {t.formatMessage({ id: 'account.password_saved_heading' })}
+          </p>
+          <p className="text-sm text-text-tertiary mt-1">
+            {t.formatMessage({ id: 'account.password_saved_description' })}
+          </p>
+        </div>
+      )}
+    </ModalShell>
+  )
 }
