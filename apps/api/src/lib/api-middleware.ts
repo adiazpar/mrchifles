@@ -58,12 +58,28 @@ function enforceSameOrigin(request: NextRequest): NextResponse | null {
     // server-to-server call. Reject with 403 — legitimate clients
     // can re-issue with the proper header set automatically by the
     // browser.
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[csrf] reject reason=missing-origin-and-referer', {
+        method: request.method,
+        url: request.url,
+        host: request.headers.get('host'),
+      })
+    }
     return errorResponse(ApiMessageCode.FORBIDDEN, 403)
   }
   const allowedOrigin = new URL(request.url).origin
   // Use startsWith on Origin (which has no trailing path) and a
   // strict origin-prefix match on Referer (which may include path).
   if (!origin.startsWith(allowedOrigin)) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[csrf] reject reason=origin-mismatch', {
+        method: request.method,
+        url: request.url,
+        host: request.headers.get('host'),
+        origin,
+        allowedOrigin,
+      })
+    }
     return errorResponse(ApiMessageCode.FORBIDDEN, 403)
   }
   return null
