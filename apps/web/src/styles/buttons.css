@@ -113,8 +113,3 @@
   justify-content: center;
 }
 
-.btn-lg {
-  padding: var(--space-4) var(--space-6);
-  font-size: var(--text-lg);
-  min-height: 56px;
-}
