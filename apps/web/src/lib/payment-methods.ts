@@ -5,7 +5,7 @@ import type { PaymentMethod } from '@kasero/shared/types/sale'
  * Future hook for real payment processing. Today every entry has
  * `processor` undefined — the cart payment step is a recording layer only
  * and the sale is committed via the existing /sales endpoint regardless
- * of method. When a real provider is added (Stripe, Yape, etc.) it
+ * of method. When a real provider is added (Stripe, etc.) it
  * implements this signature and the modal calls it before commitSale.
  */
 export interface ProcessorInput {

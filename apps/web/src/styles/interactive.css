@@ -70,16 +70,6 @@
   color: var(--color-error);
 }
 
-.badge-yape {
-  background: var(--color-yape-subtle);
-  color: var(--color-yape);
-}
-
-.badge-pos {
-  background: var(--color-pos-subtle);
-  color: var(--color-pos);
-}
-
 /* ===== Avatar ===== */
 .avatar {
   width: 36px;
@@ -182,11 +172,6 @@
 .icon-stack-btn--success .icon-stack-btn__icon {
   background: var(--color-bg-muted);
   color: var(--color-success);
-}
-
-.icon-stack-btn--pos .icon-stack-btn__icon {
-  background: var(--color-bg-muted);
-  color: var(--color-pos);
 }
 
 .icon-stack-btn--warning .icon-stack-btn__icon {

@@ -20,7 +20,7 @@ const HAPTIC_TARGET_SELECTOR = [
   '.icon-stack-btn',
   '.list-item-clickable',
   '.card-interactive',
-  '.settings-row',
+  'ion-item.ion-activatable',
   '.user-menu-item',
   '[data-haptic]',
 ].join(',')
