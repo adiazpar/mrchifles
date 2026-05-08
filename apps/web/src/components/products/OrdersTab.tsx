@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useParams } from 'react-router'
 import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig, Pencil, Trash2 } from 'lucide-react'
 import { IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonList, IonSpinner } from '@ionic/react'
-import { Modal } from '@/components/ui'
+import { ModalShell } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { scrollToTop } from '@/lib/scroll'
@@ -369,14 +369,26 @@ export function OrdersTab({
         </>
       )}
       {/* Sort & Filter Modal */}
-      <Modal
+      <ModalShell
         isOpen={isSortSheetOpen}
         onClose={() => setSortSheetOpen(false)}
         title={intl.formatMessage({
           id: 'orders.sort_filter_title'
         })}
+        variant="half"
+        footer={
+          <button
+            type="button"
+            onClick={() => setSortSheetOpen(false)}
+            className="btn btn-primary flex-1"
+          >
+            {intl.formatMessage({
+              id: 'common.done'
+            })}
+          </button>
+        }
       >
-        <Modal.Item>
+        <div className="modal-step-item">
           <div className="space-y-2">
             <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{intl.formatMessage({
               id: 'orders.sort_by_label'
@@ -403,11 +415,11 @@ export function OrdersTab({
               ))}
             </div>
           </div>
-        </Modal.Item>
+        </div>
 
         {/* Filter by Status — only shown in Active view (Completed has a single status) */}
         {viewMode === 'active' && (
-          <Modal.Item>
+          <div className="modal-step-item">
             <div className="space-y-2">
               <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{intl.formatMessage({
                 id: 'orders.filter_by_status_label'
@@ -434,21 +446,9 @@ export function OrdersTab({
                 ))}
               </div>
             </div>
-          </Modal.Item>
+          </div>
         )}
-
-        <Modal.Footer>
-          <button
-            type="button"
-            onClick={() => setSortSheetOpen(false)}
-            className="btn btn-primary flex-1"
-          >
-            {intl.formatMessage({
-              id: 'common.done'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal>
+      </ModalShell>
     </div>
   );
 }

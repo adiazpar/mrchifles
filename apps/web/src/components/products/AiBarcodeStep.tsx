@@ -3,7 +3,6 @@
 import { useIntl } from 'react-intl';
 import { useCallback, useEffect } from 'react'
 import { Plus, ScanLine } from 'lucide-react'
-import { useModal } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { generateInternalProductBarcode, getBarcodeFormatLabel } from '@kasero/shared/barcodes'
@@ -50,18 +49,17 @@ export function AiBarcodeStepBody() {
     }
   }
 
-  const { currentStep } = useModal()
-
-  // Clear any existing barcode state when entering this step so the user
-  // starts with a clean slate every time.
+  // Clear any existing barcode state when this step mounts so the user
+  // starts with a clean slate every time. In IonNav-land each step is
+  // mounted fresh on push, so running on mount (empty deps) is equivalent
+  // to the old currentStep === 2 guard.
   useEffect(() => {
-    if (currentStep === 2) {
-      setBarcode('')
-      setBarcodeFormat(null)
-      setBarcodeSource(null)
-      setError('')
-    }
-  }, [currentStep, setBarcode, setBarcodeFormat, setBarcodeSource, setError])
+    setBarcode('')
+    setBarcodeFormat(null)
+    setBarcodeSource(null)
+    setError('')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleClear = useCallback(() => {
     setBarcode('')

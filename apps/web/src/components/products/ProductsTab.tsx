@@ -6,7 +6,7 @@ import Image from '@/lib/Image'
 import { Fragment, memo, useMemo } from 'react'
 import { X, Plus, ChevronUp, Loader2, Tags, ListFilter, ScanLine, ImagePlus, SlidersHorizontal, Eye, EyeOff, Printer } from 'lucide-react'
 import { IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonLabel, IonList } from '@ionic/react'
-import { Modal } from '@/components/ui'
+import { ModalShell } from '@/components/ui'
 import { printBarcodeLabel } from '@/lib/barcode-print'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getProductIconUrl } from '@/lib/utils'
@@ -310,14 +310,26 @@ export function ProductsTab({
         </div>
       )}
       {/* Sort & Filter Modal */}
-      <Modal
+      <ModalShell
         isOpen={isSortSheetOpen}
         onClose={() => onSortSheetOpenChange(false)}
         title={intl.formatMessage({
           id: 'products.sort_filter_title'
         })}
+        variant="half"
+        footer={
+          <button
+            type="button"
+            onClick={() => onSortSheetOpenChange(false)}
+            className="btn btn-primary flex-1"
+          >
+            {intl.formatMessage({
+              id: 'common.done'
+            })}
+          </button>
+        }
       >
-        <Modal.Item>
+        <div className="modal-step-item">
           <div className="space-y-2">
             <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{intl.formatMessage({
               id: 'products.sort_by_label'
@@ -344,11 +356,11 @@ export function ProductsTab({
               ))}
             </div>
           </div>
-        </Modal.Item>
+        </div>
 
         {/* Filter Section */}
         {availableFilters.length > 0 && (
-          <Modal.Item>
+          <div className="modal-step-item">
             <div className="space-y-2">
               <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{intl.formatMessage({
                 id: 'products.filter_by_category_label'
@@ -393,21 +405,9 @@ export function ProductsTab({
                 ))}
               </div>
             </div>
-          </Modal.Item>
+          </div>
         )}
-
-        <Modal.Footer>
-          <button
-            type="button"
-            onClick={() => onSortSheetOpenChange(false)}
-            className="btn btn-primary flex-1"
-          >
-            {intl.formatMessage({
-              id: 'common.done'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal>
+      </ModalShell>
     </div>
   );
 }
