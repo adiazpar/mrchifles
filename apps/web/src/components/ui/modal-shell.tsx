@@ -23,8 +23,17 @@ interface ModalShellProps {
   onBack?: () => void
   /** When set, renders inside an IonFooter at the bottom of the modal. */
   footer?: ReactNode
-  /** Body content. For Pattern 2 wizards, pass <IonNav root={...} /> here. */
+  /**
+   * Body content. For Pattern 2 wizards, pass `<IonNav root={...} />` here
+   * and also set `rawContent` so IonNav is NOT wrapped in an extra IonContent.
+   */
   children: ReactNode
+  /**
+   * When true, children are rendered directly inside IonModal without an
+   * IonContent wrapper. Required for Pattern 2 (IonNav) — IonNav manages its
+   * own IonContent per step, and nesting it inside IonContent breaks the layout.
+   */
+  rawContent?: boolean
 }
 
 /**
@@ -48,6 +57,7 @@ export function ModalShell({
   onBack,
   footer,
   children,
+  rawContent = false,
 }: ModalShellProps) {
   const breakpoints = variant === 'full' ? [0, 1] : [0, 0.5, 1]
   const initialBreakpoint = variant === 'full' ? 1 : 0.5
@@ -79,7 +89,7 @@ export function ModalShell({
           </IonToolbar>
         </IonHeader>
       )}
-      <IonContent>{children}</IonContent>
+      {rawContent ? children : <IonContent>{children}</IonContent>}
       {footer && (
         <IonFooter>
           <IonToolbar>{footer}</IonToolbar>
