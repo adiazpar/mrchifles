@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { ArrowRightLeft } from 'lucide-react'
-import { Modal, Spinner } from '@/components/ui'
+import { ModalShell, Spinner } from '@/components/ui'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 
 interface Props {
@@ -83,75 +83,75 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
         })
     : ''
 
+  const footer = (
+    <>
+      <button
+        type="button"
+        onClick={handleDecline}
+        disabled={busy || !transfer}
+        className="btn btn-secondary flex-1"
+      >
+        {isDeclining ? <Spinner size="sm" /> : tAccount.formatMessage({
+          id: 'account.incoming_transfer_decline'
+        })}
+      </button>
+      <button
+        type="button"
+        onClick={handleAccept}
+        disabled={busy || !transfer}
+        className="btn btn-primary flex-1"
+      >
+        {isAccepting ? <Spinner size="sm" /> : tAccount.formatMessage({
+          id: 'account.incoming_transfer_accept'
+        })}
+      </button>
+    </>
+  )
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <Modal.Step title={tAccount.formatMessage({
-        id: 'account.incoming_transfer_heading'
-      })} hideBackButton>
-        <Modal.Item>
-          <div
-            className="p-3 rounded-lg flex items-start gap-3"
-            style={{
-              backgroundColor:
-                'color-mix(in oklab, var(--color-warning) 10%, transparent)',
-            }}
-          >
-            <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{
-                backgroundColor:
-                  'color-mix(in oklab, var(--color-warning) 22%, transparent)',
-              }}
-            >
-              <ArrowRightLeft className="w-5 h-5 text-warning" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-warning">
-                {tAccount.formatMessage({
-                  id: 'account.incoming_transfer_heading'
-                })}
-              </p>
-              <p className="text-xs text-text-secondary mt-1">{description}</p>
-              {expiry && (
-                <p className="text-xs text-text-secondary mt-1">
-                  {tManage.formatMessage({
-                    id: 'manage.' + expiry.key
-                  }, expiry.values)}
-                </p>
-              )}
-            </div>
-          </div>
-        </Modal.Item>
-        {error && (
-          <Modal.Item>
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
-          </Modal.Item>
-        )}
-        <Modal.Footer>
-          <button
-            type="button"
-            onClick={handleDecline}
-            disabled={busy || !transfer}
-            className="btn btn-secondary flex-1"
-          >
-            {isDeclining ? <Spinner size="sm" /> : tAccount.formatMessage({
-              id: 'account.incoming_transfer_decline'
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title={tAccount.formatMessage({ id: 'account.incoming_transfer_heading' })}
+      footer={footer}
+    >
+      <div
+        className="p-3 rounded-lg flex items-start gap-3"
+        style={{
+          backgroundColor:
+            'color-mix(in oklab, var(--color-warning) 10%, transparent)',
+        }}
+      >
+        <div
+          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{
+            backgroundColor:
+              'color-mix(in oklab, var(--color-warning) 22%, transparent)',
+          }}
+        >
+          <ArrowRightLeft className="w-5 h-5 text-warning" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-warning">
+            {tAccount.formatMessage({
+              id: 'account.incoming_transfer_heading'
             })}
-          </button>
-          <button
-            type="button"
-            onClick={handleAccept}
-            disabled={busy || !transfer}
-            className="btn btn-primary flex-1"
-          >
-            {isAccepting ? <Spinner size="sm" /> : tAccount.formatMessage({
-              id: 'account.incoming_transfer_accept'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
+          </p>
+          <p className="text-xs text-text-secondary mt-1">{description}</p>
+          {expiry && (
+            <p className="text-xs text-text-secondary mt-1">
+              {tManage.formatMessage({
+                id: 'manage.' + expiry.key
+              }, expiry.values)}
+            </p>
+          )}
+        </div>
+      </div>
+      {error && (
+        <div className="mt-3 p-3 bg-error-subtle text-error text-sm rounded-lg">
+          {error}
+        </div>
+      )}
+    </ModalShell>
+  )
 }
