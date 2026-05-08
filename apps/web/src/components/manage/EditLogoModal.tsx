@@ -6,7 +6,7 @@ import Image from '@/lib/Image'
 import { useEffect, useRef, useState } from 'react'
 import { Upload, X } from 'lucide-react'
 import { ModalShell } from '@/components/ui/modal-shell'
-import { IonSpinner } from '@ionic/react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { useBusiness } from '@/contexts/business-context'
 import { useUpdateBusiness } from '@/hooks/useUpdateBusiness'
 import { BUSINESS_TYPE_ICONS } from '@/components/businesses/shared'
@@ -97,14 +97,14 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
   }
 
   const footer = (
-    <button
-      type="button"
+    <IonButton
+      expand="block"
       onClick={handleSave}
       disabled={isSubmitting || !hasChanges}
-      className="btn btn-primary flex-1"
+      className="flex-1"
     >
       {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.save' })}
-    </button>
+    </IonButton>
   )
 
   return (

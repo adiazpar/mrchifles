@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useState, useEffect, useCallback } from 'react'
 import { Crown, Building2 } from 'lucide-react'
-import { IonSpinner } from '@ionic/react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import type { UseJoinBusinessReturn, CodeType } from '@/hooks'
@@ -80,40 +80,38 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
   const footer =
     step === 'code' ? (
       <>
-        <button
-          type="button"
+        <IonButton
+          fill="outline"
           onClick={onClose}
-          className="btn btn-secondary flex-1"
           disabled={isValidating}
+          className="flex-1"
         >
           {t.formatMessage({ id: 'common.cancel' })}
-        </button>
-        <button
-          type="button"
+        </IonButton>
+        <IonButton
           onClick={handleValidate}
           disabled={code.length < 6 || isValidating}
-          className="btn btn-primary flex-1"
+          className="flex-1"
         >
           {isValidating ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.continue' })}
-        </button>
+        </IonButton>
       </>
     ) : step === 'preview' ? (
       <>
-        <button
-          type="button"
+        <IonButton
+          fill="outline"
           onClick={onClose}
-          className="btn btn-secondary flex-1"
           disabled={isJoining}
+          className="flex-1"
         >
           {codeType === 'transfer'
             ? t.formatMessage({ id: 'joinBusiness.button_decline' })
             : t.formatMessage({ id: 'common.cancel' })}
-        </button>
-        <button
-          type="button"
+        </IonButton>
+        <IonButton
           onClick={handleJoin}
           disabled={isJoining}
-          className="btn btn-primary flex-1"
+          className="flex-1"
         >
           {isJoining ? (
             <IonSpinner name="crescent" />
@@ -122,7 +120,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
           ) : (
             t.formatMessage({ id: 'joinBusiness.button_join_business' })
           )}
-        </button>
+        </IonButton>
       </>
     ) : undefined
 

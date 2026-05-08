@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useIntl } from 'react-intl';
-import { IonSpinner } from '@ionic/react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { ConfirmationAnimation } from '@/components/ui'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
@@ -64,29 +64,28 @@ export function AddProviderNoteModal({
 
   const formFooter = (
     <>
-      <button
-        type="button"
+      <IonButton
+        fill="outline"
         onClick={onClose}
-        className="btn btn-secondary flex-1"
         disabled={isSaving}
+        className="flex-1"
       >
         {t.formatMessage({ id: 'common.cancel' })}
-      </button>
-      <button
-        type="button"
+      </IonButton>
+      <IonButton
         onClick={handleSave}
-        className="btn btn-primary flex-1"
         disabled={isSaving || !isValid}
+        className="flex-1"
       >
         {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
-      </button>
+      </IonButton>
     </>
   )
 
   const successFooter = (
-    <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+    <IonButton expand="block" onClick={onClose} className="flex-1">
       {t.formatMessage({ id: 'common.done' })}
-    </button>
+    </IonButton>
   )
 
   return (

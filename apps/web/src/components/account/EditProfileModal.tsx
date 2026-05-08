@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, X } from 'lucide-react'
-import { IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
+import { IonButton, IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
@@ -137,14 +137,14 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
   ])
 
   const saveButton = (
-    <button
-      type="button"
-      className="btn btn-primary flex-1"
+    <IonButton
+      expand="block"
       onClick={handleSave}
       disabled={!isValid || !hasChanges || isSaving}
+      className="flex-1"
     >
       {isSaving ? <IonSpinner name="crescent" /> : tCommon.formatMessage({ id: 'common.save' })}
-    </button>
+    </IonButton>
   )
 
   return (

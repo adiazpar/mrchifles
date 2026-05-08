@@ -7,6 +7,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
 import type { ReactNode } from 'react'
 import {
+  IonButton,
   IonCard,
   IonItem,
   IonItemOption,
@@ -553,30 +554,28 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
           <div className="flex items-center gap-2">
             {canManage && (
-              <button
-                type="button"
+              <IonButton
                 onClick={() => orderFlows.openNewOrder(providerId)}
-                className="btn btn-primary flex-1 min-w-0"
+                className="flex-1 min-w-0"
               >
-                <Plus />
+                <Plus slot="start" />
                 <span className="truncate">
                   {intl.formatMessage({
                     id: 'providers.new_order_button'
                   })}
                 </span>
-              </button>
+              </IonButton>
             )}
-            <button
-              type="button"
+            <IonButton
               onClick={() => setContactSheetOpen(true)}
               disabled={!provider.phone && !provider.email}
-              className="btn btn-primary flex-1 min-w-0"
+              className="flex-1 min-w-0"
             >
-              <Phone />
+              <Phone slot="start" />
               <span className="truncate">{intl.formatMessage({
                 id: 'providers.contact_button'
               })}</span>
-            </button>
+            </IonButton>
           </div>
         </div>
 
@@ -1057,24 +1056,18 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                 <>
                   <hr className="border-border" />
                   <div className="flex justify-end">
-                    <button
-                      type="button"
+                    <IonButton
+                      fill="outline"
+                      size="small"
+                      shape="round"
                       onClick={openAddNote}
                       disabled={atNotesLimit}
-                      className="btn btn-secondary"
-                      style={{
-                        fontSize: 'var(--text-sm)',
-                        padding: 'var(--space-2) var(--space-4)',
-                        minHeight: 'unset',
-                        gap: 'var(--space-2)',
-                        borderRadius: 'var(--radius-full)',
-                      }}
                     >
-                      <Plus style={{ width: 14, height: 14 }} />
+                      <Plus slot="start" style={{ width: 14, height: 14 }} />
                       {intl.formatMessage({
                         id: 'providers.add_note_button'
                       })}
-                    </button>
+                    </IonButton>
                   </div>
                 </>
               )}

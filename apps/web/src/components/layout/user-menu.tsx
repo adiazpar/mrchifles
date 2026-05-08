@@ -2,7 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useState } from 'react'
-import { IonRippleEffect } from '@ionic/react'
+import { IonButton, IonRippleEffect } from '@ionic/react'
 import { Menu } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
@@ -22,17 +22,17 @@ export function UserMenu() {
   return (
     <>
       <span className="relative inline-flex">
-        <button
-          type="button"
+        <IonButton
+          fill="clear"
+          shape="round"
           onClick={() => setMenuOpen(true)}
-          className="btn btn-secondary btn-icon flex-shrink-0 ion-activatable ripple-parent"
+          className="flex-shrink-0"
           aria-label={t.formatMessage({
             id: 'ui.user_menu.open'
           })}
         >
           <Menu style={{ width: 20, height: 20 }} />
-          <IonRippleEffect />
-        </button>
+        </IonButton>
         {incomingTransfer && (
           <span
             className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-warning badge-pop-in pointer-events-none"

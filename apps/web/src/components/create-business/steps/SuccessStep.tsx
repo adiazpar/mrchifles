@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useIntl } from 'react-intl'
-import { IonPage, IonContent } from '@ionic/react'
+import { IonButton, IonPage, IonContent } from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useCreateBusinessCtx } from '../CreateBusinessModal'
 
@@ -58,16 +58,16 @@ export function SuccessStep() {
             </div>
           )}
 
-          <button
-            type="button"
+          <IonButton
+            expand="block"
             onClick={() => {
               handleClose()
               handleExitComplete()
             }}
-            className="btn btn-primary mt-6 w-full"
+            className="mt-6 w-full"
           >
             {t.formatMessage({ id: 'common.done' })}
-          </button>
+          </IonButton>
         </div>
       </IonContent>
     </IonPage>

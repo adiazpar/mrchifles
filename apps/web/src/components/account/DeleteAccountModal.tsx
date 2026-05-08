@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { AlertTriangle } from 'lucide-react'
-import { IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
+import { IonButton, IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
@@ -142,22 +142,24 @@ export function DeleteAccountModal({
   }, [canDelete, user, confirmEmail, currentPassword, logout, router, translateApiMessage, tCommon])
 
   const footer = isBlocked ? (
-    <button
-      type="button"
-      className="btn btn-secondary flex-1"
+    <IonButton
+      fill="outline"
+      expand="block"
       onClick={onClose}
+      className="flex-1"
     >
       {tCommon.formatMessage({ id: 'common.close' })}
-    </button>
+    </IonButton>
   ) : (
-    <button
-      type="button"
-      className="btn btn-danger flex-1"
+    <IonButton
+      color="danger"
+      expand="block"
       onClick={handleDelete}
       disabled={!canDelete}
+      className="flex-1"
     >
       {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'account.delete_button' })}
-    </button>
+    </IonButton>
   )
 
   return (
