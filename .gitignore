@@ -80,6 +80,19 @@ apps/*/node_modules/
 packages/*/dist/
 packages/*/node_modules/
 
+# Vite SPA artifacts copied into apps/api/public/ by scripts/prepare-spa.mjs
+# during prebuild. (media/ is handled separately above; sw.js is handled
+# in the Serwist block above.)
+apps/api/public/animations/
+apps/api/public/assets/
+apps/api/public/icons/
+apps/api/public/splash/
+apps/api/public/index.html
+apps/api/public/manifest.json
+apps/api/public/og-image.png
+apps/api/public/icon-source.png
+apps/api/public/kasero-logo.png
+
 # Per-app env files
 apps/*/.env.local
 apps/*/.env.*.local

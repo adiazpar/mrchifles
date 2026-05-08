@@ -4,7 +4,7 @@
   "private": true,
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "build": "npm run build --workspace=packages/shared --if-present && npm run build:api && npm run build:web",
+    "build": "npm run build --workspace=packages/shared --if-present && npm run build:web && npm run build:api",
     "build:api": "npm run build --workspace=apps/api",
     "build:web": "npm run build --workspace=apps/web --if-present",
     "dev": "npm-run-all --parallel dev:api dev:web",

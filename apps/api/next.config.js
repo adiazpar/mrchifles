@@ -17,6 +17,29 @@ const nextConfig = {
   // over HTTPS at the Tailscale tailnet hostname.
   allowedDevOrigins: ['100.113.9.34', 'alejandros-macbook-air.tail37df1e.ts.net'],
 
+  // SPA history-mode fallback. The Vite SPA is copied into apps/api/public/
+  // by scripts/prepare-spa.mjs during prebuild, so /index.html, /assets/*,
+  // /sw.js, etc. are served directly by Next.js's filesystem routing.
+  //
+  // Any URL that doesn't match an /api/* route, a Next.js page, or a
+  // static file should serve the SPA shell so React Router can take over
+  // client-side. The fallback bucket fires last (after pages and the
+  // public/ filesystem), so real assets keep their direct response and
+  // /api/* 404s remain real 404s.
+  //
+  // Pattern excludes:
+  //   - api/*    -> handled by route.ts files; non-matches stay 404
+  //   - _next/*  -> Next.js internal assets
+  //   - *.*      -> any path with an extension (assumed static asset)
+  async rewrites() {
+    return {
+      fallback: [
+        { source: '/', destination: '/index.html' },
+        { source: '/:path((?!api/|_next/|.*\\..*).*)', destination: '/index.html' },
+      ],
+    }
+  },
+
   // Locally uploaded product icons are served from /media/products/<id>.<ext>
   // with a ?v=<timestamp> cache-buster (see src/lib/storage.ts). Next.js 16
   // will require query-stringed local paths to be explicitly allowlisted.
