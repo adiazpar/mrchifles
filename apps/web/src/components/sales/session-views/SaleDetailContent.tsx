@@ -2,7 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { apiRequest } from '@/lib/api-client'
 import type { Sale } from '@kasero/shared/types/sale'
@@ -59,7 +59,7 @@ export function SaleDetailContent({ businessId, saleId }: SaleDetailContentProps
     return (
       <div className="modal-step-item">
         <div className="flex items-center justify-center py-6">
-          <Spinner />
+          <IonSpinner name="crescent" />
         </div>
       </div>
     )

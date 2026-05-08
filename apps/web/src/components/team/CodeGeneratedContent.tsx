@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { RefreshCw } from 'lucide-react'
-import { Badge, Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
+import { Badge } from '@/components/ui'
 import type { InviteRole } from '@kasero/shared/types'
 
 export interface CodeGeneratedContentProps {
@@ -80,7 +81,7 @@ export function CodeGeneratedContent({
         >
           {isGenerating ? (
             <>
-              <Spinner />
+              <IonSpinner name="crescent" />
               <span>{t.formatMessage({
                 id: 'team.regenerating'
               })}</span>

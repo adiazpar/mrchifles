@@ -8,8 +8,8 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
 } from '@ionic/react'
-import { Spinner } from '@/components/ui'
 import { useInviteNavRef, useInviteCallbacks } from './InviteNavContext'
 import { InviteCodeStep } from './InviteCodeStep'
 
@@ -60,7 +60,7 @@ export function InvitePartnerWarningStep() {
               className="btn btn-primary flex-1"
               disabled={isGenerating}
             >
-              {isGenerating ? <Spinner /> : t.formatMessage({ id: 'team.partner_warning_confirm' })}
+              {isGenerating ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'team.partner_warning_confirm' })}
             </button>
           </div>
         </IonToolbar>

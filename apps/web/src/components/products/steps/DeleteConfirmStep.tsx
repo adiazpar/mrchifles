@@ -8,8 +8,8 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
 } from '@ionic/react'
-import { Spinner } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
 import { DeleteSuccessStep } from './DeleteSuccessStep'
@@ -92,7 +92,7 @@ export function DeleteConfirmStep() {
               className="btn btn-danger flex-1"
               disabled={isDeleting}
             >
-              {isDeleting ? <Spinner /> : t.formatMessage({ id: 'common.delete' })}
+              {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
             </button>
           </div>
         </IonToolbar>

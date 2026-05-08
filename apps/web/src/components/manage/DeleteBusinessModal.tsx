@@ -4,7 +4,8 @@ import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { TriangleAlert } from 'lucide-react'
-import { ModalShell, Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { useDeleteBusiness } from '@/hooks/useDeleteBusiness'
 
@@ -46,7 +47,7 @@ export function DeleteBusinessModal({ isOpen, onClose }: Props) {
         className="btn btn-primary flex-1"
         style={{ background: 'var(--color-error)' }}
       >
-        {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({ id: 'manage.delete_business_button' })}
+        {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.delete_business_button' })}
       </button>
     </>
   )

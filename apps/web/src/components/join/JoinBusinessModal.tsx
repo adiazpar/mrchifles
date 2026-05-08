@@ -3,7 +3,8 @@
 import { useIntl } from 'react-intl';
 import { useState, useEffect, useCallback } from 'react'
 import { Crown, Building2 } from 'lucide-react'
-import { ModalShell, Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import type { UseJoinBusinessReturn, CodeType } from '@/hooks'
 
@@ -93,7 +94,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
           disabled={code.length < 6 || isValidating}
           className="btn btn-primary flex-1"
         >
-          {isValidating ? <Spinner size="sm" /> : t.formatMessage({ id: 'common.continue' })}
+          {isValidating ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.continue' })}
         </button>
       </>
     ) : step === 'preview' ? (
@@ -115,7 +116,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
           className="btn btn-primary flex-1"
         >
           {isJoining ? (
-            <Spinner size="sm" />
+            <IonSpinner name="crescent" />
           ) : codeType === 'transfer' ? (
             t.formatMessage({ id: 'joinBusiness.button_accept_transfer' })
           ) : (
@@ -217,7 +218,7 @@ function CodeInputContent({
       )}
       {isValidating && (
         <div className="flex items-center justify-center gap-2 text-text-secondary">
-          <Spinner size="sm" />
+          <IonSpinner name="crescent" />
           <span className="text-sm">{t.formatMessage({ id: 'joinBusiness.validating_code' })}</span>
         </div>
       )}
@@ -249,7 +250,7 @@ function PreviewContent({ codeType, business, role, fromUser, isJoining }: Previ
   if (isJoining) {
     return (
       <div className="flex flex-col items-center justify-center py-8 gap-3 p-4">
-        <Spinner size="lg" />
+        <IonSpinner name="crescent" className="w-8 h-8" />
         <p className="text-text-secondary">
           {codeType === 'transfer'
             ? t.formatMessage({ id: 'joinBusiness.accepting_transfer' })

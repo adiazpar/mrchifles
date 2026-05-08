@@ -2,7 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
-import { Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
 import { apiRequest } from '@/lib/api-client'
@@ -73,7 +73,7 @@ export function SessionSalesList({
     return (
       <div className="modal-step-item">
         <div className="flex items-center justify-center py-6">
-          <Spinner />
+          <IonSpinner name="crescent" />
         </div>
       </div>
     )

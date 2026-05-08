@@ -8,11 +8,12 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
 } from '@ionic/react'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { Spinner, StockStepper } from '@/components/ui'
+import { StockStepper } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
 
@@ -113,7 +114,7 @@ export function AdjustInventoryStep() {
               className="btn btn-primary flex-1"
               disabled={isAdjusting || newStockValue === (editingProduct?.stock ?? 0)}
             >
-              {isAdjusting ? <Spinner /> : t.formatMessage({ id: 'common.save' })}
+              {isAdjusting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
             </button>
           </div>
         </IonToolbar>

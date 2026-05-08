@@ -3,7 +3,8 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { TriangleAlert, Mail } from 'lucide-react'
-import { ModalShell, Spinner, ConfirmationAnimation } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
+import { ModalShell, ConfirmationAnimation } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useTransferOwnership } from '@/hooks/useTransferOwnership'
@@ -132,7 +133,7 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
           disabled={isSubmitting || !isStep2Valid}
           className="btn btn-primary flex-1"
         >
-          {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({ id: 'manage.transfer_send_request' })}
+          {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.transfer_send_request' })}
         </button>
       </>
     ) : (

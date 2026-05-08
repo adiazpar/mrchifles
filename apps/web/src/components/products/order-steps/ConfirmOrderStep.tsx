@@ -8,12 +8,12 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
 } from '@ionic/react'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { Spinner } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useOrderNavRef, useNewOrderCallbacks } from './OrderNavContext'
 import { NewOrderSuccessStep } from './NewOrderSuccessStep'
@@ -125,7 +125,7 @@ export function ConfirmOrderStep() {
             className="btn btn-primary w-full"
             disabled={isSaving}
           >
-            {isSaving ? <Spinner /> : t.formatMessage({ id: 'common.confirm' })}
+            {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.confirm' })}
           </button>
         </IonToolbar>
       </IonFooter>

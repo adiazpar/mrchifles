@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useIntl } from 'react-intl';
-import { Spinner, ConfirmationAnimation } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
+import { ConfirmationAnimation } from '@/components/ui'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
 
@@ -77,7 +78,7 @@ export function AddProviderNoteModal({
         className="btn btn-primary flex-1"
         disabled={isSaving || !isValid}
       >
-        {isSaving ? <Spinner /> : t.formatMessage({ id: 'common.save' })}
+        {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
       </button>
     </>
   )

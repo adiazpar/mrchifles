@@ -8,8 +8,8 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
 } from '@ionic/react'
-import { Spinner } from '@/components/ui'
 import { useMemberNavRef, useMemberCallbacks } from './MemberNavContext'
 
 export function MemberRemoveStep() {
@@ -59,7 +59,7 @@ export function MemberRemoveStep() {
               className="btn btn-danger flex-1"
               disabled={removeLoading}
             >
-              {removeLoading ? <Spinner /> : t.formatMessage({ id: 'team.remove_confirm' })}
+              {removeLoading ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'team.remove_confirm' })}
             </button>
           </div>
         </IonToolbar>

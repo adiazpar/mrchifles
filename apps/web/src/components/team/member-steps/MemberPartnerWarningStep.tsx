@@ -8,8 +8,8 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
 } from '@ionic/react'
-import { Spinner } from '@/components/ui'
 import { useMemberNavRef, useMemberCallbacks } from './MemberNavContext'
 
 export function MemberPartnerWarningStep() {
@@ -60,7 +60,7 @@ export function MemberPartnerWarningStep() {
               className="btn btn-primary flex-1"
               disabled={roleChangeLoading}
             >
-              {roleChangeLoading ? <Spinner /> : t.formatMessage({ id: 'team.partner_warning_confirm' })}
+              {roleChangeLoading ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'team.partner_warning_confirm' })}
             </button>
           </div>
         </IonToolbar>

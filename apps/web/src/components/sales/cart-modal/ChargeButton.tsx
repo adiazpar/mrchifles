@@ -1,7 +1,7 @@
 'use client'
 
 import { useIntl, type IntlShape } from 'react-intl';
-import { Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useSales } from '@/contexts/sales-context'
@@ -98,7 +98,7 @@ export function ChargeButton({
       onClick={handleClick}
     >
       {submitting ? (
-        <Spinner />
+        <IonSpinner name="crescent" />
       ) : (
         <span>{t.formatMessage({
           id: 'sales.cart.modal_charge_button'

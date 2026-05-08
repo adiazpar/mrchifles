@@ -9,10 +9,11 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
 } from '@ionic/react'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import Image from '@/lib/Image'
-import { Spinner, PriceInput } from '@/components/ui'
+import { PriceInput } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -318,7 +319,7 @@ export function EditOrderStep() {
               className="btn btn-primary flex-1"
               disabled={isDisabled}
             >
-              {isSaving ? <Spinner /> : t.formatMessage({ id: 'common.save' })}
+              {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
             </button>
           </div>
         </IonToolbar>

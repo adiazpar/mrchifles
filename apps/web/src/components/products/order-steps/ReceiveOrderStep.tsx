@@ -9,10 +9,10 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
 } from '@ionic/react'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
-import { Spinner } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -126,7 +126,7 @@ export function ReceiveOrderStep() {
               className="btn btn-primary flex-1"
               disabled={isReceiving}
             >
-              {isReceiving ? <Spinner /> : t.formatMessage({ id: 'common.confirm' })}
+              {isReceiving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.confirm' })}
             </button>
           </div>
         </IonToolbar>

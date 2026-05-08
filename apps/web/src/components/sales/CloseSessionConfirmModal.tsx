@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { useEffect, useMemo, useState } from 'react'
-import { ModalShell, PriceInput, Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
+import { ModalShell, PriceInput } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useSales } from '@/contexts/sales-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
@@ -254,7 +255,7 @@ export function CloseSessionConfirmModal({
           ) : error ? (
             <p className="text-sm text-error mt-4">{error}</p>
           ) : (
-            <Spinner />
+            <IonSpinner name="crescent" />
           )}
         </div>
       )}

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useIntl } from 'react-intl';
 import { Trash2 } from 'lucide-react'
-import { Spinner, ConfirmationAnimation } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
+import { ConfirmationAnimation } from '@/components/ui'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
 import type { ProviderNote } from '@kasero/shared/types'
@@ -132,7 +133,7 @@ export function EditProviderNoteModal({
           className="btn btn-primary flex-1"
           disabled={isSaving || !isValid || !hasChanges}
         >
-          {isSaving ? <Spinner /> : t.formatMessage({ id: 'common.save' })}
+          {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
         </button>
       </>
     )
@@ -155,7 +156,7 @@ export function EditProviderNoteModal({
           className="btn btn-danger flex-1"
           disabled={isDeleting}
         >
-          {isDeleting ? <Spinner /> : t.formatMessage({ id: 'common.delete' })}
+          {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
         </button>
       </>
     )

@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { useRouter } from '@/lib/next-navigation-shim'
-import { ModalShell, Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { useLeaveBusiness } from '@/hooks/useLeaveBusiness'
 
@@ -32,7 +33,7 @@ export function LeaveBusinessModal({ isOpen, onClose }: Props) {
         className="btn btn-primary flex-1"
         style={{ background: 'var(--color-error)' }}
       >
-        {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({ id: 'manage.leave_business_button' })}
+        {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.leave_business_button' })}
       </button>
     </>
   )

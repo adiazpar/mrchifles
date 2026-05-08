@@ -2,8 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useState, useCallback, useEffect } from 'react'
-import { IonInput, IonItem, IonList } from '@ionic/react'
-import { Spinner } from '@/components/ui'
+import { IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useApiMessage } from '@/hooks/useApiMessage'
@@ -112,7 +111,7 @@ export function ChangePasswordModal({
       onClick={handleSave}
       disabled={!isValid || isSaving}
     >
-      {isSaving ? <Spinner /> : tCommon.formatMessage({ id: 'common.save' })}
+      {isSaving ? <IonSpinner name="crescent" /> : tCommon.formatMessage({ id: 'common.save' })}
     </button>
   )
 

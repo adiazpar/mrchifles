@@ -3,7 +3,8 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { Clock } from 'lucide-react'
-import { ModalShell, Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 
 interface Props {
@@ -87,7 +88,7 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
         className="btn btn-primary flex-1"
         style={{ background: 'var(--color-error)' }}
       >
-        {isCancelling ? <Spinner size="sm" /> : t.formatMessage({ id: 'manage.transfer_withdraw' })}
+        {isCancelling ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.transfer_withdraw' })}
       </button>
     </>
   )

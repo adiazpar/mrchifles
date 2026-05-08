@@ -7,8 +7,8 @@ import {
   IonTitle,
   IonContent,
   IonFooter,
+  IonSpinner,
 } from '@ionic/react'
-import { Spinner } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
 import { SuggestedCategoryStepWrapper } from './SuggestedCategoryStepWrapper'
@@ -64,7 +64,7 @@ export function AnalyzingStep() {
 
       <IonContent className="ion-padding">
         <div className="flex flex-col items-center justify-center py-12">
-          <Spinner className="spinner-lg mb-4" />
+          <IonSpinner name="crescent" className="w-8 h-8 mb-4" />
           <p className="text-sm text-text-secondary">{label}</p>
           <p className="text-xs text-text-tertiary mt-1">
             {t.formatMessage({ id: 'aiPipeline.may_take_seconds' })}

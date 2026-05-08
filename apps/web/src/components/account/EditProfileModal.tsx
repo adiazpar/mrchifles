@@ -3,8 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, X } from 'lucide-react'
-import { IonInput, IonItem, IonList } from '@ionic/react'
-import { Spinner } from '@/components/ui'
+import { IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
@@ -144,7 +143,7 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
       onClick={handleSave}
       disabled={!isValid || !hasChanges || isSaving}
     >
-      {isSaving ? <Spinner /> : tCommon.formatMessage({ id: 'common.save' })}
+      {isSaving ? <IonSpinner name="crescent" /> : tCommon.formatMessage({ id: 'common.save' })}
     </button>
   )
 

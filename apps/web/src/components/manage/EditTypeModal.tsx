@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { ModalShell } from '@/components/ui/modal-shell'
-import { Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
 import { BusinessTypeGrid } from '@/components/businesses/shared'
 import { useBusiness } from '@/contexts/business-context'
 import { useUpdateBusiness } from '@/hooks/useUpdateBusiness'
@@ -42,7 +42,7 @@ export function EditTypeModal({ isOpen, onClose }: Props) {
       disabled={isSubmitting || !selected || selected === business?.type}
       className="btn btn-primary flex-1"
     >
-      {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({ id: 'manage.save' })}
+      {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.save' })}
     </button>
   )
 

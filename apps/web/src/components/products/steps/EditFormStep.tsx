@@ -8,9 +8,9 @@ import {
   IonFooter,
   IonButtons,
   IonButton,
+  IonSpinner,
 } from '@ionic/react'
 import { Trash2, SlidersHorizontal } from 'lucide-react'
-import { Spinner } from '@/components/ui'
 import { hapticSuccess } from '@/lib/haptics'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
 import { ProductForm } from '../ProductForm'
@@ -140,7 +140,7 @@ export function EditFormStep() {
               className="btn btn-primary flex-1"
               disabled={isSaving || !isFormValid || !hasChanges}
             >
-              {isSaving ? <Spinner /> : t.formatMessage({ id: 'common.save' })}
+              {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
             </button>
           </div>
         </IonToolbar>

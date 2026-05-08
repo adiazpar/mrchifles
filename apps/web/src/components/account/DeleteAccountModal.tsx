@@ -4,8 +4,8 @@ import { useIntl } from 'react-intl';
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { AlertTriangle } from 'lucide-react'
-import { IonInput, IonItem, IonList } from '@ionic/react'
-import { ModalShell, Spinner } from '@/components/ui'
+import { IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
+import { ModalShell } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError, apiRequest } from '@/lib/api-client'
@@ -156,7 +156,7 @@ export function DeleteAccountModal({
       onClick={handleDelete}
       disabled={!canDelete}
     >
-      {isDeleting ? <Spinner /> : t.formatMessage({ id: 'account.delete_button' })}
+      {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'account.delete_button' })}
     </button>
   )
 
@@ -176,7 +176,7 @@ export function DeleteAccountModal({
 
         {isCheckLoading ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
-            <Spinner className="spinner-lg" />
+            <IonSpinner name="crescent" className="w-8 h-8" />
             <p className="text-sm text-text-tertiary">
               {t.formatMessage({ id: 'account.delete_loading_check' })}
             </p>

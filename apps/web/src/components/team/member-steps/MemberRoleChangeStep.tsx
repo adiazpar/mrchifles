@@ -8,8 +8,8 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonSpinner,
 } from '@ionic/react'
-import { Spinner } from '@/components/ui'
 import { RoleChangeContent } from '../RoleChangeStep'
 import { useMemberNavRef, useMemberCallbacks } from './MemberNavContext'
 import { MemberPartnerWarningStep } from './MemberPartnerWarningStep'
@@ -72,7 +72,7 @@ export function MemberRoleChangeStep() {
               className="btn btn-primary flex-1"
               disabled={roleChangeLoading || isDisabled}
             >
-              {roleChangeLoading ? <Spinner /> : t.formatMessage({ id: 'common.save' })}
+              {roleChangeLoading ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
             </button>
           </div>
         </IonToolbar>

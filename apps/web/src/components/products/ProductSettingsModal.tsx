@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { useState, useEffect, useRef } from 'react'
 import { Plus, ChevronRight, GripVertical, Trash2, Pencil } from 'lucide-react'
 import { Reorder, useDragControls } from 'framer-motion'
-import { Spinner } from '@/components/ui'
+import { IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { SORT_OPTIONS } from '@/lib/products'
@@ -84,7 +84,7 @@ function SaveCategoryButton({ name, editingCategory, onSave, isSaving, onSetComp
       className="btn btn-primary flex-1"
       disabled={isSaving || !isValid || !hasChanges}
     >
-      {isSaving ? <Spinner /> : tCommon.formatMessage({
+      {isSaving ? <IonSpinner name="crescent" /> : tCommon.formatMessage({
         id: 'common.save'
       })}
     </button>
@@ -239,7 +239,7 @@ function DeleteCategoryButton({ onDelete, isDeleting, onSetCompleted, onSetMessa
       className="btn btn-danger flex-1"
       disabled={isDeleting}
     >
-      {isDeleting ? <Spinner /> : tCommon.formatMessage({
+      {isDeleting ? <IonSpinner name="crescent" /> : tCommon.formatMessage({
         id: 'common.delete'
       })}
     </button>
