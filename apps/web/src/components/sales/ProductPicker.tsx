@@ -323,7 +323,7 @@ function QtyButton({
   return (
     <button
       type="button"
-      className={`btn border-2 border-transparent bg-transparent ${
+      className={`cursor-pointer select-none transition-colors border-2 border-transparent bg-transparent ${
         active ? activeColor : ''
       }`}
       style={{

@@ -131,10 +131,12 @@ export function AiBarcodeStepBody() {
           type="button"
           onClick={handleScanClick}
           disabled={scanBusy}
-          className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--info"
+          className="flex flex-col items-center gap-1.5 cursor-pointer select-none transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-default disabled:active:scale-100"
         >
-          <span className="icon-stack-btn__icon"><ScanLine size={28} /></span>
-          <span className="icon-stack-btn__label">{scanBusy ? t.formatMessage({
+          <span className="flex items-center justify-center w-16 h-16 rounded-full bg-bg-muted text-brand">
+            <ScanLine size={28} />
+          </span>
+          <span className="text-[13px] font-medium text-text-secondary">{scanBusy ? t.formatMessage({
             id: 'barcode.scan_reading'
           }) : t.formatMessage({
             id: 'barcode.scan_button'
@@ -143,10 +145,12 @@ export function AiBarcodeStepBody() {
         <button
           type="button"
           onClick={handleGenerate}
-          className="icon-stack-btn icon-stack-btn--lg icon-stack-btn--success"
+          className="flex flex-col items-center gap-1.5 cursor-pointer select-none transition-transform active:scale-95"
         >
-          <span className="icon-stack-btn__icon"><Plus size={28} /></span>
-          <span className="icon-stack-btn__label">{t.formatMessage({
+          <span className="flex items-center justify-center w-16 h-16 rounded-full bg-bg-muted text-success">
+            <Plus size={28} />
+          </span>
+          <span className="text-[13px] font-medium text-text-secondary">{t.formatMessage({
             id: 'barcode.generate_button'
           })}</span>
         </button>

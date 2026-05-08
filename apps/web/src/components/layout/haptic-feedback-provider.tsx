@@ -16,8 +16,6 @@ const HAPTIC_TARGET_SELECTOR = [
   '.btn',
   '.fab',
   '.payment-btn',
-  '.caja-action-btn',
-  '.icon-stack-btn',
   '.list-item-clickable',
   '.card-interactive',
   'ion-item.ion-activatable',
