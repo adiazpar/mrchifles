@@ -3,7 +3,8 @@
 import { useIntl } from 'react-intl';
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Upload, X } from 'lucide-react'
-import { Input, Spinner } from '@/components/ui'
+import { IonInput, IonItem, IonList } from '@ionic/react'
+import { Spinner } from '@/components/ui'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
@@ -219,31 +220,28 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
             })}</p>
           </div>
 
-          {/* Name */}
-          <Input
-            label={t.formatMessage({
-              id: 'account.profile_name_label'
-            })}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t.formatMessage({
-              id: 'account.profile_name_placeholder'
-            })}
-            autoComplete="name"
-            required
-          />
-
-          {/* Email (read-only) */}
-          <div className="mt-4">
-            <Input
-              label={t.formatMessage({
-                id: 'account.profile_email_label'
-              })}
-              value={user?.email ?? ''}
-              disabled
-              readOnly
-            />
-          </div>
+          {/* Name + Email */}
+          <IonList lines="full" inset>
+            <IonItem>
+              <IonInput
+                label={t.formatMessage({ id: 'account.profile_name_label' })}
+                labelPlacement="floating"
+                value={name}
+                onIonInput={(e) => setName(e.detail.value ?? '')}
+                autocomplete="name"
+                required
+              />
+            </IonItem>
+            <IonItem>
+              <IonInput
+                label={t.formatMessage({ id: 'account.profile_email_label' })}
+                labelPlacement="floating"
+                value={user?.email ?? ''}
+                disabled
+                readonly
+              />
+            </IonItem>
+          </IonList>
         </>
       )}
 

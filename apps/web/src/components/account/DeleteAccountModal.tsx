@@ -4,7 +4,8 @@ import { useIntl } from 'react-intl';
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { AlertTriangle } from 'lucide-react'
-import { ModalShell, Input, Spinner } from '@/components/ui'
+import { IonInput, IonItem, IonList } from '@ionic/react'
+import { ModalShell, Spinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError, apiRequest } from '@/lib/api-client'
@@ -270,24 +271,30 @@ function ConfirmState({
           {t.formatMessage({ id: 'account.delete_warning_description' })}
         </p>
       </div>
-      <Input
-        label={t.formatMessage({ id: 'account.delete_confirm_label' })}
-        value={confirmEmail}
-        onChange={(e) => onConfirmEmailChange(e.target.value)}
-        placeholder={email || t.formatMessage({ id: 'account.delete_confirm_placeholder' })}
-        autoComplete="off"
-        type="email"
-        required
-      />
-      <Input
-        label={t.formatMessage({ id: 'account.delete_password_label' })}
-        value={currentPassword}
-        onChange={(e) => onCurrentPasswordChange(e.target.value)}
-        placeholder={t.formatMessage({ id: 'account.delete_password_placeholder' })}
-        autoComplete="current-password"
-        type="password"
-        required
-      />
+      <IonList lines="full" inset>
+        <IonItem>
+          <IonInput
+            type="email"
+            label={t.formatMessage({ id: 'account.delete_confirm_label' })}
+            labelPlacement="floating"
+            value={confirmEmail}
+            onIonInput={(e) => onConfirmEmailChange(e.detail.value ?? '')}
+            autocomplete="off"
+            required
+          />
+        </IonItem>
+        <IonItem>
+          <IonInput
+            type="password"
+            label={t.formatMessage({ id: 'account.delete_password_label' })}
+            labelPlacement="floating"
+            value={currentPassword}
+            onIonInput={(e) => onCurrentPasswordChange(e.detail.value ?? '')}
+            autocomplete="current-password"
+            required
+          />
+        </IonItem>
+      </IonList>
     </div>
   )
 }

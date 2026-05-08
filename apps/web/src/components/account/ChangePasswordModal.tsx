@@ -2,7 +2,8 @@
 
 import { useIntl } from 'react-intl';
 import { useState, useCallback, useEffect } from 'react'
-import { Input, Spinner } from '@/components/ui'
+import { IonInput, IonItem, IonList } from '@ionic/react'
+import { Spinner } from '@/components/ui'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useApiMessage } from '@/hooks/useApiMessage'
@@ -130,59 +131,47 @@ export function ChangePasswordModal({
             </div>
           )}
 
-          <Input
-            label={t.formatMessage({
-              id: 'account.password_current_label'
-            })}
-            type="password"
-            value={current}
-            onChange={(e) => setCurrent(e.target.value)}
-            placeholder={t.formatMessage({
-              id: 'account.password_current_placeholder'
-            })}
-            autoComplete="current-password"
-            required
-          />
-
-          <div className="mt-4">
-            <Input
-              label={t.formatMessage({
-                id: 'account.password_new_label'
-              })}
-              type="password"
-              value={next}
-              onChange={(e) => setNext(e.target.value)}
-              placeholder={t.formatMessage({
-                id: 'account.password_new_placeholder'
-              })}
-              autoComplete="new-password"
-              required
-            />
-            <p className="text-xs text-text-tertiary mt-1">
-              {t.formatMessage({
-                id: 'account.password_hint'
-              })}
-            </p>
-          </div>
-
-          <div className="mt-4">
-            <Input
-              label={t.formatMessage({
-                id: 'account.password_confirm_label'
-              })}
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder={t.formatMessage({
-                id: 'account.password_confirm_placeholder'
-              })}
-              autoComplete="new-password"
-              required
-            />
-            {confirmHint && (
-              <p className="text-xs text-error mt-1">{confirmHint}</p>
-            )}
-          </div>
+          <IonList lines="full" inset>
+            <IonItem>
+              <IonInput
+                type="password"
+                label={t.formatMessage({ id: 'account.password_current_label' })}
+                labelPlacement="floating"
+                value={current}
+                onIonInput={(e) => setCurrent(e.detail.value ?? '')}
+                autocomplete="current-password"
+                required
+              />
+            </IonItem>
+            <IonItem>
+              <IonInput
+                type="password"
+                label={t.formatMessage({ id: 'account.password_new_label' })}
+                labelPlacement="floating"
+                value={next}
+                onIonInput={(e) => setNext(e.detail.value ?? '')}
+                autocomplete="new-password"
+                required
+              />
+            </IonItem>
+            <IonItem>
+              <IonInput
+                type="password"
+                label={t.formatMessage({ id: 'account.password_confirm_label' })}
+                labelPlacement="floating"
+                value={confirm}
+                onIonInput={(e) => setConfirm(e.detail.value ?? '')}
+                autocomplete="new-password"
+                required
+              />
+            </IonItem>
+          </IonList>
+          <p className="text-xs text-text-tertiary mt-1 px-4">
+            {t.formatMessage({ id: 'account.password_hint' })}
+          </p>
+          {confirmHint && (
+            <p className="text-xs text-error mt-1 px-4">{confirmHint}</p>
+          )}
         </>
       )}
 
