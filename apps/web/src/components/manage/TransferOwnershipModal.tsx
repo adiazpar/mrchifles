@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { TriangleAlert, Mail } from 'lucide-react'
-import { Modal, Spinner, useModal, ConfirmationAnimation } from '@/components/ui'
+import { ModalShell, Spinner, ConfirmationAnimation } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useTransferOwnership } from '@/hooks/useTransferOwnership'
@@ -21,6 +21,8 @@ interface TeamMember {
 
 interface Props { isOpen: boolean; onClose: () => void }
 
+type Step = 'form' | 'confirm' | 'success'
+
 export function TransferOwnershipModal({ isOpen, onClose }: Props) {
   const t = useIntl()
   const tCommon = useIntl()
@@ -29,6 +31,7 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
   const { submit, isSubmitting, error, reset } = useTransferOwnership()
   const { refresh: refreshPendingTransfer } = usePendingTransferContext()
 
+  const [step, setStep] = useState<Step>('form')
   const [members, setMembers] = useState<TeamMember[]>([])
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null)
   const [customEmail, setCustomEmail] = useState('')
@@ -54,14 +57,21 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
     return () => { cancelled = true }
   }, [isOpen, businessId])
 
-  const handleExitComplete = () => {
-    setSelectedEmail(null)
-    setCustomEmail('')
-    setMode('picker')
-    setTypedConfirm('')
-    setTransferSent(false)
-    reset()
-  }
+  // Reset all state after the modal has finished closing
+  useEffect(() => {
+    if (!isOpen) {
+      const t = setTimeout(() => {
+        setStep('form')
+        setSelectedEmail(null)
+        setCustomEmail('')
+        setMode('picker')
+        setTypedConfirm('')
+        setTransferSent(false)
+        reset()
+      }, 250)
+      return () => clearTimeout(t)
+    }
+  }, [isOpen, reset])
 
   const recipient = mode === 'picker'
     ? (selectedEmail ? members.find(m => m.email === selectedEmail) : null)
@@ -72,35 +82,82 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
     : /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customEmail.trim())
   const isStep2Valid = typedConfirm === business?.name
 
-  const handleSubmit = async (): Promise<boolean> => {
-    if (!recipientEmail) return false
+  const handleSubmit = async () => {
+    if (!recipientEmail) return
     const ok = await submit(recipientEmail)
     if (ok) {
       // Refresh the shared pending-transfer state before the success step
       // is dismissed, so the manage-page banner and nav badge are ready.
       await refreshPendingTransfer()
       setTransferSent(true)
+      setStep('success')
     }
-    return ok
   }
 
+  const titlesByStep: Record<Step, string> = {
+    form: t.formatMessage({ id: 'manage.transfer_ownership' }),
+    confirm: t.formatMessage({ id: 'manage.transfer_ownership' }),
+    success: t.formatMessage({ id: 'manage.transfer_sent_title' }),
+  }
+
+  const onBack = step === 'confirm' ? () => setStep('form') : undefined
+
+  const footer =
+    step === 'form' ? (
+      <>
+        <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
+          {tCommon.formatMessage({ id: 'common.cancel' })}
+        </button>
+        <button
+          type="button"
+          onClick={() => setStep('confirm')}
+          disabled={!isStep1Valid}
+          className="btn btn-primary flex-1"
+        >
+          {tCommon.formatMessage({ id: 'common.continue' })}
+        </button>
+      </>
+    ) : step === 'confirm' ? (
+      <>
+        <button
+          type="button"
+          onClick={() => setStep('form')}
+          className="btn btn-secondary flex-1"
+        >
+          {tCommon.formatMessage({ id: 'common.back' })}
+        </button>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting || !isStep2Valid}
+          className="btn btn-primary flex-1"
+        >
+          {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({ id: 'manage.transfer_send_request' })}
+        </button>
+      </>
+    ) : (
+      <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+        {tCommon.formatMessage({ id: 'common.done' })}
+      </button>
+    )
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} onExitComplete={handleExitComplete}>
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title={titlesByStep[step]}
+      onBack={onBack}
+      footer={footer}
+    >
       {/* Step 0: pick recipient */}
-      <Modal.Step title={t.formatMessage({
-        id: 'manage.transfer_ownership'
-      })} hideBackButton>
-        <Modal.Item>
-          <p className="text-sm text-text-secondary text-center">
-            {t.formatMessage({
-              id: 'manage.transfer_pick_recipient_subtitle'
-            })}
+      {step === 'form' && (
+        <>
+          <p className="text-sm text-text-secondary text-center px-4 pt-4">
+            {t.formatMessage({ id: 'manage.transfer_pick_recipient_subtitle' })}
           </p>
-        </Modal.Item>
-        {mode === 'picker' && (
-          <>
-            <Modal.Item>
-              <div className="flex flex-col gap-2">
+          {mode === 'picker' && (
+            <>
+              <div className="flex flex-col gap-2 px-4 pt-3">
                 {members.map((m) => {
                   const isActive = m.status === 'active'
                   return (
@@ -146,183 +203,98 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
                   );
                 })}
               </div>
-            </Modal.Item>
-            <Modal.Item>
-              <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-text-tertiary">
+              <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-text-tertiary px-4 pt-3">
                 <div className="flex-1 h-px bg-border" />
-                <span>{tCommon.formatMessage({
-                  id: 'common.or'
-                })}</span>
+                <span>{tCommon.formatMessage({ id: 'common.or' })}</span>
                 <div className="flex-1 h-px bg-border" />
               </div>
-            </Modal.Item>
-            <Modal.Item>
+              <div className="px-4 pt-3 pb-4">
+                <button
+                  type="button"
+                  onClick={() => { setMode('email'); setSelectedEmail(null) }}
+                  className="w-full flex items-center justify-center gap-2 text-sm text-brand hover:text-brand-hover transition-colors"
+                >
+                  <Mail className="w-4 h-4" />
+                  {t.formatMessage({ id: 'manage.transfer_enter_different_email' })}
+                </button>
+              </div>
+            </>
+          )}
+          {mode === 'email' && (
+            <div className="px-4 pt-3 pb-4">
+              <input
+                type="email"
+                value={customEmail}
+                onChange={(e) => setCustomEmail(e.target.value)}
+                placeholder="email@example.com"
+                className="input"
+                autoComplete="email"
+              />
+              <p className="text-xs text-text-tertiary mt-2">
+                {t.formatMessage({ id: 'manage.transfer_recipient_must_have_account' })}
+              </p>
               <button
                 type="button"
-                onClick={() => { setMode('email'); setSelectedEmail(null) }}
-                className="w-full flex items-center justify-center gap-2 text-sm text-brand hover:text-brand-hover transition-colors"
+                onClick={() => { setMode('picker'); setCustomEmail('') }}
+                className="text-xs text-text-secondary underline mt-2"
               >
-                <Mail className="w-4 h-4" />
-                {t.formatMessage({
-                  id: 'manage.transfer_enter_different_email'
-                })}
+                {tCommon.formatMessage({ id: 'common.back' })}
               </button>
-            </Modal.Item>
-          </>
-        )}
-        {mode === 'email' && (
-          <Modal.Item>
-            <input
-              type="email"
-              value={customEmail}
-              onChange={(e) => setCustomEmail(e.target.value)}
-              placeholder="email@example.com"
-              className="input"
-              autoComplete="email"
-            />
-            <p className="text-xs text-text-tertiary mt-2">
-              {t.formatMessage({
-                id: 'manage.transfer_recipient_must_have_account'
-              })}
-            </p>
-            <button
-              type="button"
-              onClick={() => { setMode('picker'); setCustomEmail('') }}
-              className="text-xs text-text-secondary underline mt-2"
-            >
-              {tCommon.formatMessage({
-                id: 'common.back'
-              })}
-            </button>
-          </Modal.Item>
-        )}
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.cancel'
-            })}
-          </button>
-          <NextButton disabled={!isStep1Valid} />
-        </Modal.Footer>
-      </Modal.Step>
+            </div>
+          )}
+        </>
+      )}
+
       {/* Step 1: confirm */}
-      <Modal.Step title={t.formatMessage({
-        id: 'manage.transfer_ownership'
-      })}>
-        <Modal.Item>
+      {step === 'confirm' && (
+        <div className="px-4 pt-4 pb-4 flex flex-col gap-4">
           <div className="p-3 bg-bg-muted rounded-lg flex items-start gap-3">
             <TriangleAlert className="w-5 h-5 text-text-secondary flex-shrink-0 mt-0.5" />
             <p className="text-sm text-text-secondary">
-              {t.formatMessage({
-                id: 'manage.transfer_confirm_warning'
-              }, {
-                recipient: recipient?.name ?? recipientEmail ?? '',
-              })}
+              {t.formatMessage(
+                { id: 'manage.transfer_confirm_warning' },
+                { recipient: recipient?.name ?? recipientEmail ?? '' }
+              )}
             </p>
           </div>
-        </Modal.Item>
-        <Modal.Item>
-          <label htmlFor="transfer-confirm" className="label">
-            {t.formatMessage({
-              id: 'manage.transfer_type_to_confirm'
-            }, { businessName: business?.name ?? '' })}
-          </label>
-          <input
-            id="transfer-confirm"
-            type="text"
-            value={typedConfirm}
-            onChange={(e) => setTypedConfirm(e.target.value)}
-            className="input"
-            placeholder={business?.name ?? ''}
-            autoComplete="off"
-          />
-        </Modal.Item>
-        {error && (
-          <Modal.Item>
+          <div>
+            <label htmlFor="transfer-confirm" className="label">
+              {t.formatMessage(
+                { id: 'manage.transfer_type_to_confirm' },
+                { businessName: business?.name ?? '' }
+              )}
+            </label>
+            <input
+              id="transfer-confirm"
+              type="text"
+              value={typedConfirm}
+              onChange={(e) => setTypedConfirm(e.target.value)}
+              className="input"
+              placeholder={business?.name ?? ''}
+              autoComplete="off"
+            />
+          </div>
+          {error && (
             <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
-          </Modal.Item>
-        )}
-        <Modal.Footer>
-          <Modal.BackButton className="btn btn-secondary flex-1" />
-          <SendTransferButton
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            disabled={isSubmitting || !isStep2Valid}
-          />
-        </Modal.Footer>
-      </Modal.Step>
+          )}
+        </div>
+      )}
+
       {/* Step 2: success — plane lottie plays once the API confirms */}
-      <Modal.Step title={t.formatMessage({
-        id: 'manage.transfer_sent_title'
-      })} hideBackButton>
-        <Modal.Item>
+      {step === 'success' && (
+        <div className="px-4 pt-4 pb-4">
           <ConfirmationAnimation
             type="success"
             src="/animations/plane.json"
             triggered={transferSent}
-            title={t.formatMessage({
-              id: 'manage.transfer_sent_heading'
-            })}
-            subtitle={t.formatMessage({
-              id: 'manage.transfer_sent_subtitle'
-            }, {
-              recipient: recipient?.name ?? recipientEmail ?? '',
-            })}
+            title={t.formatMessage({ id: 'manage.transfer_sent_heading' })}
+            subtitle={t.formatMessage(
+              { id: 'manage.transfer_sent_subtitle' },
+              { recipient: recipient?.name ?? recipientEmail ?? '' }
+            )}
           />
-        </Modal.Item>
-        <Modal.Footer>
-          <button type="button" onClick={onClose} className="btn btn-primary flex-1">
-            {tCommon.formatMessage({
-              id: 'common.done'
-            })}
-          </button>
-        </Modal.Footer>
-      </Modal.Step>
-    </Modal>
-  );
-}
-
-function SendTransferButton({
-  onSubmit,
-  isSubmitting,
-  disabled,
-}: {
-  onSubmit: () => Promise<boolean>
-  isSubmitting: boolean
-  disabled: boolean
-}) {
-  const { goToStep } = useModal()
-  const t = useIntl()
-
-  // Wait for the API result: success navigates to the animation step;
-  // failure leaves the user on the confirm step with the error visible.
-  const handleClick = async () => {
-    const ok = await onSubmit()
-    if (ok) goToStep(2)
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={disabled}
-      className="btn btn-primary flex-1"
-    >
-      {isSubmitting ? <Spinner size="sm" /> : t.formatMessage({
-        id: 'manage.transfer_send_request'
-      })}
-    </button>
-  );
-}
-
-function NextButton({ disabled }: { disabled: boolean }) {
-  const { goNext } = useModal()
-  const tCommon = useIntl()
-  return (
-    <button type="button" onClick={goNext} disabled={disabled} className="btn btn-primary flex-1">
-      {tCommon.formatMessage({
-        id: 'common.continue'
-      })}
-    </button>
-  );
+        </div>
+      )}
+    </ModalShell>
+  )
 }
