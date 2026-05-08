@@ -1,7 +1,7 @@
 import 'server-only'
 import { resolve } from 'path'
 import { drizzle } from 'drizzle-orm/libsql'
-import { createClient, type Client } from '@libsql/client'
+import type { Client } from '@libsql/client'
 import * as schema from '@kasero/shared/db/schema'
 
 let _client: Client | undefined
@@ -18,6 +18,19 @@ function getDb() {
   if (!url) {
     throw new Error('TURSO_DATABASE_URL is not set')
   }
+  // Conditional require so Next.js's "Collecting page data" build step,
+  // and the prod Lambda runtime, never load `@libsql/client`'s default
+  // node entry — that entry pulls in the `libsql` package, which loads a
+  // platform-specific native binary (`@libsql/linux-x64-gnu`) at module
+  // init that isn't reliably present in Vercel's installed node_modules
+  // and explodes the build with MODULE_NOT_FOUND. In prod we only ever
+  // talk to Turso over HTTPS, so `@libsql/client/web` (pure JS, fetch-
+  // based) is sufficient. Dev keeps the native client for `file:` URLs.
+  // The require is inside this function so neither path is touched until
+  // a real request hits the proxy.
+  const createClient: typeof import('@libsql/client').createClient = isDev
+    ? require('@libsql/client').createClient
+    : require('@libsql/client/web').createClient
   _client = createClient({ url, authToken })
   _db = drizzle(_client, { schema })
   return _db
