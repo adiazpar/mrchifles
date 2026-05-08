@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { TriangleAlert, Mail } from 'lucide-react'
-import { IonSpinner } from '@ionic/react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell, ConfirmationAnimation } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
@@ -106,40 +106,38 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
   const footer =
     step === 'form' ? (
       <>
-        <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
+        <IonButton fill="outline" onClick={onClose} className="flex-1">
           {tCommon.formatMessage({ id: 'common.cancel' })}
-        </button>
-        <button
-          type="button"
+        </IonButton>
+        <IonButton
           onClick={() => setStep('confirm')}
           disabled={!isStep1Valid}
-          className="btn btn-primary flex-1"
+          className="flex-1"
         >
           {tCommon.formatMessage({ id: 'common.continue' })}
-        </button>
+        </IonButton>
       </>
     ) : step === 'confirm' ? (
       <>
-        <button
-          type="button"
+        <IonButton
+          fill="outline"
           onClick={() => setStep('form')}
-          className="btn btn-secondary flex-1"
+          className="flex-1"
         >
           {tCommon.formatMessage({ id: 'common.back' })}
-        </button>
-        <button
-          type="button"
+        </IonButton>
+        <IonButton
           onClick={handleSubmit}
           disabled={isSubmitting || !isStep2Valid}
-          className="btn btn-primary flex-1"
+          className="flex-1"
         >
           {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.transfer_send_request' })}
-        </button>
+        </IonButton>
       </>
     ) : (
-      <button type="button" onClick={onClose} className="btn btn-primary flex-1">
+      <IonButton expand="block" onClick={onClose} className="flex-1">
         {tCommon.formatMessage({ id: 'common.done' })}
-      </button>
+      </IonButton>
     )
 
   return (

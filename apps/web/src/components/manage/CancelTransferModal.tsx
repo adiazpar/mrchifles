@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { Clock } from 'lucide-react'
-import { IonSpinner } from '@ionic/react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 
@@ -73,23 +73,22 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
 
   const footer = (
     <>
-      <button
-        type="button"
+      <IonButton
+        fill="outline"
         onClick={onClose}
         disabled={isCancelling}
-        className="btn btn-secondary flex-1"
+        className="flex-1"
       >
         {tCommon.formatMessage({ id: 'common.cancel' })}
-      </button>
-      <button
-        type="button"
+      </IonButton>
+      <IonButton
+        color="danger"
         onClick={handleCancelTransfer}
         disabled={isCancelling || !transfer}
-        className="btn btn-primary flex-1"
-        style={{ background: 'var(--color-error)' }}
+        className="flex-1"
       >
         {isCancelling ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.transfer_withdraw' })}
-      </button>
+      </IonButton>
     </>
   )
 

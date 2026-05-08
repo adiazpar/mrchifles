@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { ModalShell } from '@/components/ui/modal-shell'
-import { IonSpinner } from '@ionic/react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { LocalePicker } from '@/components/businesses/shared'
 import { useBusiness } from '@/contexts/business-context'
 import { useUpdateBusiness } from '@/hooks/useUpdateBusiness'
@@ -35,14 +35,14 @@ export function EditLocationModal({ isOpen, onClose }: Props) {
   }
 
   const footer = (
-    <button
-      type="button"
+    <IonButton
+      expand="block"
       onClick={handleSave}
       disabled={isSubmitting || locale === business?.locale}
-      className="btn btn-primary flex-1"
+      className="flex-1"
     >
       {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.save' })}
-    </button>
+    </IonButton>
   )
 
   return (
