@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, useTransition, type ReactNode } from 'react'
-import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
+import { useRouter, usePathname } from '@/lib/next-navigation-shim'
 import { useAuth } from './auth-context'
 import { CACHE_KEYS } from '@/hooks/useSessionCache'
 

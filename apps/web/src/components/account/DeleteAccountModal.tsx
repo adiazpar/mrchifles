@@ -252,7 +252,7 @@ interface ConfirmStateProps {
 }
 
 function ConfirmState({
-  email,
+  email: _email,
   confirmEmail,
   onConfirmEmailChange,
   currentPassword,

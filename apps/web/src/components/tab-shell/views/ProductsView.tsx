@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import dynamic from '@/lib/next-dynamic-shim'
-import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
+import { useRouter, useSearchParams } from '@/lib/next-navigation-shim'
 import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
 import { useProductFilters, useProductSettings } from '@/hooks'

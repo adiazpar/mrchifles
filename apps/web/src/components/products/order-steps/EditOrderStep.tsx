@@ -279,7 +279,6 @@ export function EditOrderStep() {
           {orderReceiptFile ? (
             <div className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
               {orderReceiptPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img src={orderReceiptPreview} alt="" className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
               ) : (
                 <div className="w-10 h-10 rounded-md bg-bg-surface flex items-center justify-center flex-shrink-0"><ImagePlus className="w-5 h-5 text-text-tertiary" /></div>

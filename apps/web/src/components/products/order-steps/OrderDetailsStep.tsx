@@ -192,7 +192,6 @@ export function OrderDetailsStep() {
           {orderReceiptFile ? (
             <div className="flex items-center gap-3 p-3 bg-bg-muted rounded-lg">
               {orderReceiptPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={orderReceiptPreview}
                   alt=""

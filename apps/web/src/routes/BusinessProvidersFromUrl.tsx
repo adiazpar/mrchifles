@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useRouteMatch } from 'react-router-dom'
 
 import { BusinessDataPreloader } from '@/components/layout/BusinessDataPreloader'
+import { NavigationErrorNotice } from '@/components/layout/NavigationErrorNotice'
 import { ContentGuard } from '@/components/auth'
 import { BusinessProvider } from '@/contexts/business-context'
 import { IncomingTransferProvider } from '@/contexts/incoming-transfer-context'
@@ -74,6 +75,7 @@ export function BusinessProvidersFromUrl({ children }: { children: ReactNode }) 
                       <ProductSettingsProvider key={`product-settings-${businessId}`} businessId={businessId}>
                         <ContentGuard>
                           <BusinessDataPreloader businessId={businessId} />
+                          <NavigationErrorNotice />
                           {children}
                         </ContentGuard>
                       </ProductSettingsProvider>

@@ -33,7 +33,7 @@ export interface ProductInfoDrawerProps {
 export function ProductInfoDrawer({
   isOpen,
   onClose,
-  onExitComplete,
+  onExitComplete: _onExitComplete,
   product,
   categories,
 }: ProductInfoDrawerProps) {

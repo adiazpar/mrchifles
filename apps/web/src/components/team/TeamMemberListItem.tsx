@@ -29,7 +29,6 @@ export function TeamMemberListItem({ member, isSelf, onClick }: TeamMemberListIt
         className="w-10 h-10 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0 overflow-hidden"
       >
         {member.avatar ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={member.avatar}
             alt=""

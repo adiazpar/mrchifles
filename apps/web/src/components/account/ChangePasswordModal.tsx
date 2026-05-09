@@ -94,7 +94,7 @@ export function ChangePasswordModal({
     } finally {
       setIsSaving(false)
     }
-  }, [isValid, isSaving, current, next, translateApiMessage, tCommon, onClose])
+  }, [isValid, isSaving, current, next, translateApiMessage, tCommon])
 
   // Client-side "passwords don't match" hint, shown only when both fields
   // are populated and differ. Distinct from the save-time error shown above.

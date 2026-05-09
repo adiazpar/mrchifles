@@ -18,8 +18,14 @@
  */
 
 import type { SupportedLocale } from '@kasero/shared/locales'
+// en-US is statically imported by AppIntlProvider for instant first paint.
+// Reusing that bundle here keeps Vite from emitting an INEFFECTIVE_DYNAMIC_IMPORT
+// warning AND avoids shipping the en-US strings twice.
+import enUSMessages from './messages/en-US.json'
 
-const cache = new Map<SupportedLocale, Record<string, string>>()
+const cache = new Map<SupportedLocale, Record<string, string>>([
+  ['en-US', enUSMessages],
+])
 
 export async function loadMessages(
   locale: SupportedLocale,
@@ -30,8 +36,9 @@ export async function loadMessages(
   let mod: { default: Record<string, string> }
   switch (locale) {
     case 'en-US':
-      mod = await import('./messages/en-US.json')
-      break
+      // Already in the cache above; this branch is unreachable but
+      // satisfies the exhaustiveness check.
+      return enUSMessages
     case 'es':
       mod = await import('./messages/es.json')
       break

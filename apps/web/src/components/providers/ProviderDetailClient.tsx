@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 
 import Image from '@/lib/Image'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { useRouter, usePathname, useSearchParams } from '@/lib/next-navigation-shim'
+import { useRouter, useSearchParams } from '@/lib/next-navigation-shim'
 import type { ReactNode } from 'react'
 import {
   IonButton,

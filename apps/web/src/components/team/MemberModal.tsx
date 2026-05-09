@@ -52,6 +52,11 @@ export function MemberModal({
 }: MemberModalProps) {
   const navRef = useRef<HTMLIonNavElement>(null)
 
+  // Stable root thunk — defined outside render via useCallback so IonNav never
+  // sees a new function reference between re-renders and avoids remounting.
+  // Must run before any early return so hook order stays stable.
+  const detailsStepRoot = useCallback(() => <MemberDetailsStep />, [])
+
   if (!member) return null
 
   const handleClose = () => {
@@ -73,10 +78,6 @@ export function MemberModal({
     onSubmitRoleChange,
     onRemoveMember,
   }
-
-  // Stable root thunk — defined outside render via useCallback so IonNav never
-  // sees a new function reference between re-renders and avoids remounting.
-  const detailsStepRoot = useCallback(() => <MemberDetailsStep />, [])
 
   return (
     <MemberCallbacksContext.Provider value={callbacks}>

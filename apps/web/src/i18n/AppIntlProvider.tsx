@@ -93,7 +93,6 @@ export function AppIntlProvider({ children }: AppIntlProviderProps) {
         // Bundle load failures fall back to the previously-active locale's
         // messages. Logged so dev sees the failure; not surfaced to the
         // user because i18n is a non-critical async resource.
-        // eslint-disable-next-line no-console
         console.error('[i18n] Failed to load messages for', activeLocale, err)
       })
     return () => {
@@ -132,11 +131,9 @@ export function AppIntlProvider({ children }: AppIntlProviderProps) {
         // single warning than a wall of red — the `defaultLocale` fallback
         // already renders the English string for the user.
         if (err.code === 'MISSING_TRANSLATION') {
-          // eslint-disable-next-line no-console
           console.warn(err.message)
           return
         }
-        // eslint-disable-next-line no-console
         console.error(err)
       }}
     >

@@ -2,7 +2,7 @@
 
 import { useIntl } from 'react-intl';
 import { useState } from 'react'
-import { IonButton, IonRippleEffect } from '@ionic/react'
+import { IonButton } from '@ionic/react'
 import { Menu } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'

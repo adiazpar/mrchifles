@@ -92,6 +92,16 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    build: {
+      // Default minifier (lightningcss) doesn't recognize Ionic's shadow-DOM
+      // `:host-context()` pseudo-class and emits 10+ noisy "is not recognized"
+      // warnings on every build. esbuild handles it cleanly.
+      cssMinify: 'esbuild',
+      // bwip-js (~900 kB) and unpdf/pdfjs (~1.6 MB) are unavoidably large
+      // and already loaded behind dynamic imports / route splits. Raise the
+      // threshold so the perf hint isn't constant noise.
+      chunkSizeWarningLimit: 2000,
+    },
     test: {
       environment: 'jsdom',
       globals: true,

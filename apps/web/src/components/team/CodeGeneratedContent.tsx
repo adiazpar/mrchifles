@@ -57,7 +57,6 @@ export function CodeGeneratedContent({
         {qrDataUrl && (
           <div className="flex justify-center mb-3">
             <div className="invite-qr-box">
-              {/* eslint-disable-next-line @next/next/no-img-element -- Data URL for QR code, no optimization benefit */}
               <img src={qrDataUrl} alt={t.formatMessage({
                 id: 'team.qr_alt'
               })} />

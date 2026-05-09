@@ -57,7 +57,6 @@ export const UserDetailsStep = memo(function UserDetailsStep({
         <div className="flex items-center gap-3">
           <div className="avatar w-11 h-11 text-sm overflow-hidden">
             {member.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
               (<img
                 src={member.avatar}
                 alt=""

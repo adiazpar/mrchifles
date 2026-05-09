@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useState } from 'react'
 import { useParams } from 'react-router'
-import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig, Pencil, Trash2 } from 'lucide-react'
+import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig } from 'lucide-react'
 import { IonButton, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonList, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'

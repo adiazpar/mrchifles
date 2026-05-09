@@ -5,6 +5,7 @@ import { Route, Switch } from 'react-router-dom'
 import { AuthGateOverlay } from '@/components/layout/auth-gate-overlay'
 import { ErrorBoundary } from '@/components/layout/error-boundary'
 import { HapticFeedbackProvider } from '@/components/layout/haptic-feedback-provider'
+import { OfflineBadge } from '@/components/layout/OfflineBadge'
 import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AppIntlProvider } from '@/i18n/AppIntlProvider'
@@ -33,6 +34,7 @@ export function App() {
               <AuthGateProvider>
                 <HapticFeedbackProvider />
                 <AuthGateOverlay />
+                <OfflineBadge />
                 <Switch>
                   <Route exact path="/login">
                     <LoginPage />

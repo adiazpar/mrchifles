@@ -34,12 +34,16 @@ function getDb() {
   // + `drizzle-orm/libsql/http` (both pure JS, fetch-based, no native
   // deps) cover everything. Dev keeps the native pair for `file:` URLs.
   if (isDev) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createClient } = require('@libsql/client') as typeof import('@libsql/client')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { drizzle } = require('drizzle-orm/libsql') as typeof import('drizzle-orm/libsql')
     _client = createClient({ url, authToken })
     _db = drizzle(_client, { schema })
   } else {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createClient } = require('@libsql/client/web') as typeof import('@libsql/client/web')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { drizzle } = require('drizzle-orm/libsql/http') as typeof import('drizzle-orm/libsql/http')
     _client = createClient({ url, authToken })
     _db = drizzle(_client, { schema })

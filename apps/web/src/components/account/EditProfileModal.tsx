@@ -132,7 +132,6 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
     refreshUser,
     translateApiMessage,
     tCommon,
-    onClose,
   ])
 
   const saveButton = (
@@ -177,7 +176,6 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
                   style={{ backgroundColor: 'var(--color-brand-subtle)', color: 'var(--color-text-brand)' }}
                 >
                   {avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     (<img src={avatar} alt="" className="w-24 h-24 object-cover" />)
                   ) : (
                     <span className="text-3xl font-semibold">

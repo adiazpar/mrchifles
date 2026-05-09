@@ -174,7 +174,6 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
                     >
                       <div className="w-12 h-12 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {m.avatar ? (
-                          // eslint-disable-next-line @next/next/no-img-element
                           (<img
                             src={m.avatar}
                             alt=""

@@ -1,106 +1,98 @@
 # Kasero
 
-A multi-business management system for small businesses.
+A multi-business management system for small businesses. Built for speed, simplicity, and offline capability.
 
 ## Features
 
 - **Multi-Business** - Manage multiple businesses from one account
 - **Product Catalog** - AI-powered product icons, categories, stock tracking, barcode scanning and generation
 - **Inventory** - Track stock levels and supplier orders
+- **Sales Register** - Open/close sales sessions, ring up sales, daily aggregates
 - **Team Management** - Invite partners/employees with role-based access
 - **Ownership Transfer** - Transfer business ownership to another user
-- **Dashboard** - Daily summaries and business insights
 - **Email Auth** - Simple email/password authentication
 - **PWA** - Works offline, installable on mobile
-- **Sales Register** - Coming soon
-- **Cash Drawer** - Coming soon
+- **i18n** - English, Spanish, Japanese (driven by a single locale registry)
 
 ## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
-| **Frontend** | Next.js 15, React 18, TypeScript |
-| **Styling** | Tailwind CSS |
-| **Database** | Local SQLite (dev) + Turso/libSQL (prod) + Drizzle ORM |
-| **Auth** | Simple JWT (jose) + bcryptjs |
-| **Icons** | Lucide React |
-| **Barcodes** | html5-qrcode (decode) + bwip-js (render) |
-| **Currency input** | react-currency-input-field |
-| **Hosting** | Vercel |
+| **Frontend (apps/web/)** | Vite 6, React 19, TypeScript, Ionic React 8, react-router v5 |
+| **Backend (apps/api/)** | Next.js 15 (API-only), Drizzle ORM, jose JWT, bcryptjs |
+| **Shared (packages/shared/)** | Drizzle schema, types, ApiMessageCode, locale registry |
+| **Styling** | Tailwind CSS v4 + brand CSS variables + Ionic theme bridge |
+| **Database** | Local SQLite (dev) + Turso/libSQL (prod) |
+| **i18n** | `react-intl` with ICU MessageFormat |
+| **PWA** | `vite-plugin-pwa` (Workbox `injectManifest`) |
+| **Icons** | Lucide React + custom SVGs |
+| **Barcodes** | `html5-qrcode` (decode) + `bwip-js` (render) |
+| **Rate limiting** | `@upstash/ratelimit` (prod) + in-memory fallback (dev) |
+| **Hosting** | Vercel (single deployment; SPA folded into `apps/api/public/` at build time) |
+
+Single-origin in production: the Vite SPA is built and copied into `apps/api/public/` by `apps/api/scripts/prepare-spa.mjs` (the API's `prebuild` hook). One Next.js deployment serves both `/api/*` and the SPA shell.
 
 ## Quick Start
 
 ```bash
 npm install
+# Set AUTH_SECRET in apps/api/.env.local (min 32 chars)
 npm run dev
 ```
 
-No environment variables are required for local development. The dev server uses a local SQLite file (`data/local.db`) created automatically on first run. Only `AUTH_SECRET` is needed to log in — add it to `.env.local`.
-
 | Service | URL |
 |---------|-----|
-| App | http://localhost:3000 |
+| Web (Vite) | https://localhost:3000 |
+| API (Next.js) | https://localhost:8000 |
 
-## Scripts
+In dev, Vite proxies `/api/*` to the API server, so the SPA calls the API same-origin.
+
+## Scripts (run from repo root)
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start Next.js development server |
-| `npm run build` | Build for production |
-| `npm run db:push` | Push schema to dev database |
-| `npm run db:push:prod` | Push schema to production database |
-| `npm run db:studio` | Open Drizzle Studio |
-| `npm run lint` | Run ESLint |
-| `npm run test` | Run tests with Vitest |
+| `npm run dev` | Start both servers in parallel (`dev:api` + `dev:web`) |
+| `npm run dev:api` | API only |
+| `npm run dev:web` | Web only |
+| `npm run build` | Build all workspaces (`@kasero/shared` → `@kasero/web` → `@kasero/api`) |
+| `npm run lint` | Lint every workspace |
+| `npm run test` | Test every workspace |
+
+Per-app scripts of note (run inside the workspace, or via `npm run <script> --workspace=apps/<app>`):
+
+- `apps/api/`: `db:push`, `db:push:prod`, `db:studio`, `start`, `start:local` (HTTPS preview of prod build), `i18n:translate`, `splash:generate`, `test:run`
+- `apps/web/`: `preview` (plain), `test:run`
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local`:
+Each app has its own `.env.local` (both gitignored). See `apps/api/.env.example` for the full template; the repo-root `.env.example` documents the port layout.
 
-```bash
-cp .env.example .env.local
-```
+Required:
+- `AUTH_SECRET` (in `apps/api/.env.local`) — JWT signing secret, min 32 chars
 
-Required variables:
-- `AUTH_SECRET` - Secret for JWT signing (min 32 chars) — required in all environments
+Production only:
+- `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`
 
-Production only (not needed for local dev):
-- `TURSO_DATABASE_URL` - Turso production database URL
-- `TURSO_AUTH_TOKEN` - Turso production auth token
+Optional:
+- `OPENAI_API_KEY`, `FAL_KEY` — AI features
+- `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` — distributed rate limiting in prod
+- `ANTHROPIC_API_KEY` — used by `npm run i18n:translate --workspace=apps/api` (dev-only)
 
-Optional (for AI features):
-- `OPENAI_API_KEY` - Product identification
-- `FAL_KEY` - Emoji icon generation
+Local dev uses `apps/api/data/local.db` automatically — no Turso CLI or account needed.
 
 ## Project Structure
 
 ```
-src/
-├── app/
-│   ├── (auth)/        # Login, register
-│   ├── (hub)/         # Business hub (select/create business)
-│   ├── [businessId]/  # Business routes
-│   │   ├── home/      # Dashboard
-│   │   ├── products/  # Product catalog + orders
-│   │   ├── providers/ # Supplier management
-│   │   ├── team/      # Team management
-│   │   ├── manage/    # Business settings
-│   │   ├── sales/     # Coming soon stub
-│   │   └── cash/      # Coming soon stub
-│   └── api/           # API routes
-├── components/        # React components
-├── contexts/          # React contexts (Auth, Business)
-├── db/                # Drizzle schema & client
-├── hooks/             # Custom hooks (useBusinessFormat, etc.)
-├── lib/               # Utilities (locale-config, auth-edge, etc.)
-└── types/             # TypeScript types
+kasero/
+├── apps/
+│   ├── api/        # Next.js (API-only); 55 routes; serves SPA from public/ in prod
+│   └── web/        # Vite SPA (Ionic React Router shell)
+└── packages/
+    └── shared/     # Drizzle schema, types, ApiMessageCode, locale registry,
+                    # business-role helpers, barcode utilities, sales helpers
 ```
 
-## Development Guidelines
-
-- **Language**: English
-- **Currency**: Defaults to USD ($) for en-US locale. The app adapts to each business's locale and currency via `useBusinessFormat()` — use that hook for all money/date/time formatting in components, and `<PriceInput>` for currency inputs.
-- **Date**: Defaults to MM/DD/YYYY for en-US locale. Formatted via `useBusinessFormat()` in components.
+For deep documentation (architecture, i18n system, modal/tab/barcode systems, performance patterns, deployment), see `.claude/docs/`.
 
 ## License
 

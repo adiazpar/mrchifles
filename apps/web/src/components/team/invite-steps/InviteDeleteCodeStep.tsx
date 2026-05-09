@@ -10,7 +10,6 @@ import {
   IonBackButton,
   IonButton,
 } from '@ionic/react'
-import { ConfirmationAnimation } from '@/components/ui'
 import { useInviteNavRef, useInviteCallbacks } from './InviteNavContext'
 import { InviteDeletedSuccessStep } from './InviteDeletedSuccessStep'
 
