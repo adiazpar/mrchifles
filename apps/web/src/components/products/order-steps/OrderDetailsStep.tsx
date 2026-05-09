@@ -9,8 +9,7 @@ import {
   IonButtons,
   IonBackButton,
 } from '@ionic/react'
-import { CalendarClock, ChevronDown, ImageIcon, ImagePlus, Minus, Plus, Trash2 } from 'lucide-react'
-import { PriceInput } from '@/components/ui'
+import { CalendarClock, ChevronDown, ImageIcon, ImagePlus, Trash2 } from 'lucide-react'
 import { apiPostForm } from '@/lib/api-client'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useOrderNavRef, useNewOrderCallbacks } from './OrderNavContext'
@@ -19,14 +18,22 @@ import { ConfirmOrderStep } from './ConfirmOrderStep'
 const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
 const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
 
-export function OrderDetailsStep() {
+interface OrderDetailsStepProps {
+  /**
+   * Defaults to `forward` (the wizard chain — CTA pushes ConfirmOrderStep).
+   * Pass `edit` when this step is pushed from ConfirmOrderStep so the CTA
+   * pops back to Confirm instead of pushing further forward.
+   */
+  mode?: 'forward' | 'edit'
+}
+
+export function OrderDetailsStep({ mode = 'forward' }: OrderDetailsStepProps = {}) {
   const t = useIntl()
   const navRef = useOrderNavRef()
   const { formatDate } = useBusinessFormat()
   const {
     providers,
     orderTotal,
-    onOrderTotalChange,
     orderEstimatedArrival,
     onOrderEstimatedArrivalChange,
     orderReceiptFile,
@@ -76,68 +83,27 @@ export function OrderDetailsStep() {
             <div className="order-modal__error" role="alert">{error}</div>
           )}
 
-          {/* Total & Provider */}
-          <div className="order-details__grid">
-            <div className="order-details__field">
-              <label htmlFor="orderTotal" className="order-details__label order-details__label--required">
-                {t.formatMessage({ id: 'orders.total_paid_label' })}
-              </label>
-              <div className="input-number-wrapper">
-                <PriceInput
-                  id="orderTotal"
-                  value={orderTotal}
-                  onValueChange={onOrderTotalChange}
-                  placeholder="0"
-                />
-                <div className="input-number-spinners">
-                  <button
-                    type="button"
-                    className="input-number-spinner"
-                    onClick={() => {
-                      const current = parseFloat(orderTotal) || 0
-                      onOrderTotalChange((current + 1).toFixed(2))
-                    }}
-                    tabIndex={-1}
-                    aria-label={t.formatMessage({ id: 'orders.increase_total_aria' })}
-                  >
-                    <Plus />
-                  </button>
-                  <button
-                    type="button"
-                    className="input-number-spinner"
-                    onClick={() => {
-                      const current = parseFloat(orderTotal) || 0
-                      onOrderTotalChange(Math.max(0, current - 1).toFixed(2))
-                    }}
-                    tabIndex={-1}
-                    aria-label={t.formatMessage({ id: 'orders.decrease_total_aria' })}
-                  >
-                    <Minus />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="order-details__field">
-              <label htmlFor="orderProvider" className="order-details__label">
-                {t.formatMessage({ id: 'orders.provider_label' })}
-              </label>
-              <div className="order-details__select-wrap">
-                <select
-                  id="orderProvider"
-                  value={orderProvider}
-                  onChange={e => onOrderProviderChange(e.target.value)}
-                  className={`input w-full pr-10 ${!orderProvider ? 'text-text-tertiary' : ''}`}
-                  style={{ backgroundImage: 'none', WebkitAppearance: 'none', appearance: 'none' }}
-                >
-                  <option value="">{t.formatMessage({ id: 'orders.provider_none' })}</option>
-                  {providers.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-                <span className="order-details__select-chevron">
-                  <ChevronDown size={18} strokeWidth={1.8} />
-                </span>
-              </div>
+          {/* Provider */}
+          <div className="order-details__field">
+            <label htmlFor="orderProvider" className="order-details__label">
+              {t.formatMessage({ id: 'orders.provider_label' })}
+            </label>
+            <div className="order-details__select-wrap">
+              <select
+                id="orderProvider"
+                value={orderProvider}
+                onChange={e => onOrderProviderChange(e.target.value)}
+                className={`input w-full pr-10 ${!orderProvider ? 'text-text-tertiary' : ''}`}
+                style={{ backgroundImage: 'none', WebkitAppearance: 'none', appearance: 'none' }}
+              >
+                <option value="">{t.formatMessage({ id: 'orders.provider_none' })}</option>
+                {providers.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <span className="order-details__select-chevron">
+                <ChevronDown size={18} strokeWidth={1.8} />
+              </span>
             </div>
           </div>
 
@@ -274,10 +240,16 @@ export function OrderDetailsStep() {
             <button
               type="button"
               className="order-modal__primary-pill"
-              onClick={() => navRef.current?.push(() => <ConfirmOrderStep />)}
+              onClick={() =>
+                mode === 'edit'
+                  ? navRef.current?.pop()
+                  : navRef.current?.push(() => <ConfirmOrderStep />)
+              }
               disabled={!orderTotal || parseFloat(orderTotal) <= 0}
             >
-              {t.formatMessage({ id: 'orders.review_button' })}
+              {t.formatMessage({
+                id: mode === 'edit' ? 'common.done' : 'orders.review_button',
+              })}
             </button>
           </div>
         </IonToolbar>

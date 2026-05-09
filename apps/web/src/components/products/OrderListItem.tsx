@@ -64,7 +64,7 @@ export const OrderListItem = memo(function OrderListItem({
 
   return (
     <div
-      className="order-row"
+      className={`order-row order-row--${displayStatus}`}
       onClick={() => onView(order)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

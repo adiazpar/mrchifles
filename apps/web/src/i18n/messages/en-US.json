@@ -1377,5 +1377,11 @@
   "productAddEdit.review_save_edit": "Save changes",
   "productAddEdit.review_value_unset": "Not set",
   "productAddEdit.review_name_placeholder": "Untitled product",
-  "productAddEdit.review_edit_name_aria": "Edit name and icon"
+  "productAddEdit.review_edit_name_aria": "Edit name and icon",
+  "orders.total_step_eyebrow": "Total paid",
+  "orders.total_step_title": "How much did the <em>order</em> cost?",
+  "orders.total_step_helper": "What you paid (or owe) the supplier for this run.",
+  "orders.confirm_edit_items_aria": "Edit selected items",
+  "orders.confirm_edit_total_aria": "Edit total paid",
+  "orders.confirm_edit_details_aria": "Edit provider, arrival, and receipt"
 }

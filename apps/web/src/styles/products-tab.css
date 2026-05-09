@@ -534,20 +534,64 @@
   border-color: color-mix(in srgb, var(--color-error) 28%, transparent);
 }
 
-/* ===== Order row ===================================================== */
+/* ===== Order row =====================================================
+ * Reads as a printed PO entry. Leading edge carries a 4px status-tinted
+ * vertical bar (saffron pending / moss received / oxblood overdue) so
+ * the user scans status by color stripe down a list. To its right: a
+ * 48px status icon tile (still status-tinted but quieter than the bar),
+ * Fraunces italic order-# stamp + items count, and a right-aligned
+ * total + status chip. Meta rows (ordered on / by / received by / to)
+ * sit underneath in a compact dotted-leader ledger.
+ */
 
 .order-row {
+  position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  /* Self-contained horizontal inset — the parent IonItem now
-   * zeroes its --padding-start/end so each row content owns its
-   * own padding. Mirrors .product-row's 12px. */
-  padding: var(--space-3);
+  /* Leading-edge bar lives on a ::before with 4px width — content
+   * starts after a 4px gap so it doesn't sit under the bar. */
+  padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) + 4px);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background-color var(--duration-fast) ease-out;
+}
+
+/* The leading status stripe — full row height, status-tinted color.
+ * Same vocabulary as the order-row__status-icon tints so the row reads
+ * by color stripe down a list of orders. */
+.order-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  border-radius: 0 2px 2px 0;
+  background: var(--color-text-tertiary);
+}
+
+.order-row--pending::before {
+  background: var(--color-warning);
+}
+
+.order-row--received::before {
+  background: var(--color-success);
+}
+
+.order-row--overdue::before {
+  background: var(--color-error);
+}
+
+@media (hover: hover) {
+  .order-row:hover {
+    background-color: var(--color-bg-muted);
+  }
+}
+
+.order-row:active {
+  background-color: var(--color-bg-muted);
 }
 
 .order-row__top {

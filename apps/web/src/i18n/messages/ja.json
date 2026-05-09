@@ -1377,5 +1377,11 @@
   "productAddEdit.review_save_edit": "変更を保存",
   "productAddEdit.review_value_unset": "未設定",
   "productAddEdit.review_name_placeholder": "無題の商品",
-  "productAddEdit.review_edit_name_aria": "名前とアイコンを編集"
+  "productAddEdit.review_edit_name_aria": "名前とアイコンを編集",
+  "orders.total_step_eyebrow": "支払い合計",
+  "orders.total_step_title": "<em>発注</em>はいくらでしたか？",
+  "orders.total_step_helper": "この発注について仕入先に支払った（または支払う予定の）金額。",
+  "orders.confirm_edit_items_aria": "選択した商品を編集",
+  "orders.confirm_edit_total_aria": "支払い合計を編集",
+  "orders.confirm_edit_details_aria": "仕入先・到着日・レシートを編集"
 }

@@ -8,13 +8,16 @@ import {
   IonButtons,
   IonBackButton,
 } from '@ionic/react'
-import { Package, CalendarClock, Truck, Paperclip } from 'lucide-react'
+import { Package, CalendarClock, Truck, Paperclip, ChevronRight } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useOrderNavRef, useNewOrderCallbacks } from './OrderNavContext'
 import { NewOrderSuccessStep } from './NewOrderSuccessStep'
+import { SelectProductsStep } from './SelectProductsStep'
+import { OrderTotalStep } from './OrderTotalStep'
+import { OrderDetailsStep } from './OrderDetailsStep'
 
 export function ConfirmOrderStep() {
   const t = useIntl()
@@ -38,6 +41,16 @@ export function ConfirmOrderStep() {
       navRef.current?.push(() => <NewOrderSuccessStep />)
     }
   }
+
+  // Tap-to-edit jumps: each pushes the corresponding step in `edit`
+  // mode so its CTA pops back to this Confirm screen instead of
+  // pushing further forward in the wizard chain.
+  const editItems = () =>
+    navRef.current?.push(() => <SelectProductsStep mode="edit" />)
+  const editTotal = () =>
+    navRef.current?.push(() => <OrderTotalStep mode="edit" />)
+  const editDetails = () =>
+    navRef.current?.push(() => <OrderDetailsStep mode="edit" />)
 
   const providerName = providers.find(p => p.id === orderProvider)?.name
   const totalNum = orderTotal ? parseFloat(orderTotal) : 0
@@ -74,48 +87,64 @@ export function ConfirmOrderStep() {
             <div className="order-modal__error" role="alert">{error}</div>
           )}
 
-          {/* Items rule */}
-          <div className="order-receipt__rule">
-            <span className="order-receipt__rule-line" aria-hidden="true" />
-            <span className="order-receipt__rule-caption">
-              {t.formatMessage(
-                { id: 'orders.confirm_items_caption' },
-                { count: itemCount },
-              )}
-            </span>
-            <span className="order-receipt__rule-line" aria-hidden="true" />
-          </div>
+          {/* Items section — tappable to jump back to SelectProducts. */}
+          <button
+            type="button"
+            className="order-confirm__edit-section"
+            onClick={editItems}
+            aria-label={t.formatMessage({ id: 'orders.confirm_edit_items_aria' })}
+          >
+            <div className="order-receipt__rule">
+              <span className="order-receipt__rule-line" aria-hidden="true" />
+              <span className="order-receipt__rule-caption">
+                {t.formatMessage(
+                  { id: 'orders.confirm_items_caption' },
+                  { count: itemCount },
+                )}
+              </span>
+              <ChevronRight
+                size={14}
+                strokeWidth={1.8}
+                className="order-confirm__edit-chev"
+              />
+              <span className="order-receipt__rule-line" aria-hidden="true" />
+            </div>
 
-          {/* Line items */}
-          <div className="order-receipt__lines">
-            {orderItems.map(item => {
-              const iconUrl = getProductIconUrl(item.product)
-              const presetIcon = iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
-              return (
-                <div key={item.product.id} className="order-receipt-line order-receipt-line--compact">
-                  <span className="order-receipt-line__icon">
-                    {presetIcon ? (
-                      <presetIcon.icon size={18} className="text-text-primary" />
-                    ) : iconUrl ? (
-                      <Image src={iconUrl} alt="" width={32} height={32} unoptimized />
-                    ) : (
-                      <Package size={16} strokeWidth={1.6} />
-                    )}
-                  </span>
-                  <span className="order-receipt-line__name">{item.product.name}</span>
-                  <span className="order-receipt-line__qty">
-                    {t.formatMessage(
-                      { id: 'orders.qty_short' },
-                      { count: typeof item.quantity === 'number' ? item.quantity : 0 },
-                    )}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
+            <div className="order-receipt__lines">
+              {orderItems.map(item => {
+                const iconUrl = getProductIconUrl(item.product)
+                const presetIcon = iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
+                return (
+                  <div key={item.product.id} className="order-receipt-line order-receipt-line--compact">
+                    <span className="order-receipt-line__icon">
+                      {presetIcon ? (
+                        <presetIcon.icon size={18} className="text-text-primary" />
+                      ) : iconUrl ? (
+                        <Image src={iconUrl} alt="" width={32} height={32} unoptimized />
+                      ) : (
+                        <Package size={16} strokeWidth={1.6} />
+                      )}
+                    </span>
+                    <span className="order-receipt-line__name">{item.product.name}</span>
+                    <span className="order-receipt-line__qty">
+                      {t.formatMessage(
+                        { id: 'orders.qty_short' },
+                        { count: typeof item.quantity === 'number' ? item.quantity : 0 },
+                      )}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </button>
 
-          {/* Totals block */}
-          <div className="order-receipt__totals">
+          {/* Totals block — tappable to jump back to OrderTotalStep. */}
+          <button
+            type="button"
+            className="order-confirm__edit-section order-receipt__totals"
+            onClick={editTotal}
+            aria-label={t.formatMessage({ id: 'orders.confirm_edit_total_aria' })}
+          >
             <div className="order-receipt__totals-row order-receipt__totals-row--total">
               <span className="order-receipt__totals-label">
                 {t.formatMessage({ id: 'orders.total_label' })}
@@ -123,11 +152,21 @@ export function ConfirmOrderStep() {
               <span className="order-receipt__totals-value">
                 {formatCurrency(totalNum)}
               </span>
+              <ChevronRight
+                size={14}
+                strokeWidth={1.8}
+                className="order-confirm__edit-chev"
+              />
             </div>
-          </div>
+          </button>
 
-          {/* Audit trail */}
-          <div className="order-receipt__audit">
+          {/* Audit trail — tappable to jump back to OrderDetailsStep. */}
+          <button
+            type="button"
+            className="order-confirm__edit-section order-receipt__audit"
+            onClick={editDetails}
+            aria-label={t.formatMessage({ id: 'orders.confirm_edit_details_aria' })}
+          >
             <div className="order-receipt__audit-row">
               <span className="order-receipt__audit-icon" aria-hidden="true">
                 <Truck size={14} strokeWidth={1.7} />
@@ -168,7 +207,14 @@ export function ConfirmOrderStep() {
                 </span>
               </div>
             )}
-          </div>
+            <span className="order-confirm__edit-trail">
+              <ChevronRight
+                size={14}
+                strokeWidth={1.8}
+                className="order-confirm__edit-chev"
+              />
+            </span>
+          </button>
         </div>
       </IonContent>
 

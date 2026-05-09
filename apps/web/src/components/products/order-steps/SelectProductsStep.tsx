@@ -17,9 +17,18 @@ import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { useOrderNavRef, useNewOrderCallbacks } from './OrderNavContext'
-import { OrderDetailsStep } from './OrderDetailsStep'
+import { OrderTotalStep } from './OrderTotalStep'
 
-export function SelectProductsStep() {
+interface SelectProductsStepProps {
+  /**
+   * Defaults to `forward` (the wizard chain). Pass `edit` when this
+   * step is pushed from ConfirmOrderStep so the CTA pops back to
+   * Confirm instead of pushing OrderTotalStep.
+   */
+  mode?: 'forward' | 'edit'
+}
+
+export function SelectProductsStep({ mode = 'forward' }: SelectProductsStepProps = {}) {
   const t = useIntl()
   const navRef = useOrderNavRef()
   const {
@@ -275,7 +284,11 @@ export function SelectProductsStep() {
             <button
               type="button"
               className="order-modal__primary-pill"
-              onClick={() => navRef.current?.push(() => <OrderDetailsStep />)}
+              onClick={() =>
+                mode === 'edit'
+                  ? navRef.current?.pop()
+                  : navRef.current?.push(() => <OrderTotalStep mode="forward" />)
+              }
               disabled={orderItems.length === 0}
             >
               {t.formatMessage({ id: 'common.continue' })}
