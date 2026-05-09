@@ -11,13 +11,16 @@
  */
 
 :root {
-  /* ===== Primary (brand) ===== */
+  /* ===== Primary (brand) =====
+     Shade and tint reference theme-aware tokens (defined in base.css)
+     so dark mode lifts both ends of the brand range correctly without
+     needing an override in the .dark block below. */
   --ion-color-primary: var(--color-brand);
   --ion-color-primary-rgb: var(--color-brand-rgb);
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #B85A3C;
-  --ion-color-primary-tint: #E89B7F;
+  --ion-color-primary-shade: var(--color-brand-shade);
+  --ion-color-primary-tint: var(--color-brand-tint);
 
   /* ===== Success (green) ===== */
   --ion-color-success: var(--color-success);
@@ -99,6 +102,47 @@
    .mobile-nav-item visual contract (recovered from the pre-migration
    PageHeader and MobileNav components).
    ========================================================================== */
+
+/* ==========================================================================
+   Paper grain — printed-paper feel applied to every Ionic surface
+   ==========================================================================
+   The --grain token (defined in base.css) is a low-alpha warm dot in
+   light mode (rgba ~5%) and a low-alpha cream dot in dark mode. We
+   layer it over the page bg via Ionic's --background CSS variable so
+   the texture comes for free on every page, header, and footer without
+   per-component opt-in.
+
+   Pattern: 1px-radius dot, 3px grid, anchored to top-left. CSS
+   background shorthand allows multi-layer values; the dot layer paints
+   on top of the solid base color underneath.
+
+   Why not body::before with mix-blend-mode? IonApp / IonContent paint
+   their own solid backgrounds that cover anything in the body's
+   stacking context. Working through Ionic's --background variable is
+   the only seam. Trade-off: no mix-blend-mode (background-blend-mode
+   on the host doesn't apply through the shadow DOM consistently across
+   browsers), so we use a slightly stronger dot alpha and trust the
+   token color to compose well over both paper and ink. */
+ion-content {
+  --background:
+    radial-gradient(var(--grain) 1px, transparent 1.2px) 0 0 / 3px 3px,
+    var(--color-bg-base);
+}
+
+ion-toolbar {
+  --background:
+    radial-gradient(var(--grain) 1px, transparent 1.2px) 0 0 / 3px 3px,
+    var(--color-bg-base);
+}
+
+/* IonFooter wraps a toolbar that should match the page bg, not the
+   surface tint, so the footer reads as part of the page rather than
+   floating chrome. */
+ion-footer ion-toolbar {
+  --background:
+    radial-gradient(var(--grain) 1px, transparent 1.2px) 0 0 / 3px 3px,
+    var(--color-bg-base);
+}
 
 /* ===== Header / toolbar =====
  * Legacy .page-header rules (interactive.css):

@@ -9,9 +9,11 @@ import {
   IonFooter,
   IonButtons,
   IonButton,
+  IonIcon,
   IonCard,
   IonCardContent,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { Sparkles, UserPlus, FileScan, FileSpreadsheet, ChevronRight } from 'lucide-react'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
 import { AiPhotoStep } from './AiPhotoStep'
@@ -45,8 +47,8 @@ export function AddEntryStep() {
             {t.formatMessage({ id: 'productForm.title_add' })}
           </IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={handleCancel}>
-              {t.formatMessage({ id: 'common.cancel' })}
+            <IonButton onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
         </IonToolbar>

@@ -160,26 +160,13 @@ export function ProviderModal({
     )
   } else if (step === 'delete-confirm') {
     modalTitle = t.formatMessage({ id: 'providers.delete_provider_confirm_title' })
+    // Toolbar X dismisses; toolbar back (when present) returns to form.
+    // Footer holds only the destructive primary.
     onBack = openedFromSwipe ? undefined : () => setStep('form')
     footer = (
-      <>
-        <IonButton
-          fill="outline"
-          onClick={openedFromSwipe ? onClose : () => setStep('form')}
-          disabled={isDeleting}
-          className="flex-1"
-        >
-          {t.formatMessage({ id: 'common.cancel' })}
-        </IonButton>
-        <IonButton
-          color="danger"
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="flex-1"
-        >
-          {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
-        </IonButton>
-      </>
+      <IonButton color="danger" onClick={handleDelete} disabled={isDeleting}>
+        {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
+      </IonButton>
     )
   } else {
     // delete-success or save-success

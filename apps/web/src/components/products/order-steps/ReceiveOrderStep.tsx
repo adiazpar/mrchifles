@@ -11,7 +11,9 @@ import {
   IonBackButton,
   IonSpinner,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
@@ -71,6 +73,13 @@ export function ReceiveOrderStep() {
             </IonButtons>
           )}
           <IonTitle>{t.formatMessage({ id: 'orders.receive_order_title' })}</IonTitle>
+          {openedFromSwipe && (
+            <IonButtons slot="end">
+              <IonButton onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+                <IonIcon icon={close} />
+              </IonButton>
+            </IonButtons>
+          )}
         </IonToolbar>
       </IonHeader>
 
@@ -110,21 +119,11 @@ export function ReceiveOrderStep() {
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <div className="flex gap-2">
-            {openedFromSwipe ? (
-              <IonButton fill="outline" onClick={onClose}>
-                {t.formatMessage({ id: 'common.cancel' })}
-              </IonButton>
-            ) : (
-              <IonButton fill="outline" onClick={() => navRef.current?.pop()}>
-                {t.formatMessage({ id: 'common.cancel' })}
-              </IonButton>
-            )}
-            <IonButton
-              onClick={handleReceive}
-              disabled={isReceiving}
-            >
+        <IonToolbar>
+          {/* Toolbar X (or back button when not openedFromSwipe) handles
+              dismissal; footer is the primary confirm only. */}
+          <div className="modal-footer">
+            <IonButton onClick={handleReceive} disabled={isReceiving}>
               {isReceiving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.confirm' })}
             </IonButton>
           </div>

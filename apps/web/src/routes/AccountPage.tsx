@@ -48,7 +48,10 @@ export function AccountPage() {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/" />
+            <IonBackButton
+              defaultHref="/"
+              text={intl.formatMessage({ id: 'account.back_label' })}
+            />
           </IonButtons>
           <IonTitle>{intl.formatMessage({ id: 'navigation.account' })}</IonTitle>
         </IonToolbar>

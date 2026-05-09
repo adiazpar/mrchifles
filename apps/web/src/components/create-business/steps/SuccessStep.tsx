@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import { IonButton, IonPage, IonContent } from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
@@ -8,55 +9,89 @@ export function SuccessStep() {
   const { createdBusiness, createSuccess, formData, handleClose, handleExitComplete, error } =
     useCreateBusinessCtx()
 
+  // Title with one italic-terracotta emphasis word (e.g. "ready").
+  const titleNode = useMemo(() => {
+    const full = t.formatMessage({ id: 'createBusiness.success_title' })
+    const emphasis = t.formatMessage({ id: 'createBusiness.success_title_emphasis' })
+    const idx = emphasis ? full.indexOf(emphasis) : -1
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [t])
+
+  const businessName = createdBusiness?.name || formData.name || ''
+
   return (
     <IonPage>
-      <IonContent>
-        <div className="flex flex-col items-center justify-center text-center h-full px-6 py-8">
-          <div style={{ width: 160, height: 160 }}>
+      <IonContent className="wizard-content">
+        <div className="create-business__success">
+          <div className="create-business__success-lottie">
             {createSuccess && (
               <LottiePlayer
                 src="/animations/success.json"
                 loop={false}
                 autoplay={true}
                 delay={500}
-                style={{ width: 160, height: 160 }}
+                style={{ width: '100%', height: '100%' }}
               />
             )}
           </div>
 
-          <p
-            className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-500"
-            style={{ opacity: createSuccess ? 1 : 0 }}
+          <span
+            className="create-business__success-eyebrow"
+            data-ready={createSuccess}
+            data-delay="1"
           >
-            {t.formatMessage({ id: 'createBusiness.step_success_heading' })}
-          </p>
-          <p
-            className="text-sm text-text-secondary mt-1 transition-opacity duration-500 delay-200"
-            style={{ opacity: createSuccess ? 1 : 0 }}
+            {t.formatMessage({ id: 'createBusiness.success_eyebrow' })}
+          </span>
+
+          <h1
+            className="create-business__success-title"
+            data-ready={createSuccess}
+            data-delay="2"
           >
-            {formData.icon && <span className="mr-1">{formData.icon}</span>}
-            {t.formatMessage(
-              { id: 'createBusiness.step_success_description' },
-              { name: createdBusiness?.name || 'Your business' },
-            )}
-          </p>
+            {titleNode}
+          </h1>
+
+          {businessName ? (
+            <span
+              className="create-business__success-name"
+              data-ready={createSuccess}
+              data-delay="3"
+              title={businessName}
+            >
+              {/* User content — verbatim. icon is optional emoji. */}
+              {formData.icon ? <span aria-hidden="true">{formData.icon}</span> : null}
+              <span>{businessName}</span>
+            </span>
+          ) : null}
 
           {error && (
-            <div className="mt-4 p-3 bg-error-subtle text-error text-sm rounded-lg text-center w-full">
+            <div className="create-business__success-error">
               {error}
             </div>
           )}
 
-          <IonButton
-            expand="block"
-            onClick={() => {
-              handleClose()
-              handleExitComplete()
-            }}
-            className="mt-6 w-full"
+          <div
+            className="create-business__success-action"
+            data-ready={createSuccess}
+            data-delay="3"
           >
-            {t.formatMessage({ id: 'common.done' })}
-          </IonButton>
+            <IonButton
+              expand="block"
+              onClick={() => {
+                handleClose()
+                handleExitComplete()
+              }}
+            >
+              {t.formatMessage({ id: 'common.done' })}
+            </IonButton>
+          </div>
         </div>
       </IonContent>
     </IonPage>

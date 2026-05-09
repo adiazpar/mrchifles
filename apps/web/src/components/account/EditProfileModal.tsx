@@ -1,10 +1,11 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { Upload, X } from 'lucide-react'
-import { IonButton, IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
+import { useIntl } from 'react-intl'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { Camera, X, Trash2 } from 'lucide-react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
+import { AuthField } from '@/components/auth'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
@@ -19,8 +20,7 @@ export interface EditProfileModalProps {
 }
 
 export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfileModalProps) {
-  const t = useIntl()
-  const tCommon = useIntl()
+  const intl = useIntl()
   const { user, refreshUser } = useAuth()
   const translateApiMessage = useApiMessage()
 
@@ -67,15 +67,11 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
       event.target.value = ''
 
       if (!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type)) {
-        setError(t.formatMessage({
-          id: 'account.profile_avatar_invalid_type'
-        }))
+        setError(intl.formatMessage({ id: 'account.profile_avatar_invalid_type' }))
         return
       }
       if (file.size > MAX_UPLOAD_SIZE) {
-        setError(t.formatMessage({
-          id: 'account.profile_avatar_too_large'
-        }))
+        setError(intl.formatMessage({ id: 'account.profile_avatar_too_large' }))
         return
       }
       try {
@@ -84,12 +80,10 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
         setError('')
       } catch (err) {
         console.error('Avatar read error:', err)
-        setError(tCommon.formatMessage({
-          id: 'common.error'
-        }))
+        setError(intl.formatMessage({ id: 'common.error' }))
       }
     },
-    [t, tCommon],
+    [intl],
   )
 
   const handleRemoveAvatar = () => {
@@ -110,16 +104,12 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
         setError(
           err.envelope
             ? translateApiMessage(err.envelope)
-            : tCommon.formatMessage({
-            id: 'common.error'
-          }),
+            : intl.formatMessage({ id: 'common.error' }),
         )
         return
       }
       console.error('Profile save error:', err)
-      setError(tCommon.formatMessage({
-        id: 'common.error'
-      }))
+      setError(intl.formatMessage({ id: 'common.error' }))
     } finally {
       setIsSaving(false)
     }
@@ -131,8 +121,36 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
     avatar,
     refreshUser,
     translateApiMessage,
-    tCommon,
+    intl,
   ])
+
+  const successHeading = useMemo(() => {
+    const full = intl.formatMessage({ id: 'account.profile_saved_heading_v2' })
+    const emphasis = intl.formatMessage({ id: 'account.profile_saved_heading_v2_emphasis' })
+    const idx = full.indexOf(emphasis)
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [intl])
+
+  const titleNode = useMemo(() => {
+    const full = intl.formatMessage({ id: 'account.profile_hero_title' })
+    const emphasis = intl.formatMessage({ id: 'account.profile_hero_title_emphasis' })
+    const idx = full.indexOf(emphasis)
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [intl])
 
   const saveButton = (
     <IonButton
@@ -141,13 +159,13 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
       disabled={!isValid || !hasChanges || isSaving}
       className="flex-1"
     >
-      {isSaving ? <IonSpinner name="crescent" /> : tCommon.formatMessage({ id: 'common.save' })}
+      {isSaving ? <IonSpinner name="crescent" /> : intl.formatMessage({ id: 'common.save' })}
     </IonButton>
   )
 
   const doneButton = (
     <IonButton expand="block" onClick={onClose} className="flex-1">
-      {tCommon.formatMessage({ id: 'common.done' })}
+      {intl.formatMessage({ id: 'common.done' })}
     </IonButton>
   )
 
@@ -155,48 +173,46 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={step === 'form' ? t.formatMessage({ id: 'account.profile_modal_title' }) : ''}
+      title={step === 'form' ? intl.formatMessage({ id: 'account.profile_modal_title' }) : ''}
       footer={step === 'form' ? saveButton : doneButton}
       noSwipeDismiss
     >
       {step === 'form' && (
         <>
-          {error && (
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mb-4">
-              {error}
-            </div>
-          )}
+          {error && <div className="modal-error">{error}</div>}
 
-          {/* Avatar preview + actions */}
-          <div className="mb-6">
-            <div className="flex justify-center mb-4">
-              <div className="relative">
-                <div
-                  className="w-24 h-24 rounded-full flex items-center justify-center overflow-hidden"
-                  style={{ backgroundColor: 'var(--color-brand-subtle)', color: 'var(--color-text-brand)' }}
-                >
-                  {avatar ? (
-                    (<img src={avatar} alt="" className="w-24 h-24 object-cover" />)
-                  ) : (
-                    <span className="text-3xl font-semibold">
-                      {getUserInitials(name || user?.name || '')}
-                    </span>
-                  )}
-                </div>
-                {avatar && (
+          <header className="modal-hero">
+            <div className="modal-hero__eyebrow">
+              {intl.formatMessage({ id: 'account.profile_hero_eyebrow' })}
+            </div>
+            <h1 className="modal-hero__title">{titleNode}</h1>
+            <p className="modal-hero__subtitle">
+              {intl.formatMessage({ id: 'account.profile_hero_subtitle' })}
+            </p>
+          </header>
+
+          {/* Avatar seal + small mono actions */}
+          <div className="edit-profile__seal-block">
+            <div className="edit-profile__seal">
+              {avatar ? (
+                <>
+                  <img src={avatar} alt="" />
                   <button
                     type="button"
                     onClick={handleRemoveAvatar}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center shadow-md hover:bg-error-hover transition-colors"
-                    aria-label={t.formatMessage({
-                      id: 'account.profile_avatar_remove'
-                    })}
+                    className="edit-profile__seal-clear"
+                    aria-label={intl.formatMessage({ id: 'account.profile_avatar_remove' })}
                   >
-                    <X className="w-4 h-4" />
+                    <X />
                   </button>
-                )}
-              </div>
+                </>
+              ) : (
+                <span className="edit-profile__seal-initials">
+                  {getUserInitials(name || user?.name || '')}
+                </span>
+              )}
             </div>
+
             <input
               ref={fileInputRef}
               type="file"
@@ -204,52 +220,63 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
               className="hidden"
               onChange={handleFilePick}
             />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-border hover:border-brand hover:bg-brand-subtle transition-all text-text-secondary hover:text-brand"
-            >
-              <Upload className="w-5 h-5" />
-              <span className="text-sm font-medium">
-                {avatar ? t.formatMessage({
-                  id: 'account.profile_avatar_change'
-                }) : t.formatMessage({
-                  id: 'account.profile_avatar_upload'
-                })}
-              </span>
-            </button>
-            <p className="text-xs text-text-tertiary text-center mt-2">{t.formatMessage({
-              id: 'account.profile_avatar_hint'
-            })}</p>
+
+            <div className="edit-profile__actions">
+              <button
+                type="button"
+                className="edit-profile__action"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Camera />
+                {avatar
+                  ? intl.formatMessage({ id: 'account.profile_avatar_change' })
+                  : intl.formatMessage({ id: 'account.profile_avatar_upload' })}
+              </button>
+              {avatar && (
+                <button
+                  type="button"
+                  className="edit-profile__action"
+                  onClick={handleRemoveAvatar}
+                >
+                  <Trash2 />
+                  {intl.formatMessage({ id: 'account.profile_avatar_remove' })}
+                </button>
+              )}
+            </div>
+
+            <p className="edit-profile__hint">
+              {intl.formatMessage({ id: 'account.profile_avatar_hint' })}
+            </p>
           </div>
 
-          {/* Name + Email */}
-          <IonList lines="full" inset>
-            <IonItem>
-              <IonInput
-                label={t.formatMessage({ id: 'account.profile_name_label' })}
-                labelPlacement="floating"
-                value={name}
-                onIonInput={(e) => setName(e.detail.value ?? '')}
-                autocomplete="name"
-                required
-              />
-            </IonItem>
-            <IonItem>
-              <IonInput
-                label={t.formatMessage({ id: 'account.profile_email_label' })}
-                labelPlacement="floating"
-                value={user?.email ?? ''}
-                disabled
-                readonly
-              />
-            </IonItem>
-          </IonList>
+          <div className="edit-profile__form">
+            <AuthField
+              label={intl.formatMessage({ id: 'account.profile_name_label' })}
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+              required
+              minLength={2}
+            />
+
+            <div className="edit-profile__sealed">
+              <span className="edit-profile__sealed-label">
+                {intl.formatMessage({ id: 'account.profile_email_label' })}
+              </span>
+              <span className="edit-profile__sealed-value">
+                {user?.email ?? ''}
+              </span>
+              <span className="edit-profile__sealed-tag">
+                {intl.formatMessage({ id: 'account.profile_email_locked_tag' })}
+              </span>
+            </div>
+          </div>
         </>
       )}
 
       {step === 'success' && (
-        <div className="flex flex-col items-center text-center py-4">
+        <div className="edit-profile__success">
           <div style={{ width: 160, height: 160 }}>
             <LottiePlayer
               src="/animations/success.json"
@@ -259,11 +286,9 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
               style={{ width: 160, height: 160 }}
             />
           </div>
-          <p className="text-lg font-semibold text-text-primary mt-4">
-            {t.formatMessage({ id: 'account.profile_saved_heading' })}
-          </p>
-          <p className="text-sm text-text-tertiary mt-1">
-            {t.formatMessage({ id: 'account.profile_saved_description' })}
+          <p className="edit-profile__success-heading">{successHeading}</p>
+          <p className="edit-profile__success-desc">
+            {intl.formatMessage({ id: 'account.profile_saved_description' })}
           </p>
         </div>
       )}

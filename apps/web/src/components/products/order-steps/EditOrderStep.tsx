@@ -11,7 +11,9 @@ import {
   IonBackButton,
   IonSpinner,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import Image from '@/lib/Image'
 import { PriceInput } from '@/components/ui'
@@ -110,8 +112,8 @@ export function EditOrderStep() {
           <IonTitle>{t.formatMessage({ id: 'orders.edit_order_title' })}</IonTitle>
           {openedFromSwipe && (
             <IonButtons slot="end">
-              <IonButton fill="clear" onClick={onClose}>
-                {t.formatMessage({ id: 'common.cancel' })}
+              <IonButton fill="clear" onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+                <IonIcon icon={close} />
               </IonButton>
             </IonButtons>
           )}
@@ -302,21 +304,11 @@ export function EditOrderStep() {
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <div className="flex gap-2">
-            {openedFromSwipe ? (
-              <IonButton fill="outline" onClick={onClose}>
-                {t.formatMessage({ id: 'common.cancel' })}
-              </IonButton>
-            ) : (
-              <IonButton fill="outline" onClick={() => navRef.current?.pop()}>
-                {t.formatMessage({ id: 'common.cancel' })}
-              </IonButton>
-            )}
-            <IonButton
-              onClick={handleSave}
-              disabled={isDisabled}
-            >
+        <IonToolbar>
+          {/* Toolbar X dismisses (or back button navigates back when not
+              openedFromSwipe), so the footer is primary-only. */}
+          <div className="modal-footer">
+            <IonButton onClick={handleSave} disabled={isDisabled}>
               {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
             </IonButton>
           </div>

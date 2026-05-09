@@ -161,33 +161,9 @@
 }
 
 /* ===== Auth Layout =====
- * CSS Grid with `1fr auto 1fr` rows gives us three regions:
- *
- *   Row 1 (1fr)   — logo, vertically centered in the space above the form
- *   Row 2 (auto)  — form + tagline + primary CTA (its own natural height)
- *   Row 3 (1fr)   — page footer (secondary CTA + version), bottom-aligned
- *
- * Row 1 and Row 3 are equal height, so the form sits in the exact
- * vertical center of the viewport (symmetric padding), and the logo is
- * automatically centered in its region. The layout renders the logo in
- * row 1; each page renders its own .auth-main (row 2) and
- * .auth-page-footer (row 3) so slot APIs aren't needed.
- */
-.auth-container {
-  min-height: 100%;
-  display: grid;
-  grid-template-rows: 1fr auto 1fr;
-  justify-items: center;
-  /* Horizontal uses --page-padding to match the rest of the app's
-   * fixed side rail. Vertical uses --space-6 — auth pages have no
-   * header/nav so there's no system chrome to clear. */
-  padding: var(--space-6) var(--page-padding);
-  background: var(--color-bg-base);
-}
-
-.auth-logo {
-  align-self: center;
-}
+ * Now lives in auth.css (Modern Mercantile chrome). The legacy grid here
+ * was replaced; styles intentionally removed to avoid two conflicting
+ * .auth-container declarations. */
 
 /* ===== User Menu ===== */
 .user-menu-content {

@@ -62,24 +62,11 @@ export function AddProviderNoteModal({
     onSubmit()
   }
 
+  // Dismissal lives on the toolbar X — footer is primary-only.
   const formFooter = (
-    <>
-      <IonButton
-        fill="outline"
-        onClick={onClose}
-        disabled={isSaving}
-        className="flex-1"
-      >
-        {t.formatMessage({ id: 'common.cancel' })}
-      </IonButton>
-      <IonButton
-        onClick={handleSave}
-        disabled={isSaving || !isValid}
-        className="flex-1"
-      >
-        {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
-      </IonButton>
-    </>
+    <IonButton onClick={handleSave} disabled={isSaving || !isValid}>
+      {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
+    </IonButton>
   )
 
   const successFooter = (

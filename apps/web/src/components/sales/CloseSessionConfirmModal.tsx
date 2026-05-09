@@ -111,16 +111,11 @@ export function CloseSessionConfirmModal({
 
   const title = t.formatMessage({ id: 'sales.session.close_modal.title' })
 
-  // Step 0 footer — count drawer
+  // Step 0 footer — count drawer. Dismissal is the toolbar X.
   const step0Footer = (
-    <>
-      <IonButton fill="outline" onClick={onClose} disabled={submitting}>
-        {tCommon.formatMessage({ id: 'common.cancel' })}
-      </IonButton>
-      <IonButton onClick={handleNext} disabled={submitting}>
-        {t.formatMessage({ id: 'sales.session.close_modal.next' })}
-      </IonButton>
-    </>
+    <IonButton onClick={handleNext} disabled={submitting}>
+      {t.formatMessage({ id: 'sales.session.close_modal.next' })}
+    </IonButton>
   )
 
   // Step 1 footer — variance review

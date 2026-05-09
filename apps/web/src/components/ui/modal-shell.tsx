@@ -136,10 +136,23 @@ export function ModalShell({
           </IonToolbar>
         </IonHeader>
       )}
-      {rawContent ? children : <IonContent>{children}</IonContent>}
+      {/* The .modal-content class on the auto-rendered IonContent gives
+          every Pattern 0/1 modal the same --page-padding inset + a touch
+          of vertical breathing room (CSS in app.css). Pattern 2 wizards
+          opt out via rawContent — they manage padding via .wizard-step
+          on their own per-step IonContent. */}
+      {rawContent ? children : <IonContent className="modal-content">{children}</IonContent>}
       {footer && (
         <IonFooter>
-          <IonToolbar>{footer}</IonToolbar>
+          <IonToolbar>
+            {/* The .modal-footer wrapper standardises layout for single
+                or multi-button footers — see app.css. Children laid out
+                in a flex row with equal width, 50px height, pill radius,
+                consistent gap. Per-modal layouts that want something
+                different can opt out by passing their own wrapper as the
+                footer prop. */}
+            <div className="modal-footer">{footer}</div>
+          </IonToolbar>
         </IonFooter>
       )}
     </IonModal>

@@ -16,10 +16,15 @@
   font-family: var(--font-body);
   font-size: var(--text-base);
   color: var(--color-text-primary);
-  background: var(--color-bg-muted);
-  border: 1.5px solid transparent;
+  /* Surface (slightly elevated cream / lifted ink) over the paper page
+     bg gives a clear visual distinction even in low-contrast modal
+     contexts. Hairline border holds the shape regardless of theme. */
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  transition: border-color var(--duration-fast) ease-out;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    box-shadow var(--duration-fast) ease-out;
   min-height: var(--touch-target-min);
 }
 
@@ -36,6 +41,7 @@
 .input:focus {
   outline: none;
   border-color: var(--color-brand);
+  box-shadow: 0 0 0 4px var(--color-brand-subtle);
 }
 
 .input:disabled {

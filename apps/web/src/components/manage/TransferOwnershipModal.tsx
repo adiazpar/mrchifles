@@ -105,37 +105,17 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
 
   const footer =
     step === 'form' ? (
-      <>
-        <IonButton fill="outline" onClick={onClose} className="flex-1">
-          {tCommon.formatMessage({ id: 'common.cancel' })}
-        </IonButton>
-        <IonButton
-          onClick={() => setStep('confirm')}
-          disabled={!isStep1Valid}
-          className="flex-1"
-        >
-          {tCommon.formatMessage({ id: 'common.continue' })}
-        </IonButton>
-      </>
+      <IonButton onClick={() => setStep('confirm')} disabled={!isStep1Valid}>
+        {tCommon.formatMessage({ id: 'common.continue' })}
+      </IonButton>
     ) : step === 'confirm' ? (
-      <>
-        <IonButton
-          fill="outline"
-          onClick={() => setStep('form')}
-          className="flex-1"
-        >
-          {tCommon.formatMessage({ id: 'common.back' })}
-        </IonButton>
-        <IonButton
-          onClick={handleSubmit}
-          disabled={isSubmitting || !isStep2Valid}
-          className="flex-1"
-        >
-          {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.transfer_send_request' })}
-        </IonButton>
-      </>
+      // Toolbar back navigates to step 'form'; footer is the destructive
+      // primary only.
+      <IonButton onClick={handleSubmit} disabled={isSubmitting || !isStep2Valid}>
+        {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.transfer_send_request' })}
+      </IonButton>
     ) : (
-      <IonButton expand="block" onClick={onClose} className="flex-1">
+      <IonButton onClick={onClose}>
         {tCommon.formatMessage({ id: 'common.done' })}
       </IonButton>
     )

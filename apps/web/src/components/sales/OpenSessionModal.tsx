@@ -84,16 +84,13 @@ export function OpenSessionModal({
 
   const title = t.formatMessage({ id: 'sales.session.open_modal.title' })
 
-  // Step 0 footer — enter starting cash
+  // Step 0 footer — enter starting cash. Dismissal is the toolbar X
+  // (standardised across all modals), so the footer carries only the
+  // primary action.
   const step0Footer = (
-    <>
-      <IonButton fill="outline" onClick={onClose} disabled={submitting}>
-        {tCommon.formatMessage({ id: 'common.cancel' })}
-      </IonButton>
-      <IonButton onClick={handleConfirm} disabled={submitting}>
-        {t.formatMessage({ id: 'sales.session.open_modal.confirm' })}
-      </IonButton>
-    </>
+    <IonButton onClick={handleConfirm} disabled={submitting}>
+      {t.formatMessage({ id: 'sales.session.open_modal.confirm' })}
+    </IonButton>
   )
 
   // Step 1 footer — success or error

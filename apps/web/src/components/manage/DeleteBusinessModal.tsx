@@ -13,7 +13,6 @@ interface Props { isOpen: boolean; onClose: () => void }
 
 export function DeleteBusinessModal({ isOpen, onClose }: Props) {
   const t = useIntl()
-  const tCommon = useIntl()
   const router = useRouter()
   const { business } = useBusiness()
   const { deleteBusiness, isSubmitting, error } = useDeleteBusiness()
@@ -35,20 +34,15 @@ export function DeleteBusinessModal({ isOpen, onClose }: Props) {
     if (ok) { onClose(); router.push('/') }
   }
 
+  // Toolbar X dismisses; footer is the destructive primary only.
   const footer = (
-    <>
-      <IonButton fill="outline" onClick={onClose} className="flex-1">
-        {tCommon.formatMessage({ id: 'common.cancel' })}
-      </IonButton>
-      <IonButton
-        color="danger"
-        onClick={handleDelete}
-        disabled={isSubmitting || !canDelete}
-        className="flex-1"
-      >
-        {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.delete_business_button' })}
-      </IonButton>
-    </>
+    <IonButton
+      color="danger"
+      onClick={handleDelete}
+      disabled={isSubmitting || !canDelete}
+    >
+      {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.delete_business_button' })}
+    </IonButton>
   )
 
   return (

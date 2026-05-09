@@ -46,7 +46,12 @@ type NestedMap = { [key: string]: NestedValue }
 // Config
 // ============================================================================
 
-const MESSAGES_DIR = resolve(process.cwd(), 'src/i18n/messages')
+// Messages live in the web workspace (apps/web/src/i18n/messages/) since
+// the monorepo split; this script still ships from apps/api/scripts/ so
+// the locale registry stays a single shared-package consumer. The CWD
+// when invoked via `npm run i18n:translate --workspace=apps/api` is
+// apps/api/, so hop one level up and into apps/web/.
+const MESSAGES_DIR = resolve(process.cwd(), '../web/src/i18n/messages')
 const SOURCE_FILE = 'en-US.json'
 const MAX_RETRIES = 3
 
@@ -314,7 +319,7 @@ function readJsonFile(filename: string): NestedMap {
   return JSON.parse(readFileSync(path, 'utf-8'))
 }
 
-function writeJsonFileAtomic(filename: string, data: NestedMap): void {
+function writeJsonFileAtomic(filename: string, data: FlatMap | NestedMap): void {
   const path = resolve(MESSAGES_DIR, filename)
   const tmpPath = `${path}.tmp`
   writeFileSync(tmpPath, JSON.stringify(data, null, 2) + '\n', 'utf-8')
@@ -412,12 +417,14 @@ async function main(): Promise<void> {
     console.log(`OK (${elapsed}s)`)
   }
 
-  // Merge translated into the target
+  // Merge translated into the target. Persist as a flat dot-key map —
+  // that's what apps/web/src/i18n/loadMessages.ts feeds to react-intl
+  // (a Record<string, string>); writing nested would break message
+  // lookups in the app even though the JSON parses fine. unflatten()
+  // is still kept for input handling so legacy nested files re-flatten
+  // correctly on the next run.
   const mergedFlat: FlatMap = { ...targetFlat, ...translated }
-
-  // Re-nest and write
-  const mergedNested = unflatten(mergedFlat)
-  writeJsonFileAtomic(targetFile, mergedNested)
+  writeJsonFileAtomic(targetFile, mergedFlat)
 
   const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1)
   console.log('')

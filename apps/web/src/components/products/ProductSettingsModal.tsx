@@ -389,11 +389,8 @@ export function ProductSettingsModal({
   const renderFooter = (): React.ReactNode => {
     switch (step) {
       case 'main':
-        return (
-          <IonButton fill="outline" onClick={onClose}>
-            {tCommon.formatMessage({ id: 'common.cancel' })}
-          </IonButton>
-        )
+        // Toolbar X dismisses; no footer needed for the menu step.
+        return null
 
       case 'categories':
         return (
@@ -434,19 +431,16 @@ export function ProductSettingsModal({
         )
 
       case 'delete-category':
+        // Toolbar back returns to the categories list; footer is the
+        // destructive primary only.
         return (
-          <>
-            <IonButton fill="outline" onClick={() => setStep('categories')}>
-              {tCommon.formatMessage({ id: 'common.cancel' })}
-            </IonButton>
-            <DeleteCategoryButton
-              onDelete={handleDeleteCategory}
-              isDeleting={isDeletingCategory}
-              onSetCompleted={setActionCompleted}
-              onSetMessage={setActionMessage}
-              onGoToSuccess={() => setStep('category-success')}
-            />
-          </>
+          <DeleteCategoryButton
+            onDelete={handleDeleteCategory}
+            isDeleting={isDeletingCategory}
+            onSetCompleted={setActionCompleted}
+            onSetMessage={setActionMessage}
+            onGoToSuccess={() => setStep('category-success')}
+          />
         )
 
       case 'category-success':

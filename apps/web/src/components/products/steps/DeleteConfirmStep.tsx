@@ -8,9 +8,11 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonIcon,
   IonSpinner,
   IonButton,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
 import { DeleteSuccessStep } from './DeleteSuccessStep'
@@ -18,7 +20,7 @@ import { DeleteSuccessStep } from './DeleteSuccessStep'
 export function DeleteConfirmStep() {
   const t = useIntl()
   const navRef = useProductNavRef()
-  const { onDelete } = useEditProductCallbacks()
+  const { onDelete, onClose } = useEditProductCallbacks()
   const {
     editingProduct,
     isDeleting,
@@ -59,6 +61,11 @@ export function DeleteConfirmStep() {
           <IonTitle>
             {t.formatMessage({ id: 'productForm.title_delete_product' })}
           </IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
@@ -77,20 +84,12 @@ export function DeleteConfirmStep() {
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <div className="flex gap-2">
-            <IonButton
-              fill="outline"
-              onClick={() => navRef.current?.pop()}
-              disabled={isDeleting}
-            >
-              {t.formatMessage({ id: 'common.cancel' })}
-            </IonButton>
-            <IonButton
-              color="danger"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
+        <IonToolbar>
+          {/* Toolbar back returns to the previous step; toolbar X (when
+              this step is the only one in the stack) dismisses. Footer
+              is the destructive primary only. */}
+          <div className="modal-footer">
+            <IonButton color="danger" onClick={handleDelete} disabled={isDeleting}>
               {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
             </IonButton>
           </div>

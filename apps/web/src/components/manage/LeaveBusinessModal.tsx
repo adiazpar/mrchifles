@@ -11,7 +11,6 @@ interface Props { isOpen: boolean; onClose: () => void }
 
 export function LeaveBusinessModal({ isOpen, onClose }: Props) {
   const t = useIntl()
-  const tCommon = useIntl()
   const router = useRouter()
   const { business } = useBusiness()
   const { leave, isSubmitting, error, reset } = useLeaveBusiness()
@@ -21,20 +20,11 @@ export function LeaveBusinessModal({ isOpen, onClose }: Props) {
     if (ok) { onClose(); router.push('/') }
   }
 
+  // Toolbar X dismisses; footer is the destructive primary only.
   const footer = (
-    <>
-      <IonButton fill="outline" onClick={onClose} className="flex-1">
-        {tCommon.formatMessage({ id: 'common.cancel' })}
-      </IonButton>
-      <IonButton
-        color="danger"
-        onClick={handleLeave}
-        disabled={isSubmitting}
-        className="flex-1"
-      >
-        {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.leave_business_button' })}
-      </IonButton>
-    </>
+    <IonButton color="danger" onClick={handleLeave} disabled={isSubmitting}>
+      {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.leave_business_button' })}
+    </IonButton>
   )
 
   return (

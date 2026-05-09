@@ -6,10 +6,12 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
-  IonFooter,
   IonSpinner,
+  IonButtons,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
 import { SuggestedCategoryStepWrapper } from './SuggestedCategoryStepWrapper'
@@ -60,6 +62,13 @@ export function AnalyzingStep() {
           <IonTitle>
             {t.formatMessage({ id: 'productForm.ai_step_analyzing_title' })}
           </IonTitle>
+          {/* Toolbar X aborts the in-progress AI analysis and closes
+              the modal — same effect the footer Cancel used to have. */}
+          <IonButtons slot="end">
+            <IonButton onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
@@ -72,18 +81,6 @@ export function AnalyzingStep() {
           </p>
         </div>
       </IonContent>
-
-      <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton
-            fill="outline"
-            expand="block"
-            onClick={handleCancel}
-          >
-            {t.formatMessage({ id: 'common.cancel' })}
-          </IonButton>
-        </IonToolbar>
-      </IonFooter>
     </IonPage>
   )
 }

@@ -43,20 +43,10 @@ export function InviteDeleteCodeStep() {
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <div className="flex gap-2">
-            <IonButton
-              fill="outline"
-              onClick={() => navRef.current?.pop()}
-              disabled={isDeletingCode}
-            >
-              {t.formatMessage({ id: 'common.cancel' })}
-            </IonButton>
-            <IonButton
-              color="danger"
-              onClick={handleDelete}
-              disabled={isDeletingCode}
-            >
+        <IonToolbar>
+          {/* Toolbar back returns to the previous step; footer is destructive only. */}
+          <div className="modal-footer">
+            <IonButton color="danger" onClick={handleDelete} disabled={isDeletingCode}>
               {t.formatMessage({ id: 'common.delete' })}
             </IonButton>
           </div>

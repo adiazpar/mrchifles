@@ -1,0 +1,698 @@
+/* ==========================================================================
+   App-level chrome — Modern Mercantile primitives shared across pages
+   ==========================================================================
+   These classes describe the visual language used by the hub, business
+   pages, modals, etc. They sit one level below per-page CSS (auth.css,
+   forms.css) and one level above tokens (base.css). */
+
+/* ===== UserAvatar — initials in a terracotta circle ===== */
+.user-avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-brand);
+  color: var(--color-text-inverse);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+}
+
+.user-avatar--sm { width: 28px; height: 28px; font-size: 11px; }
+.user-avatar--md { width: 34px; height: 34px; font-size: 13px; }
+.user-avatar--lg { width: 60px; height: 60px; font-size: 22px; }
+
+.user-avatar--button {
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--duration-fast) var(--ease-out-expo);
+}
+.user-avatar--button:active { transform: scale(0.94); }
+
+.user-avatar__badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-warning);
+  border: 2px solid var(--color-bg-base);
+  pointer-events: none;
+}
+
+/* ===== Group label (mono uppercase section header with optional count) ===== */
+.group-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: var(--space-5) var(--space-1) var(--space-2);
+}
+
+.group-label--danger { color: var(--color-error); }
+
+.group-label__count {
+  color: var(--color-ink-4);
+  font-size: 10px;
+}
+
+/* ===== FeatureCard — primary/secondary action card =====
+ * Used for "Get started" actions on the hub and "drill-down hero" rows
+ * on settings-style pages. Primary variant gets a paper-deep tint and
+ * a 3px terracotta inset stripe on the leading edge. */
+.feature-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+}
+.feature-card:active { transform: scale(0.99); }
+@media (hover: hover) {
+  .feature-card:hover { border-color: var(--color-border-hover); }
+}
+
+.feature-card--primary {
+  background: var(--color-paper-deep);
+  border-color: var(--glow-edge);
+  box-shadow: var(--shadow-md), inset 3px 0 0 var(--color-brand);
+}
+
+.feature-card__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.feature-card__kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  margin-bottom: 4px;
+}
+
+.feature-card__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 19px;
+  letter-spacing: -0.012em;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+}
+
+.feature-card__desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+  line-height: 1.45;
+}
+
+.feature-card__arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+  transition: background var(--duration-fast) ease-out;
+}
+
+.feature-card--primary .feature-card__arrow {
+  background: var(--color-brand);
+  border-color: var(--color-brand-shade);
+  color: var(--color-text-inverse);
+}
+
+.feature-card__arrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===== BusinessRow — list item for owned/joined business ===== */
+.business-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+}
+.business-row + .business-row { margin-top: var(--space-2); }
+.business-row:active { transform: scale(0.99); }
+@media (hover: hover) {
+  .business-row:hover { border-color: var(--color-border-hover); }
+}
+
+.business-row__mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #FFFCF5;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.business-row__mark-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.business-row__mark-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.business-row__mark-initials { display: inline-block; }
+
+.business-row__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.business-row__name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.012em;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.business-row__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+}
+
+.business-row__dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--color-ink-4);
+}
+
+.business-row__chev {
+  color: var(--color-ink-4);
+  display: inline-flex;
+}
+.business-row__chev svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ===== Page hero (greeting block) ===== */
+.page-hero {
+  margin: var(--space-2) var(--space-1) var(--space-1);
+}
+
+.page-hero__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.page-hero__eyebrow::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.page-hero__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 70;
+  font-weight: 400;
+  font-size: 36px;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.page-hero__title em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+
+/* ===== Search field (replaces IonSearchbar where used inline) ===== */
+.app-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  margin: var(--space-4) 0 0;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    box-shadow var(--duration-fast) ease-out,
+    background var(--duration-fast) ease-out;
+}
+
+.app-search:focus-within {
+  background: var(--color-bg-surface);
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 4px var(--color-brand-subtle);
+}
+
+.app-search__icon {
+  color: var(--color-text-tertiary);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.app-search__icon svg { width: 14px; height: 14px; }
+
+.app-search__input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  padding: 0;
+  min-width: 0;
+}
+.app-search__input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.app-search__clear {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  display: inline-flex;
+  padding: 2px;
+}
+.app-search__clear svg { width: 14px; height: 14px; }
+.app-search__clear:hover { color: var(--color-text-primary); }
+
+/* ===== Hub body padding + section spacing ===== */
+.hub-body {
+  padding: var(--space-4) var(--page-padding) var(--space-8);
+  display: flex;
+  flex-direction: column;
+}
+
+.hub-empty {
+  text-align: center;
+  padding: var(--space-8) var(--space-6) var(--space-4);
+}
+.hub-empty__icon {
+  width: 56px;
+  height: 56px;
+  color: var(--color-text-tertiary);
+  margin: 0 auto var(--space-4);
+  display: block;
+}
+.hub-empty__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 50;
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -0.018em;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2);
+}
+.hub-empty__desc {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 auto;
+  max-width: 32ch;
+}
+
+.hub-empty-search {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-6) var(--space-4) var(--space-2);
+  color: var(--color-text-secondary);
+}
+.hub-empty-search__icon {
+  width: 32px;
+  height: 32px;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-3);
+}
+.hub-empty-search p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ==========================================================================
+   Modal footer — standardised button layout
+   ==========================================================================
+   Wraps the footer slot of ModalShell. One button → stretches full width.
+   Two or more → equal-width side-by-side with a consistent gap. Standard
+   pill radius and 50px height come from here so consumers can drop
+   per-modal sizing tweaks. */
+.modal-footer {
+  display: flex;
+  gap: var(--space-3);
+  align-items: stretch;
+  padding: 0 var(--space-1);
+}
+
+.modal-footer ion-button {
+  flex: 1 1 0;
+  margin: 0;
+  --border-radius: var(--radius-full);
+  height: 50px;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: var(--space-5);
+  --padding-end: var(--space-5);
+}
+
+/* Default modal IonContent inset — applied via the .modal-content class
+   that ModalShell adds to the auto-wrapping IonContent. Gives Pattern 0
+   and Pattern 1 modals (no `rawContent`) the same horizontal page-padding
+   that the rest of the app uses, plus a touch of vertical breathing room
+   so heroes don't sit flush against the toolbar bottom edge.
+
+   Pattern 2 wizards (rawContent + IonNav) opt out — each step renders
+   its own IonContent + .wizard-step, which already carries its own
+   padding (see hub-modals.css). */
+.modal-content {
+  --padding-start: var(--page-padding);
+  --padding-end: var(--page-padding);
+  --padding-top: var(--space-3);
+  --padding-bottom: var(--space-3);
+}
+
+/* When IonFooter wraps the footer in IonToolbar, give it sensible padding
+   regardless of theme. */
+ion-modal ion-footer ion-toolbar {
+  --padding-top: var(--space-3);
+  --padding-bottom: var(--space-4);
+  --padding-start: var(--space-4);
+  --padding-end: var(--space-4);
+  --background: var(--color-bg-base);
+  --border-color: var(--color-border);
+}
+
+/* ==========================================================================
+   Account page — settings list with custom profile + transfer cards
+   ========================================================================== */
+
+.account-body {
+  padding: var(--space-4) var(--page-padding) var(--space-8);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Profile card — terracotta avatar, name in display serif, email in mono.
+   2px terracotta accent stripe along the top edge. */
+.account-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  transition:
+    border-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+.account-card:active { transform: scale(0.99); }
+@media (hover: hover) {
+  .account-card:hover { border-color: var(--color-border-hover); }
+}
+
+.account-card__avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.account-card__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.account-card__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.account-card__name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 19px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-card__email {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.02em;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-card__edit {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-base);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+.account-card__edit svg { width: 14px; height: 14px; }
+
+/* Incoming-transfer banner — saffron accent, single tap-target row */
+.incoming-transfer {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-warning-subtle);
+  border: 1px solid var(--color-warning);
+  border-color: rgba(200, 136, 28, 0.32);
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+}
+.incoming-transfer__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--color-warning);
+  color: var(--color-text-inverse);
+}
+.incoming-transfer__icon svg { width: 18px; height: 18px; }
+.incoming-transfer__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.incoming-transfer__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.008em;
+  color: var(--color-warning);
+}
+.incoming-transfer__desc {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.incoming-transfer__chev {
+  color: var(--color-text-tertiary);
+  display: inline-flex;
+}
+.incoming-transfer__chev svg { width: 14px; height: 14px; }
+
+/* Settings list (IonList wrapper) — strip Ionic's `inset` 16px outer
+   margin so the card sits flush with the page padding and matches the
+   width of the profile card above it. The wrapper carries the border +
+   radius itself; child IonItems become transparent rows inside. */
+.account-list.list-inset {
+  margin: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.account-list ion-item {
+  /* Slot="start" Lucide icons sit flush against the label by default —
+     pull the inner padding-start in so we have room, then space the
+     start slot from the label manually. */
+  --padding-start: var(--space-4);
+  --inner-padding-start: 0;
+  --inner-padding-end: var(--space-4);
+  --background: transparent;
+  --background-hover: var(--color-bg-muted);
+  --background-activated: var(--color-bg-muted);
+  --min-height: var(--touch-target-min);
+}
+
+.account-list ion-item [slot="start"] {
+  margin-inline-end: var(--space-3);
+  margin-inline-start: 0;
+  align-self: center;
+}
+
+.account-list ion-note[slot="end"] {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+}
+
+/* Danger-zone list — color="danger" on the IonLabel handles the label
+   color; the icon already uses .text-error inline. */
+.account-list--danger ion-item ion-label[color="danger"] {
+  color: var(--color-error);
+}
+
+/* ===== Hub-specific: top bar ===== */
+.hub-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px var(--space-2);
+}
+
+.hub-topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+}
+.hub-topbar__brand::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--color-brand-subtle);
+}
+
+.hub-topbar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}

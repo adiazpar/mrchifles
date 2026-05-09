@@ -11,11 +11,10 @@ import {
   IonSpinner,
   IonButton,
 } from '@ionic/react'
-import { useMemberNavRef, useMemberCallbacks } from './MemberNavContext'
+import { useMemberCallbacks } from './MemberNavContext'
 
 export function MemberRemoveStep() {
   const t = useIntl()
-  const navRef = useMemberNavRef()
   const { member, removeLoading, onRemoveMember, onClose } = useMemberCallbacks()
 
   const handleRemove = async () => {
@@ -44,20 +43,10 @@ export function MemberRemoveStep() {
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <div className="flex gap-2">
-            <IonButton
-              fill="outline"
-              onClick={() => navRef.current?.pop()}
-              disabled={removeLoading}
-            >
-              {t.formatMessage({ id: 'common.cancel' })}
-            </IonButton>
-            <IonButton
-              color="danger"
-              onClick={handleRemove}
-              disabled={removeLoading}
-            >
+        <IonToolbar>
+          {/* Toolbar back returns to the previous step; footer is the destructive primary only. */}
+          <div className="modal-footer">
+            <IonButton color="danger" onClick={handleRemove} disabled={removeLoading}>
               {removeLoading ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'team.remove_confirm' })}
             </IonButton>
           </div>

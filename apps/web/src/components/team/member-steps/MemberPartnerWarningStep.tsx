@@ -45,19 +45,10 @@ export function MemberPartnerWarningStep() {
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <div className="flex gap-2">
-            <IonButton
-              fill="outline"
-              onClick={() => navRef.current?.pop()}
-              disabled={roleChangeLoading}
-            >
-              {t.formatMessage({ id: 'common.cancel' })}
-            </IonButton>
-            <IonButton
-              onClick={handleConfirm}
-              disabled={roleChangeLoading}
-            >
+        <IonToolbar>
+          {/* Toolbar back returns to the previous step; footer is primary only. */}
+          <div className="modal-footer">
+            <IonButton onClick={handleConfirm} disabled={roleChangeLoading}>
               {roleChangeLoading ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'team.partner_warning_confirm' })}
             </IonButton>
           </div>

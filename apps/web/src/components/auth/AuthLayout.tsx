@@ -1,31 +1,24 @@
-import { useIntl } from 'react-intl';
 import type { ReactNode } from 'react'
-import Image from '@/lib/Image'
+import { BrandMark } from './BrandMark'
 
-// Shared shell for /login and /register. The auth-container / auth-logo
-// classes are styled in apps/web/src/styles/.
+// Shared shell for /login and /register. Modern Mercantile chrome:
+// wordmark at the top (replaces the legacy K-swoosh image), main slot
+// for hero + form (vertically centered in remaining space via flex),
+// and an optional footer slot for the "or / secondary CTA / version"
+// stack pinned to the bottom.
+//
+// The auth-* classes live in apps/web/src/styles/auth.css.
 interface AuthLayoutProps {
   children: ReactNode
+  footer?: ReactNode
 }
 
-export function AuthLayout({ children }: AuthLayoutProps) {
-  const t = useIntl()
+export function AuthLayout({ children, footer }: AuthLayoutProps) {
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="auth-container">
-        <div className="auth-logo">
-          <Image
-            src="/icon-source.png"
-            alt={t.formatMessage({
-              id: 'auth.logo_alt'
-            })}
-            width={96}
-            height={96}
-            priority
-          />
-        </div>
-        {children}
-      </div>
+    <div className="auth-container">
+      <BrandMark />
+      <div className="auth-main">{children}</div>
+      {footer ? <div className="auth-footer">{footer}</div> : null}
     </div>
-  );
+  )
 }

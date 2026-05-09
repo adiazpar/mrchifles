@@ -8,9 +8,11 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
+  IonIcon,
   IonSpinner,
   IonButton,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useOrderNavRef, useOrderDetailCallbacks } from './OrderNavContext'
 import { DeleteOrderSuccessStep } from './DeleteOrderSuccessStep'
@@ -44,6 +46,13 @@ export function DeleteOrderConfirmStep() {
             </IonButtons>
           )}
           <IonTitle>{t.formatMessage({ id: 'orders.delete_order_title' })}</IonTitle>
+          {openedFromSwipe && (
+            <IonButtons slot="end">
+              <IonButton onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+                <IonIcon icon={close} />
+              </IonButton>
+            </IonButtons>
+          )}
         </IonToolbar>
       </IonHeader>
 
@@ -58,22 +67,10 @@ export function DeleteOrderConfirmStep() {
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <div className="flex gap-2">
-            {openedFromSwipe ? (
-              <IonButton fill="outline" onClick={onClose} disabled={isDeleting}>
-                {t.formatMessage({ id: 'common.cancel' })}
-              </IonButton>
-            ) : (
-              <IonButton fill="outline" onClick={() => navRef.current?.pop()} disabled={isDeleting}>
-                {t.formatMessage({ id: 'common.cancel' })}
-              </IonButton>
-            )}
-            <IonButton
-              color="danger"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
+        <IonToolbar>
+          {/* Toolbar X (or back) handles dismissal; footer is destructive only. */}
+          <div className="modal-footer">
+            <IonButton color="danger" onClick={handleDelete} disabled={isDeleting}>
               {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
             </IonButton>
           </div>

@@ -1,8 +1,8 @@
-import { useIntl } from 'react-intl';
-import { useState, useCallback } from 'react'
-import { IonPage, IonContent, IonList, IonItem, IonInput, IonButton, IonSpinner } from '@ionic/react'
+import { useIntl } from 'react-intl'
+import { useState, useCallback, useMemo } from 'react'
+import { IonPage, IonContent, IonButton, IonSpinner } from '@ionic/react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { AuthLayout } from '@/components/auth'
+import { AuthLayout, AuthField, PasswordStrength } from '@/components/auth'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { APP_VERSION } from '@/lib/version'
@@ -26,16 +26,12 @@ export function RegisterPage() {
       setError('')
 
       if (password !== passwordConfirm) {
-        setError(intl.formatMessage({
-          id: 'auth.passwords_dont_match'
-        }))
+        setError(intl.formatMessage({ id: 'auth.passwords_dont_match' }))
         return
       }
 
       if (password.length < 8) {
-        setError(intl.formatMessage({
-          id: 'auth.password_too_short'
-        }))
+        setError(intl.formatMessage({ id: 'auth.password_too_short' }))
         return
       }
 
@@ -55,86 +51,115 @@ export function RegisterPage() {
         // isLoading on success — see login page for reasoning.
         await playEntry('/')
       } catch {
-        setError(intl.formatMessage({
-          id: 'auth.connection_error'
-        }))
+        setError(intl.formatMessage({ id: 'auth.connection_error' }))
         setIsLoading(false)
       }
     },
     [email, password, passwordConfirm, name, register, playEntry, intl]
   )
 
-  // Originally usePageTransition().navigate('/login'). See LoginPage for
-  // the rationale: PageTransitionProvider isn't mounted yet, so we go
-  // straight through the router shim.
   const handleGoToLogin = useCallback(() => {
     router.push('/login')
   }, [router])
 
+  // Italic accent on a single word in the title — same pattern as
+  // LoginPage. Falls back to plain text when the locale's emphasis
+  // term doesn't substring-match the title (e.g. Japanese).
+  const titleNode = useMemo(() => {
+    const full = intl.formatMessage({ id: 'auth.heading_register' })
+    const emphasis = intl.formatMessage({ id: 'auth.lets_get_started_emphasis' })
+    const idx = full.indexOf(emphasis)
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [intl])
+
+  const footer = (
+    <>
+      <p className="auth-link-row">
+        {intl.formatMessage({ id: 'auth.have_account_prefix' })}
+        <button type="button" onClick={handleGoToLogin}>
+          {intl.formatMessage({ id: 'auth.have_account_link' })}
+        </button>
+      </p>
+      <p className="auth-version">
+        {intl.formatMessage(
+          { id: 'auth.version_label' },
+          { version: APP_VERSION }
+        )}
+      </p>
+    </>
+  )
+
   return (
     <IonPage>
       <IonContent>
-        <AuthLayout>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <h1 className="text-3xl font-bold text-text-primary mb-2 text-center">
-              {intl.formatMessage({ id: 'auth.heading_register' })}
-            </h1>
+        <AuthLayout footer={footer}>
+          <header className="auth-hero">
+            <div className="auth-hero__eyebrow">
+              {intl.formatMessage({ id: 'auth.new_here_eyebrow' })}
+            </div>
+            <h1 className="auth-hero__title">{titleNode}</h1>
+            <p className="auth-hero__subtitle">
+              {intl.formatMessage({ id: 'auth.register_subtitle_short' })}
+            </p>
+          </header>
 
-            {error && (
-              <div className="p-3 bg-error-subtle text-error text-sm rounded-xl">
-                {error}
-              </div>
-            )}
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-2.5 w-full"
+          >
+            {error && <div className="auth-error">{error}</div>}
 
-            <IonList lines="full" inset>
-              <IonItem>
-                <IonInput
-                  type="text"
-                  label={intl.formatMessage({ id: 'auth.name_placeholder' })}
-                  labelPlacement="floating"
-                  value={name}
-                  onIonInput={(e) => setName(e.detail.value ?? '')}
-                  autocomplete="name"
-                  autofocus
-                  required
-                />
-              </IonItem>
-              <IonItem>
-                <IonInput
-                  type="email"
-                  label={intl.formatMessage({ id: 'auth.email_placeholder' })}
-                  labelPlacement="floating"
-                  value={email}
-                  onIonInput={(e) => setEmail(e.detail.value ?? '')}
-                  autocomplete="email"
-                  required
-                />
-              </IonItem>
-              <IonItem>
-                <IonInput
-                  type="password"
-                  label={intl.formatMessage({ id: 'auth.password_new_placeholder' })}
-                  labelPlacement="floating"
-                  value={password}
-                  onIonInput={(e) => setPassword(e.detail.value ?? '')}
-                  autocomplete="new-password"
-                  required
-                />
-              </IonItem>
-              <IonItem>
-                <IonInput
-                  type="password"
-                  label={intl.formatMessage({ id: 'auth.password_confirm_placeholder' })}
-                  labelPlacement="floating"
-                  value={passwordConfirm}
-                  onIonInput={(e) => setPasswordConfirm(e.detail.value ?? '')}
-                  autocomplete="new-password"
-                  required
-                />
-              </IonItem>
-            </IonList>
+            <AuthField
+              label={intl.formatMessage({ id: 'auth.name_label' })}
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+              autoFocus
+              required
+            />
+            <AuthField
+              label={intl.formatMessage({ id: 'auth.email_label' })}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              inputMode="email"
+              required
+            />
+            <AuthField
+              label={intl.formatMessage({ id: 'auth.password_label' })}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              required
+              minLength={8}
+              below={<PasswordStrength password={password} />}
+            />
+            <AuthField
+              label={intl.formatMessage({ id: 'auth.password_confirm_label' })}
+              type="password"
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              autoComplete="new-password"
+              required
+              minLength={8}
+            />
 
-            <IonButton expand="block" type="submit" disabled={isLoading}>
+            <IonButton
+              expand="block"
+              type="submit"
+              disabled={isLoading}
+              className="mt-3"
+            >
               {isLoading ? (
                 <IonSpinner name="crescent" />
               ) : (
@@ -142,27 +167,8 @@ export function RegisterPage() {
               )}
             </IonButton>
           </form>
-
-          <div className="mt-6">
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-bg-base px-4 text-sm text-text-tertiary">
-                  {intl.formatMessage({ id: 'common.or' })}
-                </span>
-              </div>
-            </div>
-            <IonButton expand="block" fill="outline" type="button" onClick={handleGoToLogin}>
-              {intl.formatMessage({ id: 'auth.login_button' })}
-            </IonButton>
-            <p className="text-xs text-text-tertiary text-center mt-6">
-              {intl.formatMessage({ id: 'auth.version_label' }, { version: APP_VERSION })}
-            </p>
-          </div>
         </AuthLayout>
       </IonContent>
     </IonPage>
-  );
+  )
 }

@@ -1,15 +1,17 @@
+import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import {
   IonPage,
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
   IonBackButton,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { LocalePicker } from '@/components/businesses/shared'
 import { useCreateBusinessCtx, useNavRef } from '../CreateBusinessModal'
 import { LogoStep } from './LogoStep'
@@ -17,43 +19,77 @@ import { LogoStep } from './LogoStep'
 export function LocaleStep() {
   const t = useIntl()
   const navRef = useNavRef()
-  const { formData, setLocale } = useCreateBusinessCtx()
+  const { formData, setLocale, handleClose, handleExitComplete } = useCreateBusinessCtx()
+
+  function handleCancel() {
+    handleClose()
+    handleExitComplete()
+  }
 
   function handleNext() {
     navRef.current?.push(() => <LogoStep />)
   }
 
+  const titleNode = useMemo(() => {
+    const full = t.formatMessage({ id: 'createBusiness.locale_title' })
+    const emphasis = t.formatMessage({ id: 'createBusiness.locale_title_emphasis' })
+    const idx = emphasis ? full.indexOf(emphasis) : -1
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [t])
+
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar>
+        <IonToolbar className="wizard-toolbar">
           <IonButtons slot="start">
             <IonBackButton defaultHref="" />
           </IonButtons>
-          <IonTitle>
-            {t.formatMessage({ id: 'createBusiness.step_location_title' })}
-          </IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          {t.formatMessage(
-            { id: 'createBusiness.step_indicator' },
-            { current: 3, total: 4 },
-          )}
+      <IonContent className="wizard-content">
+        <div className="wizard-step">
+          <header className="wizard-hero">
+            <div className="wizard-hero__eyebrow">
+              {t.formatMessage(
+                { id: 'createBusiness.step_indicator' },
+                { current: 3, total: 4 },
+              )}
+            </div>
+            <h1 className="wizard-hero__title">{titleNode}</h1>
+            <p className="wizard-hero__subtitle">
+              {t.formatMessage({ id: 'createBusiness.locale_subtitle' })}
+            </p>
+          </header>
+
+          <div className="create-business__locale-shelf">
+            <p className="wizard-note">
+              {t.formatMessage({ id: 'createBusiness.locale_currency_note' })}
+            </p>
+            <LocalePicker value={formData.locale} onChange={setLocale} />
+          </div>
         </div>
-        <p className="text-sm text-text-secondary text-center mb-4">
-          {t.formatMessage({ id: 'createBusiness.step_location_subtitle' })}
-        </p>
-        <LocalePicker value={formData.locale} onChange={setLocale} />
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton expand="block" onClick={handleNext}>
-            {t.formatMessage({ id: 'common.continue' })}
-          </IonButton>
+        <IonToolbar>
+          <div className="modal-footer">
+            <IonButton expand="block" onClick={handleNext}>
+              {t.formatMessage({ id: 'common.continue' })}
+            </IonButton>
+          </div>
         </IonToolbar>
       </IonFooter>
     </IonPage>

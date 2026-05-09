@@ -1,17 +1,18 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
   IonPage,
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
   IonBackButton,
   IonButton,
+  IonIcon,
   IonSpinner,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { Upload, X } from 'lucide-react'
 import Image from '@/lib/Image'
 import {
@@ -28,7 +29,7 @@ function getDefaultIconForType(businessType: BusinessType | null) {
 
   const IconComponent = BUSINESS_TYPE_ICONS[businessType]
   if (IconComponent) {
-    return <IconComponent className="w-14 h-14 text-brand" />
+    return <IconComponent className="w-16 h-16 text-brand" />
   }
 
   return (
@@ -47,7 +48,14 @@ export function LogoStep() {
     clearLogo,
     isCreating,
     handleCreateBusiness,
+    handleClose,
+    handleExitComplete,
   } = useCreateBusinessCtx()
+
+  function handleCancel() {
+    handleClose()
+    handleExitComplete()
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -83,102 +91,141 @@ export function LogoStep() {
     }
   }, [handleCreateBusiness, navRef])
 
+  const titleNode = useMemo(() => {
+    const full = t.formatMessage({ id: 'createBusiness.logo_title' })
+    const emphasis = t.formatMessage({ id: 'createBusiness.logo_title_emphasis' })
+    const idx = emphasis ? full.indexOf(emphasis) : -1
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [t])
+
+  const hasLogo = !!formData.logoPreview
+
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar>
+        <IonToolbar className="wizard-toolbar">
           <IonButtons slot="start">
             <IonBackButton defaultHref="" />
           </IonButtons>
-          <IonTitle>
-            {t.formatMessage({ id: 'createBusiness.step_logo_title' })}
-          </IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          {t.formatMessage(
-            { id: 'createBusiness.step_indicator' },
-            { current: 4, total: 4 },
-          )}
-        </div>
-        <p className="text-sm text-text-secondary text-center mb-4">
-          {t.formatMessage({ id: 'createBusiness.step_logo_subtitle' })}
-        </p>
-
-        {/* Logo preview */}
-        <div className="flex justify-center mb-4">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-2xl bg-brand-subtle flex items-center justify-center overflow-hidden">
-              {formData.logoPreview ? (
-                <Image
-                  src={formData.logoPreview}
-                  alt="Business logo"
-                  width={96}
-                  height={96}
-                  className="w-full h-full object-cover"
-                  unoptimized
-                />
-              ) : (
-                getDefaultIconForType(formData.type)
+      <IonContent className="wizard-content">
+        <div className="wizard-step">
+          <header className="wizard-hero">
+            <div className="wizard-hero__eyebrow">
+              {t.formatMessage(
+                { id: 'createBusiness.step_indicator' },
+                { current: 4, total: 4 },
               )}
             </div>
-            {formData.logoPreview && (
-              <button
-                type="button"
-                onClick={clearLogo}
-                className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center shadow-md hover:bg-error-hover transition-colors"
-                aria-label={t.formatMessage({ id: 'createBusiness.logo_remove' })}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
+            <h1 className="wizard-hero__title">{titleNode}</h1>
+            <p className="wizard-hero__subtitle">
+              {t.formatMessage({ id: 'createBusiness.logo_subtitle' })}
+            </p>
+          </header>
 
-        {/* File input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-border hover:border-brand hover:bg-brand-subtle transition-all text-text-secondary hover:text-brand"
-        >
-          <Upload className="w-5 h-5" />
-          <span className="text-sm font-medium">
-            {formData.logoPreview
-              ? t.formatMessage({ id: 'createBusiness.logo_change_button' })
-              : t.formatMessage({ id: 'createBusiness.logo_upload_button' })}
-          </span>
-        </button>
-        {uploadError ? (
-          <p className="text-xs text-error text-center mt-2">{uploadError}</p>
-        ) : (
-          <p className="text-xs text-text-tertiary text-center mt-2">
-            {t.formatMessage({ id: 'createBusiness.logo_size_hint' })}
-          </p>
-        )}
+          {/* Medallion preview — the "stage" for the logo. Falls back to
+              the business-type icon when no image is uploaded yet. */}
+          <div className="create-business__logo-stage">
+            <span className="create-business__logo-stage-label">
+              {t.formatMessage({ id: 'createBusiness.logo_preview_label' })}
+            </span>
+            <div className="create-business__logo-medallion">
+              <div className="create-business__logo-medallion-inner">
+                {formData.logoPreview ? (
+                  <Image
+                    src={formData.logoPreview}
+                    alt="Business logo"
+                    width={144}
+                    height={144}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  getDefaultIconForType(formData.type)
+                )}
+              </div>
+              {hasLogo && (
+                <button
+                  type="button"
+                  onClick={clearLogo}
+                  className="create-business__logo-remove"
+                  aria-label={t.formatMessage({ id: 'createBusiness.logo_remove' })}
+                >
+                  <X />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* File input + upload control row. */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="create-business__logo-upload"
+          >
+            <span className="create-business__logo-upload-icon">
+              <Upload />
+            </span>
+            <span className="create-business__logo-upload-body">
+              <span className="create-business__logo-upload-label">
+                {t.formatMessage({ id: 'createBusiness.logo_action_label' })}
+              </span>
+              <span className="create-business__logo-upload-value">
+                {hasLogo
+                  ? t.formatMessage({ id: 'createBusiness.logo_change_button' })
+                  : t.formatMessage({ id: 'createBusiness.logo_upload_button' })}
+              </span>
+            </span>
+          </button>
+
+          {uploadError ? (
+            <p className="wizard-note wizard-note--center wizard-note--error">
+              {uploadError}
+            </p>
+          ) : (
+            <p className="wizard-note wizard-note--center">
+              {t.formatMessage({ id: 'createBusiness.logo_size_hint' })}
+            </p>
+          )}
+        </div>
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton
-            expand="block"
-            disabled={isCreating}
-            onClick={handleCreate}
-          >
-            {isCreating ? (
-              <IonSpinner name="crescent" />
-            ) : (
-              t.formatMessage({ id: 'createBusiness.button_create' })
-            )}
-          </IonButton>
+        <IonToolbar>
+          <div className="modal-footer">
+            <IonButton
+              expand="block"
+              disabled={isCreating}
+              onClick={handleCreate}
+            >
+              {isCreating ? (
+                <IonSpinner name="crescent" />
+              ) : (
+                t.formatMessage({ id: 'createBusiness.button_create' })
+              )}
+            </IonButton>
+          </div>
         </IonToolbar>
       </IonFooter>
     </IonPage>

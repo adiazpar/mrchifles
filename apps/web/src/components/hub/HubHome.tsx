@@ -1,11 +1,9 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-
-import Image from '@/lib/Image'
+import { useIntl } from 'react-intl'
 import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { ChevronRight, Building2, ChefHat, HandHelping, Store, Boxes, Factory, Shapes, Plus, UserPlus, SearchX } from 'lucide-react'
+import { Building2, SearchX, X } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
@@ -13,17 +11,17 @@ import { useCreateBusinessModal } from '@/contexts/create-business-context'
 import { useJoinBusinessModal } from '@/contexts/join-business-context'
 import { fetchDeduped } from '@/lib/fetch'
 import { createSessionCache, CACHE_KEYS } from '@/hooks'
-import {
-  IonCard,
-  IonCardContent,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonSearchbar,
-  IonSpinner,
-} from '@ionic/react'
+import { IonSpinner } from '@ionic/react'
+import { FeatureCard, GroupLabel } from '@/components/ui'
+import { BusinessRow } from '@/components/businesses/shared'
 
-type BusinessType = 'food' | 'retail' | 'services' | 'wholesale' | 'manufacturing' | 'other'
+type BusinessType =
+  | 'food'
+  | 'retail'
+  | 'services'
+  | 'wholesale'
+  | 'manufacturing'
+  | 'other'
 
 interface Business {
   id: string
@@ -37,34 +35,26 @@ interface Business {
   currency: string
 }
 
-// Default emojis for each business type (fallback for types without custom icons)
-const DEFAULT_TYPE_EMOJIS: Record<BusinessType, string> = {
-  food: '🍽️',
-  retail: '🛍️',
-  services: '✂️',
-  wholesale: '📦',
-  manufacturing: '🏭',
-  other: '💼',
-}
-
-// Custom icon components for business types (takes precedence over emojis)
-const BUSINESS_TYPE_ICONS: Partial<Record<BusinessType, React.ComponentType<{ className?: string }>>> = {
-  food: ChefHat,
-  retail: Store,
-  services: HandHelping,
-  wholesale: Boxes,
-  manufacturing: Factory,
-  other: Shapes,
-}
-
-/**
- * Hub page body. Shows the user's businesses or an empty state.
- */
 const hubBusinessesCache = createSessionCache<Business[]>(CACHE_KEYS.HUB_BUSINESSES)
 
 function getCachedBusinessList(): Business[] {
   return hubBusinessesCache.get() ?? []
 }
+
+const SearchIcon = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </svg>
+)
 
 export function HubHome() {
   return (
@@ -87,8 +77,6 @@ function HubHomeBody() {
   const intl = useIntl()
 
   // Release the auth-gate's hold phase as soon as the hub has its data.
-  // Safe to call repeatedly — markHubReady clears its resolver after the
-  // first call, so re-renders during warm navigation are no-ops.
   useEffect(() => {
     if (!authLoading && !isLoading) markHubReady()
   }, [authLoading, isLoading, markHubReady])
@@ -110,8 +98,6 @@ function HubHomeBody() {
     }
   }, [setCachedBusinesses])
 
-  // Use user?.id to avoid re-fetching when the user object reference changes
-  // (e.g. auth revalidation returns a new object with the same identity)
   const userId = user?.id
   useEffect(() => {
     if (authLoading) return
@@ -122,20 +108,15 @@ function HubHomeBody() {
     fetchBusinesses()
   }, [userId, authLoading, router, fetchBusinesses])
 
-  // Refresh the business list as soon as a new business is created, so it
-  // appears in the hub without waiting for the modal to close or a manual reload.
+  // Refresh after a new business is created.
   useEffect(() => {
-    if (createdBusiness) {
-      fetchBusinesses()
-    }
+    if (createdBusiness) fetchBusinesses()
   }, [createdBusiness, fetchBusinesses])
 
   const handleEnterBusiness = (businessId: string) => {
-    const href = `/${businessId}/home`
-    navigate(href)
+    navigate(`/${businessId}/home`)
   }
 
-  // Filter businesses based on search query (must be before early returns)
   const filteredBusinesses = useMemo(() => {
     if (!searchQuery.trim()) return businesses
     const query = searchQuery.toLowerCase().trim()
@@ -155,173 +136,194 @@ function HubHomeBody() {
     )
   }
 
-  if (!hasBusinesses) {
-    return (
-      <>
-        <div className="flex flex-col items-center justify-center px-6 pt-12 pb-8 text-center">
-          <Building2 className="w-16 h-16 text-text-tertiary mb-5" />
-          <h2 className="text-xl font-semibold text-text-primary mb-2">
+  return (
+    <div className="hub-body">
+      <HubGreeting userName={user?.name ?? null} locale={intl.locale} />
+
+      {hasBusinesses ? (
+        <GroupLabel>
+          {intl.formatMessage({ id: 'hub.get_started_label' })}
+        </GroupLabel>
+      ) : (
+        <div className="hub-empty">
+          <Building2 className="hub-empty__icon" aria-hidden="true" />
+          <h2 className="hub-empty__title">
             {intl.formatMessage({ id: 'hub.empty_state_title' })}
           </h2>
-          <p className="text-sm text-text-secondary mb-6 max-w-xs">
+          <p className="hub-empty__desc">
             {intl.formatMessage({ id: 'hub.empty_state_description' })}
           </p>
         </div>
-        <div className="px-4">
-          <HubActionCards onCreate={openCreateModal} onJoin={openJoinModal} />
-        </div>
+      )}
+
+      <div className="flex flex-col gap-2.5">
+        <FeatureCard
+          primary
+          kicker={intl.formatMessage({ id: 'hub.action_create_kicker' })}
+          title={intl.formatMessage({ id: 'hub.action_create_title' })}
+          description={intl.formatMessage({ id: 'hub.action_create_desc_short' })}
+          onClick={openCreateModal}
+        />
+        <FeatureCard
+          kicker={intl.formatMessage({ id: 'hub.action_join_kicker' })}
+          title={intl.formatMessage({ id: 'hub.action_join_title' })}
+          description={intl.formatMessage({ id: 'hub.action_join_desc_short' })}
+          onClick={openJoinModal}
+        />
+      </div>
+
+      {hasBusinesses && (
+        <>
+          <label className="app-search">
+            <span className="app-search__icon">{SearchIcon}</span>
+            <input
+              type="search"
+              className="app-search__input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={intl.formatMessage({ id: 'hub.search_placeholder' })}
+              aria-label={intl.formatMessage({ id: 'hub.search_placeholder' })}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="app-search__clear"
+                onClick={() => setSearchQuery('')}
+                aria-label={intl.formatMessage({ id: 'hub.search_clear' })}
+              >
+                <X />
+              </button>
+            )}
+          </label>
+
+          {searchQuery && !hasFilteredResults ? (
+            <div className="hub-empty-search">
+              <SearchX className="hub-empty-search__icon" />
+              <p>
+                {intl.formatMessage(
+                  { id: 'hub.no_results' },
+                  { query: searchQuery }
+                )}
+              </p>
+            </div>
+          ) : null}
+
+          {ownedBusinesses.length > 0 && (
+            <>
+              <GroupLabel count={ownedBusinesses.length}>
+                {intl.formatMessage({ id: 'hub.section_owned' })}
+              </GroupLabel>
+              <div>
+                {ownedBusinesses.map((b) => (
+                  <BusinessRow
+                    key={b.id}
+                    business={b}
+                    onClick={() => handleEnterBusiness(b.id)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {joinedBusinesses.length > 0 && (
+            <>
+              <GroupLabel count={joinedBusinesses.length}>
+                {intl.formatMessage({ id: 'hub.section_joined' })}
+              </GroupLabel>
+              <div>
+                {joinedBusinesses.map((b) => (
+                  <BusinessRow
+                    key={b.id}
+                    business={b}
+                    onClick={() => handleEnterBusiness(b.id)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+// Time-of-day greeting bucket.
+type GreetingKey =
+  | 'hub.greeting_morning'
+  | 'hub.greeting_afternoon'
+  | 'hub.greeting_evening'
+
+function computeGreetingKey(): GreetingKey {
+  const hour = new Date().getHours()
+  if (hour >= 6 && hour < 12) return 'hub.greeting_morning'
+  if (hour >= 12 && hour < 18) return 'hub.greeting_afternoon'
+  return 'hub.greeting_evening'
+}
+
+const EMPHASIS_KEY: Record<GreetingKey, string> = {
+  'hub.greeting_morning': 'hub.greeting_emphasis_morning',
+  'hub.greeting_afternoon': 'hub.greeting_emphasis_afternoon',
+  'hub.greeting_evening': 'hub.greeting_emphasis_evening',
+}
+
+interface HubGreetingProps {
+  userName: string | null
+  locale: string
+}
+
+function HubGreeting({ userName, locale }: HubGreetingProps) {
+  const intl = useIntl()
+  // Compute greeting in an effect to avoid an SSR/client hour boundary
+  // mismatch — see CLAUDE.md "Time-of-Day Greetings" pattern.
+  const [greetingKey, setGreetingKey] = useState<GreetingKey | null>(null)
+  useEffect(() => setGreetingKey(computeGreetingKey()), [])
+
+  // Localised date stamp ("THU · MAY 8") rendered as the eyebrow above
+  // the greeting. Uses the user's UI locale (intl.locale) so it matches
+  // the rest of the auth-scoped surface (the hub has no business yet).
+  const dateLabel = useMemo(() => {
+    try {
+      const fmt = new Intl.DateTimeFormat(locale, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      })
+      return fmt
+        .format(new Date())
+        // Replace ", " with " · " for visual rhythm; locales that use
+        // different separators (e.g. ja-JP "5月8日(木)") are unaffected.
+        .replace(/,\s+/g, ' · ')
+        .toUpperCase()
+    } catch {
+      return ''
+    }
+  }, [locale])
+
+  if (!greetingKey || !userName) return null
+
+  // Italic accent on the time-of-day word ("Good evening" → "Good <em>evening</em>").
+  const greetingFull = intl.formatMessage({ id: greetingKey })
+  const emphasis = intl.formatMessage({ id: EMPHASIS_KEY[greetingKey] })
+  const idx = greetingFull.indexOf(emphasis)
+  const greetingNode =
+    !emphasis || idx === -1 ? (
+      <>{greetingFull}</>
+    ) : (
+      <>
+        {greetingFull.slice(0, idx)}
+        <em>{emphasis}</em>
+        {greetingFull.slice(idx + emphasis.length)}
       </>
     )
-  }
-
-  const getBusinessIcon = (business: Business) => {
-    const { icon, type } = business
-
-    // If icon is a base64 image (uploaded logo)
-    if (icon && icon.startsWith('data:')) {
-      return (
-        <Image
-          src={icon}
-          alt={business.name}
-          width={40}
-          height={40}
-          className="product-list-image-img"
-          unoptimized
-        />
-      )
-    }
-
-    // If icon is an emoji (custom set by user)
-    if (icon) {
-      return <span className="text-2xl">{icon}</span>
-    }
-
-    // Use custom icon component for business type if available
-    if (type && BUSINESS_TYPE_ICONS[type]) {
-      const IconComponent = BUSINESS_TYPE_ICONS[type]
-      return <IconComponent className="w-6 h-6 text-brand" />
-    }
-
-    // Fall back to default emoji for business type
-    if (type && DEFAULT_TYPE_EMOJIS[type]) {
-      return <span className="text-2xl">{DEFAULT_TYPE_EMOJIS[type]}</span>
-    }
-
-    // Ultimate fallback
-    return <Building2 className="w-6 h-6 text-brand" />
-  }
-
-  const renderBusinessItem = (business: Business) => (
-    <IonItem
-      key={business.id}
-      button
-      detail
-      onClick={() => handleEnterBusiness(business.id)}
-    >
-      <div slot="start" className="w-10 h-10 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0 overflow-hidden">
-        {getBusinessIcon(business)}
-      </div>
-      <IonLabel>
-        <h3>{business.name}</h3>
-        <p>
-          {intl.formatMessage(
-            { id: 'hub.member_count' },
-            { count: business.memberCount }
-          )}
-        </p>
-      </IonLabel>
-    </IonItem>
-  )
 
   return (
-    <div className="px-4 py-6 space-y-6">
-      <HubActionCards onCreate={openCreateModal} onJoin={openJoinModal} />
-      <IonSearchbar
-        value={searchQuery}
-        onIonInput={(e) => setSearchQuery(e.detail.value ?? '')}
-        placeholder={intl.formatMessage({ id: 'hub.search_placeholder' })}
-        showClearButton="focus"
-        className="px-0"
-      />
-      {searchQuery && !hasFilteredResults && (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <SearchX className="w-10 h-10 text-text-tertiary mb-3" />
-          <p className="text-sm text-text-secondary">
-            {intl.formatMessage({ id: 'hub.no_results' }, { query: searchQuery })}
-          </p>
-        </div>
-      )}
-      {ownedBusinesses.length > 0 && (
-        <div>
-          <h2 className="text-base font-semibold text-text-primary mb-2 px-0">
-            {ownedBusinesses.length === 1
-              ? intl.formatMessage({ id: 'hub.section_owned_singular' })
-              : intl.formatMessage({ id: 'hub.section_owned_plural' })}
-          </h2>
-          <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
-            {ownedBusinesses.map(renderBusinessItem)}
-          </IonList>
-        </div>
-      )}
-      {joinedBusinesses.length > 0 && (
-        <div>
-          <h2 className="text-base font-semibold text-text-primary mb-2 px-0">
-            {joinedBusinesses.length === 1
-              ? intl.formatMessage({ id: 'hub.section_joined_singular' })
-              : intl.formatMessage({ id: 'hub.section_joined_plural' })}
-          </h2>
-          <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
-            {joinedBusinesses.map(renderBusinessItem)}
-          </IonList>
-        </div>
-      )}
-    </div>
-  )
-}
-
-interface HubActionCardsProps {
-  onCreate: () => void
-  onJoin: () => void
-}
-
-function HubActionCards({ onCreate, onJoin }: HubActionCardsProps) {
-  const intl = useIntl()
-  return (
-    // m-0 overrides Ionic's :host default margin (16px inline / 24px block)
-    // so the parent's space-y-3 controls the gap between the two cards.
-    <div className="space-y-3">
-      <IonCard button onClick={onCreate} className="m-0">
-        <IonCardContent className="flex items-start gap-4 py-5">
-          <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
-            <Plus className="w-6 h-6 text-brand" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-base font-semibold text-text-primary">
-              {intl.formatMessage({ id: 'hub.action_create_title' })}
-            </div>
-            <div className="text-sm text-text-secondary mt-1">
-              {intl.formatMessage({ id: 'hub.action_create_desc' })}
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
-        </IonCardContent>
-      </IonCard>
-      <IonCard button onClick={onJoin} className="m-0">
-        <IonCardContent className="flex items-start gap-4 py-5">
-          <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
-            <UserPlus className="w-6 h-6 text-brand" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-base font-semibold text-text-primary">
-              {intl.formatMessage({ id: 'hub.action_join_title' })}
-            </div>
-            <div className="text-sm text-text-secondary mt-1">
-              {intl.formatMessage({ id: 'hub.action_join_desc' })}
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
-        </IonCardContent>
-      </IonCard>
-    </div>
+    <header className="page-hero">
+      {dateLabel ? <div className="page-hero__eyebrow">{dateLabel}</div> : null}
+      <h1 className="page-hero__title">
+        {greetingNode}, {userName}.
+      </h1>
+    </header>
   )
 }

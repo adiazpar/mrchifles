@@ -8,8 +8,10 @@ import {
   IonFooter,
   IonButtons,
   IonButton,
+  IonIcon,
   IonSpinner,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { DurationPicker } from '../DurationPicker'
 import { RoleSelectionContent } from '../RoleSelectionContent'
 import { useInviteNavRef, useInviteCallbacks } from './InviteNavContext'
@@ -50,7 +52,9 @@ export function InviteRoleStep() {
         <IonToolbar>
           <IonTitle>{t.formatMessage({ id: 'team.step_add_member' })}</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={onClose}>{t.formatMessage({ id: 'common.cancel' })}</IonButton>
+            <IonButton onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonIcon icon={close} />
+            </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>

@@ -1,7 +1,8 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-import { CircleHelp } from 'lucide-react'
+import { useIntl } from 'react-intl'
+import { useMemo } from 'react'
+import { LifeBuoy } from 'lucide-react'
 import { ModalShell } from '@/components/ui'
 
 export interface ContactSupportModalProps {
@@ -10,35 +11,56 @@ export interface ContactSupportModalProps {
 }
 
 /**
- * "Coming soon" placeholder for the contact support flow. When the
- * support feature ships, replace the body of this modal with the real
- * UI (email link, WhatsApp deep link, in-app chat, etc.). The shell
- * stays the same.
+ * Reframes the "coming soon" support placeholder as a notice posted on
+ * the wall: bordered paper card with a mono NOTICE eyebrow, italic-
+ * accented title, an italic body line, and a small mono footnote
+ * pointing the user to the help they have today (the business owner
+ * who invited them). When the real support flow ships, replace the
+ * notice card with the new UI — the shell stays the same.
  */
 export function ContactSupportModal({ isOpen, onClose }: ContactSupportModalProps) {
-  const t = useIntl()
+  const intl = useIntl()
+
+  const titleNode = useMemo(() => {
+    const full = intl.formatMessage({ id: 'account.support_title' })
+    const emphasis = intl.formatMessage({ id: 'account.support_title_emphasis' })
+    const idx = full.indexOf(emphasis)
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [intl])
 
   return (
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={t.formatMessage({ id: 'account.support_modal_title' })}
+      title={intl.formatMessage({ id: 'account.support_modal_title' })}
+      noSwipeDismiss
     >
-      <div className="flex flex-col items-center text-center py-6">
-        <div className="w-16 h-16 rounded-full bg-brand-subtle flex items-center justify-center mb-4">
-          <CircleHelp className="w-8 h-8 text-brand" />
+      <div className="contact-support__notice">
+        <div className="contact-support__icon" aria-hidden="true">
+          <LifeBuoy />
         </div>
-        <h2 className="text-lg font-semibold text-text-primary">
-          {t.formatMessage({
-            id: 'account.support_coming_soon_heading'
-          })}
-        </h2>
-        <p className="text-sm text-text-secondary mt-2 max-w-sm">
-          {t.formatMessage({
-            id: 'account.support_coming_soon_description'
-          })}
+        <div className="contact-support__eyebrow">
+          {intl.formatMessage({ id: 'account.support_eyebrow' })}
+        </div>
+        <h2 className="contact-support__title">{titleNode}</h2>
+        <p className="contact-support__body">
+          {intl.formatMessage({ id: 'account.support_body' })}
         </p>
       </div>
+
+      <div className="contact-support__footnote">
+        <span className="contact-support__footnote-eyebrow">
+          {intl.formatMessage({ id: 'account.support_footnote_eyebrow' })}
+        </span>
+        {intl.formatMessage({ id: 'account.support_footnote' })}
+      </div>
     </ModalShell>
-  );
+  )
 }

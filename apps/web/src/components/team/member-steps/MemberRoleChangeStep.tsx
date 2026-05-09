@@ -57,15 +57,9 @@ export function MemberRoleChangeStep() {
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <div className="flex gap-2">
-            <IonButton
-              fill="outline"
-              onClick={() => navRef.current?.pop()}
-              disabled={roleChangeLoading}
-            >
-              {t.formatMessage({ id: 'common.cancel' })}
-            </IonButton>
+        <IonToolbar>
+          {/* Toolbar back returns to the previous step; footer is primary only. */}
+          <div className="modal-footer">
             <IonButton
               onClick={handleSave}
               disabled={roleChangeLoading || isDisabled}

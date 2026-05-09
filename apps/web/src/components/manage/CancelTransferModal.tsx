@@ -54,7 +54,6 @@ function useExpiryLabel(expiresAt: string | undefined): ExpiryLabel | null {
 
 export function CancelTransferModal({ isOpen, onClose }: Props) {
   const t = useIntl()
-  const tCommon = useIntl()
   const { transfer, cancel, isCancelling, error } = usePendingTransferContext()
   const expiry = useExpiryLabel(transfer?.expiresAt)
 
@@ -72,24 +71,13 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
   }
 
   const footer = (
-    <>
-      <IonButton
-        fill="outline"
-        onClick={onClose}
-        disabled={isCancelling}
-        className="flex-1"
-      >
-        {tCommon.formatMessage({ id: 'common.cancel' })}
-      </IonButton>
-      <IonButton
-        color="danger"
-        onClick={handleCancelTransfer}
-        disabled={isCancelling || !transfer}
-        className="flex-1"
-      >
-        {isCancelling ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.transfer_withdraw' })}
-      </IonButton>
-    </>
+    <IonButton
+      color="danger"
+      onClick={handleCancelTransfer}
+      disabled={isCancelling || !transfer}
+    >
+      {isCancelling ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.transfer_withdraw' })}
+    </IonButton>
   )
 
   return (

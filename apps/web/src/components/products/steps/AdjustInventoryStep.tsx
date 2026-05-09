@@ -16,13 +16,12 @@ import Image from '@/lib/Image'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { StockStepper } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
+import { useEditProductCallbacks } from './ProductNavContext'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError } from '@/lib/api-client'
 
 export function AdjustInventoryStep() {
   const t = useIntl()
-  const navRef = useProductNavRef()
   const { onSaveAdjustment } = useEditProductCallbacks()
   const translateApiMessage = useApiMessage()
   const {
@@ -106,15 +105,9 @@ export function AdjustInventoryStep() {
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <div className="flex gap-2">
-            <IonButton
-              fill="outline"
-              onClick={() => navRef.current?.pop()}
-              disabled={isAdjusting}
-            >
-              {t.formatMessage({ id: 'common.cancel' })}
-            </IonButton>
+        <IonToolbar>
+          {/* Toolbar back navigates to the previous step; footer is primary only. */}
+          <div className="modal-footer">
             <IonButton
               onClick={handleSave}
               disabled={isAdjusting || newStockValue === (editingProduct?.stock ?? 0)}

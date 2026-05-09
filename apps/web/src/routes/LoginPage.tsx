@@ -1,8 +1,8 @@
-import { useIntl } from 'react-intl';
-import { useState, useCallback } from 'react'
-import { IonPage, IonContent, IonList, IonItem, IonInput, IonButton, IonSpinner } from '@ionic/react'
+import { useIntl } from 'react-intl'
+import { useState, useCallback, useMemo } from 'react'
+import { IonPage, IonContent, IonButton, IonSpinner } from '@ionic/react'
 import { useRouter, useSearchParams } from '@/lib/next-navigation-shim'
-import { AuthLayout } from '@/components/auth'
+import { AuthLayout, AuthField } from '@/components/auth'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
 import { APP_VERSION } from '@/lib/version'
@@ -14,17 +14,10 @@ import { APP_VERSION } from '@/lib/version'
 // always a same-origin path; anything else falls back to / (the Hub).
 function safeRedirect(raw: string | null): string {
   if (!raw) return '/'
-  // Allow only paths that start with exactly one '/' followed by a
-  // non-'/' non-'\\' character. This rejects '//host', '/\\host',
-  // 'http://...', and the empty string.
-  return /^\/[^/\\]/.test(raw) ? raw : '/';
+  return /^\/[^/\\]/.test(raw) ? raw : '/'
 }
 
 export function LoginPage() {
-  // The original Next.js page wrapped this content in <Suspense> because
-  // useSearchParams() in the App Router opts into client rendering and
-  // requires a Suspense boundary. react-router's useLocation()-based
-  // shim is fully synchronous — no suspense needed, fallback dropped.
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = safeRedirect(searchParams.get('redirect'))
@@ -58,67 +51,107 @@ export function LoginPage() {
         // overlay during the transition and unmounted afterward.
         await playEntry(redirect)
       } catch {
-        setError(intl.formatMessage({
-          id: 'auth.connection_error'
-        }))
+        setError(intl.formatMessage({ id: 'auth.connection_error' }))
         setIsLoading(false)
       }
     },
     [email, password, redirect, login, playEntry, intl]
   )
 
-  // Originally usePageTransition().navigate('/register'); the
-  // PageTransitionProvider isn't mounted at this stage of the migration
-  // (lands with the business shell in Phase 10+). Direct router.push
-  // achieves the same cross-route navigation without the optimistic
-  // pendingHref bookkeeping, which only matters once nav components
-  // exist to read it.
   const handleGoToRegister = useCallback(() => {
     router.push('/register')
   }, [router])
 
+  // Title with italic accent on a single word. The emphasis term comes
+  // from i18n so locales can pick a word that lands the same accent
+  // (English: "back"; Spanish: "vuelta"). If the term isn't found in
+  // the title (translator skipped or chose a different sentence), we
+  // fall back to plain text — no italic, but no broken render either.
+  const titleNode = useMemo(() => {
+    const full = intl.formatMessage({ id: 'auth.heading_login' })
+    const emphasis = intl.formatMessage({ id: 'auth.welcome_back_emphasis' })
+    const idx = full.indexOf(emphasis)
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [intl])
+
+  const footer = (
+    <>
+      <div className="auth-divider">
+        {intl.formatMessage({ id: 'common.or' })}
+      </div>
+      <p className="auth-link-row">
+        {intl.formatMessage({ id: 'auth.no_account_prefix' })}
+        <button type="button" onClick={handleGoToRegister}>
+          {intl.formatMessage({ id: 'auth.create_account_link' })}
+        </button>
+      </p>
+      <p className="auth-version">
+        {intl.formatMessage(
+          { id: 'auth.version_label' },
+          { version: APP_VERSION }
+        )}
+      </p>
+    </>
+  )
+
   return (
     <IonPage>
       <IonContent>
-        <AuthLayout>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <h1 className="text-3xl font-bold text-text-primary mb-2 text-center">
-              {intl.formatMessage({ id: 'auth.heading_login' })}
-            </h1>
+        <AuthLayout footer={footer}>
+          <header className="auth-hero">
+            <div className="auth-hero__eyebrow">
+              {intl.formatMessage({ id: 'auth.sign_in_eyebrow' })}
+            </div>
+            <h1 className="auth-hero__title">{titleNode}</h1>
+            <p className="auth-hero__subtitle">
+              {intl.formatMessage({ id: 'auth.welcome_back_subtitle' })}
+            </p>
+          </header>
 
-            {error && (
-              <div className="p-3 bg-error-subtle text-error text-sm rounded-xl">
-                {error}
-              </div>
-            )}
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-2.5 w-full"
+          >
+            {error && <div className="auth-error">{error}</div>}
 
-            <IonList lines="full" inset>
-              <IonItem>
-                <IonInput
-                  type="email"
-                  label={intl.formatMessage({ id: 'auth.email_placeholder' })}
-                  labelPlacement="floating"
-                  value={email}
-                  onIonInput={(e) => setEmail(e.detail.value ?? '')}
-                  autocomplete="email"
-                  autofocus
-                  required
-                />
-              </IonItem>
-              <IonItem>
-                <IonInput
-                  type="password"
-                  label={intl.formatMessage({ id: 'auth.password_placeholder' })}
-                  labelPlacement="floating"
-                  value={password}
-                  onIonInput={(e) => setPassword(e.detail.value ?? '')}
-                  autocomplete="current-password"
-                  required
-                />
-              </IonItem>
-            </IonList>
+            <AuthField
+              label={intl.formatMessage({ id: 'auth.email_label' })}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              autoFocus
+              required
+              inputMode="email"
+            />
+            <AuthField
+              label={intl.formatMessage({ id: 'auth.password_label' })}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
 
-            <IonButton expand="block" type="submit" disabled={isLoading}>
+            <div className="auth-field-utility">
+              <button type="button">
+                {intl.formatMessage({ id: 'auth.forgot_password' })}
+              </button>
+            </div>
+
+            <IonButton
+              expand="block"
+              type="submit"
+              disabled={isLoading}
+              className="mt-3"
+            >
               {isLoading ? (
                 <IonSpinner name="crescent" />
               ) : (
@@ -126,27 +159,8 @@ export function LoginPage() {
               )}
             </IonButton>
           </form>
-
-          <div className="mt-6">
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-bg-base px-4 text-sm text-text-tertiary">
-                  {intl.formatMessage({ id: 'common.or' })}
-                </span>
-              </div>
-            </div>
-            <IonButton expand="block" fill="outline" type="button" onClick={handleGoToRegister}>
-              {intl.formatMessage({ id: 'auth.register_button' })}
-            </IonButton>
-            <p className="text-xs text-text-tertiary text-center mt-6">
-              {intl.formatMessage({ id: 'auth.version_label' }, { version: APP_VERSION })}
-            </p>
-          </div>
         </AuthLayout>
       </IonContent>
     </IonPage>
-  );
+  )
 }

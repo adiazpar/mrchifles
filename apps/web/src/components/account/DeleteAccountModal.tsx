@@ -1,11 +1,12 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-import { useState, useEffect, useCallback } from 'react'
+import { useIntl } from 'react-intl'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { AlertTriangle } from 'lucide-react'
-import { IonButton, IonInput, IonItem, IonList, IonSpinner } from '@ionic/react'
+import { Check, AlertOctagon } from 'lucide-react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
+import { AuthField } from '@/components/auth'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError, apiRequest } from '@/lib/api-client'
@@ -27,8 +28,7 @@ export function DeleteAccountModal({
   onClose,
   onExitComplete,
 }: DeleteAccountModalProps) {
-  const t = useIntl()
-  const tCommon = useIntl()
+  const intl = useIntl()
   const router = useRouter()
   const { user, logout } = useAuth()
   const translateApiMessage = useApiMessage()
@@ -123,7 +123,7 @@ export function DeleteAccountModal({
         setError(
           err.envelope
             ? translateApiMessage(err.envelope)
-            : tCommon.formatMessage({ id: 'common.error' }),
+            : intl.formatMessage({ id: 'common.error' }),
         )
         // 409 means the server-side check found owned businesses we missed
         // (race condition: a transfer landed between pre-flight and submit).
@@ -135,11 +135,39 @@ export function DeleteAccountModal({
         return
       }
       console.error('Delete account error:', err)
-      setError(tCommon.formatMessage({ id: 'common.error' }))
+      setError(intl.formatMessage({ id: 'common.error' }))
     } finally {
       setIsDeleting(false)
     }
-  }, [canDelete, user, confirmEmail, currentPassword, logout, router, translateApiMessage, tCommon])
+  }, [canDelete, user, confirmEmail, currentPassword, logout, router, translateApiMessage, intl])
+
+  const confirmTitle = useMemo(() => {
+    const full = intl.formatMessage({ id: 'account.delete_confirm_hero_title' })
+    const emphasis = intl.formatMessage({ id: 'account.delete_confirm_hero_title_emphasis' })
+    const idx = full.indexOf(emphasis)
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [intl])
+
+  const blockedTitle = useMemo(() => {
+    const full = intl.formatMessage({ id: 'account.delete_blocked_hero_title' })
+    const emphasis = intl.formatMessage({ id: 'account.delete_blocked_hero_title_emphasis' })
+    const idx = full.indexOf(emphasis)
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [intl])
 
   const footer = isBlocked ? (
     <IonButton
@@ -148,7 +176,7 @@ export function DeleteAccountModal({
       onClick={onClose}
       className="flex-1"
     >
-      {tCommon.formatMessage({ id: 'common.close' })}
+      {intl.formatMessage({ id: 'common.close' })}
     </IonButton>
   ) : (
     <IonButton
@@ -158,7 +186,7 @@ export function DeleteAccountModal({
       disabled={!canDelete}
       className="flex-1"
     >
-      {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'account.delete_button' })}
+      {isDeleting ? <IonSpinner name="crescent" /> : intl.formatMessage({ id: 'account.delete_button' })}
     </IonButton>
   )
 
@@ -166,137 +194,205 @@ export function DeleteAccountModal({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={t.formatMessage({ id: 'account.delete_modal_title' })}
+      title={intl.formatMessage({ id: 'account.delete_modal_title' })}
       footer={isCheckLoading ? undefined : footer}
+      noSwipeDismiss
     >
-      <div className="px-4 pt-4 pb-4">
-        {error && (
-          <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mb-4">
-            {error}
-          </div>
-        )}
+      {error && <div className="modal-error">{error}</div>}
 
-        {isCheckLoading ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-3">
-            <IonSpinner name="crescent" className="w-8 h-8" />
-            <p className="text-sm text-text-tertiary">
-              {t.formatMessage({ id: 'account.delete_loading_check' })}
-            </p>
-          </div>
-        ) : isBlocked ? (
-          <BlockedState ownedBusinesses={ownedBusinesses} />
-        ) : (
-          <ConfirmState
-            email={user?.email ?? ''}
-            confirmEmail={confirmEmail}
-            onConfirmEmailChange={setConfirmEmail}
-            currentPassword={currentPassword}
-            onCurrentPasswordChange={setCurrentPassword}
-          />
-        )}
-      </div>
+      {isCheckLoading ? (
+        <div className="delete-account__loading">
+          <IonSpinner name="crescent" />
+          <p className="delete-account__loading-label">
+            {intl.formatMessage({ id: 'account.delete_loading_check' })}
+          </p>
+        </div>
+      ) : isBlocked ? (
+        <BlockedView ownedBusinesses={ownedBusinesses} title={blockedTitle} />
+      ) : (
+        <ConfirmView
+          email={user?.email ?? ''}
+          confirmEmail={confirmEmail}
+          onConfirmEmailChange={setConfirmEmail}
+          currentPassword={currentPassword}
+          onCurrentPasswordChange={setCurrentPassword}
+          emailMatches={emailMatches}
+          passwordEntered={passwordEntered}
+          title={confirmTitle}
+        />
+      )}
     </ModalShell>
   )
 }
 
 // ============================================================================
-// BLOCKED STATE
+// CONFIRM VIEW
 // ============================================================================
 
-function BlockedState({ ownedBusinesses }: { ownedBusinesses: OwnedBusiness[] }) {
-  const t = useIntl()
-
-  return (
-    <div className="flex flex-col items-center text-center py-2">
-      <div className="w-14 h-14 rounded-full bg-error-subtle flex items-center justify-center mb-4">
-        <AlertTriangle className="w-7 h-7 text-error" />
-      </div>
-      <h2 className="text-lg font-semibold text-text-primary">
-        {t.formatMessage({ id: 'account.delete_blocked_heading' })}
-      </h2>
-      <p className="text-sm text-text-secondary mt-2 max-w-sm">
-        {t.formatMessage({ id: 'account.delete_blocked_description' })}
-      </p>
-      <div className="w-full mt-6 text-left">
-        <p className="text-xs uppercase tracking-wider text-text-tertiary mb-2">
-          {t.formatMessage(
-            { id: 'account.delete_blocked_owned_label' },
-            { count: ownedBusinesses.length }
-          )}
-        </p>
-        <ul className="space-y-1">
-          {ownedBusinesses.map((b) => (
-            <li
-              key={b.id}
-              className="px-3 py-2 bg-bg-muted rounded-lg text-sm text-text-primary"
-            >
-              {b.name}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  )
-}
-
-// ============================================================================
-// CONFIRM STATE
-// ============================================================================
-
-interface ConfirmStateProps {
+interface ConfirmViewProps {
   email: string
   confirmEmail: string
   onConfirmEmailChange: (value: string) => void
   currentPassword: string
   onCurrentPasswordChange: (value: string) => void
+  emailMatches: boolean
+  passwordEntered: boolean
+  title: React.ReactNode
 }
 
-function ConfirmState({
-  email: _email,
+function ConfirmView({
+  email,
   confirmEmail,
   onConfirmEmailChange,
   currentPassword,
   onCurrentPasswordChange,
-}: ConfirmStateProps) {
-  const t = useIntl()
+  emailMatches,
+  passwordEntered,
+  title,
+}: ConfirmViewProps) {
+  const intl = useIntl()
+
+  const checks = [
+    {
+      key: 'email',
+      label: intl.formatMessage({ id: 'account.delete_check_email' }),
+      met: emailMatches,
+    },
+    {
+      key: 'password',
+      label: intl.formatMessage({ id: 'account.delete_check_password' }),
+      met: passwordEntered,
+    },
+  ]
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col items-center text-center py-2 mb-4">
-        <div className="w-14 h-14 rounded-full bg-error-subtle flex items-center justify-center mb-4">
-          <AlertTriangle className="w-7 h-7 text-error" />
+    <>
+      <header className="modal-hero delete-account__hero">
+        <div className="modal-hero__eyebrow modal-hero__eyebrow--danger">
+          <AlertOctagon size={12} />
+          {intl.formatMessage({ id: 'account.delete_hero_eyebrow' })}
         </div>
-        <h2 className="text-lg font-semibold text-text-primary">
-          {t.formatMessage({ id: 'account.delete_warning_heading' })}
-        </h2>
-        <p className="text-sm text-text-secondary mt-2">
-          {t.formatMessage({ id: 'account.delete_warning_description' })}
+        <h1 className="modal-hero__title modal-hero__title--danger">{title}</h1>
+        <p className="modal-hero__subtitle">
+          {intl.formatMessage({ id: 'account.delete_hero_subtitle' })}
         </p>
+      </header>
+
+      <div className="delete-account__warning">
+        <div className="delete-account__warning-eyebrow">
+          {intl.formatMessage({ id: 'account.delete_warning_eyebrow' })}
+        </div>
+        <ul className="delete-account__warning-list">
+          <li className="delete-account__warning-item">
+            {intl.formatMessage({ id: 'account.delete_warning_item_profile' })}
+          </li>
+          <li className="delete-account__warning-item">
+            {intl.formatMessage({ id: 'account.delete_warning_item_memberships' })}
+          </li>
+          <li className="delete-account__warning-item">
+            {intl.formatMessage({ id: 'account.delete_warning_item_invites' })}
+          </li>
+          <li className="delete-account__warning-item">
+            {intl.formatMessage({ id: 'account.delete_warning_item_irreversible' })}
+          </li>
+        </ul>
       </div>
-      <IonList lines="full" inset>
-        <IonItem>
-          <IonInput
-            type="email"
-            label={t.formatMessage({ id: 'account.delete_confirm_label' })}
-            labelPlacement="floating"
-            value={confirmEmail}
-            onIonInput={(e) => onConfirmEmailChange(e.detail.value ?? '')}
-            autocomplete="off"
-            required
-          />
-        </IonItem>
-        <IonItem>
-          <IonInput
-            type="password"
-            label={t.formatMessage({ id: 'account.delete_password_label' })}
-            labelPlacement="floating"
-            value={currentPassword}
-            onIonInput={(e) => onCurrentPasswordChange(e.detail.value ?? '')}
-            autocomplete="current-password"
-            required
-          />
-        </IonItem>
-      </IonList>
-    </div>
+
+      <div className="delete-account__target">
+        <span className="delete-account__target-eyebrow">
+          {intl.formatMessage({ id: 'account.delete_target_eyebrow' })}
+        </span>
+        <span className="delete-account__target-value">{email}</span>
+      </div>
+
+      <div className="delete-account__form">
+        <AuthField
+          label={intl.formatMessage({ id: 'account.delete_confirm_label' })}
+          type="email"
+          value={confirmEmail}
+          onChange={(e) => onConfirmEmailChange(e.target.value)}
+          placeholder={email}
+          autoComplete="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          required
+        />
+        <AuthField
+          label={intl.formatMessage({ id: 'account.delete_password_label' })}
+          type="password"
+          value={currentPassword}
+          onChange={(e) => onCurrentPasswordChange(e.target.value)}
+          autoComplete="current-password"
+          required
+        />
+      </div>
+
+      <div className="delete-account__checks">
+        <div className="delete-account__checks-eyebrow">
+          {intl.formatMessage({ id: 'account.delete_checks_eyebrow' })}
+        </div>
+        <ul className="delete-account__check-list">
+          {checks.map((check) => (
+            <li
+              key={check.key}
+              className={`delete-account__check${check.met ? ' is-met' : ''}`}
+            >
+              <span className="delete-account__check-marker" aria-hidden="true">
+                <Check />
+              </span>
+              {check.label}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
+  )
+}
+
+// ============================================================================
+// BLOCKED VIEW
+// ============================================================================
+
+function BlockedView({
+  ownedBusinesses,
+  title,
+}: {
+  ownedBusinesses: OwnedBusiness[]
+  title: React.ReactNode
+}) {
+  const intl = useIntl()
+
+  return (
+    <>
+      <header className="modal-hero delete-account__hero">
+        <div className="modal-hero__eyebrow modal-hero__eyebrow--danger">
+          <AlertOctagon size={12} />
+          {intl.formatMessage({ id: 'account.delete_blocked_eyebrow' })}
+        </div>
+        <h1 className="modal-hero__title modal-hero__title--danger">{title}</h1>
+        <p className="modal-hero__subtitle">
+          {intl.formatMessage({ id: 'account.delete_blocked_description' })}
+        </p>
+      </header>
+
+      <div className="delete-account__blocked-card">
+        <div className="delete-account__blocked-eyebrow">
+          <span>{intl.formatMessage({ id: 'account.delete_blocked_owned_eyebrow' })}</span>
+          <span className="delete-account__blocked-eyebrow-count">
+            {ownedBusinesses.length.toString().padStart(2, '0')}
+          </span>
+        </div>
+        <ul className="delete-account__owned-list">
+          {ownedBusinesses.map((b) => (
+            <li key={b.id} className="delete-account__owned-item">
+              <span className="delete-account__owned-name">{b.name}</span>
+              <span className="delete-account__owned-tag">
+                {intl.formatMessage({ id: 'account.delete_blocked_owner_tag' })}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
   )
 }

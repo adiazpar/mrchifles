@@ -139,24 +139,9 @@ export function EditProviderNoteModal({
     modalTitle = t.formatMessage({ id: 'providers.note_delete_confirm_title' })
     onBack = openedAsDelete ? undefined : () => setStep('form')
     footer = (
-      <>
-        <IonButton
-          fill="outline"
-          onClick={openedAsDelete ? onClose : () => setStep('form')}
-          disabled={isDeleting}
-          className="flex-1"
-        >
-          {t.formatMessage({ id: 'common.cancel' })}
-        </IonButton>
-        <IonButton
-          color="danger"
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="flex-1"
-        >
-          {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
-        </IonButton>
-      </>
+      <IonButton color="danger" onClick={handleDelete} disabled={isDeleting}>
+        {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
+      </IonButton>
     )
   } else {
     // delete-success or save-success

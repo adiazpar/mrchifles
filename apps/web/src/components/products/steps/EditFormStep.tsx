@@ -8,8 +8,10 @@ import {
   IonFooter,
   IonButtons,
   IonButton,
+  IonIcon,
   IonSpinner,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { Trash2, SlidersHorizontal } from 'lucide-react'
 import { hapticSuccess } from '@/lib/haptics'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
@@ -97,8 +99,8 @@ export function EditFormStep() {
             {t.formatMessage({ id: 'productForm.title_edit' })}
           </IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={handleCancel}>
-              {t.formatMessage({ id: 'common.cancel' })}
+            <IonButton onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
         </IonToolbar>

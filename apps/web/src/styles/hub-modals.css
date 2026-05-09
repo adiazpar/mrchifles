@@ -1,0 +1,840 @@
+/* ==========================================================================
+   Hub modals — Modern Mercantile chrome
+   ==========================================================================
+   Styles for CreateBusinessModal (NameStep / TypeStep / LocaleStep /
+   LogoStep / SuccessStep) and JoinBusinessModal (code / preview /
+   success). Class names prefixed by their flow so we don't collide
+   with .auth-* / .hub-* / .account-* primitives. */
+
+/* ==========================================================================
+   Shared step shell
+   ==========================================================================
+   Applied to the IonContent inner column for every wizard step. Caps width
+   so the editorial feel survives wide tablets, paints the page-base color
+   with a faint paper grain (matches auth.css), and keeps the hero +
+   form vertically rhythm'd. */
+.wizard-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  /* Horizontal + vertical padding lives on the host IonContent (via
+     --padding-* set by .wizard-content for IonNav steps, or by
+     .modal-content when ModalShell auto-wraps). The wizard-step div
+     just centers the column and rhythms its children. */
+  padding: 0;
+  max-width: 460px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.wizard-step--centered {
+  flex: 1;
+  justify-content: center;
+}
+
+/* IonContent body for our wizard pages — paper-base + faint grain.
+   Padding mirrors .modal-content (in app.css) so wizard step bodies
+   align with regular ModalShell-wrapped modals. */
+.wizard-content {
+  --padding-start: var(--page-padding);
+  --padding-end: var(--page-padding);
+  --padding-top: var(--space-3);
+  --padding-bottom: var(--space-3);
+}
+.wizard-content::part(scroll) {
+  background:
+    radial-gradient(var(--grain) 1px, transparent 1.2px) 0 0 / 3px 3px,
+    var(--color-bg-base);
+}
+
+/* ==========================================================================
+   Wizard hero (eyebrow step indicator + Fraunces title + italic subtitle)
+   ==========================================================================
+   The eyebrow is split into two atoms: a hair-line preceding the mono
+   step text. Flex with a 1px gradient sliver gives the indicator a
+   typographic "tick" rather than a pill. */
+.wizard-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.wizard-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.wizard-hero__eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+  display: inline-block;
+}
+
+.wizard-hero__eyebrow strong {
+  color: var(--color-brand);
+  font-weight: 500;
+}
+
+.wizard-hero__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-weight: 400;
+  font-size: 36px;
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+  color: var(--color-text-primary);
+  margin: 0;
+  max-width: 14ch;
+}
+
+.wizard-hero__title em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+
+.wizard-hero__subtitle {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  max-width: 32ch;
+  margin: 0;
+}
+
+/* Mono helper note (used below the locale picker, the logo button, etc.). */
+.wizard-note {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  text-align: left;
+  margin: 0;
+}
+
+.wizard-note--center { text-align: center; }
+.wizard-note--error { color: var(--color-error); }
+
+/* ==========================================================================
+   Toolbar — wizard pages render their own IonHeader. The top toolbar
+   should feel weightless: no border, no title text (the hero IS the
+   title), just the X / back affordances. The IonTitle slot is left
+   blank so the X anchors to the right edge alone.
+   ========================================================================== */
+.wizard-toolbar {
+  --background: var(--color-bg-base);
+  --border-color: transparent;
+  --border-width: 0;
+  --min-height: 48px;
+}
+
+/* ==========================================================================
+   CreateBusiness — NameStep (form-card + live echo)
+   ==========================================================================
+   The single AuthField is the entire form. Below it we render a small
+   "echo" card that mirrors what the user is typing in Fraunces — quiet
+   editorial reinforcement that the name is the one thing on this step. */
+.create-business__name-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.create-business__name-echo {
+  position: relative;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 64px;
+  /* Soft fade-in once the user starts typing. */
+  opacity: 0;
+  transform: translateY(2px);
+  transition:
+    opacity var(--duration-normal) ease-out,
+    transform var(--duration-normal) ease-out;
+}
+
+.create-business__name-echo[data-active="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.create-business__name-echo-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.create-business__name-echo-value {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 70;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 22px;
+  letter-spacing: -0.015em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  /* User content — never wrap mid-word in a way that looks broken. */
+  word-break: break-word;
+}
+
+/* ==========================================================================
+   CreateBusiness — TypeStep (wraps the shared BusinessTypeGrid)
+   ==========================================================================
+   The grid component is shared and not modified, but the wrapper gets
+   a thin paper-deep matte and a hair-line top edge so the picker reads
+   as a "shelf" of options under the hero. */
+.create-business__type-shelf {
+  position: relative;
+  padding: var(--space-3) 0 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ==========================================================================
+   CreateBusiness — LocaleStep
+   ==========================================================================
+   Wraps the shared LocalePicker. Adds a mono note row above ("Currency
+   follows from the region you pick"). */
+.create-business__locale-shelf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) 0 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ==========================================================================
+   CreateBusiness — LogoStep (medallion + upload control)
+   ========================================================================== */
+.create-business__logo-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) 0 var(--space-2);
+}
+
+.create-business__logo-stage-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.create-business__logo-medallion {
+  position: relative;
+  width: 144px;
+  height: 144px;
+  border-radius: 28px;
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  box-shadow:
+    0 1px 0 rgba(255, 252, 245, 0.6) inset,
+    0 8px 24px -16px rgba(27, 24, 21, 0.25);
+  /* Subtle lift-in when this step mounts. */
+  animation: create-business-medallion-in 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes create-business-medallion-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.create-business__logo-medallion-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--color-bg-surface);
+  margin: 0;
+}
+
+.create-business__logo-medallion-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.create-business__logo-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px -6px rgba(27, 24, 21, 0.3);
+  transition:
+    color var(--duration-fast) ease-out,
+    border-color var(--duration-fast) ease-out;
+}
+
+.create-business__logo-remove:hover {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.create-business__logo-remove svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Upload control — shaped like an AuthField row so it sits visually
+   in line with form fields elsewhere in the app. */
+.create-business__logo-upload {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background var(--duration-fast) ease-out,
+    box-shadow var(--duration-fast) ease-out;
+  text-align: left;
+}
+
+.create-business__logo-upload:hover {
+  border-color: var(--color-brand);
+  background: var(--color-bg-muted);
+  box-shadow: 0 0 0 4px var(--color-brand-subtle);
+}
+
+.create-business__logo-upload-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.create-business__logo-upload-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.create-business__logo-upload-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.create-business__logo-upload-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.create-business__logo-upload-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  letter-spacing: -0.005em;
+}
+
+/* ==========================================================================
+   CreateBusiness — SuccessStep
+   ==========================================================================
+   Full-screen celebration. No header; the IonPage's IonContent renders
+   us directly. */
+.create-business__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  padding: var(--space-6) var(--page-padding);
+  gap: var(--space-3);
+  background:
+    radial-gradient(var(--grain) 1px, transparent 1.2px) 0 0 / 3px 3px,
+    var(--color-bg-base);
+}
+
+.create-business__success-lottie {
+  width: 180px;
+  height: 180px;
+  margin-bottom: var(--space-2);
+}
+
+.create-business__success-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.create-business__success-eyebrow::before,
+.create-business__success-eyebrow::after {
+  content: "";
+  width: 16px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.create-business__success-title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-weight: 400;
+  font-size: 32px;
+  letter-spacing: -0.025em;
+  line-height: 1.06;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.create-business__success-title em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+
+.create-business__success-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg-surface);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* User content can be long; let it ellipsize on tiny phones. */
+  max-width: 80vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.create-business__success-action {
+  width: 100%;
+  max-width: 320px;
+  margin-top: var(--space-4);
+}
+
+.create-business__success-error {
+  font-size: 13px;
+  color: var(--color-error);
+  background: var(--color-error-subtle);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-top: var(--space-3);
+  width: 100%;
+  max-width: 360px;
+}
+
+/* The opacity-fade on title/name/cta is keyed off [data-ready]. */
+.create-business__success [data-ready] {
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 480ms ease-out,
+    transform 480ms ease-out;
+}
+
+.create-business__success [data-ready="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.create-business__success [data-ready][data-delay="1"] { transition-delay: 80ms; }
+.create-business__success [data-ready][data-delay="2"] { transition-delay: 200ms; }
+.create-business__success [data-ready][data-delay="3"] { transition-delay: 340ms; }
+
+/* ==========================================================================
+   JoinBusiness — code step
+   ==========================================================================
+   The 6-character code input is the centerpiece. Big mono characters,
+   tight letter-spacing, hair-line frame, focus ring matches AuthField. */
+.join-business__code-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.join-business__code-frame {
+  position: relative;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  transition:
+    border-color var(--duration-fast) ease-out,
+    box-shadow var(--duration-fast) ease-out;
+}
+
+.join-business__code-frame:focus-within {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 4px var(--color-brand-subtle);
+}
+
+.join-business__code-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.join-business__code-counter {
+  color: var(--color-text-secondary);
+}
+
+.join-business__code-counter strong {
+  color: var(--color-brand);
+  font-weight: 500;
+}
+
+.join-business__code-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  padding: 4px 0 6px;
+  caret-color: var(--color-brand);
+}
+
+.join-business__code-input::placeholder {
+  color: var(--color-ink-4);
+  letter-spacing: 0.32em;
+}
+
+/* Six-dot ledger underneath the input — fills as the user types. */
+.join-business__code-ledger {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: var(--space-2);
+}
+
+.join-business__code-ledger span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-border);
+  transition: background var(--duration-fast) ease-out;
+}
+
+.join-business__code-ledger span.is-on {
+  background: var(--color-brand);
+}
+
+.join-business__code-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.join-business__code-error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+  font-size: 13px;
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+}
+
+.join-business__code-error-action {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  text-align: left;
+  padding: 0;
+}
+
+.join-business__code-error-action::before {
+  content: "→ ";
+}
+
+/* ==========================================================================
+   JoinBusiness — preview step
+   ========================================================================== */
+.join-business__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.join-business__preview-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  background: var(--color-paper-deep);
+  border: 1px solid var(--glow-edge);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md), inset 3px 0 0 var(--color-brand);
+  /* Lift-in on mount. */
+  animation: join-business-preview-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes join-business-preview-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.join-business__preview-medallion {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+}
+
+.join-business__preview-medallion--transfer {
+  color: var(--color-warning);
+  background: var(--color-warning-subtle);
+  border-color: var(--color-warning);
+}
+
+.join-business__preview-medallion--invite {
+  color: var(--color-brand);
+  background: var(--color-brand-subtle);
+  border-color: var(--color-brand);
+}
+
+.join-business__preview-medallion svg {
+  width: 28px;
+  height: 28px;
+}
+
+.join-business__preview-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.join-business__preview-name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 50;
+  font-weight: 500;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--color-text-primary);
+  margin: 0;
+  /* User content. */
+  word-break: break-word;
+}
+
+.join-business__preview-body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  max-width: 32ch;
+  margin: 0;
+}
+
+.join-business__preview-body strong {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.join-business__preview-role {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  padding: 6px 12px;
+  border: 1px solid var(--color-brand);
+  border-radius: 999px;
+  background: var(--color-bg-surface);
+}
+
+.join-business__preview-footnote {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  margin: 0;
+}
+
+/* Loading state inside the preview card. */
+.join-business__preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-5);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   JoinBusiness — success step
+   ==========================================================================
+   Same celebration vocabulary as create-business success, scoped here so
+   each flow can tune copy/animation independently in the future. */
+.join-business__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-6) var(--page-padding);
+  gap: var(--space-3);
+}
+
+.join-business__success-lottie {
+  width: 180px;
+  height: 180px;
+  margin-bottom: var(--space-1);
+}
+
+.join-business__success-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.join-business__success-eyebrow::before,
+.join-business__success-eyebrow::after {
+  content: "";
+  width: 16px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.join-business__success-title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-weight: 400;
+  font-size: 30px;
+  letter-spacing: -0.025em;
+  line-height: 1.06;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.join-business__success-title em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+
+.join-business__success-body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  max-width: 32ch;
+  margin: 0;
+}
+
+.join-business__success-body strong {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.join-business__success [data-ready] {
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 480ms ease-out,
+    transform 480ms ease-out;
+}
+
+.join-business__success [data-ready="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.join-business__success [data-ready][data-delay="1"] { transition-delay: 80ms; }
+.join-business__success [data-ready][data-delay="2"] { transition-delay: 200ms; }
+.join-business__success [data-ready][data-delay="3"] { transition-delay: 340ms; }

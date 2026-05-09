@@ -1,0 +1,1017 @@
+/* ==========================================================================
+   Account modals — Modern Mercantile chrome
+   ==========================================================================
+   Styles for the six modals reachable from the Account page:
+   ThemeModal, EditProfileModal, ChangePasswordModal, AboutModal,
+   ContactSupportModal, DeleteAccountModal. Class names prefixed by
+   modal so we don't collide with .auth-* / .hub-* / .account-* primitives. */
+
+/* ===== Shared modal hero — same DNA as .auth-hero / .page-hero, but
+   tuned for the smaller padded canvas inside ModalShell. Used by
+   every modal in this file. ===== */
+.modal-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) 0 var(--space-2);
+}
+
+.modal-hero__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  margin-bottom: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.modal-hero__eyebrow--ink   { color: var(--color-text-tertiary); }
+.modal-hero__eyebrow--danger { color: var(--color-error); }
+
+.modal-hero__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-weight: 400;
+  font-size: 32px;
+  letter-spacing: -0.024em;
+  line-height: 1.06;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+.modal-hero__title em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+.modal-hero__title--danger em { color: var(--color-error); }
+
+.modal-hero__subtitle {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  max-width: 36ch;
+  margin: var(--space-2) 0 0;
+}
+
+/* Mono micro-rule shown beneath a title. Thin terracotta line then
+   spaced uppercase mono caption. */
+.modal-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: var(--space-4) 0 var(--space-3);
+}
+.modal-rule::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+/* Inline error banner, scoped so we don't fight the auth.css banner. */
+.modal-error {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+  border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+
+/* ==========================================================================
+   1. ThemeModal — "the swatch book"
+   --------------------------------------------------------------------------
+   Three printed paper swatches. Each renders a faux header bar + ruled
+   text lines so the user can SEE the lighting they're choosing. Selection
+   is shown by a 3px terracotta inset stripe along the top edge plus a
+   filled mono caption. */
+
+.theme-modal__intro {
+  margin-bottom: var(--space-4);
+}
+
+.theme-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.theme-modal__swatch {
+  /* The whole swatch is a button — paper card, soft shadow, hairline. */
+  appearance: none;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out,
+    box-shadow var(--duration-fast) ease-out;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+.theme-modal__swatch:active { transform: scale(0.985); }
+@media (hover: hover) {
+  .theme-modal__swatch:hover { border-color: var(--color-border-hover); }
+}
+
+.theme-modal__swatch.is-active {
+  border-color: var(--color-brand);
+  box-shadow: var(--shadow-md), 0 0 0 3px var(--color-brand-subtle);
+}
+.theme-modal__swatch.is-active::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--color-brand);
+  z-index: 2;
+}
+
+/* Faux device — a 4:5 paper rectangle that previews each theme. The
+   colors here are LITERAL — hardcoded so the swatch always shows the
+   theme it represents regardless of the user's current theme. */
+.theme-modal__preview {
+  aspect-ratio: 4 / 5;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 10px;
+  gap: 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.theme-modal__preview--light  { background: #F6EFDF; }
+.theme-modal__preview--dark   { background: #16120F; }
+.theme-modal__preview--system {
+  background: linear-gradient(
+    to right,
+    #F6EFDF 0,
+    #F6EFDF 50%,
+    #16120F 50%,
+    #16120F 100%
+  );
+}
+
+.theme-modal__preview-bar {
+  height: 6px;
+  border-radius: 3px;
+  width: 60%;
+}
+.theme-modal__preview--light  .theme-modal__preview-bar { background: #B5471F; }
+.theme-modal__preview--dark   .theme-modal__preview-bar { background: #E27A4A; }
+.theme-modal__preview--system .theme-modal__preview-bar {
+  background: #E27A4A;
+  width: 60%;
+}
+
+.theme-modal__preview-line {
+  height: 4px;
+  border-radius: 2px;
+  width: 90%;
+}
+.theme-modal__preview-line--short { width: 55%; }
+
+.theme-modal__preview--light  .theme-modal__preview-line { background: #DCD2BB; }
+.theme-modal__preview--dark   .theme-modal__preview-line { background: #322B24; }
+.theme-modal__preview--system .theme-modal__preview-line {
+  /* Half hair-light, half hair-dark — so the line crosses the seam. */
+  background: linear-gradient(
+    to right,
+    #DCD2BB 0, #DCD2BB 50%, #322B24 50%, #322B24 100%
+  );
+}
+
+/* Tiny circular mark in the corner — sun / moon / split. */
+.theme-modal__preview-mark {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+.theme-modal__preview--light  .theme-modal__preview-mark { background: #C8881C; color: #1B1815; }
+.theme-modal__preview--dark   .theme-modal__preview-mark { background: #524C44; color: #F4ECDB; }
+.theme-modal__preview--system .theme-modal__preview-mark {
+  background: linear-gradient(to right, #C8881C 50%, #524C44 50%);
+  color: #fff;
+}
+.theme-modal__preview-mark svg { width: 10px; height: 10px; }
+
+.theme-modal__caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 9px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.theme-modal__swatch.is-active .theme-modal__caption { color: var(--color-text-primary); }
+
+.theme-modal__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+.theme-modal__swatch.is-active .theme-modal__dot { background: var(--color-brand); }
+
+.theme-modal__description {
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   2. EditProfileModal — "your mark"
+   --------------------------------------------------------------------------
+   Avatar treated as a seal: large terracotta-edged ring at the center,
+   small mono action buttons beside it, name field, and a read-only
+   display row for email (locked, with a PERMANENT mono tag). */
+
+.edit-profile__seal-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0 var(--space-5);
+}
+
+.edit-profile__seal {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: var(--color-paper-deep);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  /* Concentric rings: hairline, then breathing terracotta glow. */
+  box-shadow:
+    inset 0 0 0 1px var(--color-border),
+    0 0 0 6px var(--color-bg-base),
+    0 0 0 7px var(--color-brand-subtle);
+}
+
+.edit-profile__seal img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.edit-profile__seal-initials {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-weight: 500;
+  font-size: 38px;
+  letter-spacing: -0.02em;
+  color: var(--color-brand);
+  user-select: none;
+}
+
+/* Circular X chip floating top-right of the seal. */
+.edit-profile__seal-clear {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-error);
+  color: #fff;
+  border: 2px solid var(--color-bg-base);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform var(--duration-fast) ease-out;
+  z-index: 1;
+}
+.edit-profile__seal-clear:hover { transform: scale(1.06); }
+.edit-profile__seal-clear svg { width: 12px; height: 12px; }
+
+.edit-profile__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.edit-profile__action {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 7px 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    background var(--duration-fast) ease-out;
+}
+.edit-profile__action:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-subtle);
+}
+.edit-profile__action svg { width: 12px; height: 12px; }
+
+.edit-profile__hint {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+/* Read-only "sealed" display row used for email — looks like an
+   AuthField but with a PERMANENT chip instead of a value input. */
+.edit-profile__sealed {
+  display: block;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px 12px;
+  position: relative;
+}
+
+.edit-profile__sealed-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  display: block;
+  margin-bottom: 3px;
+}
+
+.edit-profile__sealed-value {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.edit-profile__sealed-tag {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  padding: 2px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg-surface);
+}
+
+.edit-profile__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.edit-profile__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-4) var(--space-2);
+}
+.edit-profile__success-heading {
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 50;
+  font-size: 24px;
+  letter-spacing: -0.018em;
+  color: var(--color-text-primary);
+  margin-top: var(--space-3);
+}
+.edit-profile__success-heading em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+.edit-profile__success-desc {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-2);
+}
+
+/* ==========================================================================
+   3. ChangePasswordModal — "the key"
+   --------------------------------------------------------------------------
+   Three stacked AuthFields, each with its own mono eyebrow context.
+   Strength meter slides into the new-password field's `below` slot.
+   A "RULE" mono strip below the form lists requirements with live ticks. */
+
+.change-password__hero { margin-bottom: var(--space-5); }
+
+.change-password__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.change-password__rules {
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.change-password__rules-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.change-password__rule-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px var(--space-3);
+}
+
+.change-password__rule {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.change-password__rule-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.change-password__rule-marker svg {
+  width: 8px;
+  height: 8px;
+  color: transparent;
+  transition: color var(--duration-fast) ease-out;
+}
+.change-password__rule.is-met .change-password__rule-marker {
+  border-color: var(--color-success);
+  background: var(--color-success);
+}
+.change-password__rule.is-met .change-password__rule-marker svg { color: #fff; }
+.change-password__rule.is-met { color: var(--color-text-primary); }
+
+.change-password__mismatch {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.change-password__mismatch::before {
+  content: "";
+  width: 16px;
+  height: 1px;
+  background: var(--color-error);
+}
+
+.change-password__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-4) var(--space-2);
+}
+.change-password__success-heading {
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 50;
+  font-size: 24px;
+  letter-spacing: -0.018em;
+  color: var(--color-text-primary);
+  margin-top: var(--space-3);
+}
+.change-password__success-heading em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+.change-password__success-desc {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-2);
+}
+
+/* ==========================================================================
+   4. AboutModal — "the colophon"
+   --------------------------------------------------------------------------
+   Editorial layout. Big Fraunces wordmark with terracotta dot, italic
+   tagline, a printed-press version block (rule + mono edition), brand
+   statement, then a row of mono links. */
+
+.about-modal__page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-3) var(--space-2) var(--space-2);
+  position: relative;
+}
+
+/* Tiny mono inscriptions in opposite top corners — like the watermark
+   on a printed page. */
+.about-modal__corner {
+  position: absolute;
+  top: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.about-modal__corner--left  { left: 0; }
+.about-modal__corner--right { right: 0; }
+
+.about-modal__wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 70;
+  font-weight: 500;
+  font-size: 56px;
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
+  margin-top: var(--space-6);
+  line-height: 1;
+}
+.about-modal__wordmark::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  box-shadow: 0 0 0 5px var(--color-brand-subtle);
+}
+
+.about-modal__tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 100;
+  font-weight: 400;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  margin: var(--space-3) 0 0;
+}
+.about-modal__tagline em {
+  font-style: italic;
+  color: var(--color-brand);
+}
+
+.about-modal__rule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-6) 0 var(--space-3);
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.about-modal__rule::before,
+.about-modal__rule::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.about-modal__version {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-primary);
+  font-feature-settings: "tnum" 1;
+}
+.about-modal__version-label {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.about-modal__statement {
+  margin-top: var(--space-5);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 50;
+  font-weight: 400;
+  font-size: 16.5px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  letter-spacing: -0.005em;
+  max-width: 38ch;
+}
+
+.about-modal__credit {
+  margin-top: var(--space-5);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* ==========================================================================
+   5. ContactSupportModal — "notice posted"
+   --------------------------------------------------------------------------
+   The "coming soon" content reframed as a notice pinned to the wall:
+   bordered paper card with mono NOTICE eyebrow, italic-accent title,
+   description, and a small footnote pointing the user back to the help
+   they have today (the business owner who invited them). */
+
+.contact-support__notice {
+  margin: var(--space-3) 0 var(--space-2);
+  padding: var(--space-6) var(--space-5);
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  position: relative;
+  text-align: center;
+  /* Subtle terracotta inset stripe along the top to match the
+     primary FeatureCard variant the rest of the app uses. */
+  box-shadow: var(--shadow-sm), inset 0 3px 0 var(--color-brand);
+}
+
+.contact-support__icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto var(--space-4);
+  border-radius: 50%;
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  color: var(--color-brand);
+}
+.contact-support__icon svg { width: 24px; height: 24px; }
+
+.contact-support__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.contact-support__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 70;
+  font-weight: 400;
+  font-size: 30px;
+  letter-spacing: -0.022em;
+  line-height: 1.06;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+.contact-support__title em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+
+.contact-support__body {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  margin: var(--space-3) auto 0;
+  max-width: 32ch;
+}
+
+.contact-support__footnote {
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  text-align: left;
+}
+.contact-support__footnote-eyebrow {
+  display: block;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-1);
+}
+
+/* ==========================================================================
+   6. DeleteAccountModal — "destructive friction"
+   --------------------------------------------------------------------------
+   Oxblood hero. The user's email is shown in mono as the target above
+   the type-to-confirm input. A live mono check-list reflects which
+   gates the user has cleared. The blocked variant gets its own hero
+   and a paper-deep card with the list of owned businesses. */
+
+.delete-account__hero { margin-bottom: var(--space-4); }
+
+.delete-account__warning {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-error-subtle);
+  border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+}
+
+.delete-account__warning-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  margin-bottom: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.delete-account__warning-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delete-account__warning-item {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.delete-account__warning-item::before {
+  content: "—";
+  flex-shrink: 0;
+  color: var(--color-error);
+  font-family: var(--font-mono);
+}
+
+/* Email target shown above the confirm input — mono, small, with a
+   tiny "TYPE TO CONFIRM" eyebrow. */
+.delete-account__target {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.delete-account__target-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.delete-account__target-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--color-text-primary);
+  word-break: break-all;
+  font-feature-settings: "tnum" 1;
+}
+
+.delete-account__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Live checklist — same visual language as the password rule list,
+   but tinted oxblood for the destructive context. */
+.delete-account__checks {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.delete-account__checks-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.delete-account__check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.delete-account__check {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.delete-account__check-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.delete-account__check-marker svg {
+  width: 8px;
+  height: 8px;
+  color: transparent;
+  transition: color var(--duration-fast) ease-out;
+}
+.delete-account__check.is-met .delete-account__check-marker {
+  border-color: var(--color-error);
+  background: var(--color-error);
+}
+.delete-account__check.is-met .delete-account__check-marker svg { color: #fff; }
+.delete-account__check.is-met { color: var(--color-text-primary); }
+
+/* ===== Blocked state — owned businesses ===== */
+.delete-account__blocked-card {
+  margin-top: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm), inset 3px 0 0 var(--color-error);
+}
+
+.delete-account__blocked-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  margin-bottom: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.delete-account__blocked-eyebrow-count {
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+}
+
+.delete-account__owned-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.delete-account__owned-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.delete-account__owned-item:last-child { border-bottom: none; }
+
+.delete-account__owned-name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.delete-account__owned-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--color-error) 40%, transparent);
+  border-radius: 999px;
+  background: var(--color-bg-base);
+  flex-shrink: 0;
+}
+
+/* Loading / spinner state */
+.delete-account__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-4);
+}
+.delete-account__loading-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}

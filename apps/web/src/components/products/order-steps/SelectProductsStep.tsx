@@ -9,7 +9,9 @@ import {
   IonFooter,
   IonButtons,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { X, ImagePlus, Loader2, ScanLine, Minus, Plus } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
@@ -58,7 +60,9 @@ export function SelectProductsStep() {
         <IonToolbar>
           <IonTitle>{t.formatMessage({ id: 'orders.step_select_products' })}</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={onClose}>{t.formatMessage({ id: 'common.cancel' })}</IonButton>
+            <IonButton onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonIcon icon={close} />
+            </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>

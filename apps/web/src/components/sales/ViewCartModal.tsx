@@ -98,40 +98,31 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
 
   const title = step === 0 ? cartTitle : step === 1 ? paymentTitle : successTitle
 
+  // Toolbar X dismisses across the app, so footers are primary-only.
   // Footer for step 0 (cart view)
   const cartFooter = (
-    <>
-      <IonButton fill="outline" onClick={handleClose}>
-        {tCommon.formatMessage({ id: 'common.cancel' })}
-      </IonButton>
-      <IonButton disabled={isEmpty} onClick={() => setStep(1)}>
-        {tCommon.formatMessage({ id: 'common.confirm' })}
-      </IonButton>
-    </>
+    <IonButton disabled={isEmpty} onClick={() => setStep(1)}>
+      {tCommon.formatMessage({ id: 'common.confirm' })}
+    </IonButton>
   )
 
-  // Footer for step 1 (payment)
+  // Footer for step 1 (payment) — single charge button
   const paymentFooter = (
-    <>
-      <IonButton fill="outline" onClick={handleClose} disabled={submitting}>
-        {tCommon.formatMessage({ id: 'common.cancel' })}
-      </IonButton>
-      <ChargeButton
-        cart={cart}
-        currency={currency}
-        methodId={methodId}
-        tenderedStr={tenderedStr}
-        submitting={submitting}
-        setSubmitting={setSubmitting}
-        setConfirmedSale={setConfirmedSale}
-        setError={setError}
-        setErrorMessageCode={setErrorMessageCode}
-        canConfirm={canConfirm}
-        onGoToSuccess={() => setStep(2)}
-        onLock={() => setIsLocked(true)}
-        onUnlock={() => setIsLocked(false)}
-      />
-    </>
+    <ChargeButton
+      cart={cart}
+      currency={currency}
+      methodId={methodId}
+      tenderedStr={tenderedStr}
+      submitting={submitting}
+      setSubmitting={setSubmitting}
+      setConfirmedSale={setConfirmedSale}
+      setError={setError}
+      setErrorMessageCode={setErrorMessageCode}
+      canConfirm={canConfirm}
+      onGoToSuccess={() => setStep(2)}
+      onLock={() => setIsLocked(true)}
+      onUnlock={() => setIsLocked(false)}
+    />
   )
 
   const footer = step === 0 ? cartFooter : step === 1 ? paymentFooter : undefined

@@ -10,10 +10,14 @@
 
 :root {
   /* ===== Typography =====
-     Fonts are loaded via the <link> tags in index.html (Google Fonts:
-     Nunito Sans). These values name the family directly. */
-  --font-display: 'Nunito Sans', system-ui, -apple-system, sans-serif;
-  --font-body: 'Nunito Sans', system-ui, -apple-system, sans-serif;
+     Modern Mercantile system. Fraunces (variable serif with optical-size
+     and SOFT axes) carries display, prices, and key numbers. Geist is
+     the UI workhorse. JetBrains Mono is reserved for tabular figures —
+     dates, codes, money — anywhere alignment matters.
+     Fonts are loaded via the <link> tag in index.html. */
+  --font-display: 'Fraunces', 'Hoefler Text', Georgia, serif;
+  --font-body: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Size Scale (Two-Pixel Rule) */
   --text-xs: 12px;
@@ -28,52 +32,84 @@
   /* Hero Typography - for balance displays and key numbers */
   --text-hero: clamp(2.5rem, 8vw, 4rem);
 
-  /* ===== Brand: Terracotta (Warm) ===== */
-  --color-brand: #D97757;
-  --color-brand-hover: #B85A3C;
-  --color-brand-subtle: #FBF1EC;
-  /* RGB triplet for #D97757 — exposed so Ionic can build rgba(...)
-     shadows and tints from --ion-color-primary-rgb. */
-  --color-brand-rgb: 217, 119, 87;
+  /* ===== Brand: Terracotta (Mercantile) ===== */
+  --color-brand: #B5471F;
+  --color-brand-hover: #98381A;
+  --color-brand-shade: #98381A;
+  --color-brand-tint:  #C9613A;
+  --color-brand-subtle: #F7E5DA;
+  /* RGB triplet exposed so Ionic can build rgba(...) shadows and tints
+     from --ion-color-primary-rgb. */
+  --color-brand-rgb: 181, 71, 31;
 
-  /* ===== Neutral Palette (Warm Stone) ===== */
-  --neutral-50: #FAFAF9;
-  --neutral-100: #F5F5F4;
-  --neutral-200: #E7E5E4;
-  --neutral-300: #D6D3D1;
-  --neutral-400: #A8A29E;
-  --neutral-500: #78716C;
-  --neutral-600: #57534E;
-  --neutral-700: #44403C;
-  --neutral-800: #292524;
-  --neutral-900: #1C1917;
+  /* ===== Paper & Ink Palette =====
+     Replaces the prior Warm Stone neutral scale. Paper is the canvas,
+     ink is the type, hair is the divider. Saffron / moss / oxblood are
+     reserved for state colors (warning / success / error). */
+  --color-paper:        #F6EFDF;
+  --color-paper-warm:   #F2EAD6;
+  --color-paper-deep:   #ECE2C9;
+  --color-surface:      #FFFCF5;
+  --color-ink:          #1B1815;
+  --color-ink-2:        #514B40;
+  --color-ink-3:        #8B8475;
+  --color-ink-4:        #B8B0A0;
+  --color-hair:         #DCD2BB;
+  --color-hair-soft:    #E6DCC4;
 
-  /* ===== Semantic Mappings - Light Mode ===== */
+  --color-saffron:      #C8881C;
+  --color-moss:         #4F6B36;
+  --color-moss-tint:    #E5ECDB;
+  --color-oxblood:      #8B2D2D;
+  --color-oxblood-tint: #F1DCDC;
+
+  /* Glow tokens — low-alpha terracotta for accent borders, focus rings,
+     and the occasional wash. Modern Mercantile avoids gradient FILLS, so
+     these are applied as solid colors at low alpha. */
+  --glow-soft:   rgba(181, 71, 31, 0.08);
+  --glow-mid:    rgba(181, 71, 31, 0.10);
+  --glow-strong: rgba(181, 71, 31, 0.16);
+  --glow-edge:   rgba(181, 71, 31, 0.22);
+
+  /* Paper grain (token only — surfaces opt in by referencing --grain).
+     Tuned at low alpha so the texture is a hint, not a pattern. */
+  --grain: rgba(86, 67, 40, 0.022);
+  --grain-blend: multiply;
+
+  /* Translucent paper for sticky chrome (tab bar, modal footer). */
+  --paper-translucent: rgba(246, 239, 223, 0.92);
+  --surface-translucent: rgba(255, 252, 245, 0.88);
+
+  /* ===== Semantic Mappings - Light Mode =====
+     Names kept stable so the Ionic theme bridge and every existing
+     component reference continues to resolve. Values now derive from
+     Paper & Ink. */
 
   /* Backgrounds */
-  --color-bg-base: #FAFAF9;
-  --color-bg-surface: #FFFFFF;
-  --color-bg-elevated: #FFFFFF;
-  --color-bg-muted: #F5F5F4;
+  --color-bg-base: var(--color-paper);
+  --color-bg-surface: var(--color-surface);
+  --color-bg-elevated: var(--color-surface);
+  --color-bg-muted: var(--color-paper-warm);
 
   /* Text Hierarchy */
-  --color-text-primary: #1C1917;
-  --color-text-secondary: #57534E;
-  --color-text-tertiary: #A8A29E;
-  --color-text-inverse: #FAFAF9;
-  --color-text-brand: #B85A3C;
+  --color-text-primary: var(--color-ink);
+  --color-text-secondary: var(--color-ink-2);
+  --color-text-tertiary: var(--color-ink-3);
+  --color-text-inverse: var(--color-paper);
+  --color-text-brand: var(--color-brand);
 
   /* Borders */
-  --color-border: #E7E5E4;
-  --color-border-hover: #D6D3D1;
+  --color-border: var(--color-hair);
+  --color-border-hover: var(--color-hair-soft);
 
-  /* Semantic Colors */
-  --color-success: #65A30D;
-  --color-success-subtle: #ECFCCB;
-  --color-warning: #CA8A04;
-  --color-warning-subtle: #FEF9C3;
-  --color-error: #DC2626;
-  --color-error-subtle: #FEE2E2;
+  /* Semantic Colors — moss for success, saffron for warning, oxblood
+     for danger. Warmer palette than the prior bright lime / yellow. */
+  --color-success: var(--color-moss);
+  --color-success-subtle: var(--color-moss-tint);
+  --color-warning: var(--color-saffron);
+  --color-warning-subtle: #FAEFD0;
+  --color-error: var(--color-oxblood);
+  --color-error-subtle: var(--color-oxblood-tint);
 
   /* ===== Spacing ===== */
   --space-1: 4px;
@@ -95,11 +131,14 @@
   --radius-2xl: 20px;
   --radius-full: 9999px;
 
-  /* ===== Shadows (Soft, single-layer, terracotta-tinted) ===== */
-  --shadow-sm: 0 1px 3px rgba(var(--color-brand-rgb), 0.08);
-  --shadow-md: 0 4px 12px rgba(var(--color-brand-rgb), 0.10);
-  --shadow-lg: 0 12px 32px rgba(var(--color-brand-rgb), 0.12);
-  --shadow-xl: 0 24px 48px rgba(28, 25, 23, 0.16);
+  /* ===== Shadows (warm, paper-toned) =====
+     Two-layer: a hairline at the top (1px solid for the printed-edge feel)
+     plus a soft warm khaki drop. Dark mode redefines them with deeper
+     blacks. */
+  --shadow-sm: 0 1px 0 rgba(27, 24, 21, 0.04);
+  --shadow-md: 0 1px 0 rgba(27, 24, 21, 0.04), 0 8px 28px -16px rgba(91, 67, 40, 0.18);
+  --shadow-lg: 0 1px 0 rgba(27, 24, 21, 0.04), 0 18px 44px -22px rgba(91, 67, 40, 0.28);
+  --shadow-xl: 0 24px 60px -28px rgba(60, 40, 15, 0.35);
 
   /* ===== Animation Tokens ===== */
   /* Easing curves */
@@ -139,47 +178,83 @@
   --max-viewport-width: 440px;
 }
 
-/* ===== Dark Mode ===== */
+/* ===== Dark Mode — Aged Ink =====
+   Same identity, different lighting. Warm cream text on deep warm
+   charcoal, terracotta brightened for AA contrast on dark surfaces.
+   Glow tokens shift to the brighter terracotta variant; grain inverts
+   from multiply (dark-on-light) to screen (light-on-dark). */
 .dark {
-  /* Backgrounds */
-  --color-bg-base: #0C0A09;
-  --color-bg-surface: #1C1917;
-  --color-bg-elevated: #292524;
-  --color-bg-muted: #1C1917;
-
   /* Brand (lifted for contrast on dark surfaces) */
-  --color-brand: #E89B7F;
-  --color-brand-hover: #D97757;
-  /* Anchored to base brand RGB (217, 119, 87) so subtle backgrounds
-     read consistently across modes — selected-state highlights stay
-     visually consistent with light. Intentional, not an oversight. */
-  --color-brand-subtle: rgba(217, 119, 87, 0.15);
-  --color-brand-rgb: 232, 155, 127;
+  --color-brand: #E27A4A;
+  --color-brand-hover: #C46339;
+  --color-brand-shade: #C46339;
+  --color-brand-tint:  #ED8E5C;
+  --color-brand-subtle: rgba(226, 122, 74, 0.16);
+  --color-brand-rgb: 226, 122, 74;
+
+  /* Paper & Ink (Aged Ink) */
+  --color-paper:        #16120F;
+  --color-paper-warm:   #1F1A15;
+  --color-paper-deep:   #281F18;
+  --color-surface:      #221C16;
+  --color-ink:          #F4ECDB;
+  --color-ink-2:        #B5AC9A;
+  --color-ink-3:        #7F786B;
+  --color-ink-4:        #524C44;
+  --color-hair:         #322B24;
+  --color-hair-soft:    #271F1A;
+
+  --color-saffron:      #E8B95A;
+  --color-moss:         #8FB371;
+  --color-moss-tint:    rgba(143, 179, 113, 0.18);
+  --color-oxblood:      #D8807F;
+  --color-oxblood-tint: rgba(216, 128, 127, 0.16);
+
+  /* Glow — brighter terracotta for dark */
+  --glow-soft:   rgba(226, 122, 74, 0.14);
+  --glow-mid:    rgba(226, 122, 74, 0.18);
+  --glow-strong: rgba(226, 122, 74, 0.24);
+  --glow-edge:   rgba(226, 122, 74, 0.32);
+
+  /* Grain inverts: cream dots screened over deep ink */
+  --grain: rgba(255, 238, 210, 0.025);
+  --grain-blend: screen;
+
+  --paper-translucent: rgba(22, 18, 15, 0.92);
+  --surface-translucent: rgba(34, 28, 22, 0.88);
+
+  /* Semantic Mappings — Dark Mode */
+
+  /* Backgrounds */
+  --color-bg-base: var(--color-paper);
+  --color-bg-surface: var(--color-surface);
+  --color-bg-elevated: var(--color-surface);
+  --color-bg-muted: var(--color-paper-warm);
 
   /* Text Hierarchy */
-  --color-text-primary: #FAFAF9;
-  --color-text-secondary: #A8A29E;
-  --color-text-tertiary: #78716C;
-  --color-text-inverse: #1C1917;
-  --color-text-brand: #E89B7F;
+  --color-text-primary: var(--color-ink);
+  --color-text-secondary: var(--color-ink-2);
+  --color-text-tertiary: var(--color-ink-3);
+  --color-text-inverse: var(--color-paper);
+  --color-text-brand: var(--color-brand);
 
   /* Borders */
-  --color-border: #292524;
-  --color-border-hover: #44403C;
+  --color-border: var(--color-hair);
+  --color-border-hover: var(--color-hair-soft);
 
-  /* Semantic colors — lighter for dark backgrounds */
-  --color-success: #84CC16;
-  --color-success-subtle: rgba(132, 204, 22, 0.15);
-  --color-warning: #EAB308;
-  --color-warning-subtle: rgba(234, 179, 8, 0.15);
-  --color-error: #F87171;
-  --color-error-subtle: rgba(248, 113, 113, 0.15);
+  /* Semantic Colors */
+  --color-success: var(--color-moss);
+  --color-success-subtle: var(--color-moss-tint);
+  --color-warning: var(--color-saffron);
+  --color-warning-subtle: rgba(232, 185, 90, 0.18);
+  --color-error: var(--color-oxblood);
+  --color-error-subtle: var(--color-oxblood-tint);
 
-  /* Dark mode shadows (deeper, near-black) */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
-  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.7);
+  /* Dark mode shadows — deeper, near-black, warm-tinted */
+  --shadow-sm: 0 1px 0 rgba(255, 250, 235, 0.02);
+  --shadow-md: 0 1px 0 rgba(255, 250, 235, 0.02), 0 14px 36px -16px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 1px 0 rgba(255, 250, 235, 0.02), 0 22px 56px -22px rgba(0, 0, 0, 0.65);
+  --shadow-xl: 0 28px 72px -28px rgba(0, 0, 0, 0.7);
 }
 
 /* ==========================================================================
@@ -219,6 +294,10 @@ body {
   line-height: 1.6;
   color: var(--color-text-primary);
   background-color: var(--color-bg-base);
+  /* Geist OpenType: ss01/ss02 enable modern stylistic alternates;
+     cv11 swaps the hooked-leg "a" for a single-storey form. Silently
+     ignored by fallback fonts that don't ship these features. */
+  font-feature-settings: "ss01", "ss02", "cv11";
   /* Fixed height with dvh for mobile browser chrome */
   height: 100dvh;
   height: 100vh; /* Fallback for older browsers */
@@ -245,16 +324,22 @@ body {
 @layer base {
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    font-weight: 600;
-    line-height: 1.25;
-    letter-spacing: -0.01em;
+    /* Fraunces variation axes. opsz is auto (font-optical-sizing) so
+       the browser auto-tunes optical size to font-size; we tune SOFT
+       (letterform softness) but leave wght out so font-weight + Tailwind
+       utilities (font-bold, font-medium) still take effect. */
+    font-optical-sizing: auto;
+    font-variation-settings: "SOFT" 40;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
     color: var(--color-text-primary);
   }
 
-  h1 { font-size: var(--text-4xl); font-weight: 700; }
-  h2 { font-size: var(--text-3xl); }
-  h3 { font-size: var(--text-2xl); }
-  h4 { font-size: var(--text-xl); }
+  h1 { font-size: var(--text-4xl); font-weight: 400; letter-spacing: -0.028em; line-height: 1.05; }
+  h2 { font-size: var(--text-3xl); font-weight: 400; letter-spacing: -0.022em; line-height: 1.08; }
+  h3 { font-size: var(--text-2xl); font-weight: 500; letter-spacing: -0.018em; }
+  h4 { font-size: var(--text-xl); font-weight: 600; letter-spacing: -0.012em; }
 
   p {
     color: var(--color-text-secondary);
