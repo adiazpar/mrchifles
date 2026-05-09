@@ -1,7 +1,8 @@
 'use client'
 
 import { Redirect } from 'react-router-dom'
-import { IonContent, IonHeader, IonPage, IonSpinner, IonToolbar } from '@ionic/react'
+import { IonContent, IonHeader, IonPage, IonToolbar } from '@ionic/react'
+import { PageSpinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { CreateBusinessProvider } from '@/contexts/create-business-context'
 import { JoinBusinessProvider } from '@/contexts/join-business-context'
@@ -43,9 +44,7 @@ export function HubPage() {
     <IonPage>
       {authLoading ? (
         <IonContent>
-          <div className="flex h-full items-center justify-center">
-            <IonSpinner name="crescent" />
-          </div>
+          <PageSpinner />
         </IonContent>
       ) : (
         <PageTransitionProvider>

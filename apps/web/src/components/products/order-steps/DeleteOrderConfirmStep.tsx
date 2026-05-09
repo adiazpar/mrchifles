@@ -48,7 +48,7 @@ export function DeleteOrderConfirmStep() {
           <IonTitle>{t.formatMessage({ id: 'orders.delete_order_title' })}</IonTitle>
           {openedFromSwipe && (
             <IonButtons slot="end">
-              <IonButton onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonButton fill="clear" onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
                 <IonIcon icon={close} />
               </IonButton>
             </IonButtons>

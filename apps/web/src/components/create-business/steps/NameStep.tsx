@@ -55,7 +55,7 @@ export function NameStep() {
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           <IonButtons slot="end">
-            <IonButton onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+            <IonButton fill="clear" onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>

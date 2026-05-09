@@ -18,11 +18,9 @@ import {
   IonRippleEffect,
   IonSegment,
   IonSegmentButton,
-  IonSpinner,
 } from '@ionic/react'
 import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2 } from 'lucide-react'
-import { TabContainer } from '@/components/ui'
-import { ModalShell } from '@/components/ui'
+import { TabContainer, ModalShell, PageSpinner } from '@/components/ui'
 import {
   ProviderModal,
   AddProviderNoteModal,
@@ -467,9 +465,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <IonSpinner name="crescent" />
-      </div>
+      <PageSpinner />
     );
   }
 

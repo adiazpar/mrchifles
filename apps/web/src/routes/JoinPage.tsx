@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { Redirect, useHistory, useLocation } from 'react-router-dom'
-import { IonContent, IonPage, IonSpinner } from '@ionic/react'
+import { IonContent, IonPage } from '@ionic/react'
+import { PageSpinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 
 /**
@@ -65,11 +66,7 @@ export function JoinPage() {
   return (
     <IonPage>
       <IonContent>
-        {/* Full-viewport centered spinner. See HubPage for the
-            IonContent + IonSpinner pattern rationale. */}
-        <div className="flex h-full items-center justify-center">
-          <IonSpinner name="crescent" />
-        </div>
+        <PageSpinner />
       </IonContent>
     </IonPage>
   )

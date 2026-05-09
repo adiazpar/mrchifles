@@ -44,8 +44,14 @@ function handleClick(e: MouseEvent) {
 
 export function HapticFeedbackProvider() {
   useEffect(() => {
-    document.addEventListener('click', handleClick)
-    return () => document.removeEventListener('click', handleClick)
+    // Capture phase, not bubble. Some Ionic web components (IonBackButton
+    // notably) install internal click handlers on the host that change the
+    // DOM mid-handler — by the time the click finishes bubbling to
+    // `document`, the source page is already unmounting and the listener
+    // can miss the event. Listening at the capture phase guarantees the
+    // haptic fires synchronously before any descendant handler runs.
+    document.addEventListener('click', handleClick, true)
+    return () => document.removeEventListener('click', handleClick, true)
   }, [])
   return null
 }

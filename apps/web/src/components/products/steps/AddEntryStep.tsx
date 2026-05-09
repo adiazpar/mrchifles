@@ -47,7 +47,7 @@ export function AddEntryStep() {
             {t.formatMessage({ id: 'productForm.title_add' })}
           </IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+            <IonButton fill="clear" onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>

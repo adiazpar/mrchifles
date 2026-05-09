@@ -10,12 +10,12 @@ import {
   IonItemOptions,
   IonItemSliding,
   IonList,
-  IonSpinner,
 } from '@ionic/react'
 import { useProviderManagement } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
 import { ProviderListItem, ProviderModal } from '@/components/providers'
+import { PageSpinner } from '@/components/ui'
 
 interface ProvidersDrilldownProps {
   businessId: string
@@ -70,9 +70,7 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
   return (
     <>
       {isLoading ? (
-        <div className="flex items-center justify-center h-full">
-          <IonSpinner name="crescent" />
-        </div>
+        <PageSpinner />
       ) : (
         <div className="px-4 py-6 space-y-6">
           {error && !isModalOpen && (

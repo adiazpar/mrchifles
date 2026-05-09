@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
-import { IonSpinner } from '@ionic/react'
+import { PageSpinner } from '@/components/ui'
 
 /**
  * ContentGuard - Protects page content while allowing the layout shell to render.
@@ -29,27 +29,21 @@ export function ContentGuard({ children }: { children: React.ReactNode }) {
   // Show spinner while loading auth or business access
   if (authLoading || businessLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <IonSpinner name="crescent" className="w-8 h-8" />
-      </div>
+      <PageSpinner />
     )
   }
 
   // No user - waiting for redirect
   if (!user) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <IonSpinner name="crescent" className="w-8 h-8" />
-      </div>
+      <PageSpinner />
     )
   }
 
   // Business error - BusinessContext handles redirect
   if (businessError) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <IonSpinner name="crescent" className="w-8 h-8" />
-      </div>
+      <PageSpinner />
     )
   }
 

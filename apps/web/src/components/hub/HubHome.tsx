@@ -11,8 +11,7 @@ import { useCreateBusinessModal } from '@/contexts/create-business-context'
 import { useJoinBusinessModal } from '@/contexts/join-business-context'
 import { fetchDeduped } from '@/lib/fetch'
 import { createSessionCache, CACHE_KEYS } from '@/hooks'
-import { IonSpinner } from '@ionic/react'
-import { FeatureCard, GroupLabel } from '@/components/ui'
+import { FeatureCard, GroupLabel, PageSpinner } from '@/components/ui'
 import { BusinessRow } from '@/components/businesses/shared'
 
 type BusinessType =
@@ -130,9 +129,7 @@ function HubHomeBody() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <IonSpinner name="crescent" />
-      </div>
+      <PageSpinner />
     )
   }
 

@@ -129,16 +129,22 @@ export function ModalShell({
       {title !== undefined && (
         <IonHeader>
           <IonToolbar>
+            {/* Toolbar icon buttons use fill="clear" so they inherit
+                Ionic's compact default padding rather than the
+                pill-shaped CTA padding our ionic-theme.css applies to
+                every other ion-button. Without this they sit ~30px
+                from the toolbar edge while the body content is at the
+                standard 16px inset, leaving them visibly stranded. */}
             {onBack && (
               <IonButtons slot="start">
-                <IonButton onClick={onBack} aria-label="Back">
+                <IonButton fill="clear" onClick={onBack} aria-label="Back">
                   <IonIcon icon={chevronBack} />
                 </IonButton>
               </IonButtons>
             )}
             <IonTitle>{title}</IonTitle>
             <IonButtons slot="end">
-              <IonButton onClick={onClose} aria-label="Close">
+              <IonButton fill="clear" onClick={onClose} aria-label="Close">
                 <IonIcon icon={close} />
               </IonButton>
             </IonButtons>

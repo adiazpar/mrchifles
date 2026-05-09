@@ -452,6 +452,32 @@
   --padding-bottom: var(--space-3);
 }
 
+/* ===== PageSpinner — full-area centered loading indicator =====
+ * Absolutely positions itself within the nearest positioned ancestor
+ * (IonContent's inner scroll container, an .auth-container, etc.) and
+ * grid-centers the spinner. Works whether the parent is sized, flex,
+ * grid, or implicit — no layout assumptions, no h-full requirement.
+ *
+ * pointer-events: none on the wrapper means a stuck spinner won't
+ * intercept taps; the spinner itself re-enables them so its loading
+ * indicator is still focusable for assistive tech. */
+.page-spinner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.page-spinner ion-spinner {
+  pointer-events: auto;
+  --color: var(--color-brand);
+}
+
+.page-spinner--sm ion-spinner { width: 24px; height: 24px; }
+.page-spinner--md ion-spinner { width: 32px; height: 32px; }
+.page-spinner--lg ion-spinner { width: 48px; height: 48px; }
+
 /* When IonFooter wraps the footer in IonToolbar, give it sensible padding
    regardless of theme. */
 ion-modal ion-footer ion-toolbar {

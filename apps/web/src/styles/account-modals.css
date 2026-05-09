@@ -1015,3 +1015,208 @@
   text-transform: uppercase;
   color: var(--color-text-tertiary);
 }
+
+/* ==========================================================================
+   7. LanguageModal — "the specimen book"
+   --------------------------------------------------------------------------
+   A vertical stack of language cards. Each card is a horizontal composition:
+   square paper-deep "stamp" tile with the country flag emoji on the leading
+   edge, native language name in Fraunces SOFT 30 as the focal text, locale
+   code in tracked-out mono beneath. Selection is marked by a 3px terracotta
+   inset stripe along the LEADING edge (rotated 90deg from the Theme swatch's
+   top stripe — same vocabulary, different shape) and a small mono ACTIVE
+   chip in place of the inactive hairline dot. */
+
+.language-modal__intro {
+  margin-bottom: var(--space-4);
+}
+
+.language-modal__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.language-modal__list-item {
+  margin: 0;
+}
+
+.language-modal__card {
+  /* Whole row is a button — paper card, soft shadow, hairline. */
+  appearance: none;
+  width: 100%;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px 14px 18px;
+  cursor: pointer;
+  text-align: left;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-4);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out,
+    box-shadow var(--duration-fast) ease-out,
+    background var(--duration-fast) ease-out;
+}
+
+.language-modal__card:active { transform: scale(0.99); }
+@media (hover: hover) {
+  .language-modal__card:hover { border-color: var(--color-border-hover); }
+}
+.language-modal__card:focus-visible {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: var(--shadow-md), 0 0 0 3px var(--color-brand-subtle);
+}
+
+.language-modal__card.is-active {
+  border-color: var(--color-brand);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-md), 0 0 0 2px var(--color-brand-subtle);
+}
+/* Leading-edge terracotta stripe — rotated 90deg from the Theme swatch's
+   top stripe so the two pickers feel like siblings without being twins.
+   Reads like a margin marker / tick on a printed table of contents. */
+.language-modal__card.is-active::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--color-brand);
+  z-index: 2;
+}
+
+/* Square stamp tile. paper-deep background, hairline border, the flag
+   emoji centered. Sized so an emoji renders comfortably without
+   getting tiny on retina or oversized on Android letter-pair fallback. */
+.language-modal__stamp {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  /* Subtle inner press so the stamp reads as inset rather than floating. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.language-modal__flag {
+  /* Apple Color Emoji renders flags at this size without aliasing. The
+     line-height: 1 collapses the line box so the glyph centers cleanly
+     in the tile. Letter-spacing: 0 prevents the two regional indicator
+     symbols from drifting apart on browsers that render them as a pair
+     of letters (Android, some Linux). */
+  font-size: 36px;
+  line-height: 1;
+  letter-spacing: 0;
+  /* Disable system emoji color filters from inheriting brand color. */
+  color: initial;
+  font-family:
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Noto Color Emoji",
+    sans-serif;
+}
+
+.language-modal__globe {
+  width: 28px;
+  height: 28px;
+  color: var(--color-text-tertiary);
+}
+
+.language-modal__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.language-modal__name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -0.012em;
+  line-height: 1.05;
+  color: var(--color-text-primary);
+  /* Keep long native names on a single line; ellipsis if a locale is
+     ever added with a very long endonym. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.language-modal__code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-feature-settings: "tnum" 1;
+}
+
+.language-modal__card.is-active .language-modal__code {
+  color: var(--color-brand);
+}
+
+/* Trailing slot — either an inactive hairline dot (matches the Theme
+   swatch's inactive caption dot) or a mono ACTIVE chip in terracotta.
+   The shape difference between the two states reinforces selection
+   without stacking a second visual cue on the leading-edge stripe. */
+.language-modal__status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.language-modal__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.language-modal__status-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-brand) 40%, transparent);
+  border-radius: 999px;
+  background: var(--color-brand-subtle);
+  line-height: 1;
+}
+
+.language-modal__footnote {
+  margin: var(--space-5) 0 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.language-modal__footnote::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+  flex-shrink: 0;
+}

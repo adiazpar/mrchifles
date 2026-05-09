@@ -52,7 +52,7 @@ export function InviteRoleStep() {
         <IonToolbar>
           <IonTitle>{t.formatMessage({ id: 'team.step_add_member' })}</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+            <IonButton fill="clear" onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>

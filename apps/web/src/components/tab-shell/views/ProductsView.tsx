@@ -7,8 +7,8 @@ import { useRouter, useSearchParams } from '@/lib/next-navigation-shim'
 import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
 import { useProductFilters, useProductSettings } from '@/hooks'
-import { TabContainer } from '@/components/ui'
-import { IonLabel, IonSegment, IonSegmentButton, IonSpinner } from '@ionic/react'
+import { TabContainer, PageSpinner } from '@/components/ui'
+import { IonLabel, IonSegment, IonSegmentButton } from '@ionic/react'
 // Tabs render on mount so they stay static. Add/edit/settings modals are
 // closed by default and open on user action; dynamic import keeps their
 // bundle (plus framer-motion's Reorder in ProductSettingsModal) out of
@@ -797,9 +797,7 @@ export function ProductsView() {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <IonSpinner name="crescent" />
-      </div>
+      <PageSpinner />
     )
   }
 

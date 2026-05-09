@@ -65,7 +65,7 @@ export function AnalyzingStep() {
           {/* Toolbar X aborts the in-progress AI analysis and closes
               the modal — same effect the footer Cancel used to have. */}
           <IonButtons slot="end">
-            <IonButton onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+            <IonButton fill="clear" onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
