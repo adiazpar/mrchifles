@@ -382,19 +382,6 @@
   color: var(--method-color, var(--color-brand));
 }
 
-/* Stamp tab — a 3px notch on the top edge, only present when active.
- * Flat across the top, slightly inset from the corners. */
-.payment-method[aria-pressed="true"]::before {
-  content: "";
-  position: absolute;
-  top: -1.5px;
-  left: 18%;
-  right: 18%;
-  height: 3px;
-  background: var(--method-color, var(--color-brand));
-  border-radius: 0 0 2px 2px;
-}
-
 .payment-method__icon {
   width: 22px;
   height: 22px;

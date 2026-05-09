@@ -136,15 +136,15 @@ export function ProductPicker({ cart }: ProductPickerProps) {
           </label>
           <button
             type="button"
-            className="pos-scan-button"
+            className="tools-button"
             onClick={openScanner}
             disabled={scanBusy}
             aria-label={t.formatMessage({ id: 'sales.scan_barcode_aria' })}
           >
             {scanBusy ? (
-              <Loader2 className="animate-spin" size={20} strokeWidth={1.8} />
+              <Loader2 className="animate-spin" size={18} strokeWidth={1.8} />
             ) : (
-              <ScanLine size={20} strokeWidth={1.8} />
+              <ScanLine size={18} strokeWidth={1.8} />
             )}
           </button>
           {scanHiddenInput}
