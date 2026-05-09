@@ -8,7 +8,6 @@ import { useBusiness } from '@/contexts/business-context'
 import { useAuth } from '@/contexts/auth-context'
 import { useProductFilters, useProductSettings } from '@/hooks'
 import { TabContainer, PageSpinner } from '@/components/ui'
-import { IonLabel, IonSegment, IonSegmentButton } from '@ionic/react'
 // Tabs render on mount so they stay static. Add/edit/settings modals are
 // closed by default and open on user action; dynamic import keeps their
 // bundle (plus framer-motion's Reorder in ProductSettingsModal) out of
@@ -801,26 +800,53 @@ export function ProductsView() {
     )
   }
 
+  const handleSegmentChange = (tab: PageTab) => {
+    setActiveTab(tab)
+    setError('')
+    router.replace(urlForTab(tab), { scroll: false })
+  }
+
   return (
     <>
-      <div className="px-4 py-6 space-y-4">
-        {/* Section Tabs */}
-        <IonSegment
-          value={activeTab}
-          onIonChange={(e) => {
-            const tab = e.detail.value as PageTab
-            setActiveTab(tab)
-            setError('')
-            router.replace(urlForTab(tab), { scroll: false })
-          }}
-        >
-          <IonSegmentButton value="products">
-            <IonLabel>{t.formatMessage({ id: 'products.tab_products' })}</IonLabel>
-          </IonSegmentButton>
-          <IonSegmentButton value="orders">
-            <IonLabel>{t.formatMessage({ id: 'products.tab_orders' })}</IonLabel>
-          </IonSegmentButton>
-        </IonSegment>
+      <div className="products-page">
+        {/* Page hero — mono eyebrow + Fraunces italic title with em-accent
+            on the surface noun ("Inventory"). Same vocabulary as the
+            page-hero used on Hub / Manage. */}
+        <header className="products-page-hero">
+          <span className="products-page-hero__eyebrow">
+            {t.formatMessage({ id: 'products.page_eyebrow' })}
+          </span>
+          <h1 className="products-page-hero__title">
+            {t.formatMessage(
+              { id: 'products.page_title' },
+              { em: (chunks) => <em>{chunks}</em> },
+            )}
+          </h1>
+        </header>
+
+        {/* Custom pill segmented control — matches the mono uppercase
+            tracked vocabulary used elsewhere (tab-bar labels, eyebrows,
+            stamp chips). Replaces IonSegment to keep the chrome on-brand. */}
+        <div role="tablist" aria-label={t.formatMessage({ id: 'products.tab_switcher_aria' })} className="products-segment">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'products'}
+            className="products-segment__button"
+            onClick={() => handleSegmentChange('products')}
+          >
+            {t.formatMessage({ id: 'products.tab_products' })}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'orders'}
+            className="products-segment__button"
+            onClick={() => handleSegmentChange('orders')}
+          >
+            {t.formatMessage({ id: 'products.tab_orders' })}
+          </button>
+        </div>
 
         <TabContainer
           activeTab={activeTab}

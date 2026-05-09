@@ -1,10 +1,25 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { useState } from 'react'
 import { useParams } from 'react-router'
-import { X, Plus, ChevronUp, Clipboard, ListFilter, CircleCheckBig } from 'lucide-react'
-import { IonButton, IonItem, IonItemOption, IonItemOptions, IonItemSliding, IonList, IonSpinner } from '@ionic/react'
+import {
+  X,
+  Plus,
+  ChevronUp,
+  Clipboard,
+  ListFilter,
+  CircleCheckBig,
+  Check,
+} from 'lucide-react'
+import {
+  IonItem,
+  IonItemOption,
+  IonItemOptions,
+  IonItemSliding,
+  IonList,
+  IonSpinner,
+} from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { usePageTransition } from '@/contexts/page-transition-context'
@@ -19,64 +34,46 @@ import type { Product } from '@kasero/shared/types'
 import type { ExpandedOrder } from '@/lib/products'
 import { OrderListItem } from './OrderListItem'
 
-// ============================================
-// PROPS INTERFACE
-// ============================================
+const SearchIcon = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </svg>
+)
 
 export interface OrdersTabProps {
-  // Data
   products: Product[]
   orders: ExpandedOrder[]
   filteredOrders: ExpandedOrder[]
-
-  // Search state
   searchQuery: string
   onSearchChange: (query: string) => void
-
-  // Sort state
   sortBy: OrderSortOption
   onSortChange: (sort: OrderSortOption) => void
-
-  // Filter state
   statusFilter: OrderStatusFilter
   onStatusFilterChange: (filter: OrderStatusFilter) => void
-
-  // View mode (active vs completed)
   viewMode: OrderViewMode
   onViewModeChange: (mode: OrderViewMode) => void
-
-  // Handlers
   onNewOrder: () => void
   onViewOrder: (order: ExpandedOrder) => void
-  /**
-   * Optional swipe-action handlers. Each takes the order and opens the detail
-   * modal on the corresponding step. Pass all three to enable the swipe tray.
-   */
   onReceiveOrder?: (order: ExpandedOrder) => void
   onEditOrder?: (order: ExpandedOrder) => void
   onDeleteOrder?: (order: ExpandedOrder) => void
-  /** Gates the delete swipe action; matches the canDelete used by the modal. */
   canDelete?: boolean
   canManage?: boolean
-
-  // Error state
   error?: string
   isModalOpen?: boolean
-  /**
-   * True while the bucket matching `viewMode` is mid-fetch and has nothing
-   * cached yet. The empty state is suppressed during this window so the
-   * user sees a spinner instead of "no completed orders" flashing for a
-   * frame on a cold toggle.
-   */
   isLoading?: boolean
 }
 
-// Re-export the type for convenience
 export type { OrderStatusFilter } from '@/lib/products'
-
-// ============================================
-// COMPONENT
-// ============================================
 
 export function OrdersTab({
   products,
@@ -107,103 +104,92 @@ export function OrdersTab({
   const [isSortSheetOpen, setSortSheetOpen] = useState(false)
 
   const sortLabels: Record<OrderSortOption, string> = {
-    date_desc: intl.formatMessage({
-      id: 'orders.sort_date_desc'
-    }),
-    date_asc: intl.formatMessage({
-      id: 'orders.sort_date_asc'
-    }),
-    total_desc: intl.formatMessage({
-      id: 'orders.sort_total_desc'
-    }),
-    total_asc: intl.formatMessage({
-      id: 'orders.sort_total_asc'
-    }),
+    date_desc: intl.formatMessage({ id: 'orders.sort_date_desc' }),
+    date_asc: intl.formatMessage({ id: 'orders.sort_date_asc' }),
+    total_desc: intl.formatMessage({ id: 'orders.sort_total_desc' }),
+    total_asc: intl.formatMessage({ id: 'orders.sort_total_asc' }),
   }
 
   const statusFilterLabels: Record<OrderStatusFilter, string> = {
-    all: intl.formatMessage({
-      id: 'orders.filter_all'
-    }),
-    pending: intl.formatMessage({
-      id: 'orders.filter_status_pending'
-    }),
-    received: intl.formatMessage({
-      id: 'orders.filter_status_received'
-    }),
-    overdue: intl.formatMessage({
-      id: 'orders.filter_status_overdue'
-    }),
+    all: intl.formatMessage({ id: 'orders.filter_all' }),
+    pending: intl.formatMessage({ id: 'orders.filter_status_pending' }),
+    received: intl.formatMessage({ id: 'orders.filter_status_received' }),
+    overdue: intl.formatMessage({ id: 'orders.filter_status_overdue' }),
   }
 
+  const noProductsAndNoOrders = products.length === 0 && orders.length === 0
+  const hasNoOrders = orders.length === 0 && products.length > 0
+
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {error && !isModalOpen && (
-        <div className="p-4 bg-error-subtle text-error rounded-lg">
-          {error}
-        </div>
+        <div className="products-error">{error}</div>
       )}
-      {/* No products and no orders - show empty state */}
-      {products.length === 0 && orders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center px-6 pt-12 pb-8 text-center">
-          <Clipboard className="w-16 h-16 text-text-tertiary mb-5" />
-          <h2 className="text-xl font-semibold text-text-primary mb-2">
+
+      {noProductsAndNoOrders ? (
+        <div className="products-empty">
+          <Clipboard className="products-empty__icon" aria-hidden="true" />
+          <h2 className="products-empty__title">
             {intl.formatMessage({ id: 'orders.empty_no_products_title' })}
           </h2>
-          <p className="text-sm text-text-secondary mb-6 max-w-xs">
+          <p className="products-empty__desc">
             {intl.formatMessage({ id: 'orders.empty_no_products_description' })}
           </p>
         </div>
-      ) : orders.length === 0 ? (
-        /* Products exist but no orders yet */
-        <div className="flex flex-col items-center justify-center px-6 pt-12 pb-8 text-center">
-          <Clipboard className="w-16 h-16 text-text-tertiary mb-5" />
-          <h2 className="text-xl font-semibold text-text-primary mb-2">
+      ) : hasNoOrders ? (
+        <div className="products-empty">
+          <Clipboard className="products-empty__icon" aria-hidden="true" />
+          <h2 className="products-empty__title">
             {intl.formatMessage({ id: 'orders.empty_no_orders_title' })}
           </h2>
-          <p className="text-sm text-text-secondary mb-6 max-w-xs">
+          <p className="products-empty__desc">
             {intl.formatMessage({ id: 'orders.empty_no_orders_description' })}
           </p>
           {canManage && (
-            <IonButton onClick={onNewOrder} size="small">
-              <Plus className="w-4 h-4" />
+            <button
+              type="button"
+              className="products-empty__cta"
+              onClick={onNewOrder}
+            >
+              <Plus size={14} strokeWidth={2.5} />
               {intl.formatMessage({ id: 'orders.create_order_button' })}
-            </IonButton>
+            </button>
           )}
         </div>
       ) : (
-        /* Orders exist - show search, filter, and list */
         <>
-          {/* Search Bar + Filter Button */}
-          <div className="flex gap-2 items-stretch">
-            <div className="relative flex-1">
+          {/* Search + view-mode toggle + sort row. */}
+          <div className="products-tools-row">
+            <label className="app-search">
+              <span className="app-search__icon">{SearchIcon}</span>
               <input
-                type="text"
-                placeholder={intl.formatMessage({
-                  id: 'orders.search_placeholder'
-                })}
+                type="search"
+                className="app-search__input"
+                placeholder={intl.formatMessage({ id: 'orders.search_placeholder' })}
                 value={searchQuery}
-                onChange={e => onSearchChange(e.target.value)}
-                className="input input-search w-full h-full"
-                style={{ paddingTop: 'var(--space-2)', paddingBottom: 'var(--space-2)', paddingRight: '2.25rem', fontSize: 'var(--text-sm)', minHeight: 'unset' }}
+                onChange={(e) => onSearchChange(e.target.value)}
+                aria-label={intl.formatMessage({ id: 'orders.search_placeholder' })}
+                autoComplete="off"
+                spellCheck={false}
               />
               {searchQuery && (
                 <button
                   type="button"
+                  className="app-search__clear"
                   onClick={() => onSearchChange('')}
-                  className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-                  aria-label={intl.formatMessage({
-                    id: 'orders.search_clear'
-                  })}
+                  aria-label={intl.formatMessage({ id: 'orders.search_clear' })}
                 >
-                  <X size={18} />
+                  <X />
                 </button>
               )}
-            </div>
-            <IonButton
-              fill={viewMode === 'completed' ? 'solid' : 'outline'}
-              shape="round"
-              onClick={() => onViewModeChange(viewMode === 'completed' ? 'active' : 'completed')}
+            </label>
+
+            <button
+              type="button"
+              className="tools-button"
+              onClick={() =>
+                onViewModeChange(viewMode === 'completed' ? 'active' : 'completed')
+              }
               aria-pressed={viewMode === 'completed'}
               aria-label={
                 viewMode === 'completed'
@@ -211,105 +197,117 @@ export function OrdersTab({
                   : intl.formatMessage({ id: 'orders.toggle_show_completed_aria' })
               }
             >
-              <CircleCheckBig style={{ width: 18, height: 18 }} />
-            </IonButton>
-            <IonButton
-              fill="outline"
-              shape="round"
+              <CircleCheckBig size={18} strokeWidth={1.8} />
+            </button>
+
+            <button
+              type="button"
+              className="tools-button"
               onClick={() => setSortSheetOpen(true)}
-              aria-label={intl.formatMessage({
-                id: 'orders.sort_filter_aria'
-              })}
+              aria-label={intl.formatMessage({ id: 'orders.sort_filter_aria' })}
             >
-              <ListFilter style={{ width: 18, height: 18 }} />
-            </IonButton>
+              <ListFilter size={18} strokeWidth={1.8} />
+            </button>
           </div>
-          {/* Orders List Card */}
-          <div className="bg-bg-surface rounded-2xl p-4 space-y-4">
-            {/* List Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-text-secondary">
-                  {intl.formatMessage({
-                    id: 'orders.order_count'
-                  }, { count: filteredOrders.length })}
+
+          {/* Inventory ledger card (orders bucket). */}
+          <div className="inventory-ledger">
+            <div className="inventory-ledger__header">
+              <div className="inventory-ledger__count">
+                <span className="inventory-ledger__count-num">
+                  {filteredOrders.length}
                 </span>
-                <span className="text-text-tertiary">&#183;</span>
+                {intl.formatMessage(
+                  { id: 'orders.order_count_unit' },
+                  { count: filteredOrders.length },
+                )}
+                <span className="inventory-ledger__sep">·</span>
                 <button
                   type="button"
+                  className="inventory-ledger__settings-link"
                   onClick={() => {
                     if (!params?.businessId) return
-                    const href = `/${params.businessId}/providers`
-                    navigate(href)
+                    navigate(`/${params.businessId}/providers`)
                   }}
-                  className="text-sm text-brand hover:text-brand transition-colors"
                 >
-                  {intl.formatMessage({
-                    id: 'orders.providers_link'
-                  })}
+                  {intl.formatMessage({ id: 'orders.providers_link' })}
                 </button>
               </div>
               {canManage && (
-                <IonButton onClick={onNewOrder} size="small" shape="round">
-                  <Plus style={{ width: 14, height: 14 }} />
-                  {intl.formatMessage({
-                    id: 'common.add'
-                  })}
-                </IonButton>
+                <button
+                  type="button"
+                  className="inventory-ledger__add-button"
+                  onClick={onNewOrder}
+                >
+                  <Plus size={14} strokeWidth={2.5} />
+                  {intl.formatMessage({ id: 'common.add' })}
+                </button>
               )}
             </div>
 
-            {/* Orders List */}
             {isLoading && filteredOrders.length === 0 ? (
-              <div className="flex justify-center py-8">
+              <div className="inventory-ledger__empty">
                 <IonSpinner name="crescent" />
               </div>
             ) : filteredOrders.length === 0 ? (
-              <div className="text-center py-8 text-text-secondary">
-                <p>
-                  {orders.some(o => (viewMode === 'completed'
+              <div className="inventory-ledger__empty">
+                {orders.some((o) =>
+                  viewMode === 'completed'
                     ? getOrderDisplayStatus(o) === 'received'
-                    : getOrderDisplayStatus(o) !== 'received'))
-                    ? intl.formatMessage({ id: 'orders.no_results' })
-                    : viewMode === 'completed'
-                      ? intl.formatMessage({ id: 'orders.empty_no_completed' })
-                      : intl.formatMessage({ id: 'orders.empty_no_active' })}
-                </p>
+                    : getOrderDisplayStatus(o) !== 'received',
+                )
+                  ? intl.formatMessage({ id: 'orders.no_results' })
+                  : viewMode === 'completed'
+                    ? intl.formatMessage({ id: 'orders.empty_no_completed' })
+                    : intl.formatMessage({ id: 'orders.empty_no_active' })}
               </div>
             ) : (
-              <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
+              <IonList lines="none" className="inventory-ledger__list">
                 {filteredOrders.map((order) => {
                   const alreadyReceived = getOrderDisplayStatus(order) === 'received'
-                  // Receive is available to any active member (employees
-                  // included) — receiving incoming inventory is normal floor
-                  // work. Edit + Delete are manager-only. Mirrors the
-                  // products list ordering for muscle-memory consistency.
-                  const swipeActions = viewMode !== 'completed'
-                    ? [
-                        ...(onReceiveOrder ? [{
-                          label: intl.formatMessage({ id: 'orders.action_receive' }),
-                          variant: 'success' as const,
-                          disabled: alreadyReceived,
-                          onClick: () => onReceiveOrder(order),
-                        }] : []),
-                        ...(canManage && onEditOrder ? [{
-                          label: intl.formatMessage({ id: 'orders.action_edit' }),
-                          variant: 'neutral' as const,
-                          // Received orders are locked — no quantity / total /
-                          // provider edits once stock has been posted.
-                          disabled: alreadyReceived,
-                          onClick: () => onEditOrder(order),
-                        }] : []),
-                        ...(canManage && onDeleteOrder ? [{
-                          label: intl.formatMessage({ id: 'orders.action_delete' }),
-                          variant: 'destructive' as const,
-                          // Received orders can't be deleted either — would
-                          // require rolling back the stock changes they posted.
-                          disabled: !canDelete || alreadyReceived,
-                          onClick: () => onDeleteOrder(order),
-                        }] : []),
-                      ]
-                    : []
+                  // Receive is available to any active member; edit + delete
+                  // are manager-only. Mirrors the products list ordering.
+                  const swipeActions =
+                    viewMode !== 'completed'
+                      ? [
+                          ...(onReceiveOrder
+                            ? [
+                                {
+                                  label: intl.formatMessage({
+                                    id: 'orders.action_receive',
+                                  }),
+                                  variant: 'success' as const,
+                                  disabled: alreadyReceived,
+                                  onClick: () => onReceiveOrder(order),
+                                },
+                              ]
+                            : []),
+                          ...(canManage && onEditOrder
+                            ? [
+                                {
+                                  label: intl.formatMessage({
+                                    id: 'orders.action_edit',
+                                  }),
+                                  variant: 'neutral' as const,
+                                  disabled: alreadyReceived,
+                                  onClick: () => onEditOrder(order),
+                                },
+                              ]
+                            : []),
+                          ...(canManage && onDeleteOrder
+                            ? [
+                                {
+                                  label: intl.formatMessage({
+                                    id: 'orders.action_delete',
+                                  }),
+                                  variant: 'destructive' as const,
+                                  disabled: !canDelete || alreadyReceived,
+                                  onClick: () => onDeleteOrder(order),
+                                },
+                              ]
+                            : []),
+                        ]
+                      : []
                   return (
                     <IonItemSliding key={order.id}>
                       <IonItem lines="none">
@@ -321,9 +319,11 @@ export function OrdersTab({
                             <IonItemOption
                               key={index}
                               color={
-                                action.variant === 'destructive' ? 'danger'
-                                  : action.variant === 'success' ? 'success'
-                                  : 'medium'
+                                action.variant === 'destructive'
+                                  ? 'danger'
+                                  : action.variant === 'success'
+                                    ? 'success'
+                                    : 'medium'
                               }
                               disabled={action.disabled}
                               onClick={() => action.onClick()}
@@ -339,98 +339,91 @@ export function OrdersTab({
               </IonList>
             )}
           </div>
-          {/* Back to top button */}
+
           {filteredOrders.length > 5 && (
             <button
               type="button"
+              className="products-back-to-top"
               onClick={() => scrollToTop()}
-              className="w-full py-3 flex items-center justify-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
             >
-              <ChevronUp className="w-4 h-4" />
-              {intl.formatMessage({
-                id: 'products.back_to_top'
-              })}
+              <ChevronUp size={14} strokeWidth={2} />
+              {intl.formatMessage({ id: 'products.back_to_top' })}
             </button>
           )}
         </>
       )}
-      {/* Sort & Filter Modal */}
+
+      {/* Sort + filter sheet. */}
       <ModalShell
         isOpen={isSortSheetOpen}
         onClose={() => setSortSheetOpen(false)}
-        title={intl.formatMessage({
-          id: 'orders.sort_filter_title'
-        })}
+        title={intl.formatMessage({ id: 'orders.sort_filter_title' })}
         variant="half"
-        footer={
-          <IonButton onClick={() => setSortSheetOpen(false)}>
-            {intl.formatMessage({
-              id: 'common.done'
-            })}
-          </IonButton>
-        }
       >
         <div className="modal-step-item">
-          <div className="space-y-2">
-            <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{intl.formatMessage({
-              id: 'orders.sort_by_label'
-            })}</span>
-            <div className="space-y-1">
-              {ORDER_SORT_OPTIONS.map(option => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => onSortChange(option.value)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
-                >
-                  <span className={sortBy === option.value ? 'font-medium text-brand' : 'text-text-primary'}>
-                    {sortLabels[option.value]}
-                  </span>
-                  {sortBy === option.value && (
-                    <span className="w-5 h-5 text-brand">
-                      <svg viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
+          <div className="sort-sheet-section">
+            <span className="sort-sheet-section__label">
+              {intl.formatMessage({ id: 'orders.sort_by_label' })}
+            </span>
+            <div>
+              {ORDER_SORT_OPTIONS.map((option) => {
+                const selected = sortBy === option.value
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => onSortChange(option.value)}
+                    className={`sort-sheet-row${selected ? ' sort-sheet-row--selected' : ''}`}
+                  >
+                    <span className="sort-sheet-row__label">
+                      {sortLabels[option.value]}
                     </span>
-                  )}
-                </button>
-              ))}
+                    {selected && (
+                      <span className="sort-sheet-row__check" aria-hidden="true">
+                        <Check size={18} strokeWidth={2.4} />
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
 
-        {/* Filter by Status — only shown in Active view (Completed has a single status) */}
         {viewMode === 'active' && (
           <div className="modal-step-item">
-            <div className="space-y-2">
-              <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">{intl.formatMessage({
-                id: 'orders.filter_by_status_label'
-              })}</span>
-              <div className="space-y-1">
-                {(['all', 'pending', 'overdue'] as OrderStatusFilter[]).map(status => (
-                  <button
-                    key={status}
-                    type="button"
-                    onClick={() => onStatusFilterChange(status)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-bg-muted transition-colors"
-                  >
-                    <span className={statusFilter === status ? 'font-medium text-brand' : 'text-text-primary'}>
-                      {statusFilterLabels[status]}
-                    </span>
-                    {statusFilter === status && (
-                      <span className="w-5 h-5 text-brand">
-                        <svg viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </span>
-                    )}
-                  </button>
-                ))}
+            <div className="sort-sheet-section">
+              <span className="sort-sheet-section__label">
+                {intl.formatMessage({ id: 'orders.filter_by_status_label' })}
+              </span>
+              <div>
+                {(['all', 'pending', 'overdue'] as OrderStatusFilter[]).map(
+                  (status) => {
+                    const selected = statusFilter === status
+                    return (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => onStatusFilterChange(status)}
+                        className={`sort-sheet-row${selected ? ' sort-sheet-row--selected' : ''}`}
+                      >
+                        <span className="sort-sheet-row__label">
+                          {statusFilterLabels[status]}
+                        </span>
+                        {selected && (
+                          <span className="sort-sheet-row__check" aria-hidden="true">
+                            <Check size={18} strokeWidth={2.4} />
+                          </span>
+                        )}
+                      </button>
+                    )
+                  },
+                )}
               </div>
             </div>
           </div>
         )}
       </ModalShell>
     </div>
-  );
+  )
 }

@@ -1,0 +1,724 @@
+/* Products tab — Modern Mercantile vocabulary for the catalog +
+ * purchase-orders surface. Two list bodies share one chrome shell:
+ * a top page hero, a pill segmented control between Products / Orders,
+ * a search/scan/filter row, and a card-wrapped list with a typographic
+ * header. Numerals are JetBrains Mono; titles are Fraunces italic;
+ * eyebrows + chips + meta are mono uppercase tracked.
+ *
+ * Reuses .app-search (app.css) and the .pos-scan-button visual
+ * vocabulary (sales-tab.css) for the search row's circular action
+ * buttons. Lists wrap IonItem/IonItemSliding so swipe gestures work,
+ * but the row body is restyled to read like a printed inventory
+ * ledger entry rather than a generic Ionic list row.
+ */
+
+/* ===== Page shell ====================================================== */
+
+.products-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-4) var(--space-6);
+}
+
+/* Top hero — same vocabulary as page-hero used on Hub / Manage. */
+.products-page-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-2);
+}
+
+.products-page-hero__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.products-page-hero__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.products-page-hero__title em {
+  font-style: italic;
+  color: var(--color-brand);
+}
+
+/* ===== Sub-tab segmented control ====================================== */
+/* Replaces IonSegment with a custom pill control that matches the
+ * Modern Mercantile vocabulary. Two buttons in a paper-tinted rail;
+ * active button gets terracotta-tinted backplate. Mono uppercase
+ * tracked labels — the same family as eyebrows + tab-bar labels. */
+.products-segment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 4px;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.products-segment__button {
+  border: 0;
+  background: transparent;
+  padding: 10px var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out;
+}
+
+.products-segment__button[aria-selected="true"] {
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.04);
+}
+
+.products-segment__button:not([aria-selected="true"]):hover {
+  color: var(--color-text-secondary);
+}
+
+/* ===== Search + tools row ============================================= */
+
+.products-tools-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.products-tools-row .app-search {
+  flex: 1;
+  margin: 0;
+}
+
+/* Circular outline button used for scan + sort + view-mode toggle.
+ * Same shape as .pos-scan-button (sales-tab.css) so the family stays
+ * consistent across surfaces. */
+.tools-button {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    border-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+@media (hover: hover) {
+  .tools-button:hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+    background-color: var(--color-brand-subtle);
+  }
+}
+
+.tools-button:active {
+  transform: scale(0.95);
+  background-color: var(--color-brand-subtle);
+  color: var(--color-brand);
+  border-color: var(--color-brand);
+}
+
+.tools-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.tools-button:disabled:active {
+  transform: none;
+}
+
+.tools-button[aria-pressed="true"] {
+  background-color: var(--color-brand-subtle);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+/* ===== Inventory ledger card (the list wrapper) ====================== */
+/* The card wrapping the IonList. Reads as a printed inventory ledger:
+ * mono eyebrow + count chip up top, italic Fraunces dividing rule,
+ * stamped rows below. */
+.inventory-ledger {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  overflow: hidden;
+}
+
+.inventory-ledger__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.inventory-ledger__count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.inventory-ledger__count-num {
+  color: var(--color-brand);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.inventory-ledger__sep {
+  color: var(--color-border);
+  font-weight: 400;
+}
+
+.inventory-ledger__settings-link {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color var(--duration-fast) ease-out;
+}
+
+.inventory-ledger__settings-link:hover {
+  color: var(--color-brand);
+}
+
+.inventory-ledger__add-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-inverse, #ffffff);
+  background: var(--color-brand);
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 8px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+.inventory-ledger__add-button:hover {
+  filter: brightness(0.95);
+}
+
+.inventory-ledger__add-button:active {
+  transform: scale(0.96);
+}
+
+.inventory-ledger__add-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* IonList inside the ledger card — strip default chrome and let our
+ * row styles take over. Each item gets a hairline bottom border, no
+ * outer card. */
+.inventory-ledger__list {
+  --background: transparent;
+  background: transparent !important;
+  padding: 0;
+  margin: 0;
+}
+
+.inventory-ledger__list ion-item {
+  --background: transparent;
+  --border-color: var(--color-border);
+  --inner-padding-end: 0;
+  --padding-start: var(--space-4);
+  --padding-end: var(--space-4);
+  --inner-border-width: 0 0 1px 0;
+  --min-height: 64px;
+}
+
+.inventory-ledger__list ion-item:last-of-type {
+  --inner-border-width: 0;
+}
+
+.inventory-ledger__list ion-list {
+  background: transparent !important;
+  padding: 0;
+}
+
+/* Empty state inside the ledger card (filtered to nothing). */
+.inventory-ledger__empty {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+}
+
+/* ===== Product row =================================================== */
+
+.product-row__name {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+
+.product-row__name--inactive {
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+.product-row__category {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-top: 4px;
+}
+
+.product-row__barcode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  word-break: break-all;
+}
+
+.product-row__price {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  letter-spacing: -0.005em;
+}
+
+.product-row__price--inactive {
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+
+.product-row__stock {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.product-row__stock--low {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.product-row__icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.product-row__icon--inactive {
+  opacity: 0.5;
+}
+
+/* ===== Order row ===================================================== */
+
+.order-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--duration-fast) ease-out;
+}
+
+.order-row__top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.order-row__status-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-row__status-icon--pending {
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+}
+
+.order-row__status-icon--received {
+  background: var(--color-success-subtle);
+  color: var(--color-success);
+}
+
+.order-row__status-icon--overdue {
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+}
+
+.order-row__lead {
+  flex: 1;
+  min-width: 0;
+}
+
+.order-row__stamp {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+.order-row__items {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+
+.order-row__trail {
+  flex-shrink: 0;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.order-row__total {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-error);
+  letter-spacing: -0.005em;
+}
+
+.order-row__status-chip {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.order-row__status-chip--pending {
+  color: var(--color-warning);
+  background: var(--color-warning-subtle);
+}
+
+.order-row__status-chip--received {
+  color: var(--color-success);
+  background: var(--color-success-subtle);
+}
+
+.order-row__status-chip--overdue {
+  color: var(--color-error);
+  background: var(--color-error-subtle);
+}
+
+/* Metadata rows — Ordered on / by / received by / to. Hairline-leader
+ * label · value pairs in mono so they read as printed receipt lines. */
+.order-row__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 52px;
+}
+
+.order-row__meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.order-row__meta-icon {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-row__meta-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.order-row__meta-leader {
+  flex: 1;
+  height: 1em;
+  align-self: end;
+  margin-bottom: 4px;
+  border-bottom: 1px dotted var(--color-border);
+  opacity: 0.7;
+  min-width: 12px;
+}
+
+.order-row__meta-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50%;
+}
+
+/* ===== Empty state =================================================== */
+
+.products-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-10) var(--space-4) var(--space-8);
+  gap: var(--space-3);
+}
+
+.products-empty__icon {
+  width: 32px;
+  height: 32px;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-1);
+}
+
+.products-empty__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -0.015em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.products-empty__desc {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  max-width: 32ch;
+  margin: 0;
+}
+
+.products-empty__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-inverse, #ffffff);
+  background: var(--color-brand);
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 12px 20px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter var(--duration-fast) ease-out, transform var(--duration-instant) ease-out;
+}
+
+.products-empty__cta:hover {
+  filter: brightness(0.95);
+}
+
+.products-empty__cta:active {
+  transform: scale(0.97);
+}
+
+/* ===== Back-to-top link =============================================== */
+
+.products-back-to-top {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: color var(--duration-fast) ease-out;
+}
+
+.products-back-to-top:hover {
+  color: var(--color-brand);
+}
+
+/* ===== Inline error banner =========================================== */
+
+.products-error {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+}
+
+/* ===== Sort + filter sheet ========================================== */
+/* The sort/filter sheet uses ModalShell variant="half"; this just
+ * styles the body. Mono uppercase section labels, full-width radio
+ * rows with a hairline check mark on the right when selected. */
+
+.sort-sheet-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sort-sheet-section__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.sort-sheet-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--duration-fast) ease-out;
+}
+
+.sort-sheet-row:hover {
+  background-color: var(--color-bg-muted);
+}
+
+.sort-sheet-row__label {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.sort-sheet-row--selected .sort-sheet-row__label {
+  color: var(--color-brand);
+  font-weight: 600;
+}
+
+.sort-sheet-row__check {
+  flex-shrink: 0;
+  color: var(--color-brand);
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

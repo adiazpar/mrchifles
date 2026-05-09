@@ -41,6 +41,7 @@ import './styles/sales-modal-close.css'
 import './styles/sales-modal-history.css'
 import './styles/sales-modal-cart.css'
 import './styles/price-keypad.css'
+import './styles/products-tab.css'
 import './styles/utilities.css'
 
 // 5. Tailwind utilities last so utility classes can override component CSS.

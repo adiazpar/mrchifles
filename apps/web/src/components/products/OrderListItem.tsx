@@ -1,8 +1,16 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { memo } from 'react'
-import { Calendar, CircleCheckBig, CircleAlert, Clock, UserPlus, UserCheck, Truck } from 'lucide-react'
+import {
+  Calendar,
+  CircleCheckBig,
+  CircleAlert,
+  Clock,
+  UserPlus,
+  UserCheck,
+  Truck,
+} from 'lucide-react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getOrderDisplayStatus, type ExpandedOrder } from '@/lib/products'
 
@@ -19,9 +27,9 @@ interface OrderListItemProps {
 
 /**
  * Shared order list row — used on the products page's Orders tab and on
- * the provider detail page's History tab. Renders a two-column main row
- * (status icon · reference + item count · total + status) plus metadata
- * rows for Ordered on / Ordered by / Ordered to.
+ * the provider detail page's History tab. Reads as a printed receipt
+ * entry: status badge + Fraunces italic stamp + mono total + status
+ * chip up top, then dotted-leader meta rows below for the audit trail.
  */
 export const OrderListItem = memo(function OrderListItem({
   order,
@@ -34,32 +42,29 @@ export const OrderListItem = memo(function OrderListItem({
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const displayStatus = getOrderDisplayStatus(order)
 
-  const statusColors = {
-    pending: { bg: '!bg-warning-subtle', text: 'text-warning' },
-    received: { bg: '!bg-success-subtle', text: 'text-success' },
-    overdue: { bg: '!bg-error-subtle', text: 'text-error' },
-  }
   const statusLabel = {
-    pending: t.formatMessage({
-      id: 'orders.status_pending'
-    }),
-    received: t.formatMessage({
-      id: 'orders.status_received'
-    }),
-    overdue: t.formatMessage({
-      id: 'orders.status_overdue'
-    }),
+    pending: t.formatMessage({ id: 'orders.status_pending' }),
+    received: t.formatMessage({ id: 'orders.status_received' }),
+    overdue: t.formatMessage({ id: 'orders.status_overdue' }),
   }
-  const colors = statusColors[displayStatus]
+
+  const orderLabel =
+    order.orderNumber != null
+      ? `#${order.orderNumber}`
+      : `#${order.id.slice(0, 6)}`
+
+  const StatusIcon =
+    displayStatus === 'received'
+      ? CircleCheckBig
+      : displayStatus === 'pending'
+        ? Clock
+        : CircleAlert
 
   const hasProvider = !!order.expand?.provider
-  const orderLabel = order.orderNumber != null
-    ? `#${order.orderNumber}`
-    : `#${order.id.slice(0, 6)}`
 
   return (
     <div
-      className="list-item-clickable items-start"
+      className="order-row"
       onClick={() => onView(order)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -70,105 +75,84 @@ export const OrderListItem = memo(function OrderListItem({
       role="button"
       tabIndex={0}
     >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3">
-          {/* Status indicator */}
-          <div className={`product-list-image flex items-center justify-center ${colors.bg}`}>
-            {displayStatus === 'received' ? (
-              <CircleCheckBig className={`w-5 h-5 ${colors.text}`} />
-            ) : displayStatus === 'pending' ? (
-              <Clock className={`w-5 h-5 ${colors.text}`} />
-            ) : (
-              <CircleAlert className={`w-5 h-5 ${colors.text}`} />
+      <div className="order-row__top">
+        <div className={`order-row__status-icon order-row__status-icon--${displayStatus}`}>
+          <StatusIcon size={20} strokeWidth={1.8} />
+        </div>
+
+        <div className="order-row__lead">
+          <div className="order-row__stamp">{orderLabel}</div>
+          <div className="order-row__items">
+            {t.formatMessage(
+              { id: 'orders.item_unit_count' },
+              { count: itemCount },
             )}
           </div>
-
-          {/* Order reference + item count */}
-          <div className="flex-1 min-w-0">
-            <span className="font-medium block tabular-nums">
-              {orderLabel}
-            </span>
-            <span className="text-xs text-text-tertiary mt-0.5 block">
-              {t.formatMessage({
-                id: 'orders.item_unit_count'
-              }, { count: itemCount })}
-            </span>
-          </div>
-
-          {/* Total and Status */}
-          <div className="text-right flex-shrink-0">
-            <span className="font-medium block text-error">
-              -{formatCurrency(order.total)}
-            </span>
-            <span className={`text-xs mt-0.5 block ${colors.text}`}>
-              {statusLabel[displayStatus]}
-            </span>
-          </div>
         </div>
 
-        {/* Creation date as metadata, mirroring the "Ordered to:" row layout */}
-        <div className="mt-3 flex items-center gap-3">
-          <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-            <Calendar className="w-4 h-4 text-text-tertiary" />
-          </div>
-          <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-            {t.formatMessage({
-              id: 'orders.ordered_on_label'
-            })}
+        <div className="order-row__trail">
+          <span className="order-row__total">
+            -{formatCurrency(order.total)}
           </span>
-          <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate tabular-nums">
-            {formatDate(new Date(order.date))}
+          <span className={`order-row__status-chip order-row__status-chip--${displayStatus}`}>
+            {statusLabel[displayStatus]}
           </span>
         </div>
+      </div>
 
+      <div className="order-row__meta">
+        <MetaRow
+          icon={<Calendar size={14} strokeWidth={1.7} />}
+          label={t.formatMessage({ id: 'orders.ordered_on_label' })}
+          value={formatDate(new Date(order.date))}
+        />
         {order.expand?.createdByUser && (
-          <div className="mt-2 flex items-center gap-3">
-            <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <UserPlus className="w-4 h-4 text-text-tertiary" />
-            </div>
-            <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-              {t.formatMessage({
-                id: 'orders.ordered_by_label'
-              })}
-            </span>
-            <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
-              {order.expand.createdByUser.name || order.expand.createdByUser.email}
-            </span>
-          </div>
+          <MetaRow
+            icon={<UserPlus size={14} strokeWidth={1.7} />}
+            label={t.formatMessage({ id: 'orders.ordered_by_label' })}
+            value={
+              order.expand.createdByUser.name ||
+              order.expand.createdByUser.email
+            }
+          />
         )}
-
         {order.expand?.receivedByUser && (
-          <div className="mt-2 flex items-center gap-3">
-            <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <UserCheck className="w-4 h-4 text-text-tertiary" />
-            </div>
-            <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-              {t.formatMessage({
-                id: 'orders.received_by_label'
-              })}
-            </span>
-            <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
-              {order.expand.receivedByUser.name || order.expand.receivedByUser.email}
-            </span>
-          </div>
+          <MetaRow
+            icon={<UserCheck size={14} strokeWidth={1.7} />}
+            label={t.formatMessage({ id: 'orders.received_by_label' })}
+            value={
+              order.expand.receivedByUser.name ||
+              order.expand.receivedByUser.email
+            }
+          />
         )}
-
         {!hideProviderRow && hasProvider && order.expand?.provider && (
-          <div className="mt-2 flex items-center gap-3">
-            <div className="w-12 flex-shrink-0 flex items-center justify-center self-center">
-              <Truck className="w-4 h-4 text-text-tertiary" />
-            </div>
-            <span className="flex-1 min-w-0 text-xs text-text-tertiary">
-              {t.formatMessage({
-                id: 'orders.ordered_to_label'
-              })}
-            </span>
-            <span className="text-right flex-shrink-0 text-xs text-text-tertiary truncate">
-              {order.expand.provider.name}
-            </span>
-          </div>
+          <MetaRow
+            icon={<Truck size={14} strokeWidth={1.7} />}
+            label={t.formatMessage({ id: 'orders.ordered_to_label' })}
+            value={order.expand.provider.name}
+          />
         )}
       </div>
     </div>
-  );
+  )
 })
+
+interface MetaRowProps {
+  icon: React.ReactNode
+  label: string
+  value: string
+}
+
+function MetaRow({ icon, label, value }: MetaRowProps) {
+  return (
+    <div className="order-row__meta-row">
+      <span className="order-row__meta-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="order-row__meta-label">{label}</span>
+      <span className="order-row__meta-leader" aria-hidden="true" />
+      <span className="order-row__meta-value">{value}</span>
+    </div>
+  )
+}
