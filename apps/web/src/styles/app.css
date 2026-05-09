@@ -326,11 +326,16 @@
   color: var(--color-brand);
 }
 
-/* ===== Search field (replaces IonSearchbar where used inline) ===== */
+/* ===== Search field (replaces IonSearchbar where used inline) =====
+ * `min-height: 48px` matches the .tools-button pill height so the
+ * two children of any search-row line up exactly. Internal padding
+ * stays as-is — the flex `align-items: center` keeps the input
+ * vertically centered inside the taller pill. */
 .app-search {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-height: 48px;
   padding: 10px var(--space-4);
   background: var(--color-bg-muted);
   border: 1px solid var(--color-border);
