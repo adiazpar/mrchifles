@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useCallback } from 'react'
+import React, { useRef, useCallback, useEffect } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { Product, Provider } from '@kasero/shared/types'
@@ -129,10 +129,18 @@ export function OrderDetailModal({
   // so Back / Cancel should dismiss the modal rather than slide to overview.
   const openedFromSwipe = initialStep !== 0
 
-  const handleClose = useCallback(() => {
-    onClose()
-    onExitComplete()
-  }, [onClose, onExitComplete])
+  // Delayed cleanup — runs ~250ms after the modal animates closed.
+  // useOrderFlows wires onExitComplete to setViewingOrder(null) and the
+  // parent renders this modal as `{viewingOrder && <OrderDetailModal/>}`,
+  // so calling onExitComplete synchronously alongside onClose would
+  // unmount the modal mid-dismiss-animation, leaving a stale view in
+  // the IonRouterOutlet stack machine and silently breaking subsequent
+  // business-tab switching. Same pattern as AddProductModal.
+  useEffect(() => {
+    if (isOpen) return
+    const timer = window.setTimeout(onExitComplete, 250)
+    return () => window.clearTimeout(timer)
+  }, [isOpen, onExitComplete])
 
   // Stable root thunks — all hooks must run before any early return.
   // useCallback with [] so IonNav never remounts the step stack due to a new
@@ -194,7 +202,7 @@ export function OrderDetailModal({
   return (
     <OrderDetailCallbacksContext.Provider value={callbacks}>
       <OrderNavRefContext.Provider value={navRef}>
-        <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
+        <ModalShell rawContent isOpen={isOpen} onClose={onClose}>
           <IonNav ref={navRef} root={rootStep} swipeGesture={false} />
         </ModalShell>
       </OrderNavRefContext.Provider>

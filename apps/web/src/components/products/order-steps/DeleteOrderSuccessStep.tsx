@@ -5,7 +5,7 @@ import { useOrderDetailCallbacks } from './OrderNavContext'
 
 export function DeleteOrderSuccessStep() {
   const t = useIntl()
-  const { orderDeleted, order, onClose, onExitComplete } = useOrderDetailCallbacks()
+  const { orderDeleted, order, onClose } = useOrderDetailCallbacks()
 
   const orderRef = order.orderNumber != null
     ? `#${String(order.orderNumber).padStart(4, '0')}`
@@ -13,7 +13,6 @@ export function DeleteOrderSuccessStep() {
 
   function handleDone() {
     onClose()
-    onExitComplete()
   }
 
   return (

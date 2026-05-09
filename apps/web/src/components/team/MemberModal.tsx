@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { User, UserRole } from '@kasero/shared/types'
@@ -57,15 +57,23 @@ export function MemberModal({
   // Must run before any early return so hook order stays stable.
   const detailsStepRoot = useCallback(() => <MemberDetailsStep />, [])
 
+  // Delayed cleanup — runs ~250ms after the modal animates closed.
+  // useTeamManagement wires onExitComplete to setSelectedMember(null), and
+  // this component early-returns null when member is null, so calling
+  // onExitComplete synchronously alongside onClose would unmount the modal
+  // mid-dismiss-animation, leaving a stale view in the IonRouterOutlet
+  // stack machine and silently breaking subsequent business-tab switching.
+  // Same pattern as AddProductModal.
+  useEffect(() => {
+    if (isOpen) return
+    const timer = window.setTimeout(onExitComplete, 250)
+    return () => window.clearTimeout(timer)
+  }, [isOpen, onExitComplete])
+
   if (!member) return null
 
-  const handleClose = () => {
-    onClose()
-    onExitComplete()
-  }
-
   const callbacks: MemberCallbacks = {
-    onClose: handleClose,
+    onClose,
     member,
     currentUser,
     canManageTeam,
@@ -82,7 +90,7 @@ export function MemberModal({
   return (
     <MemberCallbacksContext.Provider value={callbacks}>
       <MemberNavRefContext.Provider value={navRef}>
-        <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
+        <ModalShell rawContent isOpen={isOpen} onClose={onClose}>
           <IonNav ref={navRef} root={detailsStepRoot} swipeGesture={false} />
         </ModalShell>
       </MemberNavRefContext.Provider>

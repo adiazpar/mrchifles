@@ -5,7 +5,7 @@ import { useOrderDetailCallbacks } from './OrderNavContext'
 
 export function ReceiveOrderSuccessStep() {
   const t = useIntl()
-  const { orderReceived, order, onClose, onExitComplete } = useOrderDetailCallbacks()
+  const { orderReceived, order, onClose } = useOrderDetailCallbacks()
 
   const orderRef = order.orderNumber != null
     ? `#${String(order.orderNumber).padStart(4, '0')}`
@@ -13,7 +13,6 @@ export function ReceiveOrderSuccessStep() {
 
   function handleDone() {
     onClose()
-    onExitComplete()
   }
 
   return (

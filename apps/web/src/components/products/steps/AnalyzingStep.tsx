@@ -24,7 +24,7 @@ const PHASE_ORDER: Phase[] = ['preparing', 'identifying', 'generating', 'removin
 export function AnalyzingStep() {
   const t = useIntl()
   const navRef = useProductNavRef()
-  const { onAbortAiProcessing, onClose, onExitComplete, suggestedCategoryName } =
+  const { onAbortAiProcessing, onClose, suggestedCategoryName } =
     useAddProductCallbacks()
   const { pipelineStep, isCompressing } = useProductForm()
 
@@ -72,7 +72,6 @@ export function AnalyzingStep() {
   function handleCancel() {
     onAbortAiProcessing()
     onClose()
-    onExitComplete()
   }
 
   return (

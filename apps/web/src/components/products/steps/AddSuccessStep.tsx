@@ -13,14 +13,13 @@ import { useAddProductCallbacks } from './ProductNavContext'
 export function AddSuccessStep() {
   const t = useIntl()
   const { productSaved, lastSavedProductNumber } = useProductForm()
-  const { onClose, onExitComplete } = useAddProductCallbacks()
+  const { onClose } = useAddProductCallbacks()
   const stampNumber = lastSavedProductNumber != null
     ? lastSavedProductNumber.toString().padStart(4, '0')
     : null
 
   function handleDone() {
     onClose()
-    onExitComplete()
   }
 
   return (

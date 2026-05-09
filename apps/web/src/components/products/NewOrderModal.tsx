@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { Product, Provider } from '@kasero/shared/types'
@@ -91,10 +91,18 @@ export function NewOrderModal({
 }: NewOrderModalProps) {
   const navRef = useRef<HTMLIonNavElement>(null)
 
-  const handleClose = useCallback(() => {
-    onClose()
-    onResetForm()
-  }, [onClose, onResetForm])
+  // Delayed form reset — runs ~250ms after the modal animates closed.
+  // Calling onResetForm synchronously alongside onClose would mutate
+  // useOrderFlows state mid-dismiss-animation, re-rendering IonNav
+  // children during the transition and leaving a stale "active view"
+  // reference in the IonRouterOutlet stack machine — which silently
+  // breaks subsequent business-tab switching. Same pattern used by
+  // AddProductModal / EditProductModal.
+  useEffect(() => {
+    if (isOpen) return
+    const timer = window.setTimeout(onResetForm, 250)
+    return () => window.clearTimeout(timer)
+  }, [isOpen, onResetForm])
 
   const callbacks: NewOrderCallbacks = {
     onClose,
@@ -131,7 +139,7 @@ export function NewOrderModal({
   return (
     <NewOrderCallbacksContext.Provider value={callbacks}>
       <OrderNavRefContext.Provider value={navRef}>
-        <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
+        <ModalShell rawContent isOpen={isOpen} onClose={onClose}>
           <IonNav ref={navRef} root={selectProductsRoot} swipeGesture={false} />
         </ModalShell>
       </OrderNavRefContext.Provider>

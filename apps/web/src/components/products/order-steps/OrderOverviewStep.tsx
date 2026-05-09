@@ -45,7 +45,6 @@ export function OrderOverviewStep() {
     order,
     products,
     onClose,
-    onExitComplete,
     onInitializeEditForm,
     onInitializeReceiveQuantities,
     getReceiptUrl,
@@ -71,7 +70,6 @@ export function OrderOverviewStep() {
 
   function handleClose() {
     onClose()
-    onExitComplete()
   }
 
   // Variance items — only when received and at least one item differs.

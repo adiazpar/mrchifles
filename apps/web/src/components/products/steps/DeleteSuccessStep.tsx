@@ -13,14 +13,13 @@ import { useEditProductCallbacks } from './ProductNavContext'
 export function DeleteSuccessStep() {
   const t = useIntl()
   const { productDeleted, editingProduct } = useProductForm()
-  const { onClose, onExitComplete } = useEditProductCallbacks()
+  const { onClose } = useEditProductCallbacks()
   const stampNumber = editingProduct?.productNumber != null
     ? editingProduct.productNumber.toString().padStart(4, '0')
     : null
 
   function handleDone() {
     onClose()
-    onExitComplete()
   }
 
   return (

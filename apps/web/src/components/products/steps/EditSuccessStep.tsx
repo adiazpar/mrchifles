@@ -13,7 +13,7 @@ import { useEditProductCallbacks } from './ProductNavContext'
 export function EditSuccessStep() {
   const t = useIntl()
   const { productSaved, lastSavedProductNumber, editingProduct } = useProductForm()
-  const { onClose, onExitComplete } = useEditProductCallbacks()
+  const { onClose } = useEditProductCallbacks()
   const productNumber = lastSavedProductNumber ?? editingProduct?.productNumber ?? null
   const stampNumber = productNumber != null
     ? productNumber.toString().padStart(4, '0')
@@ -21,7 +21,6 @@ export function EditSuccessStep() {
 
   function handleDone() {
     onClose()
-    onExitComplete()
   }
 
   return (

@@ -5,11 +5,10 @@ import { useNewOrderCallbacks } from './OrderNavContext'
 
 export function NewOrderSuccessStep() {
   const t = useIntl()
-  const { orderSaved, onClose, onResetForm } = useNewOrderCallbacks()
+  const { orderSaved, onClose } = useNewOrderCallbacks()
 
   function handleClose() {
     onClose()
-    onResetForm()
   }
 
   return (

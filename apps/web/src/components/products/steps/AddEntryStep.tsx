@@ -26,11 +26,14 @@ import { NameStep } from './NameStep'
 export function AddEntryStep() {
   const t = useIntl()
   const navRef = useProductNavRef()
-  const { onClose, onExitComplete, onOpenSettings } = useAddProductCallbacks()
+  const { onClose, onOpenSettings } = useAddProductCallbacks()
 
+  // Cleanup runs in AddProductModal's delayed useEffect (250ms after isOpen
+  // flips false). Calling onExitComplete synchronously here would mutate
+  // state mid-dismiss-animation and leave the IonRouterOutlet view-stack
+  // pointing at a stale view, breaking subsequent tab navigation.
   function handleCancel() {
     onClose()
-    onExitComplete()
   }
 
   function goToAiPhoto() {

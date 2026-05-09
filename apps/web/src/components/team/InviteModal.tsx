@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { InviteRole } from '@kasero/shared/types'
@@ -60,13 +60,21 @@ export function InviteModal({
 }: InviteModalProps) {
   const navRef = useRef<HTMLIonNavElement>(null)
 
-  const handleClose = () => {
-    onClose()
-    onExitComplete()
-  }
+  // Delayed cleanup — runs ~250ms after the modal animates closed.
+  // useTeamManagement wires onExitComplete to a batch of state-clearing
+  // setters (newCode, qrDataUrl, role, etc.), so calling it synchronously
+  // alongside onClose would re-render IonNav children mid-dismiss-
+  // animation and leave a stale view in the IonRouterOutlet stack
+  // machine, silently breaking subsequent business-tab switching.
+  // Same pattern as AddProductModal.
+  useEffect(() => {
+    if (isOpen) return
+    const timer = window.setTimeout(onExitComplete, 250)
+    return () => window.clearTimeout(timer)
+  }, [isOpen, onExitComplete])
 
   const callbacks: InviteCallbacks = {
-    onClose: handleClose,
+    onClose,
     selectedRole,
     setSelectedRole,
     selectedDuration,
@@ -99,7 +107,7 @@ export function InviteModal({
   return (
     <InviteCallbacksContext.Provider value={callbacks}>
       <InviteNavRefContext.Provider value={navRef}>
-        <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
+        <ModalShell rawContent isOpen={isOpen} onClose={onClose}>
           <IonNav ref={navRef} root={rootComponent} swipeGesture={false} />
         </ModalShell>
       </InviteNavRefContext.Provider>
