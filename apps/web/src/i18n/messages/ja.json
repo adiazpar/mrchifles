@@ -886,6 +886,7 @@
   "sales.stats.session_total_label": "合計: {value}",
   "sales.stats.session_sales_count": "{count, plural, =0 {売上なし} other {# 件}}",
   "sales.stats.view_history_link": "View history",
+  "sales.stats.view_sales_link": "View sales",
   "sales.action.open_session": "セッションを開始",
   "sales.action.close_session": "セッションを終了",
   "sales.action.history": "履歴",

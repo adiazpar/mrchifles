@@ -2,7 +2,7 @@
 
 import { useIntl } from 'react-intl'
 import { useMemo, useState } from 'react'
-import { ArrowRight, Receipt } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { IonButton } from '@ionic/react'
 import { useBusiness } from '@/contexts/business-context'
 import { useSales } from '@/contexts/sales-context'
@@ -192,9 +192,9 @@ export function SalesStatsCard({
                   haptic()
                   setSessionSalesOpen(true)
                 }}
-                aria-label={t.formatMessage({ id: 'sales.action.view_session_sales' })}
               >
-                <Receipt size={14} strokeWidth={2} />
+                {t.formatMessage({ id: 'sales.stats.view_sales_link' })}
+                <ArrowRight className="sales-stats-link__arrow" size={12} strokeWidth={2.5} />
               </button>
             </div>
 
