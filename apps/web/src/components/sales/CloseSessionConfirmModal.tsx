@@ -1,6 +1,6 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { useEffect, useMemo, useState } from 'react'
 import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell, PriceInput } from '@/components/ui'
@@ -28,10 +28,9 @@ export function CloseSessionConfirmModal({
   onClose,
   onCloseComplete,
 }: CloseSessionConfirmModalProps) {
-  const t = useIntl()
-  const tCommon = useIntl()
+  const intl = useIntl()
   const { business } = useBusiness()
-  const { formatCurrency } = useBusinessFormat()
+  const { formatCurrency, formatTime } = useBusinessFormat()
   const sales = useSales()
   const { currentSession, closeSession } = useSalesSessions()
   const translateApiMessage = useApiMessage()
@@ -94,54 +93,75 @@ export function CloseSessionConfirmModal({
       onCloseComplete?.()
     } catch (err) {
       if (err instanceof ApiError && err.messageCode === ApiMessageCode.SESSION_NOT_OPEN) {
-        setError(t.formatMessage({
-          id: 'sales.session.close_modal.error_not_open'
-        }))
+        setError(intl.formatMessage({ id: 'sales.session.close_modal.error_not_open' }))
       } else if (err instanceof ApiError && err.envelope) {
         setError(translateApiMessage(err.envelope))
       } else {
-        setError(tCommon.formatMessage({
-          id: 'common.error'
-        }))
+        setError(intl.formatMessage({ id: 'common.error' }))
       }
     } finally {
       setSubmitting(false)
     }
   }
 
-  const title = t.formatMessage({ id: 'sales.session.close_modal.title' })
+  const title = intl.formatMessage({ id: 'sales.session.close_modal.title' })
 
-  // Step 0 footer — count drawer. Dismissal is the toolbar X.
+  // ----- Footers (kept identical to behavior contract) -----
   const step0Footer = (
     <IonButton onClick={handleNext} disabled={submitting}>
-      {t.formatMessage({ id: 'sales.session.close_modal.next' })}
+      {intl.formatMessage({ id: 'sales.session.close_modal.next' })}
     </IonButton>
   )
 
-  // Step 1 footer — variance review
   const step1Footer = (
     <>
       <IonButton fill="outline" onClick={() => setStep(0)} disabled={submitting}>
-        {tCommon.formatMessage({ id: 'common.back' })}
+        {intl.formatMessage({ id: 'common.back' })}
       </IonButton>
       <IonButton color="danger" onClick={handleConfirm} disabled={submitting}>
-        {t.formatMessage({ id: 'sales.session.close_modal.confirm' })}
+        {intl.formatMessage({ id: 'sales.session.close_modal.confirm' })}
       </IonButton>
     </>
   )
 
-  // Step 2 footer — success or error
   const step2Footer = closed ? (
     <IonButton onClick={onClose}>
-      {tCommon.formatMessage({ id: 'common.done' })}
+      {intl.formatMessage({ id: 'common.done' })}
     </IonButton>
   ) : error ? (
     <IonButton fill="outline" onClick={() => setStep(1)}>
-      {t.formatMessage({ id: 'sales.session.close_modal.error_back' })}
+      {intl.formatMessage({ id: 'sales.session.close_modal.error_back' })}
     </IonButton>
   ) : null
 
   const footer = step === 0 ? step0Footer : step === 1 ? step1Footer : step2Footer
+
+  // ----- Variance state for step 1 -----
+  const isZeroVariance = sessionStats ? sessionStats.variance === 0 : false
+  const heroEyebrowKey = isZeroVariance
+    ? 'sales.session.close_modal.variance_zero_label'
+    : 'sales.session.close_modal.variance_off_label'
+  const heroCaptionKey = isZeroVariance
+    ? 'sales.session.close_modal.variance_zero_caption'
+    : 'sales.session.close_modal.variance_off_caption'
+
+  // Format the variance with an explicit sign so the hero numeral
+  // reads as a delta — "+$0.50" / "-$1.20" / "$0.00".
+  const heroVarianceLabel = sessionStats
+    ? sessionStats.variance > 0
+      ? `+${formatCurrency(sessionStats.variance)}`
+      : formatCurrency(sessionStats.variance)
+    : ''
+
+  // Session stamp — opening time, locale-formatted. Used in step 1 as
+  // a "which session am I closing?" anchor and in step 2 as the
+  // closing slip's printed mark.
+  const sessionStamp = currentSession
+    ? intl.formatMessage(
+        { id: 'sales.session.close_modal.session_stamp' },
+        { time: formatTime(currentSession.openedAt) },
+      )
+    : ''
 
   return (
     <ModalShell
@@ -152,65 +172,150 @@ export function CloseSessionConfirmModal({
       footer={footer}
       noSwipeDismiss
     >
-      {/* Step 0 — count drawer */}
+      {/* ============ Step 0 — Final count ============ */}
       {step === 0 && (
         <>
-          <label className="label" htmlFor="close-session-counted-cash">
-            {t.formatMessage({ id: 'sales.session.close_modal.counted_label' })}
-          </label>
-          <PriceInput
-            id="close-session-counted-cash"
-            value={countedCashStr}
-            onValueChange={setCountedCashStr}
-            placeholder="0"
-          />
-          <p className="text-xs text-text-tertiary mt-2">
-            {t.formatMessage({ id: 'sales.session.close_modal.count_helper' })}
-          </p>
+          <header className="modal-hero">
+            <div className="modal-hero__eyebrow">
+              {intl.formatMessage({ id: 'sales.session.close_modal.step0_eyebrow' })}
+            </div>
+            <h1 className="modal-hero__title">
+              {intl.formatMessage(
+                { id: 'sales.session.close_modal.step0_title' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+            <p className="modal-hero__subtitle">
+              {intl.formatMessage({ id: 'sales.session.close_modal.count_helper' })}
+            </p>
+          </header>
+
+          <div className="close-session__count-block">
+            <label
+              className="close-session__count-eyebrow"
+              htmlFor="close-session-counted-cash"
+            >
+              {intl.formatMessage({ id: 'sales.session.close_modal.counted_label' })}
+            </label>
+            <PriceInput
+              id="close-session-counted-cash"
+              value={countedCashStr}
+              onValueChange={setCountedCashStr}
+              placeholder="0"
+            />
+          </div>
         </>
       )}
 
-      {/* Step 1 — review (variance reveal) */}
+      {/* ============ Step 1 — Variance reveal ============ */}
       {step === 1 && sessionStats && (
         <>
-          <div className="text-xs uppercase tracking-wide text-text-tertiary mb-2">
-            {t.formatMessage({ id: 'sales.session.close_modal.summary_heading' })}
+          <div
+            className={`close-session__hero ${
+              isZeroVariance ? 'close-session__hero--zero' : 'close-session__hero--off'
+            }`}
+          >
+            <span className="close-session__hero-eyebrow">
+              {intl.formatMessage({ id: heroEyebrowKey })}
+            </span>
+            <span className="close-session__hero-value">{heroVarianceLabel}</span>
+            <span className="close-session__hero-caption">
+              {intl.formatMessage({ id: heroCaptionKey })}
+            </span>
+            {currentSession && (
+              <span className="close-session__hero-stamp">{sessionStamp}</span>
+            )}
           </div>
-          <div className="space-y-2 text-sm mb-4">
-            <Row label={t.formatMessage({ id: 'sales.session.close_modal.transactions_label' })} value={sessionStats.transactions.toString()} />
-            <Row
-              label={t.formatMessage({ id: 'sales.session.close_modal.revenue_label' })}
-              value={formatCurrency(sessionStats.totalRevenue)}
-              valueClass="font-semibold"
-            />
-            <Row
-              label={t.formatMessage({ id: 'sales.session.close_modal.avg_ticket_label' })}
-              value={sessionStats.avgTicket !== null ? formatCurrency(sessionStats.avgTicket) : '—'}
-            />
-          </div>
-          <div className="border-t border-dashed border-border mb-4" />
-          <div className="text-xs uppercase tracking-wide text-text-tertiary mb-2">
-            {t.formatMessage({ id: 'sales.session.close_modal.recon_heading' })}
-          </div>
-          <div className="space-y-2 text-sm">
-            <Row label={t.formatMessage({ id: 'sales.session.close_modal.starting_cash' })} value={formatCurrency(currentSession?.startingCash ?? 0)} />
-            <Row label={t.formatMessage({ id: 'sales.session.close_modal.cash_sales' })} value={formatCurrency(sessionStats.cashSales)} />
-            <Row label={t.formatMessage({ id: 'sales.session.close_modal.expected' })} value={formatCurrency(sessionStats.expected)} valueClass="font-semibold" />
-            <Row label={t.formatMessage({ id: 'sales.session.close_modal.counted' })} value={formatCurrency(sessionStats.counted)} />
-            <Row
-              label={t.formatMessage({ id: 'sales.session.close_modal.variance' })}
-              value={formatCurrency(sessionStats.variance)}
-              valueClass={`font-semibold ${sessionStats.variance === 0 ? 'text-success' : 'text-error'}`}
-            />
+
+          <div className="close-session__ledger">
+            <section className="close-session__ledger-section">
+              <div className="close-session__ledger-heading">
+                {intl.formatMessage({ id: 'sales.session.close_modal.summary_heading' })}
+              </div>
+
+              <LedgerRow
+                label={intl.formatMessage({
+                  id: 'sales.session.close_modal.transactions_label',
+                })}
+                value={sessionStats.transactions.toString()}
+              />
+              <LedgerRow
+                label={intl.formatMessage({
+                  id: 'sales.session.close_modal.revenue_label',
+                })}
+                value={formatCurrency(sessionStats.totalRevenue)}
+                strong
+              />
+              <LedgerRow
+                label={intl.formatMessage({
+                  id: 'sales.session.close_modal.avg_ticket_label',
+                })}
+                value={
+                  sessionStats.avgTicket !== null
+                    ? formatCurrency(sessionStats.avgTicket)
+                    : '—'
+                }
+                muted={sessionStats.avgTicket === null}
+              />
+            </section>
+
+            <section className="close-session__ledger-section">
+              <div className="close-session__ledger-heading">
+                {intl.formatMessage({ id: 'sales.session.close_modal.recon_heading' })}
+              </div>
+
+              <LedgerRow
+                label={intl.formatMessage({
+                  id: 'sales.session.close_modal.starting_cash',
+                })}
+                value={formatCurrency(currentSession?.startingCash ?? 0)}
+              />
+              <LedgerRow
+                label={intl.formatMessage({
+                  id: 'sales.session.close_modal.cash_sales',
+                })}
+                value={formatCurrency(sessionStats.cashSales)}
+              />
+              <LedgerRow
+                label={intl.formatMessage({
+                  id: 'sales.session.close_modal.expected',
+                })}
+                value={formatCurrency(sessionStats.expected)}
+                strong
+              />
+              <LedgerRow
+                label={intl.formatMessage({
+                  id: 'sales.session.close_modal.counted',
+                })}
+                value={formatCurrency(sessionStats.counted)}
+              />
+
+              {/* Variance row — chipped, color-coded, no leader. */}
+              <div className="close-session__ledger-row close-session__ledger-row--variance">
+                <span className="close-session__ledger-label">
+                  {intl.formatMessage({ id: 'sales.session.close_modal.variance' })}
+                </span>
+                <span className="close-session__ledger-leader" aria-hidden />
+                <span
+                  className={`close-session__variance-chip ${
+                    isZeroVariance
+                      ? 'close-session__variance-chip--zero'
+                      : 'close-session__variance-chip--off'
+                  }`}
+                >
+                  {heroVarianceLabel}
+                </span>
+              </div>
+            </section>
           </div>
         </>
       )}
 
-      {/* Step 2 — success/error/loading */}
+      {/* ============ Step 2 — Closed / loading / error ============ */}
       {step === 2 && (
-        <div className="flex flex-col items-center text-center py-4">
-          <div style={{ width: 160, height: 160 }}>
-            {closed && (
+        <div className="close-session__resolution">
+          <div className="close-session__lottie-frame">
+            {closed ? (
               <LottiePlayer
                 src="/animations/success.json"
                 loop={false}
@@ -218,36 +323,60 @@ export function CloseSessionConfirmModal({
                 delay={300}
                 style={{ width: 160, height: 160 }}
               />
+            ) : error ? null : (
+              <div className="close-session__spinner-frame">
+                <IonSpinner name="crescent" />
+              </div>
             )}
           </div>
-          {closed ? (
-            <p className="text-lg font-semibold text-text-primary mt-4">
-              {t.formatMessage({ id: 'sales.session.close_modal.success_heading' })}
-            </p>
-          ) : error ? (
-            <p className="text-sm text-error mt-4">{error}</p>
-          ) : (
-            <IonSpinner name="crescent" />
+
+          {closed && (
+            <>
+              <p className="close-session__success-title">
+                {intl.formatMessage({
+                  id: 'sales.session.close_modal.success_heading',
+                })}
+              </p>
+              <span className="close-session__success-stamp">
+                {intl.formatMessage({
+                  id: 'sales.session.close_modal.success_stamp',
+                })}
+              </span>
+            </>
           )}
+
+          {!closed && error && <p className="close-session__error">{error}</p>}
         </div>
       )}
     </ModalShell>
   )
 }
 
-function Row({
+/** A single label/value row in the ledger. The dotted leader between
+ *  label and value is the printed-receipt affordance — `aria-hidden`
+ *  so screen readers don't announce it. */
+function LedgerRow({
   label,
   value,
-  valueClass,
+  strong,
+  muted,
 }: {
   label: string
   value: string
-  valueClass?: string
+  strong?: boolean
+  muted?: boolean
 }) {
   return (
-    <div className="flex justify-between">
-      <span className="text-text-tertiary">{label}</span>
-      <span className={`tabular-nums ${valueClass ?? ''}`}>{value}</span>
+    <div className="close-session__ledger-row">
+      <span className="close-session__ledger-label">{label}</span>
+      <span className="close-session__ledger-leader" aria-hidden />
+      <span
+        className={`close-session__ledger-value${
+          strong ? ' close-session__ledger-value--strong' : ''
+        }${muted ? ' close-session__ledger-value--muted' : ''}`}
+      >
+        {value}
+      </span>
     </div>
   )
 }

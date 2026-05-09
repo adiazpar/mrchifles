@@ -1,6 +1,6 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { useState } from 'react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
@@ -33,10 +33,16 @@ export function ActiveSessionSalesModal({
     }, 250)
   }
 
+  // NOTE: the legacy detail title used `Sale #{number}` with a hardcoded
+  // 0 placeholder for `number`. Behavior preserved per redesign brief —
+  // we use the `sales.session.history_modal.detail_step_title` key
+  // ("Sale receipt") for the receipt step instead, which doesn't need
+  // the broken number arg. The list-row stamp itself shows the real
+  // sale number (rendered inside SessionSalesList).
   const title =
     step === 0
       ? t.formatMessage({ id: 'sales.session.active_sales_modal.title' })
-      : t.formatMessage({ id: 'sales.session.active_sales_modal.detail_title' }, { number: 0 })
+      : t.formatMessage({ id: 'sales.session.history_modal.detail_step_title' })
 
   return (
     <ModalShell
@@ -59,5 +65,5 @@ export function ActiveSessionSalesModal({
         <SaleDetailContent businessId={businessId} saleId={selectedSaleId} />
       )}
     </ModalShell>
-  );
+  )
 }

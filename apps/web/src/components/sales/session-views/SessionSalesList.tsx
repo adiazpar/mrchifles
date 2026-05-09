@@ -1,6 +1,6 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { useEffect, useState } from 'react'
 import { IonSpinner } from '@ionic/react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -72,8 +72,11 @@ export function SessionSalesList({
   if (loading) {
     return (
       <div className="modal-step-item">
-        <div className="flex items-center justify-center py-6">
-          <IonSpinner name="crescent" />
+        <div className="session-sales-loading">
+          <IonSpinner name="crescent" style={{ '--color': 'var(--color-brand)' } as React.CSSProperties} />
+          <span className="session-sales-loading__caption">
+            {t.formatMessage({ id: 'sales.session.list_loading' })}
+          </span>
         </div>
       </div>
     )
@@ -82,42 +85,72 @@ export function SessionSalesList({
   if (items.length === 0) {
     return (
       <div className="modal-step-item">
-        <p className="text-sm text-text-tertiary text-center py-4">{t.formatMessage({
-          id: 'sales.session.active_sales_modal.empty'
-        })}</p>
+        <div className="session-sales-empty">
+          <span className="session-sales-empty__rule" />
+          <p className="session-sales-empty__title">
+            {t.formatMessage({ id: 'sales.session.list_empty_title' })}
+          </p>
+          <p className="session-sales-empty__desc">
+            {t.formatMessage({ id: 'sales.session.active_sales_modal.empty' })}
+          </p>
+        </div>
       </div>
-    );
+    )
   }
 
   return (
     <div className="modal-step-item">
-      <div className="space-y-2">
-        {items.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => {
-              haptic()
-              onSaleTap(s.id)
-            }}
-            className="w-full flex items-center justify-between py-2 border-b border-border last:border-b-0 transition-colors hover:bg-bg-base"
-          >
-            <div className="flex flex-col items-start text-left">
-              <span className="text-sm font-medium">
-                {t.formatMessage({
-                  id: 'sales.session.active_sales_modal.sale_label'
-                }, { number: s.saleNumber })}
+      <div className="session-sales-eyebrow">
+        <span>
+          {t.formatMessage({ id: 'sales.session.list_eyebrow' })}
+        </span>
+        <span className="session-sales-eyebrow__count">
+          {t.formatMessage(
+            { id: 'sales.session.list_count' },
+            { count: items.length },
+          )}
+        </span>
+      </div>
+      <div className="session-sales-list">
+        {items.map((s) => {
+          const methodKey = `sales.cart.modal_method_${s.paymentMethod}` as const
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => {
+                haptic()
+                onSaleTap(s.id)
+              }}
+              className="session-sales-row"
+            >
+              <div className="session-sales-row__lead">
+                <span className="session-sales-row__stamp">
+                  {t.formatMessage(
+                    { id: 'sales.session.sale_stamp' },
+                    { number: s.saleNumber },
+                  )}
+                </span>
+                <span className="session-sales-row__meta">
+                  <span className="session-sales-row__time">
+                    {formatTime(new Date(s.createdAt))}
+                  </span>
+                  <span
+                    className={`session-sales-row__dot session-sales-row__dot--${s.paymentMethod}`}
+                    aria-hidden="true"
+                  />
+                  <span className="session-sales-row__method">
+                    {t.formatMessage({ id: methodKey })}
+                  </span>
+                </span>
+              </div>
+              <span className="session-sales-row__total">
+                {formatCurrency(s.total)}
               </span>
-              <span className="text-xs text-text-tertiary">
-                {formatTime(new Date(s.createdAt))} · {s.paymentMethod}
-              </span>
-            </div>
-            <span className="text-sm font-semibold tabular-nums">
-              {formatCurrency(s.total)}
-            </span>
-          </button>
-        ))}
+            </button>
+          )
+        })}
       </div>
     </div>
-  );
+  )
 }

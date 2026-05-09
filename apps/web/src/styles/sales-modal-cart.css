@@ -1,0 +1,884 @@
+/* ViewCartModal + cart-modal sub-components (ChargeButton, PaymentStep,
+ * SuccessStep) — Modern Mercantile chrome for the POS checkout flow.
+ *
+ * The heartbeat modal of the app: this is where money changes hands.
+ * Three beats:
+ *
+ *   Step 0 — Receipt in progress. Mono "RECEIPT IN PROGRESS" eyebrow,
+ *            Fraunces italic title with a small terracotta tick, ledger
+ *            line items (mono price math + qty steppers reusing the
+ *            product-tile vocabulary), sticky subtotal stamp.
+ *
+ *   Step 1 — The tendering moment. Three method stamps (cash = moss,
+ *            card = terracotta, other = ink), mono uppercase quick-bill
+ *            pills, an italic "Change due" reveal, sticky Total stamp.
+ *            The Charge pill in the footer carries the same terracotta
+ *            mood as the cart FAB that opened the modal.
+ *
+ *   Step 2 — Receipt printed. Lottie tick, mono uppercase
+ *            "SALE 0042 · COMPLETE" stamp, Fraunces italic "Paid in
+ *            full" heading, mono ledger recap on cream paper.
+ *
+ * Reuses brand tokens only (no hex). Reuses the .product-tile__qty-button
+ * vocabulary by extending it with the cart-line specifier so the qty
+ * stepper feels the same in both surfaces.
+ */
+
+/* ===== Shared chrome bits ============================================== */
+
+.cart-modal__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-2);
+}
+
+.cart-modal__eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.cart-modal__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 80;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 30px;
+  letter-spacing: -0.022em;
+  line-height: 1.06;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.cart-modal__title em {
+  /* Inline accent slot — italic Fraunces with a terracotta tint when
+   * a token in the heading wants to land like a tally mark. */
+  font-style: italic;
+  color: var(--color-brand);
+  font-variation-settings: "SOFT" 100;
+}
+
+.cart-modal__subtitle {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  margin: var(--space-2) 0 0;
+}
+
+/* Hairline divider with mono caption on the right. Used to introduce
+ * the line-items section after the receipt header. */
+.cart-modal__rule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-3);
+}
+
+.cart-modal__rule-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-hair);
+}
+
+.cart-modal__rule-caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Step 0 — cart receipt =========================================== */
+
+.cart-receipt__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-10) var(--space-4) var(--space-12);
+  gap: var(--space-3);
+}
+
+.cart-receipt__empty-stamp {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  padding: 6px var(--space-3);
+  border: 1px solid var(--color-hair);
+  background: var(--color-paper-warm);
+  border-radius: var(--radius-full);
+}
+
+.cart-receipt__empty-message {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  margin: var(--space-2) 0 0;
+  max-width: 22ch;
+  line-height: 1.4;
+}
+
+/* Line-items list — generous vertical rhythm; each row is its own row of
+ * the receipt. */
+.cart-receipt__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cart-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px dashed var(--color-hair);
+}
+
+.cart-line:last-child {
+  border-bottom: 0;
+}
+
+.cart-line__head {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cart-line__name {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+  /* Two-line clamp for longer artisan / wholesale names. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.cart-line__math {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.cart-line__math-op {
+  /* The × and = glyphs sit a little lighter than the numbers so the
+   * eye can scan price → qty → total without stutter. */
+  color: var(--color-ink-4);
+  letter-spacing: 0;
+}
+
+.cart-line__math-total {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+/* Qty stepper inside the cart line — extends the product-tile__qty-button
+ * vocabulary so the touch shape and active states match the POS surface.
+ * Smaller than the tile version (40w × 28h) so the row feels tighter. */
+.cart-line__qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1px solid var(--color-hair);
+  border-radius: var(--radius-full);
+  background: var(--color-paper-warm);
+}
+
+.cart-line__qty-button {
+  width: 40px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+.cart-line__qty-button:active {
+  transform: scale(0.94);
+}
+
+.cart-line__qty-button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.cart-line__qty-button--plus {
+  color: var(--color-brand);
+}
+
+.cart-line__qty-button--minus {
+  color: var(--color-error);
+}
+
+.cart-line__qty-button:not(:disabled):hover {
+  background-color: var(--color-paper-deep);
+}
+
+.dark .cart-line__qty-button:not(:disabled):hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.cart-line__qty-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  width: 28px;
+  text-align: center;
+  color: var(--color-text-primary);
+}
+
+/* Sticky subtotal strip — Fraunces italic label, oversized mono total,
+ * cream-paper translucent backplate. Negative inset so it bleeds to the
+ * modal-content edge. */
+.cart-receipt__subtotal {
+  position: sticky;
+  bottom: 0;
+  margin: var(--space-3) calc(var(--page-padding) * -1) calc(var(--space-3) * -1);
+  padding: var(--space-4) var(--page-padding) var(--space-4);
+  background: var(--surface-translucent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid var(--color-hair);
+}
+
+.cart-receipt__subtotal-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cart-receipt__subtotal-label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+}
+
+.cart-receipt__subtotal-value {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.cart-receipt__subtotal-meta {
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Step 1 — payment =============================================== */
+
+.payment-step__field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-3);
+}
+
+/* Method stamps — three little printed cards. Each carries its
+ * personality color when active (cash = moss, card = terracotta,
+ * other = ink). Inactive: cream paper-warm with a hairline border.
+ * Active: 1.5px border in the method color, subtle tinted fill,
+ * a 3px tab anchor on the top edge that makes the card feel like
+ * a stamp pressed onto paper. */
+.payment-methods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.payment-method {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-2);
+  border: 1.5px solid var(--color-hair);
+  background: var(--color-paper-warm);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  color: var(--color-text-secondary);
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+.payment-method:active {
+  transform: translateY(1px);
+}
+
+.payment-method:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.payment-method[aria-pressed="true"] {
+  border-color: var(--method-color, var(--color-brand));
+  background: var(--method-bg, var(--color-brand-subtle));
+  color: var(--method-color, var(--color-brand));
+}
+
+/* Stamp tab — a 3px notch on the top edge, only present when active.
+ * Flat across the top, slightly inset from the corners. */
+.payment-method[aria-pressed="true"]::before {
+  content: "";
+  position: absolute;
+  top: -1.5px;
+  left: 18%;
+  right: 18%;
+  height: 3px;
+  background: var(--method-color, var(--color-brand));
+  border-radius: 0 0 2px 2px;
+}
+
+.payment-method__icon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-method__label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Cash form reveal — uses the gridTemplateRows 0fr↔1fr trick set
+ * inline; this is just the wrapper styling. */
+.payment-cash {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+.payment-cash__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-2);
+}
+
+/* Quick-bill chip row — mono uppercase pills on a horizontal scroll.
+ * Hidden scrollbar; thumb-friendly height; press-feedback on tap. */
+.quick-bills {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(var(--page-padding) * -1);
+  padding: 4px var(--page-padding);
+}
+
+.quick-bills::-webkit-scrollbar {
+  display: none;
+}
+
+.quick-bill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-hair);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-full);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    border-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+.quick-bill:active {
+  transform: scale(0.97);
+}
+
+.quick-bill:hover {
+  border-color: var(--color-brand);
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+}
+
+/* "Exact" pill — distinguished as the canonical match (no change). */
+.quick-bill--exact {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-bg-surface);
+}
+
+.quick-bill--exact:hover {
+  background: var(--color-brand-subtle);
+}
+
+/* Change-due moment — the line that appears when tendered ≥ total.
+ * Italic Fraunces label on the left, oversized mono number on the right.
+ * Hairline above so it reads as a footnote to the input rather than a
+ * separate section. Slides in subtly. */
+.payment-change {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0 0;
+  border-top: 1px dashed var(--color-hair);
+  animation: payment-change-in 280ms var(--ease-out-expo) both;
+}
+
+@keyframes payment-change-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.payment-change__label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.payment-change__value {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--color-success);
+}
+
+.payment-change__value--negative {
+  color: var(--color-error);
+}
+
+.payment-change__qualifier {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-left: var(--space-2);
+}
+
+/* Inline error banner — oxblood eyebrow + body text + back-to-cart link. */
+.payment-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+}
+
+.payment-error__body {
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.payment-error__back {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  background: transparent;
+  border: 0;
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Sticky Total stamp — same pattern as the cart subtotal but a beat
+ * heavier (the moment of money changing hands). Italic "Total" label,
+ * oversized mono value. */
+.payment-total {
+  position: sticky;
+  bottom: 0;
+  margin: var(--space-4) calc(var(--page-padding) * -1) calc(var(--space-3) * -1);
+  padding: var(--space-4) var(--page-padding) var(--space-4);
+  background: var(--surface-translucent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid var(--color-hair);
+}
+
+.payment-total__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.payment-total__label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 24px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+}
+
+.payment-total__value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+}
+
+.payment-total__meta {
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.payment-total__meta--awaiting {
+  color: var(--color-text-tertiary);
+}
+
+.payment-total__meta--ready {
+  color: var(--color-success);
+}
+
+/* ===== Charge button (footer override of IonButton) =================== */
+
+/* The Charge button replaces the default IonButton in the modal-footer
+ * with a custom terracotta pill that echoes the cart-fab. We only
+ * supply the inner pill markup; ChargeButton.tsx renders a regular
+ * <button> instead of IonButton so we can fully own the chrome. */
+.charge-pill {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  height: 56px;
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-brand);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    0 1px 0 0 rgba(0, 0, 0, 0.08),
+    0 12px 24px -8px rgba(var(--color-brand-rgb), 0.45);
+  transition:
+    transform var(--duration-fast) ease-out,
+    box-shadow var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    opacity var(--duration-fast) ease-out;
+}
+
+.charge-pill:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 0 0 rgba(0, 0, 0, 0.08),
+    0 6px 12px -6px rgba(var(--color-brand-rgb), 0.45);
+}
+
+.charge-pill:hover:not(:disabled) {
+  background: var(--color-brand-hover);
+}
+
+.charge-pill:disabled {
+  background: var(--color-bg-muted);
+  color: var(--color-text-tertiary);
+  cursor: default;
+  box-shadow: none;
+}
+
+.charge-pill__divider {
+  opacity: 0.55;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.charge-pill__amount {
+  letter-spacing: 0.04em;
+  font-weight: 800;
+}
+
+.charge-pill__spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: charge-pill-spin 700ms linear infinite;
+}
+
+@keyframes charge-pill-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== Step 2 — receipt printed (success) ============================= */
+
+.cart-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-2) var(--space-2) var(--space-4);
+}
+
+.cart-success__lottie {
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
+}
+
+/* Mono uppercase stamp — "SALE 0042 · COMPLETE". Hairline border on
+ * cream paper-warm. Same DNA as open-session__stamp. */
+.cart-success__stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  padding: 6px var(--space-3);
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-hair);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  animation: cart-success-stamp-in 360ms var(--ease-out-expo) 320ms both;
+}
+
+.cart-success__stamp-id {
+  color: var(--color-text-primary);
+  letter-spacing: 0.14em;
+}
+
+.cart-success__stamp-dot {
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.cart-success__stamp-state {
+  color: var(--color-success);
+  font-weight: 800;
+}
+
+@keyframes cart-success-stamp-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cart-success__heading {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 80;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 30px;
+  letter-spacing: -0.022em;
+  line-height: 1.06;
+  color: var(--color-text-primary);
+  margin: var(--space-3) 0 0;
+}
+
+.cart-success__heading em {
+  font-style: italic;
+  color: var(--color-brand);
+  font-variation-settings: "SOFT" 100;
+}
+
+.cart-success__caption {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: var(--space-2) 0 0;
+  max-width: 28ch;
+}
+
+/* Ledger card — single block of mono-uppercase rows. Same chrome as
+ * the open-session__ledger so the success steps echo each other. */
+.cart-success__ledger {
+  width: 100%;
+  margin: var(--space-5) 0 0;
+  padding: var(--space-4) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-success__ledger-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+.cart-success__ledger-row + .cart-success__ledger-row {
+  border-top: 1px dashed var(--color-hair);
+}
+
+.cart-success__ledger-row--emphasis {
+  /* Total row sits a touch heavier — solid hair, larger value, brand
+   * accent on the value when this is the final paid amount. */
+  border-top: 1px solid var(--color-hair) !important;
+  margin-top: 2px;
+  padding-top: var(--space-3);
+}
+
+.cart-success__ledger-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.cart-success__ledger-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  letter-spacing: -0.005em;
+}
+
+.cart-success__ledger-row--emphasis .cart-success__ledger-value {
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.cart-success__ledger-row--change .cart-success__ledger-value {
+  color: var(--color-success);
+}
+
+/* Step 2 footer-item wrapper — when SuccessStepContent renders its own
+ * Done button inline (rather than via the modal footer), we use the
+ * same pill mood as the charge pill but in primary cream-on-terracotta. */
+.cart-success__done {
+  margin-top: var(--space-5);
+  width: 100%;
+}

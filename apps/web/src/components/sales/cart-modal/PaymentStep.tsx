@@ -1,7 +1,6 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { IonButton } from '@ionic/react'
 import { PriceInput } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { haptic } from '@/lib/haptics'
@@ -19,6 +18,7 @@ interface PaymentStepContentProps {
   error: string
   errorMessageCode?: string
   onGoToCart: () => void
+  tenderedSufficient: boolean
 }
 
 const STOCK_RELATED_CODES = new Set([
@@ -42,6 +42,7 @@ export function PaymentStepContent({
   error,
   errorMessageCode,
   onGoToCart,
+  tenderedSufficient,
 }: PaymentStepContentProps) {
   const t = useIntl()
   const { formatCurrency } = useBusinessFormat()
@@ -50,6 +51,7 @@ export function PaymentStepContent({
   const tendered = parseFloat(tenderedStr) || 0
   const change = isCash ? roundToCurrencyDecimals(tendered - total, currency) : 0
   const showChangeRow = isCash && tenderedStr !== ''
+  const isExact = isCash && Math.abs(change) < 1e-9 && tenderedStr !== ''
   const isStockError =
     errorMessageCode != null && STOCK_RELATED_CODES.has(errorMessageCode)
 
@@ -58,47 +60,58 @@ export function PaymentStepContent({
   return (
     <>
       <div className="modal-step-item">
-        <div id="payment-method-picker-label" className="text-sm text-text-secondary mb-2">
-          {t.formatMessage({
-            id: 'sales.cart.modal_pay_with_label'
-          })}
+        <div className="cart-modal__eyebrow">
+          {t.formatMessage({ id: 'sales.cart.modal_payment_eyebrow' })}
         </div>
-        <div role="group" aria-labelledby="payment-method-picker-label" className="grid grid-cols-3 gap-2">
+        <h2 className="cart-modal__title">
+          {t.formatMessage(
+            { id: 'sales.cart.modal_payment_title' },
+            { em: (chunks) => <em>{chunks}</em> },
+          )}
+        </h2>
+      </div>
+
+      {/* Method picker — three printed stamps. */}
+      <div className="modal-step-item">
+        <div id="payment-method-picker-label" className="payment-step__field-label">
+          {t.formatMessage({ id: 'sales.cart.modal_pay_with_label' })}
+        </div>
+        <div role="group" aria-labelledby="payment-method-picker-label" className="payment-methods">
           {PAYMENT_METHODS.map((method) => {
             const Icon = method.icon
             const active = method.id === methodId
-            const activeStyle = active
-              ? {
-                  borderColor: method.colorToken,
-                  background: method.subtleBg ?? 'var(--color-bg-surface)',
-                  color: method.colorToken,
-                }
-              : undefined
+            const style = {
+              ['--method-color' as string]: method.colorToken,
+              ['--method-bg' as string]: method.subtleBg ?? 'var(--color-bg-surface)',
+            } as React.CSSProperties
             return (
               <button
                 key={method.id}
                 type="button"
-                className="flex flex-col items-center gap-1 rounded-xl border-2 border-transparent bg-bg-surface p-3 transition-colors"
-                style={activeStyle}
+                className="payment-method"
+                style={style}
+                aria-pressed={active}
                 onClick={() => {
                   haptic()
                   setMethodId(method.id)
                   // Single invariant: clear tendered on every method change.
                   setTenderedStr('')
                 }}
-                aria-pressed={active}
               >
-                <Icon size={24} />
-                <span className="text-sm font-medium">
+                <span className="payment-method__icon">
+                  <Icon size={22} strokeWidth={1.75} />
+                </span>
+                <span className="payment-method__label">
                   {t.formatMessage({
-                    id: 'sales.cart.' + method.labelKey
+                    id: 'sales.cart.' + method.labelKey,
                   })}
                 </span>
               </button>
-            );
+            )
           })}
         </div>
       </div>
+
       {/* Cash form reveal — gridTemplateRows 0fr ↔ 1fr collapse trick. */}
       <div className="modal-step-item">
         <div
@@ -106,12 +119,10 @@ export function PaymentStepContent({
           style={{ gridTemplateRows: isCash ? '1fr' : '0fr' }}
         >
           <div className="overflow-hidden min-h-0">
-            <div className="flex flex-col gap-3">
+            <div className="payment-cash">
               <div>
-                <label className="label" htmlFor="payment-tendered">
-                  {t.formatMessage({
-                    id: 'sales.cart.modal_tendered_label'
-                  })}
+                <label className="payment-cash__label" htmlFor="payment-tendered">
+                  {t.formatMessage({ id: 'sales.cart.modal_tendered_label' })}
                 </label>
                 <PriceInput
                   id="payment-tendered"
@@ -122,41 +133,52 @@ export function PaymentStepContent({
               </div>
 
               {/* Quick-fill row: Exact + dynamically computed bills. */}
-              <div className="flex gap-2 overflow-x-auto scrollbar-hidden -mx-1 px-1">
-                <QuickBillButton
-                  label={t.formatMessage({
-                    id: 'sales.cart.modal_tendered_exact'
-                  })}
+              <div className="quick-bills">
+                <button
+                  type="button"
+                  className="quick-bill quick-bill--exact"
                   onClick={() => {
                     haptic()
                     setTenderedStr(total.toString())
                   }}
-                />
+                >
+                  {t.formatMessage({ id: 'sales.cart.modal_tendered_exact' })}
+                </button>
                 {quickBills.map((amount) => (
-                  <QuickBillButton
+                  <button
                     key={amount}
-                    label={formatCurrency(amount)}
+                    type="button"
+                    className="quick-bill"
                     onClick={() => {
                       haptic()
                       setTenderedStr(amount.toString())
                     }}
-                  />
+                  >
+                    {formatCurrency(amount)}
+                  </button>
                 ))}
               </div>
 
               {showChangeRow && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-secondary">
-                    {t.formatMessage({
-                      id: 'sales.cart.modal_change_label'
-                    })}
+                <div className="payment-change">
+                  <span className="payment-change__label">
+                    {change < 0
+                      ? t.formatMessage({ id: 'sales.cart.modal_short_label' })
+                      : t.formatMessage({ id: 'sales.cart.modal_change_label' })}
                   </span>
-                  <span
-                    className={`font-medium tabular-nums ${
-                      change < 0 ? 'text-error' : ''
-                    }`}
-                  >
-                    {formatCurrency(change)}
+                  <span className="flex items-baseline">
+                    <span
+                      className={`payment-change__value ${
+                        change < 0 ? 'payment-change__value--negative' : ''
+                      }`}
+                    >
+                      {formatCurrency(Math.abs(change))}
+                    </span>
+                    {isExact && (
+                      <span className="payment-change__qualifier">
+                        {t.formatMessage({ id: 'sales.cart.modal_change_exact' })}
+                      </span>
+                    )}
                   </span>
                 </div>
               )}
@@ -164,51 +186,47 @@ export function PaymentStepContent({
           </div>
         </div>
       </div>
+
       {error && (
         <div className="modal-step-item">
-          <div className="flex items-center justify-between gap-3 rounded-lg bg-error-subtle p-3 text-sm text-error">
-            <span>{error}</span>
+          <div className="payment-error">
+            <span className="payment-error__body">{error}</span>
             {isStockError && (
               <button
                 type="button"
-                className="font-medium underline whitespace-nowrap"
+                className="payment-error__back"
                 onClick={() => {
                   haptic()
                   onGoToCart()
                 }}
               >
-                {t.formatMessage({
-                  id: 'sales.cart.modal_error_back_to_cart'
-                })}
+                {t.formatMessage({ id: 'sales.cart.modal_error_back_to_cart' })}
               </button>
             )}
           </div>
         </div>
       )}
-      {/* Sticky Total: same pattern as the step-0 subtotal. */}
-      <div className="modal-step-item sticky bottom-0 -mx-5 -mb-5 px-5 pt-5 pb-5 bg-bg-surface">
-        <div className="pt-5 border-t border-border flex items-center justify-between">
-          <span className="text-lg font-bold">{t.formatMessage({
-            id: 'sales.cart.modal_total_label'
-          })}</span>
-          <span className="text-lg font-bold tabular-nums">
-            {formatCurrency(total)}
+
+      {/* Sticky Total stamp — italic Fraunces label, oversized mono total. */}
+      <div className="payment-total">
+        <div className="payment-total__row">
+          <span className="payment-total__label">
+            {t.formatMessage({ id: 'sales.cart.modal_total_label' })}
           </span>
+          <span className="payment-total__value">{formatCurrency(total)}</span>
+        </div>
+        <div
+          className={`payment-total__meta ${
+            tenderedSufficient
+              ? 'payment-total__meta--ready'
+              : 'payment-total__meta--awaiting'
+          }`}
+        >
+          {tenderedSufficient
+            ? t.formatMessage({ id: 'sales.cart.modal_total_meta_ready' })
+            : t.formatMessage({ id: 'sales.cart.modal_total_meta_awaiting' })}
         </div>
       </div>
     </>
   );
-}
-
-interface QuickBillButtonProps {
-  label: string
-  onClick: () => void
-}
-
-function QuickBillButton({ label, onClick }: QuickBillButtonProps) {
-  return (
-    <IonButton fill="outline" size="small" onClick={onClick}>
-      {label}
-    </IonButton>
-  )
 }

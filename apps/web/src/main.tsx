@@ -36,6 +36,10 @@ import './styles/account-modals.css'
 import './styles/hub-modals.css'
 import './styles/manage-modals.css'
 import './styles/sales-tab.css'
+import './styles/sales-modal-open.css'
+import './styles/sales-modal-close.css'
+import './styles/sales-modal-history.css'
+import './styles/sales-modal-cart.css'
 import './styles/utilities.css'
 
 // 5. Tailwind utilities last so utility classes can override component CSS.

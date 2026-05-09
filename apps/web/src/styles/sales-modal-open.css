@@ -1,0 +1,299 @@
+/* OpenSessionModal — Modern Mercantile chrome.
+ *
+ * The "ceremony of opening the till." Two beats:
+ *
+ *   Step 0 — a quiet, deliberate form. Modal hero (mono eyebrow,
+ *            Fraunces italic title with a terracotta `<em>` accent,
+ *            italic subtitle), a hairline mono rule introducing the
+ *            single STARTING CASH field, then the PriceInput with a
+ *            mono helper line below.
+ *
+ *   Step 1 — a printed-receipt success step. Lottie tick, a mono stamp
+ *            ("SESSION · OPEN · 09:42") that reads like ink on paper,
+ *            a Fraunces italic heading with `<em>` on "opened", and a
+ *            single-row ledger card confirming the committed starting
+ *            cash. Error path uses an oxblood eyebrow + italic heading
+ *            in place of the success stack.
+ *
+ * Reuses the shared .modal-hero / .modal-rule / .modal-error
+ * primitives from account-modals.css. Only the open-session-specific
+ * pieces live here. */
+
+/* ===== Step 0 — form layout ========================================== */
+
+.open-session {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hero collapses its bottom inset; we use .open-session__rule below to
+ * provide the gap between subtitle and the field section. */
+.open-session__hero {
+  padding-bottom: 0;
+}
+
+/* Mono micro-rule — same DNA as `.modal-rule` from account-modals.css,
+ * but lighter top margin so it docks tightly under the hero subtitle. */
+.open-session__rule {
+  margin: var(--space-5) 0 var(--space-3);
+}
+
+.open-session__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.open-session__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.open-session__helper {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+  line-height: 1.5;
+  margin: var(--space-1) 0 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+/* Hairline tick mark before the helper line — nods to a printed
+ * receipt's leading dash. Decorative, no a11y meaning. */
+.open-session__helper::before {
+  content: "";
+  flex-shrink: 0;
+  width: 14px;
+  height: 1px;
+  margin-top: 7px;
+  background: var(--color-hair);
+}
+
+/* ===== Step 1 — wraps loading / success / error ====================== */
+
+.open-session__step1 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-2) var(--space-2) var(--space-4);
+  min-height: 280px;
+  justify-content: center;
+}
+
+/* ===== Loading state ================================================= */
+
+.open-session__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) 0;
+}
+
+.open-session__loading ion-spinner {
+  --color: var(--color-brand);
+  width: 32px;
+  height: 32px;
+}
+
+.open-session__loading-caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+/* ===== Success state ================================================= */
+
+.open-session__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.open-session__lottie-frame {
+  flex-shrink: 0;
+}
+
+/* Printed-receipt stamp. Mono uppercase, hairline border, cream
+ * paper-warm fill. Reads like an ink mark applied to a register
+ * slip the moment the drawer pops. */
+.open-session__stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  padding: 6px var(--space-3);
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-hair);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  /* Soft fade-in once the Lottie tick lands. */
+  animation: open-session-stamp-in 360ms var(--ease-out-expo) 320ms both;
+}
+
+.open-session__stamp-mark {
+  color: var(--color-text-secondary);
+}
+
+.open-session__stamp-state {
+  /* "OPEN" carries the brand color so the stamp reads as alive. */
+  color: var(--color-brand);
+  font-weight: 700;
+}
+
+.open-session__stamp-dot {
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.open-session__stamp-time {
+  color: var(--color-text-primary);
+  letter-spacing: 0.12em;
+}
+
+@keyframes open-session-stamp-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.open-session__success-heading {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-weight: 400;
+  font-size: 28px;
+  letter-spacing: -0.022em;
+  line-height: 1.08;
+  color: var(--color-text-primary);
+  margin: var(--space-3) 0 0;
+}
+
+.open-session__success-heading em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+
+.open-session__success-desc {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  margin: var(--space-2) 0 0;
+  max-width: 30ch;
+}
+
+/* Single-row ledger card under the success heading. Same hairline
+ * shell as report-card / sales-stats-card so the success step echoes
+ * the chrome of the surface the modal opened from. */
+.open-session__ledger {
+  width: 100%;
+  margin: var(--space-5) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+}
+
+.open-session__ledger-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.open-session__ledger-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+.open-session__ledger-value {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* ===== Error state =================================================== */
+
+.open-session__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-6) var(--space-2);
+  max-width: 32ch;
+  margin: 0 auto;
+}
+
+.open-session__error-eyebrow {
+  /* Override .modal-hero__eyebrow's flex layout for centered display. */
+  display: block;
+  margin-bottom: var(--space-3);
+  letter-spacing: 0.22em;
+}
+
+.open-session__error-heading {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-weight: 400;
+  font-size: 24px;
+  letter-spacing: -0.018em;
+  line-height: 1.1;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.open-session__error-heading em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-error);
+}
+
+.open-session__error-body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  margin: var(--space-3) 0 0;
+}

@@ -6,6 +6,7 @@ import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell, PriceInput } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
+import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError } from '@/lib/api-client'
 import { haptic } from '@/lib/haptics'
@@ -24,9 +25,9 @@ export function OpenSessionModal({
   onClose,
   previousCountedCash,
 }: OpenSessionModalProps) {
-  const t = useIntl()
-  const tCommon = useIntl()
-  const { openSession } = useSalesSessions()
+  const intl = useIntl()
+  const { openSession, currentSession } = useSalesSessions()
+  const { formatCurrency, formatTime } = useBusinessFormat()
   const translateApiMessage = useApiMessage()
 
   const [step, setStep] = useState<Step>(0)
@@ -36,6 +37,10 @@ export function OpenSessionModal({
   const [submitting, setSubmitting] = useState(false)
   const [opened, setOpened] = useState(false)
   const [error, setError] = useState('')
+  // Snapshot of the value used for the just-confirmed open. Captured before
+  // the API call so the success step renders the exact amount the user
+  // committed to, even if they later edit the field on retry.
+  const [committedAmount, setCommittedAmount] = useState<number>(0)
 
   // Reset state after the modal closes.
   useEffect(() => {
@@ -48,6 +53,7 @@ export function OpenSessionModal({
         setSubmitting(false)
         setOpened(false)
         setError('')
+        setCommittedAmount(0)
       }, 250)
       return () => clearTimeout(timer)
     }
@@ -57,9 +63,10 @@ export function OpenSessionModal({
     haptic()
     setError('')
     setSubmitting(true)
+    const value = parseFloat(startingCashStr) || 0
+    setCommittedAmount(value)
     setStep(1)
     try {
-      const value = parseFloat(startingCashStr) || 0
       await openSession(value)
       setOpened(true)
     } catch (err) {
@@ -67,13 +74,13 @@ export function OpenSessionModal({
         err instanceof ApiError &&
         err.messageCode === ApiMessageCode.SESSION_ALREADY_OPEN
       ) {
-        setError(t.formatMessage({
+        setError(intl.formatMessage({
           id: 'sales.session.open_modal.error_already_open'
         }))
       } else if (err instanceof ApiError && err.envelope) {
         setError(translateApiMessage(err.envelope))
       } else {
-        setError(tCommon.formatMessage({
+        setError(intl.formatMessage({
           id: 'common.error'
         }))
       }
@@ -82,29 +89,35 @@ export function OpenSessionModal({
     }
   }
 
-  const title = t.formatMessage({ id: 'sales.session.open_modal.title' })
+  const title = intl.formatMessage({ id: 'sales.session.open_modal.title' })
 
-  // Step 0 footer — enter starting cash. Dismissal is the toolbar X
-  // (standardised across all modals), so the footer carries only the
-  // primary action.
+  // Step 0 footer — primary action
   const step0Footer = (
-    <IonButton onClick={handleConfirm} disabled={submitting}>
-      {t.formatMessage({ id: 'sales.session.open_modal.confirm' })}
+    <IonButton expand="block" onClick={handleConfirm} disabled={submitting} className="flex-1">
+      {intl.formatMessage({ id: 'sales.session.open_modal.confirm' })}
     </IonButton>
   )
 
-  // Step 1 footer — success or error
+  // Step 1 footer — success → Done; error → Back; loading → none
   const step1Footer = opened ? (
-    <IonButton onClick={onClose}>
-      {tCommon.formatMessage({ id: 'common.done' })}
+    <IonButton expand="block" onClick={onClose} className="flex-1">
+      {intl.formatMessage({ id: 'common.done' })}
     </IonButton>
   ) : error ? (
-    <IonButton fill="outline" onClick={() => setStep(0)}>
-      {t.formatMessage({ id: 'sales.session.open_modal.error_back' })}
+    <IonButton expand="block" fill="outline" onClick={() => setStep(0)} className="flex-1">
+      {intl.formatMessage({ id: 'sales.session.open_modal.error_back' })}
     </IonButton>
   ) : null
 
   const footer = step === 0 ? step0Footer : step1Footer
+
+  // Stamp for the success state. Uses the freshly-opened session's
+  // openedAt time when available — the session id is a UUID, not a
+  // human-readable counter, so we lean on time-of-open as the
+  // identifying mark on the printed-receipt stamp.
+  const openedAtTime = currentSession?.openedAt
+    ? formatTime(currentSession.openedAt)
+    : null
 
   return (
     <ModalShell
@@ -117,47 +130,128 @@ export function OpenSessionModal({
     >
       {/* Step 0 — enter starting cash */}
       {step === 0 && (
-        <>
-          <p className="text-sm text-text-secondary mb-4">
-            {t.formatMessage({ id: 'sales.session.open_modal.description' })}
-          </p>
-          <label className="label" htmlFor="open-session-starting-cash">
-            {t.formatMessage({ id: 'sales.session.open_modal.starting_cash' })}
-          </label>
-          <PriceInput
-            id="open-session-starting-cash"
-            value={startingCashStr}
-            onValueChange={setStartingCashStr}
-            placeholder="0"
-          />
-          <p className="text-xs text-text-tertiary mt-2">
-            {t.formatMessage({ id: 'sales.session.open_modal.starting_cash_helper' })}
-          </p>
-        </>
+        <div className="open-session">
+          <header className="modal-hero open-session__hero">
+            <div className="modal-hero__eyebrow">
+              {intl.formatMessage({ id: 'sales.session.open_modal.eyebrow' })}
+            </div>
+            <h1 className="modal-hero__title">
+              {intl.formatMessage(
+                { id: 'sales.session.open_modal.hero_title' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+            <p className="modal-hero__subtitle">
+              {intl.formatMessage({ id: 'sales.session.open_modal.description' })}
+            </p>
+          </header>
+
+          <div className="modal-rule open-session__rule">
+            {intl.formatMessage({ id: 'sales.session.open_modal.rule_caption' })}
+          </div>
+
+          <div className="open-session__field">
+            <label className="open-session__label" htmlFor="open-session-starting-cash">
+              {intl.formatMessage({ id: 'sales.session.open_modal.starting_cash' })}
+            </label>
+            <PriceInput
+              id="open-session-starting-cash"
+              value={startingCashStr}
+              onValueChange={setStartingCashStr}
+              placeholder="0"
+            />
+            <p className="open-session__helper">
+              {intl.formatMessage({ id: 'sales.session.open_modal.starting_cash_helper' })}
+            </p>
+          </div>
+        </div>
       )}
 
       {/* Step 1 — loading / success / error */}
       {step === 1 && (
-        <div className="flex flex-col items-center text-center py-4">
-          <div style={{ width: 160, height: 160 }}>
-            {opened && (
-              <LottiePlayer
-                src="/animations/success.json"
-                loop={false}
-                autoplay={true}
-                delay={300}
+        <div className="open-session__step1">
+          {/* Loading */}
+          {submitting && !opened && !error && (
+            <div className="open-session__loading">
+              <IonSpinner name="crescent" />
+              <p className="open-session__loading-caption">
+                {intl.formatMessage({ id: 'sales.session.open_modal.loading_caption' })}
+              </p>
+            </div>
+          )}
+
+          {/* Success */}
+          {opened && (
+            <div className="open-session__success">
+              <div
+                className="open-session__lottie-frame"
                 style={{ width: 160, height: 160 }}
-              />
-            )}
-          </div>
-          {opened ? (
-            <p className="text-lg font-semibold text-text-primary mt-4">
-              {t.formatMessage({ id: 'sales.session.open_modal.success_heading' })}
-            </p>
-          ) : error ? (
-            <p className="text-sm text-error mt-4">{error}</p>
-          ) : (
-            <IonSpinner name="crescent" />
+              >
+                <LottiePlayer
+                  src="/animations/success.json"
+                  loop={false}
+                  autoplay={true}
+                  delay={300}
+                  style={{ width: 160, height: 160 }}
+                />
+              </div>
+
+              <div
+                className="open-session__stamp"
+                aria-hidden={!openedAtTime}
+              >
+                <span className="open-session__stamp-mark">
+                  {intl.formatMessage({ id: 'sales.session.open_modal.stamp_label' })}
+                </span>
+                <span className="open-session__stamp-dot" aria-hidden="true">·</span>
+                <span className="open-session__stamp-state">
+                  {intl.formatMessage({ id: 'sales.session.open_modal.stamp_state_open' })}
+                </span>
+                {openedAtTime && (
+                  <>
+                    <span className="open-session__stamp-dot" aria-hidden="true">·</span>
+                    <span className="open-session__stamp-time">{openedAtTime}</span>
+                  </>
+                )}
+              </div>
+
+              <h2 className="open-session__success-heading">
+                {intl.formatMessage(
+                  { id: 'sales.session.open_modal.success_title' },
+                  { em: (chunks) => <em>{chunks}</em> },
+                )}
+              </h2>
+              <p className="open-session__success-desc">
+                {intl.formatMessage({ id: 'sales.session.open_modal.success_subtitle' })}
+              </p>
+
+              <dl className="open-session__ledger">
+                <div className="open-session__ledger-row">
+                  <dt className="open-session__ledger-label">
+                    {intl.formatMessage({ id: 'sales.session.open_modal.ledger_starting_cash' })}
+                  </dt>
+                  <dd className="open-session__ledger-value">
+                    {formatCurrency(committedAmount)}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && !opened && (
+            <div className="open-session__error">
+              <div className="modal-hero__eyebrow modal-hero__eyebrow--danger open-session__error-eyebrow">
+                {intl.formatMessage({ id: 'sales.session.open_modal.error_eyebrow' })}
+              </div>
+              <h2 className="open-session__error-heading">
+                {intl.formatMessage(
+                  { id: 'sales.session.open_modal.error_title' },
+                  { em: (chunks) => <em>{chunks}</em> },
+                )}
+              </h2>
+              <p className="open-session__error-body">{error}</p>
+            </div>
           )}
         </div>
       )}

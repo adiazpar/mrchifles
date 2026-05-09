@@ -1,8 +1,7 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { useEffect, useMemo, useState } from 'react'
-import { IonButton } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { useBusiness } from '@/contexts/business-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
@@ -75,9 +74,16 @@ export function SessionHistoryModal({
 
   const loadMoreFooter =
     step === 0 && sessions.length > 0 ? (
-      <IonButton fill="outline" onClick={() => void loadMore()}>
+      <button
+        type="button"
+        className="session-history-load-more"
+        onClick={() => {
+          haptic()
+          void loadMore()
+        }}
+      >
         {t.formatMessage({ id: 'sales.session.history_modal.load_more' })}
-      </IonButton>
+      </button>
     ) : undefined
 
   return (
@@ -88,30 +94,49 @@ export function SessionHistoryModal({
       onBack={step > 0 ? handleBack : undefined}
       footer={loadMoreFooter}
     >
-      {/* Step 0: List of closed sessions */}
+      {/* Step 0: Ledger of closed sessions */}
       {step === 0 && (
         <>
           {sessions.length === 0 ? (
-            <p className="text-sm text-text-tertiary text-center py-4">
-              {t.formatMessage({ id: 'sales.session.history_modal.empty' })}
-            </p>
+            <div className="session-history-empty">
+              <span className="session-history-empty__rule" />
+              <p className="session-history-empty__title">
+                {t.formatMessage({ id: 'sales.session.history_modal.empty_title' })}
+              </p>
+              <p className="session-history-empty__desc">
+                {t.formatMessage({ id: 'sales.session.history_modal.empty' })}
+              </p>
+            </div>
           ) : (
-            <div className="space-y-3">
-              {sessions.map((s) => (
-                <SessionRow
-                  key={s.id}
-                  session={s}
-                  formatDate={formatDate}
-                  formatTime={formatTime}
-                  formatCurrency={formatCurrency}
-                  onTap={() => {
-                    haptic()
-                    setSelectedSessionId(s.id)
-                    setSelectedSaleId(null)
-                    setStep(1)
-                  }}
-                />
-              ))}
+            <div className="session-history-ledger">
+              <div className="session-history-ledger__header">
+                <span className="session-history-ledger__eyebrow">
+                  {t.formatMessage({ id: 'sales.session.history_modal.ledger_eyebrow' })}
+                </span>
+                <span className="session-history-ledger__count">
+                  {t.formatMessage(
+                    { id: 'sales.session.history_modal.ledger_count' },
+                    { count: sessions.length },
+                  )}
+                </span>
+              </div>
+              <div className="session-history-ledger__rows">
+                {sessions.map((s) => (
+                  <SessionRow
+                    key={s.id}
+                    session={s}
+                    formatDate={formatDate}
+                    formatTime={formatTime}
+                    formatCurrency={formatCurrency}
+                    onTap={() => {
+                      haptic()
+                      setSelectedSessionId(s.id)
+                      setSelectedSaleId(null)
+                      setStep(1)
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </>
@@ -134,7 +159,7 @@ export function SessionHistoryModal({
         <SaleDetailContent businessId={businessId} saleId={selectedSaleId} />
       )}
     </ModalShell>
-  );
+  )
 }
 
 interface SessionRowProps {
@@ -161,56 +186,45 @@ function SessionRow({
 }: SessionRowProps) {
   const t = useIntl()
 
+  const opened = new Date(s.openedAt)
+  const closed = s.closedAt ? new Date(s.closedAt) : null
+  const variance = s.variance ?? 0
+  const isZero = variance === 0
+  const varianceClass = isZero
+    ? 'recent-session-row__variance recent-session-row__variance--zero'
+    : 'recent-session-row__variance recent-session-row__variance--off'
+
   return (
     <button
       type="button"
       onClick={onTap}
-      className="w-full text-left rounded-lg border border-border p-3 transition-colors hover:bg-bg-base"
+      className="recent-session-row"
     >
-      <div className="flex justify-between text-xs text-text-tertiary mb-2">
-        <span>
-          {t.formatMessage({
-            id: 'sales.session.history_modal.opened_label'
-          })}: {formatDate(new Date(s.openedAt))} {formatTime(new Date(s.openedAt))}
+      <div className="recent-session-row__lead">
+        <span className="session-history-row__time-eyebrow">
+          {formatTime(opened)}
+          {closed ? ` — ${formatTime(closed)}` : ''}
         </span>
-        {s.closedAt && (
-          <span>{t.formatMessage({
-            id: 'sales.session.history_modal.closed_label'
-          })}: {formatTime(new Date(s.closedAt))}</span>
-        )}
+        <span className="recent-session-row__date">
+          {formatDate(opened)}
+        </span>
+        <span className="recent-session-row__count">
+          {t.formatMessage(
+            { id: 'sales.session.history_modal.row_count' },
+            { count: s.salesCount ?? 0 },
+          )}
+        </span>
       </div>
-      <div className="grid grid-cols-3 gap-2 text-sm">
-        <Stat label={t.formatMessage({
-          id: 'sales.session.history_modal.transactions_label'
-        })} value={(s.salesCount ?? 0).toString()} />
-        <Stat label={t.formatMessage({
-          id: 'sales.session.history_modal.revenue_label'
-        })} value={formatCurrency(s.salesTotal ?? 0)} />
-        <Stat
-          label={t.formatMessage({
-            id: 'sales.session.history_modal.variance_label'
-          })}
-          value={formatCurrency(s.variance ?? 0)}
-          colorClass={(s.variance ?? 0) === 0 ? 'text-success' : 'text-error'}
-        />
+      <div className="recent-session-row__trail">
+        <span className="recent-session-row__total">
+          {formatCurrency(s.salesTotal ?? 0)}
+        </span>
+        <span className={varianceClass}>
+          {isZero
+            ? t.formatMessage({ id: 'sales.session.history_modal.variance_balanced' })
+            : formatCurrency(variance)}
+        </span>
       </div>
     </button>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  colorClass,
-}: {
-  label: string
-  value: string
-  colorClass?: string
-}) {
-  return (
-    <div>
-      <div className="text-xs text-text-tertiary">{label}</div>
-      <div className={`text-sm font-semibold tabular-nums ${colorClass ?? ''}`}>{value}</div>
-    </div>
   )
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { IonButton } from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { PaymentMethod } from '@kasero/shared/types/sale'
@@ -17,17 +16,18 @@ export interface ConfirmedSaleRecap {
 
 interface SuccessStepContentProps {
   confirmedSale: ConfirmedSaleRecap | null
-  onDone: () => void
 }
 
 /**
  * Content for the cart-payment success step. Lottie is gated on
  * confirmedSale != null so it only mounts after the API has actually
  * landed (matches OpenSessionModal's `opened` gate).
+ *
+ * Step 2 footer (the Done button) lives in ViewCartModal so it can
+ * share the terracotta `.charge-pill` chrome with step 1.
  */
-export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContentProps) {
+export function SuccessStepContent({ confirmedSale }: SuccessStepContentProps) {
   const t = useIntl()
-  const tCommon = useIntl()
   const { formatCurrency } = useBusinessFormat()
 
   const showCashRows = confirmedSale?.method === 'cash'
@@ -38,73 +38,97 @@ export function SuccessStepContent({ confirmedSale, onDone }: SuccessStepContent
     ? (`modal_method_${confirmedSale.method}` as const)
     : null
 
+  // Pad sale number to 4 digits with leading zeros so the stamp reads
+  // like a printed receipt run number (SALE 0042 · COMPLETE).
+  const stampNumber = confirmedSale
+    ? String(confirmedSale.saleNumber).padStart(4, '0')
+    : null
+
   return (
-    <>
-      <div className="modal-step-item">
-        <div className="flex flex-col items-center text-center py-4">
-          <div style={{ width: 160, height: 160 }}>
-            {confirmedSale && (
-              <LottiePlayer
-                src="/animations/success.json"
-                loop={false}
-                autoplay={true}
-                delay={300}
-                style={{ width: 160, height: 160 }}
-              />
-            )}
-          </div>
+    <div className="modal-step-item">
+      <div className="cart-success">
+        <div className="cart-success__lottie">
           {confirmedSale && (
-            <p className="text-lg font-semibold text-text-primary mt-4">
-              {t.formatMessage({
-                id: 'sales.cart.modal_success_heading'
-              }, { number: confirmedSale.saleNumber })}
-            </p>
+            <LottiePlayer
+              src="/animations/success.json"
+              loop={false}
+              autoplay={true}
+              delay={300}
+              style={{ width: 140, height: 140 }}
+            />
           )}
         </div>
-      </div>
-      {confirmedSale && methodLabelKey && (
-        <div className="modal-step-item">
-          <div className="flex flex-col gap-2 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-text-secondary">{t.formatMessage({
-                id: 'sales.cart.modal_success_method_label'
-              })}</span>
-              <span className="font-medium">{t.formatMessage({
-                id: 'sales.cart.' + methodLabelKey
-              })}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-text-secondary">{t.formatMessage({
-                id: 'sales.cart.modal_success_total_label'
-              })}</span>
-              <span className="font-medium tabular-nums">{formatCurrency(confirmedSale.total)}</span>
+
+        {confirmedSale && stampNumber && (
+          <span className="cart-success__stamp">
+            <span>{t.formatMessage({ id: 'sales.cart.modal_success_stamp_lead' })}</span>
+            <span className="cart-success__stamp-id">{stampNumber}</span>
+            <span className="cart-success__stamp-dot" aria-hidden="true">·</span>
+            <span className="cart-success__stamp-state">
+              {t.formatMessage({ id: 'sales.cart.modal_success_stamp_state' })}
+            </span>
+          </span>
+        )}
+
+        {confirmedSale && (
+          <h2 className="cart-success__heading">
+            {t.formatMessage(
+              { id: 'sales.cart.modal_success_heading_alt' },
+              { em: (chunks) => <em>{chunks}</em> },
+            )}
+          </h2>
+        )}
+
+        {confirmedSale && (
+          <p className="cart-success__caption">
+            {t.formatMessage(
+              { id: 'sales.cart.modal_success_caption' },
+              { number: confirmedSale.saleNumber },
+            )}
+          </p>
+        )}
+
+        {confirmedSale && methodLabelKey && (
+          <div className="cart-success__ledger">
+            <div className="cart-success__ledger-row">
+              <span className="cart-success__ledger-label">
+                {t.formatMessage({ id: 'sales.cart.modal_success_method_label' })}
+              </span>
+              <span className="cart-success__ledger-value">
+                {t.formatMessage({ id: 'sales.cart.' + methodLabelKey })}
+              </span>
             </div>
             {showCashRows && confirmedSale.tendered != null && (
-              <div className="flex items-center justify-between">
-                <span className="text-text-secondary">{t.formatMessage({
-                  id: 'sales.cart.modal_success_tendered_label'
-                })}</span>
-                <span className="font-medium tabular-nums">{formatCurrency(confirmedSale.tendered)}</span>
+              <div className="cart-success__ledger-row">
+                <span className="cart-success__ledger-label">
+                  {t.formatMessage({ id: 'sales.cart.modal_success_tendered_label' })}
+                </span>
+                <span className="cart-success__ledger-value">
+                  {formatCurrency(confirmedSale.tendered)}
+                </span>
               </div>
             )}
             {showCashRows && confirmedSale.change != null && (
-              <div className="flex items-center justify-between">
-                <span className="text-text-secondary">{t.formatMessage({
-                  id: 'sales.cart.modal_success_change_label'
-                })}</span>
-                <span className="font-medium tabular-nums">{formatCurrency(confirmedSale.change)}</span>
+              <div className="cart-success__ledger-row cart-success__ledger-row--change">
+                <span className="cart-success__ledger-label">
+                  {t.formatMessage({ id: 'sales.cart.modal_success_change_label' })}
+                </span>
+                <span className="cart-success__ledger-value">
+                  {formatCurrency(confirmedSale.change)}
+                </span>
               </div>
             )}
+            <div className="cart-success__ledger-row cart-success__ledger-row--emphasis">
+              <span className="cart-success__ledger-label">
+                {t.formatMessage({ id: 'sales.cart.modal_success_total_label' })}
+              </span>
+              <span className="cart-success__ledger-value">
+                {formatCurrency(confirmedSale.total)}
+              </span>
+            </div>
           </div>
-        </div>
-      )}
-      <div className="modal-footer-item">
-        <IonButton expand="block" onClick={onDone}>
-          {tCommon.formatMessage({
-            id: 'common.done'
-          })}
-        </IonButton>
+        )}
       </div>
-    </>
+    </div>
   );
 }

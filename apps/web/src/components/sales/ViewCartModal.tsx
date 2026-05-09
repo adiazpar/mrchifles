@@ -26,7 +26,6 @@ type CartStep = 0 | 1 | 2
 
 export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
   const t = useIntl()
-  const tCommon = useIntl()
   const { products } = useProducts()
   const { formatCurrency } = useBusinessFormat()
 
@@ -61,6 +60,8 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
     cart.lines.length > 0 &&
     cart.total > 0 &&
     tenderedSufficient
+
+  const lineCount = cart.lines.reduce((n, l) => n + l.quantity, 0)
 
   const resetState = useCallback(() => {
     setStep(0)
@@ -98,15 +99,17 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
 
   const title = step === 0 ? cartTitle : step === 1 ? paymentTitle : successTitle
 
-  // Toolbar X dismisses across the app, so footers are primary-only.
-  // Footer for step 0 (cart view)
+  // Step 0 footer: secondary IonButton — the visual mood is reserved for
+  // step 1's terracotta Charge pill. Default chrome on the confirm button
+  // keeps the receipt step quiet so the line items + subtotal are the
+  // moments of attention.
   const cartFooter = (
     <IonButton disabled={isEmpty} onClick={() => setStep(1)}>
-      {tCommon.formatMessage({ id: 'common.confirm' })}
+      {t.formatMessage({ id: 'common.confirm' })}
     </IonButton>
   )
 
-  // Footer for step 1 (payment) — single charge button
+  // Step 1 footer — terracotta Charge pill (custom button, not IonButton).
   const paymentFooter = (
     <ChargeButton
       cart={cart}
@@ -125,7 +128,23 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
     />
   )
 
-  const footer = step === 0 ? cartFooter : step === 1 ? paymentFooter : undefined
+  // Step 2 footer — terracotta Done pill (custom button, not IonButton).
+  const successFooter = (
+    <button
+      type="button"
+      className="charge-pill"
+      onClick={() => {
+        haptic()
+        handleClose()
+      }}
+    >
+      <span className="charge-pill__amount">
+        {t.formatMessage({ id: 'common.done' })}
+      </span>
+    </button>
+  )
+
+  const footer = step === 0 ? cartFooter : step === 1 ? paymentFooter : successFooter
 
   return (
     <ModalShell
@@ -136,17 +155,40 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
       footer={footer}
       noSwipeDismiss
     >
-      {/* Step 0: Cart view */}
+      {/* Step 0: Cart receipt */}
       {step === 0 && (
         <>
           {isEmpty ? (
-            <p className="text-sm text-text-secondary text-center py-6">
-              {t.formatMessage({ id: 'sales.cart.modal_empty' })}
-            </p>
+            <div className="cart-receipt__empty">
+              <span className="cart-receipt__empty-stamp">
+                {t.formatMessage({ id: 'sales.cart.modal_empty_stamp' })}
+              </span>
+              <p className="cart-receipt__empty-message">
+                {t.formatMessage({ id: 'sales.cart.modal_empty' })}
+              </p>
+            </div>
           ) : (
             <>
               <div className="modal-step-item">
-                <div className="flex flex-col gap-6">
+                <div className="cart-modal__eyebrow">
+                  {t.formatMessage({ id: 'sales.cart.modal_eyebrow' })}
+                </div>
+                <h2 className="cart-modal__title">
+                  {t.formatMessage(
+                    { id: 'sales.cart.modal_receipt_title' },
+                    { em: (chunks) => <em>{chunks}</em> },
+                  )}
+                </h2>
+                <div className="cart-modal__rule">
+                  <span className="cart-modal__rule-line" />
+                  <span className="cart-modal__rule-caption">
+                    {t.formatMessage(
+                      { id: 'sales.cart.modal_lines_caption' },
+                      { count: lineCount },
+                    )}
+                  </span>
+                </div>
+                <div className="cart-receipt__lines">
                   {cart.lines.map((line) => (
                     <CartLineRow
                       key={line.productId}
@@ -158,22 +200,20 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
                   ))}
                 </div>
               </div>
-              {/* Sticky bottom subtotal: only the product list above
-                  scrolls inside the step body. The outer's negative
-                  margins overrun the modal-body's padding so the
-                  bg-bg-surface masks content scrolling behind it
-                  edge-to-edge (matching the footer wrapper). The inner
-                  div carries the divider so the border sits flush with
-                  the standard modal-item horizontal inset, not the
-                  edge-to-edge surface. */}
-              <div className="modal-step-item sticky bottom-0 -mx-5 -mb-5 px-5 pt-5 pb-5 bg-bg-surface">
-                <div className="pt-5 border-t border-border flex items-center justify-between">
-                  <span className="text-lg font-bold">
+              <div className="cart-receipt__subtotal">
+                <div className="cart-receipt__subtotal-row">
+                  <span className="cart-receipt__subtotal-label">
                     {t.formatMessage({ id: 'sales.cart.modal_subtotal_label' })}
                   </span>
-                  <span className="text-lg font-bold tabular-nums">
+                  <span className="cart-receipt__subtotal-value">
                     {formatCurrency(cart.total)}
                   </span>
+                </div>
+                <div className="cart-receipt__subtotal-meta">
+                  {t.formatMessage(
+                    { id: 'sales.cart.modal_subtotal_meta' },
+                    { count: lineCount },
+                  )}
                 </div>
               </div>
             </>
@@ -193,12 +233,13 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
           error={error}
           errorMessageCode={errorMessageCode}
           onGoToCart={() => setStep(0)}
+          tenderedSufficient={tenderedSufficient}
         />
       )}
 
       {/* Step 2: Success */}
       {step === 2 && (
-        <SuccessStepContent confirmedSale={confirmedSale} onDone={handleClose} />
+        <SuccessStepContent confirmedSale={confirmedSale} />
       )}
     </ModalShell>
   );
@@ -218,22 +259,23 @@ function CartLineRow({ line, product, cart, formatCurrency }: CartLineRowProps) 
   const lineTotal = line.unitPrice * line.quantity
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">{line.productName}</div>
-        <div className="text-xs text-text-secondary mt-0.5">
-          {formatCurrency(line.unitPrice)} {'×'} {line.quantity} ={' '}
-          <span className="text-text-primary font-medium tabular-nums">
+    <div className="cart-line">
+      <div className="cart-line__head">
+        <div className="cart-line__name">{line.productName}</div>
+        <div className="cart-line__math">
+          <span>{formatCurrency(line.unitPrice)}</span>
+          <span className="cart-line__math-op">{'×'}</span>
+          <span>{line.quantity}</span>
+          <span className="cart-line__math-op">{'='}</span>
+          <span className="cart-line__math-total">
             {formatCurrency(lineTotal)}
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-1 flex-shrink-0">
+      <div className="cart-line__qty">
         <QtyButton
-          variant="danger"
-          ariaLabel={t.formatMessage({
-            id: 'sales.cart.qty_decrease'
-          })}
+          variant="minus"
+          ariaLabel={t.formatMessage({ id: 'sales.cart.qty_decrease' })}
           onClick={(e) => {
             e.stopPropagation()
             cart.updateQty(line.productId, line.quantity - 1)
@@ -241,14 +283,10 @@ function CartLineRow({ line, product, cart, formatCurrency }: CartLineRowProps) 
         >
           <Minus style={{ width: 14, height: 14 }} />
         </QtyButton>
-        <span className="text-sm font-semibold tabular-nums w-6 text-center">
-          {line.quantity}
-        </span>
+        <span className="cart-line__qty-value">{line.quantity}</span>
         <QtyButton
-          variant="primary"
-          ariaLabel={t.formatMessage({
-            id: 'sales.cart.qty_increase'
-          })}
+          variant="plus"
+          ariaLabel={t.formatMessage({ id: 'sales.cart.qty_increase' })}
           disabled={atMaxQty}
           onClick={(e) => {
             e.stopPropagation()
@@ -263,7 +301,7 @@ function CartLineRow({ line, product, cart, formatCurrency }: CartLineRowProps) 
   );
 }
 
-type QtyButtonVariant = 'primary' | 'danger'
+type QtyButtonVariant = 'plus' | 'minus'
 
 function QtyButton({
   variant,
@@ -278,21 +316,10 @@ function QtyButton({
   onClick: (e: MouseEvent<HTMLButtonElement>) => void
   children: React.ReactNode
 }) {
-  const activeColor = variant === 'primary' ? 'text-brand' : 'text-error'
   return (
     <button
       type="button"
-      className={`cursor-pointer select-none transition-colors border-2 border-transparent bg-transparent ${
-        disabled ? '' : activeColor
-      }`}
-      style={{
-        width: 48,
-        height: 32,
-        minHeight: 'unset',
-        padding: 0,
-        borderRadius: 'var(--radius-full)',
-        gap: 0,
-      }}
+      className={`cart-line__qty-button cart-line__qty-button--${variant}`}
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={(e) => {

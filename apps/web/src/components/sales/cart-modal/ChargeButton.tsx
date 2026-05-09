@@ -1,7 +1,6 @@
 'use client'
 
 import { useIntl, type IntlShape } from 'react-intl';
-import { IonButton, IonSpinner } from '@ionic/react'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useSales } from '@/contexts/sales-context'
@@ -34,6 +33,11 @@ interface ChargeButtonProps {
  * SalesContext.commitSale, locks the modal during the round-trip, then
  * navigates to step 2 (success) on success, or surfaces a localized
  * error inline on failure (sequential pattern, no fake success).
+ *
+ * Renders a custom terracotta `.charge-pill` instead of an IonButton so
+ * we can fully own the chrome — mono uppercase "Charge · $7.50",
+ * elevated drop shadow, two-step pressed feedback. Echoes the
+ * `.cart-fab__pill` mood from the surface that opened this modal.
  */
 export function ChargeButton({
   cart,
@@ -91,16 +95,28 @@ export function ChargeButton({
   }
 
   return (
-    <IonButton disabled={!canConfirm} onClick={handleClick}>
+    <button
+      type="button"
+      className="charge-pill"
+      disabled={!canConfirm}
+      onClick={handleClick}
+      aria-busy={submitting}
+    >
       {submitting ? (
-        <IonSpinner name="crescent" />
+        <span className="charge-pill__spinner" aria-hidden="true" />
       ) : (
-        <span>{t.formatMessage({
-          id: 'sales.cart.modal_charge_button'
-        }, { value: formatCurrency(cart.total) })}</span>
+        <>
+          <span>
+            {t.formatMessage({ id: 'sales.cart.modal_charge_label' })}
+          </span>
+          <span className="charge-pill__divider" aria-hidden="true">·</span>
+          <span className="charge-pill__amount">
+            {formatCurrency(cart.total)}
+          </span>
+        </>
       )}
-    </IonButton>
-  );
+    </button>
+  )
 }
 
 function translateError(

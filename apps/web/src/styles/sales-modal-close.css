@@ -1,0 +1,342 @@
+/* CloseSessionConfirmModal — Modern Mercantile chrome.
+ *
+ * Three-step ritual for closing the till: count → reveal → closed.
+ * The visual energy escalates: step 0 is quiet and focused, step 1 is
+ * the centerpiece (a giant variance hero with two ledger sections
+ * below), step 2 is the printed-receipt resolution (Lottie + a mono
+ * "LEDGER CLOSED" stamp). All numerals are JetBrains Mono with
+ * tabular figures; titles are Fraunces italic; eyebrows are mono
+ * uppercase tracked. No gradients — only solid tokens.
+ *
+ * Owned by CloseSessionConfirmModal.tsx. */
+
+/* ===== Step 0 — Final count =========================================== */
+/* The PriceInput sits front-and-center under a small mono "AMOUNT IN
+ * DRAWER" label-eyebrow. Helper text below is in italic display copy
+ * so it reads as guidance rather than a note. */
+.close-session__count-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.close-session__count-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.close-session__count-helper {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  margin: var(--space-2) 0 0;
+  max-width: 32ch;
+}
+
+/* ===== Step 1 — Variance reveal ======================================= */
+/* The hero plate: cream-deep paper with a thin ink-tinted hairline and
+ * generous interior padding. Variance state colors drive the eyebrow
+ * and the hero numeral; the plate background stays neutral so the
+ * number reads as the headline, not the chrome. */
+.close-session__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+/* A 2px state-colored cap along the top edge of the plate. Acts as
+ * the "ledger ink" — moss for spot-on, oxblood for off. */
+.close-session__hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--color-text-tertiary);
+}
+.close-session__hero--zero::before { background: var(--color-success); }
+.close-session__hero--off::before  { background: var(--color-error); }
+
+.close-session__hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.close-session__hero--zero .close-session__hero-eyebrow { color: var(--color-success); }
+.close-session__hero--off  .close-session__hero-eyebrow { color: var(--color-error); }
+
+/* The big variance numeral. Fraunces italic at hero scale with mono
+ * tabular figures via font-variant-numeric so the negative/plus sign
+ * and digits stay aligned across re-renders. */
+.close-session__hero-value {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 70;
+  font-weight: 500;
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0 0;
+}
+.close-session__hero--zero .close-session__hero-value { color: var(--color-success); }
+.close-session__hero--off  .close-session__hero-value { color: var(--color-error); }
+
+/* Tiny caption under the hero — italic display, sets the tone */
+.close-session__hero-caption {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+/* Session timestamp in the eyebrow row — opens-at time as a mono
+ * stamp so the user knows which session they're closing. */
+.close-session__hero-stamp {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  margin-top: var(--space-2);
+}
+
+/* ===== Ledger sections — Session summary + Cash reconciliation ======== */
+/* Two stacks of label/value rows, each preceded by a mono uppercase
+ * heading. A hairline rule separates them. Mono everywhere a number
+ * lives; ink on the right, tertiary on the left. */
+.close-session__ledger {
+  display: flex;
+  flex-direction: column;
+}
+
+.close-session__ledger-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-1) 0 var(--space-3);
+}
+
+.close-session__ledger-section + .close-session__ledger-section {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
+  margin-top: var(--space-1);
+}
+
+.close-session__ledger-heading {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* A short terracotta tick before the heading so each section reads as
+ * a chapter mark in a printed ledger. Quiet but unmistakable. */
+.close-session__ledger-heading::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.close-session__ledger-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  /* Dotted leader between the label and the value — the printed-
+   * ledger affordance. Implemented via a flex spacer with a repeating
+   * radial-gradient of dots. */
+}
+
+.close-session__ledger-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.close-session__ledger-leader {
+  flex: 1;
+  height: 1em;
+  align-self: end;
+  margin-bottom: 4px;
+  border-bottom: 1px dotted var(--color-border);
+  opacity: 0.85;
+  min-width: 16px;
+}
+
+.close-session__ledger-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.close-session__ledger-value--strong {
+  font-weight: 700;
+}
+
+.close-session__ledger-value--muted {
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+/* Final ledger row — the variance — gets a state-colored chip
+ * treatment. Mirrors the .recent-session-row__variance pattern from
+ * sales-tab.css so the language is consistent across the surface. */
+.close-session__ledger-row--variance {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.close-session__ledger-row--variance .close-session__ledger-leader {
+  display: none;
+}
+
+.close-session__variance-chip {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.close-session__variance-chip--zero {
+  color: var(--color-success);
+  background: var(--color-success-subtle);
+}
+
+.close-session__variance-chip--off {
+  color: var(--color-error);
+  background: var(--color-error-subtle);
+}
+
+/* ===== Step 2 — Closed (success / loading / error) ==================== */
+/* Centered Lottie with a Fraunces italic title and a mono "LEDGER ·
+ * CLOSED" stamp underneath. The stamp is the printed-receipt finish
+ * — what makes the close feel ceremonial. */
+.close-session__resolution {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-4) 0 var(--space-2);
+  gap: var(--space-3);
+}
+
+.close-session__lottie-frame {
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-session__success-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 70;
+  font-weight: 500;
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: -0.018em;
+  color: var(--color-text-primary);
+  margin: var(--space-2) 0 0;
+  transition: opacity var(--duration-medium) ease-out;
+}
+
+/* Mono uppercase stamp — the "printed" finishing mark. Cream-tinted
+ * pill with hairline border, terracotta type, fixed letter spacing.
+ * Reads like a rubber stamp pressed onto the closing slip. */
+.close-session__success-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  background: var(--color-brand-subtle);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 20%, transparent);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  margin-top: var(--space-2);
+  font-variant-numeric: tabular-nums;
+  transition: opacity var(--duration-medium) ease-out;
+}
+
+.close-session__success-stamp::before,
+.close-session__success-stamp::after {
+  content: "";
+  width: 8px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.close-session__error {
+  font-size: 13px;
+  color: var(--color-error);
+  background: var(--color-error-subtle);
+  border: 1px solid color-mix(in srgb, var(--color-error) 28%, transparent);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  margin-top: var(--space-3);
+  max-width: 36ch;
+  line-height: 1.5;
+}
+
+.close-session__spinner-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  margin-top: var(--space-2);
+}
+
+.close-session__spinner-frame ion-spinner {
+  --color: var(--color-brand);
+  width: 32px;
+  height: 32px;
+}

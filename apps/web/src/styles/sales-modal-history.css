@@ -1,0 +1,585 @@
+/* SessionHistoryModal + ActiveSessionSalesModal + shared session-views
+ * (SessionSalesList, SaleDetailContent) — Modern Mercantile chrome.
+ *
+ * Concept: "looking back at the till."
+ *
+ *   - Step 0 of SessionHistoryModal is a ledger of closed sessions. Reuses
+ *     the .recent-session-row vocabulary from sales-tab.css verbatim — same
+ *     Fraunces italic date / mono count / mono total / variance chip. We
+ *     wrap the rows in a paper-tinted ledger card and give the "Load more"
+ *     button a mono-uppercase printed-button feel.
+ *
+ *   - SessionSalesList is the per-session list. Each sale is a "stamped
+ *     sale" — Fraunces italic "Sale 0042" stamp on the leading edge, a
+ *     small payment-method dot + mono chip beneath, and a mono total on
+ *     the trailing edge. Hairline dividers between rows, no card chrome
+ *     competing with the data.
+ *
+ *   - SaleDetailContent is the receipt. Fraunces italic title-stamp at
+ *     the top, mono ledger of line items (qty × unit = subtotal), a
+ *     dashed printed divider, and a totals block with a Fraunces italic
+ *     "Total" label next to an oversized mono total. */
+
+/* =====================================================================
+ * History step 0 — sessions ledger
+ * ===================================================================== */
+
+/* Wraps the .recent-session-row collection with a small paper tint and a
+ * mono-uppercase eyebrow + count chip so the ledger reads as a single
+ * sheet, not a bare list. */
+.session-history-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.session-history-ledger__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.session-history-ledger__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.session-history-ledger__count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-brand);
+}
+
+.session-history-ledger__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Each row inside the ledger inherits the .recent-session-row vocabulary
+ * from sales-tab.css. Inside the ledger we paint the surface white so
+ * the rows lift off the muted paper backdrop. */
+.session-history-ledger .recent-session-row {
+  background: var(--color-bg-surface);
+}
+
+/* Row time eyebrow — small mono caption above the date that anchors
+ * the session to a clock. Optional enrichment over the bare row. */
+.session-history-row__time-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Empty state — italic Fraunces "no sessions" treatment with a thin
+ * terracotta rule above. Sits inside .modal-step-item so it picks up
+ * the staggered enter animation. */
+.session-history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  gap: var(--space-3);
+}
+
+.session-history-empty__rule {
+  width: 36px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.session-history-empty__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 20px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.session-history-empty__desc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  max-width: 26ch;
+}
+
+/* "Load more" footer — mono uppercase pill with a printed-button feel.
+ * Renders inside ModalShell's footer slot so it inherits the standard
+ * 50px height; we just retheme the surface. */
+.session-history-load-more {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 50px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-surface);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.session-history-load-more:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-subtle);
+}
+
+.session-history-load-more:active {
+  transform: translateY(1px);
+}
+
+/* =====================================================================
+ * SessionSalesList — "stamped sale" rows
+ * ===================================================================== */
+
+/* Mono uppercase eyebrow that sits above the list, anchoring it to a
+ * total count. Only rendered when items are present. */
+.session-sales-eyebrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.session-sales-eyebrow__count {
+  color: var(--color-brand);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+}
+
+.session-sales-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.session-sales-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) 2px;
+  border: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    padding-left var(--duration-fast) ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.session-sales-row:last-child {
+  border-bottom: 0;
+}
+
+@media (hover: hover) {
+  .session-sales-row:hover {
+    background-color: var(--color-brand-subtle);
+    padding-left: var(--space-2);
+  }
+}
+
+.session-sales-row:active {
+  background-color: var(--color-brand-subtle);
+}
+
+.session-sales-row__lead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* The "stamped" sale number — Fraunces italic so it reads like a
+ * receipt-stamp, not a UI label. */
+.session-sales-row__stamp {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 1.05;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Time + payment method row beneath the stamp. Two mono fragments
+ * separated by a small dot. */
+.session-sales-row__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.session-sales-row__time {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* The colored payment-method dot — cash=moss, card=brand,
+ * other=ink-tertiary. Lets the user scan payment mix at a glance. */
+.session-sales-row__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.session-sales-row__dot--cash  { background: var(--color-moss); }
+.session-sales-row__dot--card  { background: var(--color-brand); }
+.session-sales-row__dot--other { background: var(--color-ink-3); }
+
+.session-sales-row__method {
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  font-weight: 500;
+}
+
+.session-sales-row__total {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Empty state — same shape as session-history-empty. */
+.session-sales-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  gap: var(--space-3);
+}
+
+.session-sales-empty__rule {
+  width: 36px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.session-sales-empty__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.session-sales-empty__desc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  max-width: 26ch;
+}
+
+/* Loading state — mono spinner caption matching the rest of the family. */
+.session-sales-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) 0;
+}
+
+.session-sales-loading__caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* =====================================================================
+ * SaleDetailContent — printed receipt
+ * ===================================================================== */
+
+/* Stamp block at the top of the receipt — Fraunces italic sale number
+ * plus a thin terracotta rule plus a mono date/time line beneath. */
+.sale-receipt-stamp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sale-receipt-stamp__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+}
+
+.sale-receipt-stamp__eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.sale-receipt-stamp__number {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.sale-receipt-stamp__meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Item ledger — each line is qty × unit = subtotal. Mono everywhere a
+ * number lives. Name truncates so longer artisan names don't push the
+ * numerals off the row. */
+.sale-receipt-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sale-receipt-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-3) var(--space-2);
+}
+
+.sale-receipt-item__name {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sale-receipt-item__subtotal {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.sale-receipt-item__breakdown {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  margin-top: -2px;
+}
+
+.sale-receipt-item__qty {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.sale-receipt-item__times {
+  color: var(--color-ink-4);
+  margin: 0 4px;
+}
+
+.sale-receipt-item__unit {
+  color: var(--color-text-secondary);
+}
+
+/* Dashed printed-style divider between items and totals. */
+.sale-receipt-divider {
+  height: 0;
+  border: 0;
+  border-top: 1px dashed var(--color-border);
+  margin: 0;
+}
+
+/* Totals block — three rows. The TOTAL row is the headline (Fraunces
+ * italic label, oversized mono number). Method + time are mono caption
+ * rows beneath it. */
+.sale-receipt-totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sale-receipt-totals__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sale-receipt-totals__row--total {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sale-receipt-totals__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.sale-receipt-totals__row--total .sale-receipt-totals__label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 20px;
+  letter-spacing: -0.012em;
+  text-transform: none;
+  color: var(--color-text-primary);
+}
+
+.sale-receipt-totals__value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  letter-spacing: 0.04em;
+  text-align: right;
+}
+
+.sale-receipt-totals__row--total .sale-receipt-totals__value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-brand);
+}
+
+/* Method value gets a small payment-method dot inline so the receipt
+ * matches the list's color vocabulary. */
+.sale-receipt-totals__method-value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sale-receipt-totals__method-value .session-sales-row__dot {
+  width: 6px;
+  height: 6px;
+}
+
+.sale-receipt-totals__method-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+}
+
+/* Error state inside SaleDetailContent. */
+.sale-receipt-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-error);
+}
+
+.sale-receipt-error__rule {
+  width: 36px;
+  height: 1px;
+  background: var(--color-error);
+  margin-bottom: var(--space-1);
+}
