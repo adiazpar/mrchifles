@@ -2,6 +2,7 @@
 
 import { useIntl } from 'react-intl'
 import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useIonRouter } from '@ionic/react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { Building2, SearchX, X } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
@@ -67,7 +68,15 @@ function HubHomeBody() {
   const router = useRouter()
   const { user, isLoading: authLoading } = useAuth()
   const { markHubReady } = useAuthGate()
-  const { navigate, setCachedBusinesses } = usePageTransition()
+  const { setCachedBusinesses } = usePageTransition()
+  // Ionic-aware router for the Hub -> business drilldown. We tag the
+  // push as 'forward' so the IonRouterOutlet stack tracker registers it
+  // properly and IonBackButton in BusinessHeader plays peel-back on the
+  // way out — same pattern as the Hub -> /account fix in user-menu.
+  // pendingHref bookkeeping isn't needed here (no offline/optimistic UI
+  // chrome reads it for business URLs), so the route can go via the
+  // Ionic router directly.
+  const ionRouter = useIonRouter()
   const { createdBusiness, openCreateModal } = useCreateBusinessModal()
   const { openJoinModal } = useJoinBusinessModal()
   const [businesses, setBusinesses] = useState<Business[]>(() => getCachedBusinessList())
@@ -113,7 +122,7 @@ function HubHomeBody() {
   }, [createdBusiness, fetchBusinesses])
 
   const handleEnterBusiness = (businessId: string) => {
-    navigate(`/${businessId}/home`)
+    ionRouter.push(`/${businessId}/home`, 'forward', 'push')
   }
 
   const filteredBusinesses = useMemo(() => {

@@ -24,7 +24,7 @@ const BUSINESS_PATH = '/:businessId([A-Za-z0-9_-]{9,})'
 // to land at 1.5 across the row, which the stock ionicons outlines don't
 // expose. Active state is painted via .tab-selected::before in
 // ionic-theme.css (small terracotta bar above the glyph).
-const TAB_ICON_PROPS = { size: 22, strokeWidth: 1.5 } as const
+const TAB_ICON_PROPS = { size: 26, strokeWidth: 1.5 } as const
 
 export function BusinessTabsLayout() {
   const match = useRouteMatch<{ businessId: string }>(BUSINESS_PATH)
