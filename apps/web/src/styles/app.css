@@ -477,6 +477,14 @@
   --padding-bottom: var(--space-3);
 }
 
+/* Disables the inner scroll element. Use for fixed-layout steps that
+ * must fit the viewport — typically a flex-column body that lays out
+ * head/middle/foot to use 100% of the IonContent area, no overflow.
+ * Composes with .modal-content (or with flushContent on its own). */
+.modal-content--no-scroll {
+  --overflow: hidden;
+}
+
 /* ===== PageSpinner — full-area centered loading indicator =====
  * Absolutely positions itself within the nearest positioned ancestor
  * (IonContent's inner scroll container, an .auth-container, etc.) and

@@ -15,6 +15,8 @@
   "common.or": "または",
   "common.yes": "はい",
   "common.error": "エラー",
+  "keypad.decimal_aria": "Decimal",
+  "keypad.backspace_aria": "Delete last digit",
   "common.success": "成功",
   "common.page": "ページ",
   "common.detail": "詳細",

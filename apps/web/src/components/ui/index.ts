@@ -11,6 +11,9 @@ export { TabContainer } from './TabContainer'
 export { PriceInput } from './PriceInput'
 export type { PriceInputProps } from './PriceInput'
 
+export { PriceKeypadStep } from './PriceKeypadStep'
+export type { PriceKeypadStepProps } from './PriceKeypadStep'
+
 export { ModalShell } from './modal-shell'
 
 export { UserAvatar } from './UserAvatar'

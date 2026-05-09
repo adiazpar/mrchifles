@@ -15,6 +15,8 @@
   "common.or": "or",
   "common.yes": "Yes",
   "common.error": "Error",
+  "keypad.decimal_aria": "Decimal",
+  "keypad.backspace_aria": "Delete last digit",
   "common.success": "Success",
   "common.page": "Page",
   "common.detail": "Detail",

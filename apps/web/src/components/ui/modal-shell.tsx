@@ -54,6 +54,15 @@ interface ModalShellProps {
    * leave the items floating narrowly inside the sheet.
    */
   flushContent?: boolean
+  /**
+   * Disables the IonContent inner scroll via `--overflow: hidden`. Use
+   * for fixed-layout step bodies that must fit the viewport without
+   * scrolling — e.g. cash-keypad steps where scrolling to reach the 0
+   * key would be a usability bug. The body must lay itself out with
+   * `height: 100%` flex column so it fills (but doesn't overflow) the
+   * IonContent's available space.
+   */
+  noScroll?: boolean
 }
 
 /**
@@ -84,6 +93,7 @@ export function ModalShell({
   rawContent = false,
   noSwipeDismiss = false,
   flushContent = false,
+  noScroll = false,
 }: ModalShellProps) {
   // Sheet-mode is a property of `breakpoints` AND `initialBreakpoint` BOTH being
   // defined — see @ionic/core modal.js: `isSheetModal = breakpoints !== undefined
@@ -161,7 +171,12 @@ export function ModalShell({
       {rawContent
         ? children
         : (
-          <IonContent className={flushContent ? undefined : 'modal-content'}>
+          <IonContent
+            className={[
+              flushContent ? '' : 'modal-content',
+              noScroll ? 'modal-content--no-scroll' : '',
+            ].filter(Boolean).join(' ') || undefined}
+          >
             {children}
           </IonContent>
         )}

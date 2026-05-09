@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl';
 import { useEffect, useState } from 'react'
 import { IonButton, IonSpinner } from '@ionic/react'
-import { ModalShell, PriceInput } from '@/components/ui'
+import { ModalShell, PriceKeypadStep } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -127,44 +127,23 @@ export function OpenSessionModal({
       onBack={step === 1 && error ? () => setStep(0) : undefined}
       footer={footer}
       noSwipeDismiss
+      noScroll
     >
-      {/* Step 0 — enter starting cash */}
+      {/* Step 0 — enter starting cash via the inline keypad */}
       {step === 0 && (
-        <div className="open-session">
-          <header className="modal-hero open-session__hero">
-            <div className="modal-hero__eyebrow">
-              {intl.formatMessage({ id: 'sales.session.open_modal.eyebrow' })}
-            </div>
-            <h1 className="modal-hero__title">
-              {intl.formatMessage(
-                { id: 'sales.session.open_modal.hero_title' },
-                { em: (chunks) => <em>{chunks}</em> },
-              )}
-            </h1>
-            <p className="modal-hero__subtitle">
-              {intl.formatMessage({ id: 'sales.session.open_modal.description' })}
-            </p>
-          </header>
-
-          <div className="modal-rule open-session__rule">
-            {intl.formatMessage({ id: 'sales.session.open_modal.rule_caption' })}
-          </div>
-
-          <div className="open-session__field">
-            <label className="open-session__label" htmlFor="open-session-starting-cash">
-              {intl.formatMessage({ id: 'sales.session.open_modal.starting_cash' })}
-            </label>
-            <PriceInput
-              id="open-session-starting-cash"
-              value={startingCashStr}
-              onValueChange={setStartingCashStr}
-              placeholder="0"
-            />
-            <p className="open-session__helper">
-              {intl.formatMessage({ id: 'sales.session.open_modal.starting_cash_helper' })}
-            </p>
-          </div>
-        </div>
+        <PriceKeypadStep
+          value={startingCashStr}
+          onValueChange={setStartingCashStr}
+          eyebrow={intl.formatMessage({ id: 'sales.session.open_modal.eyebrow' })}
+          title={intl.formatMessage(
+            { id: 'sales.session.open_modal.hero_title' },
+            { em: (chunks) => <em>{chunks}</em> },
+          )}
+          subtitle={intl.formatMessage({ id: 'sales.session.open_modal.description' })}
+          amountLabel={intl.formatMessage({ id: 'sales.session.open_modal.starting_cash' })}
+          helper={intl.formatMessage({ id: 'sales.session.open_modal.starting_cash_helper' })}
+          ariaLabel={intl.formatMessage({ id: 'sales.session.open_modal.starting_cash' })}
+        />
       )}
 
       {/* Step 1 — loading / success / error */}

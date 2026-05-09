@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl'
 import { useEffect, useMemo, useState } from 'react'
 import { IonButton, IonSpinner } from '@ionic/react'
-import { ModalShell, PriceInput } from '@/components/ui'
+import { ModalShell, PriceKeypadStep } from '@/components/ui'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useSales } from '@/contexts/sales-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
@@ -171,40 +171,22 @@ export function CloseSessionConfirmModal({
       onBack={step === 1 ? () => setStep(0) : undefined}
       footer={footer}
       noSwipeDismiss
+      noScroll={step === 0}
     >
-      {/* ============ Step 0 — Final count ============ */}
+      {/* ============ Step 0 — Final count via inline keypad ============ */}
       {step === 0 && (
-        <>
-          <header className="modal-hero">
-            <div className="modal-hero__eyebrow">
-              {intl.formatMessage({ id: 'sales.session.close_modal.step0_eyebrow' })}
-            </div>
-            <h1 className="modal-hero__title">
-              {intl.formatMessage(
-                { id: 'sales.session.close_modal.step0_title' },
-                { em: (chunks) => <em>{chunks}</em> },
-              )}
-            </h1>
-            <p className="modal-hero__subtitle">
-              {intl.formatMessage({ id: 'sales.session.close_modal.count_helper' })}
-            </p>
-          </header>
-
-          <div className="close-session__count-block">
-            <label
-              className="close-session__count-eyebrow"
-              htmlFor="close-session-counted-cash"
-            >
-              {intl.formatMessage({ id: 'sales.session.close_modal.counted_label' })}
-            </label>
-            <PriceInput
-              id="close-session-counted-cash"
-              value={countedCashStr}
-              onValueChange={setCountedCashStr}
-              placeholder="0"
-            />
-          </div>
-        </>
+        <PriceKeypadStep
+          value={countedCashStr}
+          onValueChange={setCountedCashStr}
+          eyebrow={intl.formatMessage({ id: 'sales.session.close_modal.step0_eyebrow' })}
+          title={intl.formatMessage(
+            { id: 'sales.session.close_modal.step0_title' },
+            { em: (chunks) => <em>{chunks}</em> },
+          )}
+          amountLabel={intl.formatMessage({ id: 'sales.session.close_modal.counted_label' })}
+          helper={intl.formatMessage({ id: 'sales.session.close_modal.count_helper' })}
+          ariaLabel={intl.formatMessage({ id: 'sales.session.close_modal.counted_label' })}
+        />
       )}
 
       {/* ============ Step 1 — Variance reveal ============ */}

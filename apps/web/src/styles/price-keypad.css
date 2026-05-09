@@ -1,0 +1,190 @@
+/* PriceKeypadStep — inline cash-counting keypad.
+ *
+ * Layout contract: the host modal sets `noScroll` on ModalShell so the
+ * IonContent doesn't scroll, and gives this component 100% of the
+ * available vertical space. The keypad lays out as a flex column —
+ * hero docked at the top, display centred in the middle (flex: 1),
+ * keys docked at the bottom.
+ *
+ * Sized to fit on iPhone SE 2nd-gen (the smallest currently-supported
+ * device, 667px viewport). With a 56px header + 84px footer, that
+ * leaves ~527px for the keypad. Hero ≈ 90px + display ≥ 120px + keys
+ * 248px (4 rows × 56 + 3 × 8 gap) = ~458px. Headroom for safe-area
+ * insets is built in.
+ */
+
+.price-keypad {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ===== Hero ============================================================ */
+
+.price-keypad__hero {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: var(--space-3);
+}
+
+.price-keypad__hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.price-keypad__hero-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.price-keypad__hero-title em {
+  font-style: italic;
+  color: var(--color-brand);
+  font-weight: 500;
+}
+
+.price-keypad__hero-subtitle {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  margin: 4px 0 0;
+}
+
+/* ===== Amount display ================================================== */
+
+.price-keypad__display {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.price-keypad__amount-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.price-keypad__amount {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.price-keypad__amount-currency {
+  font-size: 26px;
+  font-style: normal;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+.price-keypad__amount-num {
+  font-size: 56px;
+  letter-spacing: -0.025em;
+}
+
+.price-keypad__amount-pale {
+  color: var(--color-text-tertiary);
+  opacity: 0.45;
+}
+
+.price-keypad__helper {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  line-height: 1.5;
+  max-width: 32ch;
+}
+
+/* ===== Keys grid ======================================================= */
+
+.price-keypad__keys {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.price-keypad__key {
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    border-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+.price-keypad__key:active {
+  transform: scale(0.96);
+  background: var(--color-bg-muted);
+  border-color: var(--color-border-hover);
+}
+
+.price-keypad__key:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.price-keypad__key:disabled:active {
+  transform: none;
+  background: transparent;
+}
+
+/* Decimal + backspace are visually de-emphasised so the digit grid is
+ * clearly the primary input. Borderless surface, lighter text. */
+.price-keypad__key--muted {
+  color: var(--color-text-tertiary);
+  border-color: transparent;
+}
+
+/* Layout placeholder for when there's no decimal key (zero-decimal
+ * currencies). Keeps the bottom row 3 cells wide so 0 stays centred. */
+.price-keypad__key--ghost {
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
