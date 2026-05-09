@@ -50,6 +50,7 @@ export function ActiveSessionSalesModal({
       onClose={handleClose}
       title={title}
       onBack={step > 0 ? () => setStep(0) : undefined}
+      noSwipeDismiss
     >
       {step === 0 && (
         <SessionSalesList

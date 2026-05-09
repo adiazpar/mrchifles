@@ -93,6 +93,7 @@ export function SessionHistoryModal({
       title={title}
       onBack={step > 0 ? handleBack : undefined}
       footer={loadMoreFooter}
+      noSwipeDismiss
     >
       {/* Step 0: Ledger of closed sessions */}
       {step === 0 && (
