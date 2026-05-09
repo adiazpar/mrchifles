@@ -344,6 +344,10 @@ export function ProductSettingsModal({
 
   // Inline add-new-category form
   const [newCategoryName, setNewCategoryName] = useState('')
+  // Ref on the add-category input so an empty-state submit can focus it
+  // rather than silently no-oping. Without this, the button was reading
+  // as "permission-gated faded" when really it just needed input.
+  const newCategoryInputRef = useRef<HTMLInputElement | null>(null)
   const [createCelebrating, setCreateCelebrating] = useState(false)
 
   // Inline edit-in-place
@@ -397,8 +401,15 @@ export function ProductSettingsModal({
   }
 
   const handleCreateCategory = async () => {
+    if (isCreatingCategory) return
     const name = newCategoryName.trim()
-    if (!name || isCreatingCategory) return
+    // Empty submit (e.g. tapping the Add pill before typing): focus the
+    // input rather than no-oping. Tells the user the button works and
+    // they just need to type a name — no permission gate involved.
+    if (!name) {
+      newCategoryInputRef.current?.focus()
+      return
+    }
     const created = await onCreateCategory(name)
     if (created) {
       setNewCategoryName('')
@@ -625,6 +636,7 @@ export function ProductSettingsModal({
             }}
           >
             <input
+              ref={newCategoryInputRef}
               type="text"
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
@@ -636,7 +648,7 @@ export function ProductSettingsModal({
             <button
               type="submit"
               className="settings-add-row__button"
-              disabled={isCreatingCategory || newCategoryName.trim().length === 0}
+              disabled={isCreatingCategory}
             >
               {isCreatingCategory ? (
                 <IonSpinner name="crescent" style={{ width: 14, height: 14 }} />
