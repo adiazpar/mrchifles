@@ -487,26 +487,36 @@ const ProductListItem = memo(function ProductListItem({
         <div
           className={`product-row${!isActive ? ' product-row--inactive' : ''}`}
         >
+          {/* Specimen portrait — generous 64px so AI-generated custom
+              icons (background-removed product photos) actually have
+              room to read. Custom photos fill the tile edge-to-edge;
+              preset Lucide glyphs render centered on cream paper. */}
           <div
-            className={`product-row__icon${!isActive ? ' product-row__icon--inactive' : ''}`}
+            className={`product-row__icon${
+              !isActive ? ' product-row__icon--inactive' : ''
+            }${
+              iconUrl && !isPresetIcon(iconUrl)
+                ? ' product-row__icon--photo'
+                : ''
+            }`}
             aria-hidden="true"
           >
             {iconUrl && isPresetIcon(iconUrl) ? (
               (() => {
                 const p = getPresetIcon(iconUrl)
-                return p ? <p.icon size={20} className="text-text-primary" /> : null
+                return p ? <p.icon size={32} className="text-text-primary" /> : null
               })()
             ) : iconUrl ? (
               <Image
                 src={iconUrl}
                 alt=""
-                width={32}
-                height={32}
+                width={64}
+                height={64}
                 className="object-cover w-full h-full"
                 unoptimized
               />
             ) : (
-              <ImagePlus size={16} className="text-text-tertiary" />
+              <ImagePlus size={22} className="text-text-tertiary" />
             )}
           </div>
 
@@ -523,12 +533,17 @@ const ProductListItem = memo(function ProductListItem({
             )}
           </div>
 
+          {/* Trail anchor: italic Fraunces price (mirrors the italic
+              name so the row reads as a typographic call-and-response)
+              over a mono uppercase units chip, error-tinted when low. */}
           <div className="product-row__trail">
             <span className="product-row__price">
               {formatCurrency(product.price)}
             </span>
             <span
-              className={`product-row__stock${isLowStock && isActive ? ' product-row__stock--low' : ''}`}
+              className={`product-row__stock${
+                isLowStock && isActive ? ' product-row__stock--low' : ''
+              }`}
             >
               {intl.formatMessage(
                 { id: 'products.units_count' },

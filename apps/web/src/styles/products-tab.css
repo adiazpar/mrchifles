@@ -278,8 +278,12 @@
   --background: transparent;
   --border-color: var(--color-border);
   --inner-padding-end: 0;
-  --padding-start: var(--space-4);
-  --padding-end: var(--space-4);
+  /* Zero left/right padding here — the row content (.product-row,
+   * .order-row) owns its own padding so we don't end up with stacked
+   * insets (16px IonItem + 12px row = 28px on each edge, way too much
+   * whitespace at the row edge). */
+  --padding-start: 0;
+  --padding-end: 0;
   --inner-border-width: 0 0 1px 0;
   --min-height: 64px;
 }
@@ -303,14 +307,19 @@
   color: var(--color-text-tertiary);
 }
 
-/* ===== Product row =================================================== */
-/* Custom row inside an IonItem (lines="none"). The Ionic slot system
- * forces a tight rhythm and a fixed 16px gap between the icon and the
- * trail column — that's what made the row feel cramped. We render
- * a flex grid manually: small icon tile (left) + multi-line body
- * (Fraunces italic name + mono uppercase category + mono barcode) +
- * right-aligned price/stock anchor. Each row of metadata gets its
- * own line with generous vertical rhythm.
+/* ===== Product row — specimen card ===================================
+ * Reads like a printed catalogue entry: a generous 64px portrait tile
+ * on the left (cream paper for preset glyphs, full-bleed for AI-
+ * generated product photos), italic Fraunces name as the left
+ * typographic anchor, italic Fraunces price as the right anchor —
+ * the row reads as a left/right call-and-response. Mono uppercase
+ * for category + units + barcode keeps the hierarchy clean.
+ *
+ * The custom flex layout (instead of IonItem's slot system) gives us
+ * control over the icon size and the rhythm between metadata lines.
+ * Icons inside the row stay cream-tinted with a hairline border; AI
+ * photos opt out of the cream background by adding a class so the
+ * full image fills the tile.
  */
 
 .product-row-host {
@@ -319,15 +328,23 @@
   --padding-start: 0;
   --padding-end: 0;
   --background: transparent;
+  /* Suppress Ionic's built-in IonItem tap-highlight so it doesn't
+   * stack on top of our custom .product-row:hover/active treatment.
+   * Without these the row shows two layered effects on tap. */
+  --background-activated: transparent;
+  --background-hover: transparent;
+  --background-focused: transparent;
+  --ripple-color: transparent;
 }
 
 .product-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3);
   width: 100%;
   border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--duration-fast) ease-out;
 }
 
 .product-row:last-child {
@@ -338,20 +355,60 @@
   opacity: 0.6;
 }
 
-/* Small icon tile — 32px keeps the visual hierarchy on the name + price,
- * not on the icon. Cream-tinted square with a hairline. */
+@media (hover: hover) {
+  .product-row:hover {
+    background-color: var(--color-bg-muted);
+  }
+}
+
+.product-row:active {
+  background-color: var(--color-bg-muted);
+}
+
+/* The specimen portrait — 64px square tile, cream-tinted with a
+ * hairline border. Preset glyphs render centered; custom photos
+ * (AI-generated, background-removed) fill the tile edge-to-edge.
+ * The inset hairline creates a "printed card" frame around either
+ * content style. */
 .product-row__icon {
-  width: 32px;
-  height: 32px;
+  width: 64px;
+  height: 64px;
   flex-shrink: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-bg-muted);
   border: 1px solid var(--color-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin-top: 2px;
+  position: relative;
+  /* Subtle inner highlight so the tile reads as a slightly raised
+   * specimen card rather than a flat rectangle. */
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Inset hairline frame — printed-card edge that doesn't compete with
+ * the outer border. Same treatment as the ProductInfoDrawer portrait. */
+.product-row__icon::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius-lg) - 3px);
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* Custom AI photo: drop the cream background and the inset frame so
+ * the photo fills cleanly. The outer hairline still draws the
+ * specimen-card edge. */
+.product-row__icon--photo {
+  background: var(--color-bg-surface);
+  box-shadow: none;
+}
+
+.product-row__icon--photo::after {
+  display: none;
 }
 
 .product-row__icon--inactive {
@@ -363,16 +420,21 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
-/* Italic Fraunces name — the row's typographic anchor on the left. */
+/* Italic Fraunces name — generous size, dominant typographic anchor.
+ * 2-line clamp protects against artisan/wholesale long names.
+ * Optical sizing axis tuned via SOFT for a slightly softer italic at
+ * this size, matching the modal hero treatment. */
 .product-row__name {
   font-family: var(--font-display);
   font-style: italic;
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 50;
   font-weight: 500;
-  font-size: 17px;
-  letter-spacing: -0.012em;
+  font-size: 19px;
+  letter-spacing: -0.014em;
   line-height: 1.15;
   color: var(--color-text-primary);
   margin: 0;
@@ -383,23 +445,27 @@
   word-break: break-word;
 }
 
-/* Mono uppercase category, on its own line. Tracked for printed-label
- * vibe; small to stay subordinate to the italic name. */
+/* Mono uppercase category — printed label vibe, sits as the first
+ * piece of metadata under the name. Generous letter-spacing to read
+ * as a stamp, not a body line. */
 .product-row__category {
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-text-tertiary);
+  margin-top: 2px;
 }
 
-/* Barcode line: scan glyph + monospaced value. Word-break ensures
- * long codes wrap rather than clip the price column. */
+/* Barcode — only visible when a code is set. Smaller scan glyph +
+ * monospaced value, slightly tighter row so it tucks under the
+ * category cleanly. */
 .product-row__barcode {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  margin-top: 4px;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
@@ -418,43 +484,54 @@
   letter-spacing: 0.04em;
 }
 
-/* Right-aligned price + stock anchor. Italic Fraunces on the price so
- * the row's typographic system has a left/right call-and-response
- * (italic name on the left, italic price on the right) — the same
- * vocabulary used in the StatsCard headline. */
+/* Right-aligned trail anchor. Italic Fraunces price mirrors the
+ * italic name on the left — the row reads as a typographic
+ * call-and-response. Bigger size than name (22 vs 19) signals
+ * "this is the headline number." */
 .product-row__trail {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 6px;
   text-align: right;
-  margin-left: var(--space-3);
+  margin-left: var(--space-2);
 }
 
 .product-row__price {
   font-family: var(--font-display);
   font-style: italic;
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 50;
   font-weight: 500;
-  font-size: 19px;
-  letter-spacing: -0.012em;
+  font-size: 22px;
+  letter-spacing: -0.018em;
   line-height: 1;
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
 }
 
+/* Mono uppercase stock chip on a cream backplate — reads as a
+ * printed inventory tag pinned under the price. Error tone on low
+ * stock keeps the warning legible without dominating the row. */
 .product-row__stock {
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-text-tertiary);
   font-variant-numeric: tabular-nums;
+  background: var(--color-bg-muted);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
 }
 
 .product-row__stock--low {
   color: var(--color-error);
+  background: var(--color-error-subtle);
+  border-color: color-mix(in srgb, var(--color-error) 28%, transparent);
 }
 
 /* ===== Order row ===================================================== */
@@ -464,7 +541,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-3) 0;
+  /* Self-contained horizontal inset — the parent IonItem now
+   * zeroes its --padding-start/end so each row content owns its
+   * own padding. Mirrors .product-row's 12px. */
+  padding: var(--space-3);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background-color var(--duration-fast) ease-out;
