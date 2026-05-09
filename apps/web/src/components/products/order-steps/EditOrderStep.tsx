@@ -13,7 +13,7 @@ import {
   IonIcon,
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
-import { Package, CalendarClock, Truck, Paperclip, ChevronRight } from 'lucide-react'
+import { Package, ChevronRight } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -25,22 +25,19 @@ import { OrderTotalStep } from './OrderTotalStep'
 import { OrderDetailsStep } from './OrderDetailsStep'
 
 /**
- * Edit-flow review surface. Mirrors ConfirmOrderStep visually — same
- * three tappable sections (line items / total / audit details). Tapping
- * any section pushes its matching edit step in `mode='edit'`, which
- * pops back here when the user is done.
+ * Edit-flow review surface. Mirrors the ProductReview ledger pattern:
+ * one prominent items card at the top, then a column of dotted-leader
+ * rows (Total, Ordered to, Est. arrival, Receipt) that each push the
+ * matching edit step.
  *
- *   - Items section → EditItemsStep (existing line items only; no
+ *   - Items card → EditItemsStep (existing line items only; no
  *     "add new product" picker since an order's identity is the set
  *     of items it shipped with).
- *   - Total section → OrderTotalStep mode='edit' (full-screen
- *     PriceKeypadStep). Reused from the new-order wizard via the
- *     unified useOrderCallbacks() hook so both flows share the
- *     keypad chrome.
- *   - Details section → OrderDetailsStep mode='edit' (provider +
- *     arrival + receipt). Same component as new flow; same hook.
- *
- * Footer: Save (primary) commits the patch via onSaveEditOrder.
+ *   - Total row → OrderTotalStep mode='edit' (full-screen
+ *     PriceKeypadStep, shared with the new-order wizard).
+ *   - Provider / Arrival / Receipt rows → OrderDetailsStep mode='edit'.
+ *     All three rows route to the same step; users can land in details
+ *     from whichever piece they want to revise.
  */
 export function EditOrderStep() {
   const t = useIntl()
@@ -130,7 +127,7 @@ export function EditOrderStep() {
       </IonHeader>
 
       <IonContent className="wizard-content">
-        <div className="wizard-step">
+        <div className="wizard-step pm-review">
           <header className="wizard-hero">
             <div className="order-modal__eyebrow">
               <span>{t.formatMessage({ id: 'orders.eyebrow_edit' })}</span>
@@ -154,46 +151,38 @@ export function EditOrderStep() {
             </div>
           )}
 
-          {/* Items section — tappable to jump to EditItemsStep. */}
+          {/* Items hero card — single tap target opening EditItemsStep. */}
           <button
             type="button"
-            className="order-confirm__edit-section"
+            className="pm-review__hero-card pm-review__hero-card--items"
             onClick={editItems}
             aria-label={t.formatMessage({ id: 'orders.confirm_edit_items_aria' })}
           >
-            <div className="order-confirm__edit-body">
-              <div className="order-receipt__rule">
-                <span className="order-receipt__rule-line" aria-hidden="true" />
-                <span className="order-receipt__rule-caption">
-                  {t.formatMessage(
-                    { id: 'orders.confirm_items_caption' },
-                    { count: itemCount },
-                  )}
-                </span>
-                <span className="order-receipt__rule-line" aria-hidden="true" />
-              </div>
-
-              <div className="order-receipt__lines">
+            <div className="pm-review__items-body">
+              <span className="pm-review__items-eyebrow">
+                {t.formatMessage(
+                  { id: 'orders.confirm_items_caption' },
+                  { count: itemCount },
+                )}
+              </span>
+              <div className="pm-review__items-list">
                 {orderItems.map((item) => {
                   const iconUrl = getProductIconUrl(item.product)
                   const presetIcon =
                     iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
                   return (
-                    <div
-                      key={item.product.id}
-                      className="order-receipt-line order-receipt-line--compact"
-                    >
-                      <span className="order-receipt-line__icon">
+                    <div key={item.product.id} className="pm-review__item-line">
+                      <span className="pm-review__item-icon">
                         {presetIcon ? (
-                          <presetIcon.icon size={18} className="text-text-primary" />
+                          <presetIcon.icon size={16} className="text-text-primary" />
                         ) : iconUrl ? (
-                          <Image src={iconUrl} alt="" width={32} height={32} unoptimized />
+                          <Image src={iconUrl} alt="" width={28} height={28} unoptimized />
                         ) : (
-                          <Package size={16} strokeWidth={1.6} />
+                          <Package size={14} strokeWidth={1.6} />
                         )}
                       </span>
-                      <span className="order-receipt-line__name">{item.product.name}</span>
-                      <span className="order-receipt-line__qty">
+                      <span className="pm-review__item-name">{item.product.name}</span>
+                      <span className="pm-review__item-qty">
                         {t.formatMessage(
                           { id: 'orders.qty_short' },
                           { count: typeof item.quantity === 'number' ? item.quantity : 0 },
@@ -205,91 +194,53 @@ export function EditOrderStep() {
               </div>
             </div>
             <ChevronRight
-              size={16}
+              size={18}
               strokeWidth={1.8}
-              className="order-confirm__edit-chev"
+              className="pm-review__chev"
+              aria-hidden="true"
             />
           </button>
 
-          {/* Total section — tappable to jump to OrderTotalStep mode='edit'. */}
-          <button
-            type="button"
-            className="order-confirm__edit-section order-receipt__totals"
-            onClick={editTotal}
-            aria-label={t.formatMessage({ id: 'orders.confirm_edit_total_aria' })}
-          >
-            <div className="order-confirm__edit-body">
-              <div className="order-receipt__totals-row order-receipt__totals-row--total">
-                <span className="order-receipt__totals-label">
-                  {t.formatMessage({ id: 'orders.total_label' })}
-                </span>
-                <span className="order-receipt__totals-value">
-                  {formatCurrency(totalNum)}
-                </span>
-              </div>
-            </div>
-            <ChevronRight
-              size={16}
-              strokeWidth={1.8}
-              className="order-confirm__edit-chev"
+          {/* Field ledger — Total + audit details. Same dotted-leader
+              rhythm as the ProductReview ledger. */}
+          <div className="pm-review__ledger">
+            <ReviewRow
+              label={t.formatMessage({ id: 'orders.total_label' })}
+              value={formatCurrency(totalNum)}
+              valueIsSet={totalNum > 0}
+              onClick={editTotal}
+              ariaLabel={t.formatMessage({ id: 'orders.confirm_edit_total_aria' })}
             />
-          </button>
-
-          {/* Audit section — tappable to jump to OrderDetailsStep mode='edit'. */}
-          <button
-            type="button"
-            className="order-confirm__edit-section order-receipt__audit"
-            onClick={editDetails}
-            aria-label={t.formatMessage({ id: 'orders.confirm_edit_details_aria' })}
-          >
-            <div className="order-confirm__edit-body">
-              <div className="order-receipt__audit-row">
-                <span className="order-receipt__audit-icon" aria-hidden="true">
-                  <Truck size={14} strokeWidth={1.7} />
-                </span>
-                <span className="order-receipt__audit-label">
-                  {t.formatMessage({ id: 'orders.ordered_to_label' })}
-                </span>
-                <span className="order-receipt__audit-leader" aria-hidden="true" />
-                <span className="order-receipt__audit-value">
-                  {providerName || t.formatMessage({ id: 'orders.provider_none' })}
-                </span>
-              </div>
-              {orderEstimatedArrival && (
-                <div className="order-receipt__audit-row">
-                  <span className="order-receipt__audit-icon" aria-hidden="true">
-                    <CalendarClock size={14} strokeWidth={1.7} />
-                  </span>
-                  <span className="order-receipt__audit-label">
-                    {t.formatMessage({ id: 'orders.est_arrival_label' })}
-                  </span>
-                  <span className="order-receipt__audit-leader" aria-hidden="true" />
-                  <span className="order-receipt__audit-value">
-                    {formatDate(orderEstimatedArrival)}
-                  </span>
-                </div>
-              )}
-              {orderReceiptFile && (
-                <div className="order-receipt__audit-row">
-                  <span className="order-receipt__audit-icon" aria-hidden="true">
-                    <Paperclip size={14} strokeWidth={1.7} />
-                  </span>
-                  <span className="order-receipt__audit-label">
-                    {t.formatMessage({ id: 'orders.receipt_attached_label' })}
-                  </span>
-                  <span className="order-receipt__audit-leader" aria-hidden="true" />
-                  <span className="order-receipt__audit-value">
-                    {t.formatMessage({ id: 'orders.receipt_attached_value' })}
-                  </span>
-                </div>
-              )}
-            </div>
-            <ChevronRight
-              size={16}
-              strokeWidth={1.8}
-              className="order-confirm__edit-chev"
+            <ReviewRow
+              label={t.formatMessage({ id: 'orders.ordered_to_label' })}
+              value={
+                providerName ?? t.formatMessage({ id: 'orders.provider_none' })
+              }
+              valueIsSet={!!providerName}
+              onClick={editDetails}
+              ariaLabel={t.formatMessage({ id: 'orders.confirm_edit_details_aria' })}
             />
-          </button>
+            <ReviewRow
+              label={t.formatMessage({ id: 'orders.est_arrival_label' })}
+              value={
+                orderEstimatedArrival
+                  ? formatDate(orderEstimatedArrival)
+                  : t.formatMessage({ id: 'productAddEdit.review_value_unset' })
+              }
+              valueIsSet={!!orderEstimatedArrival}
+              onClick={editDetails}
+              ariaLabel={t.formatMessage({ id: 'orders.confirm_edit_details_aria' })}
+            />
+            {orderReceiptFile && (
+              <ReviewRow
+                label={t.formatMessage({ id: 'orders.receipt_attached_label' })}
+                value={t.formatMessage({ id: 'orders.receipt_attached_value' })}
+                valueIsSet
+                onClick={editDetails}
+                ariaLabel={t.formatMessage({ id: 'orders.confirm_edit_details_aria' })}
+              />
+            )}
+          </div>
         </div>
       </IonContent>
 
@@ -315,5 +266,35 @@ export function EditOrderStep() {
         </IonToolbar>
       </IonFooter>
     </IonPage>
+  )
+}
+
+interface ReviewRowProps {
+  label: string
+  value: string
+  valueIsSet: boolean
+  onClick: () => void
+  ariaLabel?: string
+}
+
+function ReviewRow({ label, value, valueIsSet, onClick, ariaLabel }: ReviewRowProps) {
+  const valueClass = [
+    'pm-review-row__value',
+    !valueIsSet ? 'pm-review-row__value--unset' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return (
+    <button
+      type="button"
+      className="pm-review-row"
+      onClick={onClick}
+      aria-label={ariaLabel}
+    >
+      <span className="pm-review-row__label">{label}</span>
+      <span className="pm-review-row__leader" aria-hidden="true" />
+      <span className={valueClass}>{value}</span>
+      <ChevronRight className="pm-review-row__chev" size={14} />
+    </button>
   )
 }

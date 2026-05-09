@@ -2095,3 +2095,80 @@ ion-footer.pm-footer ion-toolbar {
   color: var(--color-text-tertiary);
   flex-shrink: 0;
 }
+
+/* Items hero variant — vertical interior layout (eyebrow + items list)
+ * with the chevron flex-aligned to the right. Same chrome as the
+ * standard hero card; reused on the EditOrder review surface so the
+ * order's identity (its line items) gets the same prominent treatment
+ * as a product's identity (icon + name) does on ProductReview. */
+.pm-review__hero-card--items {
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pm-review__items-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pm-review__items-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.pm-review__items-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pm-review__item-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.pm-review__item-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+}
+
+.pm-review__item-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--color-text-primary);
+  letter-spacing: -0.012em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-review__item-qty {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.02em;
+}
