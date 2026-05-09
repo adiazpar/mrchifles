@@ -1,15 +1,8 @@
-import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonBackButton,
-  IonButtons,
-} from '@ionic/react'
+import { IonContent, IonPage } from '@ionic/react'
 import { useParams } from 'react-router-dom'
 import { useIntl } from 'react-intl'
 
+import { BusinessHeader } from '@/components/layout'
 import { TeamDrilldown } from '@/components/team/TeamDrilldown'
 
 export function TeamTab() {
@@ -17,14 +10,11 @@ export function TeamTab() {
   const intl = useIntl()
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref={`/${businessId}/manage`} />
-          </IonButtons>
-          <IonTitle>{intl.formatMessage({ id: 'navigation.team' })}</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+      <BusinessHeader
+        title={intl.formatMessage({ id: 'navigation.team' })}
+        backHref={`/${businessId}/manage`}
+        backLabel={intl.formatMessage({ id: 'navigation.manage' })}
+      />
       <IonContent>
         <TeamDrilldown businessId={businessId} />
       </IonContent>

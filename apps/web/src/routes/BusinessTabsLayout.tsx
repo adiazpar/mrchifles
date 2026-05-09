@@ -1,18 +1,12 @@
 import { Redirect, Route, useRouteMatch } from 'react-router-dom'
 import {
-  IonIcon,
   IonLabel,
   IonRouterOutlet,
   IonTabBar,
   IonTabButton,
   IonTabs,
 } from '@ionic/react'
-import {
-  cartOutline,
-  homeOutline,
-  pricetagsOutline,
-  settingsOutline,
-} from 'ionicons/icons'
+import { Home, ShoppingCart, Package, Settings } from 'lucide-react'
 import { useIntl } from 'react-intl'
 
 import { HomeTab } from '@/routes/tabs/HomeTab'
@@ -24,6 +18,13 @@ import { SalesTab } from '@/routes/tabs/SalesTab'
 import { TeamTab } from '@/routes/tabs/TeamTab'
 
 const BUSINESS_PATH = '/:businessId([A-Za-z0-9_-]{9,})'
+
+// Lucide icons match the rest of the app's icon vocabulary (Hub feature
+// cards, Account settings rows, etc.) — and we need stroke-width control
+// to land at 1.5 across the row, which the stock ionicons outlines don't
+// expose. Active state is painted via .tab-selected::before in
+// ionic-theme.css (small terracotta bar above the glyph).
+const TAB_ICON_PROPS = { size: 22, strokeWidth: 1.5 } as const
 
 export function BusinessTabsLayout() {
   const match = useRouteMatch<{ businessId: string }>(BUSINESS_PATH)
@@ -48,19 +49,19 @@ export function BusinessTabsLayout() {
       </IonRouterOutlet>
       <IonTabBar slot="bottom">
         <IonTabButton tab="home" href={`/${businessId}/home`}>
-          <IonIcon icon={homeOutline} />
+          <Home {...TAB_ICON_PROPS} />
           <IonLabel>{intl.formatMessage({ id: 'navigation.home' })}</IonLabel>
         </IonTabButton>
         <IonTabButton tab="sales" href={`/${businessId}/sales`}>
-          <IonIcon icon={cartOutline} />
+          <ShoppingCart {...TAB_ICON_PROPS} />
           <IonLabel>{intl.formatMessage({ id: 'navigation.sales' })}</IonLabel>
         </IonTabButton>
         <IonTabButton tab="products" href={`/${businessId}/products`}>
-          <IonIcon icon={pricetagsOutline} />
+          <Package {...TAB_ICON_PROPS} />
           <IonLabel>{intl.formatMessage({ id: 'navigation.products' })}</IonLabel>
         </IonTabButton>
         <IonTabButton tab="manage" href={`/${businessId}/manage`}>
-          <IonIcon icon={settingsOutline} />
+          <Settings {...TAB_ICON_PROPS} />
           <IonLabel>{intl.formatMessage({ id: 'navigation.manage' })}</IonLabel>
         </IonTabButton>
       </IonTabBar>

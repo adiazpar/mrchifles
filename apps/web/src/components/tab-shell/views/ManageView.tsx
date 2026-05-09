@@ -1,17 +1,30 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-import { useState } from 'react'
-import { IonCard, IonCardContent, IonItem, IonLabel, IonList, IonNote } from '@ionic/react'
+import { useIntl } from 'react-intl'
+import { useMemo, useState } from 'react'
+import { IonItem, IonLabel, IonList, IonNote } from '@ionic/react'
 import dynamic from '@/lib/next-dynamic-shim'
-import { Building2, MapPin, Users, Handshake, ArrowRightLeft, LogOut, Trash2, Briefcase, ChevronRight, Clock, ImageIcon } from 'lucide-react'
+import {
+  Building2,
+  MapPin,
+  Users,
+  Handshake,
+  ArrowRightLeft,
+  LogOut,
+  Trash2,
+  Briefcase,
+  ChevronRight,
+  Clock,
+  ImageIcon,
+} from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
+import { FeatureCard, GroupLabel } from '@/components/ui'
+
 // Every modal below is closed by default; dynamic imports keep the modal
 // code out of the initial manage-page chunk until the user opens one.
-
 const EditNameModal = dynamic(
   () => import('@/components/manage/EditNameModal').then(m => m.EditNameModal),
   { ssr: false },
@@ -49,6 +62,23 @@ const IncomingTransferModal = dynamic(
   { ssr: false },
 )
 
+function getBusinessInitials(name: string | null | undefined): string {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return ((parts[0][0] ?? '') + (parts[1][0] ?? '')).toUpperCase() || '?'
+}
+
+const KNOWN_BUSINESS_TYPES = new Set([
+  'food',
+  'retail',
+  'services',
+  'wholesale',
+  'manufacturing',
+  'other',
+])
+
 export function ManageView() {
   const intl = useIntl()
   const { business, businessId, isOwner } = useBusiness()
@@ -66,6 +96,23 @@ export function ManageView() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [incomingTransferOpen, setIncomingTransferOpen] = useState(false)
 
+  // Page-hero title with one italic-terracotta accent word. Same pattern
+  // as Account / Hub / Login. Falls back to plain text if the locale's
+  // emphasis term doesn't substring-match the title.
+  const titleNode = useMemo(() => {
+    const full = intl.formatMessage({ id: 'manage.page_title' })
+    const emphasis = intl.formatMessage({ id: 'manage.page_title_emphasis' })
+    const idx = full.indexOf(emphasis)
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [intl])
+
   // Only show the incoming-transfer banner on the Manage page of the
   // target business. On any other business's Manage page the banner is
   // irrelevant (the transfer doesn't concern this business).
@@ -73,44 +120,87 @@ export function ManageView() {
     Boolean(incomingTransfer) &&
     incomingTransfer?.business.id === businessId
 
-  const slideTo = (href: string) => navigate(href)
-
   if (!business || !businessId) return null
 
+  const slideTo = (href: string) => navigate(href)
+
+  const typeLabel = business.type && KNOWN_BUSINESS_TYPES.has(business.type)
+    ? intl.formatMessage({ id: `createBusiness.business_type_${business.type}` })
+    : null
+
+  const localeLabel = `${business.locale} · ${business.currency}`
+
   return (
-    <div className="px-4 py-6 space-y-6">
-      {isOwner && pendingTransfer && (
-        <IonCard button onClick={() => setCancelTransferOpen(true)} className="m-0">
-          <IonCardContent className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-warning-subtle">
-              <Clock className="w-5 h-5 text-warning" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-warning">
+    <>
+      <div className="manage-body">
+        <header className="page-hero">
+          <div className="page-hero__eyebrow">
+            {intl.formatMessage({ id: 'manage.page_eyebrow' })}
+          </div>
+          <h1 className="page-hero__title">{titleNode}</h1>
+        </header>
+
+        {/* Business identity card — the "you are here" plate above the
+            settings sections. Mark + Fraunces name + mono pill row. */}
+        <div className="manage-hero">
+          <span className="manage-hero__mark">
+            {business.icon && business.icon.startsWith('data:') ? (
+              <img src={business.icon} alt="" />
+            ) : business.icon ? (
+              <span className="manage-hero__mark-emoji">{business.icon}</span>
+            ) : (
+              <span>{getBusinessInitials(business.name)}</span>
+            )}
+          </span>
+          <span className="manage-hero__body">
+            <span className="manage-hero__name">{business.name}</span>
+            <span className="manage-hero__pills">
+              {typeLabel ? <span className="manage-pill">{typeLabel}</span> : null}
+              <span className="manage-pill">{localeLabel}</span>
+            </span>
+          </span>
+        </div>
+
+        {isOwner && pendingTransfer && (
+          <button
+            type="button"
+            className="manage-banner"
+            onClick={() => setCancelTransferOpen(true)}
+          >
+            <span className="manage-banner__icon">
+              <Clock />
+            </span>
+            <span className="manage-banner__body">
+              <span className="manage-banner__title">
                 {intl.formatMessage({ id: 'manage.transfer_pending_heading' })}
-              </div>
-              <div className="text-xs text-text-secondary mt-0.5 truncate">
+              </span>
+              <span className="manage-banner__desc">
                 {intl.formatMessage(
                   { id: 'manage.transfer_pending_waiting' },
                   { recipient: pendingTransfer.toEmail },
                 )}
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-          </IonCardContent>
-        </IonCard>
-      )}
-      {showIncomingTransferBanner && incomingTransfer && (
-        <IonCard button onClick={() => setIncomingTransferOpen(true)} className="m-0">
-          <IonCardContent className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-warning-subtle">
-              <ArrowRightLeft className="w-5 h-5 text-warning" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-warning">
+              </span>
+            </span>
+            <span className="manage-banner__chev" aria-hidden="true">
+              <ChevronRight />
+            </span>
+          </button>
+        )}
+
+        {showIncomingTransferBanner && incomingTransfer && (
+          <button
+            type="button"
+            className="manage-banner"
+            onClick={() => setIncomingTransferOpen(true)}
+          >
+            <span className="manage-banner__icon">
+              <ArrowRightLeft />
+            </span>
+            <span className="manage-banner__body">
+              <span className="manage-banner__title">
                 {intl.formatMessage({ id: 'account.incoming_transfer_heading' })}
-              </div>
-              <div className="text-xs text-text-secondary mt-0.5 truncate">
+              </span>
+              <span className="manage-banner__desc">
                 {incomingTransfer.fromUser
                   ? intl.formatMessage(
                       { id: 'account.incoming_transfer_description' },
@@ -123,17 +213,18 @@ export function ManageView() {
                       { id: 'account.incoming_transfer_description_anonymous' },
                       { business: incomingTransfer.business.name },
                     )}
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-          </IonCardContent>
-        </IonCard>
-      )}
-      <div>
-        <h2 className="text-base font-semibold text-text-primary mb-2 px-4">
-          {intl.formatMessage({ id: 'manage.section_details' })}
-        </h2>
-        <IonList inset lines="full">
+              </span>
+            </span>
+            <span className="manage-banner__chev" aria-hidden="true">
+              <ChevronRight />
+            </span>
+          </button>
+        )}
+
+        <GroupLabel>
+          {intl.formatMessage({ id: 'manage.section_business' })}
+        </GroupLabel>
+        <IonList inset lines="full" className="account-list">
           <IonItem
             button={isOwner}
             detail={isOwner}
@@ -165,9 +256,7 @@ export function ManageView() {
               <h3>{intl.formatMessage({ id: 'manage.row_type' })}</h3>
             </IonLabel>
             <IonNote slot="end">
-              {business.type
-                ? intl.formatMessage({ id: `createBusiness.business_type_${business.type}` })
-                : '—'}
+              {typeLabel ?? '—'}
             </IonNote>
           </IonItem>
           <IonItem
@@ -179,54 +268,42 @@ export function ManageView() {
             <IonLabel>
               <h3>{intl.formatMessage({ id: 'manage.row_location' })}</h3>
             </IonLabel>
-            <IonNote slot="end">{`${business.locale} · ${business.currency}`}</IonNote>
+            <IonNote slot="end">{localeLabel}</IonNote>
           </IonItem>
         </IonList>
-      </div>
-      <div>
-        <h2 className="text-base font-semibold text-text-primary mb-2 px-4">
-          {intl.formatMessage({ id: 'manage.section_shortcuts' })}
-        </h2>
-        <div className="space-y-3">
-          <IonCard button onClick={() => slideTo(`/${businessId}/team`)} className="m-0">
-            <IonCardContent className="flex items-start gap-4 py-5">
-              <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
-                <Users className="w-6 h-6 text-brand" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-base font-semibold text-text-primary">
-                  {intl.formatMessage({ id: 'manage.shortcut_team' })}
-                </div>
-                <div className="text-sm text-text-secondary mt-1">
-                  {intl.formatMessage({ id: 'manage.shortcut_team_desc' })}
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 mt-1" />
-            </IonCardContent>
-          </IonCard>
-          <IonCard button onClick={() => slideTo(`/${businessId}/providers`)} className="m-0">
-            <IonCardContent className="flex items-start gap-4 py-5">
-              <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
-                <Handshake className="w-6 h-6 text-brand" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-base font-semibold text-text-primary">
-                  {intl.formatMessage({ id: 'manage.shortcut_providers' })}
-                </div>
-                <div className="text-sm text-text-secondary mt-1">
-                  {intl.formatMessage({ id: 'manage.shortcut_providers_desc' })}
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 mt-1" />
-            </IonCardContent>
-          </IonCard>
+
+        <GroupLabel>
+          {intl.formatMessage({ id: 'manage.section_workspace' })}
+        </GroupLabel>
+        <div className="manage-workspace">
+          <FeatureCard
+            kicker={
+              <span className="inline-flex items-center gap-1.5">
+                <Users style={{ width: 12, height: 12 }} />
+                {intl.formatMessage({ id: 'manage.shortcut_team' })}
+              </span>
+            }
+            title={intl.formatMessage({ id: 'manage.shortcut_team' })}
+            description={intl.formatMessage({ id: 'manage.shortcut_team_desc' })}
+            onClick={() => slideTo(`/${businessId}/team`)}
+          />
+          <FeatureCard
+            kicker={
+              <span className="inline-flex items-center gap-1.5">
+                <Handshake style={{ width: 12, height: 12 }} />
+                {intl.formatMessage({ id: 'manage.shortcut_providers' })}
+              </span>
+            }
+            title={intl.formatMessage({ id: 'manage.shortcut_providers' })}
+            description={intl.formatMessage({ id: 'manage.shortcut_providers_desc' })}
+            onClick={() => slideTo(`/${businessId}/providers`)}
+          />
         </div>
-      </div>
-      <div>
-        <h2 className="text-base font-semibold text-error mb-2 px-4">
+
+        <GroupLabel tone="danger">
           {intl.formatMessage({ id: 'manage.section_danger' })}
-        </h2>
-        <IonList inset lines="full">
+        </GroupLabel>
+        <IonList inset lines="full" className="account-list account-list--danger">
           {!isOwner && (
             <IonItem button detail onClick={() => setLeaveOpen(true)}>
               <LogOut slot="start" className="text-error w-5 h-5" />
@@ -258,6 +335,7 @@ export function ManageView() {
           )}
         </IonList>
       </div>
+
       <EditNameModal isOpen={nameOpen} onClose={() => setNameOpen(false)} />
       <EditTypeModal isOpen={typeOpen} onClose={() => setTypeOpen(false)} />
       <EditLocationModal isOpen={locationOpen} onClose={() => setLocationOpen(false)} />
@@ -270,6 +348,6 @@ export function ManageView() {
         isOpen={incomingTransferOpen}
         onClose={() => setIncomingTransferOpen(false)}
       />
-    </div>
-  );
+    </>
+  )
 }

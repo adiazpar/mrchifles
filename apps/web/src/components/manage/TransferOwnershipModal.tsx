@@ -1,10 +1,12 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-import { useEffect, useState } from 'react'
-import { TriangleAlert, Mail } from 'lucide-react'
+import { useIntl } from 'react-intl'
+import { useEffect, useMemo, useState } from 'react'
+import { Check, Mail } from 'lucide-react'
 import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell, ConfirmationAnimation } from '@/components/ui'
+import { AuthField } from '@/components/auth'
+import { useAuth } from '@/contexts/auth-context'
 import { useBusiness } from '@/contexts/business-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useTransferOwnership } from '@/hooks/useTransferOwnership'
@@ -25,9 +27,8 @@ interface Props { isOpen: boolean; onClose: () => void }
 type Step = 'form' | 'confirm' | 'success'
 
 export function TransferOwnershipModal({ isOpen, onClose }: Props) {
-  const t = useIntl()
-  const tCommon = useIntl()
-  const tTeam = useIntl()
+  const intl = useIntl()
+  const { user } = useAuth()
   const { business, businessId } = useBusiness()
   const { submit, isSubmitting, error, reset } = useTransferOwnership()
   const { refresh: refreshPendingTransfer } = usePendingTransferContext()
@@ -49,7 +50,7 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
         const data = await res.json()
         if (cancelled) return
         const eligible: TeamMember[] = (data.teamMembers ?? []).filter(
-          (m: TeamMember) => m.role !== 'owner'
+          (m: TeamMember) => m.role !== 'owner',
         )
         setMembers(eligible)
       } catch (err) { console.error('Load team error:', err) }
@@ -78,6 +79,7 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
     ? (selectedEmail ? members.find(m => m.email === selectedEmail) : null)
     : null
   const recipientEmail = mode === 'picker' ? selectedEmail : customEmail.trim()
+  const recipientLabel = recipient?.name ?? recipientEmail ?? ''
   const isStep1Valid = mode === 'picker'
     ? !!selectedEmail
     : /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customEmail.trim())
@@ -87,36 +89,47 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
     if (!recipientEmail) return
     const ok = await submit(recipientEmail)
     if (ok) {
-      // Refresh the shared pending-transfer state before the success step
-      // is dismissed, so the manage-page banner and nav badge are ready.
       await refreshPendingTransfer()
       setTransferSent(true)
       setStep('success')
     }
   }
 
+  // Hero title for the form step (with italic emphasis word).
+  const titleNode = useMemo(() => {
+    const full = intl.formatMessage({ id: 'manage.transfer_hero_title' })
+    const emphasis = intl.formatMessage({ id: 'manage.transfer_hero_title_emphasis' })
+    const idx = full.indexOf(emphasis)
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [intl])
+
   const titlesByStep: Record<Step, string> = {
-    form: t.formatMessage({ id: 'manage.transfer_ownership' }),
-    confirm: t.formatMessage({ id: 'manage.transfer_ownership' }),
-    success: t.formatMessage({ id: 'manage.transfer_sent_title' }),
+    form: intl.formatMessage({ id: 'manage.transfer_ownership' }),
+    confirm: intl.formatMessage({ id: 'manage.transfer_ownership' }),
+    success: intl.formatMessage({ id: 'manage.transfer_sent_title' }),
   }
 
   const onBack = step === 'confirm' ? () => setStep('form') : undefined
 
   const footer =
     step === 'form' ? (
-      <IonButton onClick={() => setStep('confirm')} disabled={!isStep1Valid}>
-        {tCommon.formatMessage({ id: 'common.continue' })}
+      <IonButton expand="block" onClick={() => setStep('confirm')} disabled={!isStep1Valid}>
+        {intl.formatMessage({ id: 'common.continue' })}
       </IonButton>
     ) : step === 'confirm' ? (
-      // Toolbar back navigates to step 'form'; footer is the destructive
-      // primary only.
-      <IonButton onClick={handleSubmit} disabled={isSubmitting || !isStep2Valid}>
-        {isSubmitting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'manage.transfer_send_request' })}
+      <IonButton expand="block" onClick={handleSubmit} disabled={isSubmitting || !isStep2Valid}>
+        {isSubmitting ? <IonSpinner name="crescent" /> : intl.formatMessage({ id: 'manage.transfer_send_request' })}
       </IonButton>
     ) : (
-      <IonButton onClick={onClose}>
-        {tCommon.formatMessage({ id: 'common.done' })}
+      <IonButton expand="block" onClick={onClose}>
+        {intl.formatMessage({ id: 'common.done' })}
       </IonButton>
     )
 
@@ -129,150 +142,239 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
       footer={footer}
       noSwipeDismiss
     >
-      {/* Step 0: pick recipient */}
+      {/* ===== Step 0: pick recipient ===== */}
       {step === 'form' && (
         <>
-          <p className="text-sm text-text-secondary text-center px-4 pt-4">
-            {t.formatMessage({ id: 'manage.transfer_pick_recipient_subtitle' })}
-          </p>
+          {error && <div className="modal-error">{error}</div>}
+
+          <header className="modal-hero transfer-ownership__hero">
+            <div className="modal-hero__eyebrow">
+              {intl.formatMessage({ id: 'manage.transfer_hero_eyebrow' })}
+            </div>
+            <h1 className="modal-hero__title">{titleNode}</h1>
+            <p className="modal-hero__subtitle">
+              {intl.formatMessage({ id: 'manage.transfer_hero_subtitle' })}
+            </p>
+          </header>
+
           {mode === 'picker' && (
             <>
-              <div className="flex flex-col gap-2 px-4 pt-3">
-                {members.map((m) => {
-                  const isActive = m.status === 'active'
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setSelectedEmail(m.email)}
-                      disabled={!isActive}
-                      className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left w-full disabled:opacity-60 disabled:cursor-not-allowed ${
-                        selectedEmail === m.email
-                          ? 'border-brand bg-bg-elevated'
-                          : 'border-border enabled:hover:border-brand-300'
-                      }`}
-                    >
-                      <div className="w-12 h-12 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {m.avatar ? (
-                          (<img
-                            src={m.avatar}
-                            alt=""
-                            className="w-12 h-12 rounded-full object-cover"
-                          />)
-                        ) : (
-                          <span className="text-sm font-bold text-brand">
-                            {getUserInitials(m.name)}
+              <div className="transfer-ownership__section-eyebrow">
+                <span>{intl.formatMessage({ id: 'manage.transfer_section_team' })}</span>
+              </div>
+
+              {members.length === 0 ? (
+                <div className="transfer-ownership__no-team">
+                  {intl.formatMessage({ id: 'manage.transfer_no_team' })}
+                </div>
+              ) : (
+                <ul className="transfer-ownership__members">
+                  {members.map((m) => {
+                    const isActive = m.status === 'active'
+                    const isSelected = selectedEmail === m.email
+                    return (
+                      <li key={m.id}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedEmail(m.email)}
+                          disabled={!isActive}
+                          className={
+                            'transfer-ownership__member' + (isSelected ? ' is-active' : '')
+                          }
+                        >
+                          <span className="transfer-ownership__member-avatar">
+                            {m.avatar ? (
+                              <img src={m.avatar} alt="" />
+                            ) : (
+                              getUserInitials(m.name)
+                            )}
                           </span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">{m.name}</p>
-                        <p className="text-xs text-text-tertiary truncate">{m.email}</p>
-                      </div>
-                      <div className="flex items-center justify-center">
-                        <span className={`text-xs font-medium ${isActive ? 'text-success' : 'text-error'}`}>
-                          {isActive ? tTeam.formatMessage({
-                            id: 'team.status_active'
-                          }) : tTeam.formatMessage({
-                            id: 'team.status_disabled'
-                          })}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
+                          <span className="transfer-ownership__member-meta">
+                            <span className="transfer-ownership__member-name">{m.name}</span>
+                            <span className="transfer-ownership__member-email">{m.email}</span>
+                          </span>
+                          <span
+                            className={
+                              'transfer-ownership__member-tag ' +
+                              (isActive
+                                ? 'transfer-ownership__member-tag--active'
+                                : 'transfer-ownership__member-tag--disabled')
+                            }
+                          >
+                            {isActive
+                              ? intl.formatMessage({ id: 'team.status_active' })
+                              : intl.formatMessage({ id: 'team.status_disabled' })}
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+
+              <div className="transfer-ownership__section-eyebrow">
+                <span>{intl.formatMessage({ id: 'manage.transfer_section_email' })}</span>
               </div>
-              <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-text-tertiary px-4 pt-3">
-                <div className="flex-1 h-px bg-border" />
-                <span>{tCommon.formatMessage({ id: 'common.or' })}</span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-              <div className="px-4 pt-3 pb-4">
-                <button
-                  type="button"
-                  onClick={() => { setMode('email'); setSelectedEmail(null) }}
-                  className="w-full flex items-center justify-center gap-2 text-sm text-brand hover:text-brand-hover transition-colors"
-                >
-                  <Mail className="w-4 h-4" />
-                  {t.formatMessage({ id: 'manage.transfer_enter_different_email' })}
-                </button>
-              </div>
+
+              <button
+                type="button"
+                className="transfer-ownership__switch"
+                onClick={() => { setMode('email'); setSelectedEmail(null) }}
+              >
+                <Mail />
+                {intl.formatMessage({ id: 'manage.transfer_switch_to_email' })}
+              </button>
             </>
           )}
+
           {mode === 'email' && (
-            <div className="px-4 pt-3 pb-4">
-              <input
+            <div className="transfer-ownership__custom">
+              <AuthField
+                label={intl.formatMessage({ id: 'manage.transfer_member_email_label' })}
                 type="email"
                 value={customEmail}
                 onChange={(e) => setCustomEmail(e.target.value)}
                 placeholder="email@example.com"
-                className="input"
                 autoComplete="email"
+                autoCapitalize="off"
+                spellCheck={false}
               />
-              <p className="text-xs text-text-tertiary mt-2">
-                {t.formatMessage({ id: 'manage.transfer_recipient_must_have_account' })}
-              </p>
+              <div className="manage-edit__note">
+                {intl.formatMessage({ id: 'manage.transfer_recipient_must_have_account' })}
+              </div>
               <button
                 type="button"
+                className="transfer-ownership__custom-back"
                 onClick={() => { setMode('picker'); setCustomEmail('') }}
-                className="text-xs text-text-secondary underline mt-2"
               >
-                {tCommon.formatMessage({ id: 'common.back' })}
+                {intl.formatMessage({ id: 'manage.transfer_switch_to_picker' })}
               </button>
             </div>
           )}
         </>
       )}
 
-      {/* Step 1: confirm */}
+      {/* ===== Step 1: confirm — the deed plate ===== */}
       {step === 'confirm' && (
-        <div className="px-4 pt-4 pb-4 flex flex-col gap-4">
-          <div className="p-3 bg-bg-muted rounded-lg flex items-start gap-3">
-            <TriangleAlert className="w-5 h-5 text-text-secondary flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-text-secondary">
-              {t.formatMessage(
-                { id: 'manage.transfer_confirm_warning' },
-                { recipient: recipient?.name ?? recipientEmail ?? '' }
-              )}
-            </p>
+        <>
+          {error && <div className="modal-error">{error}</div>}
+
+          <header className="modal-hero transfer-ownership__hero">
+            <div className="modal-hero__eyebrow">
+              {intl.formatMessage({ id: 'manage.transfer_confirm_eyebrow' })}
+            </div>
+            <h1 className="modal-hero__title">{titleNode}</h1>
+          </header>
+
+          <div className="transfer-ownership__deed">
+            <div className="transfer-ownership__deed-eyebrow">
+              <span>{intl.formatMessage({ id: 'manage.transfer_ownership' })}</span>
+              <span className="transfer-ownership__deed-eyebrow-tag">
+                {intl.formatMessage({ id: 'manage.transfer_confirm_status_tag' })}
+              </span>
+            </div>
+
+            <p className="transfer-ownership__deed-business">{business?.name ?? ''}</p>
+
+            <div className="transfer-ownership__deed-row">
+              <div className="transfer-ownership__deed-cell">
+                <span className="transfer-ownership__deed-eyebrow-mini">
+                  {intl.formatMessage({ id: 'manage.transfer_confirm_from' })}
+                </span>
+                <span className="transfer-ownership__deed-avatar">
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt="" />
+                  ) : (
+                    getUserInitials(user?.name ?? '')
+                  )}
+                </span>
+                <span className="transfer-ownership__deed-name">{user?.name ?? ''}</span>
+                <span className="transfer-ownership__deed-email">{user?.email ?? ''}</span>
+              </div>
+
+              <div className="transfer-ownership__deed-arrow" aria-hidden="true">
+                <svg viewBox="0 0 26 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="0" y1="7" x2="22" y2="7" stroke="currentColor" strokeWidth="1.4" />
+                  <polyline
+                    points="17 2, 24 7, 17 12"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+
+              <div className="transfer-ownership__deed-cell">
+                <span className="transfer-ownership__deed-eyebrow-mini">
+                  {intl.formatMessage({ id: 'manage.transfer_confirm_to' })}
+                </span>
+                <span className="transfer-ownership__deed-avatar">
+                  {recipient?.avatar ? (
+                    <img src={recipient.avatar} alt="" />
+                  ) : (
+                    getUserInitials(recipientLabel || (recipientEmail ?? ''))
+                  )}
+                </span>
+                <span className="transfer-ownership__deed-name">
+                  {recipient?.name ?? recipientEmail ?? ''}
+                </span>
+                <span className="transfer-ownership__deed-email">
+                  {recipientEmail ?? ''}
+                </span>
+              </div>
+            </div>
           </div>
-          <div>
-            <label htmlFor="transfer-confirm" className="label">
-              {t.formatMessage(
-                { id: 'manage.transfer_type_to_confirm' },
-                { businessName: business?.name ?? '' }
-              )}
-            </label>
-            <input
-              id="transfer-confirm"
-              type="text"
-              value={typedConfirm}
-              onChange={(e) => setTypedConfirm(e.target.value)}
-              className="input"
-              placeholder={business?.name ?? ''}
-              autoComplete="off"
-            />
+
+          <div className="transfer-ownership__confirm-target">
+            <span className="transfer-ownership__confirm-target-eyebrow">
+              {intl.formatMessage({ id: 'manage.transfer_confirm_target_eyebrow' })}
+            </span>
+            <span className="transfer-ownership__confirm-target-value">
+              {business?.name ?? ''}
+            </span>
           </div>
-          {error && (
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
-          )}
-        </div>
+
+          <AuthField
+            label={intl.formatMessage(
+              { id: 'manage.transfer_type_to_confirm' },
+              { businessName: business?.name ?? '' },
+            )}
+            type="text"
+            value={typedConfirm}
+            onChange={(e) => setTypedConfirm(e.target.value)}
+            placeholder={business?.name ?? ''}
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck={false}
+          />
+
+          <div
+            className={
+              'transfer-ownership__check' + (isStep2Valid ? ' is-met' : '')
+            }
+          >
+            <span className="transfer-ownership__check-marker" aria-hidden="true">
+              <Check />
+            </span>
+            {intl.formatMessage({ id: 'manage.transfer_confirm_check' })}
+          </div>
+        </>
       )}
 
-      {/* Step 2: success — plane lottie plays once the API confirms */}
+      {/* ===== Step 2: success — plane Lottie ===== */}
       {step === 'success' && (
-        <div className="px-4 pt-4 pb-4">
-          <ConfirmationAnimation
-            type="success"
-            src="/animations/plane.json"
-            triggered={transferSent}
-            title={t.formatMessage({ id: 'manage.transfer_sent_heading' })}
-            subtitle={t.formatMessage(
-              { id: 'manage.transfer_sent_subtitle' },
-              { recipient: recipient?.name ?? recipientEmail ?? '' }
-            )}
-          />
-        </div>
+        <ConfirmationAnimation
+          type="success"
+          src="/animations/plane.json"
+          triggered={transferSent}
+          title={intl.formatMessage({ id: 'manage.transfer_sent_heading' })}
+          subtitle={intl.formatMessage(
+            { id: 'manage.transfer_sent_subtitle' },
+            { recipient: recipientLabel },
+          )}
+        />
       )}
     </ModalShell>
   )

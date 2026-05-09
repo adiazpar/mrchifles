@@ -1,0 +1,1268 @@
+/* ==========================================================================
+   Manage modals — Modern Mercantile chrome
+   ==========================================================================
+   Styles for the eight modals reachable from the Manage tab.
+   Two families share a vocabulary but diverge in tone.
+
+   Family A — routine edits (rearranging the shop window):
+     .edit-name__*, .edit-type__*, .edit-location__*, .edit-logo__*
+
+   Family B — lifecycle (signing a deed):
+     .transfer-ownership__*, .cancel-transfer__*,
+     .leave-business__*, .delete-business__*
+
+   The shared `.modal-hero`, `.modal-rule`, and `.modal-error` primitives
+   live in account-modals.css and are reused here. */
+
+
+/* ==========================================================================
+   Family A — Edit field modals
+   --------------------------------------------------------------------------
+   Tone: confident, light, frequent. Each modal is a small precise gesture.
+   Shared "form" wrapper just gives consistent vertical rhythm. */
+
+.manage-edit__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* A small mono note below the fields — sits between the editable surface
+   and the modal footer. Used for "Reads as" diff in Edit Name, the
+   currency follow-on in Edit Location, and the size hint in Edit Logo. */
+.manage-edit__note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-3);
+}
+.manage-edit__note::before {
+  content: "";
+  width: 16px;
+  height: 1px;
+  background: var(--color-brand);
+  flex-shrink: 0;
+}
+.manage-edit__note--error { color: var(--color-error); }
+.manage-edit__note--error::before { background: var(--color-error); }
+
+
+/* ==========================================================================
+   1. EditNameModal — "the nameplate"
+   --------------------------------------------------------------------------
+   A single AuthField. Below it, a live Fraunces italic echo card mirrors
+   what the user is typing — quiet editorial reinforcement that the name
+   they're writing is the one thing this modal does. */
+
+.edit-name__hero { margin-bottom: var(--space-4); }
+
+.edit-name__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Below-the-field echo. Renders as a hairline separator + tracked-out
+   eyebrow + the name in Fraunces italic SOFT 70. Fades in once the user
+   has anything in the field. */
+.edit-name__echo {
+  position: relative;
+  padding: var(--space-4) var(--space-1) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 64px;
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-3);
+  opacity: 0;
+  transform: translateY(2px);
+  transition:
+    opacity var(--duration-normal) ease-out,
+    transform var(--duration-normal) ease-out;
+}
+
+.edit-name__echo[data-active="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.edit-name__echo-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.edit-name__echo-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--color-brand) 40%, transparent);
+  border-radius: 999px;
+  background: var(--color-brand-subtle);
+  line-height: 1;
+}
+.edit-name__echo-tag--quiet {
+  color: var(--color-text-tertiary);
+  border-color: var(--color-border);
+  background: var(--color-bg-muted);
+}
+
+.edit-name__echo-value {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 70;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 24px;
+  letter-spacing: -0.018em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+
+/* ==========================================================================
+   2. EditTypeModal — "the trade"
+   --------------------------------------------------------------------------
+   Wraps the shared BusinessTypeGrid in a paper-deep "shelf" with a hairline
+   top edge and a small mono "WHY THIS MATTERS" caption. Don't restyle the
+   grid itself — it's used by CreateBusiness too. */
+
+.edit-type__hero { margin-bottom: var(--space-4); }
+
+.edit-type__shelf {
+  position: relative;
+  padding: var(--space-4) 0 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* A small mono caption above the grid that explains the consequence of
+   changing the type — categories, sort defaults, fallback icon. */
+.edit-type__caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  line-height: 1.5;
+}
+.edit-type__caption::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 1px;
+  background: var(--color-brand);
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+
+/* ==========================================================================
+   3. EditLocationModal — "the region"
+   --------------------------------------------------------------------------
+   A paper-deep "current → next" plate sits above the LocalePicker, showing
+   the region change as a typeset diff. When current === next, the plate
+   reads in muted ink. The picker itself is the shared component, untouched.
+   The currency note is reused from CreateBusiness's locale step. */
+
+.edit-location__hero { margin-bottom: var(--space-4); }
+
+.edit-location__plate {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 0;
+  padding: var(--space-4) var(--space-4);
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-sm), inset 3px 0 0 var(--color-brand);
+}
+.edit-location__plate--unchanged {
+  box-shadow: var(--shadow-sm), inset 3px 0 0 var(--color-border);
+}
+
+.edit-location__plate-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.edit-location__plate-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.edit-location__plate-flag {
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: initial;
+  font-family:
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Noto Color Emoji",
+    sans-serif;
+  margin-bottom: 2px;
+}
+
+.edit-location__plate-country {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.edit-location__plate-code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--color-text-tertiary);
+  font-feature-settings: "tnum" 1;
+}
+.edit-location__plate--changed .edit-location__plate-cell--next .edit-location__plate-code {
+  color: var(--color-brand);
+}
+
+/* Arrow column between current and next. Renders a long thin terracotta
+   tick + an arrowhead. Goes muted when nothing's changed. */
+.edit-location__plate-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-3);
+  color: var(--color-brand);
+}
+.edit-location__plate--unchanged .edit-location__plate-arrow {
+  color: var(--color-text-tertiary);
+}
+.edit-location__plate-arrow svg {
+  width: 22px;
+  height: 12px;
+}
+
+/* Picker shelf — gives the LocalePicker a hair-line top edge so it reads
+   as a discrete block under the diff plate. The select inside uses the
+   global .input style; the wrapper only adds the rule and label hierarchy. */
+.edit-location__shelf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) 0 0;
+  border-top: 1px solid var(--color-border);
+}
+
+
+/* ==========================================================================
+   4. EditLogoModal — "the seal"
+   --------------------------------------------------------------------------
+   Big paper-deep medallion. AuthField-shaped upload row beneath. Remove
+   chip floats top-right of the medallion when there's an image. Mono
+   helper line for size/format. Mirrors CreateBusiness's LogoStep but
+   styled here from scratch with the .edit-logo__ prefix. */
+
+.edit-logo__hero { margin-bottom: var(--space-3); }
+
+.edit-logo__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0 var(--space-2);
+}
+
+.edit-logo__stage-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.edit-logo__medallion {
+  position: relative;
+  width: 144px;
+  height: 144px;
+  border-radius: 28px;
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  box-shadow:
+    0 1px 0 rgba(255, 252, 245, 0.6) inset,
+    0 8px 24px -16px rgba(27, 24, 21, 0.25);
+  animation: edit-logo-medallion-in 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes edit-logo-medallion-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.edit-logo__medallion-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--color-bg-surface);
+  margin: 0;
+}
+
+.edit-logo__medallion-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Type-icon fallback inside the medallion when there's no image. */
+.edit-logo__fallback {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  color: var(--color-brand);
+}
+.edit-logo__fallback svg { width: 56px; height: 56px; }
+.edit-logo__fallback-emoji {
+  font-size: 56px;
+  line-height: 1;
+}
+
+/* Floating remove chip — shaped like the CreateBusiness one, paper card
+   style. Goes oxblood on hover to telegraph the destructive intent. */
+.edit-logo__remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px -6px rgba(27, 24, 21, 0.3);
+  transition:
+    color var(--duration-fast) ease-out,
+    border-color var(--duration-fast) ease-out;
+}
+.edit-logo__remove:hover {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+.edit-logo__remove svg { width: 14px; height: 14px; }
+
+/* Small mono pill above the medallion — "ACTIVE" / "TRADE FALLBACK" /
+   "PENDING REPLACEMENT" depending on state. Quiet typographic context. */
+.edit-logo__status {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  padding: 3px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg-muted);
+  line-height: 1;
+}
+.edit-logo__status--pending {
+  color: var(--color-brand);
+  border-color: color-mix(in srgb, var(--color-brand) 40%, transparent);
+  background: var(--color-brand-subtle);
+}
+.edit-logo__status--remove {
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
+  background: var(--color-error-subtle);
+}
+
+/* Upload control — same row shape as CreateBusiness logo upload. */
+.edit-logo__upload {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background var(--duration-fast) ease-out,
+    box-shadow var(--duration-fast) ease-out;
+  text-align: left;
+  margin-top: var(--space-3);
+}
+.edit-logo__upload:hover {
+  border-color: var(--color-brand);
+  background: var(--color-bg-muted);
+  box-shadow: 0 0 0 4px var(--color-brand-subtle);
+}
+
+.edit-logo__upload-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.edit-logo__upload-icon svg { width: 16px; height: 16px; }
+
+.edit-logo__upload-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.edit-logo__upload-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.edit-logo__upload-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  letter-spacing: -0.005em;
+}
+
+
+/* ==========================================================================
+   Family B — Lifecycle modals
+   --------------------------------------------------------------------------
+   Tone: ceremonial. Heavier hierarchy, denser mono captions, more space
+   between elements. Hero subtitle italic Fraunces, callouts with inset
+   stripe, READY CHECK lists with state-colored markers. */
+
+
+/* ==========================================================================
+   5. TransferOwnershipModal — "passing the keys"
+   --------------------------------------------------------------------------
+   Three steps. Form: team picker as a list of paper cards, with an "or"
+   divider and a custom-email mode. Confirm: ceremonial FROM → TO with
+   avatars on both sides + a type-to-confirm gate. Success: plane Lottie
+   under a recipient mono pill. Saffron is the in-flight tone (the
+   business itself isn't being destroyed). */
+
+.transfer-ownership__hero { margin-bottom: var(--space-4); }
+
+.transfer-ownership__intro {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-style: italic;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  max-width: 36ch;
+  margin: 0 0 var(--space-4);
+}
+
+/* Section eyebrow used inside the form step ("Pick a teammate" / "Or
+   send to someone else"). */
+.transfer-ownership__section-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: var(--space-4) 0 var(--space-3);
+}
+.transfer-ownership__section-eyebrow::before,
+.transfer-ownership__section-eyebrow::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* Member picker — vertical list of paper cards. */
+.transfer-ownership__members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.transfer-ownership__member {
+  appearance: none;
+  width: 100%;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out,
+    box-shadow var(--duration-fast) ease-out,
+    background var(--duration-fast) ease-out;
+}
+.transfer-ownership__member:active { transform: scale(0.99); }
+@media (hover: hover) {
+  .transfer-ownership__member:hover:not(:disabled) {
+    border-color: var(--color-border-hover);
+  }
+}
+.transfer-ownership__member:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.transfer-ownership__member.is-active {
+  border-color: var(--color-brand);
+  box-shadow: var(--shadow-md), 0 0 0 2px var(--color-brand-subtle);
+}
+/* Leading-edge terracotta tick on selected — same vocabulary as the
+   language-modal card. */
+.transfer-ownership__member.is-active::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--color-brand);
+  z-index: 2;
+}
+
+.transfer-ownership__member-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--color-brand);
+}
+.transfer-ownership__member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.transfer-ownership__member-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.transfer-ownership__member-name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transfer-ownership__member-email {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transfer-ownership__member-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg-muted);
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  line-height: 1;
+}
+.transfer-ownership__member-tag--active {
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+  background: var(--color-success-subtle);
+}
+.transfer-ownership__member-tag--disabled {
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
+  background: var(--color-error-subtle);
+}
+
+/* Custom email entry mode — a single AuthField followed by a small
+   back-to-picker link. */
+.transfer-ownership__custom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.transfer-ownership__custom-back {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 0 1px;
+}
+.transfer-ownership__custom-back:hover {
+  color: var(--color-brand);
+  border-bottom-color: var(--color-brand);
+}
+
+.transfer-ownership__no-team {
+  padding: var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+/* Mode toggle — small pill that flips picker ↔ email. */
+.transfer-ownership__switch {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: center;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    background var(--duration-fast) ease-out;
+}
+.transfer-ownership__switch:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-subtle);
+}
+.transfer-ownership__switch svg { width: 12px; height: 12px; }
+
+/* ===== Confirm step — the deed plate =====
+   FROM and TO read as a printed transfer record. The arrow between them
+   is a small saffron tick → arrow head; saffron, not terracotta, because
+   this is "in motion / awaiting" — terracotta is reserved for the act
+   itself once it commits. */
+.transfer-ownership__deed {
+  margin: var(--space-3) 0 var(--space-4);
+  padding: var(--space-5) var(--space-4);
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  position: relative;
+  box-shadow: var(--shadow-sm), inset 0 3px 0 var(--color-warning);
+}
+
+.transfer-ownership__deed-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-4);
+}
+.transfer-ownership__deed-eyebrow-tag {
+  color: var(--color-warning);
+}
+
+.transfer-ownership__deed-business {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 24px;
+  letter-spacing: -0.018em;
+  color: var(--color-text-primary);
+  line-height: 1.15;
+  margin: 0 0 var(--space-4);
+  word-break: break-word;
+}
+
+.transfer-ownership__deed-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.transfer-ownership__deed-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+}
+
+.transfer-ownership__deed-eyebrow-mini {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.transfer-ownership__deed-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-weight: 500;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+  color: var(--color-brand);
+  overflow: hidden;
+}
+.transfer-ownership__deed-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.transfer-ownership__deed-name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.005em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transfer-ownership__deed-email {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--color-text-tertiary);
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transfer-ownership__deed-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-warning);
+}
+.transfer-ownership__deed-arrow svg {
+  width: 26px;
+  height: 14px;
+}
+
+/* Type-to-confirm block on the confirm step. */
+.transfer-ownership__confirm-target {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.transfer-ownership__confirm-target-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.transfer-ownership__confirm-target-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--color-text-primary);
+  word-break: break-all;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Live single-rule check below the confirm input. */
+.transfer-ownership__check {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+}
+.transfer-ownership__check-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.transfer-ownership__check-marker svg {
+  width: 9px;
+  height: 9px;
+  color: transparent;
+  transition: color var(--duration-fast) ease-out;
+}
+.transfer-ownership__check.is-met .transfer-ownership__check-marker {
+  border-color: var(--color-success);
+  background: var(--color-success);
+}
+.transfer-ownership__check.is-met .transfer-ownership__check-marker svg { color: #fff; }
+.transfer-ownership__check.is-met { color: var(--color-text-primary); }
+
+
+/* ==========================================================================
+   6. CancelTransferModal — "the recall"
+   --------------------------------------------------------------------------
+   A muted "in flight" plate showing the recipient + a saffron-toned status
+   line with the live countdown. Footer is a single oxblood "Withdraw"
+   primary — destructive from the recipient's perspective even though the
+   business itself is fine. */
+
+.cancel-transfer__hero { margin-bottom: var(--space-4); }
+
+.cancel-transfer__plate {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-5) var(--space-4);
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm), inset 3px 0 0 var(--color-warning);
+}
+
+.cancel-transfer__plate-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-warning);
+  margin-bottom: var(--space-3);
+}
+.cancel-transfer__plate-eyebrow svg { width: 12px; height: 12px; }
+
+.cancel-transfer__plate-recipient {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-3);
+}
+.cancel-transfer__plate-recipient-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.cancel-transfer__plate-recipient-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--color-text-primary);
+  word-break: break-all;
+}
+
+/* Countdown row — small mono tick under the recipient value. */
+.cancel-transfer__plate-expiry {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+.cancel-transfer__plate-expiry::before {
+  content: "";
+  width: 14px;
+  height: 1px;
+  background: var(--color-warning);
+}
+.cancel-transfer__plate-expiry--soon { color: var(--color-error); }
+.cancel-transfer__plate-expiry--soon::before { background: var(--color-error); }
+
+.cancel-transfer__note {
+  margin-top: var(--space-3);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+
+/* ==========================================================================
+   7. LeaveBusinessModal — "the farewell"
+   --------------------------------------------------------------------------
+   Quietly resolute, not aggressively destructive. Saffron palette
+   (this is reversible — the user can be re-invited). Italic Fraunces
+   subtitle, "WHAT CHANGES" mono list with saffron dashes, paper-deep
+   summary card naming the business, mono "REVERSIBLE" footnote, single
+   saffron primary "Leave" button. */
+
+.leave-business__hero { margin-bottom: var(--space-4); }
+.leave-business__hero .modal-hero__eyebrow {
+  color: var(--color-warning);
+}
+.leave-business__hero .modal-hero__title em {
+  color: var(--color-warning);
+}
+
+.leave-business__plate {
+  margin: var(--space-3) 0;
+  padding: var(--space-4) var(--space-4);
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--shadow-sm), inset 3px 0 0 var(--color-warning);
+}
+.leave-business__plate-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.leave-business__plate-name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -0.014em;
+  line-height: 1.15;
+  color: var(--color-text-primary);
+  word-break: break-word;
+}
+
+.leave-business__changes {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-warning-subtle);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
+  border-radius: var(--radius-md);
+}
+
+.leave-business__changes-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-warning);
+  margin-bottom: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.leave-business__changes-eyebrow svg { width: 12px; height: 12px; }
+
+.leave-business__changes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.leave-business__changes-item {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.leave-business__changes-item::before {
+  content: "—";
+  flex-shrink: 0;
+  color: var(--color-warning);
+  font-family: var(--font-mono);
+}
+
+.leave-business__footnote {
+  margin-top: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.leave-business__footnote::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--color-warning);
+}
+
+
+/* ==========================================================================
+   8. DeleteBusinessModal — "the deed"
+   --------------------------------------------------------------------------
+   Most permanent action in the manage tab. Mirrors DeleteAccountModal:
+   oxblood hero with italic emphasis, WARNING list of what's lost,
+   TYPE-TO-CONFIRM block with the business name as target string in mono,
+   READY CHECK list, single oxblood primary. */
+
+.delete-business__hero { margin-bottom: var(--space-4); }
+
+.delete-business__warning {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-error-subtle);
+  border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+}
+
+.delete-business__warning-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  margin-bottom: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.delete-business__warning-eyebrow svg { width: 12px; height: 12px; }
+
+.delete-business__warning-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delete-business__warning-item {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.delete-business__warning-item::before {
+  content: "—";
+  flex-shrink: 0;
+  color: var(--color-error);
+  font-family: var(--font-mono);
+}
+
+/* Target plate — the business name as the string-to-type, in mono. */
+.delete-business__target {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.delete-business__target-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.delete-business__target-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--color-text-primary);
+  word-break: break-all;
+  font-feature-settings: "tnum" 1;
+}
+
+.delete-business__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.delete-business__checks {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.delete-business__checks-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.delete-business__check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.delete-business__check {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.delete-business__check-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.delete-business__check-marker svg {
+  width: 8px;
+  height: 8px;
+  color: transparent;
+  transition: color var(--duration-fast) ease-out;
+}
+.delete-business__check.is-met .delete-business__check-marker {
+  border-color: var(--color-success);
+  background: var(--color-success);
+}
+.delete-business__check.is-met .delete-business__check-marker svg { color: #fff; }
+.delete-business__check.is-met { color: var(--color-text-primary); }

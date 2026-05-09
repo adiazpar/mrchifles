@@ -1,15 +1,8 @@
-import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonBackButton,
-  IonButtons,
-} from '@ionic/react'
+import { IonContent, IonPage } from '@ionic/react'
 import { useParams } from 'react-router-dom'
 import { useIntl } from 'react-intl'
 
+import { BusinessHeader } from '@/components/layout'
 import { ProviderDetailClient } from '@/components/providers/ProviderDetailClient'
 import { useProviders } from '@/contexts/providers-context'
 
@@ -25,14 +18,11 @@ export function ProviderDetailPage() {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref={`/${businessId}/providers`} />
-          </IonButtons>
-          <IonTitle>{title}</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+      <BusinessHeader
+        title={title}
+        backHref={`/${businessId}/providers`}
+        backLabel={intl.formatMessage({ id: 'navigation.providers' })}
+      />
       <IonContent>
         <ProviderDetailClient businessId={businessId} providerId={id} />
       </IonContent>
