@@ -90,103 +90,19 @@
  * Step 0 — SelectProductsStep
  * ===================================================================== */
 
-/* Tools row — reuses the same shape as products-tab's tools row but
- * scoped under the modal so changes don't bleed. Search input + circular
- * scan button on the trailing edge. */
+/* Tools row — same .app-search + .tools-button chrome family as the
+ * products tab and POS picker. The .app-search rule in app.css carries
+ * a `margin-top: var(--space-4)` for stand-alone use; reset it here so
+ * both children align to the top of the flex row. */
 .order-select__tools {
   display: flex;
   gap: var(--space-2);
-  align-items: stretch;
+  align-items: center;
 }
 
-.order-select__search {
+.order-select__tools .app-search {
   flex: 1;
-  position: relative;
-}
-
-.order-select__search-input {
-  width: 100%;
-  height: 48px;
-  padding: 0 40px 0 var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  background: var(--color-bg-surface);
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--color-text-primary);
-  transition:
-    border-color var(--duration-fast) ease-out,
-    background-color var(--duration-fast) ease-out;
-}
-
-.order-select__search-input::placeholder {
-  color: var(--color-text-tertiary);
-}
-
-.order-select__search-input:focus {
-  outline: none;
-  border-color: var(--color-brand);
-  background: var(--color-surface);
-}
-
-.order-select__search-clear {
-  position: absolute;
-  inset-block: 0;
-  right: var(--space-3);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  color: var(--color-text-tertiary);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  transition: color var(--duration-fast) ease-out;
-}
-
-.order-select__search-clear:hover {
-  color: var(--color-text-secondary);
-}
-
-.order-select__scan-button {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-full);
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    background-color var(--duration-fast) ease-out,
-    border-color var(--duration-fast) ease-out,
-    color var(--duration-fast) ease-out,
-    transform var(--duration-instant) ease-out;
-}
-
-@media (hover: hover) {
-  .order-select__scan-button:hover:not(:disabled) {
-    border-color: var(--color-brand);
-    color: var(--color-brand);
-    background-color: var(--color-brand-subtle);
-  }
-}
-
-.order-select__scan-button:active:not(:disabled) {
-  transform: scale(0.95);
-  background-color: var(--color-brand-subtle);
-  color: var(--color-brand);
-  border-color: var(--color-brand);
-}
-
-.order-select__scan-button:disabled {
-  opacity: 0.5;
-  cursor: default;
+  margin: 0;
 }
 
 /* Scan-error banner — oxblood subtle pill matching the modal-error

@@ -19,6 +19,23 @@ import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { useOrderNavRef, useNewOrderCallbacks } from './OrderNavContext'
 import { OrderTotalStep } from './OrderTotalStep'
 
+// Same SearchIcon used by Hub / Products / Orders / POS so the search-bar
+// chrome reads identically across the app.
+const SearchIcon = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </svg>
+)
+
 interface SelectProductsStepProps {
   /**
    * Defaults to `forward` (the wizard chain). Pass `edit` when this
@@ -97,31 +114,36 @@ export function SelectProductsStep({ mode = 'forward' }: SelectProductsStepProps
             </p>
           </header>
 
-          {/* Search bar + scan button */}
+          {/* Search bar + scan button — same .app-search + .tools-button
+              chrome family used by Hub / Products / Orders / POS. */}
           <div>
             <div className="order-select__tools">
-              <div className="order-select__search">
+              <label className="app-search">
+                <span className="app-search__icon">{SearchIcon}</span>
                 <input
-                  type="text"
+                  type="search"
+                  className="app-search__input"
                   placeholder={t.formatMessage({ id: 'orders.product_search_placeholder' })}
                   value={productSearchQuery}
                   onChange={e => onProductSearchQueryChange(e.target.value)}
-                  className="order-select__search-input"
+                  aria-label={t.formatMessage({ id: 'orders.product_search_placeholder' })}
+                  autoComplete="off"
+                  spellCheck={false}
                 />
                 {productSearchQuery && (
                   <button
                     type="button"
                     onClick={() => onProductSearchQueryChange('')}
-                    className="order-select__search-clear"
+                    className="app-search__clear"
                     aria-label={t.formatMessage({ id: 'orders.search_clear' })}
                   >
-                    <X size={16} strokeWidth={2} />
+                    <X />
                   </button>
                 )}
-              </div>
+              </label>
               <button
                 type="button"
-                className="order-select__scan-button"
+                className="tools-button"
                 onClick={() => { setScanError(''); openScanner() }}
                 disabled={scanBusy}
                 aria-label={t.formatMessage({ id: 'orders.scan_button_aria' })}
