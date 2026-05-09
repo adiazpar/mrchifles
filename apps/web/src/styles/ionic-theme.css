@@ -57,8 +57,10 @@
   --ion-tab-bar-color: var(--color-text-secondary);
   --ion-tab-bar-color-selected: var(--color-brand);
   --ion-tab-bar-border-color: var(--color-border);
-  /* Tab bar height — Ionic's iOS default is 50px; legacy mobile-nav was 80px. */
-  --ion-tab-bar-height: var(--mobile-nav-height);
+  /* `--ion-tab-bar-height` is documented but NOT consumed in Ionic 8.x's
+   * iOS theme (the host hard-codes height: 50px). The actual bar height
+   * is set as a direct `height` property on `ion-tab-bar` further down
+   * in this file. */
 
   /* ===== Items / lists ===== */
   --ion-item-background: var(--color-bg-surface);
@@ -205,27 +207,44 @@ ion-title {
  * .mobile-nav-icon size: 28px x 28px. */
 /* ===== IonTabBar — Modern Mercantile chrome ===========================
  * The persistent business-tab bar at the bottom of every business page.
- * Paper-translucent backdrop with a hairline top border (handled by the
- * --ion-tab-bar-* variables above). Active state uses a 24×2px terracotta
- * mark anchored above the icon — typographic, not a filled chip.
+ * Paper-translucent backdrop with a hairline top border. Active state
+ * uses a small terracotta mark anchored above the icon — typographic,
+ * not a filled chip. Labels render in JetBrains Mono uppercase so the
+ * whole bar reads as a row of stamps rather than a generic iOS chrome.
  *
- * Labels render in JetBrains Mono uppercase with tracked letter-spacing
- * so the whole tab bar reads as a row of stamps rather than a generic
- * iOS gradient bar. */
+ * IMPORTANT — height override:
+ * Ionic 8.4's iOS tab-bar source hard-codes `:host { height: 50px }`
+ * inside its shadow DOM and does NOT consume `--ion-tab-bar-height` on
+ * iOS mode. The token mapping in :root above is documentation-correct
+ * but functionally a no-op on the iOS theme. External selectors like
+ * `ion-tab-bar { height: ... }` beat the shadow-DOM `:host` rule per
+ * spec, which is the only seam we have.
+ *
+ * `contain: strict` is also set on the host: that means content past
+ * the host's height is clipped (paint containment), which is why the
+ * default 50px bar appeared to show "tiny icons" — the icons weren't
+ * shrunk, the bar was clipping a 28px icon + label down to a sliver.
+ * Lifting the host height to --mobile-nav-height (96px) gives content
+ * the room it needs. The host also has `box-sizing: content-box
+ * !important`, so the safe-area-inset-bottom padding stacks on top of
+ * this height for iPhone home-indicator clearance — no env() needed
+ * here. */
 ion-tab-bar {
   --background: var(--paper-translucent);
   border-top: 1px solid var(--color-border);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
+  height: var(--mobile-nav-height);
 }
 
 ion-tab-button {
   font-family: var(--font-mono);
-  /* Top padding pushes the icon down from the active-state mark; the
-   * bigger value gives icons real breathing room (matches the size of
-   * IonItem slot="start" icons elsewhere in the app). */
-  --padding-top: 18px;
-  --padding-bottom: var(--space-2);
+  /* The bar is 96px and the inner button host is height: 100% with
+   * justify-content: center — these paddings frame the centered icon +
+   * label group and leave headroom above the icon for the active mark
+   * (`::before`, top: 8px). */
+  --padding-top: var(--space-3);
+  --padding-bottom: var(--space-3);
   --padding-start: var(--space-2);
   --padding-end: var(--space-2);
   --color: var(--color-text-tertiary);
@@ -240,7 +259,7 @@ ion-tab-button {
 ion-tab-button.tab-selected::before {
   content: "";
   position: absolute;
-  top: 6px;
+  top: 8px;
   left: 50%;
   transform: translateX(-50%);
   width: 28px;
@@ -259,17 +278,24 @@ ion-tab-button ion-label {
   color: inherit;
 }
 
-/* IonIcon uses font-size for sizing (its inner SVG inherits 1em).
- * Lucide React writes width/height as HTML attributes and is sized
- * via the `size` prop in BusinessTabsLayout — CSS dimensions here
- * would lose to those attributes, so we only normalise color/stroke
- * for Lucide. */
+/* IonIcon (Ionicons font-icon) sizes via font-size — keep at 28 to
+ * match the Lucide bound below. */
 ion-tab-button ion-icon {
   font-size: 28px;
   color: inherit;
 }
 
-ion-tab-button svg {
+/* Lucide React writes the `size` prop as the SVG's width/height HTML
+ * attributes, but in a flex container with tight constraints those
+ * attributes can be overridden by the flex item's resolved cross-size.
+ * Lock the dimensions in CSS and disable flex-shrink so the icon
+ * always renders at its intended size. The Ionic shadow-DOM rule
+ * `::slotted(ion-icon) { font-size: 24px }` doesn't match raw <svg>,
+ * so this is the only governing size for Lucide tab icons. */
+ion-tab-button > svg {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
   color: inherit;
   stroke: currentColor;
 }
