@@ -32,6 +32,7 @@ import { CategoryStockStep } from './CategoryStockStep'
 import { BarcodeStep } from './BarcodeStep'
 import { AddSuccessStep } from './AddSuccessStep'
 import { EditSuccessStep } from './EditSuccessStep'
+import { AdjustInventoryStep } from './AdjustInventoryStep'
 
 /**
  * Final wizard step + summary surface. Shown:
@@ -165,6 +166,12 @@ export function ReviewStep() {
     navRef.current?.push(() => <CategoryStockStep mode="edit" />)
   const editBarcode = () =>
     navRef.current?.push(() => <BarcodeStep mode="edit" />)
+  // Edit-only: stock on hand routes to the dedicated adjust step
+  // (different endpoint, optimistic-locking, +/- delta UI). On Add the
+  // stock value is just an initial value collected by CategoryStockStep,
+  // so tapping the row there returns to that step.
+  const editStock = () =>
+    navRef.current?.push(() => <AdjustInventoryStep />)
 
   return (
     <IonPage>
@@ -275,7 +282,7 @@ export function ReviewStep() {
                 { count: stockValue },
               )}
               valueIsSet={true}
-              onClick={editCategory}
+              onClick={isEdit ? editStock : editCategory}
             />
             <ReviewRow
               label={t.formatMessage({ id: 'productForm.tab_barcode' })}
