@@ -89,7 +89,7 @@ interface AddProductModalWrapperProps {
     error?: string | null
   }
   isCompressing: boolean
-  onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<boolean>
+  onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<Product | null>
   onAbortAiProcessing: () => void
   onPipelineReset: () => void
   onAiPhotoCapture: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>
@@ -194,6 +194,18 @@ function AddProductModalWrapper({
     }
   }, [resetForm, defaultCategoryId])
 
+  // Run cleanup AFTER the modal's exit animation completes (~250ms),
+  // not synchronously when the X is tapped. Mutating state mid-animation
+  // re-renders the IonNav children while the IonRouterOutlet stack
+  // machine is still tracking the dismiss, leaving a stale active-view
+  // reference that breaks subsequent leftward tab switches. See the
+  // comment in AddProductModal.tsx for the full diagnosis.
+  useEffect(() => {
+    if (isOpen) return
+    const timer = window.setTimeout(handleExitComplete, 250)
+    return () => window.clearTimeout(timer)
+  }, [isOpen, handleExitComplete])
+
   const handleOpenSettings = useCallback(() => {
     pendingActionRef.current = onOpenSettings
     onClose()
@@ -230,7 +242,7 @@ interface EditProductModalWrapperProps {
   onExitCleanup: () => void
   categories: ProductCategory[]
   editingProduct: Product | null
-  onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<boolean>
+  onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<Product | null>
   onDelete: (productId: string) => Promise<boolean>
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
@@ -264,6 +276,15 @@ function EditProductModalWrapper({
     resetForm(defaultCategoryId)
     onExitCleanup()
   }, [resetForm, defaultCategoryId, onExitCleanup])
+
+  // Same delayed-cleanup pattern as AddProductModalWrapper — see the
+  // comment there. Without this, mid-animation state mutation breaks
+  // tab switching after the modal closes.
+  useEffect(() => {
+    if (isOpen) return
+    const timer = window.setTimeout(handleExitComplete, 250)
+    return () => window.clearTimeout(timer)
+  }, [isOpen, handleExitComplete])
 
   return (
     <EditProductModal
@@ -554,14 +575,14 @@ export function ProductsView() {
   const handleSubmitProduct = useCallback(async (
     formData: ProductFormData,
     editingProductId: string | null
-  ): Promise<boolean> => {
+  ): Promise<Product | null> => {
     if (!formData.name.trim()) {
-      return false
+      return null
     }
 
     const priceNum = parseFloat(formData.price)
     if (isNaN(priceNum) || priceNum < 0) {
-      return false
+      return null
     }
 
     try {
@@ -597,7 +618,7 @@ export function ProductsView() {
         setProducts(prev => [...prev, record].sort((a, b) => a.name.localeCompare(b.name)))
       }
 
-      return true
+      return record
     } catch (err) {
       console.warn('Error saving product:', err)
       if (err instanceof ApiError) {

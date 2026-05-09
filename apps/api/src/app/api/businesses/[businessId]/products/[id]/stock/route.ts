@@ -86,7 +86,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     // the client without a follow-up SELECT.
     const updated = await db
       .update(products)
-      .set({ stock: sql`${products.stock} + ${data.delta}` })
+      .set({ stock: sql`${products.stock} + ${data.delta}`, updatedAt: new Date() })
       .where(
         and(
           eq(products.id, id),
@@ -110,7 +110,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   // manager wrote in the meantime and we 409.
   const updated = await db
     .update(products)
-    .set({ stock: data.stock })
+    .set({ stock: data.stock, updatedAt: new Date() })
     .where(
       and(
         eq(products.id, id),

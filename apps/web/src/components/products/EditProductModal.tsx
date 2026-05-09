@@ -1,9 +1,9 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
-import type { ProductCategory } from '@kasero/shared/types'
+import type { Product, ProductCategory } from '@kasero/shared/types'
 import type { ProductFormData, StockAdjustmentData } from './ProductModal'
 import {
   ProductNavRefContext,
@@ -22,7 +22,7 @@ export interface EditProductModalProps {
   onClose: () => void
   onExitComplete: () => void
   categories: ProductCategory[]
-  onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<boolean>
+  onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<Product | null>
   onDelete: (productId: string) => Promise<boolean>
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
@@ -47,10 +47,10 @@ export function EditProductModal({
 }: EditProductModalProps) {
   const navRef = useRef<HTMLIonNavElement>(null)
 
-  const handleClose = useCallback(() => {
-    onClose()
-    onExitComplete()
-  }, [onClose, onExitComplete])
+  // X-click only flips the parent's isOpen state — see AddProductModal for
+  // the matching diagnosis. onExitComplete is fired by the wrapper after
+  // a post-animation delay.
+  const handleClose = onClose
 
   const callbacks: EditProductCallbacks = {
     onClose,
@@ -62,13 +62,9 @@ export function EditProductModal({
     canDelete,
   }
 
-  // Stable root thunks — useCallback with [] so IonNav never remounts the
-  // step stack due to a new function reference on every parent render.
-  const adjustStepRoot = useCallback(() => <AdjustInventoryStep />, [])
-  const editFormStepRoot = useCallback(() => <EditFormStep />, [])
-
-  // When initialStep is 1, start at AdjustInventoryStep directly.
-  const rootComponent = initialStep === 1 ? adjustStepRoot : editFormStepRoot
+  // Component-reference roots — passed by reference (not a wrapper thunk)
+  // so IonNav doesn't remount the step stack when the parent re-renders.
+  const rootComponent = initialStep === 1 ? AdjustInventoryStep : EditFormStep
 
   return (
     <EditProductCallbacksContext.Provider value={callbacks}>

@@ -24,6 +24,10 @@ export const businesses = sqliteTable('businesses', {
   // Monotonic counter for sales.sale_number. Incremented atomically on each
   // sale insert so references are stable even after deletes.
   nextSaleNumber: integer('next_sale_number').default(1).notNull(),
+  // Monotonic counter for products.product_number. Incremented atomically
+  // on each product insert so the success-step stamp ("PRODUCT 0042 ·
+  // CREATED") and any audit references stay stable across deletes.
+  nextProductNumber: integer('next_product_number').default(1).notNull(),
 })
 
 // ===========================================
@@ -111,6 +115,12 @@ export const productCategories = sqliteTable('product_categories', {
 export const products = sqliteTable('products', {
   id: text('id').primaryKey(),
   businessId: text('business_id').references(() => businesses.id).notNull(),
+  // Per-business sequential counter set on insert from
+  // businesses.next_product_number. Stable across deletes — the
+  // success-step stamp ("PRODUCT 0042") and any external reference
+  // can rely on it. Nullable for migration safety on rows that
+  // predated the column; backfilled at read time when null.
+  productNumber: integer('product_number'),
   name: text('name').notNull(),
   price: real('price').notNull(),
   costPrice: real('cost_price'),
@@ -130,6 +140,19 @@ export const products = sqliteTable('products', {
   // stable external identity used by supplier / POS / e-commerce integrations.
   barcodeGtin: text('barcode_gtin'),
   active: integer('active', { mode: 'boolean' }).default(true).notNull(),
+  // Audit timestamps — surfaced in ProductInfoDrawer's "Last updated"
+  // line and useful for debugging stock-discrepancy investigations.
+  // SQL-level default (sqlite's `unixepoch()` returns seconds since
+  // epoch) so ALTER TABLE ADD COLUMN can backfill existing rows
+  // safely. Drizzle reads the integer back as a Date because of the
+  // `mode: 'timestamp'` adapter. updatedAt is bumped explicitly on
+  // every PATCH that mutates a product row.
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .default(sql`(unixepoch())`)
+    .notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .default(sql`(unixepoch())`)
+    .notNull(),
 }, (table) => ({
   businessIdIdx: index('idx_products_business_id').on(table.businessId),
   categoryIdIdx: index('idx_products_category_id').on(table.categoryId),

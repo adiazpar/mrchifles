@@ -1,5 +1,5 @@
-import { db, products } from '@/db'
-import { eq, and } from 'drizzle-orm'
+import { db, products, businesses } from '@/db'
+import { eq, and, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { uploadProductIcon, validateIconSize } from '@/lib/storage'
@@ -202,9 +202,21 @@ export const POST = withBusinessAuth(async (request, access) => {
     iconData = presetIcon
   }
 
+  // Per-business sequential reference (productNumber). Pulled from a
+  // monotonic counter on the businesses row via atomic UPDATE ... RETURNING,
+  // so numbers are stable across deletes and safe under concurrent inserts.
+  // Mirrors the pattern used for orders.orderNumber and sales.saleNumber.
+  const reservation = await db
+    .update(businesses)
+    .set({ nextProductNumber: sql`${businesses.nextProductNumber} + 1` })
+    .where(eq(businesses.id, access.businessId))
+    .returning({ reserved: sql<number>`${businesses.nextProductNumber} - 1` })
+  const productNumber = Number(reservation[0]?.reserved ?? 1)
+
   const [newProduct] = await db.insert(products).values({
     id: productId,
     businessId: access.businessId,
+    productNumber,
     name: validName,
     price: validPrice,
     categoryId: validCategoryId || null,

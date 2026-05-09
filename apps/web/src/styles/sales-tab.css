@@ -470,6 +470,10 @@
 }
 
 /* ===== POS empty / no-results state ================================== */
+/* Cart FAB is absolutely positioned, so we can't honestly center the
+ * empty state between the search row and the FAB without overlap or
+ * dead space. Stay with natural-height padding and let the user see it
+ * sitting near the top of the available area. */
 .pos-empty {
   display: flex;
   flex-direction: column;

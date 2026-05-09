@@ -1,9 +1,9 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
-import type { ProductCategory } from '@kasero/shared/types'
+import type { Product, ProductCategory } from '@kasero/shared/types'
 import type { ProductFormData } from './ProductModal'
 import {
   ProductNavRefContext,
@@ -21,7 +21,7 @@ export interface AddProductModalProps {
   onClose: () => void
   onExitComplete: () => void
   categories: ProductCategory[]
-  onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<boolean>
+  onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<Product | null>
   onAbortAiProcessing: () => void
   onPipelineReset: () => void
   onAiPhotoCapture: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>
@@ -56,10 +56,14 @@ export function AddProductModal({
 }: AddProductModalProps) {
   const navRef = useRef<HTMLIonNavElement>(null)
 
-  const handleClose = useCallback(() => {
-    onClose()
-    onExitComplete()
-  }, [onClose, onExitComplete])
+  // The modal's only dismiss responsibility is to flip the parent's isOpen
+  // state. `onExitComplete` is fired by the wrapper via a useEffect with a
+  // post-animation delay — running it synchronously here (mid-dismiss-
+  // animation) re-renders IonNav children DURING the transition, which
+  // leaves the IonRouterOutlet view-stack pointing at a stale "active"
+  // reference and swallows leftward tab-switches (Sales/Home) until the
+  // user lands a rightward push (Manage) that resets the stack.
+  const handleClose = onClose
 
   const callbacks: AddProductCallbacks = {
     onClose,
@@ -75,15 +79,11 @@ export function AddProductModal({
     onClearPendingPhoto,
   }
 
-  // Stable root thunk — useCallback with [] so IonNav never remounts the step
-  // stack due to a new function reference produced on every parent render.
-  const entryStepRoot = useCallback(() => <AddEntryStep />, [])
-
   return (
     <AddProductCallbacksContext.Provider value={callbacks}>
       <ProductNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={entryStepRoot} swipeGesture={false} />
+          <IonNav ref={navRef} root={AddEntryStep} swipeGesture={false} />
         </ModalShell>
       </ProductNavRefContext.Provider>
     </AddProductCallbacksContext.Provider>

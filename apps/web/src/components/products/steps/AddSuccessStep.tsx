@@ -12,8 +12,11 @@ import { useAddProductCallbacks } from './ProductNavContext'
 
 export function AddSuccessStep() {
   const t = useIntl()
-  const { productSaved } = useProductForm()
+  const { productSaved, lastSavedProductNumber } = useProductForm()
   const { onClose, onExitComplete } = useAddProductCallbacks()
+  const stampNumber = lastSavedProductNumber != null
+    ? lastSavedProductNumber.toString().padStart(4, '0')
+    : null
 
   function handleDone() {
     onClose()
@@ -43,6 +46,12 @@ export function AddSuccessStep() {
           >
             <span className="pm-success__stamp-id">
               {t.formatMessage({ id: 'productAddEdit.success_stamp_id' })}
+              {stampNumber && (
+                <>
+                  {' '}
+                  <span className="pm-success__stamp-num">{stampNumber}</span>
+                </>
+              )}
             </span>
             <span className="pm-success__stamp-dot">·</span>
             <span className="pm-success__stamp-state pm-success__stamp-state--created">

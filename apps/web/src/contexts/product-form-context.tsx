@@ -39,6 +39,10 @@ interface ProductFormState {
   // Success states
   productSaved: boolean
   productDeleted: boolean
+  /** The per-business sequential number of the just-saved product
+   *  (newly-added or just-edited). Surfaced in the success-step stamp
+   *  ("PRODUCT 0042 · CREATED"). Null until a save lands. */
+  lastSavedProductNumber: number | null
 
   // AI Pipeline
   pipelineStep: PipelineStep
@@ -76,6 +80,7 @@ interface ProductFormActions {
   // Success states
   setProductSaved: (value: boolean) => void
   setProductDeleted: (value: boolean) => void
+  setLastSavedProductNumber: (value: number | null) => void
 
   // AI Pipeline
   setPipelineStep: (step: PipelineStep) => void
@@ -135,6 +140,7 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
   // Success states
   const [productSaved, setProductSaved] = useState(false)
   const [productDeleted, setProductDeleted] = useState(false)
+  const [lastSavedProductNumber, setLastSavedProductNumber] = useState<number | null>(null)
 
   // AI Pipeline state (these come from hooks in the parent, passed via setPipelineStep/setIsCompressing)
   const [pipelineStep, setPipelineStep] = useState<PipelineStep>('idle')
@@ -171,6 +177,7 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     setError('')
     setProductDeleted(false)
     setProductSaved(false)
+    setLastSavedProductNumber(null)
     setPipelineStep('idle')
     setIsCompressing(false)
   }, [])
@@ -226,6 +233,7 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     error,
     productSaved,
     productDeleted,
+    lastSavedProductNumber,
     pipelineStep,
     isCompressing,
     aiProcessing,
@@ -251,6 +259,7 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
     setError,
     setProductSaved,
     setProductDeleted,
+    setLastSavedProductNumber,
     setPipelineStep,
     setIsCompressing,
     cameraInputRef,
@@ -259,9 +268,9 @@ export function ProductFormProvider({ children, defaultCategoryId }: ProductForm
   }), [
     name, price, categoryId, active, iconPreview, generatedIconBlob, iconType, presetEmoji, barcode,
     editingProduct, newStockValue, isAdjusting, isSaving, isDeleting,
-    error, productSaved, productDeleted, pipelineStep, isCompressing,
-    aiProcessing, clearIcon, resetForm, populateFromProduct, cameraInputRef,
-    barcodeFormat, barcodeSource,
+    error, productSaved, productDeleted, lastSavedProductNumber,
+    pipelineStep, isCompressing, aiProcessing, clearIcon, resetForm,
+    populateFromProduct, cameraInputRef, barcodeFormat, barcodeSource,
   ])
 
   return (

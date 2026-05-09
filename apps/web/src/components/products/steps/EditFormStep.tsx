@@ -45,6 +45,7 @@ export function EditFormStep() {
     setIsSaving,
     setError,
     setProductSaved,
+    setLastSavedProductNumber,
     error,
   } = useProductForm()
   const { isFormValid, hasChanges } = useProductFormValidation()
@@ -60,7 +61,7 @@ export function EditFormStep() {
     setProductSaved(false)
 
     try {
-      const success = await onSubmit(
+      const saved = await onSubmit(
         {
           name,
           price,
@@ -76,14 +77,15 @@ export function EditFormStep() {
         editingProduct?.id || null,
       )
 
-      if (!success) {
+      if (!saved) {
         setError(t.formatMessage({ id: 'productForm.failed_to_save' }))
         return
       }
 
       setProductSaved(true)
+      setLastSavedProductNumber(saved.productNumber ?? editingProduct?.productNumber ?? null)
       hapticSuccess()
-      navRef.current?.push(() => <EditSuccessStep />)
+      navRef.current?.push(EditSuccessStep)
     } catch (err) {
       setError(
         err instanceof Error

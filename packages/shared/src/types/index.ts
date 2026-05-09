@@ -75,6 +75,10 @@ export type BarcodeSource = 'scanned' | 'generated' | 'manual'
 export interface Product {
   id: string
   businessId: string
+  /** Per-business sequential counter set on insert. Nullable for rows
+   *  that predated the column; the API backfills missing values to 0
+   *  but consumers should treat null as "no number assigned". */
+  productNumber?: number | null
   name: string
   price: number
   costPrice?: number | null
@@ -87,6 +91,10 @@ export interface Product {
   barcodeSource?: BarcodeSource | null
   stock?: number | null
   lowStockThreshold?: number | null
+  /** Audit timestamps. Set on insert; updatedAt bumped on every PATCH
+   *  that mutates a product row (PATCH /products/:id, /stock). */
+  createdAt?: Date | string | null
+  updatedAt?: Date | string | null
 }
 
 // ============================================

@@ -208,7 +208,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   // which collapses to a 404.
   const [updatedProduct] = await db
     .update(products)
-    .set(updateData)
+    .set({ ...updateData, updatedAt: new Date() })
     .where(and(eq(products.id, id), eq(products.businessId, access.businessId)))
     .returning()
 

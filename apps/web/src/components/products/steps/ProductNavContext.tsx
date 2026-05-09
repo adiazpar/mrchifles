@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { ProductCategory } from '@kasero/shared/types'
+import type { Product, ProductCategory } from '@kasero/shared/types'
 import type { ProductFormData, StockAdjustmentData } from '../ProductModal'
 
 // ---------------------------------------------------------------------------
@@ -22,7 +22,11 @@ export interface ProductModalCallbacks {
   onClose: () => void
   onExitComplete: () => void
   categories: ProductCategory[]
-  onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<boolean>
+  /** Returns the saved Product on success (with productNumber, updatedAt,
+   *  etc. populated by the server) or null on validation/network failure.
+   *  Step components capture the return value so the success step can
+   *  render the per-business sequential stamp. */
+  onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<Product | null>
 }
 
 export interface AddProductCallbacks extends ProductModalCallbacks {

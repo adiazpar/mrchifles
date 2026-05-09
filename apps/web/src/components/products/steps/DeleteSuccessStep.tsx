@@ -12,8 +12,11 @@ import { useEditProductCallbacks } from './ProductNavContext'
 
 export function DeleteSuccessStep() {
   const t = useIntl()
-  const { productDeleted } = useProductForm()
+  const { productDeleted, editingProduct } = useProductForm()
   const { onClose, onExitComplete } = useEditProductCallbacks()
+  const stampNumber = editingProduct?.productNumber != null
+    ? editingProduct.productNumber.toString().padStart(4, '0')
+    : null
 
   function handleDone() {
     onClose()
@@ -43,6 +46,12 @@ export function DeleteSuccessStep() {
           >
             <span className="pm-success__stamp-id">
               {t.formatMessage({ id: 'productAddEdit.success_stamp_id' })}
+              {stampNumber && (
+                <>
+                  {' '}
+                  <span className="pm-success__stamp-num">{stampNumber}</span>
+                </>
+              )}
             </span>
             <span className="pm-success__stamp-dot">·</span>
             <span className="pm-success__stamp-state pm-success__stamp-state--deleted">

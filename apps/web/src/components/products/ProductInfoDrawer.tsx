@@ -39,7 +39,7 @@ export function ProductInfoDrawer({
   categories,
 }: ProductInfoDrawerProps) {
   const intl = useIntl()
-  const { formatCurrency } = useBusinessFormat()
+  const { formatCurrency, formatDate } = useBusinessFormat()
 
   // Render nothing if no product is set. The parent's open-state is
   // typically gated on `!!product`, so this branch only fires during the
@@ -272,6 +272,23 @@ export function ProductInfoDrawer({
                 />
                 <dd className="info-drawer__ledger-value info-drawer__ledger-value--muted">
                   {formatLabel}
+                </dd>
+              </div>
+            )}
+
+            {product.updatedAt && (
+              <div className="info-drawer__ledger-row">
+                <dt className="info-drawer__ledger-label">
+                  {intl.formatMessage({
+                    id: 'products.info_drawer_field_last_updated',
+                  })}
+                </dt>
+                <span
+                  className="info-drawer__ledger-leader"
+                  aria-hidden="true"
+                />
+                <dd className="info-drawer__ledger-value info-drawer__ledger-value--muted">
+                  {formatDate(new Date(product.updatedAt))}
                 </dd>
               </div>
             )}
