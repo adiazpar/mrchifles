@@ -76,6 +76,7 @@ export function ReviewStep() {
     barcodeFormat,
     barcodeSource,
     editingProduct,
+    newStockValue,
     isSaving,
     setIsSaving,
     setError,
@@ -93,7 +94,12 @@ export function ReviewStep() {
     categories.find((c) => c.id === categoryId)?.name ??
     t.formatMessage({ id: 'productForm.category_none' })
 
-  const stockValue = editingProduct?.stock ?? 0
+  // Add path: stock is the user's just-entered initial value via
+  // CategoryStockStep (lives on form context as newStockValue).
+  // Edit path: stock is the existing product's stock (CategoryStockStep
+  // doesn't expose stock editing in edit mode — that's
+  // AdjustInventoryStep).
+  const stockValue = isEdit ? (editingProduct?.stock ?? 0) : newStockValue
 
   const handleSave = async () => {
     if (!isFormValid || !onSubmit || savingLocal) return
@@ -114,6 +120,9 @@ export function ReviewStep() {
           barcode,
           barcodeFormat,
           barcodeSource,
+          // Edit path uses AdjustInventoryStep for stock changes
+          // (different endpoint), so initialStock only matters on Add.
+          initialStock: isEdit ? undefined : newStockValue,
         },
         editingProduct?.id ?? null,
       )
@@ -257,32 +266,17 @@ export function ReviewStep() {
               valueIsSet={!!categoryId}
               onClick={editCategory}
             />
-            {!isEdit && (
-              <ReviewRow
-                label={t.formatMessage({
-                  id: 'productAddEdit.step_initial_stock_label',
-                })}
-                value={t.formatMessage(
-                  { id: 'products.units_count' },
-                  { count: 0 },
-                )}
-                valueIsSet={true}
-                onClick={editCategory}
-              />
-            )}
-            {isEdit && (
-              <ReviewRow
-                label={t.formatMessage({
-                  id: 'productAddEdit.step_initial_stock_label',
-                })}
-                value={t.formatMessage(
-                  { id: 'products.units_count' },
-                  { count: stockValue },
-                )}
-                valueIsSet={true}
-                onClick={editCategory}
-              />
-            )}
+            <ReviewRow
+              label={t.formatMessage({
+                id: 'productAddEdit.step_initial_stock_label',
+              })}
+              value={t.formatMessage(
+                { id: 'products.units_count' },
+                { count: stockValue },
+              )}
+              valueIsSet={true}
+              onClick={editCategory}
+            />
             <ReviewRow
               label={t.formatMessage({ id: 'productForm.tab_barcode' })}
               value={

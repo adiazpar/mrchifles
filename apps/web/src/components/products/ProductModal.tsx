@@ -15,6 +15,11 @@ export interface ProductFormData {
   barcode: string
   barcodeFormat: BarcodeFormat | null
   barcodeSource: BarcodeSource | null
+  /** Starting stock — surfaced from CategoryStockStep on Add only.
+   *  Edit path uses AdjustInventoryStep which calls a different
+   *  endpoint (`/products/:id/stock`), so this field is ignored
+   *  when editingProductId is non-null. */
+  initialStock?: number
 }
 
 export interface StockAdjustmentData {

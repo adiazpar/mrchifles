@@ -521,6 +521,16 @@ export function ProductsView() {
         // Icon was cleared
         data.append('clearIcon', 'true')
       }
+      // Initial stock only on Add — Edit path uses AdjustInventoryStep
+      // and a different endpoint. The PATCH route ignores it; only the
+      // POST route reads `initialStock` when validating + inserting.
+      if (
+        !editingProductId &&
+        typeof formData.initialStock === 'number' &&
+        formData.initialStock > 0
+      ) {
+        data.append('initialStock', formData.initialStock.toString())
+      }
 
       const url = editingProductId
         ? `/api/businesses/${businessId}/products/${editingProductId}`

@@ -24,6 +24,14 @@ const createProductSchema = z.object({
   active: Schemas.activeFlag(),
   barcode: z.string().optional(),
   barcodeSource: z.enum(['scanned', 'generated', 'manual']).optional(),
+  // Initial stock — surfaced from the Add wizard's CategoryStockStep.
+  // FormData strings parse to nullable integers; cap at the same ceiling
+  // the stock-adjust route uses so a typoed value can't exceed the
+  // catalog's invariant.
+  initialStock: z.preprocess(
+    (v) => (typeof v === 'string' && v.length > 0 ? parseInt(v, 10) : undefined),
+    z.number().int().min(0).max(999_999).optional(),
+  ),
 })
 
 /**
@@ -100,6 +108,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     // Format is derived server-side from the value, so we don't accept it from
     // the client. The field is omitted from validation entirely.
     barcodeSource: barcodeSourceValue || undefined,
+    initialStock: formData.get('initialStock') ?? undefined,
   })
 
   if (!validation.success) {
@@ -112,6 +121,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     categoryId: validCategoryId,
     active: validActive,
     barcodeSource: validBarcodeSource,
+    initialStock: validInitialStock,
   } = validation.data
 
   // Cross-tenant guard: when a category is supplied it must belong to
@@ -226,7 +236,7 @@ export const POST = withBusinessAuth(async (request, access) => {
     barcodeSource,
     barcodeGtin,
     active: validActive,
-    stock: 0,
+    stock: validInitialStock ?? 0,
   }).returning()
 
   return successResponse({ product: newProduct })
