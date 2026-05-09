@@ -1,11 +1,10 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-
+import { useIntl } from 'react-intl'
 import Image from '@/lib/Image'
 import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { IonButton } from '@ionic/react'
-import { Loader2, Minus, Package, Plus, ScanLine, X } from 'lucide-react'
+import { Loader2, Minus, Package, Plus, ScanLine, SearchX, X } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { useProducts } from '@/contexts/products-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
@@ -20,11 +19,33 @@ interface ProductPickerProps {
   cart: UseCartResult
 }
 
+const STOCK_CHIP_THRESHOLD = 10
+
+const SearchIcon = (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </svg>
+)
+
+/**
+ * POS product picker. Search + scan row at the top, then a 2-column
+ * grid of product tiles. A tile shows the product name, mono price,
+ * and an inline qty stepper revealed once the line is in the cart.
+ * Tile classes live in sales-tab.css and follow the Modern Mercantile
+ * tile vocabulary: terracotta selected border + cream tint, soft
+ * scale-down on press, "n LEFT" mono chip when stock < 10.
+ */
 export function ProductPicker({ cart }: ProductPickerProps) {
   const t = useIntl()
-  const tSales = useIntl()
-  const tProducts = useIntl()
-  const tToast = useIntl()
   const { business } = useBusiness()
   const { products, ensureLoaded } = useProducts()
   const { formatCurrency } = useBusinessFormat()
@@ -43,7 +64,6 @@ export function ProductPicker({ cart }: ProductPickerProps) {
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [products, search])
 
-  // productId -> quantity in cart, derived once per cart change.
   const qtyMap = useMemo(() => {
     const m = new Map<string, number>()
     for (const line of cart.lines) m.set(line.productId, line.quantity)
@@ -51,9 +71,9 @@ export function ProductPicker({ cart }: ProductPickerProps) {
   }, [cart.lines])
 
   // Look up a product by barcode and add it to the cart. cart.addLine
-  // already increments qty for an existing line, so a repeat scan of the
-  // same code naturally bumps the count. Stock-aware: scans for
-  // out-of-stock products or already-at-max-qty are rejected.
+  // increments qty for an existing line, so a repeat scan of the same
+  // code naturally bumps the count. Stock-aware: scans for out-of-
+  // stock products or already-at-max-qty are rejected.
   const handleScanResult = async (result: { value: string }) => {
     if (!business?.id) return
     try {
@@ -65,9 +85,7 @@ export function ProductPicker({ cart }: ProductPickerProps) {
         const stock = product.stock ?? 0
         const current = cart.lines.find((l) => l.productId === product.id)?.quantity ?? 0
         if (stock <= 0 || current >= stock) {
-          alert(t.formatMessage({
-            id: 'sales.cart.out_of_stock'
-          }))
+          alert(t.formatMessage({ id: 'sales.cart.out_of_stock' }))
           return
         }
         cart.addLine(product)
@@ -77,207 +95,202 @@ export function ProductPicker({ cart }: ProductPickerProps) {
     } catch {
       /* fall through to no-match */
     }
-    alert(tToast.formatMessage({
-      id: 'sales.toast.no_barcode_match'
-    }))
+    alert(t.formatMessage({ id: 'sales.toast.no_barcode_match' }))
   }
 
   const { open: openScanner, busy: scanBusy, hiddenInput: scanHiddenInput } =
     useBarcodeScan({
       onResult: handleScanResult,
-      onError: () => alert(tToast.formatMessage({
-        id: 'sales.toast.no_barcode_match'
-      })),
+      onError: () => alert(t.formatMessage({ id: 'sales.toast.no_barcode_match' })),
     })
+
+  const isSearching = search.trim().length > 0
+  const hasResults = visibleProducts.length > 0
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {/* Single scrollable area: search/scan row + product grid scroll
-          together so the search row can move out of view and free up
-          space for more product cards as the user pages through. A
-          fixed-height sentinel at the end clears the floating View
-          Cart button anchored to the bottom of the page-body in
-          SalesView (using `pb-*` on a flex-column overflow container
-          hits a WebKit bug where bottom padding collapses during
-          scroll). */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hidden flex flex-col gap-3">
-      {/* Search + scan row — same JSX/classes as the Products tab. */}
-      <div className="flex gap-2 items-stretch">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder={tSales.formatMessage({
-              id: 'sales.search_placeholder'
-            })}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input input-search w-full h-full"
-            style={{
-              paddingTop: 'var(--space-2)',
-              paddingBottom: 'var(--space-2)',
-              paddingRight: '2.25rem',
-              fontSize: 'var(--text-sm)',
-              minHeight: 'unset',
-            }}
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              className="absolute inset-y-0 right-3 flex items-center text-text-tertiary hover:text-text-secondary transition-colors"
-              aria-label={tProducts.formatMessage({
-                id: 'products.search_clear'
-              })}
-            >
-              <X size={18} />
-            </button>
-          )}
+        {/* Search + scan row — same .app-search vocabulary as the Hub. */}
+        <div className="pos-search-row">
+          <label className="app-search">
+            <span className="app-search__icon">{SearchIcon}</span>
+            <input
+              type="search"
+              className="app-search__input"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t.formatMessage({ id: 'sales.search_placeholder' })}
+              aria-label={t.formatMessage({ id: 'sales.search_placeholder' })}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            {search && (
+              <button
+                type="button"
+                className="app-search__clear"
+                onClick={() => setSearch('')}
+                aria-label={t.formatMessage({ id: 'products.search_clear' })}
+              >
+                <X />
+              </button>
+            )}
+          </label>
+          <IonButton
+            className="pos-scan-button"
+            fill="outline"
+            shape="round"
+            onClick={openScanner}
+            disabled={scanBusy}
+            aria-label={t.formatMessage({ id: 'sales.scan_barcode_aria' })}
+          >
+            {scanBusy ? (
+              <Loader2 className="animate-spin" size={18} />
+            ) : (
+              <ScanLine size={18} />
+            )}
+          </IonButton>
+          {scanHiddenInput}
         </div>
-        <IonButton
-          fill="outline"
-          shape="round"
-          onClick={openScanner}
-          disabled={scanBusy}
-          aria-label={tSales.formatMessage({
-            id: 'sales.scan_barcode_aria'
-          })}
-        >
-          {scanBusy ? (
-            <Loader2 className="w-[18px] h-[18px] animate-spin" />
-          ) : (
-            <ScanLine size={18} />
-          )}
-        </IonButton>
-        {scanHiddenInput}
-      </div>
 
-      {/* Product grid. */}
-        <div className="grid grid-cols-2 gap-3">
-          {visibleProducts.map((product) => {
-          const qty = qtyMap.get(product.id) ?? 0
-          const isSelected = qty > 0
-          const stockTotal = product.stock ?? 0
-          const outOfStock = stockTotal <= 0
-          const atMaxQty = qty >= stockTotal
-          const iconUrl = getProductIconUrl(product)
+        {hasResults ? (
+          <div className="product-grid">
+            {visibleProducts.map((product) => (
+              <ProductTile
+                key={product.id}
+                product={product}
+                qty={qtyMap.get(product.id) ?? 0}
+                cart={cart}
+                formatCurrency={formatCurrency}
+                t={t}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="pos-empty">
+            <SearchX className="pos-empty__icon" />
+            <h3 className="pos-empty__title">
+              {isSearching
+                ? t.formatMessage({ id: 'sales.search_no_results_title' })
+                : t.formatMessage({ id: 'sales.empty_state.no_products_title' })}
+            </h3>
+            <p className="pos-empty__desc">
+              {isSearching
+                ? t.formatMessage({ id: 'sales.search_no_results_desc' }, { query: search.trim() })
+                : t.formatMessage({ id: 'sales.empty_state.no_products_desc' })}
+            </p>
+          </div>
+        )}
 
-          const handleToggle = () => {
-            if (outOfStock) return
-            if (isSelected) cart.removeLine(product.id)
-            else cart.addLine(product)
-          }
-          const handleKey = (e: React.KeyboardEvent) => {
-            if (outOfStock) return
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              handleToggle()
-            }
-          }
-
-          return (
-            <div
-              key={product.id}
-              role="button"
-              aria-pressed={isSelected}
-              aria-disabled={outOfStock}
-              tabIndex={outOfStock ? -1 : 0}
-              onClick={handleToggle}
-              onKeyDown={handleKey}
-              className={`rounded-xl border-2 p-3 flex flex-col gap-3 transition-all outline-none ${
-                outOfStock
-                  ? 'cursor-default border-transparent bg-bg-surface'
-                  : isSelected
-                    ? 'border-brand bg-brand-subtle cursor-pointer'
-                    : 'border-transparent bg-bg-surface cursor-pointer'
-              }`}
-            >
-              {/* Row 1: icon + (name + price as sublabel). When the
-                  product is out of stock, the name and price drop to
-                  text-text-tertiary (matches the inactive-product styling
-                  in ProductsTab) and the icon container fades. */}
-              <div className="flex items-center gap-2">
-                <div
-                  className={`product-list-image ${outOfStock ? 'opacity-50' : ''}`}
-                >
-                  {renderProductIcon(product, iconUrl)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={`text-sm font-medium truncate ${
-                      outOfStock ? 'text-text-tertiary' : ''
-                    }`}
-                  >
-                    {product.name}
-                  </div>
-                  <div
-                    className={`text-xs mt-0.5 ${
-                      outOfStock ? 'text-text-tertiary' : 'text-text-secondary'
-                    }`}
-                  >
-                    {formatCurrency(product.price)}
-                  </div>
-                </div>
-              </div>
-              {/* Row 2: out-of-stock label OR qty stepper. The plus
-                  button is also HTML-disabled at qty >= stock so the
-                  user can't add more than the available inventory. */}
-              {outOfStock ? (
-                <div className="text-xs text-text-tertiary text-center h-8 flex items-center justify-center">
-                  {t.formatMessage({
-                    id: 'sales.cart.out_of_stock'
-                  })}
-                </div>
-              ) : (
-                <div
-                  className={`flex items-center justify-between gap-1 transition-opacity ${
-                    isSelected ? 'opacity-100' : 'opacity-40'
-                  }`}
-                >
-                  <QtyButton
-                    active={isSelected}
-                    variant="danger"
-                    ariaLabel={t.formatMessage({
-                      id: 'sales.cart.qty_decrease'
-                    })}
-                    disabled={!isSelected}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      cart.updateQty(product.id, qty - 1)
-                    }}
-                  >
-                    <Minus style={{ width: 14, height: 14 }} />
-                  </QtyButton>
-                  <span className="text-sm font-semibold tabular-nums w-6 text-center">
-                    {qty}
-                  </span>
-                  <QtyButton
-                    active={isSelected}
-                    variant="primary"
-                    ariaLabel={t.formatMessage({
-                      id: 'sales.cart.qty_increase'
-                    })}
-                    disabled={!isSelected || atMaxQty}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (atMaxQty) return
-                      cart.addLine(product)
-                    }}
-                  >
-                    <Plus style={{ width: 14, height: 14 }} />
-                  </QtyButton>
-                </div>
-              )}
-            </div>
-          );
-        })}
-        </div>
-        {/* Sentinel: clears the floating View Cart FAB at page-body
-            bottom. Uses a non-shrinking spacer instead of padding-bottom
-            on the scroll container, which collapses on iOS Safari. */}
-        <div aria-hidden="true" className="shrink-0 h-20" />
+        {/* Sentinel: clears the cart FAB so the last row isn't occluded. */}
+        <div aria-hidden="true" className="product-grid-sentinel" />
       </div>
     </div>
-  );
+  )
+}
+
+interface ProductTileProps {
+  product: Product
+  qty: number
+  cart: UseCartResult
+  formatCurrency: (n: number) => string
+  t: ReturnType<typeof useIntl>
+}
+
+function ProductTile({ product, qty, cart, formatCurrency, t }: ProductTileProps) {
+  const stockTotal = product.stock ?? 0
+  const outOfStock = stockTotal <= 0
+  const lowStock = !outOfStock && stockTotal < STOCK_CHIP_THRESHOLD
+  const isSelected = qty > 0
+  const atMaxQty = qty >= stockTotal
+  const iconUrl = getProductIconUrl(product)
+
+  const handleToggle = () => {
+    if (outOfStock) return
+    if (isSelected) cart.removeLine(product.id)
+    else cart.addLine(product)
+  }
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (outOfStock) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleToggle()
+    }
+  }
+
+  const tileClass = [
+    'product-tile',
+    isSelected ? 'product-tile--selected' : '',
+    outOfStock ? 'product-tile--sold-out' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  return (
+    <div
+      role="button"
+      aria-pressed={isSelected}
+      aria-disabled={outOfStock}
+      tabIndex={outOfStock ? -1 : 0}
+      onClick={handleToggle}
+      onKeyDown={handleKey}
+      className={tileClass}
+    >
+      {lowStock && (
+        <span className="product-tile__stock-chip">
+          {t.formatMessage(
+            { id: 'sales.product.stock_remaining' },
+            { count: stockTotal },
+          )}
+        </span>
+      )}
+      <div className="product-tile__head">
+        <div className="product-list-image product-tile__icon">
+          {renderProductIcon(product, iconUrl)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="product-tile__name">{product.name}</div>
+          <div className="product-tile__price">{formatCurrency(product.price)}</div>
+        </div>
+      </div>
+
+      {outOfStock ? (
+        <div className="product-tile__sold-out-stamp">
+          {t.formatMessage({ id: 'sales.product.sold_out_stamp' })}
+        </div>
+      ) : (
+        <div
+          className={`product-tile__qty-row${isSelected ? '' : ' product-tile__qty-row--idle'}`}
+        >
+          <QtyButton
+            variant="minus"
+            active={isSelected}
+            disabled={!isSelected}
+            ariaLabel={t.formatMessage({ id: 'sales.cart.qty_decrease' })}
+            onClick={(e) => {
+              e.stopPropagation()
+              cart.updateQty(product.id, qty - 1)
+            }}
+          >
+            <Minus size={14} strokeWidth={2.5} />
+          </QtyButton>
+          <span className="product-tile__qty-value">{qty}</span>
+          <QtyButton
+            variant="plus"
+            active={isSelected}
+            disabled={!isSelected || atMaxQty}
+            ariaLabel={t.formatMessage({ id: 'sales.cart.qty_increase' })}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (atMaxQty) return
+              cart.addLine(product)
+            }}
+          >
+            <Plus size={14} strokeWidth={2.5} />
+          </QtyButton>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function renderProductIcon(product: Product, iconUrl: string | null) {
@@ -302,38 +315,20 @@ function renderProductIcon(product: Product, iconUrl: string | null) {
   return <Package className="w-5 h-5 text-text-tertiary" />
 }
 
-type QtyButtonVariant = 'primary' | 'danger'
-
-function QtyButton({
-  active,
-  variant,
-  ariaLabel,
-  disabled,
-  onClick,
-  children,
-}: {
+interface QtyButtonProps {
+  variant: 'plus' | 'minus'
   active: boolean
-  variant: QtyButtonVariant
-  ariaLabel: string
   disabled: boolean
+  ariaLabel: string
   onClick: (e: MouseEvent<HTMLButtonElement>) => void
   children: React.ReactNode
-}) {
-  const activeColor = variant === 'primary' ? 'text-brand' : 'text-error'
+}
+
+function QtyButton({ variant, active, disabled, ariaLabel, onClick, children }: QtyButtonProps) {
   return (
     <button
       type="button"
-      className={`cursor-pointer select-none transition-colors border-2 border-transparent bg-transparent ${
-        active ? activeColor : ''
-      }`}
-      style={{
-        width: 48,
-        height: 32,
-        minHeight: 'unset',
-        padding: 0,
-        borderRadius: 'var(--radius-full)',
-        gap: 0,
-      }}
+      className={`product-tile__qty-button product-tile__qty-button--${variant}${active ? ' is-active' : ''}`}
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={(e) => {

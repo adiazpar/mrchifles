@@ -1,8 +1,8 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-import { useState } from 'react'
-import { History, Receipt } from 'lucide-react'
+import { useIntl } from 'react-intl'
+import { useMemo, useState } from 'react'
+import { ArrowRight, Receipt } from 'lucide-react'
 import { IonButton } from '@ionic/react'
 import { useBusiness } from '@/contexts/business-context'
 import { useSales } from '@/contexts/sales-context'
@@ -18,13 +18,30 @@ interface SalesStatsCardProps {
   onRequestCloseSession: () => void
 }
 
+/**
+ * Centerpiece of the Sales surface. Two layouts share one card shell —
+ * an italic Fraunces headline, mono uppercase eyebrow + secondary row,
+ * and a primary action pill.
+ *
+ *   Closed: TODAY's revenue as the headline, transactions / avg ticket
+ *           / vs-yesterday in a divider-separated mono row, "Open
+ *           session" full-width.
+ *   Open:   The card grows a 3px terracotta rule along its leading edge.
+ *           Headline becomes session revenue. The eyebrow flips to an
+ *           italic "Session open · 4 sales" cue. Bottom row pairs a
+ *           Receipt icon-button (view session sales) with a "Close
+ *           session" pill.
+ *
+ * The two layouts are stacked and gated by the gridTemplateRows
+ * 1fr/0fr collapse trick so the height transitions smoothly when the
+ * session flips state.
+ */
 export function SalesStatsCard({
   sessionOpen,
   onOpenSession,
   onRequestCloseSession,
 }: SalesStatsCardProps) {
   const t = useIntl()
-  const tAction = useIntl()
   const { stats, sales } = useSales()
   const { currentSession } = useSalesSessions()
   const { formatCurrency } = useBusinessFormat()
@@ -38,180 +55,173 @@ export function SalesStatsCard({
   const sessionRevenue = sessionSales.reduce((sum, s) => sum + s.total, 0)
   const sessionCount = sessionSales.length
 
-  const vsLabel = stats
+  // Eyebrow date stamp ("TODAY · MAY 9"). Uses the business locale so
+  // currency-coupled calendar conventions stay consistent with the
+  // numbers below; the rest of the eyebrow string is translated.
+  const eyebrowDate = useMemo(() => {
+    try {
+      const fmt = new Intl.DateTimeFormat(business?.locale ?? 'en-US', {
+        month: 'short',
+        day: 'numeric',
+      })
+      return fmt.format(new Date()).toUpperCase()
+    } catch {
+      return ''
+    }
+  }, [business?.locale])
+
+  const todayLabel = t.formatMessage({ id: 'sales.stats.today' })
+
+  const noComparison = t.formatMessage({ id: 'sales.stats.no_comparison' })
+  const revenueLabel = stats ? formatCurrency(stats.todayRevenue) : noComparison
+
+  const vsValue = stats
     ? stats.vsYesterdayPct === null
-      ? t.formatMessage({
-    id: 'sales.stats.no_comparison'
-  })
+      ? noComparison
       : stats.vsYesterdayPct >= 0
-        ? t.formatMessage({
-    id: 'sales.stats.vs_yesterday_up'
-  }, { pct: stats.vsYesterdayPct.toFixed(1) })
-        : t.formatMessage({
-    id: 'sales.stats.vs_yesterday_down'
-  }, { pct: stats.vsYesterdayPct.toFixed(1) })
-    : t.formatMessage({
-    id: 'sales.stats.no_comparison'
-  })
+        ? t.formatMessage({ id: 'sales.stats.vs_yesterday_up' }, { pct: stats.vsYesterdayPct.toFixed(1) })
+        : t.formatMessage({ id: 'sales.stats.vs_yesterday_down' }, { pct: stats.vsYesterdayPct.toFixed(1) })
+    : noComparison
 
-  const vsColor =
+  const vsClass =
     !stats || stats.vsYesterdayPct === null
-      ? 'text-text-secondary'
+      ? 'sales-stats-metric__value--muted'
       : stats.vsYesterdayPct >= 0
-        ? 'text-success'
-        : 'text-error'
-
-  const revenueLabel = stats ? formatCurrency(stats.todayRevenue) : t.formatMessage({
-    id: 'sales.stats.no_comparison'
-  })
+        ? 'sales-stats-metric__value--up'
+        : 'sales-stats-metric__value--down'
 
   return (
     <>
-      <div className="rounded-xl border border-border bg-bg-surface p-4">
-        {/* Expanded layout: TODAY label + 4-stat grid + History/Open buttons.
-            Uses the grid-template-rows 1fr ↔ 0fr collapse technique so the
-            card auto-heights smoothly when sessionOpen flips. */}
+      <div className={`sales-stats-card${sessionOpen ? ' sales-stats-card--open' : ''}`}>
+        {/* ===== Closed-state body — collapses to 0fr when sessionOpen ===== */}
         <div
           className="grid transition-[grid-template-rows] duration-300 ease-in-out"
           style={{ gridTemplateRows: sessionOpen ? '0fr' : '1fr' }}
         >
           <div className="overflow-hidden min-h-0">
-            <div className="text-xs uppercase tracking-wide text-text-secondary mb-3">
-              {t.formatMessage({
-                id: 'sales.stats.today'
-              })}
-            </div>
-            <div className="grid grid-cols-2 gap-y-3 gap-x-6">
-              <div>
-                <div className="text-2xl font-semibold">{revenueLabel}</div>
-                <div className="text-xs text-text-secondary mt-0.5">{t.formatMessage({
-                  id: 'sales.stats.today_revenue'
-                })}</div>
-              </div>
-              <div>
-                <div className="text-2xl font-semibold">
-                  {stats ? stats.todayCount : t.formatMessage({
-                    id: 'sales.stats.no_comparison'
-                  })}
-                </div>
-                <div className="text-xs text-text-secondary mt-0.5">{t.formatMessage({
-                  id: 'sales.stats.today_count'
-                })}</div>
-              </div>
-              <div>
-                <div className="text-2xl font-semibold">
-                  {stats && stats.todayAvgTicket !== null
-                    ? formatCurrency(stats.todayAvgTicket)
-                    : t.formatMessage({
-                    id: 'sales.stats.no_comparison'
-                  })}
-                </div>
-                <div className="text-xs text-text-secondary mt-0.5">{t.formatMessage({
-                  id: 'sales.stats.avg_ticket'
-                })}</div>
-              </div>
-              <div>
-                <div className={`text-2xl font-semibold ${vsColor}`}>{vsLabel}</div>
-                {!canManage && (
-                  <div className="text-xs text-text-secondary mt-0.5">
-                    {t.formatMessage({
-                      id: 'sales.stats.employee_open_notice'
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Action row: History (circular icon button) anchored left,
-                Open Session locked to 50% width on the right — matches the
-                compact-state Close Session footprint. Both follow the
-                canonical .btn framework. */}
-            <div className="flex items-center justify-between mt-4">
-              <IonButton
-                fill="outline"
-                shape="round"
-                aria-label={tAction.formatMessage({
-                  id: 'sales.action.history'
-                })}
+            <div className="sales-stats-eyebrow-row">
+              <span className="sales-stats-eyebrow">
+                {todayLabel.toUpperCase()}
+                {eyebrowDate ? ` · ${eyebrowDate}` : ''}
+              </span>
+              <button
+                type="button"
+                className="sales-stats-link"
                 onClick={() => {
                   haptic()
                   setHistoryOpen(true)
                 }}
               >
-                <History />
-              </IonButton>
-              <div className="w-1/2">
-                <IonButton
-                  expand="block"
-                  disabled={!canManage}
-                  onClick={() => {
-                    haptic()
-                    onOpenSession()
-                  }}
-                >
-                  <span>{tAction.formatMessage({
-                    id: 'sales.action.open_session'
-                  })}</span>
-                </IonButton>
+                {t.formatMessage({ id: 'sales.stats.view_history_link' })}
+                <ArrowRight className="sales-stats-link__arrow" size={12} strokeWidth={2.5} />
+              </button>
+            </div>
+
+            <p className="sales-stats-headline">{revenueLabel}</p>
+            <p className="sales-stats-headline-meta">
+              {t.formatMessage({ id: 'sales.stats.today_revenue' })}
+            </p>
+
+            {canManage ? (
+              <div className="sales-stats-secondary">
+                <div className="sales-stats-metric">
+                  <span className="sales-stats-metric__label">
+                    {t.formatMessage({ id: 'sales.stats.today_count' })}
+                  </span>
+                  <span className="sales-stats-metric__value">
+                    {stats ? stats.todayCount : noComparison}
+                  </span>
+                </div>
+                <div className="sales-stats-metric">
+                  <span className="sales-stats-metric__label">
+                    {t.formatMessage({ id: 'sales.stats.avg_ticket' })}
+                  </span>
+                  <span className="sales-stats-metric__value">
+                    {stats && stats.todayAvgTicket !== null
+                      ? formatCurrency(stats.todayAvgTicket)
+                      : noComparison}
+                  </span>
+                </div>
+                <div className="sales-stats-metric">
+                  <span className="sales-stats-metric__label">
+                    {t.formatMessage({ id: 'sales.stats.vs_yesterday_label' })}
+                  </span>
+                  <span className={`sales-stats-metric__value ${vsClass}`}>{vsValue}</span>
+                </div>
               </div>
+            ) : (
+              <p className="sales-stats-restricted">
+                {t.formatMessage({ id: 'sales.stats.employee_open_notice' })}
+              </p>
+            )}
+
+            <div className="sales-stats-actions">
+              <IonButton
+                expand="block"
+                disabled={!canManage}
+                onClick={() => {
+                  haptic()
+                  onOpenSession()
+                }}
+              >
+                {t.formatMessage({ id: 'sales.action.open_session' })}
+              </IonButton>
             </div>
           </div>
         </div>
 
-        {/* Compact layout: a small label row showing live session metrics
-            sits above an action row that mirrors the open-state header
-            (icon-left + 1/2 width primary action on the right). The
-            Receipt icon button slots into the same anchor as History does
-            when the session is closed — same affordance, same location,
-            state-aware in meaning. */}
+        {/* ===== Open-state body — collapses to 0fr when session closed ===== */}
         <div
           className="grid transition-[grid-template-rows] duration-300 ease-in-out"
           style={{ gridTemplateRows: sessionOpen ? '1fr' : '0fr' }}
         >
           <div className="overflow-hidden min-h-0">
-            <div className="flex items-center justify-between mb-3 text-sm text-text-secondary">
-              <span>{t.formatMessage({
-                id: 'sales.stats.session_sales_count'
-              }, { count: sessionCount })}</span>
-              <span>
-                {t.formatMessage({
-                  id: 'sales.stats.session_total_label'
-                }, { value: formatCurrency(sessionRevenue) })}
+            <div className="sales-stats-eyebrow-row">
+              <span className="sales-stats-eyebrow sales-stats-eyebrow--open">
+                <em>{t.formatMessage({ id: 'sales.stats.session_open_pulse' })}</em>
+                {' · '}
+                {t.formatMessage(
+                  { id: 'sales.stats.session_sales_count' },
+                  { count: sessionCount },
+                )}
               </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <IonButton
-                fill="outline"
-                shape="round"
-                aria-label={tAction.formatMessage({
-                  id: 'sales.action.view_session_sales'
-                })}
+              <button
+                type="button"
+                className="sales-stats-link"
                 onClick={() => {
                   haptic()
                   setSessionSalesOpen(true)
                 }}
+                aria-label={t.formatMessage({ id: 'sales.action.view_session_sales' })}
               >
-                <Receipt className="text-success" />
+                <Receipt size={14} strokeWidth={2} />
+              </button>
+            </div>
+
+            <p className="sales-stats-headline sales-stats-headline--compact">
+              {formatCurrency(sessionRevenue)}
+            </p>
+            <p className="sales-stats-headline-meta">
+              {t.formatMessage({ id: 'sales.stats.session_total_meta' })}
+            </p>
+
+            <div className="sales-stats-actions">
+              <IonButton
+                expand="block"
+                color="danger"
+                disabled={!canManage}
+                onClick={() => {
+                  haptic()
+                  onRequestCloseSession()
+                }}
+              >
+                {t.formatMessage({ id: 'sales.action.close_session' })}
               </IonButton>
-              <div className="w-1/2">
-                <IonButton
-                  expand="block"
-                  color="danger"
-                  disabled={!canManage}
-                  onClick={() => {
-                    haptic()
-                    onRequestCloseSession()
-                  }}
-                >
-                  <span>{tAction.formatMessage({
-                    id: 'sales.action.close_session'
-                  })}</span>
-                </IonButton>
-              </div>
             </div>
           </div>
         </div>
       </div>
+
       <SessionHistoryModal isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
       <ActiveSessionSalesModal
         isOpen={sessionSalesOpen}
@@ -219,5 +229,5 @@ export function SalesStatsCard({
         businessId={business?.id ?? ''}
       />
     </>
-  );
+  )
 }

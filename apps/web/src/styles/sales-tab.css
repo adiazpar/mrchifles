@@ -1,0 +1,549 @@
+/* Sales tab — Modern Mercantile vocabulary for the persistent business
+ * sales surface. Two visual energies on the same chrome:
+ *
+ *   - Session CLOSED (browse/reports): cream paper, deep ink, terracotta
+ *     reserved for the "Open Session" pill alone. Reads like a closed-
+ *     out daily ledger — quiet, focused on totals + history.
+ *   - Session OPEN  (POS register): same paper, but terracotta blooms.
+ *     A 3px terracotta rule along the left edge of the stats card, the
+ *     selected-product treatment, the Cart FAB — the surface signals
+ *     "the till is open" at a glance.
+ *
+ * All numerals are JetBrains Mono. Display titles (revenue headline,
+ * sale-number stamp) are Fraunces italic. Mono uppercase tracked is the
+ * eyebrow vocabulary — same family as the rest of the app's surfaces.
+ */
+
+/* ===== Stats card — both states share this shell ====================== */
+.sales-stats-card {
+  position: relative;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  overflow: hidden;
+}
+
+/* Open-state mark: a terracotta rule on the leading edge so the
+ * register state reads as "alive" without the card having to shout.
+ * Drawn as a ::before so it can scale to whatever height the card
+ * settles at after the gridTemplateRows collapse animation. */
+.sales-stats-card--open::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--color-brand);
+}
+
+/* ===== Eyebrow row (top of the card) ================================== */
+.sales-stats-eyebrow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.sales-stats-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.sales-stats-eyebrow--open {
+  color: var(--color-brand);
+  font-style: italic;
+  /* Italic eyebrow uses display serif for the brand-mood "alive" cue
+   * — the rest of the bar stays mono. Italics on JetBrains Mono read
+   * like markdown, not vibe. */
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0;
+  font-size: 14px;
+  text-transform: none;
+}
+
+.sales-stats-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
+}
+
+.sales-stats-link:hover {
+  color: var(--color-brand);
+  background-color: var(--color-brand-subtle);
+}
+
+.sales-stats-link__arrow {
+  margin-left: 4px;
+  display: inline-block;
+  transition: transform var(--duration-fast) ease-out;
+}
+
+.sales-stats-link:hover .sales-stats-link__arrow {
+  transform: translateX(2px);
+}
+
+/* ===== Headline (the big number) ===================================== */
+.sales-stats-headline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.sales-stats-headline--compact {
+  font-size: 32px;
+}
+
+.sales-stats-headline-meta {
+  margin-top: var(--space-2);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* ===== Closed-state secondary metrics row ============================ */
+.sales-stats-secondary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.sales-stats-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sales-stats-metric__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.sales-stats-metric__value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.sales-stats-metric__value--up {
+  color: var(--color-success);
+}
+
+.sales-stats-metric__value--down {
+  color: var(--color-error);
+}
+
+.sales-stats-metric__value--muted {
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+/* ===== Action row (bottom of the card) =============================== */
+.sales-stats-actions {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.sales-stats-actions ion-button {
+  flex: 1;
+  margin: 0;
+}
+
+/* The "manager only" notice rendered in place of the secondary row when
+ * the user can't open/close the session. Mono uppercase to match the
+ * eyebrow family; italic to soften the "no" message. */
+.sales-stats-restricted {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+/* ===== POS workspace (open-state body) =============================== */
+/* Container for the POS layout below the stats card. The flex column
+ * pushes the cart FAB (absolute) to clear the product grid scroll. */
+.pos-workspace {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.pos-workspace__stats {
+  margin-bottom: var(--space-4);
+}
+
+.pos-workspace__grid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ===== Search + scan row inside the POS grid ========================= */
+.pos-search-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.pos-search-row .app-search {
+  flex: 1;
+}
+
+.pos-scan-button {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* ===== Product grid + tiles ========================================== */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  /* Hard-coded sentinel-shape padding handled by a child spacer (see
+   * .product-grid-sentinel) because iOS Safari collapses padding-bottom
+   * on flex-overflow containers during momentum scroll. */
+}
+
+.product-tile {
+  --tile-border: var(--color-border);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--tile-border);
+  background: var(--color-bg-surface);
+  outline: none;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-fast) ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.product-tile:active {
+  transform: scale(0.98);
+}
+
+.product-tile:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.product-tile--selected {
+  --tile-border: var(--color-brand);
+  background: var(--color-brand-subtle);
+}
+
+.product-tile--sold-out {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.product-tile--sold-out:active {
+  transform: none;
+}
+
+.product-tile__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.product-tile__icon {
+  flex-shrink: 0;
+}
+
+.product-tile__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  /* 2-line clamp leaves room for longer artisan/wholesale product
+   * names without overflowing the tile. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.product-tile__price {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.product-tile--selected .product-tile__price {
+  color: var(--color-brand);
+}
+
+/* Stock countdown chip — only visible when 0 < stock < 10. Mono
+ * uppercase, sits in the top-right of the tile, doesn't take row
+ * space. Cream-tinted backplate so it reads as data, not warning. */
+.product-tile__stock-chip {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-warning);
+  background: var(--color-warning-subtle);
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  font-variant-numeric: tabular-nums;
+}
+
+.product-tile__sold-out-stamp {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-tile__qty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  height: 32px;
+  transition: opacity var(--duration-fast) ease-out;
+}
+
+.product-tile__qty-row--idle {
+  opacity: 0.4;
+}
+
+.product-tile__qty-button {
+  width: 48px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
+}
+
+.product-tile__qty-button:disabled {
+  cursor: default;
+}
+
+.product-tile__qty-button--plus.is-active {
+  color: var(--color-brand);
+}
+
+.product-tile__qty-button--minus.is-active {
+  color: var(--color-error);
+}
+
+.product-tile__qty-button:not(:disabled):hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.dark .product-tile__qty-button:not(:disabled):hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.product-tile__qty-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  width: 28px;
+  text-align: center;
+  color: var(--color-text-primary);
+}
+
+/* Sentinel spacer at the end of the scrolling grid so the cart FAB
+ * never occludes the last row. Non-shrinking because flex containers
+ * collapse padding on momentum scroll on iOS Safari. */
+.product-grid-sentinel {
+  flex-shrink: 0;
+  height: 96px;
+}
+
+/* ===== POS empty / no-results state ================================== */
+.pos-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  gap: var(--space-2);
+}
+
+.pos-empty__icon {
+  width: 32px;
+  height: 32px;
+  color: var(--color-text-tertiary);
+}
+
+.pos-empty__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--color-text-primary);
+}
+
+.pos-empty__desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  max-width: 28ch;
+}
+
+/* ===== Cart FAB (terracotta pill) ===================================== */
+/* Anchored to the bottom of the page-body which is `relative` in
+ * SalesView. Removed from layout flow so the product grid scrolls
+ * the full remaining height behind it. The pill itself is one
+ * primary-color element with mono numerals — no IonButton chrome. */
+.cart-fab {
+  position: absolute;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 5;
+}
+
+.cart-fab__pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 56px;
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-brand);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* Lift off the product grid behind it. Two-step shadow so the FAB
+   * reads as a physical chip pressed against paper, not a flat blob. */
+  box-shadow:
+    0 1px 0 0 rgba(0, 0, 0, 0.08),
+    0 12px 24px -8px rgba(var(--color-brand-rgb), 0.45);
+  transition:
+    transform var(--duration-fast) ease-out,
+    box-shadow var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out;
+}
+
+.cart-fab__pill:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 0 0 rgba(0, 0, 0, 0.08),
+    0 6px 12px -6px rgba(var(--color-brand-rgb), 0.45);
+}
+
+.cart-fab__pill:disabled {
+  background: var(--color-bg-muted);
+  color: var(--color-text-tertiary);
+  cursor: default;
+  box-shadow: none;
+}
+
+.cart-fab__icon {
+  flex-shrink: 0;
+}
+
+.cart-fab__label {
+  letter-spacing: 0.10em;
+}
+
+.cart-fab__separator {
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+.cart-fab__count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.cart-fab__total {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* ===== Reports page padding ========================================== */
+.sales-reports-shell {
+  padding: var(--space-5) var(--space-4) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

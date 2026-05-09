@@ -33,18 +33,19 @@ export function SalesView() {
 
   const sessionOpen = Boolean(salesSessions.currentSession)
 
-  // Layout flip is deferred while either session-modal is open. Without this,
-  // the underlying layout swaps from reports → POS the moment `currentSession`
-  // updates inside `openSession()` — which happens DURING the modal's success
-  // step. ProductPicker + CartSheet would then mount while the modal is still
-  // showing the Lottie celebration; if anything in that mount path threw, the
-  // whole tree (including the modal) would unmount, leaving the IonModal
-  // backdrop orphaned in <body>. That presents as "blank screen + bricked
-  // taps" on iOS Safari (no error boundary used to be in place either).
+  // Layout flip is deferred while either session-modal is open. Without
+  // this, the underlying layout swaps from reports → POS the moment
+  // `currentSession` updates inside `openSession()` — which happens DURING
+  // the modal's success step. ProductPicker + CartSheet would then mount
+  // while the modal is still showing the Lottie celebration; if anything
+  // in that mount path threw, the whole tree (including the modal) would
+  // unmount, leaving the IonModal backdrop orphaned in <body>. That
+  // presents as "blank screen + bricked taps" on iOS Safari.
   //
-  // Locking the layout to its pre-modal value during the modal's lifecycle
-  // means the layout flip happens only after the modal has fully dismissed.
-  // ErrorBoundary in App.tsx is the fallback if anything still goes wrong.
+  // Locking the layout to its pre-modal value during the modal's
+  // lifecycle means the layout flip happens only after the modal has
+  // fully dismissed. ErrorBoundary in App.tsx is the fallback if anything
+  // still goes wrong.
   const displaySessionOpen = openModalOpen
     ? false
     : closeModalOpen
@@ -62,26 +63,27 @@ export function SalesView() {
   return (
     <>
       {displaySessionOpen ? (
-        // POS workspace layout: pinned stats + product grid + bottom cart sheet.
-        // relative keeps CartSheet's absolute bottom-0 anchored to this container.
-        // No outer padding — children handle their own padding to avoid double-margins.
-        // Explicit `key` forces clean unmount/remount instead of in-place reconciliation
-        // when the layout flips, so React doesn't try to diff a reports-shaped subtree
-        // into a POS-shaped one mid-commit.
-        <div key="pos" className="relative flex h-full flex-col">
-          {statsCard}
-          <div className="flex-1 min-h-0 pt-4 flex flex-col">
+        // POS workspace: stats card + scrolling product picker + bottom
+        // cart pill. Outer container is `relative` so the absolute cart
+        // FAB anchors correctly. Explicit `key` forces a clean unmount/
+        // remount when flipping layouts so React doesn't try to diff a
+        // reports-shaped subtree into a POS-shaped one mid-commit.
+        <div key="pos" className="pos-workspace">
+          <div className="pos-workspace__stats">{statsCard}</div>
+          <div className="pos-workspace__grid">
             <ProductPicker cart={cart} />
           </div>
           <CartSheet cart={cart} />
         </div>
       ) : (
-        // Reports browse mode: vertically-scrollable column. IonContent owns scroll.
-        <div key="reports" className="px-4 py-6 space-y-4">
+        // Browse mode: stats card + reports stack, vertically scrollable.
+        // IonContent owns the scroll.
+        <div key="reports" className="sales-reports-shell">
           {statsCard}
           <SalesReports businessId={businessId} />
         </div>
       )}
+
       <CloseSessionConfirmModal
         isOpen={closeModalOpen}
         onClose={() => setCloseModalOpen(false)}
