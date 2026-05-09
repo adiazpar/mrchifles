@@ -559,13 +559,20 @@
 }
 
 /* ===== Empty state =================================================== */
-
+/* Centers vertically within the available IonContent area below the
+ * page hero + segment. min-height uses dynamic viewport (dvh) to stay
+ * stable across iOS Safari's toolbar collapse — sized to leave room
+ * for header (~96px) + bottom tab bar (~96px) + page hero+segment
+ * (~120px). The remaining ~58dvh is generous on tall phones and still
+ * comfortably centered on the iPhone SE 2nd-gen 667px viewport. */
 .products-empty {
+  min-height: 58dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: var(--space-10) var(--space-4) var(--space-8);
+  padding: var(--space-4);
   gap: var(--space-3);
 }
 
