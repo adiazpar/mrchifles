@@ -137,6 +137,17 @@ ion-toolbar {
     var(--color-bg-base);
 }
 
+/* IonHeader's toolbar matches the bottom IonTabBar look — translucent
+ * paper, no grain texture. The grain pattern was reading as visual
+ * noise behind crisp dynamic-island / status-bar text on iOS; the
+ * tab-bar pattern (paper-translucent + backdrop blur) is calmer and
+ * more on-brand for the top chrome too. */
+ion-header ion-toolbar {
+  --background: var(--paper-translucent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
 /* IonFooter wraps a toolbar that should match the page bg, not the
    surface tint, so the footer reads as part of the page rather than
    floating chrome. */

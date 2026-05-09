@@ -110,40 +110,50 @@ export function PriceKeypadStep({
 
   const placeholderDecimals = decimals > 0 ? '0'.repeat(decimals) : ''
 
-  const pressDigit = (digit: string) => {
-    haptic()
-    if (hasDecimal) {
-      if (decimalPart.length >= decimals) return
-      onValueChange(value + digit)
-      return
-    }
-    // Integer-part editing.
-    if (integerPart === '0') {
-      // Replace leading zero with the new digit, unless the digit IS
-      // zero (no point growing "0" to "00").
-      if (digit === '0') return
-      onValueChange(digit)
-      return
-    }
-    onValueChange(integerPart + digit)
+  // Register-style entry: treat the canonical value as a cents buffer
+  // that grows from the right. Industry-standard for POS keypads —
+  // typing "1" "2" "3" reads as "$0.01 → $0.12 → $1.23" instead of
+  // "$1 → $12 → $123". The decimal placement is implicit, so the
+  // decimal key is hidden in this mode (would be a no-op anyway).
+  // For zero-decimal currencies the buffer IS the integer.
+  const valueToBuffer = (v: string): number => {
+    if (!v) return 0
+    const n = parseFloat(v)
+    if (isNaN(n)) return 0
+    return Math.round(n * 10 ** decimals)
   }
 
-  const pressDecimal = () => {
-    if (decimals === 0) return
-    if (hasDecimal) return
+  const bufferToValue = (n: number): string => {
+    if (n <= 0) return ''
+    if (decimals === 0) return String(n)
+    return (n / 10 ** decimals).toFixed(decimals)
+  }
+
+  // Cap at 12 digits so a stuck keypress doesn't produce numbers that
+  // overflow IEEE 754 precision or render hilariously wide.
+  const MAX_DIGITS = 12
+
+  const pressDigit = (digit: string) => {
     haptic()
-    onValueChange((value === '' ? '0' : value) + '.')
+    const current = valueToBuffer(value)
+    if (current.toString().length >= MAX_DIGITS) return
+    const next = current * 10 + parseInt(digit, 10)
+    onValueChange(bufferToValue(next))
   }
 
   const pressBackspace = () => {
-    if (!value || value === '0') return
+    const current = valueToBuffer(value)
+    if (current === 0) return
     haptic()
-    const next = value.slice(0, -1)
-    onValueChange(next === '' ? '' : next)
+    const next = Math.floor(current / 10)
+    onValueChange(bufferToValue(next))
   }
 
-  const decimalDisabled = decimals === 0 || hasDecimal
-  const backspaceDisabled = !value || value === '0'
+  // Decimal key is redundant in register-style entry — the value
+  // always has the right decimal placement implicitly. Hide it
+  // entirely (the slot is filled with the ghost element below).
+  const showDecimalKey = false
+  const backspaceDisabled = valueToBuffer(value) === 0
 
   return (
     <div className="price-keypad">
@@ -206,17 +216,17 @@ export function PriceKeypadStep({
           </button>
         ))}
 
-        {decimals > 0 ? (
+        {showDecimalKey ? (
           <button
             type="button"
             className="price-keypad__key price-keypad__key--muted"
-            onClick={pressDecimal}
-            disabled={decimalDisabled}
             aria-label={t.formatMessage({ id: 'keypad.decimal_aria' })}
           >
             {decimalSep}
           </button>
         ) : (
+          // Register-style: decimal placement is implicit, no key needed.
+          // The empty cell keeps the bottom row 3-wide so 0 stays centred.
           <span
             className="price-keypad__key price-keypad__key--ghost"
             aria-hidden="true"

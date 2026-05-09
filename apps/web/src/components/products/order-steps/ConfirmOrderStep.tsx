@@ -94,48 +94,50 @@ export function ConfirmOrderStep() {
             onClick={editItems}
             aria-label={t.formatMessage({ id: 'orders.confirm_edit_items_aria' })}
           >
-            <div className="order-receipt__rule">
-              <span className="order-receipt__rule-line" aria-hidden="true" />
-              <span className="order-receipt__rule-caption">
-                {t.formatMessage(
-                  { id: 'orders.confirm_items_caption' },
-                  { count: itemCount },
-                )}
-              </span>
-              <ChevronRight
-                size={14}
-                strokeWidth={1.8}
-                className="order-confirm__edit-chev"
-              />
-              <span className="order-receipt__rule-line" aria-hidden="true" />
-            </div>
+            <div className="order-confirm__edit-body">
+              <div className="order-receipt__rule">
+                <span className="order-receipt__rule-line" aria-hidden="true" />
+                <span className="order-receipt__rule-caption">
+                  {t.formatMessage(
+                    { id: 'orders.confirm_items_caption' },
+                    { count: itemCount },
+                  )}
+                </span>
+                <span className="order-receipt__rule-line" aria-hidden="true" />
+              </div>
 
-            <div className="order-receipt__lines">
-              {orderItems.map(item => {
-                const iconUrl = getProductIconUrl(item.product)
-                const presetIcon = iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
-                return (
-                  <div key={item.product.id} className="order-receipt-line order-receipt-line--compact">
-                    <span className="order-receipt-line__icon">
-                      {presetIcon ? (
-                        <presetIcon.icon size={18} className="text-text-primary" />
-                      ) : iconUrl ? (
-                        <Image src={iconUrl} alt="" width={32} height={32} unoptimized />
-                      ) : (
-                        <Package size={16} strokeWidth={1.6} />
-                      )}
-                    </span>
-                    <span className="order-receipt-line__name">{item.product.name}</span>
-                    <span className="order-receipt-line__qty">
-                      {t.formatMessage(
-                        { id: 'orders.qty_short' },
-                        { count: typeof item.quantity === 'number' ? item.quantity : 0 },
-                      )}
-                    </span>
-                  </div>
-                )
-              })}
+              <div className="order-receipt__lines">
+                {orderItems.map(item => {
+                  const iconUrl = getProductIconUrl(item.product)
+                  const presetIcon = iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
+                  return (
+                    <div key={item.product.id} className="order-receipt-line order-receipt-line--compact">
+                      <span className="order-receipt-line__icon">
+                        {presetIcon ? (
+                          <presetIcon.icon size={18} className="text-text-primary" />
+                        ) : iconUrl ? (
+                          <Image src={iconUrl} alt="" width={32} height={32} unoptimized />
+                        ) : (
+                          <Package size={16} strokeWidth={1.6} />
+                        )}
+                      </span>
+                      <span className="order-receipt-line__name">{item.product.name}</span>
+                      <span className="order-receipt-line__qty">
+                        {t.formatMessage(
+                          { id: 'orders.qty_short' },
+                          { count: typeof item.quantity === 'number' ? item.quantity : 0 },
+                        )}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
+            <ChevronRight
+              size={16}
+              strokeWidth={1.8}
+              className="order-confirm__edit-chev"
+            />
           </button>
 
           {/* Totals block — tappable to jump back to OrderTotalStep. */}
@@ -145,19 +147,21 @@ export function ConfirmOrderStep() {
             onClick={editTotal}
             aria-label={t.formatMessage({ id: 'orders.confirm_edit_total_aria' })}
           >
-            <div className="order-receipt__totals-row order-receipt__totals-row--total">
-              <span className="order-receipt__totals-label">
-                {t.formatMessage({ id: 'orders.total_label' })}
-              </span>
-              <span className="order-receipt__totals-value">
-                {formatCurrency(totalNum)}
-              </span>
-              <ChevronRight
-                size={14}
-                strokeWidth={1.8}
-                className="order-confirm__edit-chev"
-              />
+            <div className="order-confirm__edit-body">
+              <div className="order-receipt__totals-row order-receipt__totals-row--total">
+                <span className="order-receipt__totals-label">
+                  {t.formatMessage({ id: 'orders.total_label' })}
+                </span>
+                <span className="order-receipt__totals-value">
+                  {formatCurrency(totalNum)}
+                </span>
+              </div>
             </div>
+            <ChevronRight
+              size={16}
+              strokeWidth={1.8}
+              className="order-confirm__edit-chev"
+            />
           </button>
 
           {/* Audit trail — tappable to jump back to OrderDetailsStep. */}
@@ -167,53 +171,53 @@ export function ConfirmOrderStep() {
             onClick={editDetails}
             aria-label={t.formatMessage({ id: 'orders.confirm_edit_details_aria' })}
           >
-            <div className="order-receipt__audit-row">
-              <span className="order-receipt__audit-icon" aria-hidden="true">
-                <Truck size={14} strokeWidth={1.7} />
-              </span>
-              <span className="order-receipt__audit-label">
-                {t.formatMessage({ id: 'orders.ordered_to_label' })}
-              </span>
-              <span className="order-receipt__audit-leader" aria-hidden="true" />
-              <span className="order-receipt__audit-value">
-                {providerName || t.formatMessage({ id: 'orders.provider_none' })}
-              </span>
+            <div className="order-confirm__edit-body">
+              <div className="order-receipt__audit-row">
+                <span className="order-receipt__audit-icon" aria-hidden="true">
+                  <Truck size={14} strokeWidth={1.7} />
+                </span>
+                <span className="order-receipt__audit-label">
+                  {t.formatMessage({ id: 'orders.ordered_to_label' })}
+                </span>
+                <span className="order-receipt__audit-leader" aria-hidden="true" />
+                <span className="order-receipt__audit-value">
+                  {providerName || t.formatMessage({ id: 'orders.provider_none' })}
+                </span>
+              </div>
+              {orderEstimatedArrival && (
+                <div className="order-receipt__audit-row">
+                  <span className="order-receipt__audit-icon" aria-hidden="true">
+                    <CalendarClock size={14} strokeWidth={1.7} />
+                  </span>
+                  <span className="order-receipt__audit-label">
+                    {t.formatMessage({ id: 'orders.est_arrival_label' })}
+                  </span>
+                  <span className="order-receipt__audit-leader" aria-hidden="true" />
+                  <span className="order-receipt__audit-value">
+                    {formatDate(orderEstimatedArrival)}
+                  </span>
+                </div>
+              )}
+              {orderReceiptFile && (
+                <div className="order-receipt__audit-row">
+                  <span className="order-receipt__audit-icon" aria-hidden="true">
+                    <Paperclip size={14} strokeWidth={1.7} />
+                  </span>
+                  <span className="order-receipt__audit-label">
+                    {t.formatMessage({ id: 'orders.receipt_attached_label' })}
+                  </span>
+                  <span className="order-receipt__audit-leader" aria-hidden="true" />
+                  <span className="order-receipt__audit-value">
+                    {t.formatMessage({ id: 'orders.receipt_attached_value' })}
+                  </span>
+                </div>
+              )}
             </div>
-            {orderEstimatedArrival && (
-              <div className="order-receipt__audit-row">
-                <span className="order-receipt__audit-icon" aria-hidden="true">
-                  <CalendarClock size={14} strokeWidth={1.7} />
-                </span>
-                <span className="order-receipt__audit-label">
-                  {t.formatMessage({ id: 'orders.est_arrival_label' })}
-                </span>
-                <span className="order-receipt__audit-leader" aria-hidden="true" />
-                <span className="order-receipt__audit-value">
-                  {formatDate(orderEstimatedArrival)}
-                </span>
-              </div>
-            )}
-            {orderReceiptFile && (
-              <div className="order-receipt__audit-row">
-                <span className="order-receipt__audit-icon" aria-hidden="true">
-                  <Paperclip size={14} strokeWidth={1.7} />
-                </span>
-                <span className="order-receipt__audit-label">
-                  {t.formatMessage({ id: 'orders.receipt_attached_label' })}
-                </span>
-                <span className="order-receipt__audit-leader" aria-hidden="true" />
-                <span className="order-receipt__audit-value">
-                  {t.formatMessage({ id: 'orders.receipt_attached_value' })}
-                </span>
-              </div>
-            )}
-            <span className="order-confirm__edit-trail">
-              <ChevronRight
-                size={14}
-                strokeWidth={1.8}
-                className="order-confirm__edit-chev"
-              />
-            </span>
+            <ChevronRight
+              size={16}
+              strokeWidth={1.8}
+              className="order-confirm__edit-chev"
+            />
           </button>
         </div>
       </IonContent>
