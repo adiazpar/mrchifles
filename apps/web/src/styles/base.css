@@ -169,7 +169,13 @@
      historical 80px so chrome offsets — page-content padding-bottom,
      LiveBarcodeScanner positioning — match the visual height of the
      IonTabBar plus its safe-area inset on a real device). */
-  --mobile-nav-height: 80px;
+  /* Bottom IonTabBar height (excludes safe-area-inset-bottom — Ionic
+     adds that automatically on iOS). 96px gives the redesigned tab
+     bar room for: 28px Lucide icon + 6px label gap + 10.5px mono
+     label + 18px top inset (anchoring the active mark) + 24px
+     bottom inset = visually balanced rows. The legacy 80px left the
+     row feeling cramped against the active terracotta mark. */
+  --mobile-nav-height: 96px;
   --header-height: 80px;
   --page-padding: 16px;
   --touch-target-min: 56px;

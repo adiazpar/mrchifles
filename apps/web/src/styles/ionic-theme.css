@@ -259,16 +259,17 @@ ion-tab-button ion-label {
   color: inherit;
 }
 
-/* Both ionicon variants and Lucide icons render through the same
- * 26px stroke style. Lucide icons keep their own stroke-width prop;
- * size is normalised here so the row stays consistent and the glyphs
- * read at the same weight as IonItem start-slot icons (~24px) on the
- * settings pages. */
-ion-tab-button ion-icon,
-ion-tab-button > svg {
-  font-size: 26px;
-  width: 26px;
-  height: 26px;
+/* IonIcon uses font-size for sizing (its inner SVG inherits 1em).
+ * Lucide React writes width/height as HTML attributes and is sized
+ * via the `size` prop in BusinessTabsLayout — CSS dimensions here
+ * would lose to those attributes, so we only normalise color/stroke
+ * for Lucide. */
+ion-tab-button ion-icon {
+  font-size: 28px;
+  color: inherit;
+}
+
+ion-tab-button svg {
   color: inherit;
   stroke: currentColor;
 }
