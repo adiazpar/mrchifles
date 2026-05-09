@@ -46,6 +46,14 @@ interface ModalShellProps {
    * issues #23878, #25245, #30144.
    */
   noSwipeDismiss?: boolean
+  /**
+   * Skip the default `.modal-content` horizontal/vertical inset on the
+   * auto-rendered IonContent. Use for list-style sheets where each row
+   * already paints edge-to-edge with its own padding (UserMenu, action
+   * sheets) — adding `.modal-content` on top would double the inset and
+   * leave the items floating narrowly inside the sheet.
+   */
+  flushContent?: boolean
 }
 
 /**
@@ -75,6 +83,7 @@ export function ModalShell({
   children,
   rawContent = false,
   noSwipeDismiss = false,
+  flushContent = false,
 }: ModalShellProps) {
   // Sheet-mode is a property of `breakpoints` AND `initialBreakpoint` BOTH being
   // defined — see @ionic/core modal.js: `isSheetModal = breakpoints !== undefined
@@ -140,8 +149,16 @@ export function ModalShell({
           every Pattern 0/1 modal the same --page-padding inset + a touch
           of vertical breathing room (CSS in app.css). Pattern 2 wizards
           opt out via rawContent — they manage padding via .wizard-step
-          on their own per-step IonContent. */}
-      {rawContent ? children : <IonContent className="modal-content">{children}</IonContent>}
+          on their own per-step IonContent. List-style sheets (UserMenu,
+          action lists where each row paints edge-to-edge) opt out via
+          flushContent so the per-item padding isn't doubled. */}
+      {rawContent
+        ? children
+        : (
+          <IonContent className={flushContent ? undefined : 'modal-content'}>
+            {children}
+          </IonContent>
+        )}
       {footer && (
         <IonFooter>
           <IonToolbar>

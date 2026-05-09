@@ -31,6 +31,7 @@ export function UserMenu() {
         onClose={handleClose}
         title={t.formatMessage({ id: 'ui.user_menu.title' })}
         variant="half"
+        flushContent
       >
         <UserMenuContent onAction={handleClose} />
       </ModalShell>
