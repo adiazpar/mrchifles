@@ -35,7 +35,9 @@ const ProductInfoDrawer = dynamic(
   () => import('@/components/products/ProductInfoDrawer').then(m => m.ProductInfoDrawer),
   { ssr: false },
 )
-import { ProductFormProvider, useProductForm } from '@/contexts/product-form-context'
+// Form-context provider is mounted inside AddProductModal /
+// EditProductModal now (so it directly wraps IonNav). ProductsView
+// no longer consumes form context here.
 import type { PipelineStep } from '@/hooks'
 import {
   type PageTab,
@@ -45,7 +47,8 @@ import {
   type SortOption,
   getOrderDisplayStatus,
 } from '@/lib/products'
-import { getProductIconUrl } from '@/lib/utils'
+// getProductIconUrl no longer needed at this level — populateFromProduct
+// lives inside EditProductModal now and imports it directly.
 import { useAiProductPipeline, useImageCompression, useBusinessFormat } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
@@ -118,93 +121,22 @@ function AddProductModalWrapper({
   checkBarcodeExists,
   defaultCategoryId,
 }: AddProductModalWrapperProps) {
-  const tProductForm = useIntl()
   const pendingActionRef = useRef<(() => void) | null>(null)
-  const {
-    barcode,
-    setPipelineStep,
-    setIsCompressing,
-    setName,
-    setCategoryId,
-    setIconPreview,
-    setGeneratedIconBlob,
-    setIconType,
-    setPresetEmoji,
-    setError,
-    resetForm,
-  } = useProductForm()
 
-  const handleStartAiPipelineWithBarcodeCheck = useCallback(async () => {
-    setError('')
-    const trimmed = barcode.trim()
-    if (trimmed) {
-      const existingName = await checkBarcodeExists(trimmed)
-      if (existingName) {
-        setError(tProductForm.formatMessage({
-          id: 'productForm.barcode_already_used'
-        }, { name: existingName }))
-        return
-      }
-    }
-    onStartAiPipeline()
-  }, [barcode, checkBarcodeExists, onStartAiPipeline, setError, tProductForm])
-
-  useEffect(() => {
-    setPipelineStep(pipelineState.step)
-  }, [pipelineState.step, setPipelineStep])
-
-  useEffect(() => {
-    setIsCompressing(isCompressing)
-  }, [isCompressing, setIsCompressing])
-
-  useEffect(() => {
-    if (pipelineState.step === 'complete' && pipelineState.result) {
-      const result = pipelineState.result
-      setName(result.name)
-      if (result.categoryId) {
-        setCategoryId(result.categoryId)
-      }
-      setGeneratedIconBlob(result.iconBlob)
-      setIconPreview(result.iconPreview)
-      setIconType('custom')
-      setPresetEmoji(null)
-    }
-  }, [
-    pipelineState.step,
-    pipelineState.result,
-    setName,
-    setCategoryId,
-    setGeneratedIconBlob,
-    setIconPreview,
-    setIconType,
-    setPresetEmoji,
-  ])
-
-  useEffect(() => {
-    if (pipelineState.step === 'error' && pipelineState.error) {
-      setError(pipelineState.error)
-    }
-  }, [pipelineState.step, pipelineState.error, setError])
-
+  // Pipeline-sync useEffects, the resetForm-on-close timer, and the
+  // barcode-uniqueness pre-check all moved INSIDE AddProductModal so
+  // they live inside the form-context provider (which now also lives
+  // inside the modal — the previous "provider above the modal" setup
+  // had context-propagation issues through IonNav, leaving Review
+  // step blank). The wrapper's only remaining job is the
+  // pendingActionRef shuffle for "open Settings after I close" and
+  // surfacing the AI suggested-category name out of pipelineState.
   const handleExitComplete = useCallback(() => {
-    resetForm(defaultCategoryId)
     if (pendingActionRef.current) {
       pendingActionRef.current()
       pendingActionRef.current = null
     }
-  }, [resetForm, defaultCategoryId])
-
-  // Run cleanup AFTER the modal's exit animation completes (~250ms),
-  // not synchronously when the X is tapped. Mutating state mid-animation
-  // re-renders the IonNav children while the IonRouterOutlet stack
-  // machine is still tracking the dismiss, leaving a stale active-view
-  // reference that breaks subsequent leftward tab switches. See the
-  // comment in AddProductModal.tsx for the full diagnosis.
-  useEffect(() => {
-    if (isOpen) return
-    const timer = window.setTimeout(handleExitComplete, 250)
-    return () => window.clearTimeout(timer)
-  }, [isOpen, handleExitComplete])
+  }, [])
 
   const handleOpenSettings = useCallback(() => {
     pendingActionRef.current = onOpenSettings
@@ -219,6 +151,8 @@ function AddProductModalWrapper({
       onClose={onClose}
       onExitComplete={handleExitComplete}
       categories={categories}
+      pipelineState={pipelineState}
+      isCompressing={isCompressing}
       onSubmit={onSubmit}
       onAbortAiProcessing={onAbortAiProcessing}
       onPipelineReset={onPipelineReset}
@@ -226,8 +160,10 @@ function AddProductModalWrapper({
       onOpenSettings={handleOpenSettings}
       suggestedCategoryName={suggestedCategoryName}
       onCreateCategory={onCreateCategory}
-      onStartAiPipeline={handleStartAiPipelineWithBarcodeCheck}
+      onStartAiPipeline={onStartAiPipeline}
       onClearPendingPhoto={onClearPendingPhoto}
+      checkBarcodeExists={checkBarcodeExists}
+      defaultCategoryId={defaultCategoryId}
     />
   )
 }
@@ -263,39 +199,22 @@ function EditProductModalWrapper({
   defaultCategoryId,
   initialStep,
 }: EditProductModalWrapperProps) {
-  const { populateFromProduct, resetForm } = useProductForm()
-
-  // Populate form when modal opens with a product
-  useEffect(() => {
-    if (isOpen && editingProduct) {
-      populateFromProduct(editingProduct, getProductIconUrl)
-    }
-  }, [isOpen, editingProduct, populateFromProduct])
-
-  const handleExitComplete = useCallback(() => {
-    resetForm(defaultCategoryId)
-    onExitCleanup()
-  }, [resetForm, defaultCategoryId, onExitCleanup])
-
-  // Same delayed-cleanup pattern as AddProductModalWrapper — see the
-  // comment there. Without this, mid-animation state mutation breaks
-  // tab switching after the modal closes.
-  useEffect(() => {
-    if (isOpen) return
-    const timer = window.setTimeout(handleExitComplete, 250)
-    return () => window.clearTimeout(timer)
-  }, [isOpen, handleExitComplete])
-
+  // Form-context concerns (populateFromProduct on open, resetForm on
+  // close) all live INSIDE EditProductModal now, alongside the form
+  // provider. The wrapper just forwards onExitCleanup so ProductsView
+  // can clear its own editingProduct state when the modal fully closes.
   return (
     <EditProductModal
       isOpen={isOpen}
       onClose={onClose}
-      onExitComplete={handleExitComplete}
+      onExitComplete={onExitCleanup}
       categories={categories}
+      editingProduct={editingProduct}
       onSubmit={onSubmit}
       onDelete={onDelete}
       onSaveAdjustment={onSaveAdjustment}
       canDelete={canDelete}
+      defaultCategoryId={defaultCategoryId}
       initialStep={initialStep}
     />
   )
@@ -939,45 +858,50 @@ export function ProductsView() {
           </TabContainer.Tab>
         </TabContainer>
       </div>
-      {/* Product Modals - shared form context, only one open at a time */}
-      <ProductFormProvider defaultCategoryId={settings?.defaultCategoryId}>
-        <AddProductModalWrapper
-          isOpen={isModalOpen && !editingProduct}
-          onClose={handleCloseModal}
-          categories={categories}
-          pipelineState={pipeline.state}
-          isCompressing={compression.state.isProcessing}
-          onSubmit={handleSubmitProduct}
-          onAbortAiProcessing={() => {
-            pipeline.cancel()
-            compression.cancel()
-          }}
-          onPipelineReset={() => {
-            pipeline.reset()
-            setPendingAiImage(null)
-          }}
-          onAiPhotoCapture={handleAiPhotoCapture}
-          onStartAiPipeline={handleStartAiPipeline}
-          onCreateCategory={handleCreateCategory}
-          onOpenSettings={() => setIsSettingsModalOpen(true)}
-          onClearPendingPhoto={handleClearPendingPhoto}
-          checkBarcodeExists={checkBarcodeExists}
-          defaultCategoryId={settings?.defaultCategoryId}
-        />
-        <EditProductModalWrapper
-          isOpen={isModalOpen && !!editingProduct}
-          onClose={handleCloseModal}
-          onExitCleanup={() => setEditingProduct(null)}
-          categories={categories}
-          editingProduct={editingProduct}
-          onSubmit={handleSubmitProduct}
-          onDelete={handleDeleteProduct}
-          onSaveAdjustment={handleSaveAdjustment}
-          canDelete={canDelete}
-          defaultCategoryId={settings?.defaultCategoryId}
-          initialStep={editInitialStep}
-        />
-      </ProductFormProvider>
+      {/*
+        Product modals — each modal mounts its OWN ProductFormProvider
+        internally (wrapping IonNav). The form context used to live
+        here, wrapping both modals — but pushed views inside IonNav
+        weren't seeing it (Review surface rendered blank values even
+        after the user filled them in upstream). Provider-inside-modal
+        guarantees every step's React tree is inside the provider.
+      */}
+      <AddProductModalWrapper
+        isOpen={isModalOpen && !editingProduct}
+        onClose={handleCloseModal}
+        categories={categories}
+        pipelineState={pipeline.state}
+        isCompressing={compression.state.isProcessing}
+        onSubmit={handleSubmitProduct}
+        onAbortAiProcessing={() => {
+          pipeline.cancel()
+          compression.cancel()
+        }}
+        onPipelineReset={() => {
+          pipeline.reset()
+          setPendingAiImage(null)
+        }}
+        onAiPhotoCapture={handleAiPhotoCapture}
+        onStartAiPipeline={handleStartAiPipeline}
+        onCreateCategory={handleCreateCategory}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onClearPendingPhoto={handleClearPendingPhoto}
+        checkBarcodeExists={checkBarcodeExists}
+        defaultCategoryId={settings?.defaultCategoryId}
+      />
+      <EditProductModalWrapper
+        isOpen={isModalOpen && !!editingProduct}
+        onClose={handleCloseModal}
+        onExitCleanup={() => setEditingProduct(null)}
+        categories={categories}
+        editingProduct={editingProduct}
+        onSubmit={handleSubmitProduct}
+        onDelete={handleDeleteProduct}
+        onSaveAdjustment={handleSaveAdjustment}
+        canDelete={canDelete}
+        defaultCategoryId={settings?.defaultCategoryId}
+        initialStep={editInitialStep}
+      />
       <ProductInfoDrawer
         isOpen={!!viewingProduct}
         onClose={() => setViewingProduct(null)}

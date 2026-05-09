@@ -1,10 +1,15 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { Product, ProductCategory } from '@kasero/shared/types'
 import type { ProductFormData, StockAdjustmentData } from './ProductModal'
+import {
+  ProductFormProvider,
+  useProductForm,
+} from '@/contexts/product-form-context'
+import { getProductIconUrl } from '@/lib/utils'
 import {
   ProductNavRefContext,
   EditProductCallbacksContext,
@@ -13,44 +18,70 @@ import {
 import { ReviewStep } from './steps/ReviewStep'
 import { AdjustInventoryStep } from './steps/AdjustInventoryStep'
 
-// ============================================
-// PROPS
-// ============================================
-
 export interface EditProductModalProps {
   isOpen: boolean
   onClose: () => void
   onExitComplete: () => void
   categories: ProductCategory[]
+  /** The product to edit. Must be present when the modal opens. */
+  editingProduct: Product | null
   onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<Product | null>
   onDelete: (productId: string) => Promise<boolean>
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
-  /** Step the modal opens to. Defaults to 0 (Edit form). Use 1 to open at "Adjust inventory". */
+  /** Default category for resetForm (after modal closes). */
+  defaultCategoryId?: string | null
+  /** Step the modal opens to. Defaults to 0 (Review). Use 1 to open at "Adjust inventory". */
   initialStep?: number
 }
 
-// ============================================
-// COMPONENT
-// ============================================
+/**
+ * Outer wrapper that mounts ProductFormProvider INSIDE the modal so it
+ * wraps IonNav directly. See the comment on AddProductModal for the
+ * propagation problem this fixes.
+ */
+export function EditProductModal(props: EditProductModalProps) {
+  return (
+    <ProductFormProvider defaultCategoryId={props.defaultCategoryId}>
+      <EditProductModalInner {...props} />
+    </ProductFormProvider>
+  )
+}
 
-export function EditProductModal({
+function EditProductModalInner({
   isOpen,
   onClose,
   onExitComplete,
   categories,
+  editingProduct,
   onSubmit,
   onDelete,
   onSaveAdjustment,
   canDelete,
+  defaultCategoryId,
   initialStep = 0,
 }: EditProductModalProps) {
   const navRef = useRef<HTMLIonNavElement>(null)
+  const { populateFromProduct, resetForm } = useProductForm()
 
-  // X-click only flips the parent's isOpen state — see AddProductModal for
-  // the matching diagnosis. onExitComplete is fired by the wrapper after
-  // a post-animation delay.
-  const handleClose = onClose
+  // Populate form context when the modal opens with a product.
+  useEffect(() => {
+    if (isOpen && editingProduct) {
+      populateFromProduct(editingProduct, getProductIconUrl)
+    }
+  }, [isOpen, editingProduct, populateFromProduct])
+
+  // Delayed cleanup — same pattern as AddProductModal's. Mid-animation
+  // state mutation breaks the IonRouterOutlet view-stack reference,
+  // causing leftward tab switches to fail after modal close.
+  useEffect(() => {
+    if (isOpen) return
+    const timer = window.setTimeout(() => {
+      resetForm(defaultCategoryId)
+      onExitComplete()
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [isOpen, resetForm, defaultCategoryId, onExitComplete])
 
   const callbacks: EditProductCallbacks = {
     onClose,
@@ -62,15 +93,10 @@ export function EditProductModal({
     canDelete,
   }
 
-  // Stable root thunks — useCallback with [] so IonNav never remounts the
-  // step stack due to a new function reference on every parent render.
-  // IonNav expects a function returning JSX (not a component reference);
-  // passing the constructor directly mounts as undefined.
-  //
-  // Edit flow lands at ReviewStep by default — the user sees the existing
-  // product as a summary card and taps any field row to revise. The
-  // legacy initialStep === 1 (deep-link to AdjustInventoryStep, fired
-  // from the row's Inventory swipe action) bypasses Review entirely.
+  // Stable root thunks — IonNav expects a function returning JSX (not a
+  // component reference); passing the constructor directly mounts as
+  // undefined. useCallback with empty deps so the thunks stay stable
+  // across parent re-renders.
   const adjustStepRoot = useCallback(() => <AdjustInventoryStep />, [])
   const reviewStepRoot = useCallback(() => <ReviewStep />, [])
   const rootComponent = initialStep === 1 ? adjustStepRoot : reviewStepRoot
@@ -78,7 +104,7 @@ export function EditProductModal({
   return (
     <EditProductCallbacksContext.Provider value={callbacks}>
       <ProductNavRefContext.Provider value={navRef}>
-        <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
+        <ModalShell rawContent isOpen={isOpen} onClose={onClose}>
           <IonNav ref={navRef} root={rootComponent} swipeGesture={false} />
         </ModalShell>
       </ProductNavRefContext.Provider>
