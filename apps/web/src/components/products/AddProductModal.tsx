@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { Product, ProductCategory } from '@kasero/shared/types'
@@ -79,11 +79,17 @@ export function AddProductModal({
     onClearPendingPhoto,
   }
 
+  // Stable root thunk — useCallback with [] so IonNav never remounts the
+  // step stack due to a new function reference on every parent render.
+  // IonNav expects a function returning JSX (not a component reference);
+  // passing the constructor directly mounts as undefined.
+  const entryStepRoot = useCallback(() => <AddEntryStep />, [])
+
   return (
     <AddProductCallbacksContext.Provider value={callbacks}>
       <ProductNavRefContext.Provider value={navRef}>
         <ModalShell rawContent isOpen={isOpen} onClose={handleClose}>
-          <IonNav ref={navRef} root={AddEntryStep} swipeGesture={false} />
+          <IonNav ref={navRef} root={entryStepRoot} swipeGesture={false} />
         </ModalShell>
       </ProductNavRefContext.Provider>
     </AddProductCallbacksContext.Provider>

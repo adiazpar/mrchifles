@@ -85,7 +85,7 @@ export function EditFormStep() {
       setProductSaved(true)
       setLastSavedProductNumber(saved.productNumber ?? editingProduct?.productNumber ?? null)
       hapticSuccess()
-      navRef.current?.push(EditSuccessStep)
+      navRef.current?.push(() => <EditSuccessStep />)
     } catch (err) {
       setError(
         err instanceof Error

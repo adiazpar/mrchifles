@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
 import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { Product, ProductCategory } from '@kasero/shared/types'
@@ -62,9 +62,13 @@ export function EditProductModal({
     canDelete,
   }
 
-  // Component-reference roots — passed by reference (not a wrapper thunk)
-  // so IonNav doesn't remount the step stack when the parent re-renders.
-  const rootComponent = initialStep === 1 ? AdjustInventoryStep : EditFormStep
+  // Stable root thunks — useCallback with [] so IonNav never remounts the
+  // step stack due to a new function reference on every parent render.
+  // IonNav expects a function returning JSX (not a component reference);
+  // passing the constructor directly mounts as undefined.
+  const adjustStepRoot = useCallback(() => <AdjustInventoryStep />, [])
+  const editFormStepRoot = useCallback(() => <EditFormStep />, [])
+  const rootComponent = initialStep === 1 ? adjustStepRoot : editFormStepRoot
 
   return (
     <EditProductCallbacksContext.Provider value={callbacks}>
