@@ -15,7 +15,7 @@ import { close } from 'ionicons/icons'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
 import { SuggestedCategoryStepWrapper } from './SuggestedCategoryStepWrapper'
-import { FormStep } from './FormStep'
+import { ReviewStep } from './ReviewStep'
 
 type Phase = 'preparing' | 'identifying' | 'generating' | 'removing-bg' | 'analyzing'
 
@@ -38,7 +38,7 @@ export function AnalyzingStep() {
       if (suggestedCategoryName) {
         navRef.current?.push(() => <SuggestedCategoryStepWrapper />)
       } else {
-        navRef.current?.push(() => <FormStep />)
+        navRef.current?.push(() => <ReviewStep />)
       }
     }
   }, [pipelineStep, suggestedCategoryName, navRef])

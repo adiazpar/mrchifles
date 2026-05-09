@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
 import { AiPhotoStep } from './AiPhotoStep'
-import { FormStep } from './FormStep'
+import { NameStep } from './NameStep'
 
 export function AddEntryStep() {
   const t = useIntl()
@@ -38,7 +38,10 @@ export function AddEntryStep() {
   }
 
   function goToManual() {
-    navRef.current?.push(() => <FormStep />)
+    // Manual entry kicks off the 4-step wizard chain
+    // (Name → Price → Category/Stock → Barcode → Review). Each step
+    // is mode='forward' so its CTA pushes the next one.
+    navRef.current?.push(() => <NameStep mode="forward" />)
   }
 
   return (

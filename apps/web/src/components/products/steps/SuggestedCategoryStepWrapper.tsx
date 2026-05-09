@@ -13,7 +13,7 @@ import {
 import { useProductForm } from '@/contexts/product-form-context'
 import { SuggestedCategoryStep } from '../SuggestedCategoryStep'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
-import { FormStep } from './FormStep'
+import { ReviewStep } from './ReviewStep'
 
 export function SuggestedCategoryStepWrapper() {
   const t = useIntl()
@@ -23,7 +23,7 @@ export function SuggestedCategoryStepWrapper() {
   const { setCategoryId } = useProductForm()
 
   function goToForm() {
-    navRef.current?.push(() => <FormStep />)
+    navRef.current?.push(() => <ReviewStep />)
   }
 
   return (

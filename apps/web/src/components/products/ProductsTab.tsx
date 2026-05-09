@@ -24,7 +24,6 @@ import {
   IonItemOption,
   IonItemOptions,
   IonItemSliding,
-  IonLabel,
   IonList,
 } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
@@ -473,56 +472,69 @@ const ProductListItem = memo(function ProductListItem({
 
   return (
     <IonItemSliding>
-      <IonItem button={!!activate} detail={false} onClick={activate}>
+      {/* lines="none" + a custom flex layout — IonItem's slot system was
+          forcing a too-tight rhythm between the name and the metadata
+          rows, and pushing the icon a fixed 16px away from the price
+          column. The custom row gives each metadata line proper breath
+          and lets the price anchor render in italic Fraunces. */}
+      <IonItem
+        button={!!activate}
+        detail={false}
+        onClick={activate}
+        lines="none"
+        className="product-row-host"
+      >
         <div
-          slot="start"
-          className={`product-row__icon${!isActive ? ' product-row__icon--inactive' : ''}`}
+          className={`product-row${!isActive ? ' product-row--inactive' : ''}`}
         >
-          {iconUrl && isPresetIcon(iconUrl) ? (
-            (() => {
-              const p = getPresetIcon(iconUrl)
-              return p ? <p.icon size={22} className="text-text-primary" /> : null
-            })()
-          ) : iconUrl ? (
-            <Image
-              src={iconUrl}
-              alt={product.name}
-              width={40}
-              height={40}
-              className="object-cover"
-              unoptimized
-            />
-          ) : (
-            <ImagePlus size={18} className="text-text-tertiary" />
-          )}
-        </div>
-        <IonLabel>
           <div
-            className={`product-row__name${!isActive ? ' product-row__name--inactive' : ''}`}
+            className={`product-row__icon${!isActive ? ' product-row__icon--inactive' : ''}`}
+            aria-hidden="true"
           >
-            {product.name}
-          </div>
-          <div className="product-row__category">{categoryName}</div>
-          {hasBarcode && (
-            <div className="product-row__barcode">
-              <ScanLine size={12} strokeWidth={1.8} />
-              <span>{product.barcode}</span>
-            </div>
-          )}
-        </IonLabel>
-        <div slot="end" className="text-right flex-shrink-0">
-          <div
-            className={`product-row__price${!isActive ? ' product-row__price--inactive' : ''}`}
-          >
-            {formatCurrency(product.price)}
-          </div>
-          <div
-            className={`product-row__stock${isLowStock && isActive ? ' product-row__stock--low' : ''}`}
-          >
-            {intl.formatMessage(
-              { id: 'products.units_count' },
-              { count: stockValue },
+            {iconUrl && isPresetIcon(iconUrl) ? (
+              (() => {
+                const p = getPresetIcon(iconUrl)
+                return p ? <p.icon size={20} className="text-text-primary" /> : null
+              })()
+            ) : iconUrl ? (
+              <Image
+                src={iconUrl}
+                alt=""
+                width={32}
+                height={32}
+                className="object-cover w-full h-full"
+                unoptimized
+              />
+            ) : (
+              <ImagePlus size={16} className="text-text-tertiary" />
             )}
+          </div>
+
+          <div className="product-row__body">
+            <h3 className="product-row__name">{product.name}</h3>
+            <span className="product-row__category">{categoryName}</span>
+            {hasBarcode && (
+              <span className="product-row__barcode">
+                <ScanLine size={12} strokeWidth={1.8} />
+                <span className="product-row__barcode-value">
+                  {product.barcode}
+                </span>
+              </span>
+            )}
+          </div>
+
+          <div className="product-row__trail">
+            <span className="product-row__price">
+              {formatCurrency(product.price)}
+            </span>
+            <span
+              className={`product-row__stock${isLowStock && isActive ? ' product-row__stock--low' : ''}`}
+            >
+              {intl.formatMessage(
+                { id: 'products.units_count' },
+                { count: stockValue },
+              )}
+            </span>
           </div>
         </div>
       </IonItem>

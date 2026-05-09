@@ -304,88 +304,157 @@
 }
 
 /* ===== Product row =================================================== */
+/* Custom row inside an IonItem (lines="none"). The Ionic slot system
+ * forces a tight rhythm and a fixed 16px gap between the icon and the
+ * trail column — that's what made the row feel cramped. We render
+ * a flex grid manually: small icon tile (left) + multi-line body
+ * (Fraunces italic name + mono uppercase category + mono barcode) +
+ * right-aligned price/stock anchor. Each row of metadata gets its
+ * own line with generous vertical rhythm.
+ */
 
+.product-row-host {
+  --inner-padding-end: 0;
+  --inner-padding-start: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+  --background: transparent;
+}
+
+.product-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  width: 100%;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.product-row:last-child {
+  border-bottom: 0;
+}
+
+.product-row--inactive {
+  opacity: 0.6;
+}
+
+/* Small icon tile — 32px keeps the visual hierarchy on the name + price,
+ * not on the icon. Cream-tinted square with a hairline. */
+.product-row__icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.product-row__icon--inactive {
+  opacity: 0.55;
+}
+
+.product-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Italic Fraunces name — the row's typographic anchor on the left. */
 .product-row__name {
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  letter-spacing: -0.005em;
-  line-height: 1.2;
-}
-
-.product-row__name--inactive {
-  color: var(--color-text-tertiary);
+  font-family: var(--font-display);
+  font-style: italic;
   font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.012em;
+  line-height: 1.15;
+  color: var(--color-text-primary);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 }
 
+/* Mono uppercase category, on its own line. Tracked for printed-label
+ * vibe; small to stay subordinate to the italic name. */
 .product-row__category {
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.10em;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-text-tertiary);
-  margin-top: 4px;
 }
 
+/* Barcode line: scan glyph + monospaced value. Word-break ensures
+ * long codes wrap rather than clip the price column. */
 .product-row__barcode {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 6px;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-tertiary);
+  letter-spacing: 0.04em;
+}
+
+.product-row__barcode > svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.product-row__barcode-value {
   word-break: break-all;
+  letter-spacing: 0.04em;
+}
+
+/* Right-aligned price + stock anchor. Italic Fraunces on the price so
+ * the row's typographic system has a left/right call-and-response
+ * (italic name on the left, italic price on the right) — the same
+ * vocabulary used in the StatsCard headline. */
+.product-row__trail {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+  margin-left: var(--space-3);
 }
 
 .product-row__price {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 19px;
+  letter-spacing: -0.012em;
+  line-height: 1;
   color: var(--color-text-primary);
-  letter-spacing: -0.005em;
-}
-
-.product-row__price--inactive {
-  color: var(--color-text-tertiary);
-  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .product-row__stock {
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-text-tertiary);
-  margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
 
 .product-row__stock--low {
   color: var(--color-error);
-  font-weight: 600;
-}
-
-.product-row__icon {
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border-radius: var(--radius-md);
-  background: var(--color-bg-muted);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.product-row__icon--inactive {
-  opacity: 0.5;
 }
 
 /* ===== Order row ===================================================== */

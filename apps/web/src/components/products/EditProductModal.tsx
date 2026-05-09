@@ -10,7 +10,7 @@ import {
   EditProductCallbacksContext,
   type EditProductCallbacks,
 } from './steps/ProductNavContext'
-import { EditFormStep } from './steps/EditFormStep'
+import { ReviewStep } from './steps/ReviewStep'
 import { AdjustInventoryStep } from './steps/AdjustInventoryStep'
 
 // ============================================
@@ -66,9 +66,14 @@ export function EditProductModal({
   // step stack due to a new function reference on every parent render.
   // IonNav expects a function returning JSX (not a component reference);
   // passing the constructor directly mounts as undefined.
+  //
+  // Edit flow lands at ReviewStep by default — the user sees the existing
+  // product as a summary card and taps any field row to revise. The
+  // legacy initialStep === 1 (deep-link to AdjustInventoryStep, fired
+  // from the row's Inventory swipe action) bypasses Review entirely.
   const adjustStepRoot = useCallback(() => <AdjustInventoryStep />, [])
-  const editFormStepRoot = useCallback(() => <EditFormStep />, [])
-  const rootComponent = initialStep === 1 ? adjustStepRoot : editFormStepRoot
+  const reviewStepRoot = useCallback(() => <ReviewStep />, [])
+  const rootComponent = initialStep === 1 ? adjustStepRoot : reviewStepRoot
 
   return (
     <EditProductCallbacksContext.Provider value={callbacks}>
