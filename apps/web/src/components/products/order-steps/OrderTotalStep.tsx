@@ -11,7 +11,7 @@ import {
   IonBackButton,
 } from '@ionic/react'
 import { PriceKeypadStep } from '@/components/ui'
-import { useOrderNavRef, useNewOrderCallbacks } from './OrderNavContext'
+import { useOrderNavRef, useOrderCallbacks } from './OrderNavContext'
 import { OrderDetailsStep } from './OrderDetailsStep'
 
 interface OrderTotalStepProps {
@@ -33,7 +33,7 @@ interface OrderTotalStepProps {
 export function OrderTotalStep({ mode }: OrderTotalStepProps) {
   const t = useIntl()
   const navRef = useOrderNavRef()
-  const { orderTotal, onOrderTotalChange } = useNewOrderCallbacks()
+  const { orderTotal, onOrderTotalChange } = useOrderCallbacks()
 
   const numericTotal = parseFloat(orderTotal)
   const isValid = !isNaN(numericTotal) && numericTotal > 0

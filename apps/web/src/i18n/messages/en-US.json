@@ -1383,5 +1383,7 @@
   "orders.total_step_helper": "What you paid (or owe) the supplier for this run.",
   "orders.confirm_edit_items_aria": "Edit selected items",
   "orders.confirm_edit_total_aria": "Edit total paid",
-  "orders.confirm_edit_details_aria": "Edit provider, arrival, and receipt"
+  "orders.confirm_edit_details_aria": "Edit provider, arrival, and receipt",
+  "orders.edit_items_hero_title": "Adjust the <em>line items</em>",
+  "orders.edit_items_hero_subtitle": "Tweak quantities or remove items. New products can't be added once an order is placed."
 }

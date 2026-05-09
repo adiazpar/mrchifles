@@ -12,7 +12,7 @@ import {
 import { CalendarClock, ChevronDown, ImageIcon, ImagePlus, Trash2 } from 'lucide-react'
 import { apiPostForm } from '@/lib/api-client'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { useOrderNavRef, useNewOrderCallbacks } from './OrderNavContext'
+import { useOrderNavRef, useOrderCallbacks } from './OrderNavContext'
 import { ConfirmOrderStep } from './ConfirmOrderStep'
 
 const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
@@ -43,7 +43,7 @@ export function OrderDetailsStep({ mode = 'forward' }: OrderDetailsStepProps = {
     orderProvider,
     onOrderProviderChange,
     error,
-  } = useNewOrderCallbacks()
+  } = useOrderCallbacks()
 
   const receiptInputRef = useRef<HTMLInputElement>(null)
   const [receiptError, setReceiptError] = useState('')

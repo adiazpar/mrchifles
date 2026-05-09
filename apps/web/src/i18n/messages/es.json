@@ -1383,5 +1383,7 @@
   "orders.total_step_helper": "Lo que pagaste (o debes) al proveedor por este pedido.",
   "orders.confirm_edit_items_aria": "Editar productos seleccionados",
   "orders.confirm_edit_total_aria": "Editar total pagado",
-  "orders.confirm_edit_details_aria": "Editar proveedor, llegada y recibo"
+  "orders.confirm_edit_details_aria": "Editar proveedor, llegada y recibo",
+  "orders.edit_items_hero_title": "Ajusta las <em>líneas</em>",
+  "orders.edit_items_hero_subtitle": "Cambia cantidades o quita artículos. No se pueden agregar productos nuevos una vez creada la orden."
 }

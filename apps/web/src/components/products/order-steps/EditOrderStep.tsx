@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+'use client'
+
 import { useIntl } from 'react-intl'
 import {
   IonPage,
@@ -12,50 +13,47 @@ import {
   IonIcon,
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
-import {
-  CalendarClock,
-  ChevronDown,
-  ImageIcon,
-  ImagePlus,
-  Minus,
-  Plus,
-  Trash2,
-  Package,
-} from 'lucide-react'
+import { Package, CalendarClock, Truck, Paperclip, ChevronRight } from 'lucide-react'
 import Image from '@/lib/Image'
-import { PriceInput } from '@/components/ui'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { apiPostForm } from '@/lib/api-client'
 import { useOrderNavRef, useOrderDetailCallbacks } from './OrderNavContext'
 import { EditOrderSuccessStep } from './EditOrderSuccessStep'
+import { EditItemsStep } from './EditItemsStep'
+import { OrderTotalStep } from './OrderTotalStep'
+import { OrderDetailsStep } from './OrderDetailsStep'
 
-const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
-const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
-
+/**
+ * Edit-flow review surface. Mirrors ConfirmOrderStep visually — same
+ * three tappable sections (line items / total / audit details). Tapping
+ * any section pushes its matching edit step in `mode='edit'`, which
+ * pops back here when the user is done.
+ *
+ *   - Items section → EditItemsStep (existing line items only; no
+ *     "add new product" picker since an order's identity is the set
+ *     of items it shipped with).
+ *   - Total section → OrderTotalStep mode='edit' (full-screen
+ *     PriceKeypadStep). Reused from the new-order wizard via the
+ *     unified useOrderCallbacks() hook so both flows share the
+ *     keypad chrome.
+ *   - Details section → OrderDetailsStep mode='edit' (provider +
+ *     arrival + receipt). Same component as new flow; same hook.
+ *
+ * Footer: Save (primary) commits the patch via onSaveEditOrder.
+ */
 export function EditOrderStep() {
   const t = useIntl()
   const navRef = useOrderNavRef()
-  const { formatDate } = useBusinessFormat()
+  const { formatCurrency, formatDate } = useBusinessFormat()
   const {
     order,
-    products,
     providers,
     orderItems,
-    setOrderItems,
-    onToggleProduct,
-    onUpdateQuantity,
     orderTotal,
-    onOrderTotalChange,
     orderEstimatedArrival,
-    onOrderEstimatedArrivalChange,
     orderProvider,
-    onOrderProviderChange,
     orderReceiptFile,
-    onOrderReceiptFileChange,
-    orderReceiptPreview,
-    onOrderReceiptPreviewChange,
     isSaving,
     error,
     onSaveEditOrder,
@@ -64,24 +62,33 @@ export function EditOrderStep() {
     openedFromSwipe,
   } = useOrderDetailCallbacks()
 
-  const productsById = new Map(products.map(p => [p.id, p]))
-  const editReceiptInputRef = useRef<HTMLInputElement>(null)
-  const [editReceiptError, setEditReceiptError] = useState('')
+  const orderRef =
+    order.orderNumber != null
+      ? `#${String(order.orderNumber).padStart(4, '0')}`
+      : `#${order.id.slice(0, 6).toUpperCase()}`
 
-  const orderRef = order.orderNumber != null
-    ? `#${String(order.orderNumber).padStart(4, '0')}`
-    : `#${order.id.slice(0, 6).toUpperCase()}`
+  const totalNum = orderTotal ? parseFloat(orderTotal) : 0
+  const itemCount = orderItems.reduce(
+    (acc, i) => acc + (typeof i.quantity === 'number' ? i.quantity : 0),
+    0,
+  )
+  const providerName = providers.find((p) => p.id === orderProvider)?.name
 
-  const hasChanges = JSON.stringify({
-    items: orderItems.map(i => ({ id: i.product.id, qty: i.quantity })),
-    total: orderTotal,
-    provider: orderProvider,
-    arrival: orderEstimatedArrival,
-    hasReceipt: !!orderReceiptFile,
-  }) !== initialEditSnapshot
+  const hasChanges =
+    JSON.stringify({
+      items: orderItems.map((i) => ({ id: i.product.id, qty: i.quantity })),
+      total: orderTotal,
+      provider: orderProvider,
+      arrival: orderEstimatedArrival,
+      hasReceipt: !!orderReceiptFile,
+    }) !== initialEditSnapshot
 
   const isDisabled =
-    isSaving || orderItems.length === 0 || !orderTotal || parseFloat(orderTotal) <= 0 || !hasChanges
+    isSaving ||
+    orderItems.length === 0 ||
+    !orderTotal ||
+    parseFloat(orderTotal) <= 0 ||
+    !hasChanges
 
   const handleSave = async () => {
     const success = await onSaveEditOrder()
@@ -89,6 +96,15 @@ export function EditOrderStep() {
       navRef.current?.push(() => <EditOrderSuccessStep />)
     }
   }
+
+  // Tap-to-edit jumps — each pushes the matching step in `mode='edit'`
+  // so its CTA pops back to this review surface instead of pushing
+  // forward in any wizard chain.
+  const editItems = () => navRef.current?.push(() => <EditItemsStep />)
+  const editTotal = () =>
+    navRef.current?.push(() => <OrderTotalStep mode="edit" />)
+  const editDetails = () =>
+    navRef.current?.push(() => <OrderDetailsStep mode="edit" />)
 
   return (
     <IonPage>
@@ -101,7 +117,11 @@ export function EditOrderStep() {
           )}
           {openedFromSwipe && (
             <IonButtons slot="end">
-              <IonButton fill="clear" onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonButton
+                fill="clear"
+                onClick={onClose}
+                aria-label={t.formatMessage({ id: 'common.close' })}
+              >
                 <IonIcon icon={close} />
               </IonButton>
             </IonButtons>
@@ -129,309 +149,143 @@ export function EditOrderStep() {
           </header>
 
           {error && (
-            <div className="order-modal__error" role="alert">{error}</div>
+            <div className="order-modal__error" role="alert">
+              {error}
+            </div>
           )}
 
-          {/* Section eyebrow */}
-          <div className="order-select__section-eyebrow">
-            <span>{t.formatMessage({ id: 'orders.eyebrow_line_items' })}</span>
-            <span className="order-select__section-count">
-              {t.formatMessage(
-                { id: 'orders.products_selected_short' },
-                { count: orderItems.length },
-              )}
-            </span>
-          </div>
+          {/* Items section — tappable to jump to EditItemsStep. */}
+          <button
+            type="button"
+            className="order-confirm__edit-section"
+            onClick={editItems}
+            aria-label={t.formatMessage({ id: 'orders.confirm_edit_items_aria' })}
+          >
+            <div className="order-receipt__rule">
+              <span className="order-receipt__rule-line" aria-hidden="true" />
+              <span className="order-receipt__rule-caption">
+                {t.formatMessage(
+                  { id: 'orders.confirm_items_caption' },
+                  { count: itemCount },
+                )}
+              </span>
+              <ChevronRight
+                size={14}
+                strokeWidth={1.8}
+                className="order-confirm__edit-chev"
+              />
+              <span className="order-receipt__rule-line" aria-hidden="true" />
+            </div>
 
-          {/* Product list — restricted to original line items (cannot add new) */}
-          <div className="order-select__list">
-            {(order.expand?.['order_items(order)'] || []).map(origItem => {
-              const product = productsById.get(origItem.productId ?? '')
-              if (!product) return null
-              const orderItem = orderItems.find(i => i.product.id === product.id)
-              const isSelected = !!orderItem
-              const stockValue = product.stock ?? 0
-              const isOutOfStock = stockValue === 0
-              const iconUrl = getProductIconUrl(product)
-              const presetIcon = iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
-              return (
-                <div
-                  key={product.id}
-                  className="order-product-row"
-                  data-selected={isSelected || undefined}
-                >
-                  <button
-                    type="button"
-                    onClick={() => onToggleProduct(product)}
-                    className="order-product-row__pick"
+            <div className="order-receipt__lines">
+              {orderItems.map((item) => {
+                const iconUrl = getProductIconUrl(item.product)
+                const presetIcon =
+                  iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
+                return (
+                  <div
+                    key={item.product.id}
+                    className="order-receipt-line order-receipt-line--compact"
                   >
-                    <span className="order-product-row__icon">
+                    <span className="order-receipt-line__icon">
                       {presetIcon ? (
-                        <presetIcon.icon size={22} className="text-text-primary" />
+                        <presetIcon.icon size={18} className="text-text-primary" />
                       ) : iconUrl ? (
-                        <Image src={iconUrl} alt={product.name} width={44} height={44} unoptimized />
+                        <Image src={iconUrl} alt="" width={32} height={32} unoptimized />
                       ) : (
-                        <Package size={18} strokeWidth={1.6} className="text-text-tertiary" />
+                        <Package size={16} strokeWidth={1.6} />
                       )}
                     </span>
-                    <span className="order-product-row__body">
-                      <span className="order-product-row__name">{product.name}</span>
-                      <span
-                        className={`order-product-row__stock${
-                          isOutOfStock ? ' order-product-row__stock--out' : ''
-                        }`}
-                      >
-                        {t.formatMessage(
-                          { id: 'orders.item_unit_count' },
-                          { count: stockValue },
-                        )}
-                      </span>
+                    <span className="order-receipt-line__name">{item.product.name}</span>
+                    <span className="order-receipt-line__qty">
+                      {t.formatMessage(
+                        { id: 'orders.qty_short' },
+                        { count: typeof item.quantity === 'number' ? item.quantity : 0 },
+                      )}
                     </span>
-                  </button>
-                  {isSelected && orderItem && (
-                    <div className="order-product-row__qty">
-                      <button
-                        type="button"
-                        onClick={() => onUpdateQuantity(product.id, orderItem.quantity - 1)}
-                        disabled={orderItem.quantity <= 1}
-                        className="order-product-row__qty-button order-product-row__qty-button--minus"
-                        aria-label={t.formatMessage({ id: 'orders.decrease_qty_aria' })}
-                      >
-                        <Minus size={14} strokeWidth={2} />
-                      </button>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={orderItem.quantity}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          if (val === '') {
-                            setOrderItems(prev => prev.map(i =>
-                              i.product.id === product.id ? { ...i, quantity: '' as unknown as number } : i
-                            ))
-                          } else {
-                            const num = parseInt(val, 10)
-                            if (!isNaN(num)) onUpdateQuantity(product.id, Math.max(1, num))
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const val = parseInt(e.target.value, 10)
-                          if (isNaN(val) || val < 1) onUpdateQuantity(product.id, 1)
-                        }}
-                        onFocus={(e) => e.target.select()}
-                        className="order-product-row__qty-input"
-                        aria-label={t.formatMessage({ id: 'orders.qty_aria' })}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => onUpdateQuantity(product.id, orderItem.quantity + 1)}
-                        className="order-product-row__qty-button order-product-row__qty-button--plus"
-                        aria-label={t.formatMessage({ id: 'orders.increase_qty_aria' })}
-                      >
-                        <Plus size={14} strokeWidth={2} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Section eyebrow */}
-          <div className="order-select__section-eyebrow">
-            <span>{t.formatMessage({ id: 'orders.eyebrow_order_meta' })}</span>
-          </div>
-
-          {/* Total & Provider */}
-          <div className="order-details__grid">
-            <div className="order-details__field">
-              <label htmlFor="editOrderTotal" className="order-details__label order-details__label--required">
-                {t.formatMessage({ id: 'orders.total_paid_label' })}
-              </label>
-              <div className="input-number-wrapper">
-                <PriceInput
-                  id="editOrderTotal"
-                  value={orderTotal}
-                  onValueChange={onOrderTotalChange}
-                  placeholder="0"
-                />
-                <div className="input-number-spinners">
-                  <button
-                    type="button"
-                    className="input-number-spinner"
-                    onClick={() => {
-                      const c = parseFloat(orderTotal) || 0
-                      onOrderTotalChange((c + 1).toFixed(2))
-                    }}
-                    tabIndex={-1}
-                    aria-label={t.formatMessage({ id: 'orders.increase_total_aria' })}
-                  >
-                    <Plus />
-                  </button>
-                  <button
-                    type="button"
-                    className="input-number-spinner"
-                    onClick={() => {
-                      const c = parseFloat(orderTotal) || 0
-                      onOrderTotalChange(Math.max(0, c - 1).toFixed(2))
-                    }}
-                    tabIndex={-1}
-                    aria-label={t.formatMessage({ id: 'orders.decrease_total_aria' })}
-                  >
-                    <Minus />
-                  </button>
-                </div>
-              </div>
+                  </div>
+                )
+              })}
             </div>
-            <div className="order-details__field">
-              <label htmlFor="editOrderProvider" className="order-details__label">
-                {t.formatMessage({ id: 'orders.provider_label' })}
-              </label>
-              <div className="order-details__select-wrap">
-                <select
-                  id="editOrderProvider"
-                  value={orderProvider}
-                  onChange={e => onOrderProviderChange(e.target.value)}
-                  className={`input w-full pr-10 ${!orderProvider ? 'text-text-tertiary' : ''}`}
-                  style={{ backgroundImage: 'none', WebkitAppearance: 'none', appearance: 'none' }}
-                >
-                  <option value="">{t.formatMessage({ id: 'orders.provider_none' })}</option>
-                  {providers.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-                <span className="order-details__select-chevron">
-                  <ChevronDown size={18} strokeWidth={1.8} />
-                </span>
-              </div>
-            </div>
-          </div>
+          </button>
 
-          {/* Estimated Arrival */}
-          <div className="order-details__field">
-            <label className="order-details__label">
-              {t.formatMessage({ id: 'orders.estimated_arrival_label' })}
-            </label>
-            <div className="order-details__date-wrap">
-              <div
-                className={`order-details__date-display${
-                  orderEstimatedArrival ? '' : ' order-details__date-display--placeholder'
-                }`}
-              >
-                {orderEstimatedArrival
-                  ? formatDate(orderEstimatedArrival)
-                  : t.formatMessage({ id: 'orders.select_date_placeholder' })}
-              </div>
-              <span className="order-details__date-display-icon">
-                <CalendarClock size={18} strokeWidth={1.8} />
+          {/* Total section — tappable to jump to OrderTotalStep mode='edit'. */}
+          <button
+            type="button"
+            className="order-confirm__edit-section order-receipt__totals"
+            onClick={editTotal}
+            aria-label={t.formatMessage({ id: 'orders.confirm_edit_total_aria' })}
+          >
+            <div className="order-receipt__totals-row order-receipt__totals-row--total">
+              <span className="order-receipt__totals-label">
+                {t.formatMessage({ id: 'orders.total_label' })}
               </span>
-              <input
-                type="date"
-                value={orderEstimatedArrival}
-                onChange={e => onOrderEstimatedArrivalChange(e.target.value)}
-                className="order-details__date-input"
-                aria-label={t.formatMessage({ id: 'orders.estimated_arrival_label' })}
+              <span className="order-receipt__totals-value">
+                {formatCurrency(totalNum)}
+              </span>
+              <ChevronRight
+                size={14}
+                strokeWidth={1.8}
+                className="order-confirm__edit-chev"
               />
             </div>
-          </div>
+          </button>
 
-          {/* Receipt */}
-          <div className="order-details__field">
-            <label className="order-details__label">
-              {t.formatMessage({ id: 'orders.receipt_label' })}
-            </label>
-            <input
-              ref={editReceiptInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
-              onChange={async e => {
-                setEditReceiptError('')
-                const file = e.target.files?.[0]
-                e.target.value = ''
-                if (!file) return
-                const isHeic = file.type === 'image/heic' || file.type === 'image/heif'
-                  || file.name.toLowerCase().endsWith('.heic')
-                  || file.name.toLowerCase().endsWith('.heif')
-                if (!isHeic && !ACCEPTED_RECEIPT_TYPES.includes(file.type)) {
-                  setEditReceiptError(t.formatMessage({ id: 'orders.receipt_invalid_type' }))
-                  return
-                }
-                if (file.size > MAX_RECEIPT_BYTES) {
-                  setEditReceiptError(t.formatMessage({ id: 'orders.receipt_too_large' }))
-                  return
-                }
-                onOrderReceiptFileChange(file)
-                if (isHeic) {
-                  try {
-                    const fd = new FormData()
-                    fd.append('file', file)
-                    const data = await apiPostForm<{ data?: { image?: string } }>('/api/convert-heic', fd)
-                    if (data.data?.image) {
-                      onOrderReceiptPreviewChange(data.data.image)
-                    } else {
-                      onOrderReceiptPreviewChange(null)
-                    }
-                  } catch {
-                    onOrderReceiptPreviewChange(null)
-                  }
-                } else if (file.type.startsWith('image/')) {
-                  const reader = new FileReader()
-                  reader.onload = () => onOrderReceiptPreviewChange(reader.result as string)
-                  reader.readAsDataURL(file)
-                } else {
-                  onOrderReceiptPreviewChange(null)
-                }
-              }}
-              className="hidden"
-            />
-            {orderReceiptFile ? (
-              <div className="order-details__receipt-attached">
-                {orderReceiptPreview ? (
-                  <img
-                    src={orderReceiptPreview}
-                    alt=""
-                    className="order-details__receipt-thumb"
-                  />
-                ) : (
-                  <div className="order-details__receipt-thumb order-details__receipt-thumb--placeholder">
-                    <ImageIcon size={18} strokeWidth={1.6} />
-                  </div>
-                )}
-                <span className="order-details__receipt-name">{orderReceiptFile.name}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onOrderReceiptFileChange(null)
-                    onOrderReceiptPreviewChange(null)
-                    if (editReceiptInputRef.current) editReceiptInputRef.current.value = ''
-                  }}
-                  className="order-details__receipt-remove"
-                  aria-label={t.formatMessage({ id: 'common.remove' })}
-                >
-                  <Trash2 size={16} strokeWidth={1.8} />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => editReceiptInputRef.current?.click()}
-                className="order-details__receipt-tile"
-              >
-                <ImagePlus size={22} strokeWidth={1.5} />
-                <span className="order-details__receipt-tile-label">
-                  {t.formatMessage({ id: 'orders.receipt_attach_placeholder' })}
+          {/* Audit section — tappable to jump to OrderDetailsStep mode='edit'. */}
+          <button
+            type="button"
+            className="order-confirm__edit-section order-receipt__audit"
+            onClick={editDetails}
+            aria-label={t.formatMessage({ id: 'orders.confirm_edit_details_aria' })}
+          >
+            <div className="order-receipt__audit-row">
+              <span className="order-receipt__audit-icon" aria-hidden="true">
+                <Truck size={14} strokeWidth={1.7} />
+              </span>
+              <span className="order-receipt__audit-label">
+                {t.formatMessage({ id: 'orders.ordered_to_label' })}
+              </span>
+              <span className="order-receipt__audit-leader" aria-hidden="true" />
+              <span className="order-receipt__audit-value">
+                {providerName || t.formatMessage({ id: 'orders.provider_none' })}
+              </span>
+            </div>
+            {orderEstimatedArrival && (
+              <div className="order-receipt__audit-row">
+                <span className="order-receipt__audit-icon" aria-hidden="true">
+                  <CalendarClock size={14} strokeWidth={1.7} />
                 </span>
-              </button>
+                <span className="order-receipt__audit-label">
+                  {t.formatMessage({ id: 'orders.est_arrival_label' })}
+                </span>
+                <span className="order-receipt__audit-leader" aria-hidden="true" />
+                <span className="order-receipt__audit-value">
+                  {formatDate(orderEstimatedArrival)}
+                </span>
+              </div>
             )}
-            <p className="order-details__receipt-hint">
-              {t.formatMessage({ id: 'orders.receipt_hint' })}
-            </p>
-            {editReceiptError && (
-              <div className="order-modal__error" role="alert">{editReceiptError}</div>
+            {orderReceiptFile && (
+              <div className="order-receipt__audit-row">
+                <span className="order-receipt__audit-icon" aria-hidden="true">
+                  <Paperclip size={14} strokeWidth={1.7} />
+                </span>
+                <span className="order-receipt__audit-label">
+                  {t.formatMessage({ id: 'orders.receipt_attached_label' })}
+                </span>
+                <span className="order-receipt__audit-leader" aria-hidden="true" />
+                <span className="order-receipt__audit-value">
+                  {t.formatMessage({ id: 'orders.receipt_attached_value' })}
+                </span>
+              </div>
             )}
-          </div>
+            <span className="order-confirm__edit-trail">
+              <ChevronRight
+                size={14}
+                strokeWidth={1.8}
+                className="order-confirm__edit-chev"
+              />
+            </span>
+          </button>
         </div>
       </IonContent>
 
@@ -445,7 +299,10 @@ export function EditOrderStep() {
               disabled={isDisabled}
             >
               {isSaving ? (
-                <span className="order-modal__pill-spinner" aria-label={t.formatMessage({ id: 'common.loading' })} />
+                <span
+                  className="order-modal__pill-spinner"
+                  aria-label={t.formatMessage({ id: 'common.loading' })}
+                />
               ) : (
                 t.formatMessage({ id: 'common.save' })
               )}
