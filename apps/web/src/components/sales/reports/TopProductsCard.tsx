@@ -1,7 +1,6 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-
+import { useIntl } from 'react-intl'
 import Image from '@/lib/Image'
 import { useMemo } from 'react'
 import { Package } from 'lucide-react'
@@ -16,6 +15,12 @@ interface TopProductsCardProps {
   entries: TopProductEntry[]
 }
 
+/**
+ * Ranked list of top-selling products by revenue. Each row carries a
+ * Fraunces italic rank numeral (terracotta on rank 1), the product
+ * icon + name, mono revenue + qty, and a thin terracotta progress bar
+ * normalized to the leader's revenue.
+ */
 export function TopProductsCard({ entries }: TopProductsCardProps) {
   const t = useIntl()
   const { products } = useProducts()
@@ -30,65 +35,68 @@ export function TopProductsCard({ entries }: TopProductsCardProps) {
   const max = entries.reduce((m, e) => (e.revenue > m ? e.revenue : m), 0)
 
   return (
-    <div className="card p-4 space-y-4">
-      <div className="text-sm text-text-secondary">{t.formatMessage({
-        id: 'sales.reports.top_products_title'
-      })}</div>
-      <hr className="border-border" />
+    <section className="report-card">
+      <header className="report-card__header">
+        <span className="report-card__eyebrow">
+          {t.formatMessage({ id: 'sales.reports.top_products_eyebrow' })}
+        </span>
+        <h3 className="report-card__title">
+          {t.formatMessage({ id: 'sales.reports.top_products_title' })}
+        </h3>
+      </header>
       {entries.length === 0 ? (
-        <p className="text-sm text-text-tertiary text-center py-2">
-          {t.formatMessage({
-            id: 'sales.reports.top_products_empty'
-          })}
+        <p className="report-card__empty">
+          {t.formatMessage({ id: 'sales.reports.top_products_empty' })}
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="top-products-list">
           {entries.map((entry, idx) => {
             const product = entry.productId ? productById.get(entry.productId) : undefined
             const iconUrl = product ? getProductIconUrl(product) : null
             const widthPct = max > 0 ? Math.max(2, (entry.revenue / max) * 100) : 0
             // productId can be null when the product was deleted post-sale
-            // (sale_items.product_id has onDelete: 'set null'). Use the
-            // index as a tiebreaker so React keys stay unique even if
-            // multiple null-productId rows survive aggregation.
+            // (sale_items.product_id has onDelete: 'set null'). Use idx
+            // as a tiebreaker so React keys stay unique even with multiple
+            // null-productId rows.
             const key = entry.productId ?? `deleted-${idx}-${entry.productName}`
             return (
-              <div key={key} className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <div className="product-list-image flex-shrink-0">
-                    {product ? (
-                      renderIcon(product, iconUrl)
-                    ) : (
-                      <Package className="w-5 h-5 text-text-tertiary" />
-                    )}
-                  </div>
-                  <span className="flex-1 min-w-0 text-sm font-medium truncate">
-                    {entry.productName}
-                  </span>
-                  <span className="text-sm font-semibold tabular-nums flex-shrink-0">
+              <div
+                key={key}
+                className={`top-product-row${idx === 0 ? ' top-product-row--first' : ''}`}
+              >
+                <span className="top-product-row__rank">{idx + 1}</span>
+                <div className="product-list-image top-product-row__icon">
+                  {product ? (
+                    renderIcon(product, iconUrl)
+                  ) : (
+                    <Package className="w-5 h-5 text-text-tertiary" />
+                  )}
+                </div>
+                <span className="top-product-row__name">{entry.productName}</span>
+                <div className="top-product-row__metrics">
+                  <span className="top-product-row__revenue">
                     {formatCurrency(entry.revenue)}
                   </span>
-                  <span className="text-xs text-text-tertiary tabular-nums flex-shrink-0 w-16 text-right">
-                    {t.formatMessage({
-                      id: 'sales.reports.top_products_qty'
-                    }, { count: entry.quantity })}
+                  <span className="top-product-row__qty">
+                    {t.formatMessage(
+                      { id: 'sales.reports.top_products_qty' },
+                      { count: entry.quantity },
+                    )}
                   </span>
                 </div>
-                <div className="ml-[60px]">
-                  <div className="h-1.5 rounded-full bg-brand-subtle overflow-hidden">
-                    <div
-                      className="h-full bg-brand rounded-full"
-                      style={{ width: `${widthPct}%` }}
-                    />
-                  </div>
+                <div className="top-product-row__bar">
+                  <div
+                    className="top-product-row__bar-fill"
+                    style={{ width: `${widthPct}%` }}
+                  />
                 </div>
               </div>
-            );
+            )
           })}
         </div>
       )}
-    </div>
-  );
+    </section>
+  )
 }
 
 function renderIcon(product: Product, iconUrl: string | null) {

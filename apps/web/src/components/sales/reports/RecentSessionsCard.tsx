@@ -1,6 +1,6 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { useState } from 'react'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -8,10 +8,10 @@ import { haptic } from '@/lib/haptics'
 import { SessionHistoryModal } from '@/components/sales/SessionHistoryModal'
 
 /**
- * Up to three most-recent closed sessions. Each row + the "View all"
- * footer link opens the existing SessionHistoryModal at step 0.
- * Drilling directly into a session's detail step would require lifting
- * setSelectedSessionId externally; deferred for v2.
+ * Up to three most-recent closed sessions. Italic Fraunces date,
+ * mono uppercase transaction count, mono total, variance chip
+ * (green when zero, red otherwise). The "View all" footer link and
+ * any row tap opens SessionHistoryModal at step 0.
  */
 export function RecentSessionsCard() {
   const t = useIntl()
@@ -23,74 +23,76 @@ export function RecentSessionsCard() {
 
   return (
     <>
-      <div className="card p-4 space-y-4">
-        <div className="text-sm text-text-secondary">
-          {t.formatMessage({
-            id: 'sales.reports.recent_sessions_title'
-          })}
-        </div>
-        <hr className="border-border" />
+      <section className="report-card">
+        <header className="report-card__header">
+          <span className="report-card__eyebrow">
+            {t.formatMessage({ id: 'sales.reports.recent_sessions_eyebrow' })}
+          </span>
+          <h3 className="report-card__title">
+            {t.formatMessage({ id: 'sales.reports.recent_sessions_title' })}
+          </h3>
+        </header>
         {recent.length === 0 ? (
-          <p className="text-sm text-text-tertiary text-center py-2">
-            {t.formatMessage({
-              id: 'sales.reports.recent_sessions_empty'
-            })}
+          <p className="report-card__empty">
+            {t.formatMessage({ id: 'sales.reports.recent_sessions_empty' })}
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="recent-sessions-list">
             {recent.map((s) => {
               const variance = s.variance ?? 0
-              const varianceColor = variance === 0 ? 'text-success' : 'text-error'
+              const varianceClass =
+                variance === 0
+                  ? 'recent-session-row__variance recent-session-row__variance--zero'
+                  : 'recent-session-row__variance recent-session-row__variance--off'
               return (
                 <button
                   key={s.id}
                   type="button"
+                  className="recent-session-row"
                   onClick={() => {
                     haptic()
                     setHistoryOpen(true)
                   }}
-                  className="w-full text-left rounded-lg border border-border p-3 transition-colors hover:bg-bg-base flex items-center justify-between gap-3"
                 >
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-medium truncate">
+                  <div className="recent-session-row__lead">
+                    <span className="recent-session-row__date">
                       {formatDate(new Date(s.openedAt))}
                     </span>
-                    <span className="text-xs text-text-tertiary tabular-nums">
-                      {t.formatMessage({
-                        id: 'sales.reports.recent_sessions_count'
-                      }, { count: s.salesCount ?? 0 })}
+                    <span className="recent-session-row__count">
+                      {t.formatMessage(
+                        { id: 'sales.reports.recent_sessions_count' },
+                        { count: s.salesCount ?? 0 },
+                      )}
                     </span>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-sm font-semibold tabular-nums">
+                  <div className="recent-session-row__trail">
+                    <span className="recent-session-row__total">
                       {formatCurrency(s.salesTotal ?? 0)}
                     </span>
-                    <span className={`text-xs tabular-nums ${varianceColor}`}>
+                    <span className={varianceClass}>
                       {formatCurrency(variance)}
                     </span>
                   </div>
                 </button>
-              );
+              )
             })}
             <button
               type="button"
+              className="recent-sessions-view-all"
               onClick={() => {
                 haptic()
                 setHistoryOpen(true)
               }}
-              className="w-full text-center text-sm text-brand font-medium py-1"
             >
-              {t.formatMessage({
-                id: 'sales.reports.recent_sessions_view_all'
-              })}
+              {t.formatMessage({ id: 'sales.reports.recent_sessions_view_all' })}
             </button>
           </div>
         )}
-      </div>
+      </section>
       <SessionHistoryModal
         isOpen={historyOpen}
         onClose={() => setHistoryOpen(false)}
       />
     </>
-  );
+  )
 }

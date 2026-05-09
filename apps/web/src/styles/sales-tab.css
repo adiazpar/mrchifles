@@ -540,10 +540,483 @@
   font-weight: 700;
 }
 
-/* ===== Reports page padding ========================================== */
+/* ===== Reports shell ================================================== */
 .sales-reports-shell {
   padding: var(--space-5) var(--space-4) var(--space-6);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+/* ===== Report card — shared chrome for every report tile ============== */
+/* The five report tiles read as pages of a single printed report.
+ * Same shell, same typographic rhythm: mono uppercase eyebrow above
+ * a Fraunces italic title, then the visualization. No card chrome
+ * competing with the data — a quiet hairline border, generous padding,
+ * tabular-nums everywhere a number lives. */
+.report-card {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.report-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.report-card__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.report-card__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.report-card__empty {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  padding: var(--space-4) 0;
+}
+
+.report-card__error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+  font-size: 13px;
+}
+
+.report-card__error-retry {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 0;
+  color: var(--color-error);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Skeleton placeholder while data loads — same chrome shell, animated
+ * cream blocks where the title + visualization will land. */
+.report-skeleton {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.report-skeleton__bar {
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+  animation: report-skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes report-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+/* ===== Daily revenue (7-day bar chart) =============================== */
+.daily-revenue-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+  height: 144px;
+}
+
+.daily-revenue-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.daily-revenue-col__amount {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.daily-revenue-col__amount--current {
+  color: var(--color-brand);
+  font-weight: 700;
+}
+
+.daily-revenue-col__bar-track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding: 4px 0;
+}
+
+.daily-revenue-col__bar {
+  width: 100%;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-sm);
+  transition: height var(--duration-base) ease-out;
+}
+
+.daily-revenue-col__bar--current {
+  background: var(--color-brand);
+}
+
+.daily-revenue-col__bar--empty {
+  height: 3px !important;
+  border-radius: var(--radius-full);
+  opacity: 0.6;
+}
+
+.daily-revenue-col__day {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.daily-revenue-col__day--current {
+  color: var(--color-brand);
+  font-weight: 700;
+}
+
+/* ===== Recent sessions =============================================== */
+.recent-sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.recent-session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.recent-session-row:hover {
+  background-color: var(--color-bg-base);
+  border-color: var(--color-border-hover);
+}
+
+.recent-session-row__lead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.recent-session-row__date {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-session-row__count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.recent-session-row__trail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.recent-session-row__total {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.recent-session-row__variance {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+}
+
+.recent-session-row__variance--zero {
+  color: var(--color-success);
+  background: var(--color-success-subtle);
+}
+
+.recent-session-row__variance--off {
+  color: var(--color-error);
+  background: var(--color-error-subtle);
+}
+
+.recent-sessions-view-all {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  background: transparent;
+  border: 0;
+  text-align: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  width: 100%;
+  margin-top: var(--space-1);
+  transition: background-color var(--duration-fast) ease-out;
+}
+
+.recent-sessions-view-all:hover {
+  background-color: var(--color-brand-subtle);
+}
+
+/* ===== Payment split (donut + legend) ================================ */
+.payment-split-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.payment-split-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.payment-split-legend-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+}
+
+.payment-split-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.payment-split-legend-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-primary);
+}
+
+.payment-split-legend-amount {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.payment-split-legend-pct {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  width: 40px;
+  text-align: right;
+}
+
+/* ===== Top products =================================================== */
+.top-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.top-product-row {
+  display: grid;
+  grid-template-columns: 28px auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.top-product-row__rank {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: right;
+}
+
+.top-product-row--first .top-product-row__rank {
+  color: var(--color-brand);
+}
+
+.top-product-row__icon {
+  flex-shrink: 0;
+}
+
+.top-product-row__name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.top-product-row__metrics {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.top-product-row__revenue {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.top-product-row__qty {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.top-product-row__bar {
+  grid-column: 2 / -1;
+  height: 4px;
+  background: var(--color-brand-subtle);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.top-product-row__bar-fill {
+  height: 100%;
+  background: var(--color-brand);
+  border-radius: var(--radius-full);
+  transition: width var(--duration-base) ease-out;
+}
+
+/* ===== Hourly distribution =========================================== */
+.hourly-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 128px;
+}
+
+.hourly-bar {
+  flex: 1;
+  background: var(--color-bg-muted);
+  border-radius: 2px;
+  min-height: 3px;
+  transition: height var(--duration-base) ease-out;
+}
+
+.hourly-bar--peak {
+  background: var(--color-brand);
+}
+
+.hourly-axis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
 }

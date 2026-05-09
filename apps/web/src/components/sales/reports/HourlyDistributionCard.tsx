@@ -1,6 +1,6 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import type { HourlyEntry } from '@kasero/shared/types/sales-aggregate'
 
 interface HourlyDistributionCardProps {
@@ -8,10 +8,10 @@ interface HourlyDistributionCardProps {
 }
 
 /**
- * 24-bar chart of revenue by hour-of-day, aggregated across the last
- * 7 days (UTC). The hour with the highest total renders in brand color;
- * all others render muted. Hour labels at 12am / 6am / 12pm / 6pm via
- * an aligned 4-column grid below the bar row.
+ * 24-bar histogram of revenue by hour-of-day, aggregated across the
+ * last 7 days (UTC). The peak hour bar renders in terracotta; all
+ * others render in muted cream blocks. Hour labels at 12am / 6am /
+ * 12pm / 6pm via a 4-column mono-uppercase axis row below the bars.
  */
 export function HourlyDistributionCard({ entries }: HourlyDistributionCardProps) {
   const t = useIntl()
@@ -20,54 +20,53 @@ export function HourlyDistributionCard({ entries }: HourlyDistributionCardProps)
   const peakIdx = entries.findIndex((e) => e.total === max && max > 0)
 
   return (
-    <div className="card p-4 space-y-4">
-      <div className="text-sm text-text-secondary">{t.formatMessage({
-        id: 'sales.reports.hourly_title'
-      })}</div>
-      <hr className="border-border" />
+    <section className="report-card">
+      <header className="report-card__header">
+        <span className="report-card__eyebrow">
+          {t.formatMessage({ id: 'sales.reports.hourly_eyebrow' })}
+        </span>
+        <h3 className="report-card__title">
+          {t.formatMessage({ id: 'sales.reports.hourly_title' })}
+        </h3>
+      </header>
       {max === 0 ? (
-        <p className="text-sm text-text-tertiary text-center py-4">
-          {t.formatMessage({
-            id: 'sales.reports.hourly_no_data'
-          })}
+        <p className="report-card__empty">
+          {t.formatMessage({ id: 'sales.reports.hourly_no_data' })}
         </p>
       ) : (
         <>
-          <div className="flex items-end gap-px h-32">
+          <div className="hourly-row">
             {entries.map((e, idx) => {
               const heightPct = max > 0 && e.total > 0 ? (e.total / max) * 100 : 0
               const isPeak = idx === peakIdx
               return (
                 <div
                   key={e.hour}
-                  className={`flex-1 rounded-sm ${
-                    isPeak ? 'bg-brand' : 'bg-bg-muted'
-                  }`}
+                  className={`hourly-bar${isPeak ? ' hourly-bar--peak' : ''}`}
                   style={{
                     height: e.total > 0 ? `${heightPct}%` : '3px',
-                    minHeight: '3px',
                   }}
                   aria-hidden="true"
                 />
               )
             })}
           </div>
-          <div className="grid grid-cols-4 text-xs text-text-tertiary">
-            <span className="text-left">{t.formatMessage({
-              id: 'sales.reports.hourly_label_12am'
-            })}</span>
-            <span className="text-left">{t.formatMessage({
-              id: 'sales.reports.hourly_label_6am'
-            })}</span>
-            <span className="text-left">{t.formatMessage({
-              id: 'sales.reports.hourly_label_12pm'
-            })}</span>
-            <span className="text-left">{t.formatMessage({
-              id: 'sales.reports.hourly_label_6pm'
-            })}</span>
+          <div className="hourly-axis">
+            <span className="text-left">
+              {t.formatMessage({ id: 'sales.reports.hourly_label_12am' })}
+            </span>
+            <span className="text-left">
+              {t.formatMessage({ id: 'sales.reports.hourly_label_6am' })}
+            </span>
+            <span className="text-left">
+              {t.formatMessage({ id: 'sales.reports.hourly_label_12pm' })}
+            </span>
+            <span className="text-left">
+              {t.formatMessage({ id: 'sales.reports.hourly_label_6pm' })}
+            </span>
           </div>
         </>
       )}
-    </div>
-  );
+    </section>
+  )
 }
