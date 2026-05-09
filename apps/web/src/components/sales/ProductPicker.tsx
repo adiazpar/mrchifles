@@ -3,7 +3,6 @@
 import { useIntl } from 'react-intl'
 import Image from '@/lib/Image'
 import { useEffect, useMemo, useState, type MouseEvent } from 'react'
-import { IonButton } from '@ionic/react'
 import { Loader2, Minus, Package, Plus, ScanLine, SearchX, X } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { useProducts } from '@/contexts/products-context'
@@ -135,20 +134,19 @@ export function ProductPicker({ cart }: ProductPickerProps) {
               </button>
             )}
           </label>
-          <IonButton
+          <button
+            type="button"
             className="pos-scan-button"
-            fill="outline"
-            shape="round"
             onClick={openScanner}
             disabled={scanBusy}
             aria-label={t.formatMessage({ id: 'sales.scan_barcode_aria' })}
           >
             {scanBusy ? (
-              <Loader2 className="animate-spin" size={18} />
+              <Loader2 className="animate-spin" size={20} strokeWidth={1.8} />
             ) : (
-              <ScanLine size={18} />
+              <ScanLine size={20} strokeWidth={1.8} />
             )}
-          </IonButton>
+          </button>
           {scanHiddenInput}
         </div>
 

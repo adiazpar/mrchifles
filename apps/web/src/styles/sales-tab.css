@@ -219,26 +219,65 @@
   gap: var(--space-3);
 }
 
-/* ===== Search + scan row inside the POS grid ========================= */
+/* ===== Search + scan row inside the POS grid =========================
+ * Two children share a single baseline: the .app-search bar (which
+ * grows) and a 48x48 scan button. The shared `.app-search` rule in
+ * app.css carries a `margin-top: var(--space-4)` that we reset here so
+ * both children align to the top of the flex row.
+ *
+ * The scan button is a plain <button> (not IonButton) — Ionic's global
+ * `ion-button:not([fill="clear"])` rule has higher specificity than a
+ * single class selector, so any sizing override on `.pos-scan-button`
+ * loses to the pill chrome. A bare button gets us full control. */
 .pos-search-row {
   display: flex;
   gap: var(--space-2);
-  align-items: stretch;
+  align-items: center;
 }
 
 .pos-search-row .app-search {
   flex: 1;
+  margin: 0;
 }
 
 .pos-scan-button {
-  --padding-start: 0;
-  --padding-end: 0;
-  --padding-top: 0;
-  --padding-bottom: 0;
+  flex-shrink: 0;
   width: 48px;
   height: 48px;
-  flex-shrink: 0;
-  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1.5px solid var(--color-brand);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-brand);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out,
+    border-color var(--duration-fast) ease-out;
+}
+
+@media (hover: hover) {
+  .pos-scan-button:hover {
+    background-color: var(--color-brand-subtle);
+  }
+}
+
+.pos-scan-button:active {
+  transform: scale(0.95);
+  background-color: var(--color-brand-subtle);
+}
+
+.pos-scan-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pos-scan-button:disabled:active {
+  transform: none;
 }
 
 /* ===== Product grid + tiles ========================================== */
