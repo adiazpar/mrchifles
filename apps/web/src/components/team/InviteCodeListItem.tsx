@@ -1,7 +1,7 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-import { IonItem, IonLabel } from '@ionic/react'
+import { useIntl } from 'react-intl'
+import { ChevronRight, Mail } from 'lucide-react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { InviteCode, InviteRole } from '@kasero/shared/types'
 
@@ -10,24 +10,45 @@ export interface InviteCodeListItemProps {
   onClick: () => void
 }
 
+/**
+ * Pending invite row — same primitive as TeamMemberListItem. Avatar slot
+ * holds an envelope glyph at 36px (matching the member-row avatar size),
+ * the 6-char code takes the primary line in tracked JetBrains Mono, and
+ * the secondary mono caption reads `ROLE · EXPIRES MM/DD/YYYY`. Tapping
+ * opens the existing InviteModal.
+ */
 export function InviteCodeListItem({ code, onClick }: InviteCodeListItemProps) {
-  const intl = useIntl()
+  const t = useIntl()
   const { formatDate } = useBusinessFormat()
 
   const roleLabels: Record<InviteRole, string> = {
-    partner: intl.formatMessage({ id: 'team.role_partner' }),
-    employee: intl.formatMessage({ id: 'team.role_employee' }),
+    partner: t.formatMessage({ id: 'team.role_partner' }),
+    employee: t.formatMessage({ id: 'team.role_employee' }),
   }
 
   return (
-    <IonItem button detail onClick={onClick}>
-      <IonLabel>
-        <h3 className="font-display font-bold tracking-widest">{code.code}</h3>
-        <p>
-          {roleLabels[code.role]} &middot;{' '}
-          {intl.formatMessage({ id: 'team.invite_expires' }, { date: formatDate(code.expiresAt) })}
-        </p>
-      </IonLabel>
-    </IonItem>
-  );
+    <button type="button" className="tm-roster__row" onClick={onClick}>
+      <span className="tm-roster__avatar" aria-hidden="true">
+        <Mail />
+      </span>
+
+      <span className="tm-roster__row-body">
+        <span className="tm-roster__row-code">{code.code}</span>
+        <span className="tm-roster__row-meta">
+          <span className="tm-roster__row-role">
+            {roleLabels[code.role].toUpperCase()}
+          </span>
+          <span className="tm-roster__row-meta-sep" aria-hidden="true">·</span>
+          <span>
+            {t.formatMessage(
+              { id: 'team.roster.invite_expires_short' },
+              { date: formatDate(code.expiresAt) },
+            )}
+          </span>
+        </span>
+      </span>
+
+      <ChevronRight size={16} className="tm-roster__row-chev" aria-hidden="true" />
+    </button>
+  )
 }

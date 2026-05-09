@@ -759,21 +759,6 @@ export function ProductsView() {
   return (
     <>
       <div className="products-page">
-        {/* Page hero — mono eyebrow + Fraunces italic title with em-accent
-            on the surface noun ("Inventory"). Same vocabulary as the
-            page-hero used on Hub / Manage. */}
-        <header className="products-page-hero">
-          <span className="products-page-hero__eyebrow">
-            {t.formatMessage({ id: 'products.page_eyebrow' })}
-          </span>
-          <h1 className="products-page-hero__title">
-            {t.formatMessage(
-              { id: 'products.page_title' },
-              { em: (chunks) => <em>{chunks}</em> },
-            )}
-          </h1>
-        </header>
-
         {/* Custom pill segmented control — matches the mono uppercase
             tracked vocabulary used elsewhere (tab-bar labels, eyebrows,
             stamp chips). Replaces IonSegment to keep the chrome on-brand. */}

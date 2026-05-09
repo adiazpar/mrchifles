@@ -63,6 +63,18 @@ interface ModalShellProps {
    * IonContent's available space.
    */
   noScroll?: boolean
+  /**
+   * Keep modal contents mounted across open/close cycles. By default
+   * Ionic unmounts modal children when the modal is dismissed (frees
+   * memory), and remounts them on the next present. For Pattern 2
+   * IonNav wizards, that remount fires the root step's iOS-style page
+   * enter animation concurrently with IonModal's slide-up — the two
+   * stacked animations look diagonal. Set this to true to force the
+   * IonNav (and its root step) to stay mounted from the page's first
+   * render. Currently used only by team modals (InviteModal,
+   * MemberModal) where this race was visible.
+   */
+  keepContentsMounted?: boolean
 }
 
 /**
@@ -94,6 +106,7 @@ export function ModalShell({
   noSwipeDismiss = false,
   flushContent = false,
   noScroll = false,
+  keepContentsMounted = false,
 }: ModalShellProps) {
   // Sheet-mode is a property of `breakpoints` AND `initialBreakpoint` BOTH being
   // defined — see @ionic/core modal.js: `isSheetModal = breakpoints !== undefined
@@ -135,6 +148,7 @@ export function ModalShell({
       breakpoints={breakpoints}
       initialBreakpoint={initialBreakpoint}
       handle={showHandle}
+      keepContentsMounted={keepContentsMounted}
     >
       {title !== undefined && (
         <IonHeader>

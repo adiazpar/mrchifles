@@ -3,16 +3,25 @@ import {
   IonPage,
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
   IonBackButton,
-  IonButton,
 } from '@ionic/react'
 import { useInviteNavRef, useInviteCallbacks } from './InviteNavContext'
 import { InviteDeletedSuccessStep } from './InviteDeletedSuccessStep'
 
+/**
+ * Revoke-confirm surface. Oxblood eyebrow, Fraunces italic title with
+ * em-pivot on "invite", then a Fraunces subtitle explaining the
+ * consequences. The code being revoked is shown as a dimmed,
+ * dashed-frame specimen so the user has the chance to spot a wrong
+ * pick before tapping the destructive pill.
+ *
+ * On confirm: call onDeleteCode(); push the success step only when
+ * it returns true. The hook is responsible for surfacing errors back
+ * to the parent — this step does not capture them inline.
+ */
 export function InviteDeleteCodeStep() {
   const t = useIntl()
   const navRef = useInviteNavRef()
@@ -27,28 +36,60 @@ export function InviteDeleteCodeStep() {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
             <IonBackButton defaultHref="" />
           </IonButtons>
-          <IonTitle>{t.formatMessage({ id: 'team.step_delete_code' })}</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        <p className="text-text-secondary">
-          {t.formatMessage({ id: 'team.delete_code_description' }, { code: newCode ?? '' })}
-        </p>
+      <IonContent className="pm-content">
+        <div className="pm-shell">
+          <header className="pm-hero">
+            <span className="pm-hero__eyebrow pm-hero__eyebrow--danger">
+              {t.formatMessage({ id: 'team.invite_v2.eyebrow_delete' })}
+            </span>
+            <h1 className="pm-hero__title pm-hero__title--danger">
+              {t.formatMessage(
+                { id: 'team.invite_v2.title_delete' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+            <p className="pm-hero__subtitle">
+              {t.formatMessage({ id: 'team.invite_v2.subtitle_delete' })}
+            </p>
+          </header>
+
+          {newCode && (
+            <div className="tm-invite__specimen">
+              <span className="tm-invite__specimen-label">
+                {t.formatMessage({ id: 'team.invite_v2.delete_specimen_label' })}
+              </span>
+              <code className="tm-invite__specimen-value">{newCode}</code>
+            </div>
+          )}
+        </div>
       </IonContent>
 
-      <IonFooter>
+      <IonFooter className="pm-footer">
         <IonToolbar>
-          {/* Toolbar back returns to the previous step; footer is destructive only. */}
           <div className="modal-footer">
-            <IonButton color="danger" onClick={handleDelete} disabled={isDeletingCode}>
-              {t.formatMessage({ id: 'common.delete' })}
-            </IonButton>
+            <button
+              type="button"
+              className="tm-invite__danger-pill"
+              onClick={handleDelete}
+              disabled={isDeletingCode}
+            >
+              {isDeletingCode ? (
+                <span
+                  className="order-modal__pill-spinner"
+                  aria-label={t.formatMessage({ id: 'common.loading' })}
+                />
+              ) : (
+                t.formatMessage({ id: 'team.invite_v2.delete_confirm' })
+              )}
+            </button>
           </div>
         </IonToolbar>
       </IonFooter>

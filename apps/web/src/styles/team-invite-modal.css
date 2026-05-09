@@ -1,0 +1,749 @@
+/* ==========================================================================
+   InviteModal — Modern Mercantile chrome
+   ==========================================================================
+   Five-step IonNav stack: role + duration → (optional partner warning) →
+   active code → (optional revoke) → revoked. Reads like a printed
+   member-card stub: mono uppercase eyebrows, Fraunces italic titles,
+   dotted/dashed rules, hairline frames, terracotta brand accents and
+   oxblood for revocation.
+
+   Naming: every class lives under .tm-invite__* (team-invite-) so it
+   never collides with .pm-* (product-modal) or any other surface. Reuses
+   only brand tokens — no hex literals, no gradients. Light + dark
+   handled automatically via the token layer.
+
+   Sections:
+     1. Role + duration step (.tm-invite__role, .tm-invite__duration)
+     2. Role card                 (.tm-invite__role-card)
+     3. Duration chip rail        (.tm-invite__duration-rail)
+     4. Partner warning bullets   (.tm-invite__warning-list)
+     5. Code stamp + QR           (.tm-invite__code-stamp, ...)
+     6. Code action ledger        (.tm-invite__action-row)
+     7. Copy toast                (.tm-invite__toast)
+     8. Revoke specimen           (.tm-invite__specimen)
+     9. Success seal              (.tm-invite__seal)
+     10. Footer pills (oxblood)   (.tm-invite__danger-pill)
+*/
+
+/* ==========================================================================
+   1. Section rule — used between Role and Duration blocks
+   ==========================================================================
+   Mono caption flanked by hairlines. Same vocabulary as .pm-rule but in
+   the .tm-invite namespace so it can be reused without dragging product
+   modal CSS along.
+*/
+
+.tm-invite__rule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-3);
+}
+
+.tm-invite__rule-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-hair);
+}
+
+.tm-invite__rule-caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* ==========================================================================
+   2. Role card — restyled for the Mercantile vocabulary.
+   ==========================================================================
+   Hairline frame on cream paper. Selected state pushes the border to
+   terracotta and tints the background brand-subtle. Title uses Fraunces
+   italic; description is small Geist body for legibility.
+*/
+
+.tm-invite__role-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tm-invite__role-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+@media (hover: hover) {
+  .tm-invite__role-card:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
+}
+
+.tm-invite__role-card:active {
+  transform: translateY(1px);
+}
+
+.tm-invite__role-card:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.tm-invite__role-card[aria-pressed='true'] {
+  border-color: var(--color-brand);
+  background: var(--color-brand-subtle);
+  box-shadow: inset 0 0 0 1px var(--color-brand);
+}
+
+.tm-invite__role-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-hair);
+  color: var(--color-text-secondary);
+  transition:
+    background-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    border-color var(--duration-fast) ease-out;
+}
+
+.tm-invite__role-card[aria-pressed='true'] .tm-invite__role-icon {
+  background: var(--color-bg-surface);
+  border-color: color-mix(in srgb, var(--color-brand) 35%, var(--color-hair));
+  color: var(--color-brand);
+}
+
+.tm-invite__role-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tm-invite__role-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 19px;
+  letter-spacing: -0.012em;
+  line-height: 1.15;
+  color: var(--color-text-primary);
+}
+
+.tm-invite__role-card[aria-pressed='true'] .tm-invite__role-name {
+  color: var(--color-text-primary);
+}
+
+.tm-invite__role-desc {
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.tm-invite__role-tick {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-hair);
+  color: transparent;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out;
+}
+
+.tm-invite__role-card[aria-pressed='true'] .tm-invite__role-tick {
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   3. Duration chip rail — mono uppercase chips. Selected gets a brand
+      tint and inset terracotta hairline, like a stamped pick.
+   ==========================================================================
+*/
+
+.tm-invite__duration {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.tm-invite__duration-rail {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.tm-invite__duration-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--space-3) var(--space-2);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+@media (hover: hover) {
+  .tm-invite__duration-chip:hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+  }
+}
+
+.tm-invite__duration-chip:active {
+  transform: translateY(1px);
+}
+
+.tm-invite__duration-chip:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.tm-invite__duration-chip[aria-pressed='true'] {
+  border-color: var(--color-brand);
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+  box-shadow: inset 0 0 0 1px var(--color-brand);
+}
+
+/* ==========================================================================
+   4. Partner-warning bullets — small ledger of consequences. Mono
+      uppercase label flanked by a Fraunces italic descriptor on each
+      row, with a hairline rule between them like a printed stub.
+   ==========================================================================
+*/
+
+.tm-invite__warning-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid color-mix(in srgb, var(--color-error) 22%, var(--color-hair));
+  border-radius: var(--radius-xl);
+  background: var(--color-error-subtle);
+  overflow: hidden;
+}
+
+.tm-invite__warning-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid color-mix(in srgb, var(--color-error) 18%, transparent);
+}
+
+.tm-invite__warning-row:first-child {
+  border-top: 0;
+}
+
+.tm-invite__warning-tick {
+  flex-shrink: 0;
+  margin-top: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-error) 75%, transparent);
+}
+
+.tm-invite__warning-row--off-limits .tm-invite__warning-tick {
+  background: transparent;
+  border: 1.5px solid color-mix(in srgb, var(--color-error) 60%, transparent);
+}
+
+.tm-invite__warning-text {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--color-error) 85%, var(--color-text-primary));
+}
+
+.tm-invite__warning-row--off-limits .tm-invite__warning-text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  color: color-mix(in srgb, var(--color-error) 90%, var(--color-text-primary));
+}
+
+/* ==========================================================================
+   5. Code stamp — the visual centerpiece of the active-code surface.
+   ==========================================================================
+   Reads like a printed member tag: dashed top + bottom rules, mono
+   uppercase caption above, big tracked code in the middle, hairline
+   frame on cream paper, decorative corner ticks.
+*/
+
+.tm-invite__code-stamp {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-surface);
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Decorative corner ticks — same vocabulary as the barcode ledger frame
+   so the family of "stamped tag" surfaces stays consistent. */
+.tm-invite__code-stamp::before,
+.tm-invite__code-stamp::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--color-hair);
+  border-style: solid;
+  border-width: 0;
+  pointer-events: none;
+}
+
+.tm-invite__code-stamp::before {
+  top: 8px;
+  left: 8px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.tm-invite__code-stamp::after {
+  bottom: 8px;
+  right: 8px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+.tm-invite__code-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0;
+}
+
+.tm-invite__code-rule-line {
+  flex: 1;
+  height: 0;
+  border-top: 1px dashed var(--color-hair);
+}
+
+.tm-invite__code-rule-caption {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* The 6-char invite code itself. JetBrains Mono, big, tracked, tabular
+   so the digits/letters line up across regenerations. */
+.tm-invite__code-value {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  /* Negative right margin compensates for the trailing letter-spacing
+     so the visual block remains optically centered. */
+  padding-left: 0.22em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+.tm-invite__code-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Copy-confirmation toast — small mono caption that flashes inside the
+   stamp when the code is copied. Pulses in via opacity + slight rise. */
+.tm-invite__toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--space-3) * -1);
+  transform: translate(-50%, 0);
+  padding: 4px var(--space-3);
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: tm-invite-toast-in 320ms var(--ease-out-expo) both;
+  box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+  pointer-events: none;
+}
+
+@keyframes tm-invite-toast-in {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* QR card under the stamp — same hairline frame, smaller, with a mono
+   caption so it reads like a paired-stub. */
+.tm-invite__qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+}
+
+.tm-invite__qr-caption {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.tm-invite__qr-frame {
+  width: 132px;
+  height: 132px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.tm-invite__qr-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ==========================================================================
+   6. Action ledger — Copy / Share / Regenerate / Revoke as dotted-leader
+      rows. Same rhythm as .pm-review-row but with a leading icon and
+      adapted to the team-invite namespace. The Revoke row carries
+      oxblood styling.
+   ==========================================================================
+*/
+
+.tm-invite__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) 0 0;
+  border-top: 1px solid var(--color-hair);
+  margin-top: var(--space-2);
+}
+
+.tm-invite__action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-2);
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--duration-fast) ease-out;
+}
+
+@media (hover: hover) {
+  .tm-invite__action-row:hover {
+    background: var(--color-bg-muted);
+  }
+}
+
+.tm-invite__action-row:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.tm-invite__action-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+}
+
+.tm-invite__action-row--danger .tm-invite__action-icon {
+  border-color: color-mix(in srgb, var(--color-error) 30%, var(--color-hair));
+  color: var(--color-error);
+}
+
+.tm-invite__action-row--success .tm-invite__action-icon {
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 30%, var(--color-hair));
+}
+
+.tm-invite__action-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.tm-invite__action-row--danger .tm-invite__action-label {
+  color: var(--color-error);
+}
+
+.tm-invite__action-leader {
+  flex: 1;
+  height: 1em;
+  border-bottom: 1px dotted var(--color-border);
+  opacity: 0.7;
+  align-self: end;
+  margin-bottom: 4px;
+  min-width: 12px;
+}
+
+.tm-invite__action-chev {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+
+.tm-invite__action-row--danger .tm-invite__action-chev {
+  color: var(--color-error);
+  opacity: 0.7;
+}
+
+/* Spinner inline inside an action row's icon slot, used when
+   regenerating. */
+.tm-invite__action-icon--spinning > * {
+  animation: tm-invite-spin 1s linear infinite;
+}
+
+@keyframes tm-invite-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   7. Revoke specimen — dimmer mono code stamp shown on the
+      delete-confirm step. Frames the value being revoked.
+   ==========================================================================
+*/
+
+.tm-invite__specimen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed color-mix(in srgb, var(--color-error) 28%, var(--color-hair));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-error-subtle) 60%, var(--color-paper-warm));
+  align-self: center;
+}
+
+.tm-invite__specimen-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-error) 65%, var(--color-text-tertiary));
+}
+
+.tm-invite__specimen-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  padding-left: 0.20em;
+  color: color-mix(in srgb, var(--color-error) 70%, var(--color-text-primary));
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   8. Success seal — terminal "Revoked" surface. Big circular icon with a
+      hairline ring and an oxblood glyph, mono stamp under it.
+   ==========================================================================
+*/
+
+.tm-invite__seal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-6) var(--space-2);
+  gap: var(--space-3);
+}
+
+.tm-invite__seal-circle {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-error-subtle);
+  border: 1px solid color-mix(in srgb, var(--color-error) 30%, var(--color-hair));
+  color: var(--color-error);
+  animation: tm-invite-seal-in 420ms var(--ease-out-back) both;
+}
+
+@keyframes tm-invite-seal-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.tm-invite__seal-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px var(--space-3);
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-hair);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  animation: tm-invite-stamp-in 320ms var(--ease-out-expo) 200ms both;
+}
+
+@keyframes tm-invite-stamp-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   9. Footer pills — terracotta primary lives in products-modal-orders.css
+      (.order-modal__primary-pill). Add an oxblood danger variant
+      here so the revoke action reads as destructive without coupling to
+      the orders surface.
+   ==========================================================================
+*/
+
+.tm-invite__danger-pill {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 50px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-error);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out,
+    opacity var(--duration-fast) ease-out;
+}
+
+.tm-invite__danger-pill:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 88%, #000);
+}
+
+.tm-invite__danger-pill:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.tm-invite__danger-pill:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ==========================================================================
+   10. Section heading — small mono caption used above Role and Duration
+       blocks within InviteRoleStep. Lives below the .pm-hero so it
+       doubles as a sub-eyebrow, paced tighter than .pm-rule.
+   ==========================================================================
+*/
+
+.tm-invite__section-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-2);
+  display: block;
+}

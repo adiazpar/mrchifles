@@ -8,14 +8,32 @@ import {
   IonContent,
   IonButtons,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
+import { ChevronRight, UserCog, Power, UserMinus } from 'lucide-react'
 import { getUserInitials } from '@kasero/shared/auth'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { UserRole } from '@kasero/shared/types'
 import { useMemberNavRef, useMemberCallbacks } from './MemberNavContext'
 import { MemberRoleChangeStep } from './MemberRoleChangeStep'
+import { MemberPartnerWarningStep } from './MemberPartnerWarningStep'
 import { MemberRemoveStep } from './MemberRemoveStep'
 
+/**
+ * Root of the MemberModal IonNav stack. Pattern:
+ *   - Hero zone: avatar tile, mono uppercase eyebrow ("MEMBER · ACTIVE"),
+ *     Fraunces italic name with the name itself emphasized via <em>, and a
+ *     mono caption beneath ("ROLE · JOINED 04/12/2024 · YOU").
+ *   - Identifier ledger: dotted-leader rows for email, member-since, status.
+ *     Status row's value is preceded by a brand/dim status dot.
+ *   - Action ladder (only when isManageable): primary "CHANGE ROLE" with a
+ *     mono direction stamp showing where this tap leads, secondary status
+ *     toggle with a colored pill on the right ("WILL DISABLE" / "WILL
+ *     ENABLE"), and a demoted oxblood-bordered "REMOVE FROM TEAM" link
+ *     well-separated by a hairline rule with a clarifying caption.
+ *   - Self view footer: italic Fraunces caption pointing to /account.
+ */
 export function MemberDetailsStep() {
   const t = useIntl()
   const navRef = useMemberNavRef()
@@ -27,6 +45,7 @@ export function MemberDetailsStep() {
     canManageTeam,
     callerRole,
     onToggleStatus,
+    setNewRole,
   } = useMemberCallbacks()
 
   const isSelf = member.id === currentUser?.id
@@ -34,144 +53,304 @@ export function MemberDetailsStep() {
   const isManageable =
     canManageTeam && !isSelf && member.role !== 'owner' && !isPartnerOnPartner
 
+  const isActive = member.status === 'active'
+
   const roleLabels: Record<UserRole, string> = {
     owner: t.formatMessage({ id: 'team.role_owner' }),
     partner: t.formatMessage({ id: 'team.role_partner' }),
     employee: t.formatMessage({ id: 'team.role_employee' }),
   }
 
-  const modalTitle = isSelf
-    ? t.formatMessage({ id: 'team.step_your_profile' })
-    : t.formatMessage({ id: 'team.step_manage_member' })
+  const modalTitleId = isSelf
+    ? 'team.member_v2.step_title_self'
+    : 'team.member_v2.step_title_other'
+
+  // Direction the role-change tap will move toward. Employees → Partner
+  // (which routes through the warning step), Partners → Employee (direct
+  // role-change step). Owners aren't manageable; this only renders when
+  // isManageable is true so we know we're looking at employee or partner.
+  const isPromoting = member.role === 'employee'
+  const targetRoleLabel = isPromoting
+    ? t.formatMessage({ id: 'team.role_partner' })
+    : t.formatMessage({ id: 'team.role_employee' })
+
+  // Email mask: full address for the current user, partial mask otherwise
+  // so a manager can identify which inbox got the invite without leaking
+  // the rest of the team's contact details.
+  const maskedEmail = (() => {
+    if (!member.email) return ''
+    if (isSelf) return member.email
+    const [local, domain] = member.email.split('@')
+    if (!domain) return member.email
+    return `****${local.slice(-4)}@${domain}`
+  })()
+
+  const handleChangeRole = () => {
+    // Pre-set the proposed direction on the form so the role-change /
+    // warning step opens with the right radio selected, then push.
+    setNewRole(isPromoting ? 'partner' : 'employee')
+    if (isPromoting) {
+      navRef.current?.push(() => <MemberPartnerWarningStep />)
+    } else {
+      navRef.current?.push(() => <MemberRoleChangeStep />)
+    }
+  }
+
+  const handleRemove = () => {
+    navRef.current?.push(() => <MemberRemoveStep />)
+  }
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="pm-header">
         <IonToolbar>
-          <IonTitle>{modalTitle}</IonTitle>
+          <IonTitle>{t.formatMessage({ id: modalTitleId })}</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={onClose}>{t.formatMessage({ id: 'common.close' })}</IonButton>
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
+            </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        {/* Member header */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="avatar w-11 h-11 text-sm overflow-hidden">
-            {member.avatar ? (
-              <img
-                src={member.avatar}
-                alt=""
-                className="w-11 h-11 rounded-full object-cover"
-              />
-            ) : (
-              getUserInitials(member.name)
+      <IonContent className="pm-content">
+        <div className="pm-shell">
+          {/* Hero — avatar + eyebrow + Fraunces italic name + mono caption. */}
+          <header className="tm-member__hero">
+            <div className="tm-member__avatar">
+              {member.avatar ? (
+                <img src={member.avatar} alt="" />
+              ) : (
+                getUserInitials(member.name)
+              )}
+            </div>
+            <div className="tm-member__hero-text">
+              <span
+                className={
+                  isActive
+                    ? 'tm-member__hero-eyebrow'
+                    : 'tm-member__hero-eyebrow tm-member__hero-eyebrow--inactive'
+                }
+              >
+                <span>{t.formatMessage({ id: 'team.member_v2.eyebrow_member' })}</span>
+                <span className="tm-member__hero-eyebrow-mark">·</span>
+                <span className="tm-member__hero-eyebrow-state">
+                  {t.formatMessage({
+                    id: isActive
+                      ? 'team.member_v2.eyebrow_state_active'
+                      : 'team.member_v2.eyebrow_state_inactive',
+                  })}
+                </span>
+              </span>
+              <h1 className="tm-member__hero-name">
+                {/* User-entered content — never translated. The italic
+                    word in the headline IS the member's name. */}
+                <em>{member.name}</em>
+              </h1>
+              <span className="tm-member__hero-meta">
+                <span className="tm-member__hero-meta-role">
+                  {roleLabels[member.role]}
+                </span>
+                <span className="tm-member__hero-meta-dot">·</span>
+                <span>
+                  {t.formatMessage(
+                    { id: 'team.member_v2.joined_caption' },
+                    { date: formatDate(member.createdAt) },
+                  )}
+                </span>
+                {isSelf && (
+                  <>
+                    <span className="tm-member__hero-meta-dot">·</span>
+                    <span className="tm-member__hero-meta-self">
+                      {t.formatMessage({ id: 'team.member_v2.you_marker' })}
+                    </span>
+                  </>
+                )}
+              </span>
+            </div>
+          </header>
+
+          {/* Identifier ledger — dotted-leader rows for the contact card. */}
+          <div className="pm-review__ledger" role="list">
+            {member.email && (
+              <div className="pm-review-row" role="listitem">
+                <span className="pm-review-row__label">
+                  {t.formatMessage({ id: 'team.email_label' })}
+                </span>
+                <span className="pm-review-row__leader" aria-hidden="true" />
+                <span className="pm-review-row__value pm-review-row__value--mono">
+                  {maskedEmail}
+                </span>
+              </div>
             )}
-          </div>
-          <div>
-            <h3 className="font-display font-bold text-lg">{member.name}</h3>
-            <div className="text-xs text-text-tertiary mt-0.5">
-              {roleLabels[member.role]}
-              <span className="mx-1.5">·</span>
-              <span className={member.status === 'active' ? 'text-success' : 'text-error'}>
-                {member.status === 'active'
-                  ? t.formatMessage({ id: 'team.status_active' })
-                  : t.formatMessage({ id: 'team.status_disabled' })}
+            <div className="pm-review-row" role="listitem">
+              <span className="pm-review-row__label">
+                {t.formatMessage({ id: 'team.member_since_label' })}
+              </span>
+              <span className="pm-review-row__leader" aria-hidden="true" />
+              <span className="pm-review-row__value pm-review-row__value--mono">
+                {formatDate(member.createdAt)}
+              </span>
+            </div>
+            <div className="pm-review-row" role="listitem">
+              <span className="pm-review-row__label">
+                {t.formatMessage({ id: 'team.member_v2.status_label' })}
+              </span>
+              <span className="pm-review-row__leader" aria-hidden="true" />
+              <span className="pm-review-row__value pm-review-row__value--mono">
+                <span className="tm-member__status-value">
+                  <span
+                    className={
+                      isActive
+                        ? 'tm-member__status-dot'
+                        : 'tm-member__status-dot tm-member__status-dot--inactive'
+                    }
+                    aria-hidden="true"
+                  />
+                  {t.formatMessage({
+                    id: isActive
+                      ? 'team.status_active'
+                      : 'team.status_disabled',
+                  })}
+                </span>
               </span>
             </div>
           </div>
-        </div>
 
-        {/* Member details */}
-        <div className="space-y-3 p-4 bg-bg-muted rounded-lg mb-4">
-          {member.email && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-text-secondary">{t.formatMessage({ id: 'team.email_label' })}</span>
-              <span className="text-sm font-medium">
-                {isSelf
-                  ? member.email
-                  : `****${member.email.split('@')[0].slice(-4)}@${member.email.split('@')[1]}`}
-              </span>
+          {/* Action ladder — only when this user can be managed. */}
+          {isManageable && (
+            <>
+              <div className="tm-member__rule" aria-hidden="true">
+                <span className="tm-member__rule-line" />
+                <span className="tm-member__rule-caption">
+                  {t.formatMessage({ id: 'team.member_v2.actions_caption' })}
+                </span>
+                <span className="tm-member__rule-line" />
+              </div>
+
+              <div className="tm-member__actions">
+                {/* Primary — Change role. Mono direction stamp + chevron. */}
+                <button
+                  type="button"
+                  className="tm-member__action tm-member__action--brand"
+                  onClick={handleChangeRole}
+                >
+                  <span className="tm-member__action-icon">
+                    <UserCog size={18} strokeWidth={1.7} />
+                  </span>
+                  <span className="tm-member__action-body">
+                    <span className="tm-member__action-label">
+                      {t.formatMessage({ id: 'team.member_v2.action_change_role' })}
+                    </span>
+                    <span className="tm-member__action-direction">
+                      <span className="tm-member__action-direction-arrow">{'->'}</span>
+                      <span>{targetRoleLabel.toUpperCase()}</span>
+                    </span>
+                  </span>
+                  <ChevronRight
+                    size={16}
+                    className="tm-member__action-chev"
+                    aria-hidden="true"
+                  />
+                </button>
+
+                {/* Secondary — Disable / Enable. Pill on the right edge. */}
+                <button
+                  type="button"
+                  className={
+                    isActive
+                      ? 'tm-member__action tm-member__action--warning'
+                      : 'tm-member__action tm-member__action--success'
+                  }
+                  onClick={onToggleStatus}
+                >
+                  <span className="tm-member__action-icon">
+                    <Power size={18} strokeWidth={1.7} />
+                  </span>
+                  <span className="tm-member__action-body">
+                    <span className="tm-member__action-label">
+                      {t.formatMessage({
+                        id: isActive
+                          ? 'team.member_v2.action_disable_label'
+                          : 'team.member_v2.action_enable_label',
+                      })}
+                    </span>
+                    <span className="tm-member__action-value">
+                      {t.formatMessage({
+                        id: isActive
+                          ? 'team.member_v2.action_disable_value'
+                          : 'team.member_v2.action_enable_value',
+                      })}
+                    </span>
+                  </span>
+                  <span
+                    className={
+                      isActive
+                        ? 'tm-member__action-pill tm-member__action-pill--warn'
+                        : 'tm-member__action-pill tm-member__action-pill--restore'
+                    }
+                  >
+                    {t.formatMessage({
+                      id: isActive
+                        ? 'team.member_v2.action_disable_pill'
+                        : 'team.member_v2.action_enable_pill',
+                    })}
+                  </span>
+                </button>
+              </div>
+
+              {/* Disabled-account explanatory note. */}
+              {!isActive && (
+                <div className="tm-member__disabled-note" role="note">
+                  <span className="tm-member__disabled-note-mark">
+                    {t.formatMessage({ id: 'team.member_v2.note_marker' })}
+                  </span>
+                  <span className="tm-member__disabled-note-body">
+                    {t.formatMessage({ id: 'team.disabled_cannot_sign_in' })}
+                  </span>
+                </div>
+              )}
+
+              {/* Demoted destructive link — well-separated, intentionally subdued. */}
+              <div className="tm-member__danger">
+                <button
+                  type="button"
+                  className="tm-member__danger-link"
+                  onClick={handleRemove}
+                >
+                  <UserMinus size={14} strokeWidth={1.8} aria-hidden="true" />
+                  <span>{t.formatMessage({ id: 'team.member_v2.remove_link' })}</span>
+                </button>
+                <p className="tm-member__danger-caption">
+                  {t.formatMessage({ id: 'team.member_v2.remove_link_caption' })}
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Self view footer — point to /account for self-management. */}
+          {isSelf && (
+            <div className="tm-member__self-footer">
+              <p className="tm-member__self-footer-text">
+                {t.formatMessage({ id: 'team.member_v2.self_footer_prose' })}
+              </p>
+              <Link
+                to="/account"
+                className="tm-member__self-footer-link"
+                onClick={onClose}
+              >
+                <span>
+                  {t.formatMessage({ id: 'team.member_v2.self_footer_link' })}
+                </span>
+                <ChevronRight size={12} strokeWidth={2} aria-hidden="true" />
+              </Link>
             </div>
           )}
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-text-secondary">{t.formatMessage({ id: 'team.member_since_label' })}</span>
-            <span className="text-sm font-medium">
-              {formatDate(member.createdAt)}
-            </span>
-          </div>
         </div>
-
-        {isManageable && (
-          <div className="space-y-3">
-            {/* Change role button */}
-            <IonButton
-              fill="outline"
-              expand="block"
-              onClick={() => navRef.current?.push(() => <MemberRoleChangeStep />)}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span>{t.formatMessage({ id: 'team.change_role_button' })}</span>
-            </IonButton>
-
-            {/* Toggle status button */}
-            <IonButton
-              fill={member.status === 'active' ? 'clear' : 'outline'}
-              color={member.status === 'active' ? 'danger' : undefined}
-              expand="block"
-              onClick={onToggleStatus}
-            >
-              {member.status === 'active' ? (
-                <>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
-                  <span>{t.formatMessage({ id: 'team.disable_account_button' })}</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{t.formatMessage({ id: 'team.enable_account_button' })}</span>
-                </>
-              )}
-            </IonButton>
-
-            {/* Remove from business button */}
-            <IonButton
-              fill="clear"
-              color="danger"
-              expand="block"
-              onClick={() => navRef.current?.push(() => <MemberRemoveStep />)}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H22M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span>{t.formatMessage({ id: 'team.remove_member_button' })}</span>
-            </IonButton>
-
-            {/* Status explanation */}
-            {member.status === 'disabled' && (
-              <p className="text-xs text-text-tertiary">
-                {t.formatMessage({ id: 'team.disabled_cannot_sign_in' })}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Self view hint */}
-        {isSelf && (
-          <p className="text-xs text-text-tertiary text-center mt-4">
-            {t.formatMessage({ id: 'team.account_settings_hint' })}{' '}
-            <Link to="/account" className="text-brand hover:underline">
-              {t.formatMessage({ id: 'team.account_settings_link' })}
-            </Link>.
-          </p>
-        )}
       </IonContent>
     </IonPage>
   )

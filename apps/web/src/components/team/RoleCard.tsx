@@ -1,5 +1,7 @@
 'use client'
 
+import { Check } from 'lucide-react'
+
 export interface RoleCardProps {
   icon: React.ReactNode
   title: string
@@ -8,28 +10,34 @@ export interface RoleCardProps {
   onClick: () => void
 }
 
+/**
+ * Mercantile-vocab role card. Hairline frame on cream paper, Fraunces
+ * italic role name, Geist body description, mono uppercase tick on the
+ * trailing edge. Selected state pushes the border to terracotta and
+ * tints the background brand-subtle.
+ *
+ * Used inside InviteRoleStep (and any future role-pick surface). Acts
+ * as a visual radio button — `aria-pressed` carries the selected state
+ * for assistive tech.
+ */
 export function RoleCard({ icon, title, description, selected, onClick }: RoleCardProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left w-full ${
-        selected
-          ? 'border-brand bg-bg-elevated'
-          : 'border-border hover:border-brand-300'
-      }`}
+      aria-pressed={selected}
+      className="tm-invite__role-card"
     >
-      <div className="product-list-image">
-        <span className={selected ? 'text-brand' : 'text-text-tertiary'}>
-          {icon}
-        </span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <span className="block font-semibold text-text-primary">{title}</span>
-        <span className="block text-sm text-text-tertiary leading-tight mt-0.5">
-          {description}
-        </span>
-      </div>
+      <span className="tm-invite__role-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="tm-invite__role-body">
+        <span className="tm-invite__role-name">{title}</span>
+        <span className="tm-invite__role-desc">{description}</span>
+      </span>
+      <span className="tm-invite__role-tick" aria-hidden="true">
+        <Check size={12} strokeWidth={3} />
+      </span>
     </button>
   )
 }

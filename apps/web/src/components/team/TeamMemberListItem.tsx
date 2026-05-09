@@ -1,7 +1,7 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-import { IonItem, IonLabel, IonNote } from '@ionic/react'
+import { useIntl } from 'react-intl'
+import { ChevronRight } from 'lucide-react'
 import { getUserInitials } from '@kasero/shared/auth'
 import type { TeamMember } from '@/hooks/useTeamManagement'
 import type { UserRole } from '@kasero/shared/types'
@@ -12,52 +12,65 @@ export interface TeamMemberListItemProps {
   onClick: () => void
 }
 
+/**
+ * Single ledger row in the unified roster.
+ *
+ * Layout: 36px avatar (initials or photo) → italic Fraunces name on the
+ * top line → mono uppercase caption on the bottom line in the form
+ * `ROLE [· YOU] [· DISABLED]` → trailing chevron. The owner role token is
+ * rendered in terracotta; everyone else stays in muted tertiary ink. The
+ * whole row dims to 0.55 opacity when the member is disabled.
+ */
 export function TeamMemberListItem({ member, isSelf, onClick }: TeamMemberListItemProps) {
-  const intl = useIntl()
+  const t = useIntl()
 
   const roleLabels: Record<UserRole, string> = {
-    owner: intl.formatMessage({ id: 'team.role_owner' }),
-    partner: intl.formatMessage({ id: 'team.role_partner' }),
-    employee: intl.formatMessage({ id: 'team.role_employee' }),
+    owner: t.formatMessage({ id: 'team.role_owner' }),
+    partner: t.formatMessage({ id: 'team.role_partner' }),
+    employee: t.formatMessage({ id: 'team.role_employee' }),
   }
 
+  const isInactive = member.status !== 'active'
+  const isOwner = member.role === 'owner'
+
+  const rowClass = isInactive
+    ? 'tm-roster__row tm-roster__row--inactive'
+    : 'tm-roster__row'
+
+  const roleClass = isOwner
+    ? 'tm-roster__row-role tm-roster__row-role--owner'
+    : 'tm-roster__row-role'
+
   return (
-    <IonItem button detail onClick={onClick}>
-      {/* Avatar */}
-      <div
-        slot="start"
-        className="w-10 h-10 rounded-full bg-brand-subtle flex items-center justify-center flex-shrink-0 overflow-hidden"
-      >
+    <button type="button" className={rowClass} onClick={onClick}>
+      <span className="tm-roster__avatar" aria-hidden="true">
         {member.avatar ? (
-          <img
-            src={member.avatar}
-            alt=""
-            className="w-10 h-10 rounded-full object-cover"
-          />
+          <img src={member.avatar} alt="" />
         ) : (
-          <span className="text-sm font-bold text-brand">
-            {getUserInitials(member.name)}
-          </span>
+          <span>{getUserInitials(member.name)}</span>
         )}
-      </div>
-      {/* Info */}
-      <IonLabel>
-        <h3>
-          {member.name}
+      </span>
+
+      <span className="tm-roster__row-body">
+        <span className="tm-roster__row-name">{member.name}</span>
+        <span className="tm-roster__row-meta">
+          <span className={roleClass}>{roleLabels[member.role].toUpperCase()}</span>
           {isSelf && (
-            <span className="text-xs text-text-tertiary ml-2">
-              {intl.formatMessage({ id: 'team.member_you_label' })}
-            </span>
+            <>
+              <span className="tm-roster__row-meta-sep" aria-hidden="true">·</span>
+              <span>{t.formatMessage({ id: 'team.roster.you_label' }).toUpperCase()}</span>
+            </>
           )}
-        </h3>
-        <p>{roleLabels[member.role]}</p>
-      </IonLabel>
-      {/* Status */}
-      <IonNote slot="end" className={member.status === 'active' ? 'text-success' : 'text-error'}>
-        {member.status === 'active'
-          ? intl.formatMessage({ id: 'team.status_active' })
-          : intl.formatMessage({ id: 'team.status_disabled' })}
-      </IonNote>
-    </IonItem>
-  );
+          {isInactive && (
+            <>
+              <span className="tm-roster__row-meta-sep" aria-hidden="true">·</span>
+              <span>{t.formatMessage({ id: 'team.status_disabled' }).toUpperCase()}</span>
+            </>
+          )}
+        </span>
+      </span>
+
+      <ChevronRight size={16} className="tm-roster__row-chev" aria-hidden="true" />
+    </button>
+  )
 }

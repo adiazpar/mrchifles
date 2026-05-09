@@ -1,0 +1,701 @@
+/* ==========================================================================
+   MemberModal — Modern Mercantile redesign
+   ==========================================================================
+   The four-step IonNav stack the team-management surfaces use to view + edit
+   one member: details (root) → role-change OR partner-warning OR remove. The
+   chrome reads like a stamped employee card — terracotta leading rule, mono
+   uppercase eyebrow, Fraunces italic name with the member emphasized as the
+   italic word, dotted-leader ledger rows for identifiers, and an action
+   ladder where role + status sit on equal footing and removal is
+   intentionally demoted.
+
+   Naming: every class lives under .tm-member-* (team-member-) to stay clear
+   of every other surface's vocabulary. Reuses .pm-* primitives where the
+   product-modal redesign already nailed the rhythm (`.pm-shell`, `.pm-hero`,
+   `.pm-review__ledger`, `.pm-review-row`, `.pm-error`, `.pm-content`,
+   `.pm-header`, `.pm-footer`) — only the member-specific surfaces below add
+   bespoke chrome.
+
+   Sections:
+     1. Hero — avatar tile, eyebrow, italic name, role/joined caption
+     2. Identifier ledger — status row + status dot variant
+     3. Action ladder — primary, secondary toggle, demoted destructive link
+     4. Self view footer — "Manage your account in Settings" caption
+     5. Consequence ledger — partner warning + removal specimen
+     6. Footer pills — terracotta primary, oxblood danger, ghost back link
+*/
+
+/* ==========================================================================
+   1. Hero — avatar tile, eyebrow, italic name, role/joined caption
+   ========================================================================== */
+
+/* Wraps the hero zone so the avatar tile can sit centered above the
+ * eyebrow + Fraunces title rhythm. Uses .pm-hero as the typographic
+ * baseline; only the avatar tile + role caption are bespoke here. */
+.tm-member__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0 var(--space-1);
+  text-align: center;
+}
+
+.tm-member__avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-hair);
+  overflow: hidden;
+  color: var(--color-brand);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.04);
+}
+
+.tm-member__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Title block sits centered under the avatar. Reuses .pm-hero typography
+ * but center-aligns and tightens the gap. */
+.tm-member__hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.tm-member__hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+.tm-member__hero-eyebrow::before,
+.tm-member__hero-eyebrow::after {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.tm-member__hero-eyebrow--inactive {
+  color: var(--color-text-tertiary);
+}
+
+.tm-member__hero-eyebrow--inactive::before,
+.tm-member__hero-eyebrow--inactive::after {
+  background: var(--color-text-tertiary);
+}
+
+.tm-member__hero-eyebrow-mark {
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.tm-member__hero-eyebrow-state {
+  color: var(--color-brand);
+  letter-spacing: 0.18em;
+}
+
+.tm-member__hero-eyebrow--inactive .tm-member__hero-eyebrow-state {
+  color: var(--color-text-tertiary);
+}
+
+.tm-member__hero-name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 70;
+  font-weight: 400;
+  font-size: 30px;
+  letter-spacing: -0.022em;
+  line-height: 1.06;
+  color: var(--color-text-primary);
+  margin: 0;
+  word-break: break-word;
+  max-width: 22ch;
+}
+
+.tm-member__hero-name em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+
+/* Mono caption directly under the name: ROLE · JOINED 04/12/2024 (· YOU). */
+.tm-member__hero-meta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tm-member__hero-meta-role {
+  color: var(--color-text-secondary);
+  letter-spacing: 0.18em;
+}
+
+.tm-member__hero-meta-dot {
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.tm-member__hero-meta-self {
+  color: var(--color-brand);
+  letter-spacing: 0.20em;
+}
+
+/* ==========================================================================
+   2. Identifier ledger — status row + status dot variant
+   ==========================================================================
+   The identifier ledger reuses .pm-review__ledger + .pm-review-row from
+   products-modal-add-edit.css. The only bespoke piece is the status dot
+   that prefixes the ACTIVE / DISABLED value — the roster page no longer
+   uses dots in its rows, so the dot lives only here in the member modal.
+*/
+
+.tm-member__status-value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tm-member__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 14%, transparent);
+  flex-shrink: 0;
+}
+
+.tm-member__status-dot--inactive {
+  background: var(--color-text-tertiary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-text-tertiary) 14%, transparent);
+}
+
+/* Disabled-account explanatory caption — rendered inline beneath the
+ * action ladder when the member is disabled. Italic Fraunces with a mono
+ * "NOTE" lead so it reads like a printed annotation. */
+.tm-member__disabled-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
+  border: 1px dashed var(--color-hair);
+  background: var(--color-paper-warm);
+  border-radius: var(--radius-lg);
+  margin-top: var(--space-2);
+}
+
+.tm-member__disabled-note-mark {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  padding-top: 1px;
+}
+
+.tm-member__disabled-note-body {
+  flex: 1;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* ==========================================================================
+   3. Action ladder — primary, secondary toggle, demoted destructive link
+   ==========================================================================
+   Three strata of decreasing visual weight, all cream paper hairline cards
+   first, then the destructive removal link at the very bottom rendered as
+   a thin oxblood-bordered chip so it never dominates the page.
+*/
+
+.tm-member__rule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 var(--space-2);
+}
+
+.tm-member__rule-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-hair);
+}
+
+.tm-member__rule-caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.tm-member__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Primary + secondary action share the same chassis: hairline cream card
+ * with a leading icon, mono uppercase label, italic Fraunces value
+ * (the "→ PARTNER" direction or the status pill), trailing chevron. */
+.tm-member__action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+@media (hover: hover) {
+  .tm-member__action:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
+}
+
+.tm-member__action:active {
+  transform: translateY(1px);
+}
+
+.tm-member__action:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.tm-member__action-icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-hair);
+  color: var(--color-text-secondary);
+}
+
+.tm-member__action--brand .tm-member__action-icon {
+  background: var(--color-brand-subtle);
+  border-color: color-mix(in srgb, var(--color-brand) 32%, var(--color-hair));
+  color: var(--color-brand);
+}
+
+.tm-member__action--warning .tm-member__action-icon {
+  background: var(--color-warning-subtle);
+  border-color: color-mix(in srgb, var(--color-warning) 32%, var(--color-hair));
+  color: var(--color-warning);
+}
+
+.tm-member__action--success .tm-member__action-icon {
+  background: var(--color-success-subtle);
+  border-color: color-mix(in srgb, var(--color-success) 32%, var(--color-hair));
+  color: var(--color-success);
+}
+
+.tm-member__action-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tm-member__action-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.tm-member__action-value {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+/* Mono direction stamp inside the primary action — "→ PARTNER" / "→ EMPLOYEE". */
+.tm-member__action-direction {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.tm-member__action-direction-arrow {
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+/* Status pill on the right edge of the toggle action.
+ *  active   → terracotta filled pill ("WILL DISABLE")
+ *  disabled → moss outline pill     ("WILL ENABLE") */
+.tm-member__action-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--color-hair);
+  background: var(--color-paper-warm);
+  color: var(--color-text-secondary);
+}
+
+.tm-member__action-pill--warn {
+  border-color: color-mix(in srgb, var(--color-warning) 32%, var(--color-hair));
+  color: var(--color-warning);
+  background: var(--color-warning-subtle);
+}
+
+.tm-member__action-pill--restore {
+  border-color: color-mix(in srgb, var(--color-success) 32%, var(--color-hair));
+  color: var(--color-success);
+  background: var(--color-success-subtle);
+}
+
+.tm-member__action-chev {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  transition: color var(--duration-fast) ease-out, transform var(--duration-fast) ease-out;
+}
+
+.tm-member__action:hover .tm-member__action-chev {
+  color: var(--color-brand);
+  transform: translateX(2px);
+}
+
+/* Demoted destructive link — sits below a generous gap, rendered as a
+ * thin oxblood-bordered chip with a small clarifying caption underneath.
+ * Intentionally subdued so the page never reads "remove first". */
+.tm-member__danger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px dotted var(--color-border);
+}
+
+.tm-member__danger-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px var(--space-4);
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--color-error) 28%, var(--color-hair));
+  background: transparent;
+  color: var(--color-error);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    border-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+@media (hover: hover) {
+  .tm-member__danger-link:hover {
+    background: var(--color-error-subtle);
+    border-color: color-mix(in srgb, var(--color-error) 50%, var(--color-hair));
+  }
+}
+
+.tm-member__danger-link:active {
+  transform: translateY(1px);
+}
+
+.tm-member__danger-caption {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 12.5px;
+  color: var(--color-text-tertiary);
+  line-height: 1.4;
+  text-align: center;
+  max-width: 32ch;
+  margin: 0;
+}
+
+/* ==========================================================================
+   4. Self view footer — "Manage your account in Settings" caption
+   ========================================================================== */
+
+.tm-member__self-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px dotted var(--color-border);
+}
+
+.tm-member__self-footer-text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  text-align: center;
+  margin: 0;
+  max-width: 30ch;
+}
+
+.tm-member__self-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  text-decoration: none;
+  padding: 6px var(--space-3);
+  border-radius: var(--radius-full);
+  transition: background-color var(--duration-fast) ease-out;
+}
+
+.tm-member__self-footer-link:hover {
+  background: var(--color-brand-subtle);
+}
+
+/* ==========================================================================
+   5. Consequence ledger — partner warning + removal specimen
+   ==========================================================================
+   Used by MemberPartnerWarningStep + MemberRemoveStep to lay down 3-4
+   bullet consequences in a stamped ledger frame, with a small specimen
+   card showing exactly which member is being acted on (avatar + name +
+   role chip). Mirrors the .pm-delete vocabulary's concept (oxblood-tinted
+   panel + bullet rows) but stays cream paper for promotion warnings.
+*/
+
+.tm-member__consequences {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+}
+
+.tm-member__consequences--danger {
+  border-color: color-mix(in srgb, var(--color-error) 22%, var(--color-hair));
+  background: var(--color-error-subtle);
+}
+
+.tm-member__consequences-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-1);
+}
+
+.tm-member__consequences--danger .tm-member__consequences-eyebrow {
+  color: color-mix(in srgb, var(--color-error) 70%, var(--color-text-tertiary));
+}
+
+.tm-member__consequences-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tm-member__consequences-bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.tm-member__consequences-bullet::before {
+  content: "";
+  flex-shrink: 0;
+  margin-top: 9px;
+  width: 8px;
+  height: 1px;
+  background: var(--color-brand);
+  opacity: 0.85;
+}
+
+.tm-member__consequences--danger .tm-member__consequences-bullet {
+  color: color-mix(in srgb, var(--color-error) 78%, var(--color-text-primary));
+}
+
+.tm-member__consequences--danger .tm-member__consequences-bullet::before {
+  background: var(--color-error);
+}
+
+/* Trailing exception line — for the partner warning's "Cannot delete the
+ * business or transfer ownership". Italic Fraunces lead-in. */
+.tm-member__consequences-bullet--exception {
+  color: var(--color-text-tertiary);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 13px;
+}
+
+.tm-member__consequences-bullet--exception::before {
+  background: var(--color-text-tertiary);
+  opacity: 0.6;
+}
+
+/* Specimen card — small avatar + name + role chip showing the member
+ * the action targets. Used inside MemberRemoveStep so the destructive
+ * action is unambiguous. */
+.tm-member__specimen {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+}
+
+.tm-member__specimen-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-hair);
+  color: var(--color-brand);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 17px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.tm-member__specimen-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tm-member__specimen-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tm-member__specimen-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.tm-member__specimen-role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* Footer buttons use the canonical .modal-footer + IonButton pattern from
+   app.css — the same shape and sizing the add-product modal uses. No
+   bespoke pill rules live here. */

@@ -1,0 +1,315 @@
+/* ==========================================================================
+   Team roster — Modern Mercantile (unified)
+   ==========================================================================
+   The page is built on one row primitive (.tm-roster__row) used for owner,
+   active members, inactive members, and pending invites alike. Variation
+   comes from a single mono caption line (ROLE · YOU · DISABLED · EXPIRES …)
+   and an opacity dim for inactive rows. The page eyebrow keeps the tracked
+   tick + label vocabulary; nothing else on the page repeats it.
+
+   Sections:
+     1. Page shell + hero band (with manager Invite pill)
+     2. Section label + ledger frame (used by roster + pending lists)
+     3. Unified row primitive (avatar + body + chevron)
+     4. Loading + error frames
+*/
+
+/* ==========================================================================
+   1. Page shell + hero band
+   ========================================================================== */
+
+.tm-roster {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-4) var(--space-8);
+}
+
+.tm-roster__hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  padding: var(--space-2) 0 var(--space-1);
+}
+
+.tm-roster__hero-text {
+  flex: 1 1 18rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Invite pill — terracotta primary, mono uppercase label. The only pill
+   on the page; section labels, role markers, and rows do not repeat the
+   shape. */
+.tm-roster__invite-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-brand);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+.tm-roster__invite-pill:hover:not(:disabled) {
+  background: var(--color-brand-hover);
+}
+
+.tm-roster__invite-pill:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.tm-roster__invite-pill svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.4;
+}
+
+/* Solo-owner empty hint — italic line only, no dashed frame. Surfaces
+ * when the roster has just the owner and zero pending invites. */
+.tm-roster__solo-hint {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.tm-roster__solo-hint em {
+  font-style: italic;
+  color: var(--color-brand);
+}
+
+/* ==========================================================================
+   2. Section label + ledger frame
+   ========================================================================== */
+
+.tm-roster__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Bare mono label — no leading tick, no trailing rule. The page eyebrow
+   carries the tracked-tick vocabulary; section labels stay quiet. */
+.tm-roster__section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tm-roster__section-eyebrow-count {
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.tm-roster__section-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--color-hair);
+  border-bottom: 1px solid var(--color-hair);
+  background: transparent;
+}
+
+/* ==========================================================================
+   3. Unified row primitive — used by members AND invites
+   ========================================================================== */
+
+.tm-roster__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-2);
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+@media (hover: hover) {
+  .tm-roster__row:hover {
+    background: var(--color-bg-muted);
+  }
+}
+
+.tm-roster__row:active {
+  transform: translateY(1px);
+}
+
+.tm-roster__row + .tm-roster__row {
+  border-top: 1px dotted var(--color-border);
+}
+
+.tm-roster__row--inactive {
+  opacity: 0.55;
+}
+
+/* Avatar slot — 36px target for initials, photos, and the envelope glyph
+   used by pending invites. Equal hierarchy across the board. */
+.tm-roster__avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-brand-subtle);
+  border: 1px solid var(--color-hair);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--color-brand);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.tm-roster__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tm-roster__avatar svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.8;
+}
+
+.tm-roster__row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Primary line — italic Fraunces name for members; tracked mono code
+   for pending invites. Same vertical rhythm and weight either way. */
+.tm-roster__row-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  line-height: 1.15;
+  margin: 0;
+  word-break: break-word;
+}
+
+.tm-roster__row-code {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  color: var(--color-text-primary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Secondary mono caption — replaces both the outlined role chip and the
+   active status dot. Format: ROLE [· YOU] [· DISABLED] [· EXPIRES …]. */
+.tm-roster__row-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tm-roster__row-meta-sep {
+  color: var(--color-hair);
+  letter-spacing: 0;
+}
+
+/* Role token — terracotta only when this row is the owner; everyone else
+   stays in the muted tertiary ink so the hierarchy reads at a glance
+   without a separate chip or dot. */
+.tm-roster__row-role {
+  color: inherit;
+  font-weight: 700;
+}
+
+.tm-roster__row-role--owner {
+  color: var(--color-brand);
+}
+
+.tm-roster__row-chev {
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  margin-left: auto;
+  transition:
+    color var(--duration-fast) ease-out,
+    transform var(--duration-fast) ease-out;
+}
+
+.tm-roster__row:hover .tm-roster__row-chev {
+  color: var(--color-text-secondary);
+  transform: translateX(2px);
+}
+
+/* ==========================================================================
+   4. Loading + error frames
+   ========================================================================== */
+
+.tm-roster__error {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--color-error) 28%, var(--color-hair));
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.45;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.tm-roster__error-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
