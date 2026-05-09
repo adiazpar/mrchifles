@@ -34,6 +34,16 @@ export function AdjustInventoryStep() {
     setError,
   } = useProductForm()
 
+  const currentStock = editingProduct?.stock ?? 0
+  const delta = newStockValue - currentStock
+  const isDirty = delta !== 0
+
+  const deltaClass = isDirty
+    ? delta > 0
+      ? 'pm-adjust__preview-delta--up'
+      : 'pm-adjust__preview-delta--down'
+    : 'pm-adjust__preview-delta--zero'
+
   const handleSave = async () => {
     if (!editingProduct) return
     setError('')
@@ -58,7 +68,7 @@ export function AdjustInventoryStep() {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
             <IonBackButton defaultHref="" />
@@ -69,50 +79,108 @@ export function AdjustInventoryStep() {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        {editingProduct && (
-          <div className="flex flex-col items-center py-6">
-            <div className="w-56 h-56 rounded-3xl overflow-hidden flex items-center justify-center bg-bg-muted">
-              {iconPreview && isPresetIcon(iconPreview) ? (
-                (() => {
-                  const p = getPresetIcon(iconPreview)
-                  return p ? <p.icon size={120} className="text-text-primary" /> : null
-                })()
-              ) : iconPreview ? (
-                <Image
-                  src={iconPreview}
-                  alt={editingProduct.name}
-                  width={224}
-                  height={224}
-                  className="object-cover w-full h-full"
-                  unoptimized
-                />
-              ) : (
-                <ImagePlus className="w-20 h-20 text-text-tertiary" />
+      <IonContent className="pm-content">
+        <div className="pm-shell">
+          <header className="pm-hero">
+            <span className="pm-hero__eyebrow">
+              {t.formatMessage({ id: 'productAddEdit.adjust_eyebrow' })}
+            </span>
+            <h1 className="pm-hero__title">
+              {t.formatMessage(
+                { id: 'productAddEdit.adjust_title' },
+                { em: (chunks) => <em>{chunks}</em> },
               )}
+            </h1>
+          </header>
+
+          {error && <div className="pm-error">{error}</div>}
+
+          {editingProduct && (
+            <div className="pm-adjust">
+              <div className="pm-adjust__hero">
+                <div className="pm-adjust__icon">
+                  {iconPreview && isPresetIcon(iconPreview) ? (
+                    (() => {
+                      const p = getPresetIcon(iconPreview)
+                      return p ? (
+                        <p.icon size={32} className="text-text-primary" />
+                      ) : null
+                    })()
+                  ) : iconPreview ? (
+                    <Image
+                      src={iconPreview}
+                      alt={editingProduct.name}
+                      width={64}
+                      height={64}
+                      className="object-cover w-full h-full"
+                      unoptimized
+                    />
+                  ) : (
+                    <ImagePlus size={26} />
+                  )}
+                </div>
+                <div className="pm-adjust__head">
+                  <h2 className="pm-adjust__name">{editingProduct.name}</h2>
+                  <span className="pm-adjust__current">
+                    <span>
+                      {t.formatMessage({
+                        id: 'productAddEdit.adjust_current_label',
+                      })}
+                    </span>
+                    <span className="pm-adjust__current-num">
+                      {currentStock}
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="pm-field">
+                <span className="pm-field-label">
+                  {t.formatMessage({ id: 'productAddEdit.adjust_set_to_label' })}
+                </span>
+                <StockStepper
+                  value={newStockValue}
+                  onChange={setNewStockValue}
+                />
+              </div>
+
+              <div className="pm-adjust__preview">
+                <span className="pm-adjust__preview-label">
+                  {t.formatMessage({ id: 'productAddEdit.adjust_change_label' })}
+                </span>
+                <span className={`pm-adjust__preview-delta ${deltaClass}`}>
+                  <span>
+                    {isDirty
+                      ? `${delta > 0 ? '+' : ''}${delta}`
+                      : t.formatMessage({
+                          id: 'productAddEdit.adjust_no_change',
+                        })}
+                  </span>
+                  {isDirty && (
+                    <>
+                      <span className="pm-adjust__preview-arrow">{'->'}</span>
+                      <span>{newStockValue}</span>
+                    </>
+                  )}
+                </span>
+              </div>
             </div>
-            <div className="font-medium text-lg mt-4">{editingProduct.name}</div>
-          </div>
-        )}
-
-        {error && (
-          <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mb-4">
-            {error}
-          </div>
-        )}
-
-        <StockStepper value={newStockValue} onChange={setNewStockValue} />
+          )}
+        </div>
       </IonContent>
 
-      <IonFooter>
+      <IonFooter className="pm-footer">
         <IonToolbar>
-          {/* Toolbar back navigates to the previous step; footer is primary only. */}
           <div className="modal-footer">
             <IonButton
               onClick={handleSave}
-              disabled={isAdjusting || newStockValue === (editingProduct?.stock ?? 0)}
+              disabled={isAdjusting || !isDirty}
             >
-              {isAdjusting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
+              {isAdjusting ? (
+                <IonSpinner name="crescent" />
+              ) : (
+                t.formatMessage({ id: 'common.save' })
+              )}
             </IonButton>
           </div>
         </IonToolbar>

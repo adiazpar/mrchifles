@@ -1,10 +1,14 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Copy, Plus, Printer, RotateCcw, ScanLine } from 'lucide-react'
 import { useProductForm } from '@/contexts/product-form-context'
-import { detectBarcodeFormat, generateInternalProductBarcode, getBarcodeFormatLabel } from '@kasero/shared/barcodes'
+import {
+  detectBarcodeFormat,
+  generateInternalProductBarcode,
+  getBarcodeFormatLabel,
+} from '@kasero/shared/barcodes'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { printBarcodeLabel } from '@/lib/barcode-print'
 import { BarcodeDisplay } from './BarcodeDisplay'
@@ -25,7 +29,11 @@ export function BarcodeFields() {
     setError,
   } = useProductForm()
 
-  const { open: openScanner, busy: scanBusy, hiddenInput: scanHiddenInput } = useBarcodeScan({
+  const {
+    open: openScanner,
+    busy: scanBusy,
+    hiddenInput: scanHiddenInput,
+  } = useBarcodeScan({
     onResult: ({ value, format }) => {
       setBarcode(value)
       setBarcodeFormat(format)
@@ -36,16 +44,15 @@ export function BarcodeFields() {
     },
   })
 
-  const handleBarcodeChange = useCallback((value: string) => {
-    setBarcode(value)
-
-    // Format is always derived from the value — never a user input. The
-    // cascade handles normalization internally and returns null for empty or
-    // non-printable input.
-    const detected = detectBarcodeFormat(value)
-    setBarcodeFormat(detected)
-    setBarcodeSource(detected ? 'manual' : null)
-  }, [setBarcode, setBarcodeFormat, setBarcodeSource])
+  const handleBarcodeChange = useCallback(
+    (value: string) => {
+      setBarcode(value)
+      const detected = detectBarcodeFormat(value)
+      setBarcodeFormat(detected)
+      setBarcodeSource(detected ? 'manual' : null)
+    },
+    [setBarcode, setBarcodeFormat, setBarcodeSource],
+  )
 
   const handleScanClick = useCallback(() => {
     setError('')
@@ -67,21 +74,13 @@ export function BarcodeFields() {
   const getBarcodeSourceLabel = (source: BarcodeSource | null): string => {
     switch (source) {
       case 'scanned':
-        return t.formatMessage({
-          id: 'barcode.source_scanned'
-        });
+        return t.formatMessage({ id: 'barcode.source_scanned' })
       case 'generated':
-        return t.formatMessage({
-          id: 'barcode.source_generated'
-        });
+        return t.formatMessage({ id: 'barcode.source_generated' })
       case 'manual':
-        return t.formatMessage({
-          id: 'barcode.source_manual'
-        });
+        return t.formatMessage({ id: 'barcode.source_manual' })
       default:
-        return t.formatMessage({
-          id: 'barcode.source_na'
-        });
+        return t.formatMessage({ id: 'barcode.source_na' })
     }
   }
 
@@ -140,117 +139,133 @@ export function BarcodeFields() {
     }
   }, [])
 
+  const hasBarcode = Boolean(barcode.trim())
+
   return (
-    <div className="flex flex-col gap-4 h-full">
-      <div>
-        <label htmlFor="product-barcode" className="label">{t.formatMessage({
-          id: 'barcode.label'
-        })}</label>
-        <div className="relative">
+    <div className="pm-barcode">
+      <div className="pm-field">
+        <label htmlFor="product-barcode" className="pm-field-label">
+          {t.formatMessage({ id: 'barcode.label' })}
+        </label>
+        <div className="pm-barcode-input">
           <input
             id="product-barcode"
             type="text"
             value={barcode}
             onChange={(e) => handleBarcodeChange(e.target.value)}
-            className="input w-full"
-            style={{ paddingRight: 'var(--space-10)' }}
+            className="input"
+            style={{ paddingRight: 'var(--space-10)', fontFamily: 'var(--font-mono)' }}
             placeholder={t.formatMessage({
-              id: 'barcode.scan_input_placeholder'
+              id: 'barcode.scan_input_placeholder',
             })}
             autoComplete="off"
           />
           <button
             type="button"
             onClick={handleCopy}
-            disabled={!barcode.trim()}
-            style={{ right: 'var(--space-3)' }}
-            className={`absolute top-1/2 -translate-y-1/2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-              copied ? 'text-success' : 'text-text-tertiary hover:text-text-secondary'
+            disabled={!hasBarcode}
+            className={`pm-barcode-input__copy ${
+              copied ? 'pm-barcode-input__copy--copied' : ''
             }`}
-            aria-label={copied ? t.formatMessage({
-              id: 'barcode.copy_aria_copied'
-            }) : t.formatMessage({
-              id: 'barcode.copy_aria_default'
-            })}
+            aria-label={
+              copied
+                ? t.formatMessage({ id: 'barcode.copy_aria_copied' })
+                : t.formatMessage({ id: 'barcode.copy_aria_default' })
+            }
           >
-            {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
       </div>
-      <div className="rounded-xl border border-border bg-bg-muted p-4 h-28 flex items-center justify-center text-center overflow-hidden">
+
+      <div className="pm-barcode-ledger pm-barcode-ledger--tall">
         <BarcodeDisplay value={barcode} format={barcodeFormat} />
       </div>
-      {barcode ? (
-        <div className="text-sm text-text-secondary text-center">
-          {`${barcodeFormat ? getBarcodeFormatLabel(barcodeFormat) : t.formatMessage({
-            id: 'barcode.source_na'
-          })} · ${getBarcodeSourceLabel(barcodeSource)}`}
-        </div>
-      ) : (
-        <div className="text-sm text-text-tertiary text-center">
-          {t.formatMessage({
-            id: 'barcode.no_barcode'
-          })}
-        </div>
-      )}
+
+      <div className="pm-barcode-meta">
+        {hasBarcode ? (
+          <div className="pm-barcode-meta__chips">
+            <span className="pm-barcode-chip pm-barcode-chip--brand">
+              {barcodeFormat
+                ? getBarcodeFormatLabel(barcodeFormat)
+                : t.formatMessage({ id: 'barcode.source_na' })}
+            </span>
+            <span className="pm-barcode-chip pm-barcode-chip--ink">
+              {getBarcodeSourceLabel(barcodeSource)}
+            </span>
+          </div>
+        ) : (
+          <span className="pm-barcode-meta__empty">
+            {t.formatMessage({ id: 'barcode.no_barcode' })}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={handleClear}
+          disabled={!hasBarcode}
+          className="pm-barcode-meta__reset"
+        >
+          {t.formatMessage({ id: 'barcode.reset_button' })}
+        </button>
+      </div>
+
       {scanHiddenInput}
-      <div className="flex-1 flex items-center justify-center">
-        <div className="flex gap-4">
-          <button
-            type="button"
-            onClick={handleScanClick}
-            disabled={scanBusy}
-            className="flex flex-col items-center gap-1.5 cursor-pointer select-none transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-default disabled:active:scale-100"
-          >
-            <span className="flex items-center justify-center w-16 h-16 rounded-full bg-bg-muted text-brand">
-              <ScanLine size={28} />
-            </span>
-            <span className="text-[13px] font-medium text-text-secondary">{scanBusy ? t.formatMessage({
-              id: 'barcode.scan_reading'
-            }) : t.formatMessage({
-              id: 'barcode.scan_button'
-            })}</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleGenerate}
-            className="flex flex-col items-center gap-1.5 cursor-pointer select-none transition-transform active:scale-95"
-          >
-            <span className="flex items-center justify-center w-16 h-16 rounded-full bg-bg-muted text-success">
-              <Plus size={28} />
-            </span>
-            <span className="text-[13px] font-medium text-text-secondary">{t.formatMessage({
-              id: 'barcode.generate_button'
-            })}</span>
-          </button>
-          <button
-            type="button"
-            onClick={handlePrint}
-            disabled={!barcode}
-            className="flex flex-col items-center gap-1.5 cursor-pointer select-none transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-default disabled:active:scale-100"
-          >
-            <span className="flex items-center justify-center w-16 h-16 rounded-full bg-bg-muted text-warning">
-              <Printer size={28} />
-            </span>
-            <span className="text-[13px] font-medium text-text-secondary">{t.formatMessage({
-              id: 'barcode.print_button'
-            })}</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleClear}
-            disabled={!barcode}
-            className="flex flex-col items-center gap-1.5 cursor-pointer select-none transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-default disabled:active:scale-100"
-          >
-            <span className="flex items-center justify-center w-16 h-16 rounded-full bg-bg-muted text-error">
-              <RotateCcw size={28} />
-            </span>
-            <span className="text-[13px] font-medium text-text-secondary">{t.formatMessage({
-              id: 'barcode.reset_button'
-            })}</span>
-          </button>
-        </div>
+
+      <div className="pm-barcode-actions">
+        <button
+          type="button"
+          onClick={handleScanClick}
+          disabled={scanBusy}
+          className="pm-action pm-action--brand"
+        >
+          <span className="pm-action__circle">
+            <ScanLine size={26} strokeWidth={1.6} />
+          </span>
+          <span className="pm-action__label">
+            {scanBusy
+              ? t.formatMessage({ id: 'barcode.scan_reading' })
+              : t.formatMessage({ id: 'barcode.scan_button' })}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          className="pm-action pm-action--success"
+        >
+          <span className="pm-action__circle">
+            <Plus size={26} strokeWidth={1.6} />
+          </span>
+          <span className="pm-action__label">
+            {t.formatMessage({ id: 'barcode.generate_button' })}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={handlePrint}
+          disabled={!hasBarcode}
+          className="pm-action pm-action--warning"
+        >
+          <span className="pm-action__circle">
+            <Printer size={24} strokeWidth={1.6} />
+          </span>
+          <span className="pm-action__label">
+            {t.formatMessage({ id: 'barcode.print_button' })}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={handleClear}
+          disabled={!hasBarcode}
+          className="pm-action pm-action--danger"
+        >
+          <span className="pm-action__circle">
+            <RotateCcw size={24} strokeWidth={1.6} />
+          </span>
+          <span className="pm-action__label">
+            {t.formatMessage({ id: 'barcode.reset_button' })}
+          </span>
+        </button>
       </div>
     </div>
-  );
+  )
 }

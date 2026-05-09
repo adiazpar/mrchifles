@@ -1,0 +1,435 @@
+/* ProductInfoDrawer — read-only product info sheet shown when an
+ * employee taps a product row. Modern Mercantile vocabulary: a
+ * "stamped catalog card" the floor employee can reference.
+ *
+ *   - Hero portrait at the top in a cream square with a hairline
+ *     terracotta border, mono uppercase eyebrow with the category
+ *     beneath, then the product name in italic Fraunces.
+ *   - Quick stats: three stamped columns (Price · Stock · Status)
+ *     separated by hairline rules. Mono uppercase eyebrows + mono
+ *     numerals. Stock turns oxblood + a "LOW" flag below threshold.
+ *   - Specifications ledger: dotted-leader label · value rows in
+ *     the printed-receipt vocabulary established by
+ *     .close-session__ledger-row.
+ *   - Barcode block: cream-tinted hairline card. Mono uppercase
+ *     "BARCODE · {format}" eyebrow with a small terracotta tick,
+ *     the SVG centered inside, mono numeral value beneath. When
+ *     no barcode exists, the slot fills with an italic Fraunces
+ *     "no barcode set" line and a mono caption.
+ *
+ * Owned by subagent D. Reuses the brand tokens declared in base.css
+ * — no hex literals, no gradients, no inline colors.
+ */
+
+/* ===== Outer wrapper =================================================== */
+
+.info-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-2) 0 var(--space-3);
+}
+
+/* ===== Hero — portrait + caption ====================================== */
+
+.info-drawer__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) 0 var(--space-1);
+}
+
+/* The portrait square — large cream-tinted canvas with a hairline
+ * border and a faint terracotta inset glow. Reads as a museum
+ * "specimen card" without being precious about it. */
+.info-drawer__portrait {
+  position: relative;
+  width: 224px;
+  height: 224px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px var(--glow-soft),
+    var(--shadow-md);
+}
+
+/* Inner hairline frame — gives the portrait a printed-card edge
+ * without competing with the outer border. */
+.info-drawer__portrait::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--color-hair-soft);
+  border-radius: calc(var(--radius-2xl) - 6px);
+  pointer-events: none;
+}
+
+.info-drawer__portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.info-drawer__portrait-icon {
+  color: var(--color-text-primary);
+}
+
+.info-drawer__portrait-fallback {
+  width: 56px;
+  height: 56px;
+  color: var(--color-text-tertiary);
+}
+
+.info-drawer__caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  width: 100%;
+}
+
+/* Eyebrow above the name — mono uppercase tracked, with a small
+ * terracotta tick on the leading edge. Doubles as a slot for the
+ * "INACTIVE" flag when the product is disabled. */
+.info-drawer__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.info-drawer__eyebrow-rule {
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+  display: inline-block;
+}
+
+.info-drawer__eyebrow-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-ink-4);
+  display: inline-block;
+}
+
+.info-drawer__eyebrow-flag {
+  color: var(--color-error);
+  letter-spacing: 0.20em;
+}
+
+/* The product name — italic Fraunces, sized to dominate the hero
+ * but still leave breathing room for the stats row beneath. We do
+ * not add an em-accent because the name is user-content. */
+.info-drawer__name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 60;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  margin: 0;
+  /* Two-line clamp in case of artisan-length names. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  max-width: 32ch;
+}
+
+/* ===== Quick stats — three stamped columns =========================== */
+
+.info-drawer__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: stretch;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-3) 0;
+}
+
+.info-drawer__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 0 var(--space-2);
+  /* Hairline divider between columns — drawn as a left border on
+   * the middle and right column so the grid reads as a printed
+   * three-cell stamp. */
+}
+
+.info-drawer__stat--center,
+.info-drawer__stat--right {
+  border-left: 1px solid var(--color-border);
+}
+
+.info-drawer__stat-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.info-drawer__stat-value {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+/* Smaller stat value treatment used for Status — keeps the
+ * "ACTIVE / INACTIVE" string from overflowing the column. */
+.info-drawer__stat-value--mono-sm {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Low-stock state — column tints oxblood, with a tiny "LOW" flag
+ * beneath the numeral so the warning is immediately legible. */
+.info-drawer__stat--low .info-drawer__stat-value {
+  color: var(--color-error);
+}
+
+.info-drawer__stat-flag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-error-subtle);
+  margin-top: 2px;
+}
+
+/* ===== Specifications ledger ========================================== */
+
+.info-drawer__ledger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.info-drawer__ledger-heading {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Same chapter-mark as .close-session__ledger-heading::before — a
+ * short terracotta tick that anchors the section. */
+.info-drawer__ledger-heading::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.info-drawer__ledger-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.info-drawer__ledger-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.info-drawer__ledger-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.info-drawer__ledger-leader {
+  flex: 1;
+  height: 1em;
+  align-self: end;
+  margin-bottom: 4px;
+  border-bottom: 1px dotted var(--color-border);
+  opacity: 0.85;
+  min-width: 16px;
+}
+
+.info-drawer__ledger-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  text-align: right;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin: 0;
+  /* Allow long category names to wrap onto a second line so the
+   * leader stays inline. */
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info-drawer__ledger-value--strong {
+  font-weight: 700;
+}
+
+.info-drawer__ledger-value--muted {
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+.info-drawer__ledger-value--alert {
+  color: var(--color-error);
+  font-weight: 700;
+}
+
+/* ===== Barcode block ================================================== */
+
+.info-drawer__barcode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  /* Faint terracotta inset glow — subtle enough that it reads as
+   * "stamped paper" rather than a colored card. */
+  box-shadow: inset 0 0 0 1px var(--glow-soft);
+}
+
+.info-drawer__barcode-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+}
+
+.info-drawer__barcode-tick {
+  display: inline-block;
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.info-drawer__barcode-tick--muted {
+  background: var(--color-ink-4);
+}
+
+.info-drawer__barcode-eyebrow-sep {
+  color: var(--color-ink-4);
+  letter-spacing: 0;
+}
+
+.info-drawer__barcode-format {
+  color: var(--color-text-secondary);
+  letter-spacing: 0.18em;
+}
+
+/* The frame holding the BarcodeDisplay SVG. White paper background
+ * so the printed bars sit on a high-contrast canvas regardless of
+ * the surrounding cream tint. Hairline border + tiny corner inset
+ * for the "tag stub" feel. */
+.info-drawer__barcode-frame {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-hair-soft);
+  border-radius: var(--radius-md);
+}
+
+.info-drawer__barcode-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  text-align: center;
+  word-break: break-all;
+}
+
+/* Empty barcode state — italic Fraunces headline + mono caption.
+ * Reads as a polite stamp on the catalog card rather than an
+ * error message. */
+.info-drawer__barcode--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.info-drawer__barcode-empty-headline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--color-text-secondary);
+  margin: 0;
+  text-align: center;
+}
+
+.info-drawer__barcode-empty-caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0;
+  text-align: center;
+}

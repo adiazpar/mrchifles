@@ -1,6 +1,6 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { X } from 'lucide-react'
@@ -34,10 +34,7 @@ export interface LiveBarcodeScannerProps {
   /**
    * Optional escape hatch: if provided, the overlay shows a "Choose file
    * instead" link that dismisses the live camera and switches to the
-   * file picker path. Useful for:
-   *  - Scanning PDFs or pre-taken photos from the library on mobile.
-   *  - Desktop dev workflows where Chrome DevTools emulates a mobile
-   *    viewport and forces the scanner into live-camera mode.
+   * file picker path.
    */
   onSwitchToFilePicker?: () => void
 }
@@ -51,9 +48,9 @@ export interface LiveBarcodeScannerProps {
  * `onCancel`. On camera failure (permission denied, no camera, etc.) shows
  * an inline error and calls `onError`.
  *
- * Expected to be mounted conditionally by the parent (only while the
- * scanner is active) — unmounting releases the camera stream via the
- * useEffect cleanup.
+ * Visual chrome — Modern Mercantile cinema-dark viewfinder. Mono uppercase
+ * caption strip up top, terracotta corner brackets + horizontal laser line
+ * sweeping the frame, italic Fraunces hint at the bottom.
  */
 export function LiveBarcodeScanner({
   onResult,
@@ -69,44 +66,42 @@ export function LiveBarcodeScanner({
   // Guard against double-emission: html5-qrcode's onSuccess may fire for
   // multiple consecutive frames seeing the same barcode.
   const emittedRef = useRef(false)
-  const [status, setStatus] = useState<'starting' | 'scanning' | 'error'>('starting')
+  const [status, setStatus] = useState<'starting' | 'scanning' | 'error'>(
+    'starting',
+  )
   const [errorMessage, setErrorMessage] = useState('')
 
   // Stash translated error strings in refs so the async effect can access
   // them without being in its dependency array.
-  const errGenericRef = useRef(t.formatMessage({
-    id: 'barcode.scanner_error_generic'
-  }))
-  const errPermissionRef = useRef(t.formatMessage({
-    id: 'barcode.scanner_error_permission'
-  }))
-  const errNotFoundRef = useRef(t.formatMessage({
-    id: 'barcode.scanner_error_not_found'
-  }))
-  const errInUseRef = useRef(t.formatMessage({
-    id: 'barcode.scanner_error_in_use'
-  }))
+  const errGenericRef = useRef(
+    t.formatMessage({ id: 'barcode.scanner_error_generic' }),
+  )
+  const errPermissionRef = useRef(
+    t.formatMessage({ id: 'barcode.scanner_error_permission' }),
+  )
+  const errNotFoundRef = useRef(
+    t.formatMessage({ id: 'barcode.scanner_error_not_found' }),
+  )
+  const errInUseRef = useRef(
+    t.formatMessage({ id: 'barcode.scanner_error_in_use' }),
+  )
   useEffect(() => {
     errGenericRef.current = t.formatMessage({
-      id: 'barcode.scanner_error_generic'
+      id: 'barcode.scanner_error_generic',
     })
     errPermissionRef.current = t.formatMessage({
-      id: 'barcode.scanner_error_permission'
+      id: 'barcode.scanner_error_permission',
     })
     errNotFoundRef.current = t.formatMessage({
-      id: 'barcode.scanner_error_not_found'
+      id: 'barcode.scanner_error_not_found',
     })
     errInUseRef.current = t.formatMessage({
-      id: 'barcode.scanner_error_in_use'
+      id: 'barcode.scanner_error_in_use',
     })
   })
 
   // Stash callbacks in refs so the start-scanner effect can run exactly
-  // once on mount without depending on prop identity. If a parent passes
-  // inline arrow functions (new reference every render), including them
-  // in the effect's dep array would re-run the effect on every parent
-  // re-render — stopping and restarting the camera in a loop, which is
-  // the root cause of the "Maximum update depth exceeded" error.
+  // once on mount without depending on prop identity.
   const onResultRef = useRef(onResult)
   const onErrorRef = useRef(onError)
   useEffect(() => {
@@ -129,13 +124,10 @@ export function LiveBarcodeScanner({
           { facingMode: 'environment' },
           {
             fps: 10,
-            // Intentionally omit `qrbox` — when set, html5-qrcode injects
-            // its own shaded scan region with corner markers that it
-            // positions relative to the <video> element's letterboxed
-            // rendered size, not our host div. That made the injected
-            // overlay appear below the vertical center of our host. By
-            // scanning the full frame, the library skips drawing the
-            // shaded region entirely and we rely on our own laser line.
+            // Intentionally omit `qrbox` — we render our own viewfinder
+            // overlay so the library skips drawing its built-in shaded
+            // region (which positions inconsistently against the host
+            // div).
             aspectRatio: undefined,
           },
           async (decodedText, result) => {
@@ -143,7 +135,8 @@ export function LiveBarcodeScanner({
             emittedRef.current = true
 
             const formatName = result.result.format?.formatName || null
-            const format = formatName && isBarcodeFormat(formatName) ? formatName : null
+            const format =
+              formatName && isBarcodeFormat(formatName) ? formatName : null
 
             try {
               await scanner.stop()
@@ -166,11 +159,6 @@ export function LiveBarcodeScanner({
           setStatus('scanning')
         }
       } catch (err) {
-        // html5-qrcode wraps the underlying getUserMedia error into a
-        // string with the original error name embedded. The Error object
-        // itself may or may not have a usable `.name` property by the
-        // time we see it here, so we stringify and substring-match to
-        // reliably classify the failure.
         if (cancelled) return
 
         const errString =
@@ -198,10 +186,10 @@ export function LiveBarcodeScanner({
           message = errInUseRef.current
         }
 
-        // Log as a warning, not an error, so the dev-mode error overlay
-        // doesn't surface it as a blocking error. The user-visible
-        // message is already shown inside the scanner overlay.
-        console.warn('[LiveBarcodeScanner] Camera could not start:', errString)
+        console.warn(
+          '[LiveBarcodeScanner] Camera could not start:',
+          errString,
+        )
 
         setErrorMessage(message)
         setStatus('error')
@@ -215,9 +203,6 @@ export function LiveBarcodeScanner({
       cancelled = true
       const scanner = scannerRef.current
       if (scanner) {
-        // Fire-and-forget cleanup. stop() and clear() are async but the
-        // effect cleanup can't await. Errors here are expected if the
-        // scanner never finished starting.
         void (async () => {
           try {
             await scanner.stop()
@@ -248,28 +233,17 @@ export function LiveBarcodeScanner({
 
   return (
     <div
-      // The backdrop is intentionally a hardcoded dark color (not a
-      // theme-aware token) because this is a camera viewfinder context —
-      // the scanner UI must be dark regardless of the user's theme so
-      // the camera feed is readable, matching platform camera UIs.
-      className="fixed z-40 bg-black overflow-hidden"
+      className="pm-scanner"
       style={overlayStyle}
       role="dialog"
       aria-modal="true"
-      aria-label={t.formatMessage({
-        id: 'barcode.scanner_aria_label'
-      })}
+      aria-label={t.formatMessage({ id: 'barcode.scanner_aria_label' })}
     >
       {/*
         Video host — html5-qrcode injects nested wrapper divs around a
-        <video> element. The library applies inline width/height to those
-        wrappers and to the video itself based on the camera stream's
-        intrinsic aspect ratio, which leaves letterbox space when the host
-        is taller than the video's natural ratio. We override every
-        descendant inside the host to fill completely and force the video
-        to object-cover so the camera feed crops to fill instead of
-        letterboxing. Scoped via a host-specific <style> tag so selectors
-        can target html5-qrcode's injected DOM regardless of its depth.
+        <video> element. Force every descendant inside the host to fill
+        completely and the video to object-cover so the camera feed
+        crops to fill instead of letterboxing.
       */}
       <style>{`
         #${hostIdRef.current},
@@ -292,87 +266,86 @@ export function LiveBarcodeScanner({
         }
       `}</style>
       <div id={hostIdRef.current} className="absolute inset-0" />
-      {/* Close button — top-right corner, floats above everything */}
-      <button
-        type="button"
-        onClick={onCancel}
-        className="absolute top-3 right-3 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-text-inverse backdrop-blur-sm transition-colors hover:bg-black/80"
-        aria-label={t.formatMessage({
-          id: 'barcode.scanner_cancel_aria'
-        })}
-      >
-        <X className="w-5 h-5" />
-      </button>
-      {/* Scanning frame — centered scan box with corner brackets and a
-          horizontal laser line running through the middle. The box defines
-          the visual scan target, while the underlying camera still scans
-          the full frame (we omit qrbox from html5-qrcode config).
-          Bracket color uses text-inverse (white in light, off-white in
-          dark) so it stays visible against the camera feed. The laser
-          line uses the semantic error color token. */}
+
+      {/* Top bar — mono caption + close X */}
+      <div className="pm-scanner__topbar">
+        <span className="pm-scanner__caption">
+          {t.formatMessage({ id: 'productAddEdit.scanner_caption' })}
+        </span>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="pm-scanner__close"
+          aria-label={t.formatMessage({ id: 'barcode.scanner_cancel_aria' })}
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Viewfinder — terracotta corner brackets + sweeping laser */}
       {status === 'scanning' && (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <div className="relative w-[85%] aspect-[3/2] max-w-md">
-            <div className="absolute top-0 left-0 w-8 h-8 border-t-[3px] border-l-[3px] border-text-inverse rounded-tl-lg" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-text-inverse rounded-tr-lg" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-[3px] border-l-[3px] border-text-inverse rounded-bl-lg" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[3px] border-r-[3px] border-text-inverse rounded-br-lg" />
-            <div
-              className="absolute left-0 right-0 h-[2px] bg-error"
-              style={{ top: '50%', transform: 'translateY(-50%)' }}
-            />
+        <div className="pm-scanner__viewfinder">
+          <div className="pm-scanner__frame">
+            <span className="pm-scanner__corner pm-scanner__corner--tl" />
+            <span className="pm-scanner__corner pm-scanner__corner--tr" />
+            <span className="pm-scanner__corner pm-scanner__corner--bl" />
+            <span className="pm-scanner__corner pm-scanner__corner--br" />
+            <span className="pm-scanner__laser" />
           </div>
         </div>
       )}
-      {/* Footer instruction + optional file-picker fallback */}
+
+      {/* Bottom bar — italic Fraunces hint + optional file-picker fallback */}
       {status === 'scanning' && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-          <p className="text-text-inverse text-center text-sm pointer-events-none">
-            {t.formatMessage({
-              id: 'barcode.scanner_instruction'
-            })}
+        <div className="pm-scanner__bottombar">
+          <p className="pm-scanner__hint">
+            {t.formatMessage(
+              { id: 'productAddEdit.scanner_hint' },
+              { em: (chunks) => <em>{chunks}</em> },
+            )}
           </p>
-          {onSwitchToFilePicker && (
-            <div className="mt-2 text-center">
-              <button
-                type="button"
-                onClick={onSwitchToFilePicker}
-                className="text-text-inverse/80 text-xs underline underline-offset-2 hover:text-text-inverse transition-colors"
-              >
-                {t.formatMessage({
-                  id: 'barcode.scanner_choose_file'
-                })}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-      {/* Starting state */}
-      {status === 'starting' && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <p className="text-text-inverse text-sm">{t.formatMessage({
-            id: 'barcode.scanner_starting'
-          })}</p>
-        </div>
-      )}
-      {/* Error state — message plus the same "Choose a file instead"
-          escape hatch so the user isn't stranded when the camera fails. */}
-      {status === 'error' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center gap-4">
-          <p className="text-text-inverse text-sm max-w-sm">{errorMessage}</p>
           {onSwitchToFilePicker && (
             <button
               type="button"
               onClick={onSwitchToFilePicker}
-              className="text-text-inverse/90 text-sm underline underline-offset-2 hover:text-text-inverse transition-colors"
+              className="pm-scanner__fallback"
             >
-              {t.formatMessage({
-                id: 'barcode.scanner_choose_file'
-              })}
+              {t.formatMessage({ id: 'barcode.scanner_choose_file' })}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Starting */}
+      {status === 'starting' && (
+        <div className="pm-scanner__overlay">
+          <span className="pm-scanner__overlay-eyebrow">
+            {t.formatMessage({ id: 'productAddEdit.scanner_starting_eyebrow' })}
+          </span>
+          <p className="pm-scanner__overlay-message">
+            {t.formatMessage({ id: 'barcode.scanner_starting' })}
+          </p>
+        </div>
+      )}
+
+      {/* Error */}
+      {status === 'error' && (
+        <div className="pm-scanner__overlay pm-scanner__overlay--error">
+          <span className="pm-scanner__overlay-eyebrow">
+            {t.formatMessage({ id: 'productAddEdit.scanner_error_eyebrow' })}
+          </span>
+          <p className="pm-scanner__overlay-message">{errorMessage}</p>
+          {onSwitchToFilePicker && (
+            <button
+              type="button"
+              onClick={onSwitchToFilePicker}
+              className="pm-scanner__fallback"
+            >
+              {t.formatMessage({ id: 'barcode.scanner_choose_file' })}
             </button>
           )}
         </div>
       )}
     </div>
-  );
+  )
 }

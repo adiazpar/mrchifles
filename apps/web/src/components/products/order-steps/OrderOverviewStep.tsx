@@ -5,13 +5,25 @@ import {
   IonPage,
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
-import { Pencil, Trash2, ImagePlus } from 'lucide-react'
+import { close } from 'ionicons/icons'
+import {
+  Pencil,
+  Trash2,
+  Package,
+  Calendar,
+  CalendarClock,
+  UserPlus,
+  UserCheck,
+  Truck,
+  Paperclip,
+  CheckCircle2,
+} from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -43,245 +55,353 @@ export function OrderOverviewStep() {
 
   const productsById = useMemo(() => new Map(products.map(p => [p.id, p])), [products])
 
-  const OrderItemIconCell = ({ productId }: { productId: string | null | undefined }) => {
-    const product = productId ? productsById.get(productId) : null
-    const iconUrl = product ? getProductIconUrl(product) : null
-    return (
-      <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-bg-muted flex-shrink-0">
-        {iconUrl && isPresetIcon(iconUrl) ? (
-          (() => {
-            const p = getPresetIcon(iconUrl)
-            return p ? <p.icon size={18} className="text-text-primary" /> : null
-          })()
-        ) : iconUrl ? (
-          <Image
-            src={iconUrl}
-            alt=""
-            width={32}
-            height={32}
-            className="object-cover w-full h-full"
-            unoptimized
-          />
-        ) : (
-          <ImagePlus className="w-4 h-4 text-text-tertiary" />
-        )}
-      </div>
-    )
-  }
+  const items = order.expand?.['order_items(order)'] || []
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  const displayStatus = getOrderDisplayStatus(order)
 
-  const headingTitle = order.orderNumber != null
-    ? t.formatMessage({ id: 'orders.detail_title_with_ref' }, { number: order.orderNumber })
-    : t.formatMessage({ id: 'orders.detail_title' })
+  const orderRef = order.orderNumber != null
+    ? `#${String(order.orderNumber).padStart(4, '0')}`
+    : `#${order.id.slice(0, 6).toUpperCase()}`
+
+  const statusLabel = {
+    pending: t.formatMessage({ id: 'orders.status_pending' }),
+    received: t.formatMessage({ id: 'orders.status_received' }),
+    overdue: t.formatMessage({ id: 'orders.status_overdue' }),
+  }[displayStatus]
 
   function handleClose() {
     onClose()
     onExitComplete()
   }
 
+  // Variance items — only when received and at least one item differs.
+  const varianceItems = displayStatus === 'received'
+    ? items.filter(item => item.receivedQuantity != null && item.receivedQuantity !== item.quantity)
+    : []
+
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar>
-          <IonTitle>{headingTitle}</IonTitle>
+        <IonToolbar className="wizard-toolbar">
           <IonButtons slot="end">
-            <IonButton onClick={handleClose}>{t.formatMessage({ id: 'common.close' })}</IonButton>
+            <IonButton fill="clear" onClick={handleClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonIcon icon={close} />
+            </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        {/* Products list */}
-        <div className="space-y-1 mb-4">
-          {order.expand?.['order_items(order)']?.map(item => (
-            <div key={item.id} className="flex items-center justify-between gap-2 text-sm">
-              <OrderItemIconCell productId={item.productId} />
-              <span className="text-text-secondary truncate flex-1 min-w-0">{item.productName}</span>
-              <span className="text-text-secondary flex-shrink-0 tabular-nums">{item.quantity}x</span>
-              {item.unitCost != null && (
-                <>
-                  <span className="text-text-tertiary flex-shrink-0 tabular-nums w-16 text-right">
-                    {formatCurrency(item.unitCost)}
-                  </span>
-                  <span className="text-text-primary flex-shrink-0 tabular-nums w-20 text-right font-medium">
-                    {formatCurrency(item.subtotal ?? item.unitCost * item.quantity)}
-                  </span>
-                </>
-              )}
+      <IonContent className="wizard-content">
+        <div className="wizard-step">
+          <header className="wizard-hero">
+            <div className="order-modal__eyebrow">
+              <span>{t.formatMessage({ id: 'orders.eyebrow_order' })}</span>
+              <span className="order-modal__eyebrow-dot">·</span>
+              <span className="order-modal__eyebrow-id">{orderRef}</span>
             </div>
-          ))}
-        </div>
+            <span className={`order-receipt__hero-status order-receipt__hero-status--${displayStatus}`}>
+              {statusLabel}
+            </span>
+            <h1 className="wizard-hero__title">
+              {t.formatMessage(
+                { id: 'orders.overview_hero_title' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+          </header>
 
-        {/* Variance — only renders when received AND at least one item differs */}
-        {order.status === 'received' && (() => {
-          const varianceItems = (order.expand?.['order_items(order)'] || []).filter(
-            item => item.receivedQuantity != null && item.receivedQuantity !== item.quantity
-          )
-          if (varianceItems.length === 0) return null
-          return (
-            <div className="mb-4">
-              <span className="text-xs font-medium uppercase tracking-wide text-warning">
-                {t.formatMessage({ id: 'orders.variance_section_title' })}
-              </span>
-              <div className="space-y-1 mt-1">
-                {varianceItems.map(item => (
-                  <div key={`variance-${item.id}`} className="flex items-center gap-2 text-sm text-warning">
-                    <OrderItemIconCell productId={item.productId} />
-                    <span className="truncate flex-1 min-w-0">{item.productName}</span>
-                    <span className="flex-shrink-0">
-                      {t.formatMessage(
-                        { id: 'orders.variance_item_line' },
-                        { ordered: item.quantity, received: item.receivedQuantity ?? 0 }
-                      )}
+          {/* Items rule */}
+          <div className="order-receipt__rule">
+            <span className="order-receipt__rule-line" aria-hidden="true" />
+            <span className="order-receipt__rule-caption">
+              {t.formatMessage(
+                { id: 'orders.confirm_items_caption' },
+                { count: itemCount },
+              )}
+            </span>
+            <span className="order-receipt__rule-line" aria-hidden="true" />
+          </div>
+
+          {/* Line items */}
+          <div className="order-receipt__lines">
+            {items.map(item => {
+              const product = item.productId ? productsById.get(item.productId) : null
+              const iconUrl = product ? getProductIconUrl(product) : null
+              const presetIcon = iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
+              const subtotal = item.subtotal ?? (item.unitCost != null ? item.unitCost * item.quantity : null)
+              const hasMath = item.unitCost != null
+              return (
+                <div key={item.id} className="order-receipt-line">
+                  <span className="order-receipt-line__icon">
+                    {presetIcon ? (
+                      <presetIcon.icon size={18} className="text-text-primary" />
+                    ) : iconUrl ? (
+                      <Image src={iconUrl} alt="" width={32} height={32} unoptimized />
+                    ) : (
+                      <Package size={16} strokeWidth={1.6} />
+                    )}
+                  </span>
+                  <span className="order-receipt-line__name">{item.productName}</span>
+                  <span className="order-receipt-line__subtotal">
+                    {subtotal != null
+                      ? formatCurrency(subtotal)
+                      : t.formatMessage({ id: 'orders.qty_short' }, { count: item.quantity })}
+                  </span>
+                  {hasMath && (
+                    <span className="order-receipt-line__math">
+                      <span className="order-receipt-line__math-qty">
+                        {t.formatMessage({ id: 'orders.qty_short' }, { count: item.quantity })}
+                      </span>
+                      <span className="order-receipt-line__math-op">×</span>
+                      <span className="order-receipt-line__math-unit">
+                        {item.unitCost != null ? formatCurrency(item.unitCost) : '—'}
+                      </span>
                     </span>
-                  </div>
-                ))}
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Variance section — when received with deltas */}
+          {varianceItems.length > 0 && (
+            <div>
+              <div className="order-select__section-eyebrow" style={{ marginTop: 0 }}>
+                <span style={{ color: 'var(--color-warning)' }}>
+                  {t.formatMessage({ id: 'orders.variance_section_title' })}
+                </span>
+                <span className="order-select__section-count" style={{ color: 'var(--color-warning)' }}>
+                  {varianceItems.length}
+                </span>
+              </div>
+              <div className="order-receive__manifest">
+                {varianceItems.map(item => {
+                  const product = item.productId ? productsById.get(item.productId) : null
+                  const iconUrl = product ? getProductIconUrl(product) : null
+                  const presetIcon = iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
+                  const ordered = item.quantity
+                  const received = item.receivedQuantity ?? 0
+                  const delta = received - ordered
+                  const variantClass =
+                    delta === 0
+                      ? 'order-receive-line__variance--match'
+                      : delta > 0
+                        ? 'order-receive-line__variance--over'
+                        : 'order-receive-line__variance--short'
+                  return (
+                    <div key={`variance-${item.id}`} className="order-receive-line">
+                      <span className="order-receive-line__icon">
+                        {presetIcon ? (
+                          <presetIcon.icon size={18} className="text-text-primary" />
+                        ) : iconUrl ? (
+                          <Image src={iconUrl} alt="" width={32} height={32} unoptimized />
+                        ) : (
+                          <Package size={16} strokeWidth={1.6} />
+                        )}
+                      </span>
+                      <span className="order-receive-line__name">{item.productName}</span>
+                      <span className="order-receive-line__qty">
+                        {t.formatMessage(
+                          { id: 'orders.variance_compact' },
+                          { ordered, received },
+                        )}
+                      </span>
+                      <span className={`order-receive-line__variance ${variantClass}`}>
+                        {delta > 0 ? `+${delta}` : delta}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-          )
-        })()}
-
-        {/* Divider */}
-        <div className="border-t border-dashed border-border mb-4" />
-
-        {/* Total + Status */}
-        <div className="space-y-2 text-sm mb-4">
-          <div className="flex justify-between">
-            <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.total_label' })}</span>
-            <span className="font-semibold">{formatCurrency(order.total)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.status_label' })}</span>
-            {(() => {
-              const ds = getOrderDisplayStatus(order)
-              const colorMap = { pending: 'text-warning', received: 'text-success', overdue: 'text-error' }
-              const labelMap = {
-                pending: t.formatMessage({ id: 'orders.status_pending' }),
-                received: t.formatMessage({ id: 'orders.status_received' }),
-                overdue: t.formatMessage({ id: 'orders.status_overdue' }),
-              }
-              return <span className={colorMap[ds]}>{labelMap[ds]}</span>
-            })()}
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-dashed border-border mb-4" />
-
-        {/* Ordered on / by / to + arrival + receipt */}
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.ordered_on_label' })}</span>
-            <span className="tabular-nums">{formatDate(new Date(order.date))}</span>
-          </div>
-          {order.expand?.createdByUser && (
-            <div className="flex justify-between">
-              <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.ordered_by_label' })}</span>
-              <span>{order.expand.createdByUser.name || order.expand.createdByUser.email}</span>
-            </div>
           )}
-          <div className="flex justify-between">
-            <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.ordered_to_label' })}</span>
-            {order.providerId && order.expand?.provider?.name ? (
-              <button
-                type="button"
-                onClick={() => {
-                  if (!params?.businessId || !order.providerId) return
-                  const href = `/${params.businessId}/providers/${order.providerId}`
-                  onClose()
-                  setTimeout(() => {
-                    navigate(href)
-                  }, 200)
-                }}
-                className="text-brand hover:underline text-right"
-              >
-                {order.expand.provider.name}
-              </button>
-            ) : (
-              <span>{order.expand?.provider?.name || '-'}</span>
+
+          {/* Totals block */}
+          <div className="order-receipt__totals">
+            <div className="order-receipt__totals-row order-receipt__totals-row--total">
+              <span className="order-receipt__totals-label">
+                {t.formatMessage({ id: 'orders.total_label' })}
+              </span>
+              <span className="order-receipt__totals-value">
+                {formatCurrency(order.total)}
+              </span>
+            </div>
+          </div>
+
+          {/* Audit trail */}
+          <div className="order-receipt__audit">
+            <div className="order-receipt__audit-row">
+              <span className="order-receipt__audit-icon" aria-hidden="true">
+                <Calendar size={14} strokeWidth={1.7} />
+              </span>
+              <span className="order-receipt__audit-label">
+                {t.formatMessage({ id: 'orders.ordered_on_label' })}
+              </span>
+              <span className="order-receipt__audit-leader" aria-hidden="true" />
+              <span className="order-receipt__audit-value">
+                {formatDate(new Date(order.date))}
+              </span>
+            </div>
+            {order.expand?.createdByUser && (
+              <div className="order-receipt__audit-row">
+                <span className="order-receipt__audit-icon" aria-hidden="true">
+                  <UserPlus size={14} strokeWidth={1.7} />
+                </span>
+                <span className="order-receipt__audit-label">
+                  {t.formatMessage({ id: 'orders.ordered_by_label' })}
+                </span>
+                <span className="order-receipt__audit-leader" aria-hidden="true" />
+                <span className="order-receipt__audit-value">
+                  {order.expand.createdByUser.name || order.expand.createdByUser.email}
+                </span>
+              </div>
+            )}
+            <div className="order-receipt__audit-row">
+              <span className="order-receipt__audit-icon" aria-hidden="true">
+                <Truck size={14} strokeWidth={1.7} />
+              </span>
+              <span className="order-receipt__audit-label">
+                {t.formatMessage({ id: 'orders.ordered_to_label' })}
+              </span>
+              <span className="order-receipt__audit-leader" aria-hidden="true" />
+              {order.providerId && order.expand?.provider?.name ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!params?.businessId || !order.providerId) return
+                    const href = `/${params.businessId}/providers/${order.providerId}`
+                    onClose()
+                    setTimeout(() => navigate(href), 200)
+                  }}
+                  className="order-receipt__audit-value order-receipt__audit-value--link"
+                >
+                  {order.expand.provider.name}
+                </button>
+              ) : (
+                <span className="order-receipt__audit-value">
+                  {order.expand?.provider?.name || t.formatMessage({ id: 'orders.provider_none' })}
+                </span>
+              )}
+            </div>
+            {order.estimatedArrival && order.status !== 'received' && (
+              <div className="order-receipt__audit-row">
+                <span className="order-receipt__audit-icon" aria-hidden="true">
+                  <CalendarClock size={14} strokeWidth={1.7} />
+                </span>
+                <span className="order-receipt__audit-label">
+                  {t.formatMessage({ id: 'orders.est_arrival_label' })}
+                </span>
+                <span className="order-receipt__audit-leader" aria-hidden="true" />
+                <span className="order-receipt__audit-value">
+                  {formatDate(new Date(order.estimatedArrival))}
+                </span>
+              </div>
+            )}
+            {order.receivedDate && (
+              <div className="order-receipt__audit-row">
+                <span className="order-receipt__audit-icon" aria-hidden="true">
+                  <CheckCircle2 size={14} strokeWidth={1.7} />
+                </span>
+                <span className="order-receipt__audit-label">
+                  {t.formatMessage({ id: 'orders.received_date_label' })}
+                </span>
+                <span className="order-receipt__audit-leader" aria-hidden="true" />
+                <span className="order-receipt__audit-value">
+                  {formatDate(new Date(order.receivedDate))}
+                </span>
+              </div>
+            )}
+            {order.expand?.receivedByUser && (
+              <div className="order-receipt__audit-row">
+                <span className="order-receipt__audit-icon" aria-hidden="true">
+                  <UserCheck size={14} strokeWidth={1.7} />
+                </span>
+                <span className="order-receipt__audit-label">
+                  {t.formatMessage({ id: 'orders.received_by_label' })}
+                </span>
+                <span className="order-receipt__audit-leader" aria-hidden="true" />
+                <span className="order-receipt__audit-value">
+                  {order.expand.receivedByUser.name || order.expand.receivedByUser.email}
+                </span>
+              </div>
+            )}
+            {order.receipt && (
+              <div className="order-receipt__audit-row">
+                <span className="order-receipt__audit-icon" aria-hidden="true">
+                  <Paperclip size={14} strokeWidth={1.7} />
+                </span>
+                <span className="order-receipt__audit-label">
+                  {t.formatMessage({ id: 'orders.receipt_attached_label' })}
+                </span>
+                <span className="order-receipt__audit-leader" aria-hidden="true" />
+                <a
+                  href={getReceiptUrl(order) || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="order-receipt__audit-value order-receipt__audit-value--link"
+                >
+                  {t.formatMessage({ id: 'orders.view_attachment' })}
+                </a>
+              </div>
             )}
           </div>
-          {order.estimatedArrival && order.status !== 'received' && (
-            <div className="flex justify-between">
-              <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.est_arrival_label' })}</span>
-              <span className="tabular-nums">{formatDate(new Date(order.estimatedArrival))}</span>
-            </div>
-          )}
-          {order.receivedDate && (
-            <div className="flex justify-between">
-              <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.received_date_label' })}</span>
-              <span className="tabular-nums">{formatDate(new Date(order.receivedDate))}</span>
-            </div>
-          )}
-          {order.expand?.receivedByUser && (
-            <div className="flex justify-between">
-              <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.received_by_label' })}</span>
-              <span>{order.expand.receivedByUser.name || order.expand.receivedByUser.email}</span>
-            </div>
-          )}
-          {order.receipt && (
-            <div className="flex justify-between">
-              <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.receipt_attached_label' })}</span>
-              <a
-                href={getReceiptUrl(order) || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-brand"
-              >
-                {t.formatMessage({ id: 'orders.view_attachment' })}
-              </a>
-            </div>
-          )}
         </div>
       </IonContent>
 
       {/* Footer: pending vs received */}
-      {order.status === 'pending' ? (
-        <IonFooter>
-          <IonToolbar className="ion-padding-horizontal">
-            <div className="flex gap-2">
-              {canDelete && (
-                <IonButton
-                  fill="outline"
-                  shape="round"
-                  onClick={() => navRef.current?.push(() => <DeleteOrderConfirmStep />)}
-                  aria-label={t.formatMessage({ id: 'orders.delete_order_title' })}
-                >
-                  <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
-                </IonButton>
-              )}
-              {canManage && (
-                <IonButton
-                  fill="outline"
-                  shape="round"
+      <IonFooter>
+        <IonToolbar>
+          {order.status === 'pending' ? (
+            <div className="modal-footer">
+              <div className="order-overview__actions">
+                {canDelete && (
+                  <button
+                    type="button"
+                    className="order-overview__icon-action order-overview__icon-action--delete"
+                    onClick={() => navRef.current?.push(() => <DeleteOrderConfirmStep />)}
+                    aria-label={t.formatMessage({ id: 'orders.delete_order_title' })}
+                  >
+                    <Trash2 size={18} strokeWidth={1.8} />
+                  </button>
+                )}
+                {canManage && (
+                  <button
+                    type="button"
+                    className="order-overview__icon-action order-overview__icon-action--edit"
+                    onClick={() => {
+                      onInitializeEditForm(order)
+                      navRef.current?.push(() => <EditOrderStep />)
+                    }}
+                    aria-label={t.formatMessage({ id: 'orders.edit_order_aria' })}
+                  >
+                    <Pencil size={18} strokeWidth={1.8} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="order-overview__primary"
                   onClick={() => {
-                    onInitializeEditForm(order)
-                    navRef.current?.push(() => <EditOrderStep />)
+                    onInitializeReceiveQuantities(order)
+                    navRef.current?.push(() => <ReceiveOrderStep />)
                   }}
-                  aria-label={t.formatMessage({ id: 'orders.edit_order_aria' })}
                 >
-                  <Pencil className="text-brand" style={{ width: 16, height: 16 }} />
-                </IonButton>
-              )}
-              <IonButton
-                onClick={() => {
-                  onInitializeReceiveQuantities(order)
-                  navRef.current?.push(() => <ReceiveOrderStep />)
-                }}
-              >
-                {t.formatMessage({ id: 'orders.receive_button' })}
-              </IonButton>
+                  {t.formatMessage({ id: 'orders.receive_button' })}
+                </button>
+              </div>
             </div>
-          </IonToolbar>
-        </IonFooter>
-      ) : (
-        <IonFooter>
-          <IonToolbar className="ion-padding-horizontal">
-            <IonButton expand="block" onClick={handleClose}>
-              {t.formatMessage({ id: 'common.close' })}
-            </IonButton>
-          </IonToolbar>
-        </IonFooter>
-      )}
+          ) : (
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="order-modal__primary-pill"
+                onClick={handleClose}
+              >
+                {t.formatMessage({ id: 'common.close' })}
+              </button>
+            </div>
+          )}
+        </IonToolbar>
+      </IonFooter>
     </IonPage>
   )
 }

@@ -1,12 +1,13 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import Image from '@/lib/Image'
 import { ImagePlus } from 'lucide-react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { BarcodeDisplay } from './BarcodeDisplay'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { getProductIconUrl } from '@/lib/utils'
+import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { Product, ProductCategory, BarcodeFormat } from '@kasero/shared/types'
 
 const BARCODE_FORMAT_LABELS: Record<BarcodeFormat, string> = {
@@ -37,7 +38,8 @@ export function ProductInfoDrawer({
   product,
   categories,
 }: ProductInfoDrawerProps) {
-  const t = useIntl()
+  const intl = useIntl()
+  const { formatCurrency } = useBusinessFormat()
 
   // Render nothing if no product is set. The parent's open-state is
   // typically gated on `!!product`, so this branch only fires during the
@@ -46,62 +48,293 @@ export function ProductInfoDrawer({
 
   const iconUrl = getProductIconUrl(product)
   const categoryName =
-    categories.find(c => c.id === product.categoryId)?.name ?? t.formatMessage({
-      id: 'products.uncategorized'
-    })
-  const formatLabel =
-    product.barcodeFormat ? BARCODE_FORMAT_LABELS[product.barcodeFormat] : null
+    categories.find((c) => c.id === product.categoryId)?.name ??
+    intl.formatMessage({ id: 'products.uncategorized' })
+  const formatLabel = product.barcodeFormat
+    ? BARCODE_FORMAT_LABELS[product.barcodeFormat]
+    : null
+
+  const stockValue = product.stock ?? 0
+  const threshold = product.lowStockThreshold ?? 10
+  const hasStock = product.stock !== null && product.stock !== undefined
+  const isLowStock = hasStock && stockValue <= threshold
+  const isActive = product.active
+
+  const stockDisplay = hasStock
+    ? intl.formatMessage({ id: 'products.units_count' }, { count: stockValue })
+    : intl.formatMessage({ id: 'products.info_drawer_stock_untracked' })
 
   return (
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={t.formatMessage({
-        id: 'products.info_drawer_title'
-      })}
+      title={intl.formatMessage({ id: 'products.info_drawer_title' })}
     >
-      <div className="flex flex-col items-center py-6">
-        <div className="w-56 h-56 rounded-3xl overflow-hidden flex items-center justify-center bg-bg-muted">
-          {iconUrl && isPresetIcon(iconUrl) ? (
-            (() => {
-              const p = getPresetIcon(iconUrl)
-              return p ? <p.icon size={120} className="text-text-primary" /> : null
-            })()
-          ) : iconUrl ? (
-            <Image
-              src={iconUrl}
-              alt={product.name}
-              width={224}
-              height={224}
-              className="object-cover w-full h-full"
-              unoptimized
-            />
-          ) : (
-            <ImagePlus className="w-20 h-20 text-text-tertiary" />
-          )}
+      <article className="info-drawer">
+        {/* Hero — large product photo / icon, eyebrow with category, and
+            the product name in italic Fraunces. The "stamped catalog
+            card" voice begins here. */}
+        <header className="info-drawer__hero">
+          <div className="info-drawer__portrait" aria-hidden="true">
+            {iconUrl && isPresetIcon(iconUrl) ? (
+              (() => {
+                const p = getPresetIcon(iconUrl)
+                return p ? (
+                  <p.icon size={120} className="info-drawer__portrait-icon" />
+                ) : null
+              })()
+            ) : iconUrl ? (
+              <Image
+                src={iconUrl}
+                alt={product.name}
+                width={224}
+                height={224}
+                className="info-drawer__portrait-img"
+                unoptimized
+              />
+            ) : (
+              <ImagePlus className="info-drawer__portrait-fallback" />
+            )}
+          </div>
+
+          <div className="info-drawer__caption">
+            <span className="info-drawer__eyebrow">
+              <span className="info-drawer__eyebrow-rule" aria-hidden="true" />
+              {categoryName}
+              {!isActive && (
+                <>
+                  <span
+                    className="info-drawer__eyebrow-dot"
+                    aria-hidden="true"
+                  />
+                  <span className="info-drawer__eyebrow-flag">
+                    {intl.formatMessage({
+                      id: 'products.info_drawer_inactive_flag',
+                    })}
+                  </span>
+                </>
+              )}
+            </span>
+            <h2 className="info-drawer__name">{product.name}</h2>
+          </div>
+        </header>
+
+        {/* Quick stats — three stamped columns. Mono uppercase eyebrows
+            sit above mono numerals. Stock turns oxblood when it dips
+            below the low-stock threshold. */}
+        <div className="info-drawer__stats" role="list">
+          <div className="info-drawer__stat" role="listitem">
+            <span className="info-drawer__stat-label">
+              {intl.formatMessage({ id: 'products.info_drawer_stat_price' })}
+            </span>
+            <span className="info-drawer__stat-value">
+              {formatCurrency(product.price)}
+            </span>
+          </div>
+          <div
+            className={`info-drawer__stat info-drawer__stat--center${
+              isLowStock ? ' info-drawer__stat--low' : ''
+            }`}
+            role="listitem"
+          >
+            <span className="info-drawer__stat-label">
+              {intl.formatMessage({ id: 'products.info_drawer_stat_stock' })}
+            </span>
+            <span className="info-drawer__stat-value">{stockDisplay}</span>
+            {isLowStock && (
+              <span className="info-drawer__stat-flag">
+                {intl.formatMessage({
+                  id: 'products.info_drawer_stock_low_flag',
+                })}
+              </span>
+            )}
+          </div>
+          <div className="info-drawer__stat info-drawer__stat--right" role="listitem">
+            <span className="info-drawer__stat-label">
+              {intl.formatMessage({ id: 'products.info_drawer_stat_status' })}
+            </span>
+            <span className="info-drawer__stat-value info-drawer__stat-value--mono-sm">
+              {isActive
+                ? intl.formatMessage({
+                    id: 'products.info_drawer_status_active',
+                  })
+                : intl.formatMessage({
+                    id: 'products.info_drawer_status_inactive',
+                  })}
+            </span>
+          </div>
         </div>
-        <div className="font-medium text-lg mt-4 text-center">{product.name}</div>
-        <div className="text-sm text-text-tertiary mt-1 text-center">{categoryName}</div>
-      </div>
-      <div className="modal-step-item">
-        {product.barcode && product.barcodeFormat ? (
-          <div className="flex flex-col items-center gap-3">
-            <BarcodeDisplay value={product.barcode} format={product.barcodeFormat} />
-            <div className="text-center">
-              <div className="text-sm font-medium text-text-primary">{formatLabel}</div>
-              <div className="text-sm font-mono text-text-secondary mt-0.5 break-all">
+
+        {/* Specifications ledger — printed-receipt style dotted-leader
+            rows. Stays in mono everywhere a number lives so the eye
+            tracks left → right cleanly. */}
+        <section className="info-drawer__ledger">
+          <h3 className="info-drawer__ledger-heading">
+            {intl.formatMessage({
+              id: 'products.info_drawer_section_specs',
+            })}
+          </h3>
+          <dl className="info-drawer__ledger-rows">
+            <div className="info-drawer__ledger-row">
+              <dt className="info-drawer__ledger-label">
+                {intl.formatMessage({
+                  id: 'products.info_drawer_field_category',
+                })}
+              </dt>
+              <span
+                className="info-drawer__ledger-leader"
+                aria-hidden="true"
+              />
+              <dd className="info-drawer__ledger-value">{categoryName}</dd>
+            </div>
+
+            <div className="info-drawer__ledger-row">
+              <dt className="info-drawer__ledger-label">
+                {intl.formatMessage({
+                  id: 'products.info_drawer_field_price',
+                })}
+              </dt>
+              <span
+                className="info-drawer__ledger-leader"
+                aria-hidden="true"
+              />
+              <dd className="info-drawer__ledger-value info-drawer__ledger-value--strong">
+                {formatCurrency(product.price)}
+              </dd>
+            </div>
+
+            {product.costPrice !== null && product.costPrice !== undefined && (
+              <div className="info-drawer__ledger-row">
+                <dt className="info-drawer__ledger-label">
+                  {intl.formatMessage({
+                    id: 'products.info_drawer_field_cost',
+                  })}
+                </dt>
+                <span
+                  className="info-drawer__ledger-leader"
+                  aria-hidden="true"
+                />
+                <dd className="info-drawer__ledger-value info-drawer__ledger-value--muted">
+                  {formatCurrency(product.costPrice)}
+                </dd>
+              </div>
+            )}
+
+            <div className="info-drawer__ledger-row">
+              <dt className="info-drawer__ledger-label">
+                {intl.formatMessage({
+                  id: 'products.info_drawer_field_stock',
+                })}
+              </dt>
+              <span
+                className="info-drawer__ledger-leader"
+                aria-hidden="true"
+              />
+              <dd
+                className={`info-drawer__ledger-value${
+                  isLowStock ? ' info-drawer__ledger-value--alert' : ''
+                }`}
+              >
+                {stockDisplay}
+              </dd>
+            </div>
+
+            {hasStock && (
+              <div className="info-drawer__ledger-row">
+                <dt className="info-drawer__ledger-label">
+                  {intl.formatMessage({
+                    id: 'products.info_drawer_field_low_stock_at',
+                  })}
+                </dt>
+                <span
+                  className="info-drawer__ledger-leader"
+                  aria-hidden="true"
+                />
+                <dd className="info-drawer__ledger-value info-drawer__ledger-value--muted">
+                  {intl.formatMessage(
+                    { id: 'products.units_count' },
+                    { count: threshold },
+                  )}
+                </dd>
+              </div>
+            )}
+
+            {formatLabel && (
+              <div className="info-drawer__ledger-row">
+                <dt className="info-drawer__ledger-label">
+                  {intl.formatMessage({
+                    id: 'products.info_drawer_field_barcode_format',
+                  })}
+                </dt>
+                <span
+                  className="info-drawer__ledger-leader"
+                  aria-hidden="true"
+                />
+                <dd className="info-drawer__ledger-value info-drawer__ledger-value--muted">
+                  {formatLabel}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </section>
+
+        {/* Barcode block — terracotta-tinted hairline card. When the
+            product has a code, the SVG renders inside; the value sits
+            beneath in mono numerals. When it doesn't, the slot fills
+            with an italic Fraunces "no barcode set" line. */}
+        <section className="info-drawer__barcode">
+          {product.barcode && product.barcodeFormat ? (
+            <>
+              <div className="info-drawer__barcode-eyebrow">
+                <span
+                  className="info-drawer__barcode-tick"
+                  aria-hidden="true"
+                />
+                <span>
+                  {intl.formatMessage({
+                    id: 'products.info_drawer_barcode_eyebrow',
+                  })}
+                </span>
+                <span
+                  className="info-drawer__barcode-eyebrow-sep"
+                  aria-hidden="true"
+                >
+                  ·
+                </span>
+                <span className="info-drawer__barcode-format">
+                  {formatLabel}
+                </span>
+              </div>
+              <div className="info-drawer__barcode-frame">
+                <BarcodeDisplay
+                  value={product.barcode}
+                  format={product.barcodeFormat}
+                />
+              </div>
+              <div className="info-drawer__barcode-value">
                 {product.barcode}
               </div>
+            </>
+          ) : (
+            <div className="info-drawer__barcode--empty">
+              <span
+                className="info-drawer__barcode-tick info-drawer__barcode-tick--muted"
+                aria-hidden="true"
+              />
+              <p className="info-drawer__barcode-empty-headline">
+                {intl.formatMessage({
+                  id: 'products.info_drawer_no_barcode',
+                })}
+              </p>
+              <p className="info-drawer__barcode-empty-caption">
+                {intl.formatMessage({
+                  id: 'products.info_drawer_no_barcode_caption',
+                })}
+              </p>
             </div>
-          </div>
-        ) : (
-          <p className="text-center text-sm text-text-tertiary">
-            {t.formatMessage({
-              id: 'products.info_drawer_no_barcode'
-            })}
-          </p>
-        )}
-      </div>
+          )}
+        </section>
+      </article>
     </ModalShell>
-  );
+  )
 }

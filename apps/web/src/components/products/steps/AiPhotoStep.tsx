@@ -9,10 +9,8 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
-  IonCard,
-  IonCardContent,
 } from '@ionic/react'
-import { Camera, ChevronRight } from 'lucide-react'
+import { Camera } from 'lucide-react'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
 import { AiBarcodeStep } from './AiBarcodeStep'
 
@@ -29,7 +27,7 @@ export function AiPhotoStep() {
     if (photoInputRef.current) {
       photoInputRef.current.value = ''
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function handlePhotoSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -43,7 +41,7 @@ export function AiPhotoStep() {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
             <IonBackButton defaultHref="" />
@@ -54,35 +52,61 @@ export function AiPhotoStep() {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary mb-2 text-center">
-          {t.formatMessage({ id: 'productForm.ai_step_photo_indicator' })}
+      <IonContent className="pm-content">
+        <div className="pm-shell">
+          <header className="pm-hero">
+            <span className="pm-hero__eyebrow">
+              {t.formatMessage({ id: 'productAddEdit.ai_photo_eyebrow' })}
+            </span>
+            <h1 className="pm-hero__title">
+              {t.formatMessage(
+                { id: 'productAddEdit.ai_photo_title' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+            <p className="pm-hero__subtitle">
+              {t.formatMessage({ id: 'productForm.ai_step_photo_instructions' })}
+            </p>
+          </header>
+
+          <div className="pm-ai-photo">
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              className="pm-ai-dropzone"
+            >
+              <span className="pm-ai-dropzone__icon">
+                <Camera size={28} strokeWidth={1.6} />
+              </span>
+              <span className="pm-ai-dropzone__title">
+                {t.formatMessage({ id: 'productForm.choose_photo_button' })}
+              </span>
+              <span className="pm-ai-dropzone__desc">
+                {t.formatMessage({ id: 'productForm.choose_photo_desc' })}
+              </span>
+              <span className="pm-ai-dropzone__stamp">
+                {t.formatMessage({ id: 'productAddEdit.ai_photo_stamp' })}
+              </span>
+            </button>
+
+            <span className="pm-ai-step-indicator">
+              <span className="pm-ai-step-indicator__num">1</span>
+              <span className="pm-ai-step-indicator__sep">/</span>
+              <span>2</span>
+            </span>
+          </div>
+
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+            onChange={handlePhotoSelected}
+            className="hidden"
+          />
         </div>
-        <p className="text-sm text-text-secondary mb-4 text-center">
-          {t.formatMessage({ id: 'productForm.ai_step_photo_instructions' })}
-        </p>
-        <IonCard button onClick={() => photoInputRef.current?.click()} className="m-0">
-          <IonCardContent className="flex items-start gap-4 py-5">
-            <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
-              <Camera className="w-6 h-6 text-brand" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-base font-semibold text-text-primary">{t.formatMessage({ id: 'productForm.choose_photo_button' })}</div>
-              <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.choose_photo_desc' })}</div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
-          </IonCardContent>
-        </IonCard>
-        <input
-          ref={photoInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-          onChange={handlePhotoSelected}
-          className="hidden"
-        />
       </IonContent>
 
-      <IonFooter>
+      <IonFooter className="pm-footer">
         <IonToolbar className="ion-padding-horizontal" />
       </IonFooter>
     </IonPage>

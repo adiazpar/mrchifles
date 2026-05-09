@@ -1,5 +1,4 @@
 import { useIntl } from 'react-intl'
-import { useRef } from 'react'
 import {
   IonPage,
   IonHeader,
@@ -10,11 +9,16 @@ import {
   IonButtons,
   IonButton,
   IonIcon,
-  IonCard,
-  IonCardContent,
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
-import { Sparkles, UserPlus, FileScan, FileSpreadsheet, ChevronRight } from 'lucide-react'
+import {
+  Sparkles,
+  PencilLine,
+  FileScan,
+  FileSpreadsheet,
+  ChevronRight,
+  Settings2,
+} from 'lucide-react'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
 import { AiPhotoStep } from './AiPhotoStep'
 import { FormStep } from './FormStep'
@@ -23,8 +27,6 @@ export function AddEntryStep() {
   const t = useIntl()
   const navRef = useProductNavRef()
   const { onClose, onExitComplete, onOpenSettings } = useAddProductCallbacks()
-
-  const gradientId = useRef(`ai-icon-gradient-${Math.random().toString(36).slice(2, 7)}`).current
 
   function handleCancel() {
     onClose()
@@ -41,100 +43,149 @@ export function AddEntryStep() {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="pm-header">
         <IonToolbar>
-          <IonTitle>
-            {t.formatMessage({ id: 'productForm.title_add' })}
-          </IonTitle>
+          <IonTitle>{t.formatMessage({ id: 'productForm.title_add' })}</IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+            <IonButton
+              fill="clear"
+              onClick={handleCancel}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        <svg width="0" height="0" className="absolute" aria-hidden="true" focusable="false">
-          <defs>
-            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#0EA5E9" />
-              <stop offset="100%" stopColor="#A855F7" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="space-y-3">
-          <div className="space-y-3">
-            <IonCard button onClick={goToAiPhoto} className="m-0">
-              <IonCardContent className="flex items-start gap-4 py-5">
-                <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-6 h-6" color={`url(#${gradientId})`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-base font-semibold text-text-primary">{t.formatMessage({ id: 'productForm.snap_to_add_title' })}</div>
-                  <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.snap_to_add_desc' })}</div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
-              </IonCardContent>
-            </IonCard>
+      <IonContent className="pm-content">
+        <div className="pm-shell">
+          <header className="pm-hero">
+            <span className="pm-hero__eyebrow">
+              {t.formatMessage({ id: 'productAddEdit.entry_eyebrow' })}
+            </span>
+            <h1 className="pm-hero__title">
+              {t.formatMessage(
+                { id: 'productAddEdit.entry_title' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+            <p className="pm-hero__subtitle">
+              {t.formatMessage({ id: 'productAddEdit.entry_subtitle' })}
+            </p>
+          </header>
 
-            {/* Disabled card — plain div avoids IonCard shadow-DOM pointer-events leak */}
-            <div className="m-0 opacity-40 pointer-events-none rounded-lg border border-[var(--color-border)] bg-[var(--ion-card-background,var(--color-bg-card,#fff))]">
-              <div className="flex items-start gap-4 py-5 px-4">
-                <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
-                  <FileScan className="w-6 h-6" color={`url(#${gradientId})`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-base font-semibold text-text-primary">{t.formatMessage({ id: 'productForm.add_from_document_title' })}</div>
-                  <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.add_from_document_desc' })}</div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
+          <div className="pm-entry">
+            <div className="pm-entry__choices">
+              {/* AI photo path */}
+              <button
+                type="button"
+                onClick={goToAiPhoto}
+                className="pm-choice"
+              >
+                <span className="pm-choice__icon">
+                  <Sparkles size={26} strokeWidth={1.6} />
+                </span>
+                <span className="pm-choice__body">
+                  <span className="pm-choice__title">
+                    {t.formatMessage({ id: 'productAddEdit.choice_snap_title' })}
+                  </span>
+                  <span className="pm-choice__desc">
+                    {t.formatMessage({ id: 'productAddEdit.choice_snap_desc' })}
+                  </span>
+                  <span className="pm-choice__meta">
+                    <span>{t.formatMessage({ id: 'productAddEdit.choice_snap_meta' })}</span>
+                  </span>
+                </span>
+                <span className="pm-choice__chev">
+                  <ChevronRight size={18} />
+                </span>
+              </button>
+
+              {/* Coming-soon scan-a-document */}
+              <div className="pm-choice pm-choice--ghost" aria-disabled="true">
+                <span className="pm-choice__icon">
+                  <FileScan size={24} strokeWidth={1.6} />
+                </span>
+                <span className="pm-choice__body">
+                  <span className="pm-choice__title">
+                    {t.formatMessage({ id: 'productForm.add_from_document_title' })}
+                  </span>
+                  <span className="pm-choice__desc">
+                    {t.formatMessage({ id: 'productForm.add_from_document_desc' })}
+                  </span>
+                  <span className="pm-choice__meta">
+                    <span>{t.formatMessage({ id: 'productAddEdit.coming_soon' })}</span>
+                  </span>
+                </span>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3" aria-hidden="true">
-            <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
-            <span className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
-              {t.formatMessage({ id: 'common.or' })}
-            </span>
-            <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
-          </div>
+            <div className="pm-entry__or" aria-hidden="true">
+              <span className="pm-entry__or-line" />
+              <span className="pm-entry__or-text">
+                {t.formatMessage({ id: 'common.or' })}
+              </span>
+              <span className="pm-entry__or-line" />
+            </div>
 
-          <div className="space-y-3">
-            <IonCard button onClick={goToManual} className="m-0">
-              <IonCardContent className="flex items-start gap-4 py-5">
-                <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
-                  <UserPlus className="w-6 h-6 text-text-secondary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-base font-semibold text-text-primary">{t.formatMessage({ id: 'productForm.add_manually_title' })}</div>
-                  <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.add_manually_desc' })}</div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
-              </IonCardContent>
-            </IonCard>
+            <div className="pm-entry__choices">
+              {/* Manual form path */}
+              <button
+                type="button"
+                onClick={goToManual}
+                className="pm-choice"
+              >
+                <span className="pm-choice__icon">
+                  <PencilLine size={24} strokeWidth={1.6} />
+                </span>
+                <span className="pm-choice__body">
+                  <span className="pm-choice__title">
+                    {t.formatMessage({ id: 'productAddEdit.choice_manual_title' })}
+                  </span>
+                  <span className="pm-choice__desc">
+                    {t.formatMessage({ id: 'productAddEdit.choice_manual_desc' })}
+                  </span>
+                  <span className="pm-choice__meta">
+                    <span>{t.formatMessage({ id: 'productAddEdit.choice_manual_meta' })}</span>
+                  </span>
+                </span>
+                <span className="pm-choice__chev">
+                  <ChevronRight size={18} />
+                </span>
+              </button>
 
-            {/* Disabled card — plain div avoids IonCard shadow-DOM pointer-events leak */}
-            <div className="m-0 opacity-40 pointer-events-none rounded-lg border border-[var(--color-border)] bg-[var(--ion-card-background,var(--color-bg-card,#fff))]">
-              <div className="flex items-start gap-4 py-5 px-4">
-                <div className="w-12 h-12 rounded-xl bg-brand-subtle flex items-center justify-center flex-shrink-0">
-                  <FileSpreadsheet className="w-6 h-6 text-text-tertiary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-base font-semibold text-text-primary">{t.formatMessage({ id: 'productForm.import_file_title' })}</div>
-                  <div className="text-sm text-text-secondary mt-1">{t.formatMessage({ id: 'productForm.import_file_desc' })}</div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0 self-center" />
+              {/* Coming-soon import file */}
+              <div className="pm-choice pm-choice--ghost" aria-disabled="true">
+                <span className="pm-choice__icon">
+                  <FileSpreadsheet size={24} strokeWidth={1.6} />
+                </span>
+                <span className="pm-choice__body">
+                  <span className="pm-choice__title">
+                    {t.formatMessage({ id: 'productForm.import_file_title' })}
+                  </span>
+                  <span className="pm-choice__desc">
+                    {t.formatMessage({ id: 'productForm.import_file_desc' })}
+                  </span>
+                  <span className="pm-choice__meta">
+                    <span>{t.formatMessage({ id: 'productAddEdit.coming_soon' })}</span>
+                  </span>
+                </span>
               </div>
             </div>
           </div>
         </div>
       </IonContent>
 
-      <IonFooter>
+      <IonFooter className="pm-footer">
         <IonToolbar className="ion-padding-horizontal">
-          <IonButton expand="block" fill="outline" onClick={onOpenSettings}>
+          <IonButton
+            expand="block"
+            fill="outline"
+            className="pm-ghost-btn"
+            onClick={onOpenSettings}
+          >
+            <Settings2 size={16} style={{ marginRight: 8 }} />
             {t.formatMessage({ id: 'productForm.settings_button' })}
           </IonButton>
         </IonToolbar>

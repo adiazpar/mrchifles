@@ -14,7 +14,10 @@ import {
 import { close } from 'ionicons/icons'
 import { Trash2, SlidersHorizontal } from 'lucide-react'
 import { hapticSuccess } from '@/lib/haptics'
-import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
+import {
+  useProductForm,
+  useProductFormValidation,
+} from '@/contexts/product-form-context'
 import { ProductForm } from '../ProductForm'
 import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
 import { EditSuccessStep } from './EditSuccessStep'
@@ -24,7 +27,8 @@ import { DeleteConfirmStep } from './DeleteConfirmStep'
 export function EditFormStep() {
   const t = useIntl()
   const navRef = useProductNavRef()
-  const { onClose, onExitComplete, categories, onSubmit, canDelete } = useEditProductCallbacks()
+  const { onClose, onExitComplete, categories, onSubmit, canDelete } =
+    useEditProductCallbacks()
   const {
     name,
     price,
@@ -93,37 +97,60 @@ export function EditFormStep() {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="pm-header">
         <IonToolbar>
           <IonTitle>
             {t.formatMessage({ id: 'productForm.title_edit' })}
           </IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+            <IonButton
+              fill="clear"
+              onClick={handleCancel}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        {error && (
-          <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mb-4">
-            {error}
-          </div>
-        )}
-        <ProductForm categories={categories} idPrefix="edit" isOpen={true} />
+      <IonContent className="pm-content">
+        <div className="pm-shell">
+          <header className="pm-hero">
+            <span className="pm-hero__eyebrow">
+              {t.formatMessage({ id: 'productAddEdit.form_edit_eyebrow' })}
+            </span>
+            <h1 className="pm-hero__title">
+              {t.formatMessage(
+                { id: 'productAddEdit.form_edit_title' },
+                {
+                  em: (chunks) => <em>{chunks}</em>,
+                  name: editingProduct?.name ?? '',
+                },
+              )}
+            </h1>
+          </header>
+
+          {error && <div className="pm-error">{error}</div>}
+
+          <ProductForm categories={categories} idPrefix="edit" isOpen={true} />
+        </div>
       </IonContent>
 
-      <IonFooter>
+      <IonFooter className="pm-footer">
         <IonToolbar className="ion-padding-horizontal">
           <div className="flex gap-2">
             {canDelete && (
               <IonButton
                 fill="outline"
                 shape="round"
-                onClick={() => navRef.current?.push(() => <DeleteConfirmStep />)}
-                aria-label={t.formatMessage({ id: 'productForm.title_delete_product' })}
+                className="pm-icon-btn"
+                onClick={() =>
+                  navRef.current?.push(() => <DeleteConfirmStep />)
+                }
+                aria-label={t.formatMessage({
+                  id: 'productForm.title_delete_product',
+                })}
               >
                 <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
               </IonButton>
@@ -131,16 +158,28 @@ export function EditFormStep() {
             <IonButton
               fill="outline"
               shape="round"
-              onClick={() => navRef.current?.push(() => <AdjustInventoryStep />)}
-              aria-label={t.formatMessage({ id: 'productForm.title_adjust_inventory' })}
+              className="pm-icon-btn"
+              onClick={() =>
+                navRef.current?.push(() => <AdjustInventoryStep />)
+              }
+              aria-label={t.formatMessage({
+                id: 'productForm.title_adjust_inventory',
+              })}
             >
-              <SlidersHorizontal className="text-brand" style={{ width: 16, height: 16 }} />
+              <SlidersHorizontal
+                className="text-brand"
+                style={{ width: 16, height: 16 }}
+              />
             </IonButton>
             <IonButton
               onClick={handleSave}
               disabled={isSaving || !isFormValid || !hasChanges}
             >
-              {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
+              {isSaving ? (
+                <IonSpinner name="crescent" />
+              ) : (
+                t.formatMessage({ id: 'common.save' })
+              )}
             </IonButton>
           </div>
         </IonToolbar>

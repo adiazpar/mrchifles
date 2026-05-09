@@ -12,7 +12,10 @@ import {
   IonButton,
 } from '@ionic/react'
 import { hapticSuccess } from '@/lib/haptics'
-import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
+import {
+  useProductForm,
+  useProductFormValidation,
+} from '@/contexts/product-form-context'
 import { ProductForm } from '../ProductForm'
 import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
 import { AddSuccessStep } from './AddSuccessStep'
@@ -87,7 +90,7 @@ export function FormStep() {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
             <IonBackButton defaultHref="" />
@@ -98,23 +101,38 @@ export function FormStep() {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        {error && (
-          <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mb-4">
-            {error}
-          </div>
-        )}
-        <ProductForm categories={categories} idPrefix="add" isOpen={true} />
+      <IonContent className="pm-content">
+        <div className="pm-shell">
+          <header className="pm-hero">
+            <span className="pm-hero__eyebrow">
+              {t.formatMessage({ id: 'productAddEdit.form_add_eyebrow' })}
+            </span>
+            <h1 className="pm-hero__title">
+              {t.formatMessage(
+                { id: 'productAddEdit.form_add_title' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+          </header>
+
+          {error && <div className="pm-error">{error}</div>}
+
+          <ProductForm categories={categories} idPrefix="add" isOpen={true} />
+        </div>
       </IonContent>
 
-      <IonFooter>
+      <IonFooter className="pm-footer">
         <IonToolbar className="ion-padding-horizontal">
           <IonButton
             expand="block"
             onClick={handleSave}
             disabled={isSaving || !isFormValid || !hasChanges}
           >
-            {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
+            {isSaving ? (
+              <IonSpinner name="crescent" />
+            ) : (
+              t.formatMessage({ id: 'productAddEdit.add_product_cta' })
+            )}
           </IonButton>
         </IonToolbar>
       </IonFooter>

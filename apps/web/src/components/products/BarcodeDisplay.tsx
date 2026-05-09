@@ -1,5 +1,6 @@
 'use client'
 
+import { useIntl } from 'react-intl'
 import { useMemo } from 'react'
 import DOMPurify from 'dompurify'
 import { renderBarcodeSvg } from '@/lib/barcode-render'
@@ -18,6 +19,7 @@ const DOMPURIFY_OPTIONS = {
 } as const
 
 export function BarcodeDisplay({ value, format }: BarcodeDisplayProps) {
+  const t = useIntl()
   const normalizedValue = value.trim()
 
   const result = useMemo(() => {
@@ -41,20 +43,23 @@ export function BarcodeDisplay({ value, format }: BarcodeDisplayProps) {
 
   if (!normalizedValue) {
     return (
-      <div className="text-sm text-text-tertiary">
-        Barcode visual appears here once you scan or generate a code.
-      </div>
+      <p className="pm-barcode-ledger__placeholder">
+        {t.formatMessage({ id: 'productAddEdit.barcode_placeholder' })}
+      </p>
     )
   }
 
   if (result.error) {
     return (
-      <div className="text-sm text-text-tertiary max-w-sm">
+      <p className="pm-barcode-ledger__placeholder">
         {result.error}
-      </div>
+      </p>
     )
   }
 
+  // safeSvg is the DOMPurify-sanitized SVG output of bwip-js (see
+  // DOMPURIFY_OPTIONS above). All scripts, event-handler attrs, and
+  // foreignObject payloads are stripped before this point.
   return (
     <div
       className="w-full flex justify-center items-center overflow-hidden [&_svg]:max-h-full [&_svg]:w-auto"

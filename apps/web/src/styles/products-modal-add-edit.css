@@ -1,0 +1,1847 @@
+/* ==========================================================================
+   AddProductModal + EditProductModal — Modern Mercantile chrome
+   ==========================================================================
+   The largest wizard in the app: Pattern 2 IonNav. The screens read like
+   a printed register slip — mono uppercase "PRODUCT DETAILS" eyebrow,
+   Fraunces italic title, hairline rules, mono numerals for prices /
+   stock / barcodes, stamped pills for success states.
+
+   Naming: every class lives under .pm-* (product-modal-) to stay clear
+   of every other surface's vocabulary. Reuses brand tokens only — no
+   hex, no gradients. Light + dark mode handled via tokens.
+
+   Sections:
+     1. Shared chrome  ............. hero, eyebrows, rules, errors
+     2. Add entry step  ............ two stamped option cards
+     3. Form (manual + AI tail)  ... fields, icon picker, segments
+     4. Barcode panel + scanner  ... value stamp, ledger frame, actions
+     5. AI pipeline  ............... photo, analyzing, barcode, suggested
+     6. Adjust inventory  .......... stock dial + delta preview
+     7. Delete confirm  ............ warning bullets + oxblood pill
+     8. Success steps  ............. Lottie + stamp + ledger recap
+     9. Live camera scanner  ....... full-screen viewfinder
+     10. Footer pills  ............. terracotta primary, ghost, danger
+*/
+
+/* ==========================================================================
+   1. Shared chrome
+   ========================================================================== */
+
+.pm-shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-3);
+}
+
+.pm-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) 0 var(--space-1);
+}
+
+.pm-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+.pm-hero__eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.pm-hero__eyebrow--danger {
+  color: var(--color-error);
+}
+
+.pm-hero__eyebrow--danger::before {
+  background: var(--color-error);
+}
+
+.pm-hero__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 70;
+  font-weight: 400;
+  font-size: 30px;
+  letter-spacing: -0.022em;
+  line-height: 1.06;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.pm-hero__title em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+
+.pm-hero__title--danger em {
+  color: var(--color-error);
+}
+
+.pm-hero__subtitle {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  max-width: 36ch;
+  margin: var(--space-2) 0 0;
+}
+
+/* Section rule — mono caption on a hairline. Used to introduce a block. */
+.pm-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-3);
+}
+
+.pm-rule__line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-hair);
+}
+
+.pm-rule__caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* Inline error banner — oxblood subtle on cream paper. Drops in with a
+   subtle slide so it reads as a printed correction, not a popup. */
+.pm-error {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+  border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+  line-height: 1.45;
+  animation: pm-error-in 240ms var(--ease-out-expo) both;
+}
+
+@keyframes pm-error-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   2. Add entry step — two stamped option cards
+   ========================================================================== */
+
+.pm-entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-2);
+}
+
+.pm-entry__choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* The choice card reads like a stamped option. Hairline frame on cream
+   paper-warm; the brand variant runs a 3px terracotta tab on the leading
+   edge so it reads like an ink-pressed pick. */
+.pm-choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-4);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out,
+    box-shadow var(--duration-fast) ease-out;
+}
+
+@media (hover: hover) {
+  .pm-choice:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
+}
+
+.pm-choice:active {
+  transform: translateY(1px);
+}
+
+.pm-choice:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Disabled / coming-soon ghost — half opacity, dotted border. */
+.pm-choice--ghost {
+  cursor: default;
+  border-style: dashed;
+  border-color: var(--color-hair);
+  background: var(--color-paper-warm);
+  opacity: 0.55;
+}
+
+.pm-choice--ghost:hover {
+  border-color: var(--color-hair);
+  background: var(--color-paper-warm);
+}
+
+.pm-choice__icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+  border: 1px solid var(--color-hair);
+}
+
+.pm-choice--ghost .pm-choice__icon {
+  background: var(--color-paper-deep);
+  color: var(--color-text-tertiary);
+  border-color: var(--color-hair);
+}
+
+.pm-choice__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pm-choice__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 19px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.pm-choice__desc {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  margin: 2px 0 0;
+}
+
+.pm-choice__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.pm-choice--ghost .pm-choice__meta {
+  color: var(--color-text-tertiary);
+}
+
+.pm-choice__meta-dot {
+  width: 4px;
+  height: 4px;
+  background: var(--color-text-tertiary);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.pm-choice__chev {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
+}
+
+.pm-choice:hover .pm-choice__chev {
+  color: var(--color-brand);
+  transform: translateX(2px);
+}
+
+/* "OR" rule between the two pairs of choices. */
+.pm-entry__or {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-1) 0;
+}
+
+.pm-entry__or-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-hair);
+}
+
+.pm-entry__or-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* ==========================================================================
+   3. Form (manual + AI tail) — fields, icon picker, segments
+   ========================================================================== */
+
+.pm-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Sub-segment — Details / Barcode tabs inside the form. Replaces the
+   default IonSegment chrome with a Mercantile pill rail. */
+.pm-form-segment {
+  --background: transparent;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 4px;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-1);
+}
+
+ion-segment.pm-form-segment ion-segment-button {
+  --background: transparent;
+  --background-checked: var(--color-bg-surface);
+  --color: var(--color-text-tertiary);
+  --color-checked: var(--color-text-primary);
+  --indicator-color: transparent;
+  --indicator-box-shadow: none;
+  --border-radius: var(--radius-full);
+  --padding-start: var(--space-3);
+  --padding-end: var(--space-3);
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  min-height: 34px;
+  margin: 0;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+ion-segment.pm-form-segment ion-segment-button::part(indicator) {
+  display: none;
+}
+
+ion-segment.pm-form-segment ion-segment-button.segment-button-checked {
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.04);
+}
+
+/* Field label — mono uppercase tracked. */
+.pm-field-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--space-2);
+}
+
+.pm-field-label__required {
+  color: var(--color-brand);
+  font-weight: 700;
+}
+
+.pm-field-helper {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--color-text-tertiary);
+  line-height: 1.5;
+  margin: var(--space-2) 0 0;
+}
+
+/* Field group — vertical stack with consistent rhythm. */
+.pm-field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Two-up row for Price + Category. */
+.pm-field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* Icon picker — large aspect tile + horizontal preset rail. */
+.pm-icon-picker {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.pm-icon-tile {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-paper-warm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--color-text-tertiary);
+}
+
+.pm-icon-rail {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-paper-warm);
+  padding: 0 var(--space-2);
+}
+
+.pm-icon-rail__button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 0;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+@media (hover: hover) {
+  .pm-icon-rail__button:hover {
+    background: var(--color-brand-subtle);
+    color: var(--color-brand);
+  }
+}
+
+.pm-icon-rail__button:active {
+  transform: scale(0.94);
+}
+
+.pm-icon-rail__button[aria-pressed="true"] {
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
+
+.pm-icon-meta {
+  margin-top: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.pm-icon-meta__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.pm-icon-meta__reset {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  cursor: pointer;
+  transition: opacity var(--duration-fast) ease-out;
+}
+
+.pm-icon-meta__reset:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Active toggle row. */
+.pm-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-hair);
+}
+
+.pm-toggle-row__lead {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pm-toggle-row__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.pm-toggle-row__desc {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   4. Barcode panel + actions
+   ========================================================================== */
+
+.pm-barcode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Barcode value input + clipboard action. */
+.pm-barcode-input {
+  position: relative;
+}
+
+.pm-barcode-input__copy {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  border: 0;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
+}
+
+.pm-barcode-input__copy:hover:not(:disabled) {
+  color: var(--color-text-secondary);
+  background: var(--color-paper-warm);
+}
+
+.pm-barcode-input__copy:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pm-barcode-input__copy--copied {
+  color: var(--color-success);
+}
+
+/* The barcode display ledger frame — hairline border around the rendered
+   SVG with mono uppercase corner tickmarks. Reads like a stamped tag. */
+.pm-barcode-ledger {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+  padding: var(--space-4);
+  min-height: 132px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.pm-barcode-ledger--tall {
+  min-height: 168px;
+}
+
+/* Decorative corner ticks — mono uppercase "K · KSR" feel. */
+.pm-barcode-ledger::before,
+.pm-barcode-ledger::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--color-hair);
+  border-style: solid;
+  border-width: 0;
+  pointer-events: none;
+}
+
+.pm-barcode-ledger::before {
+  top: 8px;
+  left: 8px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.pm-barcode-ledger::after {
+  bottom: 8px;
+  right: 8px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+.pm-barcode-ledger svg {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+}
+
+.pm-barcode-ledger__placeholder {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+  line-height: 1.45;
+  max-width: 28ch;
+  margin: 0;
+}
+
+.pm-barcode-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+.pm-barcode-meta__chips {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.pm-barcode-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px var(--space-2);
+  border: 1px solid var(--color-hair);
+  background: var(--color-paper-warm);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-barcode-chip--brand {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-subtle);
+}
+
+.pm-barcode-chip--success {
+  border-color: color-mix(in srgb, var(--color-success) 30%, var(--color-hair));
+  color: var(--color-success);
+  background: var(--color-success-subtle);
+}
+
+.pm-barcode-chip--ink {
+  color: var(--color-text-secondary);
+}
+
+.pm-barcode-meta__reset {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-error);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity var(--duration-fast) ease-out;
+}
+
+.pm-barcode-meta__reset:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Empty meta — italic Fraunces caption. */
+.pm-barcode-meta__empty {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 13.5px;
+  color: var(--color-text-tertiary);
+}
+
+/* Row of round action buttons — Scan, Generate, Print, Reset.
+   Same pos-scan-button vocabulary so the family stays consistent. */
+.pm-barcode-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-around;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-3);
+}
+
+.pm-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity var(--duration-fast) ease-out, transform var(--duration-instant) ease-out;
+}
+
+.pm-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pm-action:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.pm-action__circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  transition:
+    border-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out;
+}
+
+.pm-action--brand .pm-action__circle {
+  border-color: color-mix(in srgb, var(--color-brand) 40%, var(--color-hair));
+  color: var(--color-brand);
+}
+
+.pm-action--success .pm-action__circle {
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--color-hair));
+  color: var(--color-success);
+}
+
+.pm-action--warning .pm-action__circle {
+  border-color: color-mix(in srgb, var(--color-warning) 40%, var(--color-hair));
+  color: var(--color-warning);
+}
+
+.pm-action--danger .pm-action__circle {
+  border-color: color-mix(in srgb, var(--color-error) 35%, var(--color-hair));
+  color: var(--color-error);
+}
+
+@media (hover: hover) {
+  .pm-action:hover:not(:disabled) .pm-action__circle {
+    background: var(--color-brand-subtle);
+  }
+}
+
+.pm-action__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+/* ==========================================================================
+   5. AI pipeline — photo / analyzing / suggested category
+   ========================================================================== */
+
+/* Photo step — full-bleed dropzone-style stamped card. */
+.pm-ai-photo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+}
+
+.pm-ai-photo__caption {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  margin: 0;
+  max-width: 36ch;
+}
+
+.pm-ai-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  border: 1.5px dashed var(--color-hair);
+  border-radius: var(--radius-xl);
+  background: var(--color-paper-warm);
+  cursor: pointer;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+@media (hover: hover) {
+  .pm-ai-dropzone:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
+}
+
+.pm-ai-dropzone:active {
+  transform: translateY(1px);
+}
+
+.pm-ai-dropzone__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-hair);
+  color: var(--color-brand);
+}
+
+.pm-ai-dropzone__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 19px;
+  letter-spacing: -0.012em;
+  color: var(--color-text-primary);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.pm-ai-dropzone__desc {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  max-width: 32ch;
+  margin: 0;
+}
+
+.pm-ai-dropzone__stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.pm-ai-dropzone__stamp::before,
+.pm-ai-dropzone__stamp::after {
+  content: "";
+  width: 12px;
+  height: 1px;
+  background: var(--color-hair);
+}
+
+/* Step indicator pill — "STEP 1 OF 2". */
+.pm-ai-step-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-hair);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  align-self: center;
+}
+
+.pm-ai-step-indicator__num {
+  color: var(--color-brand);
+  font-weight: 800;
+}
+
+.pm-ai-step-indicator__sep {
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+}
+
+/* ===== Analyzing step =================================================== */
+
+.pm-analyzing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-10) var(--space-4);
+  gap: var(--space-4);
+  min-height: 300px;
+  justify-content: center;
+}
+
+.pm-analyzing__ring {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-hair);
+  position: relative;
+}
+
+.pm-analyzing__ring ion-spinner {
+  --color: var(--color-brand);
+  width: 28px;
+  height: 28px;
+}
+
+.pm-analyzing__heading {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-variation-settings: "SOFT" 100;
+  font-size: 24px;
+  letter-spacing: -0.018em;
+  line-height: 1.1;
+  color: var(--color-text-primary);
+  margin: 0;
+  max-width: 24ch;
+}
+
+.pm-analyzing__heading em {
+  font-style: italic;
+  color: var(--color-brand);
+  font-variation-settings: "SOFT" 100;
+}
+
+.pm-analyzing__caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+/* Three-dot pulse aside the caption. */
+.pm-analyzing__dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pm-analyzing__dot {
+  width: 4px;
+  height: 4px;
+  background: var(--color-text-tertiary);
+  border-radius: 50%;
+  animation: pm-dot-pulse 1.2s var(--ease-out-expo) infinite both;
+}
+
+.pm-analyzing__dot:nth-child(2) { animation-delay: 160ms; }
+.pm-analyzing__dot:nth-child(3) { animation-delay: 320ms; }
+
+@keyframes pm-dot-pulse {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40%           { opacity: 1;    transform: translateY(-2px); }
+}
+
+/* Pipeline phase ledger — small printed line under the caption telling
+   which sub-step is running. */
+.pm-analyzing__phases {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: var(--space-2);
+  width: 100%;
+  max-width: 22rem;
+}
+
+.pm-analyzing__phase {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.pm-analyzing__phase-leader {
+  flex: 1;
+  height: 1em;
+  align-self: end;
+  margin-bottom: 4px;
+  border-bottom: 1px dotted var(--color-border);
+  opacity: 0.7;
+  min-width: 12px;
+}
+
+.pm-analyzing__phase--active {
+  color: var(--color-brand);
+  font-weight: 700;
+}
+
+.pm-analyzing__phase--done {
+  color: var(--color-success);
+}
+
+/* ===== Suggested category step ========================================= */
+
+.pm-suggested {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pm-suggested__notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0 0;
+}
+
+.pm-suggested__intro {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  max-width: 36ch;
+  margin: 0;
+}
+
+.pm-suggested__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-1) 0;
+}
+
+.pm-suggested__divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-hair);
+}
+
+.pm-suggested__divider-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.pm-suggested__pick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pm-suggested__pick-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+@media (hover: hover) {
+  .pm-suggested__pick-row:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
+}
+
+.pm-suggested__pick-row:active {
+  transform: translateY(1px);
+}
+
+.pm-suggested__pick-row-chev {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pm-suggested__back {
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  background: transparent;
+  border: 0;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: background-color var(--duration-fast) ease-out;
+}
+
+.pm-suggested__back:hover {
+  background: var(--color-brand-subtle);
+}
+
+/* ==========================================================================
+   6. Adjust inventory — current stock dial + delta preview
+   ========================================================================== */
+
+.pm-adjust {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+.pm-adjust__hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-surface);
+}
+
+.pm-adjust__icon {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-hair);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--color-text-tertiary);
+}
+
+.pm-adjust__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pm-adjust__head {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pm-adjust__name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 20px;
+  letter-spacing: -0.014em;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+  margin: 0;
+  word-break: break-word;
+}
+
+.pm-adjust__current {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-adjust__current-num {
+  color: var(--color-text-primary);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+/* Delta preview — Fraunces italic explainer of the new value. */
+.pm-adjust__preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-hair);
+  border-radius: var(--radius-lg);
+  background: var(--color-paper-warm);
+}
+
+.pm-adjust__preview-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.pm-adjust__preview-delta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.pm-adjust__preview-delta--up {
+  color: var(--color-success);
+}
+
+.pm-adjust__preview-delta--down {
+  color: var(--color-error);
+}
+
+.pm-adjust__preview-delta--zero {
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+
+.pm-adjust__preview-arrow {
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* ==========================================================================
+   7. Delete confirm
+   ========================================================================== */
+
+.pm-delete {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pm-delete__panel {
+  border: 1px solid color-mix(in srgb, var(--color-error) 22%, var(--color-hair));
+  background: var(--color-error-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+}
+
+.pm-delete__bullet-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-delete__bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--color-error) 80%, var(--color-text-primary));
+}
+
+.pm-delete__bullet::before {
+  content: "";
+  flex-shrink: 0;
+  margin-top: 8px;
+  width: 6px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.pm-delete__name-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  margin-top: var(--space-1);
+  padding: 6px var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--color-error) 28%, var(--color-hair));
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-error);
+}
+
+.pm-delete__name-stamp-mark {
+  color: color-mix(in srgb, var(--color-error) 60%, var(--color-text-tertiary));
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.pm-delete__name-stamp-name {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: -0.005em;
+  color: var(--color-text-primary);
+  max-width: 22ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   8. Success steps — Lottie + stamp + ledger
+   ========================================================================== */
+
+.pm-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-2) var(--space-2) var(--space-4);
+  height: 100%;
+  justify-content: center;
+}
+
+.pm-success__lottie {
+  width: 144px;
+  height: 144px;
+  flex-shrink: 0;
+}
+
+/* Mono uppercase stamp — "PRODUCT 0042 · CREATED" / "·EDITED·" / "·DELETED·". */
+.pm-success__stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  padding: 6px var(--space-3);
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-hair);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  animation: pm-stamp-in 360ms var(--ease-out-expo) 320ms both;
+}
+
+.pm-success__stamp-id {
+  color: var(--color-text-primary);
+  letter-spacing: 0.14em;
+}
+
+.pm-success__stamp-dot {
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.pm-success__stamp-state {
+  font-weight: 800;
+}
+
+.pm-success__stamp-state--created,
+.pm-success__stamp-state--edited {
+  color: var(--color-brand);
+}
+
+.pm-success__stamp-state--deleted {
+  color: var(--color-error);
+}
+
+@keyframes pm-stamp-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pm-success__heading {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 80;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 28px;
+  letter-spacing: -0.022em;
+  line-height: 1.06;
+  color: var(--color-text-primary);
+  margin: var(--space-3) 0 0;
+}
+
+.pm-success__heading em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+
+.pm-success__heading--danger em {
+  color: var(--color-error);
+}
+
+.pm-success__caption {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: var(--space-2) 0 0;
+  max-width: 30ch;
+}
+
+/* ==========================================================================
+   9. Live camera barcode scanner — full-screen viewfinder
+   ========================================================================== */
+
+/* Cinema-dark backdrop. The scanner intentionally ignores theme tokens for
+   the camera container itself (camera UIs read better dark) but uses brand
+   tokens for the corner brackets and laser line. */
+.pm-scanner {
+  position: fixed;
+  z-index: 40;
+  background-color: #000;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* Top-edge translucent strip with mono caption + close X. */
+.pm-scanner__topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
+
+.pm-scanner__topbar > * {
+  pointer-events: auto;
+}
+
+.pm-scanner__caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pm-scanner__caption::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.pm-scanner__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background-color var(--duration-fast) ease-out, transform var(--duration-instant) ease-out;
+}
+
+.pm-scanner__close:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.pm-scanner__close:active {
+  transform: scale(0.94);
+}
+
+/* Viewfinder area — corner brackets in terracotta, no full border so the
+   live feed remains the focus. The brackets read like a stamp. */
+.pm-scanner__viewfinder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pm-scanner__frame {
+  position: relative;
+  width: 82%;
+  aspect-ratio: 3 / 2;
+  max-width: 22rem;
+}
+
+.pm-scanner__corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: var(--color-brand);
+  border-style: solid;
+  border-width: 0;
+  border-radius: 6px;
+}
+
+.pm-scanner__corner--tl { top: 0; left: 0; border-top-width: 3px; border-left-width: 3px; }
+.pm-scanner__corner--tr { top: 0; right: 0; border-top-width: 3px; border-right-width: 3px; }
+.pm-scanner__corner--bl { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; }
+.pm-scanner__corner--br { bottom: 0; right: 0; border-bottom-width: 3px; border-right-width: 3px; }
+
+.pm-scanner__laser {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 50%;
+  height: 2px;
+  background: var(--color-brand);
+  transform: translateY(-50%);
+  opacity: 0.95;
+  box-shadow: 0 0 16px rgba(var(--color-brand-rgb), 0.8);
+  animation: pm-laser-sweep 2.1s ease-in-out infinite;
+}
+
+@keyframes pm-laser-sweep {
+  0%, 100% { transform: translateY(-50%) translateY(-44%); opacity: 0.6; }
+  50%      { transform: translateY(-50%) translateY(44%);  opacity: 1.0; }
+}
+
+/* Bottom-edge instruction strip + optional file-picker fallback. */
+.pm-scanner__bottombar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-6) var(--space-4) var(--space-4);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0));
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pm-scanner__hint {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+  line-height: 1.3;
+  max-width: 28ch;
+}
+
+.pm-scanner__hint em {
+  font-style: italic;
+  color: var(--color-brand-tint);
+  font-variation-settings: "SOFT" 100;
+}
+
+.pm-scanner__fallback {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+  background: transparent;
+  border: 0;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: color var(--duration-fast) ease-out;
+}
+
+.pm-scanner__fallback:hover {
+  color: #fff;
+}
+
+/* Starting / error overlays — centered. */
+.pm-scanner__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-6);
+  gap: var(--space-3);
+  pointer-events: none;
+}
+
+.pm-scanner__overlay--error {
+  pointer-events: auto;
+}
+
+.pm-scanner__overlay-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.pm-scanner__overlay-message {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.95);
+  max-width: 28ch;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   10. Footer pills — terracotta primary, ghost outline, oxblood danger
+   ==========================================================================
+   These augment the existing IonButton chrome without replacing it. The
+   modal-footer wrapper layout is owned by app.css; we only override colors
+   and label spacing for the wizard-specific tones. */
+
+/* Square icon-only button used by the EditFormStep footer (delete + adjust
+   actions to the left of Save). 44px target — touch-friendly. */
+.pm-icon-btn {
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto !important;
+}
+
+.pm-icon-btn ion-button-inner,
+.pm-icon-btn::part(native) {
+  padding: 0;
+}
+
+/* Subdued ghost button used for "Skip for now". */
+.pm-ghost-btn {
+  --background: transparent;
+  --background-hover: var(--color-paper-warm);
+  --background-activated: var(--color-paper-warm);
+  --color: var(--color-text-secondary);
+  --color-hover: var(--color-brand);
+  --border-color: var(--color-border);
+  --border-style: solid;
+  --border-width: 1px;
+}
+
+/* ==========================================================================
+   Utility — modal-step-item spacing inside Pattern 2 step content.
+   Keeps Pattern 2 IonContent panels visually consistent with the inset
+   the modal-content class would have applied automatically.
+   ========================================================================== */
+
+.pm-step-pad {
+  padding: var(--space-4) var(--space-5) var(--space-6);
+}
+
+.pm-step-pad--narrow {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+/* IonContent inside the wizard already injects ion-padding; we suppress the
+   default and re-apply our own so the hero / form layouts have a consistent
+   starting baseline. */
+ion-content.pm-content {
+  --background: var(--color-bg-base);
+  --padding-start: var(--space-4);
+  --padding-end: var(--space-4);
+  --padding-top: var(--space-3);
+  --padding-bottom: var(--space-3);
+}
+
+/* Toolbar overrides — softer divider, monospace title for that printed look. */
+ion-header.pm-header ion-toolbar {
+  --background: var(--color-bg-base);
+  --border-color: var(--color-hair);
+  --color: var(--color-text-primary);
+}
+
+ion-header.pm-header ion-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+/* Footer with hairline divider on top — same paper translucent feel. */
+ion-footer.pm-footer ion-toolbar {
+  --background: var(--paper-translucent);
+  --border-color: var(--color-hair);
+  border-top: 1px solid var(--color-hair);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}

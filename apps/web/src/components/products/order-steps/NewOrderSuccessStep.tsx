@@ -1,5 +1,5 @@
 import { useIntl } from 'react-intl'
-import { IonPage, IonContent, IonFooter, IonToolbar, IonButton } from '@ionic/react'
+import { IonPage, IonContent, IonFooter, IonToolbar } from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useNewOrderCallbacks } from './OrderNavContext'
 
@@ -14,39 +14,63 @@ export function NewOrderSuccessStep() {
 
   return (
     <IonPage>
-      <IonContent>
-        <div className="flex flex-col items-center justify-center text-center h-full px-6 py-8">
-          <div style={{ width: 160, height: 160 }}>
-            {orderSaved && (
-              <LottiePlayer
-                src="/animations/success.json"
-                loop={false}
-                autoplay={true}
-                delay={300}
-                style={{ width: 160, height: 160 }}
-              />
-            )}
+      <IonContent className="wizard-content">
+        <div className="wizard-step wizard-step--centered">
+          <div className="order-success">
+            <div className="order-success__lottie">
+              {orderSaved && (
+                <LottiePlayer
+                  src="/animations/success.json"
+                  loop={false}
+                  autoplay={true}
+                  delay={300}
+                  style={{ width: 160, height: 160 }}
+                />
+              )}
+            </div>
+            <div
+              className="order-success__stamp"
+              aria-hidden="true"
+              style={{ opacity: orderSaved ? undefined : 0 }}
+            >
+              <span className="order-success__stamp-noun">
+                {t.formatMessage({ id: 'orders.eyebrow_order' })}
+              </span>
+              <span className="order-success__stamp-dot">·</span>
+              <span className="order-success__stamp-verb--created">
+                {t.formatMessage({ id: 'orders.stamp_verb_created' })}
+              </span>
+            </div>
+            <h2
+              className="order-success__heading"
+              style={{ opacity: orderSaved ? 1 : 0 }}
+            >
+              {t.formatMessage(
+                { id: 'orders.new_order_success_heading_v2' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h2>
+            <p
+              className="order-success__caption"
+              style={{ opacity: orderSaved ? 1 : 0 }}
+            >
+              {t.formatMessage({ id: 'orders.new_order_success_description' })}
+            </p>
           </div>
-          <p
-            className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
-            style={{ opacity: orderSaved ? 1 : 0 }}
-          >
-            {t.formatMessage({ id: 'orders.new_order_success_heading' })}
-          </p>
-          <p
-            className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
-            style={{ opacity: orderSaved ? 1 : 0 }}
-          >
-            {t.formatMessage({ id: 'orders.new_order_success_description' })}
-          </p>
         </div>
       </IonContent>
 
       <IonFooter>
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton expand="block" onClick={handleClose}>
-            {t.formatMessage({ id: 'common.close' })}
-          </IonButton>
+        <IonToolbar>
+          <div className="modal-footer">
+            <button
+              type="button"
+              className="order-modal__primary-pill"
+              onClick={handleClose}
+            >
+              {t.formatMessage({ id: 'common.done' })}
+            </button>
+          </div>
         </IonToolbar>
       </IonFooter>
     </IonPage>

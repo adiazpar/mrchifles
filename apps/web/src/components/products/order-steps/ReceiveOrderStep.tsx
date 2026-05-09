@@ -4,17 +4,15 @@ import {
   IonPage,
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
   IonBackButton,
-  IonSpinner,
   IonButton,
   IonIcon,
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
-import { ImagePlus } from 'lucide-react'
+import { Package, Truck, CalendarClock } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -37,24 +35,11 @@ export function ReceiveOrderStep() {
 
   const productsById = useMemo(() => new Map(products.map(p => [p.id, p])), [products])
 
-  const OrderItemIconCell = ({ productId }: { productId: string | null | undefined }) => {
-    const product = productId ? productsById.get(productId) : null
-    const iconUrl = product ? getProductIconUrl(product) : null
-    return (
-      <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-bg-muted flex-shrink-0">
-        {iconUrl && isPresetIcon(iconUrl) ? (
-          (() => {
-            const p = getPresetIcon(iconUrl)
-            return p ? <p.icon size={18} className="text-text-primary" /> : null
-          })()
-        ) : iconUrl ? (
-          <Image src={iconUrl} alt="" width={32} height={32} className="object-cover w-full h-full" unoptimized />
-        ) : (
-          <ImagePlus className="w-4 h-4 text-text-tertiary" />
-        )}
-      </div>
-    )
-  }
+  const orderRef = order.orderNumber != null
+    ? `#${String(order.orderNumber).padStart(4, '0')}`
+    : `#${order.id.slice(0, 6).toUpperCase()}`
+
+  const items = order.expand?.['order_items(order)'] || []
 
   const handleReceive = async () => {
     const success = await onReceiveOrder()
@@ -66,13 +51,12 @@ export function ReceiveOrderStep() {
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar>
+        <IonToolbar className="wizard-toolbar">
           {!openedFromSwipe && (
             <IonButtons slot="start">
               <IonBackButton defaultHref="" />
             </IonButtons>
           )}
-          <IonTitle>{t.formatMessage({ id: 'orders.receive_order_title' })}</IonTitle>
           {openedFromSwipe && (
             <IonButtons slot="end">
               <IonButton fill="clear" onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
@@ -83,49 +67,149 @@ export function ReceiveOrderStep() {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        {/* Products list */}
-        <div className="space-y-1 mb-4">
-          {order.expand?.['order_items(order)']?.map(item => (
-            <div key={item.id} className="flex items-center gap-2 text-sm">
-              <OrderItemIconCell productId={item.productId} />
-              <span className="text-text-secondary truncate flex-1 min-w-0">{item.productName}</span>
-              <span className="text-text-secondary flex-shrink-0">{item.quantity}x</span>
+      <IonContent className="wizard-content">
+        <div className="wizard-step">
+          <header className="wizard-hero">
+            <div className="order-modal__eyebrow">
+              <span className="order-modal__eyebrow-emphasis order-modal__eyebrow-emphasis--moss">
+                {t.formatMessage({ id: 'orders.eyebrow_receive' })}
+              </span>
+              <span className="order-modal__eyebrow-dot">·</span>
+              <span className="order-modal__eyebrow-id">{orderRef}</span>
             </div>
-          ))}
+            <h1 className="wizard-hero__title">
+              {t.formatMessage(
+                { id: 'orders.receive_hero_title' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+            <p className="wizard-hero__subtitle">
+              {t.formatMessage({ id: 'orders.receive_hero_subtitle' })}
+            </p>
+          </header>
+
+          {/* Manifest header */}
+          <div className="order-receive__manifest">
+            <div className="order-receive__manifest-eyebrow">
+              <span className="order-receive__manifest-eyebrow-spacer" aria-hidden="true" />
+              <span className="order-receive__manifest-eyebrow-name">
+                {t.formatMessage({ id: 'orders.manifest_item_label' })}
+              </span>
+              <span className="order-receive__manifest-eyebrow-qty">
+                {t.formatMessage({ id: 'orders.manifest_ordered_label' })}
+              </span>
+              <span className="order-receive__manifest-eyebrow-qty">
+                {t.formatMessage({ id: 'orders.manifest_status_label' })}
+              </span>
+            </div>
+
+            {items.map(item => {
+              const product = item.productId ? productsById.get(item.productId) : null
+              const iconUrl = product ? getProductIconUrl(product) : null
+              const presetIcon = iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
+              return (
+                <div key={item.id} className="order-receive-line">
+                  <span className="order-receive-line__icon">
+                    {presetIcon ? (
+                      <presetIcon.icon size={18} className="text-text-primary" />
+                    ) : iconUrl ? (
+                      <Image src={iconUrl} alt="" width={32} height={32} unoptimized />
+                    ) : (
+                      <Package size={16} strokeWidth={1.6} />
+                    )}
+                  </span>
+                  <span className="order-receive-line__name">{item.productName}</span>
+                  <span className="order-receive-line__qty order-receive-line__qty--ordered">
+                    {item.quantity}
+                  </span>
+                  <span className="order-receive-line__variance order-receive-line__variance--match">
+                    {t.formatMessage({ id: 'orders.manifest_pending_chip' })}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Order details summary */}
+          <div className="order-receipt__totals">
+            <div className="order-receipt__totals-row">
+              <span className="order-receipt__totals-label">
+                {t.formatMessage({ id: 'orders.provider_label' })}
+              </span>
+              <span className="order-receipt__totals-value">
+                {order.expand?.provider?.name || t.formatMessage({ id: 'orders.provider_none' })}
+              </span>
+            </div>
+            <div className="order-receipt__totals-row">
+              <span className="order-receipt__totals-label">
+                {t.formatMessage({ id: 'orders.arrival_date_label' })}
+              </span>
+              <span className="order-receipt__totals-value">
+                {formatDate(new Date())}
+              </span>
+            </div>
+            <div className="order-receipt__totals-row order-receipt__totals-row--total">
+              <span className="order-receipt__totals-label">
+                {t.formatMessage({ id: 'orders.total_label' })}
+              </span>
+              <span className="order-receipt__totals-value">
+                {formatCurrency(order.total)}
+              </span>
+            </div>
+          </div>
+
+          {/* Audit hints — sit beneath the totals */}
+          <div className="order-receipt__audit">
+            <div className="order-receipt__audit-row">
+              <span className="order-receipt__audit-icon" aria-hidden="true">
+                <Truck size={14} strokeWidth={1.7} />
+              </span>
+              <span className="order-receipt__audit-label">
+                {t.formatMessage({ id: 'orders.ordered_to_label' })}
+              </span>
+              <span className="order-receipt__audit-leader" aria-hidden="true" />
+              <span className="order-receipt__audit-value">
+                {order.expand?.provider?.name || t.formatMessage({ id: 'orders.provider_none' })}
+              </span>
+            </div>
+            {order.estimatedArrival && (
+              <div className="order-receipt__audit-row">
+                <span className="order-receipt__audit-icon" aria-hidden="true">
+                  <CalendarClock size={14} strokeWidth={1.7} />
+                </span>
+                <span className="order-receipt__audit-label">
+                  {t.formatMessage({ id: 'orders.est_arrival_label' })}
+                </span>
+                <span className="order-receipt__audit-leader" aria-hidden="true" />
+                <span className="order-receipt__audit-value">
+                  {formatDate(new Date(order.estimatedArrival))}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Confirmation note */}
+          <p className="order-receive__note">
+            {t.formatMessage({ id: 'orders.receive_confirm_description' })}
+          </p>
         </div>
-
-        {/* Divider */}
-        <div className="border-t border-dashed border-border mb-4" />
-
-        {/* Order details */}
-        <div className="space-y-2 text-sm mb-4">
-          <div className="flex justify-between">
-            <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.total_label' })}</span>
-            <span className="font-semibold">{formatCurrency(order.total)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.provider_label' })}</span>
-            <span>{order.expand?.provider?.name || '-'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-tertiary">{t.formatMessage({ id: 'orders.arrival_date_label' })}</span>
-            <span>{formatDate(new Date())}</span>
-          </div>
-        </div>
-
-        {/* Confirmation hint */}
-        <p className="text-sm text-text-tertiary">{t.formatMessage({ id: 'orders.receive_confirm_description' })}</p>
       </IonContent>
 
       <IonFooter>
         <IonToolbar>
-          {/* Toolbar X (or back button when not openedFromSwipe) handles
-              dismissal; footer is the primary confirm only. */}
           <div className="modal-footer">
-            <IonButton onClick={handleReceive} disabled={isReceiving}>
-              {isReceiving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.confirm' })}
-            </IonButton>
+            <button
+              type="button"
+              className="order-modal__primary-pill"
+              onClick={handleReceive}
+              disabled={isReceiving}
+            >
+              {isReceiving ? (
+                <span className="order-modal__pill-spinner" aria-label={t.formatMessage({ id: 'common.loading' })} />
+              ) : (
+                t.formatMessage({ id: 'orders.mark_received_button' })
+              )}
+            </button>
           </div>
         </IonToolbar>
       </IonFooter>

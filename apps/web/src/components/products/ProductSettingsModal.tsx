@@ -1,17 +1,16 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { useState, useEffect, useRef } from 'react'
-import { Plus, ChevronRight, GripVertical, Trash2, Pencil } from 'lucide-react'
+import { Check, GripVertical, Plus, X } from 'lucide-react'
 import { Reorder, useDragControls } from 'framer-motion'
-import { IonSpinner, IonButton } from '@ionic/react'
+import { IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
-import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { SORT_OPTIONS } from '@/lib/products'
 import type { ProductCategory, SortPreference } from '@kasero/shared/types'
 
 // ============================================
-// PROPS INTERFACE
+// PROPS
 // ============================================
 
 export interface ProductSettingsModalProps {
@@ -41,78 +40,47 @@ export interface ProductSettingsModalProps {
 }
 
 // ============================================
-// STEP TYPE
+// CATEGORY ROW
 // ============================================
 
-type Step = 'main' | 'categories' | 'add-edit-category' | 'delete-category' | 'category-success' | 'preferences'
-
-// ============================================
-// BUTTON COMPONENTS
-// ============================================
-
-interface SaveCategoryButtonProps {
-  name: string
-  editingCategory: ProductCategory | null
-  onSave: () => Promise<void>
-  isSaving: boolean
-  onSetCompleted: (v: boolean) => void
-  onSetMessage: (v: string) => void
-  onGoToSuccess: () => void
-}
-
-function SaveCategoryButton({ name, editingCategory, onSave, isSaving, onSetCompleted, onSetMessage, onGoToSuccess }: SaveCategoryButtonProps) {
-  const t = useIntl()
-  const tCommon = useIntl()
-  const isValid = name.trim().length > 0
-  const hasChanges = editingCategory ? name.trim() !== editingCategory.name : true
-
-  const handleSave = () => {
-    onSetCompleted(true)
-    onSetMessage(editingCategory ? t.formatMessage({
-      id: 'productSettings.category_updated'
-    }) : t.formatMessage({
-      id: 'productSettings.category_created'
-    }))
-    onGoToSuccess()
-    onSave()
-  }
-
-  return (
-    <IonButton
-      onClick={handleSave}
-      disabled={isSaving || !isValid || !hasChanges}
-    >
-      {isSaving ? <IonSpinner name="crescent" /> : tCommon.formatMessage({
-        id: 'common.save'
-      })}
-    </IonButton>
-  );
-}
-
-interface DeleteCategoryButtonProps {
-  onDelete: () => Promise<void>
-  isDeleting: boolean
-  onSetCompleted: (v: boolean) => void
-  onSetMessage: (v: string) => void
-  onGoToSuccess: () => void
-}
-
-// ============================================
-// SORTABLE CATEGORY ITEM
-// ============================================
-
-interface SortableCategoryItemProps {
+interface CategoryRowProps {
   category: ProductCategory
-  onEditClick: () => void
-  onDeleteClick: () => void
+  isDefault: boolean
+  isEditing: boolean
+  editingValue: string
+  onEditingValueChange: (v: string) => void
+  isPendingDelete: boolean
+  isCommittingEdit: boolean
+  isCommittingDelete: boolean
+  onStartEdit: () => void
+  onCancelEdit: () => void
+  onSaveEdit: () => void
+  onStartDelete: () => void
+  onCancelDelete: () => void
+  onConfirmDelete: () => void
   onDragEnd: () => void
 }
 
-function SortableCategoryItem({ category, onEditClick, onDeleteClick, onDragEnd }: SortableCategoryItemProps) {
-  const t = useIntl()
-  // dragListener=false + manual controls means only the grip button starts a
-  // drag — tapping anywhere else on the row (edit/delete icons) behaves as
-  // a normal click.
+function CategoryRow({
+  category,
+  isDefault,
+  isEditing,
+  editingValue,
+  onEditingValueChange,
+  isPendingDelete,
+  isCommittingEdit,
+  isCommittingDelete,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onStartDelete,
+  onCancelDelete,
+  onConfirmDelete,
+  onDragEnd,
+}: CategoryRowProps) {
+  const intl = useIntl()
+  // dragListener=false + manual controls means only the grip starts a drag —
+  // taps anywhere else on the row behave as normal clicks.
   const controls = useDragControls()
 
   return (
@@ -122,66 +90,178 @@ function SortableCategoryItem({ category, onEditClick, onDeleteClick, onDragEnd 
       dragListener={false}
       dragControls={controls}
       onDragEnd={onDragEnd}
-      className="list-item-clickable list-item-flat"
+      className="settings-category-row"
     >
-      <button
-        type="button"
-        onPointerDown={(e) => controls.start(e)}
-        className="p-1 text-text-tertiary cursor-grab active:cursor-grabbing touch-none"
-        aria-label={t.formatMessage({
-          id: 'productSettings.drag_to_reorder_aria'
-        })}
-      >
-        <GripVertical style={{ width: 16, height: 16 }} />
-      </button>
-      <div className="flex-1 min-w-0">
-        <span className="font-medium block truncate">{category.name}</span>
+      <div className="settings-category-row__main">
+        <button
+          type="button"
+          onPointerDown={(e) => controls.start(e)}
+          className="settings-category-row__grip"
+          aria-label={intl.formatMessage({ id: 'productSettings.drag_to_reorder_aria' })}
+        >
+          <GripVertical style={{ width: 14, height: 14 }} />
+        </button>
+
+        {isEditing ? (
+          <input
+            type="text"
+            value={editingValue}
+            onChange={(e) => onEditingValueChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                if (editingValue.trim() && editingValue.trim() !== category.name) onSaveEdit()
+              }
+              if (e.key === 'Escape') onCancelEdit()
+            }}
+            className="settings-category-row__input"
+            autoFocus
+            autoComplete="off"
+            placeholder={intl.formatMessage({ id: 'productSettings.category_name_placeholder' })}
+          />
+        ) : (
+          <span className="settings-category-row__name">{category.name}</span>
+        )}
+
+        {isDefault && !isEditing && !isPendingDelete && (
+          <span className="settings-tag settings-tag--default">
+            {intl.formatMessage({ id: 'productSettings.tag_default' })}
+          </span>
+        )}
+
+        {isEditing && (
+          <span className="settings-tag settings-tag--editing">
+            {intl.formatMessage({ id: 'productSettings.tag_editing' })}
+          </span>
+        )}
+
+        {!isEditing && !isPendingDelete && (
+          <div className="settings-category-row__actions">
+            <button
+              type="button"
+              onClick={onStartEdit}
+              className="settings-link"
+              aria-label={intl.formatMessage({ id: 'productSettings.edit_category_aria' })}
+            >
+              {intl.formatMessage({ id: 'productSettings.action_edit' })}
+            </button>
+            <span className="settings-link__sep" aria-hidden="true">·</span>
+            <button
+              type="button"
+              onClick={onStartDelete}
+              className="settings-link settings-link--danger"
+              aria-label={intl.formatMessage({ id: 'productSettings.delete_category_aria' })}
+            >
+              {intl.formatMessage({ id: 'productSettings.action_delete' })}
+            </button>
+          </div>
+        )}
+
+        {isEditing && (
+          <div className="settings-category-row__actions">
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="settings-link"
+              disabled={isCommittingEdit}
+            >
+              {intl.formatMessage({ id: 'common.cancel' })}
+            </button>
+            <span className="settings-link__sep" aria-hidden="true">·</span>
+            <button
+              type="button"
+              onClick={onSaveEdit}
+              className="settings-link settings-link--primary"
+              disabled={
+                isCommittingEdit ||
+                !editingValue.trim() ||
+                editingValue.trim() === category.name
+              }
+            >
+              {isCommittingEdit
+                ? <IonSpinner name="dots" style={{ width: 18, height: 12 }} />
+                : intl.formatMessage({ id: 'productSettings.action_save' })}
+            </button>
+          </div>
+        )}
       </div>
-      <button
-        type="button"
-        onClick={onEditClick}
-        className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
-        aria-label={t.formatMessage({
-          id: 'productSettings.edit_category_aria'
-        })}
-      >
-        <Pencil style={{ width: 16, height: 16 }} />
-      </button>
-      <button
-        type="button"
-        onClick={onDeleteClick}
-        className="p-1 text-error hover:text-error transition-colors"
-        aria-label={t.formatMessage({
-          id: 'productSettings.delete_category_aria'
-        })}
-      >
-        <Trash2 style={{ width: 16, height: 16 }} />
-      </button>
+
+      {isPendingDelete && (
+        <div className="settings-category-row__confirm" role="alert">
+          <span className="settings-category-row__confirm-prompt">
+            {intl.formatMessage(
+              { id: 'productSettings.delete_inline_prompt' },
+              { name: category.name },
+            )}
+          </span>
+          <div className="settings-category-row__confirm-actions">
+            <button
+              type="button"
+              className="settings-pill settings-pill--ghost"
+              onClick={onCancelDelete}
+              disabled={isCommittingDelete}
+            >
+              {intl.formatMessage({ id: 'common.cancel' })}
+            </button>
+            <button
+              type="button"
+              className="settings-pill settings-pill--danger"
+              onClick={onConfirmDelete}
+              disabled={isCommittingDelete}
+            >
+              {isCommittingDelete
+                ? <IonSpinner name="crescent" style={{ width: 14, height: 14 }} />
+                : intl.formatMessage({ id: 'productSettings.action_delete_confirm' })}
+            </button>
+          </div>
+        </div>
+      )}
     </Reorder.Item>
-  );
+  )
 }
 
 // ============================================
-// SORTABLE CATEGORY LIST
+// CATEGORY LIST (with reorder)
 // ============================================
 
-interface SortableCategoryListProps {
+interface CategoryListProps {
   categories: ProductCategory[]
-  onReorder: (categoryIds: string[]) => Promise<boolean>
-  onEditCategory: (category: ProductCategory) => void
-  onDeleteCategory: (category: ProductCategory) => void
+  defaultCategoryId: string | null
+  editingId: string | null
+  editingValue: string
+  onEditingValueChange: (v: string) => void
+  pendingDeleteId: string | null
+  isCommittingEdit: boolean
+  isCommittingDelete: boolean
+  onReorder: (ids: string[]) => Promise<boolean>
+  onStartEdit: (c: ProductCategory) => void
+  onCancelEdit: () => void
+  onSaveEdit: () => void
+  onStartDelete: (c: ProductCategory) => void
+  onCancelDelete: () => void
+  onConfirmDelete: () => void
 }
 
-function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteCategory }: SortableCategoryListProps) {
-  // Local mirror of the ordered list. framer-motion's Reorder.Group calls
-  // onReorder repeatedly during the drag gesture with the intermediate
-  // ordering, so we track it locally and only persist the final order once
-  // the drag ends.
+function CategoryList({
+  categories,
+  defaultCategoryId,
+  editingId,
+  editingValue,
+  onEditingValueChange,
+  pendingDeleteId,
+  isCommittingEdit,
+  isCommittingDelete,
+  onReorder,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onStartDelete,
+  onCancelDelete,
+  onConfirmDelete,
+}: CategoryListProps) {
   const [items, setItems] = useState(categories)
   const itemsRef = useRef(items)
 
-  // Keep local state in sync with the authoritative prop whenever it
-  // changes externally (after a successful persist, or category add/delete).
   useEffect(() => {
     setItems(categories)
     itemsRef.current = categories
@@ -193,19 +273,34 @@ function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteC
   }
 
   const handleDragEnd = () => {
-    // Use the ref so we see the final ordering from the last onReorder call,
-    // not a closed-over stale `items` reference.
-    onReorder(itemsRef.current.map(c => c.id))
+    onReorder(itemsRef.current.map((c) => c.id))
   }
 
   return (
-    <Reorder.Group as="div" axis="y" values={items} onReorder={handleReorder}>
-      {items.map(category => (
-        <SortableCategoryItem
+    <Reorder.Group
+      as="div"
+      axis="y"
+      values={items}
+      onReorder={handleReorder}
+      className="settings-category-list"
+    >
+      {items.map((category) => (
+        <CategoryRow
           key={category.id}
           category={category}
-          onEditClick={() => onEditCategory(category)}
-          onDeleteClick={() => onDeleteCategory(category)}
+          isDefault={defaultCategoryId === category.id}
+          isEditing={editingId === category.id}
+          editingValue={editingId === category.id ? editingValue : ''}
+          onEditingValueChange={onEditingValueChange}
+          isPendingDelete={pendingDeleteId === category.id}
+          isCommittingEdit={isCommittingEdit && editingId === category.id}
+          isCommittingDelete={isCommittingDelete && pendingDeleteId === category.id}
+          onStartEdit={() => onStartEdit(category)}
+          onCancelEdit={onCancelEdit}
+          onSaveEdit={onSaveEdit}
+          onStartDelete={() => onStartDelete(category)}
+          onCancelDelete={onCancelDelete}
+          onConfirmDelete={onConfirmDelete}
           onDragEnd={handleDragEnd}
         />
       ))}
@@ -214,37 +309,7 @@ function SortableCategoryList({ categories, onReorder, onEditCategory, onDeleteC
 }
 
 // ============================================
-// BUTTON COMPONENTS (continued)
-// ============================================
-
-function DeleteCategoryButton({ onDelete, isDeleting, onSetCompleted, onSetMessage, onGoToSuccess }: DeleteCategoryButtonProps) {
-  const t = useIntl()
-  const tCommon = useIntl()
-
-  const handleDelete = () => {
-    onSetCompleted(true)
-    onSetMessage(t.formatMessage({
-      id: 'productSettings.category_deleted'
-    }))
-    onGoToSuccess()
-    onDelete()
-  }
-
-  return (
-    <IonButton
-      color="danger"
-      onClick={handleDelete}
-      disabled={isDeleting}
-    >
-      {isDeleting ? <IonSpinner name="crescent" /> : tCommon.formatMessage({
-        id: 'common.delete'
-      })}
-    </IonButton>
-  );
-}
-
-// ============================================
-// COMPONENT
+// MAIN COMPONENT
 // ============================================
 
 export function ProductSettingsModal({
@@ -266,68 +331,38 @@ export function ProductSettingsModal({
   error,
   onClearError,
 }: ProductSettingsModalProps) {
-  const t = useIntl()
-  const tCommon = useIntl()
-  const tProducts = useIntl()
+  const intl = useIntl()
 
-  const sortLabels: Record<SortPreference, string> = {
-    name_asc: tProducts.formatMessage({
-      id: 'products.sort_name_asc'
-    }),
-    name_desc: tProducts.formatMessage({
-      id: 'products.sort_name_desc'
-    }),
-    price_asc: tProducts.formatMessage({
-      id: 'products.sort_price_asc'
-    }),
-    price_desc: tProducts.formatMessage({
-      id: 'products.sort_price_desc'
-    }),
-    category: tProducts.formatMessage({
-      id: 'products.sort_category'
-    }),
-    stock_asc: tProducts.formatMessage({
-      id: 'products.sort_stock_asc'
-    }),
-    stock_desc: tProducts.formatMessage({
-      id: 'products.sort_stock_desc'
-    }),
-  }
-
-  // Step state
-  const [step, setStep] = useState<Step>('main')
-
-  // Local form state
-  const [categoryName, setCategoryName] = useState('')
-  const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null)
-  const [deletingCategory, setDeletingCategory] = useState<ProductCategory | null>(null)
-  const [actionCompleted, setActionCompleted] = useState(false)
-  const [actionMessage, setActionMessage] = useState('')
-
-  // Local preferences state (saved on Done, not on change)
+  // Optimistic local state — these update immediately so the check mark
+  // moves on tap; the API fires in the background. Re-sync if the prop
+  // changes externally (eg. saved successfully or another window).
   const [localDefaultCategoryId, setLocalDefaultCategoryId] = useState<string | null>(defaultCategoryId)
   const [localSortPreference, setLocalSortPreference] = useState<SortPreference>(sortPreference)
 
-  // Sync local state when props change (e.g., after save)
-  useEffect(() => {
-    setLocalDefaultCategoryId(defaultCategoryId)
-  }, [defaultCategoryId])
+  useEffect(() => setLocalDefaultCategoryId(defaultCategoryId), [defaultCategoryId])
+  useEffect(() => setLocalSortPreference(sortPreference), [sortPreference])
 
-  useEffect(() => {
-    setLocalSortPreference(sortPreference)
-  }, [sortPreference])
+  // Inline add-new-category form
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [createCelebrating, setCreateCelebrating] = useState(false)
 
-  // Reset all state after the dismissal animation plays so the modal doesn't
-  // flash back to a stale step while it is still sliding away.
+  // Inline edit-in-place
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
+  const [editingValue, setEditingValue] = useState('')
+
+  // Inline delete confirmation row
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+
+  // Reset local state once the modal has fully closed so the next open
+  // shows a fresh sheet.
   useEffect(() => {
     if (!isOpen) {
       const timer = setTimeout(() => {
-        setStep('main')
-        setCategoryName('')
-        setEditingCategory(null)
-        setDeletingCategory(null)
-        setActionCompleted(false)
-        setActionMessage('')
+        setNewCategoryName('')
+        setCreateCelebrating(false)
+        setEditingCategoryId(null)
+        setEditingValue('')
+        setPendingDeleteId(null)
         setLocalDefaultCategoryId(defaultCategoryId)
         setLocalSortPreference(sortPreference)
         onClearError()
@@ -337,146 +372,81 @@ export function ProductSettingsModal({
     }
   }, [isOpen, onClearError, onExitComplete, defaultCategoryId, sortPreference])
 
-  // Handle category save (create or update)
-  const handleSaveCategory = async () => {
-    if (!categoryName.trim()) return
+  // ----- Sort labels (translation lookup) -----
+  const sortLabels: Record<SortPreference, string> = {
+    name_asc: intl.formatMessage({ id: 'products.sort_name_asc' }),
+    name_desc: intl.formatMessage({ id: 'products.sort_name_desc' }),
+    price_asc: intl.formatMessage({ id: 'products.sort_price_asc' }),
+    price_desc: intl.formatMessage({ id: 'products.sort_price_desc' }),
+    stock_asc: intl.formatMessage({ id: 'products.sort_stock_asc' }),
+    stock_desc: intl.formatMessage({ id: 'products.sort_stock_desc' }),
+    category: intl.formatMessage({ id: 'products.sort_category' }),
+  }
 
-    if (editingCategory) {
-      await onUpdateCategory(editingCategory.id, categoryName.trim())
-    } else {
-      await onCreateCategory(categoryName.trim())
+  // ----- Handlers -----
+  const handleSelectSort = (next: SortPreference) => {
+    if (next === localSortPreference) return
+    setLocalSortPreference(next)
+    onUpdateSettings({ sortPreference: next })
+  }
+
+  const handleSelectDefault = (next: string | null) => {
+    if (next === localDefaultCategoryId) return
+    setLocalDefaultCategoryId(next)
+    onUpdateSettings({ defaultCategoryId: next })
+  }
+
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim()
+    if (!name || isCreatingCategory) return
+    const created = await onCreateCategory(name)
+    if (created) {
+      setNewCategoryName('')
+      setCreateCelebrating(true)
+      // brief celebration ping; cleared by the timeout below
+      setTimeout(() => setCreateCelebrating(false), 1100)
     }
   }
 
-  // Handle category delete
-  const handleDeleteCategory = async () => {
-    if (!deletingCategory) return
-    await onDeleteCategory(deletingCategory.id)
+  const handleStartEdit = (c: ProductCategory) => {
+    setPendingDeleteId(null)
+    setEditingCategoryId(c.id)
+    setEditingValue(c.name)
   }
 
-  // Count products per category (would need to be passed in for accurate counts)
-  const getCategoryProductCount = (_categoryId: string) => {
-    // For now, return 0 - will need to implement product counting
-    return 0
+  const handleCancelEdit = () => {
+    setEditingCategoryId(null)
+    setEditingValue('')
   }
 
-  // Derive back handler and title based on current step
-  const getTitle = (): string => {
-    switch (step) {
-      case 'main': return t.formatMessage({ id: 'productSettings.title' })
-      case 'categories': return t.formatMessage({ id: 'productSettings.categories_title' })
-      case 'add-edit-category': return editingCategory
-        ? t.formatMessage({ id: 'productSettings.edit_category_title' })
-        : t.formatMessage({ id: 'productSettings.add_category_title' })
-      case 'delete-category': return t.formatMessage({ id: 'productSettings.delete_category_title' })
-      case 'category-success': return tCommon.formatMessage({ id: 'common.done' })
-      case 'preferences': return t.formatMessage({ id: 'productSettings.preferences_title' })
+  const handleSaveEdit = async () => {
+    if (!editingCategoryId) return
+    const name = editingValue.trim()
+    if (!name) return
+    const target = categories.find((c) => c.id === editingCategoryId)
+    if (target && name === target.name) {
+      handleCancelEdit()
+      return
     }
+    const updated = await onUpdateCategory(editingCategoryId, name)
+    if (updated) handleCancelEdit()
   }
 
-  const getBackHandler = (): (() => void) | undefined => {
-    switch (step) {
-      case 'main': return undefined
-      case 'categories': return () => setStep('main')
-      case 'add-edit-category': return () => setStep('categories')
-      case 'delete-category': return () => setStep('categories')
-      case 'category-success': return undefined
-      case 'preferences': return () => setStep('main')
-    }
+  const handleStartDelete = (c: ProductCategory) => {
+    setEditingCategoryId(null)
+    setEditingValue('')
+    setPendingDeleteId(c.id)
   }
 
-  // Footer content per step
-  const renderFooter = (): React.ReactNode => {
-    switch (step) {
-      case 'main':
-        // Toolbar X dismisses; no footer needed for the menu step.
-        return null
+  const handleCancelDelete = () => setPendingDeleteId(null)
 
-      case 'categories':
-        return (
-          <>
-            <IonButton fill="outline" onClick={() => setStep('main')}>
-              {tCommon.formatMessage({ id: 'common.back' })}
-            </IonButton>
-            <IonButton
-              onClick={() => {
-                setEditingCategory(null)
-                setCategoryName('')
-                setActionCompleted(false)
-                setStep('add-edit-category')
-              }}
-            >
-              <Plus style={{ width: 16, height: 16 }} />
-              {t.formatMessage({ id: 'productSettings.add_category_button' })}
-            </IonButton>
-          </>
-        )
-
-      case 'add-edit-category':
-        return (
-          <>
-            <IonButton fill="outline" onClick={() => setStep('categories')}>
-              {tCommon.formatMessage({ id: 'common.back' })}
-            </IonButton>
-            <SaveCategoryButton
-              name={categoryName}
-              editingCategory={editingCategory}
-              onSave={handleSaveCategory}
-              isSaving={isCreatingCategory || isUpdatingCategory}
-              onSetCompleted={setActionCompleted}
-              onSetMessage={setActionMessage}
-              onGoToSuccess={() => setStep('category-success')}
-            />
-          </>
-        )
-
-      case 'delete-category':
-        // Toolbar back returns to the categories list; footer is the
-        // destructive primary only.
-        return (
-          <DeleteCategoryButton
-            onDelete={handleDeleteCategory}
-            isDeleting={isDeletingCategory}
-            onSetCompleted={setActionCompleted}
-            onSetMessage={setActionMessage}
-            onGoToSuccess={() => setStep('category-success')}
-          />
-        )
-
-      case 'category-success':
-        return (
-          <IonButton
-            onClick={() => {
-              setEditingCategory(null)
-              setDeletingCategory(null)
-              setCategoryName('')
-              setActionCompleted(false)
-              setStep('categories')
-            }}
-          >
-            {tCommon.formatMessage({ id: 'common.done' })}
-          </IonButton>
-        )
-
-      case 'preferences':
-        return (
-          <>
-            <IonButton fill="outline" onClick={() => setStep('main')}>
-              {tCommon.formatMessage({ id: 'common.back' })}
-            </IonButton>
-            <IonButton
-              disabled={isSavingSettings || (localDefaultCategoryId === defaultCategoryId && localSortPreference === sortPreference)}
-              onClick={() => {
-                onUpdateSettings({
-                  defaultCategoryId: localDefaultCategoryId,
-                  sortPreference: localSortPreference,
-                })
-              }}
-            >
-              {tCommon.formatMessage({ id: 'common.save' })}
-            </IonButton>
-          </>
-        )
+  const handleConfirmDelete = async () => {
+    if (!pendingDeleteId) return
+    const ok = await onDeleteCategory(pendingDeleteId)
+    if (ok) {
+      // If we just deleted the current default, the parent will null it
+      // out via the prop sync; nothing else to do here.
+      setPendingDeleteId(null)
     }
   }
 
@@ -484,192 +454,248 @@ export function ProductSettingsModal({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={getTitle()}
-      onBack={getBackHandler()}
-      footer={renderFooter()}
+      title={intl.formatMessage({ id: 'productSettings.title' })}
       noSwipeDismiss
     >
-      {/* Step: main */}
-      {step === 'main' && (
-        <>
-          <button
-            type="button"
-            onClick={() => setStep('categories')}
-            className="list-item-clickable list-item-flat w-full text-left"
-          >
-            <div className="flex-1 min-w-0">
-              <span className="font-medium block">{t.formatMessage({
-                id: 'productSettings.categories_menu_label'
-              })}</span>
-              <span className="text-xs text-text-tertiary">
-                {t.formatMessage({
-                  id: 'productSettings.categories_count'
-                }, { count: categories.length })}
-              </span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setStep('preferences')}
-            className="list-item-clickable list-item-flat w-full text-left"
-          >
-            <div className="flex-1 min-w-0">
-              <span className="font-medium block">{t.formatMessage({
-                id: 'productSettings.preferences_menu_label'
-              })}</span>
-              <span className="text-xs text-text-tertiary">
-                {t.formatMessage({
-                  id: 'productSettings.preferences_menu_description'
-                })}
-              </span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
-          </button>
-        </>
-      )}
+      <div className="settings-sheet">
+        {/* ---------- Hero ---------- */}
+        <header className="settings-hero">
+          <span className="settings-hero__eyebrow">
+            {intl.formatMessage({ id: 'productSettings.eyebrow' })}
+          </span>
+          <h2 className="settings-hero__title">
+            {intl.formatMessage(
+              { id: 'productSettings.hero_title' },
+              { em: (chunks) => <em>{chunks}</em> },
+            )}
+          </h2>
+          <p className="settings-hero__subtitle">
+            {intl.formatMessage({ id: 'productSettings.hero_subtitle' })}
+          </p>
+        </header>
 
-      {/* Step: categories */}
-      {step === 'categories' && (
-        <>
-          {error && (
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
-          )}
-          {categories.length === 0 ? (
-            <div className="text-center py-8 text-text-secondary">
-              <p>{t.formatMessage({ id: 'productSettings.no_categories' })}</p>
-            </div>
-          ) : (
-            <SortableCategoryList
-              categories={categories}
-              onReorder={onReorderCategories}
-              onEditCategory={(category) => {
-                setEditingCategory(category)
-                setCategoryName(category.name)
-                setActionCompleted(false)
-                setStep('add-edit-category')
-              }}
-              onDeleteCategory={(category) => {
-                setDeletingCategory(category)
-                setActionCompleted(false)
-                setStep('delete-category')
-              }}
-            />
-          )}
-        </>
-      )}
+        {/* ---------- Inline error banner ---------- */}
+        {error && (
+          <div className="settings-error" role="alert">
+            <span className="settings-error__rule" aria-hidden="true" />
+            <span className="settings-error__text">{error}</span>
+            <button
+              type="button"
+              className="settings-error__dismiss"
+              onClick={onClearError}
+              aria-label={intl.formatMessage({ id: 'common.dismiss' })}
+            >
+              <X style={{ width: 14, height: 14 }} />
+            </button>
+          </div>
+        )}
 
-      {/* Step: add-edit-category */}
-      {step === 'add-edit-category' && (
-        <>
-          {error && (
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">
-              {error}
-            </div>
-          )}
-          <label htmlFor="category-name" className="label">
-            {t.formatMessage({ id: 'productSettings.category_name_label' })} <span className="text-error">*</span>
-          </label>
-          <input
-            id="category-name"
-            type="text"
-            value={categoryName}
-            onChange={e => setCategoryName(e.target.value)}
-            className="input"
-            placeholder={t.formatMessage({ id: 'productSettings.category_name_placeholder' })}
-            autoComplete="off"
-          />
-        </>
-      )}
-
-      {/* Step: delete-category */}
-      {step === 'delete-category' && (
-        <p className="text-text-secondary">
-          {t.formatMessage({
-            id: 'productSettings.delete_category_confirm'
-          }, { name: deletingCategory?.name ?? '' })}
-          {getCategoryProductCount(deletingCategory?.id || '') > 0 && (
-            <span className="block mt-2 text-sm text-warning">
-              {t.formatMessage({ id: 'productSettings.delete_category_warning' })}
+        {/* ---------- Section 1: Default sort ---------- */}
+        <section className="settings-section">
+          <div className="settings-section__head">
+            <span className="settings-section__label">
+              {intl.formatMessage({ id: 'productSettings.section_default_sort' })}
             </span>
-          )}
-        </p>
-      )}
+            <span className="settings-section__hint">
+              {intl.formatMessage({ id: 'productSettings.sort_preference_hint' })}
+            </span>
+          </div>
+          <div className="settings-radio-group" role="radiogroup">
+            {SORT_OPTIONS.map((option) => {
+              const selected = option.value === localSortPreference
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => handleSelectSort(option.value)}
+                  className={`sort-sheet-row${selected ? ' sort-sheet-row--selected' : ''}`}
+                  disabled={isSavingSettings && selected}
+                >
+                  <span className="sort-sheet-row__label">{sortLabels[option.value]}</span>
+                  <span className="settings-radio-row__trail">
+                    {selected && (
+                      <>
+                        <span className="settings-tag settings-tag--current">
+                          {intl.formatMessage({ id: 'productSettings.tag_current' })}
+                        </span>
+                        <span className="sort-sheet-row__check" aria-hidden="true">
+                          <Check style={{ width: 16, height: 16, strokeWidth: 2.5 }} />
+                        </span>
+                      </>
+                    )}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
 
-      {/* Step: category-success */}
-      {step === 'category-success' && (
-        <div className="flex flex-col items-center text-center py-4">
-          <div style={{ width: 160, height: 160 }}>
-            {actionCompleted && (
-              <LottiePlayer
-                src="/animations/success.json"
-                loop={false}
-                autoplay={true}
-                delay={300}
-                style={{ width: 160, height: 160 }}
-              />
+        {/* ---------- Section 2: Default category ---------- */}
+        <section className="settings-section">
+          <div className="settings-section__head">
+            <span className="settings-section__label">
+              {intl.formatMessage({ id: 'productSettings.section_default_category' })}
+            </span>
+            <span className="settings-section__hint">
+              {intl.formatMessage({ id: 'productSettings.default_category_hint' })}
+            </span>
+          </div>
+          <div className="settings-radio-group" role="radiogroup">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={localDefaultCategoryId === null}
+              onClick={() => handleSelectDefault(null)}
+              className={`sort-sheet-row${localDefaultCategoryId === null ? ' sort-sheet-row--selected' : ''}`}
+            >
+              <span className="sort-sheet-row__label settings-default-row__none-label">
+                {intl.formatMessage({ id: 'productSettings.default_category_none' })}
+              </span>
+              <span className="settings-radio-row__trail">
+                {localDefaultCategoryId === null && (
+                  <>
+                    <span className="settings-tag settings-tag--current">
+                      {intl.formatMessage({ id: 'productSettings.tag_current' })}
+                    </span>
+                    <span className="sort-sheet-row__check" aria-hidden="true">
+                      <Check style={{ width: 16, height: 16, strokeWidth: 2.5 }} />
+                    </span>
+                  </>
+                )}
+              </span>
+            </button>
+            {categories.length === 0 ? (
+              <p className="settings-default-row__empty">
+                {intl.formatMessage({ id: 'productSettings.default_category_none_to_pick' })}
+              </p>
+            ) : (
+              categories.map((c) => {
+                const selected = c.id === localDefaultCategoryId
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => handleSelectDefault(c.id)}
+                    className={`sort-sheet-row${selected ? ' sort-sheet-row--selected' : ''}`}
+                  >
+                    <span className="sort-sheet-row__label">{c.name}</span>
+                    <span className="settings-radio-row__trail">
+                      {selected && (
+                        <>
+                          <span className="settings-tag settings-tag--current">
+                            {intl.formatMessage({ id: 'productSettings.tag_current' })}
+                          </span>
+                          <span className="sort-sheet-row__check" aria-hidden="true">
+                            <Check style={{ width: 16, height: 16, strokeWidth: 2.5 }} />
+                          </span>
+                        </>
+                      )}
+                    </span>
+                  </button>
+                )
+              })
             )}
           </div>
-          <p
-            className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
-            style={{ opacity: actionCompleted ? 1 : 0 }}
+        </section>
+
+        {/* ---------- Section 3: Categories CRUD ---------- */}
+        <section className="settings-section settings-section--categories">
+          <div className="settings-section__head">
+            <span className="settings-section__label">
+              {intl.formatMessage({ id: 'productSettings.section_your_categories' })}
+            </span>
+            <span className="settings-section__count">
+              {intl.formatMessage(
+                { id: 'productSettings.categories_count' },
+                { count: categories.length },
+              )}
+            </span>
+          </div>
+
+          {/* Add-new inline form */}
+          <form
+            className="settings-add-row"
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleCreateCategory()
+            }}
           >
-            {actionMessage}
-          </p>
-        </div>
-      )}
-
-      {/* Step: preferences */}
-      {step === 'preferences' && (
-        <>
-          <div>
-            <label htmlFor="default-category" className="label">{t.formatMessage({
-              id: 'productSettings.default_category_label'
-            })}</label>
-            <select
-              id="default-category"
-              value={localDefaultCategoryId || ''}
-              onChange={(e) => setLocalDefaultCategoryId(e.target.value || null)}
-              className={`input ${!localDefaultCategoryId ? 'select-placeholder' : ''}`}
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              className="settings-add-row__input"
+              placeholder={intl.formatMessage({ id: 'productSettings.category_name_placeholder' })}
+              autoComplete="off"
+              maxLength={64}
+            />
+            <button
+              type="submit"
+              className="settings-add-row__button"
+              disabled={isCreatingCategory || newCategoryName.trim().length === 0}
             >
-              <option value="">{t.formatMessage({
-                id: 'productSettings.default_category_none'
-              })}</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-text-tertiary mt-1">
-              {t.formatMessage({ id: 'productSettings.default_category_hint' })}
-            </p>
-          </div>
+              {isCreatingCategory ? (
+                <IonSpinner name="crescent" style={{ width: 14, height: 14 }} />
+              ) : (
+                <Plus style={{ width: 14, height: 14, strokeWidth: 2.5 }} />
+              )}
+              <span>{intl.formatMessage({ id: 'productSettings.add_category_button' })}</span>
+            </button>
+            {createCelebrating && (
+              <span className="settings-add-row__ping" role="status">
+                <Check style={{ width: 12, height: 12, strokeWidth: 2.5 }} />
+                {intl.formatMessage({ id: 'productSettings.category_created' })}
+              </span>
+            )}
+          </form>
 
-          <div className="mt-4">
-            <label htmlFor="sort-preference" className="label">{t.formatMessage({
-              id: 'productSettings.sort_preference_label'
-            })}</label>
-            <select
-              id="sort-preference"
-              value={localSortPreference}
-              onChange={(e) => setLocalSortPreference(e.target.value as SortPreference)}
-              className="input"
-            >
-              {SORT_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {sortLabels[option.value]}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-text-tertiary mt-1">
-              {t.formatMessage({ id: 'productSettings.sort_preference_hint' })}
-            </p>
+          {/* List */}
+          {categories.length === 0 ? (
+            <div className="settings-empty">
+              <span className="settings-empty__rule" aria-hidden="true" />
+              <p className="settings-empty__title">
+                {intl.formatMessage({ id: 'productSettings.no_categories' })}
+              </p>
+              <p className="settings-empty__desc">
+                {intl.formatMessage({ id: 'productSettings.no_categories_hint' })}
+              </p>
+            </div>
+          ) : (
+            <CategoryList
+              categories={categories}
+              defaultCategoryId={localDefaultCategoryId}
+              editingId={editingCategoryId}
+              editingValue={editingValue}
+              onEditingValueChange={setEditingValue}
+              pendingDeleteId={pendingDeleteId}
+              isCommittingEdit={isUpdatingCategory}
+              isCommittingDelete={isDeletingCategory}
+              onReorder={onReorderCategories}
+              onStartEdit={handleStartEdit}
+              onCancelEdit={handleCancelEdit}
+              onSaveEdit={handleSaveEdit}
+              onStartDelete={handleStartDelete}
+              onCancelDelete={handleCancelDelete}
+              onConfirmDelete={handleConfirmDelete}
+            />
+          )}
+        </section>
+
+        {/* Saving indicator stamp — quiet ledger feedback while a
+            settings PATCH is in flight. */}
+        {isSavingSettings && (
+          <div className="settings-saving-stamp" role="status">
+            <IonSpinner name="dots" style={{ width: 18, height: 12 }} />
+            <span className="settings-saving-stamp__text">
+              {intl.formatMessage({ id: 'productSettings.saving' })}
+            </span>
           </div>
-        </>
-      )}
+        )}
+      </div>
     </ModalShell>
-  );
+  )
 }

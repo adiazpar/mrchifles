@@ -1,5 +1,11 @@
 import { useIntl } from 'react-intl'
-import { IonPage, IonContent, IonFooter, IonToolbar, IonButton } from '@ionic/react'
+import {
+  IonPage,
+  IonContent,
+  IonFooter,
+  IonToolbar,
+  IonButton,
+} from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useEditProductCallbacks } from './ProductNavContext'
@@ -16,35 +22,54 @@ export function EditSuccessStep() {
 
   return (
     <IonPage>
-      <IonContent>
-        <div className="flex flex-col items-center justify-center text-center h-full px-6 py-8">
-          <div style={{ width: 160, height: 160 }}>
+      <IonContent className="pm-content">
+        <div className="pm-success">
+          <div className="pm-success__lottie">
             {productSaved && (
               <LottiePlayer
                 src="/animations/success.json"
                 loop={false}
                 autoplay={true}
                 delay={300}
-                style={{ width: 160, height: 160 }}
+                style={{ width: 144, height: 144 }}
               />
             )}
           </div>
-          <p
-            className="text-lg font-semibold text-text-primary mt-4 transition-opacity duration-300"
+
+          <span
+            className="pm-success__stamp"
             style={{ opacity: productSaved ? 1 : 0 }}
+            aria-hidden={!productSaved}
           >
-            {t.formatMessage({ id: 'productForm.success_updated_heading' })}
-          </p>
+            <span className="pm-success__stamp-id">
+              {t.formatMessage({ id: 'productAddEdit.success_stamp_id' })}
+            </span>
+            <span className="pm-success__stamp-dot">·</span>
+            <span className="pm-success__stamp-state pm-success__stamp-state--edited">
+              {t.formatMessage({ id: 'productAddEdit.success_stamp_edited' })}
+            </span>
+          </span>
+
+          <h2
+            className="pm-success__heading"
+            style={{ opacity: productSaved ? 1 : 0, transition: 'opacity 300ms' }}
+          >
+            {t.formatMessage(
+              { id: 'productAddEdit.success_updated_title' },
+              { em: (chunks) => <em>{chunks}</em> },
+            )}
+          </h2>
+
           <p
-            className="text-sm text-text-secondary mt-1 transition-opacity duration-300 delay-100"
-            style={{ opacity: productSaved ? 1 : 0 }}
+            className="pm-success__caption"
+            style={{ opacity: productSaved ? 1 : 0, transition: 'opacity 300ms 100ms' }}
           >
             {t.formatMessage({ id: 'productForm.success_updated_description' })}
           </p>
         </div>
       </IonContent>
 
-      <IonFooter>
+      <IonFooter className="pm-footer">
         <IonToolbar className="ion-padding-horizontal">
           <IonButton expand="block" onClick={handleDone}>
             {t.formatMessage({ id: 'common.done' })}

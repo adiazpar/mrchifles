@@ -53,7 +53,7 @@ export function DeleteConfirmStep() {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
             <IonBackButton defaultHref="" />
@@ -62,35 +62,75 @@ export function DeleteConfirmStep() {
             {t.formatMessage({ id: 'productForm.title_delete_product' })}
           </IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        <p className="text-text-secondary">
-          {t.formatMessage(
-            { id: 'productForm.delete_confirm_text' },
-            { name: editingProduct?.name ?? '' },
-          )}
-        </p>
-        {error && (
-          <div className="p-3 bg-error-subtle text-error text-sm rounded-lg mt-4">
-            {error}
+      <IonContent className="pm-content">
+        <div className="pm-shell">
+          <header className="pm-hero">
+            <span className="pm-hero__eyebrow pm-hero__eyebrow--danger">
+              {t.formatMessage({ id: 'productAddEdit.delete_eyebrow' })}
+            </span>
+            <h1 className="pm-hero__title pm-hero__title--danger">
+              {t.formatMessage(
+                { id: 'productAddEdit.delete_title' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+          </header>
+
+          {error && <div className="pm-error">{error}</div>}
+
+          <div className="pm-delete">
+            {editingProduct && (
+              <span className="pm-delete__name-stamp">
+                <span className="pm-delete__name-stamp-mark">
+                  {t.formatMessage({ id: 'productAddEdit.delete_stamp_mark' })}
+                </span>
+                <span className="pm-delete__name-stamp-name">
+                  {editingProduct.name}
+                </span>
+              </span>
+            )}
+
+            <div className="pm-delete__panel">
+              <ul className="pm-delete__bullet-list">
+                <li className="pm-delete__bullet">
+                  {t.formatMessage({ id: 'productAddEdit.delete_bullet_records' })}
+                </li>
+                <li className="pm-delete__bullet">
+                  {t.formatMessage({ id: 'productAddEdit.delete_bullet_pos' })}
+                </li>
+                <li className="pm-delete__bullet">
+                  {t.formatMessage({ id: 'productAddEdit.delete_bullet_undo' })}
+                </li>
+              </ul>
+            </div>
           </div>
-        )}
+        </div>
       </IonContent>
 
-      <IonFooter>
+      <IonFooter className="pm-footer">
         <IonToolbar>
-          {/* Toolbar back returns to the previous step; toolbar X (when
-              this step is the only one in the stack) dismisses. Footer
-              is the destructive primary only. */}
           <div className="modal-footer">
-            <IonButton color="danger" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
+            <IonButton
+              color="danger"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <IonSpinner name="crescent" />
+              ) : (
+                t.formatMessage({ id: 'productAddEdit.delete_cta' })
+              )}
             </IonButton>
           </div>
         </IonToolbar>

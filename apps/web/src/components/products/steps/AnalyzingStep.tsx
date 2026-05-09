@@ -17,6 +17,10 @@ import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
 import { SuggestedCategoryStepWrapper } from './SuggestedCategoryStepWrapper'
 import { FormStep } from './FormStep'
 
+type Phase = 'preparing' | 'identifying' | 'generating' | 'removing-bg' | 'analyzing'
+
+const PHASE_ORDER: Phase[] = ['preparing', 'identifying', 'generating', 'removing-bg']
+
 export function AnalyzingStep() {
   const t = useIntl()
   const navRef = useProductNavRef()
@@ -39,15 +43,31 @@ export function AnalyzingStep() {
     }
   }, [pipelineStep, suggestedCategoryName, navRef])
 
-  const label = isCompressing
-    ? t.formatMessage({ id: 'aiPipeline.preparing_photo' })
+  // Determine current phase for the heading + ledger.
+  const currentPhase: Phase = isCompressing
+    ? 'preparing'
     : pipelineStep === 'identifying'
-      ? t.formatMessage({ id: 'aiPipeline.identifying' })
-      : pipelineStep === 'generating'
-        ? t.formatMessage({ id: 'aiPipeline.generating_icon' })
-        : pipelineStep === 'removing-bg'
-          ? t.formatMessage({ id: 'aiPipeline.removing_bg' })
-          : t.formatMessage({ id: 'aiPipeline.analyzing' })
+    ? 'identifying'
+    : pipelineStep === 'generating'
+    ? 'generating'
+    : pipelineStep === 'removing-bg'
+    ? 'removing-bg'
+    : 'analyzing'
+
+  function isPhaseDone(p: Phase): boolean {
+    if (currentPhase === 'analyzing') return false
+    const ci = PHASE_ORDER.indexOf(currentPhase)
+    const pi = PHASE_ORDER.indexOf(p)
+    return pi >= 0 && pi < ci
+  }
+
+  const phaseLabel: Record<Phase, string> = {
+    preparing: t.formatMessage({ id: 'aiPipeline.preparing_photo' }),
+    identifying: t.formatMessage({ id: 'aiPipeline.identifying' }),
+    generating: t.formatMessage({ id: 'aiPipeline.generating_icon' }),
+    'removing-bg': t.formatMessage({ id: 'aiPipeline.removing_bg' }),
+    analyzing: t.formatMessage({ id: 'aiPipeline.analyzing' }),
+  }
 
   function handleCancel() {
     onAbortAiProcessing()
@@ -57,26 +77,78 @@ export function AnalyzingStep() {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="pm-header">
         <IonToolbar>
           <IonTitle>
             {t.formatMessage({ id: 'productForm.ai_step_analyzing_title' })}
           </IonTitle>
-          {/* Toolbar X aborts the in-progress AI analysis and closes
-              the modal — same effect the footer Cancel used to have. */}
           <IonButtons slot="end">
-            <IonButton fill="clear" onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
+            <IonButton
+              fill="clear"
+              onClick={handleCancel}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        <div className="flex flex-col items-center justify-center py-12">
-          <IonSpinner name="crescent" className="w-8 h-8 mb-4" />
-          <p className="text-sm text-text-secondary">{label}</p>
-          <p className="text-xs text-text-tertiary mt-1">
+      <IonContent className="pm-content">
+        <div className="pm-analyzing">
+          <span className="pm-analyzing__ring">
+            <IonSpinner name="crescent" />
+          </span>
+
+          <h2 className="pm-analyzing__heading">
+            {t.formatMessage(
+              { id: 'productAddEdit.analyzing_heading' },
+              { em: (chunks) => <em>{chunks}</em> },
+            )}
+          </h2>
+
+          <span className="pm-analyzing__caption">
+            {phaseLabel[currentPhase]}
+            <span className="pm-analyzing__dots" aria-hidden="true">
+              <span className="pm-analyzing__dot" />
+              <span className="pm-analyzing__dot" />
+              <span className="pm-analyzing__dot" />
+            </span>
+          </span>
+
+          <div className="pm-analyzing__phases">
+            {PHASE_ORDER.map((p) => {
+              const active = currentPhase === p
+              const done = isPhaseDone(p)
+              return (
+                <div
+                  key={p}
+                  className={`pm-analyzing__phase ${
+                    active
+                      ? 'pm-analyzing__phase--active'
+                      : done
+                      ? 'pm-analyzing__phase--done'
+                      : ''
+                  }`}
+                >
+                  <span>{phaseLabel[p]}</span>
+                  <span
+                    className="pm-analyzing__phase-leader"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {done
+                      ? t.formatMessage({ id: 'productAddEdit.phase_done' })
+                      : active
+                      ? t.formatMessage({ id: 'productAddEdit.phase_running' })
+                      : t.formatMessage({ id: 'productAddEdit.phase_pending' })}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+
+          <p className="pm-hero__subtitle" style={{ textAlign: 'center', marginTop: 'var(--space-2)' }}>
             {t.formatMessage({ id: 'aiPipeline.may_take_seconds' })}
           </p>
         </div>
