@@ -22,7 +22,7 @@ import {
 import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2 } from 'lucide-react'
 import { TabContainer, ModalShell, PageSpinner } from '@/components/ui'
 import {
-  ProviderModal,
+  EditProviderModal,
   AddProviderNoteModal,
   EditProviderNoteModal,
   ReliabilityBar,
@@ -1073,11 +1073,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
       </div>
       {/* ============== Edit modal ==============
-          Hosts the delete flow as extra modal steps (see ProviderModal).
-          When the modal has finished closing after a successful delete we
-          slide back to the providers list — deferring the navigation
-          lets the delete-success animation play inside the modal first. */}
-      <ProviderModal
+          Detail page only ever edits the provider it's already showing,
+          so we mount EditProviderModal directly (no add-mode gating).
+          The modal hosts the delete flow as extra steps (see
+          EditProviderModal). When the modal has finished closing after
+          a successful delete we slide back to the providers list —
+          deferring the navigation lets the delete-success animation play
+          inside the modal first. */}
+      <EditProviderModal
         isOpen={isEditOpen}
         onClose={() => setEditOpen(false)}
         onExitComplete={() => {
@@ -1128,7 +1131,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       {/* ============== Edit / delete note modal ==============
           Opens at step 0 from the edit pencil and step 1 (delete confirm)
           from the trash icon. Delete-success plays as step 2, save-success
-          as step 3 — same shape as ProviderModal. */}
+          as step 3 — same shape as EditProviderModal. */}
       <EditProviderNoteModal
         isOpen={isEditNoteOpen}
         onClose={() => setEditNoteOpen(false)}

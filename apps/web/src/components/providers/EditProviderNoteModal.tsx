@@ -1,19 +1,31 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useIntl } from 'react-intl';
-import { Trash2 } from 'lucide-react'
-import { IonButton, IonSpinner } from '@ionic/react'
-import { ConfirmationAnimation } from '@/components/ui'
-import { ModalShell } from '@/components/ui/modal-shell'
-import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
+import { useEffect, useState } from 'react'
+import { useIntl } from 'react-intl'
+import {
+  IonHeader,
+  IonToolbar,
+  IonContent,
+  IonFooter,
+  IonButtons,
+  IonButton,
+  IonIcon,
+} from '@ionic/react'
+import { close, chevronBack } from 'ionicons/icons'
+import { ModalShell } from '@/components/ui'
+import {
+  NoteTitleField,
+  NoteBodyField,
+  ProviderNoteSuccessBody,
+} from './AddProviderNoteModal'
+import { NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
+import { formatRelative } from '@/lib/formatRelative'
 import type { ProviderNote } from '@kasero/shared/types'
 
-// Step indices
 type Step = 'form' | 'delete-confirm' | 'delete-success' | 'save-success'
 
-function initialStepFromProp(prop: 0 | 1): Step {
-  return prop === 1 ? 'delete-confirm' : 'form'
+function stepFromProp(initialStep: 0 | 1): Step {
+  return initialStep === 1 ? 'delete-confirm' : 'form'
 }
 
 export interface EditProviderNoteModalProps {
@@ -21,7 +33,7 @@ export interface EditProviderNoteModalProps {
   onClose: () => void
   onExitComplete: () => void
 
-  /** Which step to show first. 0 = form (edit button). 1 = delete confirm (trash button). */
+  /** 0 = form (pencil), 1 = delete-confirm (trash). */
   initialStep?: 0 | 1
 
   editingNote: ProviderNote | null
@@ -41,6 +53,19 @@ export interface EditProviderNoteModalProps {
   onDelete: () => Promise<boolean>
 }
 
+/**
+ * Edit / delete a provider note — Modern Mercantile.
+ *
+ * Pattern 1, rawContent. Same chrome contract as AddProviderNoteModal.
+ * Adds two extra steps:
+ *   - delete-confirm: oxblood hero + the note-being-deleted as a
+ *     dashed-frame specimen (3-line clamped body)
+ *   - delete-success: oxblood seal
+ *
+ * Demoted destructive link in the form footer mirrors the
+ * EditProviderModal pattern. When opened directly via the trash icon
+ * (initialStep=1), backing out closes the modal entirely.
+ */
 export function EditProviderNoteModal({
   isOpen,
   onClose,
@@ -60,174 +85,276 @@ export function EditProviderNoteModal({
   onDelete,
 }: EditProviderNoteModalProps) {
   const t = useIntl()
+  const userLocale = t.locale
 
-  const [step, setStep] = useState<Step>(initialStepFromProp(initialStep))
+  const [step, setStep] = useState<Step>(stepFromProp(initialStep))
 
   // Sync step when the modal opens at a different initialStep.
   useEffect(() => {
-    if (isOpen) {
-      setStep(initialStepFromProp(initialStep))
-    }
+    if (isOpen) setStep(stepFromProp(initialStep))
   }, [isOpen, initialStep])
 
-  // Reset step state after the modal dismissal animation completes.
-  // Also fire onExitComplete so the parent can clear its own state.
+  // Delayed cleanup so the parent's onExitComplete (clears editingNoteId
+  // + form draft) doesn't fire mid dismiss animation.
   useEffect(() => {
-    if (!isOpen) {
-      const timer = setTimeout(() => {
-        setStep(initialStepFromProp(initialStep))
-        onExitComplete()
-      }, 250)
-      return () => clearTimeout(timer)
-    }
-  }, [isOpen, initialStep, onExitComplete])
+    if (isOpen) return
+    const timer = window.setTimeout(onExitComplete, 250)
+    return () => window.clearTimeout(timer)
+  }, [isOpen, onExitComplete])
+
+  // True when the modal was opened directly from a note row's trash
+  // icon — back/cancel should close the modal instead of returning to
+  // the form.
+  const openedAsDelete = initialStep === 1
 
   const isValid = title.trim().length > 0 && body.trim().length > 0
   const hasChanges = editingNote
-    ? title.trim() !== editingNote.title.trim() || body.trim() !== editingNote.body.trim()
+    ? title.trim() !== editingNote.title.trim() ||
+      body.trim() !== editingNote.body.trim()
     : false
 
-  // True when the modal was opened directly from a note row's trash icon.
-  // In that flow cancel/back should close the modal instead of returning to the form.
-  const openedAsDelete = initialStep === 1
-
-  // Optimistic save: jump to success immediately, fire API in background.
-  // The user dismisses the success step manually via the Done button.
   const handleSave = () => {
     setStep('save-success')
-    onSubmit()
+    void onSubmit()
   }
 
-  // Await the delete API — navigate on result so a failure shows the error on the form.
   const handleDelete = async () => {
     const ok = await onDelete()
     if (ok) {
       setStep('delete-success')
-    } else {
+    } else if (!openedAsDelete) {
       setStep('form')
     }
   }
 
-  // Derive title and back/footer for each step.
-  let modalTitle: string
-  let onBack: (() => void) | undefined
-  let footer: React.ReactNode
+  const onBack: (() => void) | undefined =
+    step === 'delete-confirm' && !openedAsDelete
+      ? () => setStep('form')
+      : undefined
 
+  const bodyCharsLeft = NOTE_BODY_MAX - body.length
+  const counterWarn = bodyCharsLeft <= NOTE_BODY_MAX * 0.05
+
+  let footer: React.ReactNode = null
   if (step === 'form') {
-    modalTitle = t.formatMessage({ id: 'providers.note_modal_title_edit' })
-    onBack = undefined
     footer = (
       <>
-        <IonButton
-          fill="clear"
-          shape="round"
+        <button
+          type="button"
+          className="provider-modal__delete-link"
           onClick={() => setStep('delete-confirm')}
-          aria-label={t.formatMessage({ id: 'common.delete' })}
+          disabled={isSaving}
         >
-          <Trash2 className="text-error" style={{ width: 16, height: 16 }} />
-        </IonButton>
-        <IonButton
+          {t.formatMessage({ id: 'providers.modal_v2.note_delete_link' })}
+        </button>
+        <button
+          type="button"
+          className="order-modal__primary-pill"
           onClick={handleSave}
           disabled={isSaving || !isValid || !hasChanges}
-          className="flex-1"
         >
-          {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
-        </IonButton>
+          {isSaving ? (
+            <span
+              className="order-modal__pill-spinner"
+              aria-label={t.formatMessage({ id: 'common.loading' })}
+            />
+          ) : (
+            t.formatMessage({ id: 'providers.modal_v2.note_save_button' })
+          )}
+        </button>
       </>
     )
   } else if (step === 'delete-confirm') {
-    modalTitle = t.formatMessage({ id: 'providers.note_delete_confirm_title' })
-    onBack = openedAsDelete ? undefined : () => setStep('form')
     footer = (
-      <IonButton color="danger" onClick={handleDelete} disabled={isDeleting}>
-        {isDeleting ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.delete' })}
-      </IonButton>
+      <button
+        type="button"
+        className="tm-invite__danger-pill"
+        onClick={handleDelete}
+        disabled={isDeleting}
+      >
+        {isDeleting ? (
+          <span
+            className="order-modal__pill-spinner"
+            aria-label={t.formatMessage({ id: 'common.loading' })}
+          />
+        ) : (
+          t.formatMessage({ id: 'providers.modal_v2.note_delete_confirm' })
+        )}
+      </button>
     )
   } else {
-    // delete-success or save-success
-    modalTitle = ''
-    onBack = undefined
     footer = (
-      <IonButton expand="block" onClick={onClose} className="flex-1">
+      <button
+        type="button"
+        className="order-modal__primary-pill"
+        onClick={onClose}
+      >
         {t.formatMessage({ id: 'common.done' })}
-      </IonButton>
+      </button>
     )
   }
 
   return (
-    <ModalShell
-      isOpen={isOpen}
-      onClose={onClose}
-      title={modalTitle}
-      onBack={onBack}
-      footer={footer}
-      noSwipeDismiss
-    >
-      {step === 'form' && (
-        <>
-          {error && (
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
+    <ModalShell rawContent isOpen={isOpen} onClose={onClose} noSwipeDismiss>
+      <IonHeader className="pm-header">
+        <IonToolbar>
+          {onBack && (
+            <IonButtons slot="start">
+              <IonButton
+                fill="clear"
+                onClick={onBack}
+                aria-label={t.formatMessage({ id: 'common.back' })}
+              >
+                <IonIcon icon={chevronBack} />
+              </IonButton>
+            </IonButtons>
           )}
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
+        </IonToolbar>
+      </IonHeader>
 
-          <div>
-            <label htmlFor="edit-provider-note-title" className="label">
-              {t.formatMessage({ id: 'providers.note_title_label' })} <span className="text-error">*</span>
-            </label>
-            <input
-              id="edit-provider-note-title"
-              type="text"
-              value={title}
-              onChange={e => onTitleChange(e.target.value)}
-              className="input"
-              placeholder={t.formatMessage({ id: 'providers.note_title_placeholder' })}
-              autoComplete="off"
-              maxLength={NOTE_TITLE_MAX}
-            />
-          </div>
+      <IonContent className="pm-content">
+        {step === 'form' && editingNote && (
+          <FormBody
+            title={title}
+            onTitleChange={onTitleChange}
+            body={body}
+            onBodyChange={onBodyChange}
+            counterWarn={counterWarn}
+            charsLeft={bodyCharsLeft}
+            error={error}
+          />
+        )}
+        {step === 'delete-confirm' && editingNote && (
+          <DeleteConfirmBody
+            note={editingNote}
+            error={error}
+            userLocale={userLocale}
+          />
+        )}
+        {step === 'save-success' && (
+          <ProviderNoteSuccessBody triggered={noteSaved} mode="edit" />
+        )}
+        {step === 'delete-success' && (
+          <ProviderNoteSuccessBody triggered={noteDeleted} mode="delete" />
+        )}
+      </IonContent>
 
-          <div>
-            <label htmlFor="edit-provider-note-body" className="label">
-              {t.formatMessage({ id: 'providers.note_body_label' })} <span className="text-error">*</span>
-            </label>
-            <textarea
-              id="edit-provider-note-body"
-              value={body}
-              onChange={e => onBodyChange(e.target.value)}
-              className="input"
-              rows={8}
-              placeholder={t.formatMessage({ id: 'providers.note_body_placeholder' })}
-              maxLength={NOTE_BODY_MAX}
-            />
-          </div>
-        </>
-      )}
-
-      {step === 'delete-confirm' && (
-        <p className="text-text-secondary">
-          {t.formatMessage(
-            { id: 'providers.note_delete_confirm_body' },
-            { title: editingNote?.title ?? '' }
-          )}
-        </p>
-      )}
-
-      {step === 'delete-success' && (
-        <ConfirmationAnimation
-          type="error"
-          triggered={noteDeleted}
-          title={t.formatMessage({ id: 'providers.success_note_deleted_heading' })}
-          subtitle={t.formatMessage({ id: 'providers.success_note_deleted_subtitle' })}
-        />
-      )}
-
-      {step === 'save-success' && (
-        <ConfirmationAnimation
-          type="success"
-          triggered={noteSaved}
-          title={t.formatMessage({ id: 'providers.success_note_updated_heading' })}
-          subtitle={t.formatMessage({ id: 'providers.success_note_updated_subtitle' })}
-        />
-      )}
+      <IonFooter className="pm-footer">
+        <IonToolbar>
+          <div className="modal-footer">{footer}</div>
+        </IonToolbar>
+      </IonFooter>
     </ModalShell>
+  )
+}
+
+interface FormBodyProps {
+  title: string
+  onTitleChange: (v: string) => void
+  body: string
+  onBodyChange: (v: string) => void
+  counterWarn: boolean
+  charsLeft: number
+  error: string
+}
+
+function FormBody({
+  title,
+  onTitleChange,
+  body,
+  onBodyChange,
+  counterWarn,
+  charsLeft,
+  error,
+}: FormBodyProps) {
+  const t = useIntl()
+  return (
+    <div className="pm-shell">
+      <header className="pm-hero">
+        <span className="pm-hero__eyebrow">
+          {t.formatMessage({ id: 'providers.modal_v2.note_eyebrow_edit' })}
+        </span>
+        <h1 className="pm-hero__title">
+          {t.formatMessage(
+            { id: 'providers.modal_v2.note_title_edit' },
+            { em: (chunks) => <em>{chunks}</em> },
+          )}
+        </h1>
+        <p className="pm-hero__subtitle">
+          {t.formatMessage({ id: 'providers.modal_v2.note_subtitle_edit' })}
+        </p>
+      </header>
+
+      {error && <div className="pm-error" role="alert">{error}</div>}
+
+      <div className="pv-fields">
+        <NoteTitleField
+          value={title}
+          onChange={onTitleChange}
+          inputId="edit-provider-note-title"
+        />
+        <NoteBodyField
+          value={body}
+          onChange={onBodyChange}
+          counterWarn={counterWarn}
+          charsLeft={charsLeft}
+          inputId="edit-provider-note-body"
+        />
+      </div>
+    </div>
+  )
+}
+
+interface DeleteConfirmBodyProps {
+  note: ProviderNote
+  error: string
+  userLocale: string
+}
+
+function DeleteConfirmBody({ note, error, userLocale }: DeleteConfirmBodyProps) {
+  const t = useIntl()
+
+  return (
+    <div className="pm-shell">
+      <header className="pm-hero">
+        <span className="pm-hero__eyebrow pm-hero__eyebrow--danger">
+          {t.formatMessage({ id: 'providers.modal_v2.note_eyebrow_delete' })}
+        </span>
+        <h1 className="pm-hero__title pm-hero__title--danger">
+          {t.formatMessage(
+            { id: 'providers.modal_v2.note_title_delete' },
+            { em: (chunks) => <em>{chunks}</em> },
+          )}
+        </h1>
+        <p className="pm-hero__subtitle">
+          {t.formatMessage({ id: 'providers.modal_v2.note_subtitle_delete' })}
+        </p>
+      </header>
+
+      {error && <div className="pm-error" role="alert">{error}</div>}
+
+      {/* Specimen — italic Fraunces title, mono "EDITED ..." caption,
+          3-line clamped body so a long note doesn't push the confirm
+          pill below the fold. */}
+      <div className="pv-note-specimen">
+        <p className="pv-note-specimen__title">{note.title}</p>
+        <span className="pv-note-specimen__meta">
+          {t.formatMessage(
+            { id: 'providers.note_edited_on' },
+            { date: formatRelative(note.updatedAt, userLocale) },
+          )}
+        </span>
+        <p className="pv-note-specimen__body">{note.body}</p>
+      </div>
+    </div>
   )
 }

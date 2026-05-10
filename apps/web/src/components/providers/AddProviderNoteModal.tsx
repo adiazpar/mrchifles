@@ -1,11 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useIntl } from 'react-intl';
-import { IonButton, IonSpinner } from '@ionic/react'
-import { ConfirmationAnimation } from '@/components/ui'
-import { ModalShell } from '@/components/ui/modal-shell'
+import { useEffect, useState } from 'react'
+import { useIntl } from 'react-intl'
+import {
+  IonHeader,
+  IonToolbar,
+  IonContent,
+  IonFooter,
+  IonButtons,
+  IonButton,
+  IonIcon,
+} from '@ionic/react'
+import { close } from 'ionicons/icons'
+import { CheckCircle2 } from 'lucide-react'
+import { ModalShell } from '@/components/ui'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
+
+type Step = 'form' | 'success'
 
 export interface AddProviderNoteModalProps {
   isOpen: boolean
@@ -23,6 +34,16 @@ export interface AddProviderNoteModalProps {
   onSubmit: () => Promise<boolean>
 }
 
+/**
+ * Add-note flow — Modern Mercantile.
+ *
+ * Pattern 1, rawContent — same chrome contract as AddProviderModal so the
+ * modal-to-modal aesthetic stays cohesive (a manager often opens this
+ * directly after editing the provider). The body is a two-row form: a
+ * mono "TITLE" field for the headline and a generous prose textarea for
+ * the body, with a live mono character counter under the textarea that
+ * turns oxblood at 95% of the cap.
+ */
 export function AddProviderNoteModal({
   isOpen,
   onClose,
@@ -37,99 +58,304 @@ export function AddProviderNoteModal({
   onSubmit,
 }: AddProviderNoteModalProps) {
   const t = useIntl()
+  const [step, setStep] = useState<Step>('form')
 
-  const [step, setStep] = useState<'form' | 'success'>('form')
-
-  // Reset step state after the modal dismissal animation completes.
-  // Also fire onExitComplete so the parent can clear its form state.
+  // Reset to root surface every time the modal opens.
   useEffect(() => {
-    if (!isOpen) {
-      const timer = setTimeout(() => {
-        setStep('form')
-        onExitComplete()
-      }, 250)
-      return () => clearTimeout(timer)
-    }
+    if (isOpen) setStep('form')
+  }, [isOpen])
+
+  // Delayed cleanup — runs ~250ms after dismiss animation completes so
+  // the parent's onExitComplete (clears form state) doesn't fire mid
+  // dismissal.
+  useEffect(() => {
+    if (isOpen) return
+    const timer = window.setTimeout(onExitComplete, 250)
+    return () => window.clearTimeout(timer)
   }, [isOpen, onExitComplete])
 
   const isValid = title.trim().length > 0 && body.trim().length > 0
 
-  // Optimistic: jump to success immediately, fire the API in the background.
-  // If it fails the parent surfaces the error on reopen. The user dismisses
-  // the success step manually via the Done button — never auto-close.
+  // Optimistic save: jump to success immediately, fire API in background.
   const handleSave = () => {
     setStep('success')
-    onSubmit()
+    void onSubmit()
   }
 
-  // Dismissal lives on the toolbar X — footer is primary-only.
-  const formFooter = (
-    <IonButton onClick={handleSave} disabled={isSaving || !isValid}>
-      {isSaving ? <IonSpinner name="crescent" /> : t.formatMessage({ id: 'common.save' })}
-    </IonButton>
-  )
-
-  const successFooter = (
-    <IonButton expand="block" onClick={onClose} className="flex-1">
-      {t.formatMessage({ id: 'common.done' })}
-    </IonButton>
-  )
+  let footer: React.ReactNode
+  if (step === 'form') {
+    footer = (
+      <button
+        type="button"
+        className="order-modal__primary-pill"
+        onClick={handleSave}
+        disabled={isSaving || !isValid}
+      >
+        {isSaving ? (
+          <span
+            className="order-modal__pill-spinner"
+            aria-label={t.formatMessage({ id: 'common.loading' })}
+          />
+        ) : (
+          t.formatMessage({ id: 'providers.modal_v2.note_save_button' })
+        )}
+      </button>
+    )
+  } else {
+    footer = (
+      <button
+        type="button"
+        className="order-modal__primary-pill"
+        onClick={onClose}
+      >
+        {t.formatMessage({ id: 'common.done' })}
+      </button>
+    )
+  }
 
   return (
-    <ModalShell
-      isOpen={isOpen}
-      onClose={onClose}
-      title={step === 'form' ? t.formatMessage({ id: 'providers.note_modal_title_add' }) : ''}
-      footer={step === 'form' ? formFooter : successFooter}
-      noSwipeDismiss
-    >
-      {step === 'form' && (
-        <>
-          {error && (
-            <div className="p-3 bg-error-subtle text-error text-sm rounded-lg">{error}</div>
-          )}
+    <ModalShell rawContent isOpen={isOpen} onClose={onClose} noSwipeDismiss>
+      <IonHeader className="pm-header">
+        <IonToolbar>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
+        </IonToolbar>
+      </IonHeader>
 
-          <div>
-            <label htmlFor="provider-note-title" className="label">
-              {t.formatMessage({ id: 'providers.note_title_label' })} <span className="text-error">*</span>
-            </label>
-            <input
-              id="provider-note-title"
-              type="text"
-              value={title}
-              onChange={e => onTitleChange(e.target.value)}
-              className="input"
-              placeholder={t.formatMessage({ id: 'providers.note_title_placeholder' })}
-              autoComplete="off"
-              maxLength={NOTE_TITLE_MAX}
-            />
-          </div>
+      <IonContent className="pm-content">
+        {step === 'form' && (
+          <FormBody
+            title={title}
+            onTitleChange={onTitleChange}
+            body={body}
+            onBodyChange={onBodyChange}
+            error={error}
+          />
+        )}
+        {step === 'success' && <SuccessBody triggered={noteSaved} mode="add" />}
+      </IonContent>
 
-          <div>
-            <label htmlFor="provider-note-body" className="label">
-              {t.formatMessage({ id: 'providers.note_body_label' })} <span className="text-error">*</span>
-            </label>
-            <textarea
-              id="provider-note-body"
-              value={body}
-              onChange={e => onBodyChange(e.target.value)}
-              className="input"
-              rows={8}
-              placeholder={t.formatMessage({ id: 'providers.note_body_placeholder' })}
-              maxLength={NOTE_BODY_MAX}
-            />
-          </div>
-        </>
-      )}
-
-      {step === 'success' && (
-        <ConfirmationAnimation
-          type="success"
-          triggered={noteSaved}
-          title={t.formatMessage({ id: 'providers.success_note_added_heading' })}
-          subtitle={t.formatMessage({ id: 'providers.success_note_added_subtitle' })}
-        />
-      )}
+      <IonFooter className="pm-footer">
+        <IonToolbar>
+          <div className="modal-footer">{footer}</div>
+        </IonToolbar>
+      </IonFooter>
     </ModalShell>
   )
 }
+
+interface FormBodyProps {
+  title: string
+  onTitleChange: (v: string) => void
+  body: string
+  onBodyChange: (v: string) => void
+  error: string
+}
+
+function FormBody({ title, onTitleChange, body, onBodyChange, error }: FormBodyProps) {
+  const t = useIntl()
+  const bodyCharsLeft = NOTE_BODY_MAX - body.length
+  const counterWarn = bodyCharsLeft <= NOTE_BODY_MAX * 0.05
+
+  return (
+    <div className="pm-shell">
+      <header className="pm-hero">
+        <span className="pm-hero__eyebrow">
+          {t.formatMessage({ id: 'providers.modal_v2.note_eyebrow_add' })}
+        </span>
+        <h1 className="pm-hero__title">
+          {t.formatMessage(
+            { id: 'providers.modal_v2.note_title_add' },
+            { em: (chunks) => <em>{chunks}</em> },
+          )}
+        </h1>
+        <p className="pm-hero__subtitle">
+          {t.formatMessage({ id: 'providers.modal_v2.note_subtitle_add' })}
+        </p>
+      </header>
+
+      {error && <div className="pm-error" role="alert">{error}</div>}
+
+      <div className="pv-fields">
+        <NoteTitleField value={title} onChange={onTitleChange} />
+        <NoteBodyField
+          value={body}
+          onChange={onBodyChange}
+          counterWarn={counterWarn}
+          charsLeft={bodyCharsLeft}
+        />
+      </div>
+    </div>
+  )
+}
+
+interface SuccessBodyProps {
+  triggered: boolean
+  mode: 'add' | 'edit' | 'delete'
+}
+
+function SuccessBody({ triggered, mode }: SuccessBodyProps) {
+  const t = useIntl()
+  const stampKey =
+    mode === 'add'
+      ? 'providers.modal_v2.note_stamp_added'
+      : mode === 'edit'
+        ? 'providers.modal_v2.note_stamp_updated'
+        : 'providers.modal_v2.note_stamp_deleted'
+  const titleKey =
+    mode === 'add'
+      ? 'providers.modal_v2.note_success_added_title'
+      : mode === 'edit'
+        ? 'providers.modal_v2.note_success_updated_title'
+        : 'providers.modal_v2.note_success_deleted_title'
+  const subtitleKey =
+    mode === 'add'
+      ? 'providers.modal_v2.note_success_added_subtitle'
+      : mode === 'edit'
+        ? 'providers.modal_v2.note_success_updated_subtitle'
+        : 'providers.modal_v2.note_success_deleted_subtitle'
+  const isDanger = mode === 'delete'
+
+  return (
+    <div className="pm-shell">
+      <div className="pv-seal" aria-hidden={!triggered}>
+        <span
+          className={
+            isDanger
+              ? 'pv-seal__circle pv-seal__circle--danger'
+              : 'pv-seal__circle'
+          }
+        >
+          <CheckCircle2 size={44} strokeWidth={1.4} />
+        </span>
+        <span className="pv-seal__stamp">{t.formatMessage({ id: stampKey })}</span>
+        <h2
+          className={
+            isDanger
+              ? 'pm-hero__title pm-hero__title--danger'
+              : 'pm-hero__title'
+          }
+          style={{ textAlign: 'center' }}
+        >
+          {t.formatMessage(
+            { id: titleKey },
+            { em: (chunks) => <em>{chunks}</em> },
+          )}
+        </h2>
+        <p
+          className="pm-hero__subtitle"
+          style={{ textAlign: 'center', margin: 0 }}
+        >
+          {t.formatMessage({ id: subtitleKey })}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+/* ==========================================================================
+   Note field primitives — re-exported so EditProviderNoteModal uses them.
+   ========================================================================== */
+
+export interface NoteTitleFieldProps {
+  value: string
+  onChange: (v: string) => void
+  /** When set, overrides the default DOM id so add + edit don't collide
+   *  if both happen to mount briefly during a swipe transition. */
+  inputId?: string
+}
+
+export function NoteTitleField({
+  value,
+  onChange,
+  inputId = 'provider-note-title',
+}: NoteTitleFieldProps) {
+  const t = useIntl()
+  return (
+    <div className="pv-field">
+      <div className="pv-field__head">
+        <span className="pv-field__label">
+          {t.formatMessage({ id: 'providers.modal_v2.note_field_title_label' })}
+          <span className="pv-field__label-required">*</span>
+        </span>
+        <span className="pv-field__head-line" aria-hidden="true" />
+        <span className="pv-field__caption">
+          {t.formatMessage({ id: 'providers.modal_v2.field_required' })}
+        </span>
+      </div>
+      <input
+        id={inputId}
+        type="text"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="pv-field__input pv-field__input--name"
+        placeholder={t.formatMessage({ id: 'providers.modal_v2.note_field_title_placeholder' })}
+        autoComplete="off"
+        maxLength={NOTE_TITLE_MAX}
+      />
+    </div>
+  )
+}
+
+export interface NoteBodyFieldProps {
+  value: string
+  onChange: (v: string) => void
+  counterWarn: boolean
+  charsLeft: number
+  inputId?: string
+}
+
+export function NoteBodyField({
+  value,
+  onChange,
+  counterWarn,
+  charsLeft,
+  inputId = 'provider-note-body',
+}: NoteBodyFieldProps) {
+  const t = useIntl()
+  return (
+    <div className="pv-field">
+      <div className="pv-field__head">
+        <span className="pv-field__label">
+          {t.formatMessage({ id: 'providers.modal_v2.note_field_body_label' })}
+          <span className="pv-field__label-required">*</span>
+        </span>
+        <span className="pv-field__head-line" aria-hidden="true" />
+        <span className="pv-field__caption">
+          {t.formatMessage({ id: 'providers.modal_v2.field_required' })}
+        </span>
+      </div>
+      <textarea
+        id={inputId}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="pv-field__input pv-field__input--prose"
+        placeholder={t.formatMessage({ id: 'providers.modal_v2.note_field_body_placeholder' })}
+        maxLength={NOTE_BODY_MAX}
+      />
+      <div
+        className={
+          counterWarn
+            ? 'pv-note-counter pv-note-counter--warn'
+            : 'pv-note-counter'
+        }
+        aria-live="polite"
+      >
+        {t.formatMessage(
+          { id: 'providers.modal_v2.note_chars_left' },
+          { count: charsLeft },
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Re-export for the edit modal.
+export { SuccessBody as ProviderNoteSuccessBody }

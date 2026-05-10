@@ -12,7 +12,11 @@ import {
 import { useProviderManagement } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
-import { ProviderListItem, ProviderModal } from '@/components/providers'
+import {
+  ProviderListItem,
+  AddProviderModal,
+  EditProviderModal,
+} from '@/components/providers'
 import { PageSpinner } from '@/components/ui'
 
 interface ProvidersDrilldownProps {
@@ -226,9 +230,12 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
         )}
       </div>
 
-      <ProviderModal
-        isOpen={isModalOpen}
-        initialStep={modalInitialStep}
+      {/* Add and edit are separate modals (modal-system rule #2). The
+          shared `useProviderManagement` hook already produces all the
+          state both consume; we just gate by editingProvider so only one
+          is ever open at a time. */}
+      <AddProviderModal
+        isOpen={isModalOpen && !editingProvider}
         onClose={handleCloseModal}
         onExitComplete={handleModalExitComplete}
         name={name}
@@ -239,7 +246,25 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
         onEmailChange={setEmail}
         active={active}
         onActiveChange={setActive}
+        isSaving={isSaving}
+        error={error}
+        providerSaved={providerSaved}
+        onSubmit={handleSubmit}
+      />
+      <EditProviderModal
+        isOpen={isModalOpen && !!editingProvider}
+        initialStep={modalInitialStep}
+        onClose={handleCloseModal}
+        onExitComplete={handleModalExitComplete}
         editingProvider={editingProvider}
+        name={name}
+        onNameChange={setName}
+        phone={phone}
+        onPhoneChange={setPhone}
+        email={email}
+        onEmailChange={setEmail}
+        active={active}
+        onActiveChange={setActive}
         isSaving={isSaving}
         error={error}
         providerSaved={providerSaved}
