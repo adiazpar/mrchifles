@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import { useIntl } from 'react-intl'
 import type { ApiMessageEnvelope } from '@kasero/shared/api-messages'
+import type { MessageId } from '@/i18n/messageIds'
 
 /**
  * Translate a server-emitted API message envelope into a localized string.
@@ -34,7 +35,12 @@ export function useApiMessage() {
 
   return useCallback(
     (envelope: ApiMessageEnvelope): string => {
-      const id = `apiMessages.${envelope.messageCode.toLowerCase()}`
+      // Server-driven dynamic id. ApiMessageCode is the source of truth for
+      // the suffix set, and every code has a matching `apiMessages.<lower>`
+      // key in en-US.json — but TypeScript can't see through .toLowerCase()
+      // back to a literal union, so we assert the cast here. A typo'd code
+      // would still fall back at runtime to the literal string.
+      const id = `apiMessages.${envelope.messageCode.toLowerCase()}` as MessageId
       return intl.formatMessage({ id }, envelope.messageVars ?? {})
     },
     [intl],

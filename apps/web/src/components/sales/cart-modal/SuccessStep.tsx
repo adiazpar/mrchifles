@@ -31,11 +31,12 @@ export function SuccessStepContent({ confirmedSale }: SuccessStepContentProps) {
   const { formatCurrency } = useBusinessFormat()
 
   const showCashRows = confirmedSale?.method === 'cash'
-  // Build the method label key as a template literal so the type narrows
-  // to the union of declared keys instead of `string`. Using
-  // PAYMENT_METHODS[i].labelKey (typed as string) would force a cast.
+  // Build the full message id as a template literal so the type narrows
+  // to the union of declared ids instead of `string`. Mirrors the shape
+  // returned by PAYMENT_METHODS[i].labelKey so call sites can pass it
+  // straight to formatMessage.
   const methodLabelKey = confirmedSale
-    ? (`modal_method_${confirmedSale.method}` as const)
+    ? (`sales.cart.modal_method_${confirmedSale.method}` as const)
     : null
 
   // Pad sale number to 4 digits with leading zeros so the stamp reads
@@ -95,7 +96,7 @@ export function SuccessStepContent({ confirmedSale }: SuccessStepContentProps) {
                 {t.formatMessage({ id: 'sales.cart.modal_success_method_label' })}
               </span>
               <span className="cart-success__ledger-value">
-                {t.formatMessage({ id: 'sales.cart.' + methodLabelKey })}
+                {t.formatMessage({ id: methodLabelKey })}
               </span>
             </div>
             {showCashRows && confirmedSale.tendered != null && (

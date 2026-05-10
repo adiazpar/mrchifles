@@ -1,5 +1,6 @@
 import { useIntl } from 'react-intl'
 import { useMemo } from 'react'
+import type { MessageId } from '@/i18n/messageIds'
 
 // Five-bucket strength model. The 8-char minimum is enforced by the
 // API and by RegisterPage's submit guard; the meter here is a visual
@@ -40,7 +41,7 @@ const TONE_CLASS: Record<Strength, string> = {
   strong: 'auth-strength--pass',
 }
 
-const LABEL_KEY: Record<Strength, string> = {
+const LABEL_KEY: Record<Strength, MessageId> = {
   short: 'auth.password_strength_short',
   weak: 'auth.password_strength_weak',
   fair: 'auth.password_strength_fair',

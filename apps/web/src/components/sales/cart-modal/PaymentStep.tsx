@@ -102,9 +102,7 @@ export function PaymentStepContent({
                   <Icon size={22} strokeWidth={1.75} />
                 </span>
                 <span className="payment-method__label">
-                  {t.formatMessage({
-                    id: 'sales.cart.' + method.labelKey,
-                  })}
+                  {t.formatMessage({ id: method.labelKey })}
                 </span>
               </button>
             )

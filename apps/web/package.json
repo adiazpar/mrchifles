@@ -4,6 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "i18n:types": "node scripts/generate-message-ids.mjs",
+    "predev": "npm run i18n:types",
+    "prebuild": "npm run i18n:types",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

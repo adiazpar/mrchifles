@@ -12,7 +12,10 @@ interface Segment {
   key: 'cash' | 'card' | 'other'
   amount: number
   color: string
-  i18nKey: 'modal_method_cash' | 'modal_method_card' | 'modal_method_other'
+  i18nKey:
+    | 'sales.cart.modal_method_cash'
+    | 'sales.cart.modal_method_card'
+    | 'sales.cart.modal_method_other'
 }
 
 /**
@@ -29,9 +32,9 @@ export function PaymentSplitCard({ split }: PaymentSplitCardProps) {
   const total = split.cash + split.card + split.other
 
   const segments: Segment[] = [
-    { key: 'cash', amount: split.cash, color: 'var(--color-success)', i18nKey: 'modal_method_cash' },
-    { key: 'card', amount: split.card, color: 'var(--color-brand)', i18nKey: 'modal_method_card' },
-    { key: 'other', amount: split.other, color: 'var(--color-text-secondary)', i18nKey: 'modal_method_other' },
+    { key: 'cash', amount: split.cash, color: 'var(--color-success)', i18nKey: 'sales.cart.modal_method_cash' },
+    { key: 'card', amount: split.card, color: 'var(--color-brand)', i18nKey: 'sales.cart.modal_method_card' },
+    { key: 'other', amount: split.other, color: 'var(--color-text-secondary)', i18nKey: 'sales.cart.modal_method_other' },
   ]
 
   return (
@@ -61,9 +64,7 @@ export function PaymentSplitCard({ split }: PaymentSplitCardProps) {
                     style={{ background: seg.color }}
                   />
                   <span className="payment-split-legend-label">
-                    {tMethod.formatMessage({
-                      id: 'sales.cart.' + seg.i18nKey,
-                    })}
+                    {tMethod.formatMessage({ id: seg.i18nKey })}
                   </span>
                   <span className="payment-split-legend-amount">
                     {formatCurrency(seg.amount)}

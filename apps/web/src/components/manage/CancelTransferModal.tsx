@@ -17,10 +17,10 @@ interface Props {
  * countdown stays live while the user is looking at it.
  */
 type ExpiryLabel = {
-  key:
-    | 'transfer_pending_expires_soon'
-    | 'transfer_pending_expires_hours'
-    | 'transfer_pending_expires_minutes'
+  id:
+    | 'manage.transfer_pending_expires_soon'
+    | 'manage.transfer_pending_expires_hours'
+    | 'manage.transfer_pending_expires_minutes'
   values: Record<string, number>
   isSoon: boolean
 }
@@ -36,19 +36,19 @@ function useExpiryLabel(expiresAt: string | undefined): ExpiryLabel | null {
   if (!expiresAt) return null
   const msRemaining = new Date(expiresAt).getTime() - Date.now()
   if (msRemaining <= 60_000) {
-    return { key: 'transfer_pending_expires_soon', values: {}, isSoon: true }
+    return { id: 'manage.transfer_pending_expires_soon', values: {}, isSoon: true }
   }
   const hoursRemaining = Math.floor(msRemaining / 3_600_000)
   if (hoursRemaining >= 1) {
     return {
-      key: 'transfer_pending_expires_hours',
+      id: 'manage.transfer_pending_expires_hours',
       values: { hours: hoursRemaining },
       isSoon: false,
     }
   }
   const minutesRemaining = Math.floor(msRemaining / 60_000)
   return {
-    key: 'transfer_pending_expires_minutes',
+    id: 'manage.transfer_pending_expires_minutes',
     values: { minutes: minutesRemaining },
     isSoon: minutesRemaining < 15,
   }
@@ -137,10 +137,7 @@ export function CancelTransferModal({ isOpen, onClose }: Props) {
               (expiry.isSoon ? ' cancel-transfer__plate-expiry--soon' : '')
             }
           >
-            {intl.formatMessage(
-              { id: 'manage.' + expiry.key },
-              expiry.values,
-            )}
+            {intl.formatMessage({ id: expiry.id }, expiry.values)}
           </div>
         )}
       </div>

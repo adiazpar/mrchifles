@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useMemo, u
 import { useRouter, usePathname } from '@/lib/next-navigation-shim'
 import { useAuth } from './auth-context'
 import { CACHE_KEYS } from '@/hooks/useSessionCache'
+import type { MessageId } from '@/i18n/messageIds'
 
 const BUSINESS_CACHE_STORAGE_KEY = CACHE_KEYS.BUSINESS_SHELL
 
@@ -21,11 +22,11 @@ interface PageTransitionContextValue {
   // Optimistic navigation state - shared across nav components and header
   pendingHref: string | null
   setPendingHref: (href: string | null) => void
-  // Translation key (under the `navigation` namespace) for a transient
-  // navigation-error notice. Set when the safety-net timeout fires;
-  // auto-clears 4 seconds later. Consumed by <NavigationErrorNotice/>.
-  navigationError: string | null
-  setNavigationError: (key: string | null) => void
+  // Full message id for a transient navigation-error notice. Set when the
+  // safety-net timeout fires; auto-clears 4 seconds later. Consumed by
+  // <NavigationErrorNotice/>, which passes it directly to formatMessage.
+  navigationError: MessageId | null
+  setNavigationError: (key: MessageId | null) => void
   // Centralised navigation. Sets pendingHref and pushes via router inside a
   // React transition so rapid taps coalesce. A safety timeout in the
   // provider auto-clears pendingHref if pathname doesn't catch up, so a
@@ -57,7 +58,7 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   const router = useRouter()
   const { user } = useAuth()
   const [pendingHref, setPendingHrefState] = useState<string | null>(null)
-  const [navigationError, setNavigationErrorState] = useState<string | null>(null)
+  const [navigationError, setNavigationErrorState] = useState<MessageId | null>(null)
   const [, startTransition] = useTransition()
 
   // Business cache - use ref to avoid re-renders, initialize from sessionStorage
@@ -100,7 +101,7 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
   }, [user?.id])
 
   const setPendingHref = useCallback((href: string | null) => setPendingHrefState(href), [])
-  const setNavigationError = useCallback((key: string | null) => setNavigationErrorState(key), [])
+  const setNavigationError = useCallback((key: MessageId | null) => setNavigationErrorState(key), [])
 
   const navigate = useCallback((href: string) => {
     setPendingHrefState(href)
@@ -169,7 +170,7 @@ export function PageTransitionProvider({ children }: PageTransitionProviderProps
     }
     const timeout = window.setTimeout(() => {
       setPendingHrefState(null)
-      setNavigationErrorState('load_failed')
+      setNavigationErrorState('navigation.load_failed')
     }, 5000)
     return () => window.clearTimeout(timeout)
   }, [pendingHref, pathname])

@@ -18,10 +18,11 @@ export interface ProcessorResult {
   externalRef?: string
 }
 
-// Each method's i18n label lives at sales.cart.modal_method_<id>. Encoded
-// as a typed union so call sites can pass method.labelKey to
-// formatMessage without a cast.
-export type PaymentMethodLabelKey = `modal_method_${PaymentMethod}`
+// Each method's i18n label is encoded as the full message id
+// (`sales.cart.modal_method_<id>`). Storing the full id lets call sites
+// pass method.labelKey straight to formatMessage without a string concat,
+// keeping every dispatch inside the typed MessageId union.
+export type PaymentMethodLabelKey = `sales.cart.modal_method_${PaymentMethod}`
 
 export interface PaymentMethodEntry {
   id: PaymentMethod              // matches the DB enum: 'cash' | 'card' | 'other'
@@ -36,7 +37,7 @@ export interface PaymentMethodEntry {
 export const PAYMENT_METHODS: PaymentMethodEntry[] = [
   {
     id: 'cash',
-    labelKey: 'modal_method_cash',
+    labelKey: 'sales.cart.modal_method_cash',
     icon: Banknote,
     colorToken: 'var(--color-success)',
     subtleBg: 'var(--color-success-subtle)',
@@ -44,7 +45,7 @@ export const PAYMENT_METHODS: PaymentMethodEntry[] = [
   },
   {
     id: 'card',
-    labelKey: 'modal_method_card',
+    labelKey: 'sales.cart.modal_method_card',
     icon: CreditCard,
     colorToken: 'var(--color-brand)',
     subtleBg: 'var(--color-brand-subtle)',
@@ -52,7 +53,7 @@ export const PAYMENT_METHODS: PaymentMethodEntry[] = [
   },
   {
     id: 'other',
-    labelKey: 'modal_method_other',
+    labelKey: 'sales.cart.modal_method_other',
     icon: MoreHorizontal,
     colorToken: 'var(--color-text-secondary)',
     // Page-bg as the active fill — slightly darker than the inactive

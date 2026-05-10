@@ -13,6 +13,7 @@ import { fetchDeduped } from '@/lib/fetch'
 import { createSessionCache, CACHE_KEYS } from '@/hooks'
 import { FeatureCard, GroupLabel, PageSpinner } from '@/components/ui'
 import { BusinessRow } from '@/components/businesses/shared'
+import type { MessageId } from '@/i18n/messageIds'
 
 type BusinessType =
   | 'food'
@@ -269,7 +270,7 @@ function computeGreetingKey(): GreetingKey {
   return 'hub.greeting_evening'
 }
 
-const EMPHASIS_KEY: Record<GreetingKey, string> = {
+const EMPHASIS_KEY: Record<GreetingKey, MessageId> = {
   'hub.greeting_morning': 'hub.greeting_emphasis_morning',
   'hub.greeting_afternoon': 'hub.greeting_emphasis_afternoon',
   'hub.greeting_evening': 'hub.greeting_emphasis_evening',

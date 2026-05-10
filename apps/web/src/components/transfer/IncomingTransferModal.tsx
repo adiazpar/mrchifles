@@ -13,10 +13,10 @@ interface Props {
 }
 
 type ExpiryLabel = {
-  key:
-    | 'transfer_pending_expires_soon'
-    | 'transfer_pending_expires_hours'
-    | 'transfer_pending_expires_minutes'
+  id:
+    | 'manage.transfer_pending_expires_soon'
+    | 'manage.transfer_pending_expires_hours'
+    | 'manage.transfer_pending_expires_minutes'
   values: Record<string, number>
 }
 
@@ -31,18 +31,18 @@ function useExpiryLabel(expiresAt: string | undefined): ExpiryLabel | null {
   if (!expiresAt) return null
   const msRemaining = new Date(expiresAt).getTime() - Date.now()
   if (msRemaining <= 60_000) {
-    return { key: 'transfer_pending_expires_soon', values: {} }
+    return { id: 'manage.transfer_pending_expires_soon', values: {} }
   }
   const hoursRemaining = Math.floor(msRemaining / 3_600_000)
   if (hoursRemaining >= 1) {
     return {
-      key: 'transfer_pending_expires_hours',
+      id: 'manage.transfer_pending_expires_hours',
       values: { hours: hoursRemaining },
     }
   }
   const minutesRemaining = Math.floor(msRemaining / 60_000)
   return {
-    key: 'transfer_pending_expires_minutes',
+    id: 'manage.transfer_pending_expires_minutes',
     values: { minutes: minutesRemaining },
   }
 }
@@ -140,9 +140,7 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
           <p className="text-xs text-text-secondary mt-1">{description}</p>
           {expiry && (
             <p className="text-xs text-text-secondary mt-1">
-              {tManage.formatMessage({
-                id: 'manage.' + expiry.key
-              }, expiry.values)}
+              {tManage.formatMessage({ id: expiry.id }, expiry.values)}
             </p>
           )}
         </div>
