@@ -1,15 +1,13 @@
 'use client'
 
-import { useIntl } from 'react-intl';
+import { useIntl } from 'react-intl'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { Plus, Handshake } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import {
-  IonButton,
   IonItem,
   IonItemOption,
   IonItemOptions,
   IonItemSliding,
-  IonList,
 } from '@ionic/react'
 import { useProviderManagement } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
@@ -22,12 +20,31 @@ interface ProvidersDrilldownProps {
 }
 
 /**
- * The wrapping `IonHeader` + `IonBackButton` inside `ProvidersTab`
- * provides the title and back affordance for this view.
+ * Suppliers roster — Modern Mercantile (unified).
+ *
+ * The page reads like a printed roster slip and reuses the team page's
+ * primitives wholesale (.tm-roster, .pm-hero__*, .tm-roster__row,
+ * .tm-roster__avatar, .tm-roster__row-meta, .report-card). The only
+ * provider-specific addition is the IonItemSliding shell that gives
+ * each row an edit / delete / new-order swipe tray.
+ *
+ *   - Hero band: tracked "SUPPLIERS · N PARTNERS" eyebrow → Fraunces
+ *     italic "Your suppliers" / "The suppliers" → italic subtitle. A
+ *     terracotta Add pill anchors the right side for managers.
+ *   - Roster card: single .report-card frame with one row per supplier.
+ *     Active providers stay full opacity; paused providers dim to match
+ *     the disabled-member treatment on the team page.
+ *   - Empty state: a quiet italic line nudging the manager toward the
+ *     Add pill instead of a separate empty card.
+ *
+ * Data flow is unchanged — every field comes from
+ * `useProviderManagement({ businessId, setOrders })`. The wrapping
+ * `IonHeader` + `IonBackButton` + `IonContent` are provided by
+ * `ProvidersTab`; this component renders the body only.
  */
 export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
   const router = useRouter()
-  const intl = useIntl()
+  const t = useIntl()
 
   const { setOrders } = useOrders()
 
@@ -67,126 +84,148 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
     canManage,
   })
 
+  // Pick the manager / employee variant of the hero copy. Managers see
+  // "Your suppliers"; employees see "The suppliers" — same tone, different
+  // ownership framing. Mirrors the team page's title selection.
+  const titleId = canManage
+    ? 'providers.roster_title_manager'
+    : 'providers.roster_title_employee'
+  const subtitleId = canManage
+    ? 'providers.roster_subtitle_manager'
+    : 'providers.roster_subtitle_employee'
+
+  // Manager + zero providers: nudge toward the Add pill instead of an
+  // empty card. Employees with zero providers see a quieter italic line.
+  const showSoloEmptyState = canManage && providers.length === 0
+
+  // Early-return the spinner so modals mount only after the page is in
+  // its loaded state — same pattern as TeamDrilldown / ProductsView.
+  if (isLoading) {
+    return <PageSpinner />
+  }
+
   return (
     <>
-      {isLoading ? (
-        <PageSpinner />
-      ) : (
-        <div className="px-4 py-6 space-y-6">
-          {error && !isModalOpen && (
-            <div className="p-4 bg-error-subtle text-error rounded-lg">
-              {error}
-            </div>
-          )}
-
-          {providers.length > 0 && (
-            <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-text-secondary">
-                  {intl.formatMessage({
-                    id: 'providers.count'
-                  }, { count: providers.length })}
-                </span>
-                {canManage && (
-                  <IonButton
-                    size="small"
-                    shape="round"
-                    onClick={() => handleOpenModal()}
-                  >
-                    <Plus slot="start" style={{ width: 14, height: 14 }} />
-                    {intl.formatMessage({
-                      id: 'providers.add_button'
-                    })}
-                  </IonButton>
-                )}
-              </div>
-
-              <hr className="border-border" />
-
-              <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
-                {sortedProviders.map((provider) => {
-                  const swipeActions = canManage
-                    ? [
-                        {
-                          label: intl.formatMessage({
-                            id: 'providers.action_new_order'
-                          }),
-                          color: 'primary' as const,
-                          onClick: () => orderFlows.openNewOrder(provider.id),
-                        },
-                        {
-                          label: intl.formatMessage({
-                            id: 'providers.action_edit'
-                          }),
-                          color: 'medium' as const,
-                          onClick: () => handleOpenModal(provider),
-                        },
-                        {
-                          label: intl.formatMessage({
-                            id: 'providers.action_delete'
-                          }),
-                          color: 'danger' as const,
-                          onClick: () => handleOpenDelete(provider),
-                        },
-                      ]
-                    : []
-                  return (
-                    <IonItemSliding key={provider.id}>
-                      <IonItem lines="full">
-                        <ProviderListItem
-                          provider={provider}
-                          onClick={() => router.push(`/${businessId}/providers/${provider.id}`)}
-                        />
-                      </IonItem>
-                      {swipeActions.length > 0 && (
-                        <IonItemOptions side="end">
-                          {swipeActions.map((action) => (
-                            <IonItemOption
-                              key={action.label}
-                              color={action.color}
-                              onClick={action.onClick}
-                            >
-                              {action.label}
-                            </IonItemOption>
-                          ))}
-                        </IonItemOptions>
-                      )}
-                    </IonItemSliding>
-                  )
-                })}
-              </IonList>
-            </div>
-          )}
-
-          {providers.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Handshake className="w-16 h-16 text-text-tertiary mb-5" />
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                {intl.formatMessage({
-                  id: 'providers.empty_title'
-                })}
-              </h3>
-              <p className="text-sm text-text-secondary max-w-xs">
-                {intl.formatMessage({
-                  id: 'providers.empty_description'
-                })}
-              </p>
-              {canManage && (
-                <IonButton
-                  size="small"
-                  onClick={() => handleOpenModal()}
-                  className="mt-4"
-                >
-                  <Plus slot="start" className="w-4 h-4" />
-                  {intl.formatMessage({
-                    id: 'providers.add_provider_button'
-                  })}
-                </IonButton>
+      <div className="tm-roster">
+        {/* Hero band */}
+        <header className="tm-roster__hero">
+          <div className="tm-roster__hero-text">
+            <span className="pm-hero__eyebrow">
+              {t.formatMessage(
+                { id: 'providers.roster_eyebrow' },
+                { count: providers.length },
               )}
-            </div>
+            </span>
+            <h1 className="pm-hero__title">
+              {t.formatMessage(
+                { id: titleId },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+            <p className="pm-hero__subtitle">
+              {t.formatMessage({ id: subtitleId })}
+            </p>
+          </div>
+          {canManage && (
+            <button
+              type="button"
+              className="tm-roster__invite-pill"
+              onClick={() => handleOpenModal()}
+              aria-label={t.formatMessage({ id: 'providers.add_aria' })}
+            >
+              <Plus aria-hidden="true" />
+              {t.formatMessage({ id: 'providers.add_button' })}
+            </button>
           )}
-        </div>
-      )}
+        </header>
+
+        {error && !isModalOpen && (
+          <div className="tm-roster__error" role="alert">
+            <span className="tm-roster__error-eyebrow">
+              {t.formatMessage({ id: 'providers.roster_error_eyebrow' })}
+            </span>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Solo-empty state — manager only, only when there's nothing else
+            to show. Employees with zero providers see no card and no hint;
+            the empty page is quiet by design. */}
+        {showSoloEmptyState && (
+          <p className="tm-roster__solo-hint">
+            {t.formatMessage(
+              { id: 'providers.roster_solo_hint' },
+              { em: (chunks) => <em>{chunks}</em> },
+            )}
+          </p>
+        )}
+
+        {/* Roster card — every provider, active first then paused, all in
+            one .report-card frame. Paused rows render dimmed via the row
+            primitive. */}
+        {sortedProviders.length > 0 && (
+          <section className="report-card">
+            <div className="report-card__header">
+              <span className="report-card__eyebrow">
+                {t.formatMessage({ id: 'providers.roster_card_eyebrow' })}
+              </span>
+              <h2 className="report-card__title">
+                {t.formatMessage({ id: 'providers.roster_card_title' })}
+              </h2>
+            </div>
+            {sortedProviders.map((provider) => {
+              const swipeActions = canManage
+                ? [
+                    {
+                      label: t.formatMessage({ id: 'providers.action_new_order' }),
+                      color: 'primary' as const,
+                      onClick: () => orderFlows.openNewOrder(provider.id),
+                    },
+                    {
+                      label: t.formatMessage({ id: 'providers.action_edit' }),
+                      color: 'medium' as const,
+                      onClick: () => handleOpenModal(provider),
+                    },
+                    {
+                      label: t.formatMessage({ id: 'providers.action_delete' }),
+                      color: 'danger' as const,
+                      onClick: () => handleOpenDelete(provider),
+                    },
+                  ]
+                : []
+              return (
+                <IonItemSliding key={provider.id}>
+                  <IonItem
+                    button
+                    detail={false}
+                    lines="none"
+                    className="tm-roster__row-shell"
+                    onClick={() =>
+                      router.push(`/${businessId}/providers/${provider.id}`)
+                    }
+                  >
+                    <ProviderListItem provider={provider} />
+                  </IonItem>
+                  {swipeActions.length > 0 && (
+                    <IonItemOptions side="end">
+                      {swipeActions.map((action) => (
+                        <IonItemOption
+                          key={action.label}
+                          color={action.color}
+                          onClick={action.onClick}
+                        >
+                          {action.label}
+                        </IonItemOption>
+                      ))}
+                    </IonItemOptions>
+                  )}
+                </IonItemSliding>
+              )
+            })}
+          </section>
+        )}
+      </div>
+
       <ProviderModal
         isOpen={isModalOpen}
         initialStep={modalInitialStep}
@@ -212,5 +251,5 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
       />
       {orderFlows.modals}
     </>
-  );
+  )
 }

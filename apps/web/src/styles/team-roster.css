@@ -1,16 +1,23 @@
 /* ==========================================================================
-   Team roster — Modern Mercantile (unified)
+   Roster row primitive — Modern Mercantile (unified)
    ==========================================================================
-   The page is built on one row primitive (.tm-roster__row) used for owner,
-   active members, inactive members, and pending invites alike. Variation
-   comes from a single mono caption line (ROLE · YOU · DISABLED · EXPIRES …)
-   and an opacity dim for inactive rows. The page eyebrow keeps the tracked
-   tick + label vocabulary; nothing else on the page repeats it.
+   Despite the file name, the .tm-roster__* primitives below are intentionally
+   domain-neutral and shared by the Providers page as well. The team page was
+   the first surface to use them; the providers page reuses the same row
+   primitive so the two ledgers feel like pages of the same printed roster.
+
+   Variation across surfaces comes from a single mono caption line
+   (ROLE · YOU · DISABLED · EXPIRES … / PHONE · INACTIVE) and an opacity dim
+   for inactive rows. The page eyebrow keeps the tracked tick + label
+   vocabulary; nothing else on the page repeats it.
 
    Sections:
      1. Page shell + hero band (with manager Invite pill)
      2. Unified row primitive (avatar + body + chevron)
-     3. Loading + error frames
+     3. IonItemSliding shell — providers wrap each row in IonItemSliding
+        for swipe actions; this strips IonItem chrome so the row primitive
+        renders edge-to-edge.
+     4. Loading + error frames
 
    Note: roster + pending sections are wrapped in shared .report-card
    containers (defined in sales-tab.css), so this file only contains
@@ -37,8 +44,13 @@
   padding: var(--space-2) 0 var(--space-1);
 }
 
+/* Text block always claims the full row so the trailing action pill
+   wraps to its own line below the subtitle, left-aligned. This keeps
+   the layout identical across surfaces (Team vs Providers) and across
+   viewports — so a shorter label like "Add" can't sneak inline next
+   to the title. */
 .tm-roster__hero-text {
-  flex: 1 1 18rem;
+  flex: 1 1 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -252,6 +264,47 @@
 .tm-roster__row:hover .tm-roster__row-chev {
   color: var(--color-text-secondary);
   transform: translateX(2px);
+}
+
+/* ==========================================================================
+   3. IonItemSliding shell (providers — swipe actions on the row primitive)
+   ==========================================================================
+   The team page renders rows as plain <button>s; the providers page wraps
+   each row in IonItemSliding so members get edit / delete / new-order swipe
+   actions. IonItemSliding requires an IonItem child, which ships with its
+   own padding, hairlines, and ripple. The .tm-roster__row-shell class
+   strips that chrome so the row primitive renders edge-to-edge inside the
+   .report-card container, identical to the team layout.
+
+   The dotted divider that .tm-roster__row + .tm-roster__row provides on
+   the team page is recreated here between sibling IonItemSliding nodes.
+*/
+
+.tm-roster__row-shell {
+  --background: transparent;
+  --background-hover: var(--color-bg-muted);
+  --background-activated: var(--color-bg-muted);
+  --background-focused: var(--color-bg-muted);
+  --padding-start: 0;
+  --padding-end: 0;
+  --inner-padding-end: 0;
+  --inner-padding-start: 0;
+  --inner-padding-top: 0;
+  --inner-padding-bottom: 0;
+  --min-height: 0;
+  --border-width: 0;
+  --border-color: transparent;
+  --ripple-color: transparent;
+}
+
+.tm-roster__row-shell::part(native) {
+  padding: 0;
+  border: 0;
+  min-height: 0;
+}
+
+ion-item-sliding + ion-item-sliding .tm-roster__row {
+  border-top: 1px dotted var(--color-border);
 }
 
 /* ==========================================================================

@@ -1,7 +1,7 @@
 'use client'
 
-import { useIntl } from 'react-intl';
-import { IonItem, IonLabel } from '@ionic/react'
+import { useIntl } from 'react-intl'
+import { ChevronRight } from 'lucide-react'
 import type { Provider } from '@kasero/shared/types'
 
 export function getProviderInitials(name: string): string {
@@ -14,32 +14,58 @@ export function getProviderInitials(name: string): string {
 
 export interface ProviderListItemProps {
   provider: Provider
-  onClick: () => void
 }
 
-export function ProviderListItem({ provider, onClick }: ProviderListItemProps) {
+/**
+ * Single ledger row in the suppliers roster.
+ *
+ * Mirrors the team's TeamMemberListItem primitive: 36px terracotta avatar
+ * (initials) → italic Fraunces name on the top line → mono uppercase
+ * caption on the bottom line. The caption carries the provider's phone, or
+ * "NO PHONE" when missing; paused providers append "PAUSED" and the whole
+ * row dims to 0.55 opacity, matching the disabled-member treatment on the
+ * team page.
+ *
+ * The row renders as bare markup (no <button>) because the wrapping
+ * IonItem owns the click target so IonItemSliding can drive the
+ * edit / delete / new-order swipe actions.
+ */
+export function ProviderListItem({ provider }: ProviderListItemProps) {
   const t = useIntl()
+
+  const isInactive = !provider.active
+  const rowClass = isInactive
+    ? 'tm-roster__row tm-roster__row--inactive'
+    : 'tm-roster__row'
+
+  const phoneLabel =
+    provider.phone?.trim() ||
+    t.formatMessage({ id: 'providers.roster_no_phone' })
+
   return (
-    <IonItem button detail onClick={onClick}>
-      <div
-        slot="start"
-        className="avatar"
-      >
-        {getProviderInitials(provider.name)}
-      </div>
-      <IonLabel>
-        <h3>{provider.name}</h3>
-        <p>
-          {provider.phone || t.formatMessage({ id: 'providers.no_phone' })}
-        </p>
-      </IonLabel>
-      <div slot="end" className="flex items-center justify-center">
-        <span className={`text-xs font-medium ${provider.active ? 'text-success' : 'text-error'}`}>
-          {provider.active
-            ? t.formatMessage({ id: 'providers.status_active' })
-            : t.formatMessage({ id: 'providers.status_inactive' })}
+    <div className={rowClass}>
+      <span className="tm-roster__avatar" aria-hidden="true">
+        <span>{getProviderInitials(provider.name)}</span>
+      </span>
+
+      <span className="tm-roster__row-body">
+        <span className="tm-roster__row-name">{provider.name}</span>
+        <span className="tm-roster__row-meta">
+          <span>{phoneLabel.toUpperCase()}</span>
+          {isInactive && (
+            <>
+              <span className="tm-roster__row-meta-sep" aria-hidden="true">
+                ·
+              </span>
+              <span>
+                {t.formatMessage({ id: 'providers.roster_status_inactive' }).toUpperCase()}
+              </span>
+            </>
+          )}
         </span>
-      </div>
-    </IonItem>
-  );
+      </span>
+
+      <ChevronRight size={16} className="tm-roster__row-chev" aria-hidden="true" />
+    </div>
+  )
 }
