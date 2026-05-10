@@ -22,6 +22,10 @@ import { usePageTransition } from '@/contexts/page-transition-context'
 import { usePendingTransferContext } from '@/contexts/pending-transfer-context'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 import { FeatureCard, GroupLabel } from '@/components/ui'
+import {
+  getBusinessInitials,
+  pickBusinessMarkColor,
+} from '@/lib/business-mark'
 
 // Every modal below is closed by default; dynamic imports keep the modal
 // code out of the initial manage-page chunk until the user opens one.
@@ -61,14 +65,6 @@ const IncomingTransferModal = dynamic(
   () => import('@/components/transfer/IncomingTransferModal').then(m => m.IncomingTransferModal),
   { ssr: false },
 )
-
-function getBusinessInitials(name: string | null | undefined): string {
-  if (!name) return '?'
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '?'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return ((parts[0][0] ?? '') + (parts[1][0] ?? '')).toUpperCase() || '?'
-}
 
 const KNOWN_BUSINESS_TYPES = new Set([
   'food',
@@ -143,7 +139,10 @@ export function ManageView() {
         {/* Business identity card — the "you are here" plate above the
             settings sections. Mark + Fraunces name + mono pill row. */}
         <div className="manage-hero">
-          <span className="manage-hero__mark">
+          <span
+            className="manage-hero__mark"
+            style={{ background: pickBusinessMarkColor(business.id) }}
+          >
             {business.icon && business.icon.startsWith('data:') ? (
               <img src={business.icon} alt="" />
             ) : business.icon ? (

@@ -62,6 +62,19 @@
   --color-moss-tint:    #E5ECDB;
   --color-oxblood:      #8B2D2D;
   --color-oxblood-tint: #F1DCDC;
+  --color-indigo:       #2C334D;
+
+  /* Business mark palette — five brand-aligned hues used as the placeholder
+     fill for businesses without an uploaded logo. The picker in
+     `lib/business-mark.ts` hashes the business id into this set so a given
+     business always renders the same hue across every surface (hub list,
+     manage hero, etc.) and stays consistent across light + dark via the
+     paired token in `.dark` below. */
+  --color-mark-1: var(--color-brand);    /* terracotta */
+  --color-mark-2: var(--color-moss);     /* moss */
+  --color-mark-3: var(--color-saffron);  /* saffron */
+  --color-mark-4: var(--color-oxblood);  /* oxblood */
+  --color-mark-5: var(--color-indigo);   /* indigo */
 
   /* Glow tokens — low-alpha terracotta for accent borders, focus rings,
      and the occasional wash. Modern Mercantile avoids gradient FILLS, so
@@ -215,6 +228,16 @@
   --color-moss-tint:    rgba(143, 179, 113, 0.18);
   --color-oxblood:      #D8807F;
   --color-oxblood-tint: rgba(216, 128, 127, 0.16);
+  --color-indigo:       #8590B6;
+
+  /* Business mark palette — dark variants are lifted to the same lightness
+     band as the rest of the Aged-Ink dark accents so initials stay legible
+     against the deep paper background. */
+  --color-mark-1: var(--color-brand);    /* lifted terracotta */
+  --color-mark-2: var(--color-moss);     /* lifted moss */
+  --color-mark-3: var(--color-saffron);  /* lifted saffron */
+  --color-mark-4: var(--color-oxblood);  /* lifted oxblood */
+  --color-mark-5: var(--color-indigo);   /* lifted indigo */
 
   /* Glow — brighter terracotta for dark */
   --glow-soft:   rgba(226, 122, 74, 0.14);

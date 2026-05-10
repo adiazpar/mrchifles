@@ -1,6 +1,10 @@
 import { useIntl } from 'react-intl'
 import Image from '@/lib/Image'
 import type { MessageId } from '@/i18n/messageIds'
+import {
+  getBusinessInitials,
+  pickBusinessMarkColor,
+} from '@/lib/business-mark'
 
 const ChevronRight = (
   <svg
@@ -15,31 +19,6 @@ const ChevronRight = (
     <polyline points="9 6 15 12 9 18" />
   </svg>
 )
-
-// Stable colour palette for business marks. Keyed off business id so a
-// given business always renders the same hue across sessions.
-const MARK_COLORS = [
-  '#B5471F', // terracotta
-  '#2F4F3C', // moss
-  '#2C334D', // indigo
-  '#5C5824', // olive
-  '#7A3D52', // mulberry
-] as const
-
-function pickMarkColor(id: string): string {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) | 0
-  }
-  return MARK_COLORS[Math.abs(hash) % MARK_COLORS.length]
-}
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '?'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return ((parts[0][0] ?? '') + (parts[1][0] ?? '')).toUpperCase() || '?'
-}
 
 // Mapped to a typed lookup so the resulting message id stays inside
 // the MessageId union — TypeScript can then verify each entry exists
@@ -83,7 +62,7 @@ export function BusinessRow({ business, onClick, className }: BusinessRowProps) 
     <button type="button" className={cls} onClick={onClick}>
       <span
         className="business-row__mark"
-        style={{ background: pickMarkColor(business.id) }}
+        style={{ background: pickBusinessMarkColor(business.id) }}
       >
         {business.icon && business.icon.startsWith('data:') ? (
           <Image
@@ -98,7 +77,7 @@ export function BusinessRow({ business, onClick, className }: BusinessRowProps) 
           <span className="business-row__mark-emoji">{business.icon}</span>
         ) : (
           <span className="business-row__mark-initials">
-            {getInitials(business.name)}
+            {getBusinessInitials(business.name)}
           </span>
         )}
       </span>
