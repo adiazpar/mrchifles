@@ -1,35 +1,35 @@
 import { useRef, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
+  IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import { CalendarClock, ChevronDown, ImageIcon, ImagePlus, Trash2 } from 'lucide-react'
 import { apiPostForm } from '@/lib/api-client'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { useOrderNavRef, useOrderCallbacks } from './OrderNavContext'
-import { ConfirmOrderStep } from './ConfirmOrderStep'
+import { useOrderNav, useOrderCallbacks } from './OrderNavContext'
 
 const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
 const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
 
 interface OrderDetailsStepProps {
   /**
-   * Defaults to `forward` (the wizard chain — CTA pushes ConfirmOrderStep).
-   * Pass `edit` when this step is pushed from ConfirmOrderStep so the CTA
-   * pops back to Confirm instead of pushing further forward.
+   * Defaults to `forward` (the wizard chain — CTA pushes 'confirm' for
+   * the new-order flow). Pass `edit` when this step is opened from a
+   * review surface so the CTA pops back to the review.
    */
   mode?: 'forward' | 'edit'
 }
 
 export function OrderDetailsStep({ mode = 'forward' }: OrderDetailsStepProps = {}) {
   const t = useIntl()
-  const navRef = useOrderNavRef()
+  const nav = useOrderNav()
   const { formatDate } = useBusinessFormat()
   const {
     providers,
@@ -49,11 +49,17 @@ export function OrderDetailsStep({ mode = 'forward' }: OrderDetailsStepProps = {
   const [receiptError, setReceiptError] = useState('')
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
@@ -241,9 +247,7 @@ export function OrderDetailsStep({ mode = 'forward' }: OrderDetailsStepProps = {
               type="button"
               className="order-modal__primary-pill"
               onClick={() =>
-                mode === 'edit'
-                  ? navRef.current?.pop()
-                  : navRef.current?.push(() => <ConfirmOrderStep />)
+                mode === 'edit' ? nav.pop() : nav.push('confirm')
               }
               disabled={!orderTotal || parseFloat(orderTotal) <= 0}
             >
@@ -254,6 +258,6 @@ export function OrderDetailsStep({ mode = 'forward' }: OrderDetailsStepProps = {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

@@ -1,40 +1,68 @@
 'use client'
 
-import React, { useRef, useCallback, useEffect } from 'react'
-import { IonNav } from '@ionic/react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { ModalShell } from '@/components/ui'
 import type { Product, Provider } from '@kasero/shared/types'
 import type { ExpandedOrder, OrderFormItem } from '@/lib/products'
 import {
-  OrderNavRefContext,
+  OrderDetailNavContext,
   OrderDetailCallbacksContext,
   type OrderDetailCallbacks,
+  type OrderNav,
 } from './order-steps/OrderNavContext'
 import { OrderOverviewStep } from './order-steps/OrderOverviewStep'
 import { EditOrderStep } from './order-steps/EditOrderStep'
+import { EditItemsStep } from './order-steps/EditItemsStep'
+import { OrderTotalStep } from './order-steps/OrderTotalStep'
+import { OrderDetailsStep } from './order-steps/OrderDetailsStep'
+import { EditOrderSuccessStep } from './order-steps/EditOrderSuccessStep'
 import { ReceiveOrderStep } from './order-steps/ReceiveOrderStep'
+import { ReceiveOrderSuccessStep } from './order-steps/ReceiveOrderSuccessStep'
 import { DeleteOrderConfirmStep } from './order-steps/DeleteOrderConfirmStep'
+import { DeleteOrderSuccessStep } from './order-steps/DeleteOrderSuccessStep'
+
+// ============================================
+// STEP TYPE
+// ============================================
+
+type Step =
+  | 'overview'
+  | 'edit'
+  | 'edit-items'
+  | 'edit-total'
+  | 'edit-details'
+  | 'edit-success'
+  | 'receive'
+  | 'receive-success'
+  | 'delete'
+  | 'delete-success'
+
+// initialStep prop -> starting stack. Numbers map to the legacy
+// initialStep contract (0=overview, 1=edit, 3=receive, 5=delete) so
+// the swipe-tray callsites in useOrderFlows don't need updating.
+function stackFromInitialStep(n: number): Step[] {
+  if (n === 1) return ['edit']
+  if (n === 3) return ['receive']
+  if (n === 5) return ['delete']
+  return ['overview']
+}
 
 // ============================================
 // PROPS INTERFACE
 // ============================================
 
 export interface OrderDetailModalProps {
-  // Modal state
   isOpen: boolean
   /** Step to open on (0 = overview, 1 = edit, 3 = receive, 5 = delete). Default 0. */
   initialStep?: number
   onClose: () => void
   onExitComplete: () => void
 
-  // Order being viewed
   order: ExpandedOrder | null
 
-  // Products and providers
   products: Product[]
   providers: Provider[]
 
-  // Form state for editing
   orderItems: OrderFormItem[]
   setOrderItems: React.Dispatch<React.SetStateAction<OrderFormItem[]>>
   onToggleProduct: (product: Product) => void
@@ -50,18 +78,15 @@ export interface OrderDetailModalProps {
   orderReceiptPreview: string | null
   onOrderReceiptPreviewChange: (preview: string | null) => void
 
-  // Operation states
   isSaving: boolean
   isReceiving: boolean
   isDeleting: boolean
   error: string
 
-  // Success states
   orderReceived: boolean
   orderDeleted: boolean
   editOrderSaved: boolean
 
-  // Handlers
   onInitializeEditForm: (order: ExpandedOrder) => void
   onInitializeReceiveQuantities: (order: ExpandedOrder) => void
   onSaveEditOrder: () => Promise<boolean>
@@ -69,13 +94,9 @@ export interface OrderDetailModalProps {
   onDeleteOrder: () => Promise<boolean>
   getReceiptUrl: (order: ExpandedOrder) => string | null
 
-  // Edit change detection
   initialEditSnapshot: string
 
-  // Permissions
   canDelete: boolean
-  /** Owners + partners; false for employees. Gates Edit and Receive buttons
-   *  on the pending-order overview footer. */
   canManage: boolean
 }
 
@@ -83,6 +104,14 @@ export interface OrderDetailModalProps {
 // COMPONENT
 // ============================================
 
+/**
+ * Order detail / edit / receive / delete flow. Pattern 1, single
+ * step-stack inside one ModalShell. See `OrderNavContext` for why we
+ * removed IonNav: the per-step `<IonPage>` components were registering
+ * against the surrounding IonRouterOutlet's StackManager from inside an
+ * IonModal portal, which made same-outlet pop animations drag for
+ * ~1-2s on drilldown pages (most visibly on ProviderDetailPage).
+ */
 export function OrderDetailModal({
   isOpen,
   initialStep = 0,
@@ -122,43 +151,40 @@ export function OrderDetailModal({
   canDelete,
   canManage,
 }: OrderDetailModalProps) {
-  const navRef = useRef<HTMLIonNavElement>(null)
+  const [stack, setStack] = useState<Step[]>(() => stackFromInitialStep(initialStep))
 
-  // When the modal was opened at a sub-step directly (via a swipe-tray action
-  // on the list row), the overview isn't part of the user's mental stack —
-  // so Back / Cancel should dismiss the modal rather than slide to overview.
-  const openedFromSwipe = initialStep !== 0
+  // Reset to the initialStep-derived stack every time the modal opens so
+  // a stale stack from a prior order's flow doesn't persist.
+  useEffect(() => {
+    if (isOpen) setStack(stackFromInitialStep(initialStep))
+  }, [isOpen, initialStep])
 
   // Delayed cleanup — runs ~250ms after the modal animates closed.
-  // useOrderFlows wires onExitComplete to setViewingOrder(null) and the
-  // parent renders this modal as `{viewingOrder && <OrderDetailModal/>}`,
-  // so calling onExitComplete synchronously alongside onClose would
-  // unmount the modal mid-dismiss-animation, leaving a stale view in
-  // the IonRouterOutlet stack machine and silently breaking subsequent
-  // business-tab switching. Same pattern as AddProductModal.
   useEffect(() => {
     if (isOpen) return
     const timer = window.setTimeout(onExitComplete, 250)
     return () => window.clearTimeout(timer)
   }, [isOpen, onExitComplete])
 
-  // Stable root thunks — all hooks must run before any early return.
-  // useCallback with [] so IonNav never remounts the step stack due to a new
-  // function reference on every parent render.
-  const editOrderStepRoot = useCallback(() => <EditOrderStep />, [])
-  const receiveOrderStepRoot = useCallback(() => <ReceiveOrderStep />, [])
-  const deleteOrderStepRoot = useCallback(() => <DeleteOrderConfirmStep />, [])
-  const overviewStepRoot = useCallback(() => <OrderOverviewStep />, [])
+  const push = useCallback((step: string) => {
+    setStack((s) => [...s, step as Step])
+  }, [])
+  const pop = useCallback(() => {
+    setStack((s) => (s.length > 1 ? s.slice(0, -1) : s))
+  }, [])
+
+  const nav: OrderNav = useMemo(
+    () => ({ push, pop, depth: stack.length }),
+    [push, pop, stack.length],
+  )
+
+  // When opened directly at a sub-step (via swipe tray), the overview
+  // isn't part of the user's mental stack — back / cancel should
+  // dismiss the modal rather than slide to overview. Matches the legacy
+  // behavior: openedFromSwipe = initialStep !== 0.
+  const openedFromSwipe = initialStep !== 0
 
   if (!order) return null
-
-  // Resolve which step component is the IonNav root based on initialStep.
-  // 0 = overview, 1 = edit, 3 = receive, 5 = delete
-  let rootStep: () => React.ReactElement
-  if (initialStep === 1) rootStep = editOrderStepRoot
-  else if (initialStep === 3) rootStep = receiveOrderStepRoot
-  else if (initialStep === 5) rootStep = deleteOrderStepRoot
-  else rootStep = overviewStepRoot
 
   const callbacks: OrderDetailCallbacks = {
     onClose,
@@ -199,13 +225,24 @@ export function OrderDetailModal({
     openedFromSwipe,
   }
 
+  const current = stack[stack.length - 1]
+
   return (
     <OrderDetailCallbacksContext.Provider value={callbacks}>
-      <OrderNavRefContext.Provider value={navRef}>
+      <OrderDetailNavContext.Provider value={nav}>
         <ModalShell rawContent isOpen={isOpen} onClose={onClose}>
-          <IonNav ref={navRef} root={rootStep} swipeGesture={false} />
+          {current === 'overview' && <OrderOverviewStep />}
+          {current === 'edit' && <EditOrderStep />}
+          {current === 'edit-items' && <EditItemsStep />}
+          {current === 'edit-total' && <OrderTotalStep mode="edit" />}
+          {current === 'edit-details' && <OrderDetailsStep mode="edit" />}
+          {current === 'edit-success' && <EditOrderSuccessStep />}
+          {current === 'receive' && <ReceiveOrderStep />}
+          {current === 'receive-success' && <ReceiveOrderSuccessStep />}
+          {current === 'delete' && <DeleteOrderConfirmStep />}
+          {current === 'delete-success' && <DeleteOrderSuccessStep />}
         </ModalShell>
-      </OrderNavRefContext.Provider>
+      </OrderDetailNavContext.Provider>
     </OrderDetailCallbacksContext.Provider>
   )
 }

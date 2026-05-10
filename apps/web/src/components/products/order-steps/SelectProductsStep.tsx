@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
@@ -10,14 +9,13 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { close } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { X, Loader2, ScanLine, Minus, Plus, Package } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
-import { useOrderNavRef, useNewOrderCallbacks } from './OrderNavContext'
-import { OrderTotalStep } from './OrderTotalStep'
+import { useOrderNav, useNewOrderCallbacks } from './OrderNavContext'
 
 // Same SearchIcon used by Hub / Products / Orders / POS so the search-bar
 // chrome reads identically across the app.
@@ -47,7 +45,7 @@ interface SelectProductsStepProps {
 
 export function SelectProductsStep({ mode = 'forward' }: SelectProductsStepProps = {}) {
   const t = useIntl()
-  const navRef = useOrderNavRef()
+  const nav = useOrderNav()
   const {
     products,
     filteredProducts,
@@ -79,10 +77,25 @@ export function SelectProductsStep({ mode = 'forward' }: SelectProductsStepProps
     onError: (message) => setScanError(message),
   })
 
+  // Edit mode is always pushed on top of confirm — show a back chevron
+  // so the user has a way out other than the destructive close X.
+  const showBack = mode === 'edit' && nav.depth > 1
+
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
+          {showBack && (
+            <IonButtons slot="start">
+              <IonButton
+                fill="clear"
+                onClick={() => nav.pop()}
+                aria-label={t.formatMessage({ id: 'common.back' })}
+              >
+                <IonIcon icon={chevronBack} />
+              </IonButton>
+            </IonButtons>
+          )}
           <IonButtons slot="end">
             <IonButton fill="clear" onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
               <IonIcon icon={close} />
@@ -311,9 +324,7 @@ export function SelectProductsStep({ mode = 'forward' }: SelectProductsStepProps
               type="button"
               className="order-modal__primary-pill"
               onClick={() =>
-                mode === 'edit'
-                  ? navRef.current?.pop()
-                  : navRef.current?.push(() => <OrderTotalStep mode="forward" />)
+                mode === 'edit' ? nav.pop() : nav.push('total-forward')
               }
               disabled={orderItems.length === 0}
             >
@@ -322,6 +333,6 @@ export function SelectProductsStep({ mode = 'forward' }: SelectProductsStepProps
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

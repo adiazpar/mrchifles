@@ -2,27 +2,21 @@
 
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { close } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { Package, ChevronRight } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { useOrderNavRef, useOrderDetailCallbacks } from './OrderNavContext'
-import { EditOrderSuccessStep } from './EditOrderSuccessStep'
-import { EditItemsStep } from './EditItemsStep'
-import { OrderTotalStep } from './OrderTotalStep'
-import { OrderDetailsStep } from './OrderDetailsStep'
+import { useOrderNav, useOrderDetailCallbacks } from './OrderNavContext'
 
 /**
  * Edit-flow review surface. Mirrors the ProductReview ledger pattern:
@@ -30,18 +24,16 @@ import { OrderDetailsStep } from './OrderDetailsStep'
  * rows (Total, Ordered to, Est. arrival, Receipt) that each push the
  * matching edit step.
  *
- *   - Items card → EditItemsStep (existing line items only; no
- *     "add new product" picker since an order's identity is the set
- *     of items it shipped with).
- *   - Total row → OrderTotalStep mode='edit' (full-screen
- *     PriceKeypadStep, shared with the new-order wizard).
- *   - Provider / Arrival / Receipt rows → OrderDetailsStep mode='edit'.
- *     All three rows route to the same step; users can land in details
- *     from whichever piece they want to revise.
+ *   - Items card → 'edit-items'
+ *   - Total row → 'edit-total' (shared OrderTotalStep mode='edit')
+ *   - Provider / Arrival / Receipt rows → 'edit-details' (shared
+ *     OrderDetailsStep mode='edit'). All three rows route to the same
+ *     step; users can land in details from whichever piece they want
+ *     to revise.
  */
 export function EditOrderStep() {
   const t = useIntl()
-  const navRef = useOrderNavRef()
+  const nav = useOrderNav()
   const { formatCurrency, formatDate } = useBusinessFormat()
   const {
     order,
@@ -90,26 +82,27 @@ export function EditOrderStep() {
   const handleSave = async () => {
     const success = await onSaveEditOrder()
     if (success) {
-      navRef.current?.push(() => <EditOrderSuccessStep />)
+      nav.push('edit-success')
     }
   }
 
-  // Tap-to-edit jumps — each pushes the matching step in `mode='edit'`
-  // so its CTA pops back to this review surface instead of pushing
-  // forward in any wizard chain.
-  const editItems = () => navRef.current?.push(() => <EditItemsStep />)
-  const editTotal = () =>
-    navRef.current?.push(() => <OrderTotalStep mode="edit" />)
-  const editDetails = () =>
-    navRef.current?.push(() => <OrderDetailsStep mode="edit" />)
+  const editItems = () => nav.push('edit-items')
+  const editTotal = () => nav.push('edit-total')
+  const editDetails = () => nav.push('edit-details')
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           {!openedFromSwipe && (
             <IonButtons slot="start">
-              <IonBackButton defaultHref="" />
+              <IonButton
+                fill="clear"
+                onClick={() => nav.pop()}
+                aria-label={t.formatMessage({ id: 'common.back' })}
+              >
+                <IonIcon icon={chevronBack} />
+              </IonButton>
             </IonButtons>
           )}
           {openedFromSwipe && (
@@ -269,7 +262,7 @@ export function EditOrderStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }
 

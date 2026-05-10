@@ -2,23 +2,24 @@
 
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
+  IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import { PriceKeypadStep } from '@/components/ui'
-import { useOrderNavRef, useOrderCallbacks } from './OrderNavContext'
-import { OrderDetailsStep } from './OrderDetailsStep'
+import { useOrderNav, useOrderCallbacks } from './OrderNavContext'
 
 interface OrderTotalStepProps {
   /**
-   * `forward` (manual wizard chain): CTA pushes OrderDetailsStep.
-   * `edit` (jumped here from ConfirmOrderStep to revise the total):
-   * CTA pops back to Confirm.
+   * `forward` (manual wizard chain): CTA pushes 'details-forward' so
+   * the next surface is OrderDetailsStep.
+   * `edit` (jumped here from a review surface to revise the total):
+   * CTA pops back to whichever review pushed it.
    */
   mode: 'forward' | 'edit'
 }
@@ -32,7 +33,7 @@ interface OrderTotalStepProps {
  */
 export function OrderTotalStep({ mode }: OrderTotalStepProps) {
   const t = useIntl()
-  const navRef = useOrderNavRef()
+  const nav = useOrderNav()
   const { orderTotal, onOrderTotalChange } = useOrderCallbacks()
 
   const numericTotal = parseFloat(orderTotal)
@@ -41,18 +42,24 @@ export function OrderTotalStep({ mode }: OrderTotalStepProps) {
   const handleContinue = () => {
     if (!isValid) return
     if (mode === 'edit') {
-      navRef.current?.pop()
+      nav.pop()
     } else {
-      navRef.current?.push(() => <OrderDetailsStep mode="forward" />)
+      nav.push('details-forward')
     }
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
@@ -88,6 +95,6 @@ export function OrderTotalStep({ mode }: OrderTotalStepProps) {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

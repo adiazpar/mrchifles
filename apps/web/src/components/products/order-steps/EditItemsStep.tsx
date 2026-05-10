@@ -1,20 +1,19 @@
-'use client'
-
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
+  IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import { Minus, Plus, Package } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { useOrderNavRef, useOrderDetailCallbacks } from './OrderNavContext'
+import { useOrderNav, useOrderDetailCallbacks } from './OrderNavContext'
 
 /**
  * Edit-flow line-items step. Restricted to the order's original line
@@ -22,13 +21,13 @@ import { useOrderNavRef, useOrderDetailCallbacks } from './OrderNavContext'
  * off), but new products can't be added (an order's identity is the
  * set of items it shipped with).
  *
- * Pushed from the EditOrderStep review surface in `mode='edit'`. The
- * "Done" CTA pops back to EditOrderStep so the user can keep going
- * down the section list.
+ * Pushed from the EditOrderStep review surface. The "Done" CTA pops
+ * back to EditOrderStep so the user can keep going down the section
+ * list.
  */
 export function EditItemsStep() {
   const t = useIntl()
-  const navRef = useOrderNavRef()
+  const nav = useOrderNav()
   const {
     order,
     products,
@@ -41,11 +40,17 @@ export function EditItemsStep() {
   const originalItems = order.expand?.['order_items(order)'] || []
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
@@ -170,7 +175,7 @@ export function EditItemsStep() {
             <button
               type="button"
               className="order-modal__primary-pill"
-              onClick={() => navRef.current?.pop()}
+              onClick={() => nav.pop()}
               disabled={orderItems.length === 0}
             >
               {t.formatMessage({ id: 'common.done' })}
@@ -178,6 +183,6 @@ export function EditItemsStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

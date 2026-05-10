@@ -1,32 +1,53 @@
 'use client'
 
-import { useRef, useCallback, useEffect } from 'react'
-import { IonNav } from '@ionic/react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ModalShell } from '@/components/ui'
 import type { Product, Provider } from '@kasero/shared/types'
 import type { OrderFormItem } from '@/lib/products'
 import {
-  OrderNavRefContext,
+  NewOrderNavContext,
   NewOrderCallbacksContext,
   type NewOrderCallbacks,
+  type OrderNav,
 } from './order-steps/OrderNavContext'
 import { SelectProductsStep } from './order-steps/SelectProductsStep'
+import { OrderTotalStep } from './order-steps/OrderTotalStep'
+import { OrderDetailsStep } from './order-steps/OrderDetailsStep'
+import { ConfirmOrderStep } from './order-steps/ConfirmOrderStep'
+import { NewOrderSuccessStep } from './order-steps/NewOrderSuccessStep'
+
+// ============================================
+// STEP TYPE
+// ============================================
+
+// Each entry in the stack identifies which step body to render. The
+// edit-mode jumps from ConfirmOrderStep push a -edit suffix so the
+// shared step body knows its CTA pops back to confirm rather than
+// pushing forward in the wizard.
+type Step =
+  | 'select-forward'
+  | 'total-forward'
+  | 'details-forward'
+  | 'confirm'
+  | 'select-edit'
+  | 'total-edit'
+  | 'details-edit'
+  | 'success'
+
+const INITIAL_STACK: Step[] = ['select-forward']
 
 // ============================================
 // PROPS INTERFACE
 // ============================================
 
 export interface NewOrderModalProps {
-  // Modal state
   isOpen: boolean
   onClose: () => void
 
-  // Products and providers
   products: Product[]
   providers: Provider[]
   filteredProducts: Product[]
 
-  // Form state
   orderItems: OrderFormItem[]
   onToggleProduct: (product: Product) => void
   onUpdateQuantity: (productId: string, quantity: number) => void
@@ -45,14 +66,11 @@ export interface NewOrderModalProps {
   productSearchQuery: string
   onProductSearchQueryChange: (query: string) => void
 
-  // Operation states
   isSaving: boolean
   error: string
 
-  // Success state
   orderSaved: boolean
 
-  // Handlers
   onSaveOrder: () => Promise<boolean>
   onResetForm: () => void
 }
@@ -61,6 +79,16 @@ export interface NewOrderModalProps {
 // COMPONENT
 // ============================================
 
+/**
+ * New-order wizard. Pattern 1 (single step-stack, conditional body
+ * rendering inside one ModalShell). The previous IonNav-based version
+ * registered each step's `<IonPage>` against the surrounding
+ * IonRouterOutlet's StackManager — including from inside an IonModal
+ * portal — which polluted the outlet's view-stack tracking and made
+ * the next iOS slide pop drag for ~1-2s when the modal had been opened
+ * on a same-outlet drilldown (e.g. ProviderDetailPage). See
+ * `OrderNavContext` for the full note.
+ */
 export function NewOrderModal({
   isOpen,
   onClose,
@@ -89,20 +117,33 @@ export function NewOrderModal({
   onSaveOrder,
   onResetForm,
 }: NewOrderModalProps) {
-  const navRef = useRef<HTMLIonNavElement>(null)
+  const [stack, setStack] = useState<Step[]>(INITIAL_STACK)
 
-  // Delayed form reset — runs ~250ms after the modal animates closed.
-  // Calling onResetForm synchronously alongside onClose would mutate
-  // useOrderFlows state mid-dismiss-animation, re-rendering IonNav
-  // children during the transition and leaving a stale "active view"
-  // reference in the IonRouterOutlet stack machine — which silently
-  // breaks subsequent business-tab switching. Same pattern used by
-  // AddProductModal / EditProductModal.
+  // Reset to root every time the modal opens. The same modal component
+  // is reused across consecutive new-order flows.
+  useEffect(() => {
+    if (isOpen) setStack(INITIAL_STACK)
+  }, [isOpen])
+
+  // Delayed form reset — runs ~250ms after the modal animates closed
+  // so useOrderFlows state mutations don't race the dismiss animation.
   useEffect(() => {
     if (isOpen) return
     const timer = window.setTimeout(onResetForm, 250)
     return () => window.clearTimeout(timer)
   }, [isOpen, onResetForm])
+
+  const push = useCallback((step: string) => {
+    setStack((s) => [...s, step as Step])
+  }, [])
+  const pop = useCallback(() => {
+    setStack((s) => (s.length > 1 ? s.slice(0, -1) : s))
+  }, [])
+
+  const nav: OrderNav = useMemo(
+    () => ({ push, pop, depth: stack.length }),
+    [push, pop, stack.length],
+  )
 
   const callbacks: NewOrderCallbacks = {
     onClose,
@@ -132,17 +173,22 @@ export function NewOrderModal({
     onSaveOrder,
   }
 
-  // Stable root thunk — useCallback with [] so IonNav never remounts the step
-  // stack due to a new function reference produced on every parent render.
-  const selectProductsRoot = useCallback(() => <SelectProductsStep />, [])
+  const current = stack[stack.length - 1]
 
   return (
     <NewOrderCallbacksContext.Provider value={callbacks}>
-      <OrderNavRefContext.Provider value={navRef}>
+      <NewOrderNavContext.Provider value={nav}>
         <ModalShell rawContent isOpen={isOpen} onClose={onClose}>
-          <IonNav ref={navRef} root={selectProductsRoot} swipeGesture={false} />
+          {current === 'select-forward' && <SelectProductsStep mode="forward" />}
+          {current === 'select-edit' && <SelectProductsStep mode="edit" />}
+          {current === 'total-forward' && <OrderTotalStep mode="forward" />}
+          {current === 'total-edit' && <OrderTotalStep mode="edit" />}
+          {current === 'details-forward' && <OrderDetailsStep mode="forward" />}
+          {current === 'details-edit' && <OrderDetailsStep mode="edit" />}
+          {current === 'confirm' && <ConfirmOrderStep />}
+          {current === 'success' && <NewOrderSuccessStep />}
         </ModalShell>
-      </OrderNavRefContext.Provider>
+      </NewOrderNavContext.Provider>
     </NewOrderCallbacksContext.Provider>
   )
 }

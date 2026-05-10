@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import { useParams } from 'react-router'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
@@ -30,14 +29,11 @@ import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { getOrderDisplayStatus } from '@/lib/products'
-import { useOrderNavRef, useOrderDetailCallbacks } from './OrderNavContext'
-import { EditOrderStep } from './EditOrderStep'
-import { ReceiveOrderStep } from './ReceiveOrderStep'
-import { DeleteOrderConfirmStep } from './DeleteOrderConfirmStep'
+import { useOrderNav, useOrderDetailCallbacks } from './OrderNavContext'
 
 export function OrderOverviewStep() {
   const t = useIntl()
-  const navRef = useOrderNavRef()
+  const nav = useOrderNav()
   const { formatCurrency, formatDate } = useBusinessFormat()
   const params = useParams<{ businessId: string }>()
   const { navigate } = usePageTransition()
@@ -78,7 +74,7 @@ export function OrderOverviewStep() {
     : []
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           <IonButtons slot="end">
@@ -364,7 +360,7 @@ export function OrderOverviewStep() {
                   <button
                     type="button"
                     className="order-overview__icon-action order-overview__icon-action--delete"
-                    onClick={() => navRef.current?.push(() => <DeleteOrderConfirmStep />)}
+                    onClick={() => nav.push('delete')}
                     aria-label={t.formatMessage({ id: 'orders.delete_order_title' })}
                   >
                     <Trash2 size={18} strokeWidth={1.8} />
@@ -376,7 +372,7 @@ export function OrderOverviewStep() {
                     className="order-overview__icon-action order-overview__icon-action--edit"
                     onClick={() => {
                       onInitializeEditForm(order)
-                      navRef.current?.push(() => <EditOrderStep />)
+                      nav.push('edit')
                     }}
                     aria-label={t.formatMessage({ id: 'orders.edit_order_aria' })}
                   >
@@ -388,7 +384,7 @@ export function OrderOverviewStep() {
                   className="order-overview__primary"
                   onClick={() => {
                     onInitializeReceiveQuantities(order)
-                    navRef.current?.push(() => <ReceiveOrderStep />)
+                    nav.push('receive')
                   }}
                 >
                   {t.formatMessage({ id: 'orders.receive_button' })}
@@ -408,6 +404,6 @@ export function OrderOverviewStep() {
           )}
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

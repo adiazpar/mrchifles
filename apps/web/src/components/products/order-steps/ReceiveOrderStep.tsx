@@ -1,28 +1,25 @@
 import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { close } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { Package, Truck, CalendarClock } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { useOrderNavRef, useOrderDetailCallbacks } from './OrderNavContext'
-import { ReceiveOrderSuccessStep } from './ReceiveOrderSuccessStep'
+import { useOrderNav, useOrderDetailCallbacks } from './OrderNavContext'
 
 export function ReceiveOrderStep() {
   const t = useIntl()
-  const navRef = useOrderNavRef()
+  const nav = useOrderNav()
   const { formatCurrency, formatDate } = useBusinessFormat()
   const {
     order,
@@ -44,17 +41,23 @@ export function ReceiveOrderStep() {
   const handleReceive = async () => {
     const success = await onReceiveOrder()
     if (success) {
-      navRef.current?.push(() => <ReceiveOrderSuccessStep />)
+      nav.push('receive-success')
     }
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           {!openedFromSwipe && (
             <IonButtons slot="start">
-              <IonBackButton defaultHref="" />
+              <IonButton
+                fill="clear"
+                onClick={() => nav.pop()}
+                aria-label={t.formatMessage({ id: 'common.back' })}
+              >
+                <IonIcon icon={chevronBack} />
+              </IonButton>
             </IonButtons>
           )}
           {openedFromSwipe && (
@@ -217,6 +220,6 @@ export function ReceiveOrderStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

@@ -143,9 +143,7 @@ ion-toolbar {
  * tab-bar pattern (paper-translucent + backdrop blur) is calmer and
  * more on-brand for the top chrome too. */
 ion-header ion-toolbar {
-  --background: var(--paper-translucent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  --background: var(--color-bg-base);
 }
 
 /* IonFooter wraps a toolbar that should match the page bg, not the

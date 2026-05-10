@@ -1,23 +1,20 @@
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonIcon,
   IonButton,
 } from '@ionic/react'
-import { close } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { useOrderNavRef, useOrderDetailCallbacks } from './OrderNavContext'
-import { DeleteOrderSuccessStep } from './DeleteOrderSuccessStep'
+import { useOrderNav, useOrderDetailCallbacks } from './OrderNavContext'
 
 export function DeleteOrderConfirmStep() {
   const t = useIntl()
-  const navRef = useOrderNavRef()
+  const nav = useOrderNav()
   const { formatCurrency, formatDate } = useBusinessFormat()
   const {
     order,
@@ -37,17 +34,23 @@ export function DeleteOrderConfirmStep() {
   const handleDelete = async () => {
     const success = await onDeleteOrder()
     if (success) {
-      navRef.current?.push(() => <DeleteOrderSuccessStep />)
+      nav.push('delete-success')
     }
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           {!openedFromSwipe && (
             <IonButtons slot="start">
-              <IonBackButton defaultHref="" />
+              <IonButton
+                fill="clear"
+                onClick={() => nav.pop()}
+                aria-label={t.formatMessage({ id: 'common.back' })}
+              >
+                <IonIcon icon={chevronBack} />
+              </IonButton>
             </IonButtons>
           )}
           {openedFromSwipe && (
@@ -124,7 +127,7 @@ export function DeleteOrderConfirmStep() {
                 if (openedFromSwipe) {
                   onClose()
                 } else {
-                  navRef.current?.pop()
+                  nav.pop()
                 }
               }}
               disabled={isDeleting}
@@ -146,6 +149,6 @@ export function DeleteOrderConfirmStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

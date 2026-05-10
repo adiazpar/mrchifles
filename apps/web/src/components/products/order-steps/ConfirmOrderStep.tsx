@@ -1,23 +1,20 @@
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
+  IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import { Package, ChevronRight } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { useOrderNavRef, useNewOrderCallbacks } from './OrderNavContext'
-import { NewOrderSuccessStep } from './NewOrderSuccessStep'
-import { SelectProductsStep } from './SelectProductsStep'
-import { OrderTotalStep } from './OrderTotalStep'
-import { OrderDetailsStep } from './OrderDetailsStep'
+import { useOrderNav, useNewOrderCallbacks } from './OrderNavContext'
 
 /**
  * New-order confirm surface. Same shape as EditOrderStep ("Revise the
@@ -30,7 +27,7 @@ import { OrderDetailsStep } from './OrderDetailsStep'
  */
 export function ConfirmOrderStep() {
   const t = useIntl()
-  const navRef = useOrderNavRef()
+  const nav = useOrderNav()
   const { formatCurrency, formatDate } = useBusinessFormat()
   const {
     providers,
@@ -47,19 +44,15 @@ export function ConfirmOrderStep() {
   const handleConfirm = async () => {
     const success = await onSaveOrder()
     if (success) {
-      navRef.current?.push(() => <NewOrderSuccessStep />)
+      nav.push('success')
     }
   }
 
-  // Tap-to-edit jumps: each pushes the matching step in `mode='edit'`
-  // so its CTA pops back to this Confirm screen instead of pushing
-  // forward in the wizard chain.
-  const editItems = () =>
-    navRef.current?.push(() => <SelectProductsStep mode="edit" />)
-  const editTotal = () =>
-    navRef.current?.push(() => <OrderTotalStep mode="edit" />)
-  const editDetails = () =>
-    navRef.current?.push(() => <OrderDetailsStep mode="edit" />)
+  // Tap-to-edit jumps push the matching step in -edit mode so its CTA
+  // pops back here instead of pushing forward in the wizard chain.
+  const editItems = () => nav.push('select-edit')
+  const editTotal = () => nav.push('total-edit')
+  const editDetails = () => nav.push('details-edit')
 
   const providerName = providers.find((p) => p.id === orderProvider)?.name
   const totalNum = orderTotal ? parseFloat(orderTotal) : 0
@@ -69,11 +62,17 @@ export function ConfirmOrderStep() {
   )
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
@@ -220,7 +219,7 @@ export function ConfirmOrderStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }
 

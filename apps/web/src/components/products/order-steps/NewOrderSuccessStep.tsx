@@ -1,5 +1,5 @@
 import { useIntl } from 'react-intl'
-import { IonPage, IonContent, IonFooter, IonToolbar } from '@ionic/react'
+import { IonContent, IonFooter, IonToolbar } from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useNewOrderCallbacks } from './OrderNavContext'
 
@@ -12,7 +12,7 @@ export function NewOrderSuccessStep() {
   }
 
   return (
-    <IonPage>
+    <>
       <IonContent className="wizard-content">
         <div className="wizard-step wizard-step--centered">
           <div className="order-success">
@@ -72,6 +72,6 @@ export function NewOrderSuccessStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

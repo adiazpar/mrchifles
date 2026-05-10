@@ -3,15 +3,41 @@ import type { Product, Provider } from '@kasero/shared/types'
 import type { ExpandedOrder, OrderFormItem } from '@/lib/products'
 
 // ---------------------------------------------------------------------------
-// Nav ref context — steps call navRef.current?.push / .pop to navigate.
+// Generic nav surface — each order modal owns a step stack and exposes it
+// via this context. Steps call push(stepKey) / pop() instead of pushing
+// React elements onto an IonNav stack. Switching from IonNav to plain
+// state-driven rendering removed the per-step <IonPage> components, which
+// were silently registering against the surrounding IonRouterOutlet's
+// StackManager and slowing the next iOS pop animation by ~1-2s after a
+// modal had been opened on a same-outlet drilldown.
 // ---------------------------------------------------------------------------
 
-export const OrderNavRefContext = createContext<React.RefObject<HTMLIonNavElement | null> | null>(null)
+export interface OrderNav {
+  push: (step: string) => void
+  pop: () => void
+  /** Total entries in the back stack. Steps that pre-render the toolbar
+   *  back chevron use this to know whether back means "go to parent step"
+   *  (depth > 1) or "close modal" (depth === 1, opened-from-swipe path). */
+  depth: number
+}
 
-export function useOrderNavRef(): React.RefObject<HTMLIonNavElement | null> {
-  const ctx = useContext(OrderNavRefContext)
-  if (!ctx) throw new Error('useOrderNavRef must be used inside NewOrderModal or OrderDetailModal')
-  return ctx
+export const NewOrderNavContext = createContext<OrderNav | null>(null)
+export const OrderDetailNavContext = createContext<OrderNav | null>(null)
+
+/**
+ * Generic nav hook used by step files. Returns whichever nav context is
+ * mounted (NewOrderModal provides one, OrderDetailModal provides the other).
+ * Shared steps like OrderTotalStep / OrderDetailsStep don't know which
+ * modal hosts them — they just push the step key for their flow.
+ */
+export function useOrderNav(): OrderNav {
+  const newOrderNav = useContext(NewOrderNavContext)
+  const orderDetailNav = useContext(OrderDetailNavContext)
+  const nav = newOrderNav ?? orderDetailNav
+  if (!nav) {
+    throw new Error('useOrderNav must be used inside NewOrderModal or OrderDetailModal')
+  }
+  return nav
 }
 
 // ---------------------------------------------------------------------------
@@ -122,11 +148,9 @@ export function useOrderDetailCallbacks(): OrderDetailCallbacks {
 // ---------------------------------------------------------------------------
 // Unified callbacks for shared steps that work in BOTH the new-order and
 // edit-order flows (OrderTotalStep, OrderDetailsStep). Returns whichever
-// context is mounted. The shape exposed is the intersection of fields
-// these steps actually read — total, arrival, provider, receipt — plus
-// `error` and `onClose`. Save-callback differs between flows so it's
-// NOT exposed here; each step that needs save-on-this-button pushes a
-// flow-specific step instead.
+// context is mounted. Save-callback differs between flows so it's NOT
+// exposed here; each step that needs save-on-this-button pushes a flow-
+// specific step key instead.
 // ---------------------------------------------------------------------------
 
 export interface SharedOrderFieldCallbacks {
