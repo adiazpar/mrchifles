@@ -9,9 +9,12 @@
 
    Sections:
      1. Page shell + hero band (with manager Invite pill)
-     2. Section label + ledger frame (used by roster + pending lists)
-     3. Unified row primitive (avatar + body + chevron)
-     4. Loading + error frames
+     2. Unified row primitive (avatar + body + chevron)
+     3. Loading + error frames
+
+   Note: roster + pending sections are wrapped in shared .report-card
+   containers (defined in sales-tab.css), so this file only contains
+   the row primitive that sits inside those cards.
 */
 
 /* ==========================================================================
@@ -99,47 +102,13 @@
 }
 
 /* ==========================================================================
-   2. Section label + ledger frame
-   ========================================================================== */
-
-.tm-roster__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-/* Bare mono label — no leading tick, no trailing rule. The page eyebrow
-   carries the tracked-tick vocabulary; section labels stay quiet. */
-.tm-roster__section-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.tm-roster__section-eyebrow-count {
-  color: var(--color-text-tertiary);
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-  font-weight: 500;
-}
-
-.tm-roster__section-list {
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--color-hair);
-  border-bottom: 1px solid var(--color-hair);
-  background: transparent;
-}
-
-/* ==========================================================================
-   3. Unified row primitive — used by members AND invites
-   ========================================================================== */
+   2. Unified row primitive — used by members AND invites
+   ==========================================================================
+   The roster and pending-invites sections are wrapped in shared
+   .report-card containers (defined in sales-tab.css). The rows below
+   are the inner content of those cards; no team-side section frame
+   is needed.
+*/
 
 .tm-roster__row {
   display: flex;

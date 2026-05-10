@@ -181,42 +181,54 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
             </p>
           )}
 
-          {/* Roster ledger — owner, active members, and any disabled
-              members all flow into one frame. Disabled rows render dimmed
-              with a "DISABLED" mono token in the caption. */}
+          {/* Roster card — owner, active members, and any disabled members
+              all flow into one .report-card frame (the same wrapper used
+              by Sales reports / Products inventory) so the page feels
+              consistent with the rest of the app. Disabled rows render
+              dimmed with a "DISABLED" mono token in the caption. */}
           {orderedRoster.length > 0 && (
-            <section className="tm-roster__section">
-              <div className="tm-roster__section-list">
-                {orderedRoster.map((member) => (
-                  <TeamMemberListItem
-                    key={member.id}
-                    member={member}
-                    isSelf={member.id === user?.id}
-                    onClick={() => handleOpenUserModal(member)}
-                  />
-                ))}
+            <section className="report-card">
+              <div className="report-card__header">
+                <span className="report-card__eyebrow">
+                  {t.formatMessage({ id: 'team.roster.card_roster_eyebrow' })}
+                </span>
+                <h2 className="report-card__title">
+                  {t.formatMessage({ id: 'team.roster.card_roster_title' })}
+                </h2>
               </div>
+              {orderedRoster.map((member) => (
+                <TeamMemberListItem
+                  key={member.id}
+                  member={member}
+                  isSelf={member.id === user?.id}
+                  onClick={() => handleOpenUserModal(member)}
+                />
+              ))}
             </section>
           )}
 
-          {/* Pending invites — manager-only, identical row primitive. */}
+          {/* Pending invites card — manager-only. Same .report-card frame,
+              with the active-count baked into the eyebrow since invites
+              are dynamic. */}
           {canManageTeam && inviteCodes.length > 0 && (
-            <section className="tm-roster__section">
-              <span className="tm-roster__section-eyebrow">
-                {t.formatMessage({ id: 'team.roster.section_pending' })}
-                <span className="tm-roster__section-eyebrow-count">
-                  · {inviteCodes.length}
+            <section className="report-card">
+              <div className="report-card__header">
+                <span className="report-card__eyebrow">
+                  {t.formatMessage({ id: 'team.roster.section_pending' })}
+                  {' · '}
+                  {inviteCodes.length}
                 </span>
-              </span>
-              <div className="tm-roster__section-list">
-                {inviteCodes.map((code) => (
-                  <InviteCodeListItem
-                    key={code.id}
-                    code={code}
-                    onClick={() => handleOpenExistingCode(code)}
-                  />
-                ))}
+                <h2 className="report-card__title">
+                  {t.formatMessage({ id: 'team.roster.card_pending_title' })}
+                </h2>
               </div>
+              {inviteCodes.map((code) => (
+                <InviteCodeListItem
+                  key={code.id}
+                  code={code}
+                  onClick={() => handleOpenExistingCode(code)}
+                />
+              ))}
             </section>
           )}
       </div>

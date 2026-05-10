@@ -227,14 +227,6 @@ export function ConfirmOrderStep() {
           <div className="modal-footer">
             <button
               type="button"
-              className="order-modal__secondary-pill"
-              onClick={() => navRef.current?.pop()}
-              disabled={isSaving}
-            >
-              {t.formatMessage({ id: 'common.back' })}
-            </button>
-            <button
-              type="button"
               className="order-modal__primary-pill"
               onClick={handleConfirm}
               disabled={isSaving}
