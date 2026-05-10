@@ -102,6 +102,13 @@
   margin: var(--space-2) 0 0;
 }
 
+/* Drop the standard pm-hero vertical padding when it sits above the
+ * fixed-height keypad — IonContent already gives us --padding-top, and
+ * the keypad's display block provides its own breathing room below. */
+.pm-hero--keypad {
+  padding: 0;
+}
+
 /* Section rule — mono caption on a hairline. Used to introduce a block. */
 .pm-rule {
   display: flex;

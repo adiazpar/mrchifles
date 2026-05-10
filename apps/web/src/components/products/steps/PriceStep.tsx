@@ -59,18 +59,26 @@ export function PriceStep({ mode }: PriceStepProps) {
       </IonHeader>
 
       <IonContent className="pm-content modal-content--no-scroll">
-        <PriceKeypadStep
-          value={price}
-          onValueChange={setPrice}
-          eyebrow={t.formatMessage({ id: 'productAddEdit.step_price_eyebrow' })}
-          title={t.formatMessage(
-            { id: 'productAddEdit.step_price_title' },
-            { em: (chunks) => <em>{chunks}</em> },
-          )}
-          amountLabel={t.formatMessage({ id: 'productForm.price_label' })}
-          helper={t.formatMessage({ id: 'productAddEdit.step_price_helper' })}
-          ariaLabel={t.formatMessage({ id: 'productForm.price_label' })}
-        />
+        <div className="keypad-shell">
+          <header className="pm-hero pm-hero--keypad">
+            <span className="pm-hero__eyebrow">
+              {t.formatMessage({ id: 'productAddEdit.step_price_eyebrow' })}
+            </span>
+            <h1 className="pm-hero__title">
+              {t.formatMessage(
+                { id: 'productAddEdit.step_price_title' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+          </header>
+          <PriceKeypadStep
+            value={price}
+            onValueChange={setPrice}
+            amountLabel={t.formatMessage({ id: 'productForm.price_label' })}
+            helper={t.formatMessage({ id: 'productAddEdit.step_price_helper' })}
+            ariaLabel={t.formatMessage({ id: 'productForm.price_label' })}
+          />
+        </div>
       </IonContent>
 
       <IonFooter className="pm-footer">

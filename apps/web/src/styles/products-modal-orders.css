@@ -1570,6 +1570,20 @@
   font-weight: 400;
 }
 
+/* Tightens .wizard-hero when it sits above PriceKeypadStep inside a
+ * no-scroll IonContent. Smaller eyebrow→title gap and a smaller title
+ * keep the keypad's display centre roomy on iPhone SE-class viewports. */
+.wizard-hero--keypad {
+  gap: var(--space-1);
+}
+
+.wizard-hero--keypad .wizard-hero__title {
+  font-size: 30px;
+  letter-spacing: -0.022em;
+  line-height: 1.06;
+  max-width: none;
+}
+
 /* =====================================================================
  * Misc — eyebrow + count chip used by SelectProductsStep above the list
  * matches mainline session-history-ledger eyebrow.

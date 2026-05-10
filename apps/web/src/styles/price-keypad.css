@@ -20,6 +20,23 @@
   min-height: 0;
 }
 
+/* Flex shell that lets a step header (.pm-hero in the product flow,
+ * .wizard-hero in the order flow) share a no-scroll IonContent with
+ * the keypad. The keypad takes the remaining vertical space; its
+ * display centre (flex: 1) absorbs whatever the hero claims so the
+ * key grid stays docked at the bottom. */
+.keypad-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.keypad-shell > .price-keypad {
+  flex: 1;
+  height: auto;
+}
+
 /* ===== Hero ============================================================ */
 
 .price-keypad__hero {

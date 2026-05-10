@@ -65,18 +65,30 @@ export function OrderTotalStep({ mode }: OrderTotalStepProps) {
       </IonHeader>
 
       <IonContent className="wizard-content modal-content--no-scroll">
-        <PriceKeypadStep
-          value={orderTotal}
-          onValueChange={onOrderTotalChange}
-          eyebrow={t.formatMessage({ id: 'orders.total_step_eyebrow' })}
-          title={t.formatMessage(
-            { id: 'orders.total_step_title' },
-            { em: (chunks) => <em>{chunks}</em> },
-          )}
-          amountLabel={t.formatMessage({ id: 'orders.total_label' })}
-          helper={t.formatMessage({ id: 'orders.total_step_helper' })}
-          ariaLabel={t.formatMessage({ id: 'orders.total_label' })}
-        />
+        <div className="keypad-shell">
+          <header className="wizard-hero wizard-hero--keypad">
+            <div className="order-modal__eyebrow">
+              <span>{t.formatMessage({ id: 'orders.eyebrow_order' })}</span>
+              <span className="order-modal__eyebrow-dot">·</span>
+              <span className="order-modal__eyebrow-emphasis">
+                {t.formatMessage({ id: 'orders.eyebrow_total' })}
+              </span>
+            </div>
+            <h1 className="wizard-hero__title">
+              {t.formatMessage(
+                { id: 'orders.total_step_title' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h1>
+          </header>
+          <PriceKeypadStep
+            value={orderTotal}
+            onValueChange={onOrderTotalChange}
+            amountLabel={t.formatMessage({ id: 'orders.total_label' })}
+            helper={t.formatMessage({ id: 'orders.total_step_helper' })}
+            ariaLabel={t.formatMessage({ id: 'orders.total_label' })}
+          />
+        </div>
       </IonContent>
 
       <IonFooter>
