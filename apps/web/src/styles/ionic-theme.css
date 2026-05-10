@@ -175,6 +175,46 @@ ion-toolbar {
   --border-width: 0;
 }
 
+/* Page-level header toolbars (AccountPage, BusinessHeader, etc.) get the
+   same horizontal page-padding inset that the body content uses, so the
+   visible left edge of the back chevron and the visible right edge of the
+   trailing action button line up with the content below.
+   Scoped to .ion-page (IonPage in @ionic/react renders as
+   <div class="ion-page">, not <ion-page>) so modal toolbars — which live
+   inside <ion-modal> and have their own padding conventions in
+   modal-shell.tsx + per-modal CSS — aren't affected. */
+.ion-page > ion-header ion-toolbar {
+  --padding-start: var(--page-padding);
+  --padding-end: var(--page-padding);
+}
+
+/* Ionic's iOS toolbar bakes in a few px of negative margin / inner padding
+   on the slotted buttons so they "bleed past" the toolbar's padded slot
+   (an iOS affordance). We don't want that here — we want the *visible* edge
+   of each button to sit flush with --page-padding. Zero out the slot
+   wrapper margins and the back-button's host margin / padding so the back
+   button's hit-area starts at the toolbar's padded edge (16px from the
+   screen edge). Same on the trailing slot. */
+.ion-page > ion-header ion-buttons[slot="start"] {
+  margin-inline-start: 0;
+  padding-inline-start: 0;
+}
+.ion-page > ion-header ion-buttons[slot="end"] {
+  margin-inline-end: 0;
+  padding-inline-end: 0;
+}
+.ion-page > ion-header ion-back-button {
+  margin-inline-start: 0;
+  --padding-start: 0;
+  --icon-margin-start: 0;
+  --icon-padding-start: 0;
+}
+.ion-page > ion-header ion-buttons[slot="end"] > ion-button {
+  --padding-end: 0;
+  margin-inline-end: 0;
+  min-width: 0;
+}
+
 /* ===== Title typography =====
  * Legacy .page-title rules:
  *   font-family: var(--font-display);
