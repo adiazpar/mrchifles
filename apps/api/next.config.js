@@ -52,26 +52,6 @@ const nextConfig = {
     ],
   },
 
-  // Lint runs separately via `npm run lint` with our flat eslint.config.mjs.
-  // Next's build-time lint only detects legacy .eslintrc* files, so letting
-  // it run during build would emit a noisy "plugin not detected" warning
-  // even though our config is correct and clean.
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
-  // libheif-js (consumed by heic-convert) uses dynamic require() inside its
-  // WASM bundle. It's a library-internal pattern we can't fix, so silence
-  // the "critical dependency" warning instead of polluting every build.
-  webpack: (config) => {
-    config.ignoreWarnings = [
-      ...(config.ignoreWarnings || []),
-      { module: /libheif-js/ },
-    ]
-    return config
-  },
-
-
   // Security headers
   async headers() {
     return [
