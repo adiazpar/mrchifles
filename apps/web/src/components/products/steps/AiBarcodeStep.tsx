@@ -150,14 +150,6 @@ export function AiBarcodeStep() {
                   {t.formatMessage({ id: 'barcode.no_barcode' })}
                 </span>
               )}
-              <button
-                type="button"
-                onClick={handleClear}
-                disabled={!hasBarcode}
-                className="pm-barcode-meta__reset"
-              >
-                {t.formatMessage({ id: 'barcode.reset_button' })}
-              </button>
             </div>
 
             {scanHiddenInput}
@@ -169,7 +161,7 @@ export function AiBarcodeStep() {
                 disabled={scanBusy}
                 className="pm-action pm-action--brand"
               >
-                <span className="pm-action__circle">
+                <span className="pm-action__icon">
                   <ScanLine size={26} strokeWidth={1.6} />
                 </span>
                 <span className="pm-action__label">
@@ -183,7 +175,7 @@ export function AiBarcodeStep() {
                 onClick={handleGenerate}
                 className="pm-action pm-action--success"
               >
-                <span className="pm-action__circle">
+                <span className="pm-action__icon">
                   <Plus size={26} strokeWidth={1.6} />
                 </span>
                 <span className="pm-action__label">
@@ -196,7 +188,7 @@ export function AiBarcodeStep() {
                 disabled={!hasBarcode}
                 className="pm-action pm-action--danger"
               >
-                <span className="pm-action__circle">
+                <span className="pm-action__icon">
                   <RotateCcw size={24} strokeWidth={1.6} />
                 </span>
                 <span className="pm-action__label">
@@ -209,17 +201,18 @@ export function AiBarcodeStep() {
       </IonContent>
 
       <IonFooter className="pm-footer">
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton
-            expand="block"
-            fill={hasBarcode ? 'solid' : 'outline'}
-            className={hasBarcode ? undefined : 'pm-ghost-btn'}
-            onClick={handleContinue}
-          >
-            {hasBarcode
-              ? t.formatMessage({ id: 'productForm.continue_button' })
-              : t.formatMessage({ id: 'productForm.skip_for_now' })}
-          </IonButton>
+        <IonToolbar>
+          <div className="modal-footer">
+            <IonButton
+              fill={hasBarcode ? 'solid' : 'outline'}
+              className={hasBarcode ? undefined : 'pm-ghost-btn'}
+              onClick={handleContinue}
+            >
+              {hasBarcode
+                ? t.formatMessage({ id: 'productForm.continue_button' })
+                : t.formatMessage({ id: 'productForm.skip_for_now' })}
+            </IonButton>
+          </div>
         </IonToolbar>
       </IonFooter>
     </IonPage>

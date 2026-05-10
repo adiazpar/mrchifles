@@ -199,14 +199,6 @@ export function BarcodeFields() {
             {t.formatMessage({ id: 'barcode.no_barcode' })}
           </span>
         )}
-        <button
-          type="button"
-          onClick={handleClear}
-          disabled={!hasBarcode}
-          className="pm-barcode-meta__reset"
-        >
-          {t.formatMessage({ id: 'barcode.reset_button' })}
-        </button>
       </div>
 
       {scanHiddenInput}
@@ -218,7 +210,7 @@ export function BarcodeFields() {
           disabled={scanBusy}
           className="pm-action pm-action--brand"
         >
-          <span className="pm-action__circle">
+          <span className="pm-action__icon">
             <ScanLine size={26} strokeWidth={1.6} />
           </span>
           <span className="pm-action__label">
@@ -232,7 +224,7 @@ export function BarcodeFields() {
           onClick={handleGenerate}
           className="pm-action pm-action--success"
         >
-          <span className="pm-action__circle">
+          <span className="pm-action__icon">
             <Plus size={26} strokeWidth={1.6} />
           </span>
           <span className="pm-action__label">
@@ -245,7 +237,7 @@ export function BarcodeFields() {
           disabled={!hasBarcode}
           className="pm-action pm-action--warning"
         >
-          <span className="pm-action__circle">
+          <span className="pm-action__icon">
             <Printer size={24} strokeWidth={1.6} />
           </span>
           <span className="pm-action__label">
@@ -258,7 +250,7 @@ export function BarcodeFields() {
           disabled={!hasBarcode}
           className="pm-action pm-action--danger"
         >
-          <span className="pm-action__circle">
+          <span className="pm-action__icon">
             <RotateCcw size={24} strokeWidth={1.6} />
           </span>
           <span className="pm-action__label">

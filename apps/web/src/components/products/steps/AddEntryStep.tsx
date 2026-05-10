@@ -184,16 +184,17 @@ export function AddEntryStep() {
       </IonContent>
 
       <IonFooter className="pm-footer">
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton
-            expand="block"
-            fill="outline"
-            className="pm-ghost-btn"
-            onClick={onOpenSettings}
-          >
-            <Settings2 size={16} style={{ marginRight: 8 }} />
-            {t.formatMessage({ id: 'productForm.settings_button' })}
-          </IonButton>
+        <IonToolbar>
+          <div className="modal-footer">
+            <IonButton
+              fill="outline"
+              className="pm-ghost-btn"
+              onClick={onOpenSettings}
+            >
+              <Settings2 size={16} style={{ marginRight: 8 }} />
+              {t.formatMessage({ id: 'productForm.settings_button' })}
+            </IonButton>
+          </div>
         </IonToolbar>
       </IonFooter>
     </IonPage>

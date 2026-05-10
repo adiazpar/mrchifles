@@ -79,10 +79,12 @@ export function EditSuccessStep() {
       </IonContent>
 
       <IonFooter className="pm-footer">
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton expand="block" onClick={handleDone}>
-            {t.formatMessage({ id: 'common.done' })}
-          </IonButton>
+        <IonToolbar>
+          <div className="modal-footer">
+            <IonButton onClick={handleDone}>
+              {t.formatMessage({ id: 'common.done' })}
+            </IonButton>
+          </div>
         </IonToolbar>
       </IonFooter>
     </IonPage>

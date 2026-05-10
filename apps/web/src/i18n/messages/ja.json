@@ -859,7 +859,7 @@
   "team.invite_v2.eyebrow_step2": "招待・有効",
   "team.invite_v2.title_step2": "この<em>コード</em>を共有しましょう。",
   "team.invite_v2.code_meta_format": "{role}・有効期限 {date}",
-  "team.invite_v2.code_copied_toast": "クリップボードにコピーしました",
+  "team.invite_v2.action_copy_done": "コピーしました!",
   "team.invite_v2.code_qr_caption": "またはQRコードをスキャン",
   "team.invite_v2.action_copy": "コピー",
   "team.invite_v2.action_share": "共有",

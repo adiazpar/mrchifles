@@ -300,22 +300,23 @@ export function ReviewStep() {
       </IonContent>
 
       <IonFooter className="pm-footer">
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton
-            expand="block"
-            onClick={handleSave}
-            disabled={!isFormValid || savingLocal || isSaving}
-          >
-            {savingLocal || isSaving ? (
-              <IonSpinner name="crescent" />
-            ) : (
-              t.formatMessage({
-                id: isEdit
-                  ? 'productAddEdit.review_save_edit'
-                  : 'productAddEdit.review_save_add',
-              })
-            )}
-          </IonButton>
+        <IonToolbar>
+          <div className="modal-footer">
+            <IonButton
+              onClick={handleSave}
+              disabled={!isFormValid || savingLocal || isSaving}
+            >
+              {savingLocal || isSaving ? (
+                <IonSpinner name="crescent" />
+              ) : (
+                t.formatMessage({
+                  id: isEdit
+                    ? 'productAddEdit.review_save_edit'
+                    : 'productAddEdit.review_save_add',
+                })
+              )}
+            </IonButton>
+          </div>
         </IonToolbar>
       </IonFooter>
     </IonPage>

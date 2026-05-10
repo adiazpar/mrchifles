@@ -859,7 +859,7 @@
   "team.invite_v2.eyebrow_step2": "Invitación · Activa",
   "team.invite_v2.title_step2": "Comparta este <em>código</em>.",
   "team.invite_v2.code_meta_format": "{role} · Vence {date}",
-  "team.invite_v2.code_copied_toast": "Copiado al portapapeles",
+  "team.invite_v2.action_copy_done": "¡Copiado!",
   "team.invite_v2.code_qr_caption": "O escanee el QR",
   "team.invite_v2.action_copy": "Copiar",
   "team.invite_v2.action_share": "Compartir",

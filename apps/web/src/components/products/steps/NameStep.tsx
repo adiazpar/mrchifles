@@ -188,18 +188,19 @@ export function NameStep({ mode }: NameStepProps) {
       </IonContent>
 
       <IonFooter className="pm-footer">
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton
-            expand="block"
-            onClick={handleContinue}
-            disabled={!isFormValid}
-          >
-            {t.formatMessage({
-              id: mode === 'edit'
-                ? 'productAddEdit.step_done_cta'
-                : 'productAddEdit.step_continue_cta',
-            })}
-          </IonButton>
+        <IonToolbar>
+          <div className="modal-footer">
+            <IonButton
+              onClick={handleContinue}
+              disabled={!isFormValid}
+            >
+              {t.formatMessage({
+                id: mode === 'edit'
+                  ? 'productAddEdit.step_done_cta'
+                  : 'productAddEdit.step_continue_cta',
+              })}
+            </IonButton>
+          </div>
         </IonToolbar>
       </IonFooter>
     </IonPage>

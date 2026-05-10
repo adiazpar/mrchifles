@@ -868,7 +868,7 @@
   "team.invite_v2.eyebrow_step2": "Invite · Active",
   "team.invite_v2.title_step2": "Share this <em>code</em>.",
   "team.invite_v2.code_meta_format": "{role} · Expires {date}",
-  "team.invite_v2.code_copied_toast": "Copied to clipboard",
+  "team.invite_v2.action_copy_done": "Copied!",
   "team.invite_v2.code_qr_caption": "Or scan the QR",
   "team.invite_v2.action_copy": "Copy",
   "team.invite_v2.action_share": "Share",

@@ -76,15 +76,16 @@ export function SuggestedCategoryStepWrapper() {
       </IonContent>
 
       <IonFooter className="pm-footer">
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton
-            fill="outline"
-            expand="block"
-            className="pm-ghost-btn"
-            onClick={goToForm}
-          >
-            {t.formatMessage({ id: 'productForm.skip_for_now' })}
-          </IonButton>
+        <IonToolbar>
+          <div className="modal-footer">
+            <IonButton
+              fill="outline"
+              className="pm-ghost-btn"
+              onClick={goToForm}
+            >
+              {t.formatMessage({ id: 'productForm.skip_for_now' })}
+            </IonButton>
+          </div>
         </IonToolbar>
       </IonFooter>
     </IonPage>

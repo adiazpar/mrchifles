@@ -73,14 +73,16 @@ export function BarcodeStep({ mode }: BarcodeStepProps) {
       </IonContent>
 
       <IonFooter className="pm-footer">
-        <IonToolbar className="ion-padding-horizontal">
-          <IonButton expand="block" onClick={handleContinue}>
-            {t.formatMessage({
-              id: mode === 'edit'
-                ? 'productAddEdit.step_done_cta'
-                : 'productAddEdit.step_review_cta',
-            })}
-          </IonButton>
+        <IonToolbar>
+          <div className="modal-footer">
+            <IonButton onClick={handleContinue}>
+              {t.formatMessage({
+                id: mode === 'edit'
+                  ? 'productAddEdit.step_done_cta'
+                  : 'productAddEdit.step_review_cta',
+              })}
+            </IonButton>
+          </div>
         </IonToolbar>
       </IonFooter>
     </IonPage>

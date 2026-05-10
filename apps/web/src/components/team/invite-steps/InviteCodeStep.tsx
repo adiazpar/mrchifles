@@ -8,9 +8,13 @@ import {
   IonButtons,
   IonButton,
   IonIcon,
+  IonSpinner,
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
-import { ChevronRight, Copy, Share2, RefreshCw, Trash2 } from 'lucide-react'
+import { Copy, CheckCheck, Share2, RefreshCw, Trash2 } from 'lucide-react'
+// .pm-action vocabulary lives in products-modal-add-edit.css and is
+// imported globally by main.tsx — reused here so the team and product
+// modals share one tile-button family.
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { InviteRole } from '@kasero/shared/types'
 import { useInviteNavRef, useInviteCallbacks } from './InviteNavContext'
@@ -55,7 +59,7 @@ export function InviteCodeStep() {
     employee: t.formatMessage({ id: 'team.role_employee' }),
   }
 
-  const showCopyToast = !!newCode && copyFeedback === newCode
+  const isCopied = !!newCode && copyFeedback === newCode
 
   // Web Share API is gated to https + secure contexts; render the row
   // only when supported so the ledger doesn't list a dead action.
@@ -106,20 +110,12 @@ export function InviteCodeStep() {
             </h1>
           </header>
 
-          {/* Code stamp — printed-tag aesthetic. The dashed rules + corner
-              ticks are decorative, the value itself is what the user
-              shares. user-select on the value lets the long-press
-              "select all" gesture grab the code cleanly. */}
+          {/* Code stamp — the value is the only thing shown. Copy
+              confirmation now lives on the COPY action button itself
+              (label + icon flip), so the stamp stays clean. user-select
+              on the value lets long-press "select all" grab the code. */}
           {newCode && (
             <div className="tm-invite__code-stamp">
-              <div className="tm-invite__code-rule">
-                <span className="tm-invite__code-rule-line" aria-hidden="true" />
-                <span className="tm-invite__code-rule-caption">
-                  {t.formatMessage({ id: 'team.invite_v2.eyebrow_step2' })}
-                </span>
-                <span className="tm-invite__code-rule-line" aria-hidden="true" />
-              </div>
-
               <code className="tm-invite__code-value">{newCode}</code>
 
               <span className="tm-invite__code-meta">
@@ -133,12 +129,6 @@ export function InviteCodeStep() {
                     )
                   : roleLabels[selectedRole]}
               </span>
-
-              {showCopyToast && (
-                <span className="tm-invite__toast" role="status" aria-live="polite">
-                  {t.formatMessage({ id: 'team.invite_v2.code_copied_toast' })}
-                </span>
-              )}
             </div>
           )}
 
@@ -154,80 +144,82 @@ export function InviteCodeStep() {
             </div>
           )}
 
-          {/* Action ledger — dotted-leader rows. Share row is conditional. */}
+          {/* Action row — .pm-action tiles (icon-on-top, mono label below)
+              shared with the barcode modal. Same pillowed icon container,
+              same color-coded variants. Revoke uses --danger. */}
           <div className="tm-invite__actions">
             <button
               type="button"
-              className="tm-invite__action-row"
               onClick={() => newCode && onCopyCode(newCode)}
               disabled={!newCode}
+              className={
+                isCopied
+                  ? 'pm-action pm-action--success'
+                  : 'pm-action pm-action--brand'
+              }
+              aria-live="polite"
             >
-              <span className="tm-invite__action-icon" aria-hidden="true">
-                <Copy size={14} strokeWidth={1.7} />
+              <span className="pm-action__icon">
+                {isCopied ? (
+                  <CheckCheck size={24} strokeWidth={1.6} />
+                ) : (
+                  <Copy size={24} strokeWidth={1.6} />
+                )}
               </span>
-              <span className="tm-invite__action-label">
-                {t.formatMessage({ id: 'team.invite_v2.action_copy' })}
+              <span className="pm-action__label">
+                {isCopied
+                  ? t.formatMessage({ id: 'team.invite_v2.action_copy_done' })
+                  : t.formatMessage({ id: 'team.invite_v2.action_copy' })}
               </span>
-              <span className="tm-invite__action-leader" aria-hidden="true" />
-              <ChevronRight className="tm-invite__action-chev" size={14} aria-hidden="true" />
             </button>
 
             {canShare && (
               <button
                 type="button"
-                className="tm-invite__action-row"
                 onClick={handleShare}
                 disabled={!newCode}
+                className="pm-action pm-action--success"
               >
-                <span className="tm-invite__action-icon" aria-hidden="true">
-                  <Share2 size={14} strokeWidth={1.7} />
+                <span className="pm-action__icon">
+                  <Share2 size={24} strokeWidth={1.6} />
                 </span>
-                <span className="tm-invite__action-label">
+                <span className="pm-action__label">
                   {t.formatMessage({ id: 'team.invite_v2.action_share' })}
                 </span>
-                <span className="tm-invite__action-leader" aria-hidden="true" />
-                <ChevronRight className="tm-invite__action-chev" size={14} aria-hidden="true" />
               </button>
             )}
 
             <button
               type="button"
-              className="tm-invite__action-row"
               onClick={() => onRegenerateCode()}
               disabled={isGenerating}
+              className="pm-action pm-action--warning"
             >
-              <span
-                className={
-                  isGenerating
-                    ? 'tm-invite__action-icon tm-invite__action-icon--spinning'
-                    : 'tm-invite__action-icon'
-                }
-                aria-hidden="true"
-              >
-                <RefreshCw size={14} strokeWidth={1.7} />
+              <span className="pm-action__icon">
+                {isGenerating ? (
+                  <IonSpinner name="crescent" style={{ width: 24, height: 24 }} />
+                ) : (
+                  <RefreshCw size={24} strokeWidth={1.6} />
+                )}
               </span>
-              <span className="tm-invite__action-label">
+              <span className="pm-action__label">
                 {isGenerating
                   ? t.formatMessage({ id: 'team.regenerating' })
                   : t.formatMessage({ id: 'team.invite_v2.action_regenerate' })}
               </span>
-              <span className="tm-invite__action-leader" aria-hidden="true" />
-              <ChevronRight className="tm-invite__action-chev" size={14} aria-hidden="true" />
             </button>
 
             <button
               type="button"
-              className="tm-invite__action-row tm-invite__action-row--danger"
               onClick={handleRevoke}
+              className="pm-action pm-action--danger"
             >
-              <span className="tm-invite__action-icon" aria-hidden="true">
-                <Trash2 size={14} strokeWidth={1.7} />
+              <span className="pm-action__icon">
+                <Trash2 size={24} strokeWidth={1.6} />
               </span>
-              <span className="tm-invite__action-label">
+              <span className="pm-action__label">
                 {t.formatMessage({ id: 'team.invite_v2.action_revoke' })}
               </span>
-              <span className="tm-invite__action-leader" aria-hidden="true" />
-              <ChevronRight className="tm-invite__action-chev" size={14} aria-hidden="true" />
             </button>
           </div>
         </div>

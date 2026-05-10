@@ -17,12 +17,11 @@
      2. Role card                 (.tm-invite__role-card)
      3. Duration chip rail        (.tm-invite__duration-rail)
      4. Partner warning bullets   (.tm-invite__warning-list)
-     5. Code stamp + QR           (.tm-invite__code-stamp, ...)
-     6. Code action ledger        (.tm-invite__action-row)
-     7. Copy toast                (.tm-invite__toast)
-     8. Revoke specimen           (.tm-invite__specimen)
-     9. Success seal              (.tm-invite__seal)
-     10. Footer pills (oxblood)   (.tm-invite__danger-pill)
+     5. Code stamp + QR           (.tm-invite__code-stamp, .tm-invite__qr-card)
+     6. Action row (.pm-action)   (.tm-invite__actions)
+     7. Revoke specimen           (.tm-invite__specimen)
+     8. Success seal              (.tm-invite__seal)
+     9. Footer pills (oxblood)    (.tm-invite__danger-pill)
 */
 
 /* ==========================================================================
@@ -329,64 +328,12 @@
   border-radius: var(--radius-xl);
   background: var(--color-bg-surface);
   text-align: center;
-  overflow: hidden;
-}
-
-/* Decorative corner ticks — same vocabulary as the barcode ledger frame
-   so the family of "stamped tag" surfaces stays consistent. */
-.tm-invite__code-stamp::before,
-.tm-invite__code-stamp::after {
-  content: "";
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border-color: var(--color-hair);
-  border-style: solid;
-  border-width: 0;
-  pointer-events: none;
-}
-
-.tm-invite__code-stamp::before {
-  top: 8px;
-  left: 8px;
-  border-top-width: 1px;
-  border-left-width: 1px;
-}
-
-.tm-invite__code-stamp::after {
-  bottom: 8px;
-  right: 8px;
-  border-bottom-width: 1px;
-  border-right-width: 1px;
-}
-
-.tm-invite__code-rule {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  margin: 0;
-}
-
-.tm-invite__code-rule-line {
-  flex: 1;
-  height: 0;
-  border-top: 1px dashed var(--color-hair);
-}
-
-.tm-invite__code-rule-caption {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
 }
 
 /* The 6-char invite code itself. JetBrains Mono, big, tracked, tabular
    so the digits/letters line up across regenerations. */
 .tm-invite__code-value {
-  margin: var(--space-2) 0 0;
+  margin: 0;
   font-family: var(--font-mono);
   font-size: 44px;
   line-height: 1;
@@ -415,42 +362,16 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Copy-confirmation toast — small mono caption that flashes inside the
-   stamp when the code is copied. Pulses in via opacity + slight rise. */
-.tm-invite__toast {
-  position: absolute;
-  left: 50%;
-  bottom: calc(var(--space-3) * -1);
-  transform: translate(-50%, 0);
-  padding: 4px var(--space-3);
-  background: var(--color-text-primary);
-  color: var(--color-bg-surface);
-  border-radius: var(--radius-full);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  animation: tm-invite-toast-in 320ms var(--ease-out-expo) both;
-  box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.35);
-  z-index: 2;
-  pointer-events: none;
-}
-
-@keyframes tm-invite-toast-in {
-  from { opacity: 0; transform: translate(-50%, 6px); }
-  to   { opacity: 1; transform: translate(-50%, 0); }
-}
-
-/* QR card under the stamp — same hairline frame, smaller, with a mono
-   caption so it reads like a paired-stub. */
+/* QR card sits between the code stamp and the action row, growing to
+   fill the empty space. The frame inside scales responsively up to a
+   reasonable cap so the QR remains crisp on phones. */
 .tm-invite__qr-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3);
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-bg-surface);
@@ -458,7 +379,7 @@
 
 .tm-invite__qr-caption {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.20em;
   text-transform: uppercase;
@@ -466,8 +387,8 @@
 }
 
 .tm-invite__qr-frame {
-  width: 132px;
-  height: 132px;
+  width: min(60vw, 220px);
+  aspect-ratio: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -484,112 +405,19 @@
 }
 
 /* ==========================================================================
-   6. Action ledger — Copy / Share / Regenerate / Revoke as dotted-leader
-      rows. Same rhythm as .pm-review-row but with a leading icon and
-      adapted to the team-invite namespace. The Revoke row carries
-      oxblood styling.
+   6. Action row — Copy / Share / Regenerate / Revoke as .pm-action tiles
+      (the same vocabulary used by the barcode modal). Icon-on-top with
+      a pillowed container, mono uppercase label below. Layout mirrors
+      .pm-barcode-actions: flex row, space-around, modest gap.
    ==========================================================================
 */
 
 .tm-invite__actions {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-2) 0 0;
-  border-top: 1px solid var(--color-hair);
-  margin-top: var(--space-2);
-}
-
-.tm-invite__action-row {
-  display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-around;
   gap: var(--space-3);
-  width: 100%;
-  padding: var(--space-3) var(--space-2);
-  border: 0;
-  background: transparent;
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  text-align: left;
-  -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--duration-fast) ease-out;
-}
-
-@media (hover: hover) {
-  .tm-invite__action-row:hover {
-    background: var(--color-bg-muted);
-  }
-}
-
-.tm-invite__action-row:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.tm-invite__action-icon {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-surface);
-  color: var(--color-text-secondary);
-}
-
-.tm-invite__action-row--danger .tm-invite__action-icon {
-  border-color: color-mix(in srgb, var(--color-error) 30%, var(--color-hair));
-  color: var(--color-error);
-}
-
-.tm-invite__action-row--success .tm-invite__action-icon {
-  color: var(--color-success);
-  border-color: color-mix(in srgb, var(--color-success) 30%, var(--color-hair));
-}
-
-.tm-invite__action-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-
-.tm-invite__action-row--danger .tm-invite__action-label {
-  color: var(--color-error);
-}
-
-.tm-invite__action-leader {
-  flex: 1;
-  height: 1em;
-  border-bottom: 1px dotted var(--color-border);
-  opacity: 0.7;
-  align-self: end;
-  margin-bottom: 4px;
-  min-width: 12px;
-}
-
-.tm-invite__action-chev {
-  flex-shrink: 0;
-  color: var(--color-text-tertiary);
-}
-
-.tm-invite__action-row--danger .tm-invite__action-chev {
-  color: var(--color-error);
-  opacity: 0.7;
-}
-
-/* Spinner inline inside an action row's icon slot, used when
-   regenerating. */
-.tm-invite__action-icon--spinning > * {
-  animation: tm-invite-spin 1s linear infinite;
-}
-
-@keyframes tm-invite-spin {
-  to { transform: rotate(360deg); }
+  padding: var(--space-2) 0 var(--space-3);
 }
 
 /* ==========================================================================
