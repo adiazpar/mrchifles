@@ -1,7 +1,7 @@
 'use client'
 
 import { Redirect } from 'react-router-dom'
-import { IonContent, IonHeader, IonPage, IonToolbar } from '@ionic/react'
+import { IonButtons, IonContent, IonHeader, IonPage, IonToolbar } from '@ionic/react'
 import { PageSpinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { CreateBusinessProvider } from '@/contexts/create-business-context'
@@ -68,9 +68,9 @@ function HubPageChrome() {
         <IonToolbar>
           <div className="hub-topbar">
             <span className="hub-topbar__brand">Kasero</span>
-            <div className="hub-topbar__actions">
-              <UserMenu />
-            </div>
+            <IonButtons className="hub-topbar__actions">
+              <UserMenu trigger="hamburger" />
+            </IonButtons>
           </div>
         </IonToolbar>
       </IonHeader>
