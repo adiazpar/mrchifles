@@ -250,7 +250,7 @@
   padding: 0;
   border: 1.5px solid var(--color-brand);
   border-radius: var(--radius-full);
-  background: transparent;
+  background: var(--color-bg-muted);
   color: var(--color-brand);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;

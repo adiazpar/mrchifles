@@ -130,7 +130,11 @@ export function OrderOverviewStep() {
               const hasMath = item.unitCost != null
               return (
                 <div key={item.id} className="order-receipt-line">
-                  <span className="order-receipt-line__icon">
+                  <span
+                    className={`order-receipt-line__icon${
+                      iconUrl && !presetIcon ? ' order-receipt-line__icon--photo' : ''
+                    }`}
+                  >
                     {presetIcon ? (
                       <presetIcon.icon size={18} className="text-text-primary" />
                     ) : iconUrl ? (
@@ -188,7 +192,11 @@ export function OrderOverviewStep() {
                         : 'order-receive-line__variance--short'
                   return (
                     <div key={`variance-${item.id}`} className="order-receive-line">
-                      <span className="order-receive-line__icon">
+                      <span
+                        className={`order-receive-line__icon${
+                          iconUrl && !presetIcon ? ' order-receive-line__icon--photo' : ''
+                        }`}
+                      >
                         {presetIcon ? (
                           <presetIcon.icon size={18} className="text-text-primary" />
                         ) : iconUrl ? (

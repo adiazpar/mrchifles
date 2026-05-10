@@ -219,16 +219,42 @@
   text-align: left;
 }
 
+/* Same double-outline treatment as .product-tile__icon (sales picker)
+   so the order-modal product rows feel like part of the same family.
+   --photo modifier strips the inset frame + inner highlight so real
+   photos fill the tile cleanly. */
 .order-product-row__icon {
   width: 44px;
   height: 44px;
   flex-shrink: 0;
+  position: relative;
   border-radius: var(--radius-md);
   background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+.order-product-row__icon::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius-md) - 2px);
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.order-product-row__icon--photo {
+  background: var(--color-bg-surface);
+  box-shadow: none;
+}
+
+.order-product-row__icon--photo::after {
+  display: none;
 }
 
 .order-product-row__icon img {
@@ -413,12 +439,12 @@
   align-items: center;
   gap: var(--space-2);
   padding: 0 var(--space-10) 0 var(--space-4);
-  height: 48px;
+  min-height: var(--touch-target-min);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-bg-surface);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--text-base);
   color: var(--color-text-primary);
   pointer-events: none;
 }
@@ -643,13 +669,35 @@
   align-self: center;
   width: 32px;
   height: 32px;
+  position: relative;
   border-radius: var(--radius-md);
   background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   color: var(--color-text-tertiary);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+.order-receipt-line__icon::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius-md) - 2px);
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.order-receipt-line__icon--photo {
+  background: var(--color-bg-surface);
+  box-shadow: none;
+}
+
+.order-receipt-line__icon--photo::after {
+  display: none;
 }
 
 .order-receipt-line__icon img {
@@ -710,22 +758,6 @@
 
 .order-receipt-line__math-unit {
   color: var(--color-text-secondary);
-}
-
-/* Compact variant used by ConfirmOrderStep — fewer columns, tighter rows. */
-.order-receipt-line--compact {
-  grid-template-columns: 32px 1fr auto;
-  padding: var(--space-2) 0;
-}
-
-.order-receipt-line--compact .order-receipt-line__qty {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-secondary);
-  text-align: right;
-  letter-spacing: 0.04em;
 }
 
 /* =====================================================================
@@ -924,13 +956,35 @@
 .order-receive-line__icon {
   width: 32px;
   height: 32px;
+  position: relative;
   border-radius: var(--radius-md);
   background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   color: var(--color-text-tertiary);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+.order-receive-line__icon::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius-md) - 2px);
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.order-receive-line__icon--photo {
+  background: var(--color-bg-surface);
+  box-shadow: none;
+}
+
+.order-receive-line__icon--photo::after {
+  display: none;
 }
 
 .order-receive-line__icon img {
@@ -1514,66 +1568,6 @@
   color: var(--color-text-tertiary);
   letter-spacing: 0;
   font-weight: 400;
-}
-
-/* =====================================================================
- * Confirm-order tap-to-edit ledger
- * =====================================================================
- * Each section on ConfirmOrderStep + EditOrderStep (line items, total,
- * audit trail) is a tappable card that jumps to its matching edit
- * step. Layout: flex row of body (flex:1, holds the section content)
- * + chevron (flex-shrink:0). align-items: center keeps the chevron
- * vertically balanced regardless of whether the body is one row or
- * many, and the chevron lines up across all three cards because it's
- * always the same flex-item position.
- */
-button.order-confirm__edit-section {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  padding: var(--space-3);
-  margin-bottom: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-bg-surface);
-  text-align: left;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
-}
-
-@media (hover: hover) {
-  button.order-confirm__edit-section:hover {
-    border-color: var(--color-brand);
-    background: var(--color-brand-subtle);
-  }
-}
-
-button.order-confirm__edit-section:active {
-  background: var(--color-brand-subtle);
-}
-
-.order-confirm__edit-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.order-confirm__edit-chev {
-  flex-shrink: 0;
-  color: var(--color-text-tertiary);
-}
-
-@media (hover: hover) {
-  button.order-confirm__edit-section:hover .order-confirm__edit-chev {
-    color: var(--color-brand);
-  }
-}
-
-/* Legacy block removed in JSX — keep this hide for any in-flight
- * caches still rendering it. */
-.order-confirm__edit-trail {
-  display: none;
 }
 
 /* =====================================================================

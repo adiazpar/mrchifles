@@ -109,7 +109,11 @@ export function ReceiveOrderStep() {
               const presetIcon = iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
               return (
                 <div key={item.id} className="order-receive-line">
-                  <span className="order-receive-line__icon">
+                  <span
+                    className={`order-receive-line__icon${
+                      iconUrl && !presetIcon ? ' order-receive-line__icon--photo' : ''
+                    }`}
+                  >
                     {presetIcon ? (
                       <presetIcon.icon size={18} className="text-text-primary" />
                     ) : iconUrl ? (

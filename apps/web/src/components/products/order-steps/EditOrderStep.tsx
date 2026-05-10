@@ -172,7 +172,11 @@ export function EditOrderStep() {
                     iconUrl && isPresetIcon(iconUrl) ? getPresetIcon(iconUrl) : null
                   return (
                     <div key={item.product.id} className="pm-review__item-line">
-                      <span className="pm-review__item-icon">
+                      <span
+                        className={`pm-review__item-icon${
+                          iconUrl && !presetIcon ? ' pm-review__item-icon--photo' : ''
+                        }`}
+                      >
                         {presetIcon ? (
                           <presetIcon.icon size={16} className="text-text-primary" />
                         ) : iconUrl ? (

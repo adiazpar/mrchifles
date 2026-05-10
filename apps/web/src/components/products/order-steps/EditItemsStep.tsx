@@ -94,7 +94,11 @@ export function EditItemsStep() {
                     onClick={() => onToggleProduct(product)}
                     className="order-product-row__pick"
                   >
-                    <span className="order-product-row__icon">
+                    <span
+                      className={`order-product-row__icon${
+                        iconUrl && !presetIcon ? ' order-product-row__icon--photo' : ''
+                      }`}
+                    >
                       {presetIcon ? (
                         <presetIcon.icon size={22} className="text-text-primary" />
                       ) : iconUrl ? (
