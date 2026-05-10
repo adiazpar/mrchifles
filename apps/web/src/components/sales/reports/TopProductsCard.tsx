@@ -65,7 +65,13 @@ export function TopProductsCard({ entries }: TopProductsCardProps) {
                 className={`top-product-row${idx === 0 ? ' top-product-row--first' : ''}`}
               >
                 <span className="top-product-row__rank">{idx + 1}</span>
-                <div className="product-list-image top-product-row__icon">
+                <div
+                  className={`product-list-image top-product-row__icon${
+                    iconUrl && !isPresetIcon(iconUrl)
+                      ? ' top-product-row__icon--photo'
+                      : ''
+                  }`}
+                >
                   {product ? (
                     renderIcon(product, iconUrl)
                   ) : (

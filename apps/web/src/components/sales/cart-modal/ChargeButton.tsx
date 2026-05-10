@@ -4,6 +4,7 @@ import { useIntl, type IntlShape } from 'react-intl';
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useSales } from '@/contexts/sales-context'
+import { useProducts } from '@/contexts/products-context'
 import { ApiError } from '@/lib/api-client'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { roundToCurrencyDecimals } from '@kasero/shared/sales-helpers'
@@ -58,6 +59,7 @@ export function ChargeButton({
   const { formatCurrency } = useBusinessFormat()
   const translateApiMessage = useApiMessage()
   const sales = useSales()
+  const products = useProducts()
 
   const tendered = parseFloat(tenderedStr) || 0
 
@@ -75,6 +77,11 @@ export function ChargeButton({
         })),
         paymentMethod: methodId,
       })
+      // Server decremented stock atomically inside the sale transaction —
+      // refresh the products cache in the background so the picker reflects
+      // the new stock numbers without waiting for focus revalidation. Fire
+      // and forget; the user keeps moving to the success step.
+      void products.refetch()
       const isCash = methodId === 'cash'
       setConfirmedSale({
         saleNumber: sale.saleNumber,

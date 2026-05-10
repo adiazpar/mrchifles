@@ -339,8 +339,38 @@
   min-width: 0;
 }
 
+/* Sales product tile icon — adopts the same double-outline treatment as
+   .product-row__icon on the products page: outer hairline + a subtler
+   inset hairline (printed-card edge), with a slightly darker cream
+   background so preset Lucide glyphs read as specimen tiles. */
 .product-tile__icon {
   flex-shrink: 0;
+  position: relative;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+.product-tile__icon::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius-lg) - 3px);
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* Real photo (AI-generated, background-removed) fills the tile cleanly,
+   so the inset frame and inner highlight drop out — only the outer
+   hairline remains as the specimen-card edge. */
+.product-tile__icon--photo {
+  background: var(--color-bg-surface);
+  box-shadow: none;
+}
+
+.product-tile__icon--photo::after {
+  display: none;
 }
 
 .product-tile__name {
@@ -370,25 +400,6 @@
   color: var(--color-brand);
 }
 
-/* Stock countdown chip — only visible when 0 < stock < 10. Mono
- * uppercase, sits in the top-right of the tile, doesn't take row
- * space. Cream-tinted backplate so it reads as data, not warning. */
-.product-tile__stock-chip {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  color: var(--color-warning);
-  background: var(--color-warning-subtle);
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  font-variant-numeric: tabular-nums;
-}
-
 .product-tile__sold-out-stamp {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -412,8 +423,13 @@
   transition: opacity var(--duration-fast) ease-out;
 }
 
+/* When the tile isn't selected the qty controls are inert — drop
+   pointer-events so taps fall through to the tile's own click
+   handler (which selects the product). The buttons are also
+   disabled in JSX so this is belt-and-braces. */
 .product-tile__qty-row--idle {
   opacity: 0.4;
+  pointer-events: none;
 }
 
 .product-tile__qty-button {
@@ -977,8 +993,33 @@
   color: var(--color-brand);
 }
 
+/* Same double-outline treatment as .product-tile__icon for visual
+   consistency across the sales surface. */
 .top-product-row__icon {
   flex-shrink: 0;
+  position: relative;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+.top-product-row__icon::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius-lg) - 3px);
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.top-product-row__icon--photo {
+  background: var(--color-bg-surface);
+  box-shadow: none;
+}
+
+.top-product-row__icon--photo::after {
+  display: none;
 }
 
 .top-product-row__name {

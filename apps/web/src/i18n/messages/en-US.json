@@ -947,7 +947,6 @@
   "sales.empty_state.no_products_desc": "Add products in Manage to start ringing up sales.",
   "sales.search_no_results_title": "No matches",
   "sales.search_no_results_desc": "Nothing matches “{query}”.",
-  "sales.product.stock_remaining": "{count} left",
   "sales.product.sold_out_stamp": "Sold out",
   "sales.stats.today": "Today",
   "sales.stats.today_revenue": "Today's revenue",

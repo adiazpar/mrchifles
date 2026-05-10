@@ -947,7 +947,6 @@
   "sales.empty_state.no_products_desc": "管理から商品を追加して、販売を始めましょう",
   "sales.search_no_results_title": "一致する項目なし",
   "sales.search_no_results_desc": "「{query}」に一致するものがありません",
-  "sales.product.stock_remaining": "残り{count}個",
   "sales.product.sold_out_stamp": "売り切れ",
   "sales.stats.today": "今日",
   "sales.stats.today_revenue": "今日の売上",

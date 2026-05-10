@@ -18,7 +18,6 @@ interface ProductPickerProps {
   cart: UseCartResult
 }
 
-const STOCK_CHIP_THRESHOLD = 10
 
 const SearchIcon = (
   <svg
@@ -197,7 +196,6 @@ interface ProductTileProps {
 function ProductTile({ product, qty, cart, formatCurrency, t }: ProductTileProps) {
   const stockTotal = product.stock ?? 0
   const outOfStock = stockTotal <= 0
-  const lowStock = !outOfStock && stockTotal < STOCK_CHIP_THRESHOLD
   const isSelected = qty > 0
   const atMaxQty = qty >= stockTotal
   const iconUrl = getProductIconUrl(product)
@@ -233,16 +231,12 @@ function ProductTile({ product, qty, cart, formatCurrency, t }: ProductTileProps
       onKeyDown={handleKey}
       className={tileClass}
     >
-      {lowStock && (
-        <span className="product-tile__stock-chip">
-          {t.formatMessage(
-            { id: 'sales.product.stock_remaining' },
-            { count: stockTotal },
-          )}
-        </span>
-      )}
       <div className="product-tile__head">
-        <div className="product-list-image product-tile__icon">
+        <div
+          className={`product-list-image product-tile__icon${
+            iconUrl && !isPresetIcon(iconUrl) ? ' product-tile__icon--photo' : ''
+          }`}
+        >
           {renderProductIcon(product, iconUrl)}
         </div>
         <div className="flex-1 min-w-0">

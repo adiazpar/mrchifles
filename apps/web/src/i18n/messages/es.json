@@ -947,7 +947,6 @@
   "sales.empty_state.no_products_desc": "Agregue productos en Gestionar para empezar a registrar ventas.",
   "sales.search_no_results_title": "Sin coincidencias",
   "sales.search_no_results_desc": "Nada coincide con \"{query}\".",
-  "sales.product.stock_remaining": "Quedan {count}",
   "sales.product.sold_out_stamp": "Agotado",
   "sales.stats.today": "Hoy",
   "sales.stats.today_revenue": "Ingresos de hoy",
