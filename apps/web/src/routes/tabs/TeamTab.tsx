@@ -13,7 +13,7 @@ export function TeamTab() {
       <BusinessHeader
         title={intl.formatMessage({ id: 'navigation.team' })}
         backHref={`/${businessId}/manage`}
-        backLabel={intl.formatMessage({ id: 'navigation.manage' })}
+        backLabel={intl.formatMessage({ id: 'common.back' })}
       />
       <IonContent>
         <TeamDrilldown businessId={businessId} />

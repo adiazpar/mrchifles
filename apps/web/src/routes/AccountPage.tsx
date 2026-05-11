@@ -50,7 +50,7 @@ export function AccountPage() {
           <IonButtons slot="start">
             <IonBackButton
               defaultHref="/"
-              text={intl.formatMessage({ id: 'account.back_label' })}
+              text={intl.formatMessage({ id: 'common.back' })}
             />
           </IonButtons>
           <IonTitle>{intl.formatMessage({ id: 'navigation.account' })}</IonTitle>

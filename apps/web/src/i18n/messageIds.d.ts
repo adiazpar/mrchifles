@@ -13,7 +13,6 @@ export type MessageId =
   | 'account.about_tagline_v2'
   | 'account.about_tagline_v2_emphasis'
   | 'account.about_version_label'
-  | 'account.back_label'
   | 'account.delete_blocked_description'
   | 'account.delete_blocked_eyebrow'
   | 'account.delete_blocked_hero_title'

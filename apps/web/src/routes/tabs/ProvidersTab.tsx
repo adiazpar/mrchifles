@@ -13,7 +13,7 @@ export function ProvidersTab() {
       <BusinessHeader
         title={intl.formatMessage({ id: 'navigation.providers' })}
         backHref={`/${businessId}/manage`}
-        backLabel={intl.formatMessage({ id: 'navigation.manage' })}
+        backLabel={intl.formatMessage({ id: 'common.back' })}
       />
       <IonContent>
         <ProvidersDrilldown businessId={businessId} />
