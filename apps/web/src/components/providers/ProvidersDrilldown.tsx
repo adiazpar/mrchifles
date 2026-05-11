@@ -169,14 +169,6 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
             primitive. */}
         {sortedProviders.length > 0 && (
           <section className="report-card">
-            <div className="report-card__header">
-              <span className="report-card__eyebrow">
-                {t.formatMessage({ id: 'providers.roster_card_eyebrow' })}
-              </span>
-              <h2 className="report-card__title">
-                {t.formatMessage({ id: 'providers.roster_card_title' })}
-              </h2>
-            </div>
             {sortedProviders.map((provider) => {
               const swipeActions = canManage
                 ? [

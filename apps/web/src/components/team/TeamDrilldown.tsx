@@ -188,14 +188,6 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
               dimmed with a "DISABLED" mono token in the caption. */}
           {orderedRoster.length > 0 && (
             <section className="report-card">
-              <div className="report-card__header">
-                <span className="report-card__eyebrow">
-                  {t.formatMessage({ id: 'team.roster.card_roster_eyebrow' })}
-                </span>
-                <h2 className="report-card__title">
-                  {t.formatMessage({ id: 'team.roster.card_roster_title' })}
-                </h2>
-              </div>
               {orderedRoster.map((member) => (
                 <TeamMemberListItem
                   key={member.id}
