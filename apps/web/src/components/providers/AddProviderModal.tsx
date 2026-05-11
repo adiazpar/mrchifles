@@ -232,7 +232,7 @@ function FormBody({
         <h1 className="pm-hero__title">
           {t.formatMessage(
             { id: 'providers.modal_v2.title_add' },
-            { em: (chunks) => <em>{chunks}</em> },
+            { em: (chunks) => <em key="em">{chunks}</em> },
           )}
         </h1>
         <p className="pm-hero__subtitle">

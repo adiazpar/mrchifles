@@ -325,7 +325,7 @@ function FormBody({
             {
               // User-entered content — interpolated verbatim.
               name: editingProvider.name,
-              em: (chunks) => <em>{chunks}</em>,
+              em: (chunks) => <em key="em">{chunks}</em>,
             },
           )}
         </h1>
@@ -381,7 +381,7 @@ function DeleteConfirmBody({ provider, error }: DeleteConfirmBodyProps) {
             {
               // User-entered content — interpolated verbatim.
               name: provider.name,
-              em: (chunks) => <em>{chunks}</em>,
+              em: (chunks) => <em key="em">{chunks}</em>,
             },
           )}
         </h1>

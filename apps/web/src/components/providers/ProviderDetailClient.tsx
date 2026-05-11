@@ -367,6 +367,27 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     setAddNoteOpen(true)
   }, [atNotesLimit])
 
+  // Stable onExitComplete handlers — wrapped in useCallback so the modal's
+  // delayed-cleanup effect doesn't see a fresh reference on every keystroke
+  // (an inline lambda would make the cleanup-effect re-run + reschedule its
+  // 250ms onExitComplete timer on every parent render, eventually firing
+  // while the user is still mid-draft and wiping noteTitle/noteBody).
+  const handleAddNoteExitComplete = useCallback(() => {
+    setNoteTitle('')
+    setNoteBody('')
+    setNoteSaved(false)
+    setNoteError('')
+  }, [])
+  const handleEditNoteExitComplete = useCallback(() => {
+    setEditingNoteId(null)
+    setNoteTitle('')
+    setNoteBody('')
+    setNoteSaved(false)
+    setNoteDeleted(false)
+    setNoteError('')
+    setEditNoteInitialStep(0)
+  }, [])
+
   const openEditNote = useCallback((note: ProviderNote) => {
     setEditingNoteId(note.id)
     setNoteTitle(note.title)
@@ -775,11 +796,9 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             {DETAIL_TAB_IDS.map((id) => {
               const isActive = activeTab === id
               const countLabel =
-                id === 'history' && hasOrders
-                  ? String(providerOrders.length)
-                  : id === 'notes' && notesCount > 0
-                    ? `${notesCount}/${MAX_PROVIDER_NOTES}`
-                    : null
+                id === 'notes' && notesCount > 0
+                  ? `${notesCount}/${MAX_PROVIDER_NOTES}`
+                  : null
               return (
                 <button
                   key={id}
@@ -1289,12 +1308,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       <AddProviderNoteModal
         isOpen={isAddNoteOpen}
         onClose={() => setAddNoteOpen(false)}
-        onExitComplete={() => {
-          setNoteTitle('')
-          setNoteBody('')
-          setNoteSaved(false)
-          setNoteError('')
-        }}
+        onExitComplete={handleAddNoteExitComplete}
         title={noteTitle}
         onTitleChange={setNoteTitle}
         body={noteBody}
@@ -1311,15 +1325,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       <EditProviderNoteModal
         isOpen={isEditNoteOpen}
         onClose={() => setEditNoteOpen(false)}
-        onExitComplete={() => {
-          setEditingNoteId(null)
-          setNoteTitle('')
-          setNoteBody('')
-          setNoteSaved(false)
-          setNoteDeleted(false)
-          setNoteError('')
-          setEditNoteInitialStep(0)
-        }}
+        onExitComplete={handleEditNoteExitComplete}
         initialStep={editNoteInitialStep}
         editingNote={editingNote}
         title={noteTitle}

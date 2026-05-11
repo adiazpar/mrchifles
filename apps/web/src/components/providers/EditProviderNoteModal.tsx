@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
   IonHeader,
@@ -88,6 +88,11 @@ export function EditProviderNoteModal({
   const userLocale = t.locale
 
   const [step, setStep] = useState<Step>(stepFromProp(initialStep))
+  // Tracks whether the modal has ever been opened in this mount. Required
+  // so the cleanup-effect doesn't fire on initial mount and wipe the
+  // sibling Add-note modal's draft state — see the same guard in
+  // AddProviderNoteModal for the full rationale.
+  const wasOpenRef = useRef(false)
 
   // Sync step when the modal opens at a different initialStep.
   useEffect(() => {
@@ -95,9 +100,14 @@ export function EditProviderNoteModal({
   }, [isOpen, initialStep])
 
   // Delayed cleanup so the parent's onExitComplete (clears editingNoteId
-  // + form draft) doesn't fire mid dismiss animation.
+  // + form draft) doesn't fire mid dismiss animation. Skips the initial
+  // mount-with-isOpen=false state via wasOpenRef.
   useEffect(() => {
-    if (isOpen) return
+    if (isOpen) {
+      wasOpenRef.current = true
+      return
+    }
+    if (!wasOpenRef.current) return
     const timer = window.setTimeout(onExitComplete, 250)
     return () => window.clearTimeout(timer)
   }, [isOpen, onExitComplete])
@@ -286,7 +296,7 @@ function FormBody({
         <h1 className="pm-hero__title">
           {t.formatMessage(
             { id: 'providers.modal_v2.note_title_edit' },
-            { em: (chunks) => <em>{chunks}</em> },
+            { em: (chunks) => <em key="em">{chunks}</em> },
           )}
         </h1>
         <p className="pm-hero__subtitle">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
   IonHeader,
@@ -60,6 +60,12 @@ export function AddProviderNoteModal({
 }: AddProviderNoteModalProps) {
   const t = useIntl()
   const [step, setStep] = useState<Step>('form')
+  // Tracks whether the modal has ever been opened in this mount. Without
+  // this, the cleanup-effect would fire its 250ms onExitComplete timer on
+  // initial mount (isOpen=false from the start) and wipe sibling draft
+  // state — concretely: if a user clicks Add and starts typing within
+  // 250ms of mount, the spurious timer clears their input.
+  const wasOpenRef = useRef(false)
 
   // Reset to root surface every time the modal opens.
   useEffect(() => {
@@ -68,9 +74,14 @@ export function AddProviderNoteModal({
 
   // Delayed cleanup — runs ~250ms after dismiss animation completes so
   // the parent's onExitComplete (clears form state) doesn't fire mid
-  // dismissal.
+  // dismissal. Only fires on open→close transitions (never on the
+  // mount-with-isOpen=false initial state).
   useEffect(() => {
-    if (isOpen) return
+    if (isOpen) {
+      wasOpenRef.current = true
+      return
+    }
+    if (!wasOpenRef.current) return
     const timer = window.setTimeout(onExitComplete, 250)
     return () => window.clearTimeout(timer)
   }, [isOpen, onExitComplete])
@@ -174,7 +185,7 @@ function FormBody({ title, onTitleChange, body, onBodyChange, error }: FormBodyP
         <h1 className="pm-hero__title">
           {t.formatMessage(
             { id: 'providers.modal_v2.note_title_add' },
-            { em: (chunks) => <em>{chunks}</em> },
+            { em: (chunks) => <em key="em">{chunks}</em> },
           )}
         </h1>
         <p className="pm-hero__subtitle">
