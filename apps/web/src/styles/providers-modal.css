@@ -474,9 +474,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
   padding: var(--space-6) var(--space-2);
   gap: var(--space-3);
+  height: 100%;
 }
 
 .pv-seal__circle {
@@ -593,4 +595,188 @@
 .provider-modal__delete-link:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* ==========================================================================
+   9. Contact sheet — Fraunces hero + hairline row stack
+   ==========================================================================
+   The contact half-sheet shares its row chassis with the user-menu drawer
+   (.user-menu-item — paper-warm hover wash, hairline divider between
+   rows, chevron on the trailing edge). The hero on top swaps the toolbar's
+   neutral IonTitle for a printed-stub identity card: mono "REACH" eyebrow
+   above a Fraunces italic provider name, so the sheet reads as a calling
+   card rather than a generic action list.
+
+   Each row carries a square icon chip whose tint signals the channel
+   (saffron for phone, moss for WhatsApp, ink for email — all derived
+   from semantic tokens, never hex). The label sits in Geist for the
+   action verb and the underlying value falls into JetBrains Mono with
+   tabular numerics so phone numbers align across rows. Long emails are
+   truncated with ellipsis so the row never wraps and breaks rhythm.
+*/
+
+.pv-contact-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-bottom: 1px solid var(--color-hair);
+}
+
+.pv-contact-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.pv-contact-hero__eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--color-brand);
+}
+
+.pv-contact-hero__name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -0.014em;
+  line-height: 1.15;
+  color: var(--color-text-primary);
+  word-break: break-word;
+  margin: 0;
+}
+
+/* Row stack — flush-edge list mirroring .user-menu-items spacing.
+   The very first row gets a tiny extra gap from the hero; subsequent
+   rows are separated by hairlines so the eye reads down the list as a
+   single ledger column. */
+.pv-contact-list {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) 0 var(--space-3);
+}
+
+.pv-contact-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--color-hair-soft);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+.pv-contact-row:first-child {
+  border-top: 0;
+}
+
+@media (hover: hover) {
+  .pv-contact-row:hover {
+    background: var(--color-paper-warm);
+    text-decoration: none;
+  }
+}
+
+.pv-contact-row:active {
+  background: var(--color-paper-warm);
+  transform: translateY(1px);
+}
+
+.pv-contact-row:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: -2px;
+}
+
+/* Square icon chip — hairline frame on cream paper, tinted glyph keyed
+   to the channel. Matches the visual weight of .pv-specimen__avatar so
+   the supplier identity throughout the modal stays in one chip family. */
+.pv-contact-row__chip {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-hair);
+  color: var(--color-text-secondary);
+}
+
+.pv-contact-row__chip svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pv-contact-row__chip--call {
+  background: var(--color-warning-subtle);
+  border-color: color-mix(in srgb, var(--color-warning) 30%, var(--color-hair));
+  color: var(--color-warning);
+}
+
+.pv-contact-row__chip--whatsapp {
+  background: var(--color-success-subtle);
+  border-color: color-mix(in srgb, var(--color-success) 30%, var(--color-hair));
+  color: var(--color-success);
+}
+
+.pv-contact-row__chip--email {
+  background: var(--color-paper-warm);
+  border-color: var(--color-hair);
+  color: var(--color-text-primary);
+}
+
+.pv-contact-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pv-contact-row__label {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.pv-contact-row__value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pv-contact-row__arrow {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-tertiary);
+  margin-left: var(--space-2);
 }

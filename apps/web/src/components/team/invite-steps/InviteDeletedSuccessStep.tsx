@@ -13,27 +13,25 @@ export function InviteDeletedSuccessBody() {
   const t = useIntl()
 
   return (
-    <div className="pm-shell">
-      <div className="tm-invite__seal">
-        <span className="tm-invite__seal-circle" aria-hidden="true">
-          <CheckCircle2 size={44} strokeWidth={1.4} />
-        </span>
+    <div className="tm-invite__seal">
+      <span className="tm-invite__seal-circle" aria-hidden="true">
+        <CheckCircle2 size={44} strokeWidth={1.4} />
+      </span>
 
-        <span className="tm-invite__seal-stamp">
-          {t.formatMessage({ id: 'team.invite_v2.eyebrow_deleted' })}
-        </span>
+      <span className="tm-invite__seal-stamp">
+        {t.formatMessage({ id: 'team.invite_v2.eyebrow_deleted' })}
+      </span>
 
-        <h2 className="pm-hero__title pm-hero__title--danger" style={{ textAlign: 'center' }}>
-          {t.formatMessage(
-            { id: 'team.invite_v2.title_deleted' },
-            { em: (chunks) => <em>{chunks}</em> },
-          )}
-        </h2>
+      <h2 className="pm-hero__title pm-hero__title--danger" style={{ textAlign: 'center' }}>
+        {t.formatMessage(
+          { id: 'team.invite_v2.title_deleted' },
+          { em: (chunks) => <em>{chunks}</em> },
+        )}
+      </h2>
 
-        <p className="pm-hero__subtitle" style={{ textAlign: 'center', margin: 0 }}>
-          {t.formatMessage({ id: 'team.invite_v2.subtitle_deleted' })}
-        </p>
-      </div>
+      <p className="pm-hero__subtitle" style={{ textAlign: 'center', margin: 0 }}>
+        {t.formatMessage({ id: 'team.invite_v2.subtitle_deleted' })}
+      </p>
     </div>
   )
 }

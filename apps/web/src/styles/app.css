@@ -393,6 +393,9 @@
   flex-direction: column;
 }
 
+/* Sibling block above the Create/Join action cards when the user has no
+ * businesses yet — not a full-page empty state. Stays as a text block so
+ * the cards below remain on-screen. */
 .hub-empty {
   text-align: center;
   padding: var(--space-8) var(--space-6) var(--space-4);
@@ -422,6 +425,8 @@
   max-width: 32ch;
 }
 
+/* Sibling no-results card that sits inside the business list scroller —
+ * sized to its content so the search bar above it stays in view. */
 .hub-empty-search {
   display: flex;
   flex-direction: column;

@@ -52,7 +52,7 @@ export function ConfirmationAnimation({
   }, [triggered, type])
 
   return (
-    <div className="flex flex-col items-center text-center py-4">
+    <div className="flex flex-col items-center justify-center text-center py-4 h-full">
       <div style={{ width: 160, height: 160 }}>
         {triggered && (
           <LottiePlayer

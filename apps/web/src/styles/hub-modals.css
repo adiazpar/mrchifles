@@ -27,8 +27,14 @@
   width: 100%;
 }
 
+/* Used for terminal/celebration step bodies. min-height: 100% expands the
+ * wizard-step to fill the IonContent area (its parent .inner-scroll is
+ * absolutely positioned with definite height via inset:0), and
+ * justify-content: center vertically centers the inner content. The
+ * earlier flex:1 declaration was dead because the IonContent scroll part
+ * is not display:flex, so flex:1 had no parent to grow against. */
 .wizard-step--centered {
-  flex: 1;
+  min-height: 100%;
   justify-content: center;
 }
 
@@ -760,9 +766,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
   padding: var(--space-6) var(--page-padding);
   gap: var(--space-3);
+  height: 100%;
 }
 
 .join-business__success-lottie {

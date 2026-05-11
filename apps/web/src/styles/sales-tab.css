@@ -486,17 +486,23 @@
 }
 
 /* ===== POS empty / no-results state ================================== */
-/* Cart FAB is absolutely positioned, so we can't honestly center the
- * empty state between the search row and the FAB without overlap or
- * dead space. Stay with natural-height padding and let the user see it
- * sitting near the top of the available area. */
+/* The pos-empty is the second flex child of the picker's scroll column
+ * (which is `flex-1 min-h-0 overflow-y-auto flex-col` — a Tailwind chain
+ * coming from ProductPicker.tsx). The first sibling is the search row.
+ * Using `flex: 1` here lets the empty state grab the remaining vertical
+ * space after the search row, and justify-content:center centers the
+ * inner block inside that space. The cart FAB is absolutely positioned
+ * over the picker's bottom, so we add bottom padding equal to its
+ * footprint so the centered block doesn't sit underneath it. */
 .pos-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: var(--space-8) var(--space-4);
+  padding: var(--space-8) var(--space-4) calc(var(--space-8) + 64px);
   gap: var(--space-2);
+  flex: 1;
 }
 
 .pos-empty__icon {

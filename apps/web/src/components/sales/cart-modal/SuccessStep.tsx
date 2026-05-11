@@ -46,19 +46,18 @@ export function SuccessStepContent({ confirmedSale }: SuccessStepContentProps) {
     : null
 
   return (
-    <div className="modal-step-item">
-      <div className="cart-success">
-        <div className="cart-success__lottie">
-          {confirmedSale && (
-            <LottiePlayer
-              src="/animations/success.json"
-              loop={false}
-              autoplay={true}
-              delay={300}
-              style={{ width: 140, height: 140 }}
-            />
-          )}
-        </div>
+    <div className="cart-success">
+      <div className="cart-success__lottie">
+        {confirmedSale && (
+          <LottiePlayer
+            src="/animations/success.json"
+            loop={false}
+            autoplay={true}
+            delay={300}
+            style={{ width: 140, height: 140 }}
+          />
+        )}
+      </div>
 
         {confirmedSale && stampNumber && (
           <span className="cart-success__stamp">
@@ -119,17 +118,16 @@ export function SuccessStepContent({ confirmedSale }: SuccessStepContentProps) {
                 </span>
               </div>
             )}
-            <div className="cart-success__ledger-row cart-success__ledger-row--emphasis">
-              <span className="cart-success__ledger-label">
-                {t.formatMessage({ id: 'sales.cart.modal_success_total_label' })}
-              </span>
-              <span className="cart-success__ledger-value">
-                {formatCurrency(confirmedSale.total)}
-              </span>
-            </div>
+          <div className="cart-success__ledger-row cart-success__ledger-row--emphasis">
+            <span className="cart-success__ledger-label">
+              {t.formatMessage({ id: 'sales.cart.modal_success_total_label' })}
+            </span>
+            <span className="cart-success__ledger-value">
+              {formatCurrency(confirmedSale.total)}
+            </span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

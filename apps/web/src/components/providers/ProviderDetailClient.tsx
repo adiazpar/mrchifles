@@ -3,26 +3,28 @@
 import { useIntl } from 'react-intl';
 
 import Image from '@/lib/Image'
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from '@/lib/next-navigation-shim'
 import type { ReactNode } from 'react'
 import {
   IonButton,
-  IonCard,
   IonItem,
   IonItemOption,
   IonItemOptions,
   IonItemSliding,
   IonLabel,
   IonList,
-  IonRippleEffect,
-  IonSegment,
-  IonSegmentButton,
+  IonNote,
+  IonToggle,
 } from '@ionic/react'
-import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2 } from 'lucide-react'
-import { TabContainer, ModalShell, PageSpinner } from '@/components/ui'
+import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2, User as UserIcon, Power } from 'lucide-react'
+import { TabContainer, ModalShell, PageSpinner, GroupLabel } from '@/components/ui'
+import { pickBusinessMarkColor } from '@/lib/business-mark'
 import {
-  EditProviderModal,
+  EditProviderNameModal,
+  EditProviderPhoneModal,
+  EditProviderEmailModal,
+  DeleteProviderModal,
   AddProviderNoteModal,
   EditProviderNoteModal,
   ReliabilityBar,
@@ -120,19 +122,31 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [isEditOpen, setEditOpen] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [providerDeleted, setProviderDeleted] = useState(false)
   const [isContactSheetOpen, setContactSheetOpen] = useState(false)
 
-  // Edit modal form state
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
-  const [active, setActive] = useState(true)
+  // Per-field edit + delete modal state. We keep one shared isSaving /
+  // editError / providerSaved triplet because only one modal can be open
+  // at a time, and each modal resets its own step on open. The opening
+  // helper below also clears these so a previous error never leaks into
+  // a fresh modal session.
+  const [isNameEditOpen, setNameEditOpen] = useState(false)
+  const [isPhoneEditOpen, setPhoneEditOpen] = useState(false)
+  const [isEmailEditOpen, setEmailEditOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [editError, setEditError] = useState('')
   const [providerSaved, setProviderSaved] = useState(false)
+
+  // Inline Active toggle state — no modal. Optimistic flip with revert on
+  // API failure; isTogglingActive locks the toggle while the PATCH is in
+  // flight so a rapid double-tap doesn't race.
+  const [isTogglingActive, setIsTogglingActive] = useState(false)
+  const [activeError, setActiveError] = useState('')
+
+  // Delete provider modal state.
+  const [isDeleteOpen, setDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [providerDeleted, setProviderDeleted] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   // Notes state — one add modal and one edit/delete modal. Draft state
   // (title + body) is shared between them since only one is ever open at
@@ -225,54 +239,109 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   useEffect(() => { loadAll() }, [loadAll])
 
-  // ===== Edit provider =====
-  const openEdit = () => {
-    if (!provider) return
-    setName(provider.name)
-    setPhone(provider.phone || '')
-    setEmail(provider.email || '')
-    setActive(provider.active)
-    setProviderSaved(false)
-    setEditError('')
-    setEditOpen(true)
-  }
-
-  const handleSaveEdit = useCallback(async (): Promise<boolean> => {
-    if (!name.trim()) { setEditError(intl.formatMessage({
-      id: 'providers.error_name_required'
-    })); return false }
-    setIsSaving(true)
-    setEditError('')
-    try {
-      const payload = {
-        name: name.trim(),
-        phone: phone.trim() || null,
-        email: email.trim() || null,
-        active,
+  // ===== Per-field edit =====
+  // Generic single-field PATCH helper. Each per-field modal hands us
+  // the new trimmed value; we shape the payload so empty strings clear
+  // the field on the server (route accepts `null` for phone/email; name
+  // requires a non-empty value enforced by the modal's canSave gate).
+  // Updates local provider state + syncs the shared providers list so
+  // the order-modal dropdowns on other pages see the new values.
+  const patchProviderField = useCallback(
+    async (
+      payload: { name?: string } | { phone?: string | null } | { email?: string | null } | { active?: boolean },
+    ): Promise<boolean> => {
+      setIsSaving(true)
+      setEditError('')
+      try {
+        const result = await apiPatch<{ success: true; provider: Provider }>(
+          `/api/businesses/${businessId}/providers/${providerId}`,
+          payload,
+        )
+        setProvider(result.provider)
+        setProviders(prev => prev.map(p => (p.id === result.provider.id ? result.provider : p)))
+        setProviderSaved(true)
+        return true
+      } catch (err) {
+        setEditError(
+          err instanceof ApiError && err.envelope
+            ? translateApiMessage(err.envelope)
+            : intl.formatMessage({ id: 'providers.error_failed_to_save' }),
+        )
+        return false
+      } finally {
+        setIsSaving(false)
       }
+    },
+    [businessId, providerId, setProviders, intl, translateApiMessage],
+  )
+
+  // Per-field handlers feeding each modal's onSubmit prop. Empty
+  // phone/email strings collapse to null (server clears the column).
+  const handleSaveName = useCallback(
+    (next: string) => patchProviderField({ name: next }),
+    [patchProviderField],
+  )
+  const handleSavePhone = useCallback(
+    (next: string) => patchProviderField({ phone: next.length > 0 ? next : null }),
+    [patchProviderField],
+  )
+  const handleSaveEmail = useCallback(
+    (next: string) => patchProviderField({ email: next.length > 0 ? next : null }),
+    [patchProviderField],
+  )
+
+  // Open helpers — clear shared state so a previous modal's error or
+  // success flag doesn't bleed into this session.
+  const openNameEdit = useCallback(() => {
+    setEditError('')
+    setProviderSaved(false)
+    setNameEditOpen(true)
+  }, [])
+  const openPhoneEdit = useCallback(() => {
+    setEditError('')
+    setProviderSaved(false)
+    setPhoneEditOpen(true)
+  }, [])
+  const openEmailEdit = useCallback(() => {
+    setEditError('')
+    setProviderSaved(false)
+    setEmailEditOpen(true)
+  }, [])
+
+  // Inline Active toggle — optimistic flip, revert on failure.
+  const handleToggleActive = useCallback(async () => {
+    if (!provider || isTogglingActive) return
+    const next = !provider.active
+    const previous = provider
+    setIsTogglingActive(true)
+    setActiveError('')
+    setProvider({ ...provider, active: next })
+    try {
       const result = await apiPatch<{ success: true; provider: Provider }>(
         `/api/businesses/${businessId}/providers/${providerId}`,
-        payload,
+        { active: next },
       )
-      // Update local provider state + sync the shared providers list so
-      // the order-modal dropdowns on other pages see the new values.
       setProvider(result.provider)
       setProviders(prev => prev.map(p => (p.id === result.provider.id ? result.provider : p)))
-      setProviderSaved(true)
-      return true
     } catch (err) {
-      setEditError(
+      // Revert the optimistic flip and surface the error inline.
+      setProvider(previous)
+      setActiveError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
-          : intl.formatMessage({
-          id: 'providers.error_failed_to_save'
-        })
+          : intl.formatMessage({ id: 'providers.error_failed_to_save' }),
       )
-      return false
     } finally {
-      setIsSaving(false)
+      setIsTogglingActive(false)
     }
-  }, [businessId, providerId, name, phone, email, active, setProviders, intl, translateApiMessage])
+  }, [businessId, providerId, provider, isTogglingActive, setProviders, intl, translateApiMessage])
+
+  // Open the delete confirm modal.
+  const openDelete = useCallback(() => {
+    setDeleteError('')
+    setProviderDeleted(false)
+    setDeleteOpen(true)
+  }, [])
 
   // ===== Notes =====
   // The list lives on `provider.notes` (seeded from the detail GET). Each
@@ -403,7 +472,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   // so the delete-success animation plays before the slide-back fires.
   const handleDelete = useCallback(async (): Promise<boolean> => {
     setIsDeleting(true)
-    setEditError('')
+    setDeleteError('')
     try {
       await apiDelete(`/api/businesses/${businessId}/providers/${providerId}`)
       // Detach the provider from every piece of client state so no UI
@@ -425,7 +494,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       setProviderDeleted(true)
       return true
     } catch (err) {
-      setEditError(
+      setDeleteError(
         err instanceof ApiError && err.envelope
           ? translateApiMessage(err.envelope)
           : intl.formatMessage({
@@ -471,227 +540,316 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   if (error || !provider) {
     return (
-      <div className="px-4 py-6">
-        <div className="p-4 bg-error-subtle text-error rounded-lg">
-          {error || intl.formatMessage({
-            id: 'providers.error_failed_to_load'
-          })}
-        </div>
+      <div className="pd-error">
+        {error || intl.formatMessage({
+          id: 'providers.error_failed_to_load'
+        })}
       </div>
     );
   }
 
   const initials = getProviderInitials(provider.name)
   const hasOrders = providerOrders.length > 0
-
-  const identityContent = (
-    <>
-      <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 bg-brand-subtle text-brand">
-        <span className="text-lg font-semibold">{initials}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-base font-semibold text-text-primary truncate">
-          {provider.name}
-        </div>
-        <div className="text-sm mt-0.5 flex items-center gap-1.5 min-w-0">
-          <span
-            className={`font-medium flex-shrink-0 ${
-              provider.active ? 'text-success' : 'text-error'
-            }`}
-          >
-            {provider.active ? intl.formatMessage({
-              id: 'providers.status_active'
-            }) : intl.formatMessage({
-              id: 'providers.status_inactive'
-            })}
-          </span>
-          {provider.createdAt && (
-            <>
-              <span className="text-text-tertiary flex-shrink-0">&#183;</span>
-              <span className="text-text-tertiary truncate">
-                {intl.formatMessage({
-                  id: 'providers.since_date'
-                }, { date: formatMonthYear(provider.createdAt, userLocale) })}
-              </span>
-            </>
-          )}
-        </div>
-      </div>
-    </>
-  )
+  const markColor = pickBusinessMarkColor(provider.id)
+  const lifetimeSpend = formatCurrencyCompact(metrics.totalSpent)
+  const sinceMonthYear = provider.createdAt
+    ? formatMonthYear(provider.createdAt, userLocale)
+    : null
+  const phoneValue = provider.phone?.trim() ?? ''
+  const emailValue = provider.email?.trim() ?? ''
 
   return (
     <>
-      <div className="px-4 py-6 space-y-4">
-        {/* ============== Identity Header ==============
-            Top row: avatar + name/status. Tappable for managers — opens
-            the edit modal, mirroring the account-page profile card. For
-            non-managers the same content renders as a static div.
-            Below: the two primary actions (New order / Contact). */}
-        <div className="space-y-4">
-          {canManage ? (
-            <button
-              type="button"
-              onClick={openEdit}
-              aria-label={intl.formatMessage({
-                id: 'providers.edit_provider_aria'
-              })}
-              className="bg-bg-surface rounded-xl card-interactive w-full p-4 flex items-center gap-4 text-left ion-activatable ripple-parent"
-            >
-              {identityContent}
-              <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-              <IonRippleEffect />
-            </button>
-          ) : (
-            <div className="flex items-center gap-4">
-              {identityContent}
+      <div className="px-4 pt-3 pb-8">
+        {/* ============== Editorial hero — display only ==============
+            Mark + eyebrow ("PROVIDER · MEMBER SINCE NOV '24") +
+            Fraunces name + meta line (status pill · order count ·
+            lifetime spend). The hero is intentionally non-interactive;
+            edit affordances live in the Details rows below. */}
+        <div className="pd-hero">
+          <div
+            className="pd-hero__mark"
+            data-active={provider.active}
+            style={provider.active ? { background: markColor } : undefined}
+            aria-hidden="true"
+          >
+            {initials}
+          </div>
+          <div className="pd-hero__body">
+            <div className="pd-hero__eyebrow">
+              <span>{intl.formatMessage({ id: 'providers.detail_eyebrow' })}</span>
+              {sinceMonthYear && (
+                <>
+                  <span className="pd-hero__eyebrow-sep" aria-hidden="true" />
+                  <span>
+                    {intl.formatMessage(
+                      { id: 'providers.since_date' },
+                      { date: sinceMonthYear },
+                    )}
+                  </span>
+                </>
+              )}
             </div>
-          )}
-
-          <div className="flex items-center gap-2">
-            {canManage && (
-              <IonButton
-                onClick={() => orderFlows.openNewOrder(providerId)}
-                className="flex-1 min-w-0"
+            <h1 className="pd-hero__name">{provider.name}</h1>
+            <div className="pd-hero__meta">
+              <span
+                className="pd-hero__status"
+                data-active={provider.active}
               >
-                <Plus slot="start" />
-                <span className="truncate">
-                  {intl.formatMessage({
-                    id: 'providers.new_order_button'
-                  })}
-                </span>
-              </IonButton>
-            )}
-            <IonButton
-              onClick={() => setContactSheetOpen(true)}
-              disabled={!provider.phone && !provider.email}
-              className="flex-1 min-w-0"
-            >
-              <Phone slot="start" />
-              <span className="truncate">{intl.formatMessage({
-                id: 'providers.contact_button'
-              })}</span>
-            </IonButton>
+                <span className="pd-hero__status-dot" aria-hidden="true" />
+                {intl.formatMessage({
+                  id: provider.active
+                    ? 'providers.status_active'
+                    : 'providers.status_inactive',
+                })}
+              </span>
+              {hasOrders && (
+                <>
+                  <span className="pd-hero__meta-sep" aria-hidden="true">·</span>
+                  <span className="pd-hero__meta-item">
+                    {intl.formatMessage(
+                      { id: 'orders.order_count' },
+                      { count: providerOrders.length },
+                    )}
+                  </span>
+                  <span className="pd-hero__meta-sep" aria-hidden="true">·</span>
+                  <span className="pd-hero__meta-item">
+                    {intl.formatMessage(
+                      { id: 'providers.lifetime_total' },
+                      { value: lifetimeSpend },
+                    )}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* ============== Tabs ==============
-            Summary / Stats / History / Notes. Mirrors the products page
-            pattern: a section-tabs bar driving a swipeable TabContainer.
-            The tab is persisted in the URL so browser back/forward and
-            tab reloads restore the user's position. */}
-        <IonSegment
-          value={activeTab}
-          onIonChange={(e) => handleTabChange(e.detail.value as DetailTab)}
-        >
-          {DETAIL_TAB_IDS.map(id => (
-            <IonSegmentButton key={id} value={id}>
-              <IonLabel>{intl.formatMessage({ id: `providers.tab_${id}` })}</IonLabel>
-            </IonSegmentButton>
-          ))}
-        </IonSegment>
+        {/* ============== Primary action row ==============
+            Manager-only "New order" terracotta primary; "Contact" outline
+            secondary. When the user is a non-manager, Contact stretches
+            full width. Disabled when no phone/email. */}
+        <div className="pd-actions">
+          {canManage && (
+            <IonButton onClick={() => orderFlows.openNewOrder(providerId)}>
+              <Plus slot="start" />
+              <span>
+                {intl.formatMessage({ id: 'providers.new_order_button' })}
+              </span>
+            </IonButton>
+          )}
+          <IonButton
+            fill="outline"
+            onClick={() => setContactSheetOpen(true)}
+            disabled={!provider.phone && !provider.email}
+          >
+            <Phone slot="start" />
+            <span>{intl.formatMessage({ id: 'providers.contact_button' })}</span>
+          </IonButton>
+        </div>
 
-        <TabContainer
-          activeTab={activeTab}
-          onTabChange={id => handleTabChange(id as DetailTab)}
-          swipeable
-          fitActiveHeight
-          preserveScrollOnChange
-        >
-          {/* ---- Summary ----
-              Cards always render — on a brand-new provider, each card
-              tells its own empty-state story (stats at zero, reliability
-              as "not enough data", typical items promising what will
-              appear). The overdue banner is the only card that stays
-              conditional (only shown when orders are actually overdue). */}
-          <TabContainer.Tab id="summary">
-              <div className="space-y-4">
-                {/* Overdue orders banner — jumps the user to the History
-                    tab so they can see which orders need attention. */}
+        {/* ============== Details list (manager-only) ==============
+            Mirrors ManageView's per-field row pattern: each row is a
+            tap target that opens its own focused modal (Name / Phone /
+            Email). The Status row owns its toggle inline — no modal —
+            because boolean state doesn't warrant the ceremony of an
+            open/save flow. Non-managers don't see this section. */}
+        {canManage && (
+          <div className="pd-section">
+            <GroupLabel>
+              {intl.formatMessage({ id: 'providers.section_details' })}
+            </GroupLabel>
+            <IonList inset lines="full" className="account-list">
+              <IonItem button detail onClick={openNameEdit}>
+                <UserIcon slot="start" className="text-text-secondary w-5 h-5" />
+                <IonLabel>
+                  <h3>{intl.formatMessage({ id: 'providers.name_label' })}</h3>
+                </IonLabel>
+                <IonNote slot="end" className="pd-detail__value">
+                  {provider.name}
+                </IonNote>
+              </IonItem>
+              <IonItem button detail onClick={openPhoneEdit}>
+                <Phone slot="start" className="text-text-secondary w-5 h-5" />
+                <IonLabel>
+                  <h3>{intl.formatMessage({ id: 'providers.phone_label' })}</h3>
+                </IonLabel>
+                <IonNote
+                  slot="end"
+                  className={phoneValue ? 'pd-detail__value' : 'pd-detail__placeholder'}
+                >
+                  {phoneValue || '—'}
+                </IonNote>
+              </IonItem>
+              <IonItem button detail onClick={openEmailEdit}>
+                <Mail slot="start" className="text-text-secondary w-5 h-5" />
+                <IonLabel>
+                  <h3>{intl.formatMessage({ id: 'providers.email_label' })}</h3>
+                </IonLabel>
+                <IonNote
+                  slot="end"
+                  className={emailValue ? 'pd-detail__value' : 'pd-detail__placeholder'}
+                >
+                  {emailValue || '—'}
+                </IonNote>
+              </IonItem>
+              {/* Status row owns its IonToggle inline — tap routes through
+                  the toggle, not the row chassis (we drop button/detail). */}
+              <IonItem lines="full">
+                <Power slot="start" className="text-text-secondary w-5 h-5" />
+                <IonLabel>
+                  <h3>{intl.formatMessage({ id: 'providers.active_label' })}</h3>
+                </IonLabel>
+                <span
+                  slot="end"
+                  className="pd-toggle-value"
+                  data-active={provider.active}
+                >
+                  <span>
+                    {intl.formatMessage({
+                      id: provider.active
+                        ? 'providers.status_active'
+                        : 'providers.status_inactive',
+                    })}
+                  </span>
+                  <IonToggle
+                    checked={provider.active}
+                    disabled={isTogglingActive}
+                    onIonChange={handleToggleActive}
+                    aria-label={intl.formatMessage({ id: 'providers.active_label' })}
+                  />
+                </span>
+              </IonItem>
+            </IonList>
+            {activeError && (
+              <p className="pd-error" role="alert" style={{ margin: 'var(--space-3) 0 0' }}>
+                {activeError}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ============== Tabs ==============
+            Pill segmented control mirroring the Products page convention
+            (.products-segment). Plain <button role="tab"> elements rather
+            than IonSegment — IonSegment's gesture/touch routing was
+            misrouting taps inside the active TabContainer body below.
+            Mono uppercase tracked labels with an optional count chip on
+            History and Notes. The TabContainer below stays in charge of
+            swipeable, URL-persisted state. */}
+        <div className="pd-section">
+          <div
+            role="tablist"
+            aria-label={intl.formatMessage({ id: 'providers.tab_switcher_aria' })}
+            className="pd-segment"
+          >
+            {DETAIL_TAB_IDS.map((id) => {
+              const isActive = activeTab === id
+              const countLabel =
+                id === 'history' && hasOrders
+                  ? String(providerOrders.length)
+                  : id === 'notes' && notesCount > 0
+                    ? `${notesCount}/${MAX_PROVIDER_NOTES}`
+                    : null
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className="pd-segment__button"
+                  onClick={() => handleTabChange(id)}
+                >
+                  <span>{intl.formatMessage({ id: `providers.tab_${id}` })}</span>
+                  {countLabel && (
+                    <span className="pd-segment__count">{countLabel}</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          <TabContainer
+            activeTab={activeTab}
+            onTabChange={id => handleTabChange(id as DetailTab)}
+            swipeable
+            fitActiveHeight
+            preserveScrollOnChange
+          >
+            {/* ---- Summary ----
+                Cards always render — on a brand-new provider, each card
+                tells its own empty-state story (stats at zero, reliability
+                as "not enough data", typical items promising what will
+                appear). The overdue banner is the only card that stays
+                conditional (only shown when orders are actually overdue). */}
+            <TabContainer.Tab id="summary">
+              <div className="flex flex-col gap-3">
+                {/* Overdue banner — paper-overlay alert. Tap to jump to
+                    the History tab. Oxblood, not generic red. */}
                 {overdueCount > 0 && (
-                  <IonCard
-                    button
+                  <button
+                    type="button"
+                    className="pd-overdue"
                     onClick={() => handleTabChange('history')}
-                    color="danger"
-                    className="m-0 ion-activatable ripple-parent"
                   >
-                    <div className="flex items-center gap-3 p-4">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Bell className="w-5 h-5 text-error" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-error">
-                          {intl.formatMessage({
-                            id: 'providers.overdue_banner_title'
-                          }, { count: overdueCount })}
-                        </div>
-                        <div className="text-xs text-text-secondary mt-0.5">
-                          {intl.formatMessage({
-                            id: 'providers.overdue_banner_subtitle'
-                          })}
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-                    </div>
-                    <IonRippleEffect />
-                  </IonCard>
+                    <span className="pd-overdue__icon" aria-hidden="true">
+                      <Bell />
+                    </span>
+                    <span>
+                      <span className="pd-overdue__title">
+                        {intl.formatMessage({
+                          id: 'providers.overdue_banner_title'
+                        }, { count: overdueCount })}
+                      </span>
+                      <span className="pd-overdue__sub">
+                        {intl.formatMessage({
+                          id: 'providers.overdue_banner_subtitle'
+                        })}
+                      </span>
+                    </span>
+                    <ChevronRight className="pd-overdue__chev" />
+                  </button>
                 )}
 
-                {/* Stats — two side-by-side cards. Both are left-aligned
-                    with the same vertical rhythm: label at top, big
-                    primary value, subtext at the bottom. The right
-                    card's horizontal bar sits between the percentage
-                    and the breakdown as a visual reinforcement. */}
-                <div className="grid grid-cols-2 gap-3 items-stretch">
-                  {/* ---- GASTO TOTAL / Total Spent ---- */}
-                  <div className="bg-bg-surface rounded-2xl p-4 flex flex-col gap-1">
-                    <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary">
-                      {intl.formatMessage({
-                        id: 'providers.stat_total_spent'
-                      })}
+                {/* Stats — two-up tile grid. Mono uppercase label,
+                    Fraunces value, mono sub-line. Reliability swaps the
+                    big number for a percent + horizontal bar; insufficient-
+                    data state collapses to a quiet italic line. */}
+                <div className="pd-stats">
+                  {/* ---- Total spent ---- */}
+                  <div className="pd-stat">
+                    <div className="pd-stat__label">
+                      {intl.formatMessage({ id: 'providers.stat_total_spent' })}
                     </div>
-                    <div className="text-xl font-semibold text-text-primary tabular-nums mt-1">
+                    <div className="pd-stat__value">
                       {formatCurrencyCompact(metrics.totalSpent)}
                     </div>
-                    <div className="text-xs text-text-tertiary tabular-nums mt-auto pt-2">
+                    <div className="pd-stat__sub">
                       {metrics.orderCount === 0
-                        ? intl.formatMessage({
-                        id: 'providers.stat_never_ordered'
-                      })
+                        ? intl.formatMessage({ id: 'providers.stat_never_ordered' })
                         : metrics.cadenceDays != null
-                          ? intl.formatMessage({
-                        id: 'providers.stat_total_spent_subtext_with_cadence'
-                      }, {
-                              count: metrics.orderCount,
-                              days: metrics.cadenceDays,
-                            })
-                          : intl.formatMessage({
-                        id: 'providers.stat_total_spent_subtext_orders_only'
-                      }, {
-                              count: metrics.orderCount,
-                            })}
+                          ? intl.formatMessage(
+                              { id: 'providers.stat_total_spent_subtext_with_cadence' },
+                              { count: metrics.orderCount, days: metrics.cadenceDays },
+                            )
+                          : intl.formatMessage(
+                              { id: 'providers.stat_total_spent_subtext_orders_only' },
+                              { count: metrics.orderCount },
+                            )}
                     </div>
                   </div>
 
-                  {/* ---- CUMPLIMIENTO / Reliability ----
-                      Label → big percent → horizontal bar → breakdown
-                      at the bottom (with optional window scope). The
-                      "last N" tail is only appended when we're showing
-                      a subset of the provider's orders — otherwise the
-                      breakdown denominator already communicates sample
-                      size. */}
-                  <div className="bg-bg-surface rounded-2xl p-4 flex flex-col gap-1">
-                    <div className="text-xs font-medium uppercase tracking-wider text-text-tertiary">
-                      {intl.formatMessage({
-                        id: 'providers.stat_reliability_label'
-                      })}
+                  {/* ---- Reliability ---- */}
+                  <div className="pd-stat">
+                    <div className="pd-stat__label">
+                      {intl.formatMessage({ id: 'providers.stat_reliability_label' })}
                     </div>
                     {metrics.reliability ? (
                       <>
-                        <div className="text-xl font-semibold text-text-primary tabular-nums mt-1">
+                        <div className="pd-stat__value">
                           {metrics.reliability.percent}%
                         </div>
-                        <div className="mt-1">
+                        <div className="pd-stat__bar">
                           <ReliabilityBar
                             percent={metrics.reliability.percent}
                             ariaLabel={intl.formatMessage({
@@ -699,54 +857,53 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                             }) + ': ' + metrics.reliability.percent + '%'}
                           />
                         </div>
-                        <div className="text-xs text-text-tertiary tabular-nums mt-auto pt-2">
-                          {intl.formatMessage({
-                            id: 'providers.stat_reliability_breakdown'
-                          }, {
-                            onTime: metrics.reliability.onTime,
-                            total: metrics.reliability.resolved,
-                          })}
+                        <div className="pd-stat__sub">
+                          {intl.formatMessage(
+                            { id: 'providers.stat_reliability_breakdown' },
+                            { onTime: metrics.reliability.onTime, total: metrics.reliability.resolved },
+                          )}
                           {metrics.reliability.windowSize < metrics.orderCount && (
                             <>
                               {' · '}
-                              {intl.formatMessage({
-                                id: 'providers.stat_reliability_window'
-                              }, {
-                                count: metrics.reliability.windowSize,
-                              })}
+                              {intl.formatMessage(
+                                { id: 'providers.stat_reliability_window' },
+                                { count: metrics.reliability.windowSize },
+                              )}
                             </>
                           )}
                         </div>
                       </>
                     ) : (
-                      <div className="text-sm text-text-tertiary mt-1">
-                        {intl.formatMessage({
-                          id: 'providers.stat_reliability_insufficient'
-                        })}
+                      <div className="pd-stat__value--muted">
+                        {intl.formatMessage({ id: 'providers.stat_reliability_insufficient' })}
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
-                  <div className="text-sm text-text-secondary">
-                    {intl.formatMessage({
-                      id: 'providers.typical_items_title'
-                    })}
+                {/* ---- Typical items ----
+                    Mono "WHAT YOU BUY" header, hairline divider, then a
+                    tight list of icon + name + units/last-ordered subline.
+                    Empty state collapses to a quiet italic line. */}
+                <div className="pd-card">
+                  <div className="pd-card__head">
+                    <span className="pd-card__head-title">
+                      {intl.formatMessage({ id: 'providers.typical_items_title' })}
+                    </span>
                   </div>
-                  <hr className="border-border" />
+                  <hr className="pd-card__rule" />
                   {typicalItems.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="pd-typical">
                       {typicalItems.map(item => {
                         const product = productsById.get(item.key)
                         const iconUrl = product ? getProductIconUrl(product) : null
                         return (
-                          <div key={item.key} className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          <div key={item.key} className="pd-typical__row">
+                            <div className="pd-typical__icon">
                               {iconUrl && isPresetIcon(iconUrl) ? (
                                 (() => {
                                   const p = getPresetIcon(iconUrl)
-                                  return p ? <p.icon size={24} className="text-text-primary" /> : null
+                                  return p ? <p.icon size={22} /> : null
                                 })()
                               ) : iconUrl ? (
                                 <Image
@@ -754,35 +911,31 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                                   alt={item.name}
                                   width={48}
                                   height={48}
-                                  className="w-full h-full object-cover"
                                   unoptimized
                                 />
                               ) : (
-                                <ImagePlus className="w-5 h-5 text-text-tertiary" />
+                                <ImagePlus className="w-4 h-4" />
                               )}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium text-text-primary truncate">
-                                {item.name}
-                              </div>
-                              <div className="text-xs text-text-tertiary mt-0.5 tabular-nums">
-                                {intl.formatMessage({
-                                  id: 'providers.typical_items_subtitle'
-                                }, {
-                                  units: item.totalUnits,
-                                  date: formatRelative(item.lastOrderedAt, userLocale),
-                                })}
+                            <div className="min-w-0">
+                              <div className="pd-typical__name">{item.name}</div>
+                              <div className="pd-typical__sub">
+                                {intl.formatMessage(
+                                  { id: 'providers.typical_items_subtitle' },
+                                  {
+                                    units: item.totalUnits,
+                                    date: formatRelative(item.lastOrderedAt, userLocale),
+                                  },
+                                )}
                               </div>
                             </div>
                           </div>
-                        );
+                        )
                       })}
                     </div>
                   ) : (
-                    <p className="text-sm text-text-tertiary text-center py-2">
-                      {intl.formatMessage({
-                        id: 'providers.typical_items_empty'
-                      })}
+                    <p className="pd-card__empty">
+                      {intl.formatMessage({ id: 'providers.typical_items_empty' })}
                     </p>
                   )}
                 </div>
@@ -792,15 +945,15 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     scale relative to the tallest in the window; empty
                     months render as thin stubs so the time axis stays
                     consistent. The current-month bar uses the brand
-                    color; past months are muted. */}
-                <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
-                  <div className="text-sm text-text-secondary">
-                    {intl.formatMessage({
-                      id: 'providers.monthly_spend_title'
-                    })}
+                    color; past months sit in paper-deep. */}
+                <div className="pd-card">
+                  <div className="pd-card__head">
+                    <span className="pd-card__head-title">
+                      {intl.formatMessage({ id: 'providers.monthly_spend_title' })}
+                    </span>
                   </div>
-                  <hr className="border-border" />
-                  <div className="flex items-stretch gap-2 h-36">
+                  <hr className="pd-card__rule" />
+                  <div className="pd-spend">
                     {monthlySpend.map(bucket => {
                       const heightPct =
                         monthlySpendMax > 0 && bucket.total > 0
@@ -813,77 +966,58 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       return (
                         <div
                           key={bucket.start.toISOString()}
-                          className="flex-1 flex flex-col items-center min-w-0"
+                          className="pd-spend__col"
+                          data-current={bucket.isCurrent}
+                          data-empty={bucket.total === 0}
                         >
-                          <span
-                            className={`text-xs tabular-nums truncate ${
-                              bucket.isCurrent ? 'text-brand font-semibold' : 'text-text-tertiary'
-                            }`}
-                          >
-                            {valueLabel}
-                          </span>
-                          <div className="flex-1 w-full flex items-end py-1">
-                            {bucket.total > 0 ? (
-                              <div
-                                className={`w-full rounded-lg ${
-                                  bucket.isCurrent ? 'bg-brand' : 'bg-bg-muted'
-                                }`}
-                                style={{ height: `${heightPct}%` }}
-                              />
-                            ) : (
-                              <div className="w-full h-[3px] rounded-full bg-bg-muted opacity-60" />
-                            )}
+                          <span className="pd-spend__value">{valueLabel}</span>
+                          <div className="pd-spend__bar-wrap">
+                            <div
+                              className="pd-spend__bar"
+                              style={
+                                bucket.total > 0 ? { height: `${heightPct}%` } : undefined
+                              }
+                            />
                           </div>
-                          <span
-                            className={`text-xs mt-1 truncate ${
-                              bucket.isCurrent ? 'text-brand font-semibold' : 'text-text-tertiary'
-                            }`}
-                          >
-                            {monthLabel}
-                          </span>
+                          <span className="pd-spend__label">{monthLabel}</span>
                         </div>
                       )
                     })}
                   </div>
                 </div>
-
               </div>
-          </TabContainer.Tab>
+            </TabContainer.Tab>
 
           {/* ---- History ----
-              Same card pattern and list item styles as the products
-              page's Orders tab, scoped to this provider. The "Ordered
-              to:" metadata row is suppressed because the whole page is
-              already about one provider — the row would be redundant. */}
+              Same card primitive (.pd-card), mono header (label · count ·
+              total), hairline rule, then the OrderListItem rows. The
+              "Ordered to:" metadata row is suppressed because the whole
+              page is already about one provider. */}
           <TabContainer.Tab id="history">
-            <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-text-secondary">{intl.formatMessage({
-                  id: 'providers.order_history_title'
-                })}</span>
+            <div className="pd-card">
+              <div className="pd-card__head">
+                <span className="pd-card__head-title">
+                  {intl.formatMessage({ id: 'providers.order_history_title' })}
+                </span>
                 {hasOrders && (
-                  <div className="text-text-tertiary">
-                    {intl.formatMessage({
-                      id: 'orders.order_count'
-                    }, { count: providerOrders.length })}
-                    <span className="mx-1.5">&#183;</span>
+                  <span className="pd-card__head-meta">
+                    {intl.formatMessage(
+                      { id: 'orders.order_count' },
+                      { count: providerOrders.length },
+                    )}
+                    {' · '}
                     {formatCurrencyCompact(metrics.totalSpent)}
-                  </div>
+                  </span>
                 )}
               </div>
-
-              <hr className="border-border" />
+              <hr className="pd-card__rule" />
 
               {!hasOrders ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <p className="text-sm text-text-secondary">
-                    {intl.formatMessage({
-                      id: 'providers.order_history_empty'
-                    })}
-                  </p>
-                </div>
+                <p className="pd-card__empty">
+                  {intl.formatMessage({ id: 'providers.order_history_empty' })}
+                </p>
               ) : (
-                <IonList lines="full" className="bg-bg-surface rounded-2xl overflow-hidden">
+                <IonList lines="full" className="pd-history__list">
                   {providerOrders.map((order) => {
                     const alreadyReceived = getOrderDisplayStatus(order) === 'received'
                     // Same semantic ordering as the Products page Orders tab.
@@ -950,98 +1084,72 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           </TabContainer.Tab>
 
           {/* ---- Notes ----
-              Three-row card:
-                1. Header: "Notes" title + written/edited date (if any)
-                2. Content: the note text, or a muted "No notes yet" line
-                3. Actions: right-aligned compact Add/Edit button
-              The same shell is used for both empty and populated states
-              so the card's dimensions don't jump when a note is first
-              added. Actions are hidden entirely for non-managers. */}
+              Editorial paper card. Mono "NOTES · X/5" header, hairline,
+              then either the empty-state italic line or the divided
+              note list. Each note: Fraunces title + mono "EDITED X AGO"
+              + body in Geist, with manager-only edit/trash icon buttons.
+              Same shell for empty + populated so card height doesn't
+              jump when a note is first added. */}
           <TabContainer.Tab id="notes">
-            <div className="bg-bg-surface rounded-2xl p-4 space-y-3">
-              {/* Header row — label on the left, X/5 count on the right.
-                  Mirrors the other Summary cards' header pattern. */}
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-text-secondary">
-                  {intl.formatMessage({
-                    id: 'providers.notes_card_header'
-                  })}
+            <div className="pd-card">
+              <div className="pd-card__head">
+                <span className="pd-card__head-title">
+                  {intl.formatMessage({ id: 'providers.notes_card_header' })}
                 </span>
-                <span className="text-text-tertiary tabular-nums flex-shrink-0">
-                  {intl.formatMessage({
-                    id: 'providers.notes_count_label'
-                  }, {
-                    count: notesCount,
-                    max: MAX_PROVIDER_NOTES,
-                  })}
+                <span className="pd-card__head-meta">
+                  {intl.formatMessage(
+                    { id: 'providers.notes_count_label' },
+                    { count: notesCount, max: MAX_PROVIDER_NOTES },
+                  )}
                 </span>
               </div>
+              <hr className="pd-card__rule" />
 
-              <hr className="border-border" />
-
-              {/* List of notes, or the empty-state line when none exist.
-                  Matches the app's list-divided pattern: no border or
-                  background on individual notes, separated by hairline
-                  dividers. Title + action icons on top, "Edited X ago"
-                  subtitle, body below — no hairline between header and
-                  body, just spacing. */}
               {notesCount === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <p className="text-sm text-text-secondary">
-                    {intl.formatMessage({
-                      id: 'providers.notes_empty'
-                    })}
-                  </p>
-                </div>
+                <p className="pd-card__empty">
+                  {intl.formatMessage({ id: 'providers.notes_empty' })}
+                </p>
               ) : (
-                <div className="list-divided">
-                  {notes.map((note, i) => (
-                    <Fragment key={note.id}>
-                      {i > 0 && <hr className="list-divider" />}
-                      <div className="space-y-2">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium text-text-primary truncate">
-                              {note.title}
-                            </div>
-                            <div className="text-xs text-text-tertiary mt-0.5">
-                              {intl.formatMessage({
-                                id: 'providers.note_edited_on'
-                              }, {
-                                date: formatRelative(note.updatedAt, userLocale),
-                              })}
-                            </div>
-                          </div>
-                          {canManage && (
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => openEditNote(note)}
-                                className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
-                                aria-label={intl.formatMessage({
-                                  id: 'providers.note_edit_aria'
-                                })}
-                              >
-                                <Pencil style={{ width: 16, height: 16 }} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => openDeleteNote(note)}
-                                className="p-1 text-error hover:text-error transition-colors"
-                                aria-label={intl.formatMessage({
-                                  id: 'providers.note_delete_aria'
-                                })}
-                              >
-                                <Trash2 style={{ width: 16, height: 16 }} />
-                              </button>
-                            </div>
-                          )}
+                <div className="pd-notes">
+                  {notes.map((note) => (
+                    <div key={note.id} className="pd-note">
+                      <div className="pd-note__head">
+                        <div className="pd-note__title-block">
+                          <span className="pd-note__title">{note.title}</span>
+                          <span className="pd-note__meta">
+                            {intl.formatMessage(
+                              { id: 'providers.note_edited_on' },
+                              { date: formatRelative(note.updatedAt, userLocale) },
+                            )}
+                          </span>
                         </div>
-                        <p className="text-sm text-text-secondary whitespace-pre-wrap">
-                          {note.body}
-                        </p>
+                        {canManage && (
+                          <div className="pd-note__actions">
+                            <button
+                              type="button"
+                              onClick={() => openEditNote(note)}
+                              className="pd-note__icon-btn"
+                              aria-label={intl.formatMessage({
+                                id: 'providers.note_edit_aria',
+                              })}
+                            >
+                              <Pencil style={{ width: 16, height: 16 }} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openDeleteNote(note)}
+                              className="pd-note__icon-btn pd-note__icon-btn--danger"
+                              aria-label={intl.formatMessage({
+                                id: 'providers.note_delete_aria',
+                              })}
+                            >
+                              <Trash2 style={{ width: 16, height: 16 }} />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    </Fragment>
+                      <p className="pd-note__body">{note.body}</p>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1050,8 +1158,8 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   per-provider cap is reached; server still enforces. */}
               {canManage && (
                 <>
-                  <hr className="border-border" />
-                  <div className="flex justify-end">
+                  <hr className="pd-card__rule" />
+                  <div className="pd-notes__add-row">
                     <IonButton
                       fill="outline"
                       size="small"
@@ -1060,9 +1168,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                       disabled={atNotesLimit}
                     >
                       <Plus slot="start" style={{ width: 14, height: 14 }} />
-                      {intl.formatMessage({
-                        id: 'providers.add_note_button'
-                      })}
+                      {intl.formatMessage({ id: 'providers.add_note_button' })}
                     </IonButton>
                   </div>
                 </>
@@ -1070,42 +1176,90 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             </div>
           </TabContainer.Tab>
         </TabContainer>
+        </div>
 
+        {/* ============== Danger zone (manager-only) ==============
+            Mirrors ManageView's danger-zone idiom: a separate red-tinted
+            IonList sitting at the bottom of the page, well below the
+            primary actions and tabs so a stray tap can't trigger it.
+            Single Delete row opens DeleteProviderModal. */}
+        {canManage && (
+          <div className="pd-section pd-danger">
+            <GroupLabel tone="danger">
+              {intl.formatMessage({ id: 'providers.section_danger' })}
+            </GroupLabel>
+            <IonList inset lines="full" className="account-list account-list--danger">
+              <IonItem button detail onClick={openDelete}>
+                <Trash2 slot="start" className="text-error w-5 h-5" />
+                <IonLabel color="danger">
+                  <h3>{intl.formatMessage({ id: 'providers.delete_provider_row' })}</h3>
+                </IonLabel>
+              </IonItem>
+            </IonList>
+          </div>
+        )}
       </div>
-      {/* ============== Edit modal ==============
-          Detail page only ever edits the provider it's already showing,
-          so we mount EditProviderModal directly (no add-mode gating).
-          The modal hosts the delete flow as extra steps (see
-          EditProviderModal). When the modal has finished closing after
-          a successful delete we slide back to the providers list —
-          deferring the navigation lets the delete-success animation play
-          inside the modal first. */}
-      <EditProviderModal
-        isOpen={isEditOpen}
-        onClose={() => setEditOpen(false)}
+      {/* ============== Per-field edit modals ==============
+          Each modal owns one field. The success step plays the lottie
+          when providerSaved flips true. onExitComplete clears the
+          shared edit-state triplet so a re-open lands on a clean form. */}
+      <EditProviderNameModal
+        isOpen={isNameEditOpen}
+        onClose={() => setNameEditOpen(false)}
         onExitComplete={() => {
           setProviderSaved(false)
           setEditError('')
+        }}
+        initialName={provider.name}
+        isSaving={isSaving}
+        error={editError}
+        providerSaved={providerSaved}
+        onSubmit={handleSaveName}
+      />
+      <EditProviderPhoneModal
+        isOpen={isPhoneEditOpen}
+        onClose={() => setPhoneEditOpen(false)}
+        onExitComplete={() => {
+          setProviderSaved(false)
+          setEditError('')
+        }}
+        initialPhone={provider.phone ?? ''}
+        isSaving={isSaving}
+        error={editError}
+        providerSaved={providerSaved}
+        onSubmit={handleSavePhone}
+      />
+      <EditProviderEmailModal
+        isOpen={isEmailEditOpen}
+        onClose={() => setEmailEditOpen(false)}
+        onExitComplete={() => {
+          setProviderSaved(false)
+          setEditError('')
+        }}
+        initialEmail={provider.email ?? ''}
+        isSaving={isSaving}
+        error={editError}
+        providerSaved={providerSaved}
+        onSubmit={handleSaveEmail}
+      />
+      {/* ============== Delete provider modal ==============
+          Standalone confirm + delete-success flow. After the modal has
+          finished animating closed on a successful delete, we navigate
+          back to the providers list — deferring the navigation lets the
+          delete-success surface play inside the modal first. */}
+      <DeleteProviderModal
+        isOpen={isDeleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onExitComplete={() => {
+          setDeleteError('')
           if (providerDeleted) {
             router.push(`/${businessId}/providers`)
             setProviderDeleted(false)
           }
         }}
-        name={name}
-        onNameChange={setName}
-        phone={phone}
-        onPhoneChange={setPhone}
-        email={email}
-        onEmailChange={setEmail}
-        active={active}
-        onActiveChange={setActive}
-        editingProvider={provider}
-        isSaving={isSaving}
-        error={editError}
-        providerSaved={providerSaved}
-        onSubmit={handleSaveEdit}
-        canDelete={canManage}
+        provider={provider}
         isDeleting={isDeleting}
+        error={deleteError}
         providerDeleted={providerDeleted}
         onDelete={handleDelete}
       />
@@ -1161,7 +1315,17 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
       {/* ============== Contact sheet ==============
           Tapping a row fires the native handler (tel:, mailto:, wa.me) and
           closes the sheet so returning to the app doesn't land back inside
-          an open overlay. Rows for missing contact fields are omitted. */}
+          an open overlay. Rows for missing contact fields are omitted.
+
+          Visual: mirrors the user-menu drawer's hairline-row chassis but
+          opens with a printed-stub hero (mono "REACH" eyebrow above a
+          Fraunces italic provider name) so the sheet reads as a calling
+          card. `flushContent` removes the default modal inset so each row
+          paints edge-to-edge — the per-row padding handles its own gutter,
+          matching .user-menu-content. The toolbar IonTitle is left empty
+          (the body hero carries the identity) but a screen-reader-only
+          accessible name still rides on the modal via the same translation
+          key the previous version exposed. */}
       <ModalShell
         isOpen={isContactSheetOpen}
         onClose={() => setContactSheetOpen(false)}
@@ -1169,12 +1333,19 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           id: 'providers.contact_sheet_title'
         }, { name: provider.name })}
         variant="half"
+        flushContent
       >
-        <div className="py-2">
+        <header className="pv-contact-hero">
+          <span className="pv-contact-hero__eyebrow">
+            {intl.formatMessage({ id: 'providers.modal_v2.section_reach' })}
+          </span>
+          <h2 className="pv-contact-hero__name">{provider.name}</h2>
+        </header>
+        <div className="pv-contact-list" role="list">
           {provider.phone && (
             <ContactSheetRow
-              icon={<Phone className="w-5 h-5" />}
-              iconColorClass="text-warning"
+              icon={<Phone />}
+              variant="call"
               label={intl.formatMessage({
                 id: 'providers.action_call'
               })}
@@ -1185,8 +1356,8 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           )}
           {provider.phone && (
             <ContactSheetRow
-              icon={<MessageCircle className="w-5 h-5" />}
-              iconColorClass="text-success"
+              icon={<MessageCircle />}
+              variant="whatsapp"
               label={intl.formatMessage({
                 id: 'providers.action_whatsapp'
               })}
@@ -1198,8 +1369,8 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           )}
           {provider.email && (
             <ContactSheetRow
-              icon={<Mail className="w-5 h-5" />}
-              iconColorClass="text-text-primary"
+              icon={<Mail />}
+              variant="email"
               label={intl.formatMessage({
                 id: 'providers.action_email'
               })}
@@ -1223,7 +1394,8 @@ function formatMonthYear(date: Date | string, locale: string): string {
 
 interface ContactSheetRowProps {
   icon: ReactNode
-  iconColorClass: string
+  /** Channel variant — drives the icon-chip tint (saffron / moss / ink). */
+  variant: 'call' | 'whatsapp' | 'email'
   label: string
   value: string
   href: string
@@ -1231,33 +1403,43 @@ interface ContactSheetRowProps {
   onAction: () => void
 }
 
+/**
+ * One row of the contact sheet. Shares its hairline-divider, paper-warm
+ * hover wash, and chevron-trailing-edge chassis with `.user-menu-item`
+ * (see providers-modal.css §9 + interactive.css `.user-menu-item`) so the
+ * supplier sheet feels like a sibling of the user-menu drawer rather than
+ * a one-off overlay. The leading `pv-contact-row__chip` tints itself per
+ * channel; the value sits below the label in JetBrains Mono so phone
+ * numbers fall into tabular alignment across rows.
+ */
 function ContactSheetRow({
   icon,
-  iconColorClass,
+  variant,
   label,
   value,
   href,
   external,
   onAction,
 }: ContactSheetRowProps) {
-  // Mirrors `.user-menu-item`: same padding, gap, text color, and hover
-  // behavior as the user avatar menu. The colored-icon span sits where
-  // the menu icon would — `.user-menu-item svg` forces a secondary color,
-  // so we avoid the class and style the wrapper directly. ChevronRight
-  // on the trailing edge matches the menu's right-pointing arrow.
   return (
     <a
       href={href}
       onClick={onAction}
-      className="flex items-center gap-3 px-4 py-3 text-text-primary no-underline transition-colors hover:bg-bg-muted hover:no-underline active:bg-bg-muted"
+      role="listitem"
+      className="pv-contact-row"
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
-      <span className={`flex-shrink-0 ${iconColorClass}`}>{icon}</span>
-      <div className="min-w-0 flex-1">
-        <div className="text-base text-text-primary">{label}</div>
-        <div className="text-xs text-text-tertiary truncate">{value}</div>
-      </div>
-      <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />
+      <span
+        className={`pv-contact-row__chip pv-contact-row__chip--${variant}`}
+        aria-hidden="true"
+      >
+        {icon}
+      </span>
+      <span className="pv-contact-row__body">
+        <span className="pv-contact-row__label">{label}</span>
+        <span className="pv-contact-row__value">{value}</span>
+      </span>
+      <ChevronRight className="pv-contact-row__arrow" aria-hidden="true" />
     </a>
   )
 }

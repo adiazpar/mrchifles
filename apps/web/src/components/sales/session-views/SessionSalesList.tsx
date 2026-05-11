@@ -84,16 +84,14 @@ export function SessionSalesList({
 
   if (items.length === 0) {
     return (
-      <div className="modal-step-item">
-        <div className="session-sales-empty">
-          <span className="session-sales-empty__rule" />
-          <p className="session-sales-empty__title">
-            {t.formatMessage({ id: 'sales.session.list_empty_title' })}
-          </p>
-          <p className="session-sales-empty__desc">
-            {t.formatMessage({ id: 'sales.session.active_sales_modal.empty' })}
-          </p>
-        </div>
+      <div className="session-sales-empty">
+        <span className="session-sales-empty__rule" />
+        <p className="session-sales-empty__title">
+          {t.formatMessage({ id: 'sales.session.list_empty_title' })}
+        </p>
+        <p className="session-sales-empty__desc">
+          {t.formatMessage({ id: 'sales.session.active_sales_modal.empty' })}
+        </p>
       </div>
     )
   }

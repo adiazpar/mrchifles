@@ -468,9 +468,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
   padding: var(--space-6) var(--space-2);
   gap: var(--space-3);
+  height: 100%;
 }
 
 .tm-invite__seal-circle {

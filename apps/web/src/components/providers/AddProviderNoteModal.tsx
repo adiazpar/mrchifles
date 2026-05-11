@@ -13,6 +13,7 @@ import {
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
 import { CheckCircle2 } from 'lucide-react'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { ModalShell } from '@/components/ui'
 import { NOTE_TITLE_MAX, NOTE_BODY_MAX } from '@kasero/shared/provider-notes'
 
@@ -224,38 +225,47 @@ function SuccessBody({ triggered, mode }: SuccessBodyProps) {
   const isDanger = mode === 'delete'
 
   return (
-    <div className="pm-shell">
-      <div className="pv-seal" aria-hidden={!triggered}>
-        <span
-          className={
-            isDanger
-              ? 'pv-seal__circle pv-seal__circle--danger'
-              : 'pv-seal__circle'
-          }
-        >
+    <div className="pv-seal" aria-hidden={!triggered}>
+      {/* Add + edit (note save-success) play the canonical Lottie tick.
+          Delete-success keeps the quiet oxblood ring + glyph — the
+          destruction confirmation should not look celebratory. */}
+      {isDanger ? (
+        <span className="pv-seal__circle pv-seal__circle--danger">
           <CheckCircle2 size={44} strokeWidth={1.4} />
         </span>
-        <span className="pv-seal__stamp">{t.formatMessage({ id: stampKey })}</span>
-        <h2
-          className={
-            isDanger
-              ? 'pm-hero__title pm-hero__title--danger'
-              : 'pm-hero__title'
-          }
-          style={{ textAlign: 'center' }}
-        >
-          {t.formatMessage(
-            { id: titleKey },
-            { em: (chunks) => <em>{chunks}</em> },
+      ) : (
+        <div style={{ width: 144, height: 144 }}>
+          {triggered && (
+            <LottiePlayer
+              src="/animations/success.json"
+              loop={false}
+              autoplay={true}
+              delay={300}
+              style={{ width: 144, height: 144 }}
+            />
           )}
-        </h2>
-        <p
-          className="pm-hero__subtitle"
-          style={{ textAlign: 'center', margin: 0 }}
-        >
-          {t.formatMessage({ id: subtitleKey })}
-        </p>
-      </div>
+        </div>
+      )}
+      <span className="pv-seal__stamp">{t.formatMessage({ id: stampKey })}</span>
+      <h2
+        className={
+          isDanger
+            ? 'pm-hero__title pm-hero__title--danger'
+            : 'pm-hero__title'
+        }
+        style={{ textAlign: 'center' }}
+      >
+        {t.formatMessage(
+          { id: titleKey },
+          { em: (chunks) => <em>{chunks}</em> },
+        )}
+      </h2>
+      <p
+        className="pm-hero__subtitle"
+        style={{ textAlign: 'center', margin: 0 }}
+      >
+        {t.formatMessage({ id: subtitleKey })}
+      </p>
     </div>
   )
 }

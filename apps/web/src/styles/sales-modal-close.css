@@ -257,9 +257,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
   padding: var(--space-4) 0 var(--space-2);
   gap: var(--space-3);
+  height: 100%;
 }
 
 .close-session__lottie-frame {
