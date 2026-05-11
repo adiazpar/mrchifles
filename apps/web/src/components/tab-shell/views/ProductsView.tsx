@@ -651,26 +651,50 @@ export function ProductsView() {
     setIsModalOpen(true)
   }, [pipeline, compression])
 
-  const handleToggleActive = useCallback(async (product: Product) => {
-    const nextActive = !product.active
-    // Optimistic update
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === product.id ? { ...p, active: nextActive } : p
-      )
-    )
-    try {
-      const fd = new FormData()
-      fd.set('active', nextActive ? 'true' : 'false')
-      await apiPatchForm(`/api/businesses/${businessId}/products/${product.id}`, fd)
-    } catch (err) {
-      console.error('Error toggling product status:', err)
-      // Revert
+  // Shared core — optimistic flip, PATCH, revert on failure. Returns the
+  // outcome so callers can react (the modal's inline toggle row needs to
+  // know whether to surface an error).
+  const toggleActive = useCallback(
+    async (productId: string, prevActive: boolean, nextActive: boolean): Promise<boolean> => {
       setProducts((prev) =>
-        prev.map((p) => (p.id === product.id ? { ...p, active: product.active } : p))
+        prev.map((p) => (p.id === productId ? { ...p, active: nextActive } : p)),
       )
-    }
-  }, [businessId, setProducts])
+      try {
+        const fd = new FormData()
+        fd.set('active', nextActive ? 'true' : 'false')
+        await apiPatchForm(`/api/businesses/${businessId}/products/${productId}`, fd)
+        return true
+      } catch (err) {
+        console.error('Error toggling product status:', err)
+        setProducts((prev) =>
+          prev.map((p) => (p.id === productId ? { ...p, active: prevActive } : p)),
+        )
+        return false
+      }
+    },
+    [businessId, setProducts],
+  )
+
+  // Swipe-action call shape (unchanged signature) — fire-and-forget flip.
+  const handleToggleActive = useCallback(
+    (product: Product) => {
+      void toggleActive(product.id, product.active, !product.active)
+    },
+    [toggleActive],
+  )
+
+  // Modal call shape — pass an explicit nextActive (rather than negating
+  // the current value) so a rapid double-tap from inside the modal can't
+  // accidentally toggle twice off a stale snapshot. We look up prevActive
+  // from the live shared products array.
+  const handleToggleActiveFromModal = useCallback(
+    (productId: string, nextActive: boolean): Promise<boolean> => {
+      const current = products.find((p) => p.id === productId)
+      const prevActive = current?.active ?? !nextActive
+      return toggleActive(productId, prevActive, nextActive)
+    },
+    [toggleActive, products],
+  )
 
   const handleBarcodeScanResult = useCallback(async ({ value }: { value: string }) => {
     setError('')
@@ -895,6 +919,7 @@ export function ProductsView() {
         editingProduct={editingProduct}
         onSubmit={handleSubmitProduct}
         onDelete={handleDeleteProduct}
+        onToggleActive={handleToggleActiveFromModal}
         onSaveAdjustment={handleSaveAdjustment}
         canDelete={canDelete}
         defaultCategoryId={settings?.defaultCategoryId}
