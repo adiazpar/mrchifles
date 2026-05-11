@@ -591,61 +591,68 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
               )}
             </div>
             <h1 className="pd-hero__name">{provider.name}</h1>
-            <div className="pd-hero__meta">
-              <span
-                className="pd-hero__status"
-                data-active={provider.active}
-              >
-                <span className="pd-hero__status-dot" aria-hidden="true" />
-                {intl.formatMessage({
-                  id: provider.active
-                    ? 'providers.status_active'
-                    : 'providers.status_inactive',
-                })}
-              </span>
-              {hasOrders && (
-                <>
-                  <span className="pd-hero__meta-sep" aria-hidden="true">·</span>
-                  <span className="pd-hero__meta-item">
-                    {intl.formatMessage(
-                      { id: 'orders.order_count' },
-                      { count: providerOrders.length },
-                    )}
-                  </span>
-                  <span className="pd-hero__meta-sep" aria-hidden="true">·</span>
-                  <span className="pd-hero__meta-item">
-                    {intl.formatMessage(
-                      { id: 'providers.lifetime_total' },
-                      { value: lifetimeSpend },
-                    )}
-                  </span>
-                </>
-              )}
-            </div>
+            {hasOrders && (
+              <div className="pd-hero__meta">
+                <span className="pd-hero__meta-item">
+                  {intl.formatMessage(
+                    { id: 'orders.order_count' },
+                    { count: providerOrders.length },
+                  )}
+                </span>
+                <span className="pd-hero__meta-sep" aria-hidden="true">·</span>
+                <span className="pd-hero__meta-item">
+                  {intl.formatMessage(
+                    { id: 'providers.lifetime_total' },
+                    { value: lifetimeSpend },
+                  )}
+                </span>
+              </div>
+            )}
           </div>
+          {/* Status pill lives in the hero's third grid column so it
+              right-aligns with the page edge. Top-aligned via align-self
+              so it sits at the cap-line of the eyebrow row. */}
+          <span
+            className="pd-hero__status"
+            data-active={provider.active}
+          >
+            <span className="pd-hero__status-dot" aria-hidden="true" />
+            {intl.formatMessage({
+              id: provider.active
+                ? 'providers.status_active'
+                : 'providers.status_inactive',
+            })}
+          </span>
         </div>
 
         {/* ============== Primary action row ==============
-            Manager-only "New order" terracotta primary; "Contact" outline
-            secondary. When the user is a non-manager, Contact stretches
-            full width. Disabled when no phone/email. */}
+            Page-level paired pills mirroring the team-roster invite-pill
+            family — terracotta primary for "New order" (manager-only),
+            ghost outline secondary for "Contact". 14px Lucide glyphs,
+            mono uppercase tracked label, 8px gap. When the user is a
+            non-manager, Contact stretches full width. */}
         <div className="pd-actions">
           {canManage && (
-            <IonButton onClick={() => orderFlows.openNewOrder(providerId)}>
-              <Plus slot="start" />
+            <button
+              type="button"
+              className="pd-action-pill"
+              onClick={() => orderFlows.openNewOrder(providerId)}
+            >
+              <Plus aria-hidden="true" />
               <span>
                 {intl.formatMessage({ id: 'providers.new_order_button' })}
               </span>
-            </IonButton>
+            </button>
           )}
-          <IonButton
-            fill="outline"
+          <button
+            type="button"
+            className="pd-action-pill pd-action-pill--ghost"
             onClick={() => setContactSheetOpen(true)}
             disabled={!provider.phone && !provider.email}
           >
-            <Phone slot="start" />
+            <Phone aria-hidden="true" />
             <span>{intl.formatMessage({ id: 'providers.contact_button' })}</span>
-          </IonButton>
+          </button>
         </div>
 
         {/* ============== Details list (manager-only) ==============
@@ -726,6 +733,28 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                 {activeError}
               </p>
             )}
+          </div>
+        )}
+
+        {/* ============== Danger zone (manager-only) ==============
+            Mirrors ManageView's danger-zone idiom: a separate red-tinted
+            IonList sitting alongside the editable Details rows. Sits
+            above the tab strip because the page's primary purpose is
+            management — Summary / History / Notes are reference, not
+            action. Single Delete row opens DeleteProviderModal. */}
+        {canManage && (
+          <div className="pd-section pd-danger">
+            <GroupLabel tone="danger">
+              {intl.formatMessage({ id: 'providers.section_danger' })}
+            </GroupLabel>
+            <IonList inset lines="full" className="account-list account-list--danger">
+              <IonItem button detail onClick={openDelete}>
+                <Trash2 slot="start" className="text-error w-5 h-5" />
+                <IonLabel color="danger">
+                  <h3>{intl.formatMessage({ id: 'providers.delete_provider_row' })}</h3>
+                </IonLabel>
+              </IonItem>
+            </IonList>
           </div>
         )}
 
@@ -1177,27 +1206,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
           </TabContainer.Tab>
         </TabContainer>
         </div>
-
-        {/* ============== Danger zone (manager-only) ==============
-            Mirrors ManageView's danger-zone idiom: a separate red-tinted
-            IonList sitting at the bottom of the page, well below the
-            primary actions and tabs so a stray tap can't trigger it.
-            Single Delete row opens DeleteProviderModal. */}
-        {canManage && (
-          <div className="pd-section pd-danger">
-            <GroupLabel tone="danger">
-              {intl.formatMessage({ id: 'providers.section_danger' })}
-            </GroupLabel>
-            <IonList inset lines="full" className="account-list account-list--danger">
-              <IonItem button detail onClick={openDelete}>
-                <Trash2 slot="start" className="text-error w-5 h-5" />
-                <IonLabel color="danger">
-                  <h3>{intl.formatMessage({ id: 'providers.delete_provider_row' })}</h3>
-                </IonLabel>
-              </IonItem>
-            </IonList>
-          </div>
-        )}
       </div>
       {/* ============== Per-field edit modals ==============
           Each modal owns one field. The success step plays the lottie
@@ -1389,7 +1397,8 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
 function formatMonthYear(date: Date | string, locale: string): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat(locale, { month: 'short', year: '2-digit' }).format(d)
+  // 4-digit year so "May 26" can't be misread as a day-of-month.
+  return new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' }).format(d)
 }
 
 interface ContactSheetRowProps {

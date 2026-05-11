@@ -21,7 +21,7 @@
 
 .pd-hero {
   display: grid;
-  grid-template-columns: 56px 1fr;
+  grid-template-columns: 56px 1fr auto;
   gap: var(--space-4);
   align-items: center;
   padding: var(--space-4) var(--space-1) var(--space-3);
@@ -109,19 +109,24 @@
 }
 
 /* Status pill — leading dot + label, matching the team-roster status
-   convention. Active = moss; paused = oxblood. */
+   convention. Lives in the hero's third grid column so it right-aligns
+   with the page edge. Active = moss; paused = oxblood. */
 .pd-hero__status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 8px 3px 6px;
+  padding: 4px 10px 4px 8px;
   border-radius: 999px;
   border: 1px solid var(--color-border);
   background: var(--color-bg-surface);
   font-family: var(--font-mono);
   font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  align-self: start;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 .pd-hero__status[data-active='true'] {
   color: var(--color-success);
@@ -140,7 +145,13 @@
   background: currentColor;
 }
 
-/* ===== Actions row ===================================================== */
+/* ===== Actions row =====================================================
+   Page-level paired pill row mirroring the team-roster invite pill family
+   (.tm-roster__invite-pill): mono uppercase tracked label, 40px tall,
+   14px Lucide glyphs at 2.4 stroke. Primary = terracotta filled; ghost
+   variant for the secondary slot uses a hairline outline that reveals
+   terracotta on hover/active — matches .order-modal__secondary-pill's
+   chassis but tuned to the page-level scale. */
 
 .pd-actions {
   display: flex;
@@ -148,10 +159,57 @@
   gap: var(--space-2);
   margin-top: var(--space-2);
 }
-.pd-actions ion-button {
-  flex: 1;
+
+.pd-action-pill {
+  flex: 1 1 0;
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-brand);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) ease-out,
+    border-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
 }
+.pd-action-pill:hover:not(:disabled) {
+  background: var(--color-brand-hover);
+}
+.pd-action-pill:active:not(:disabled) { transform: translateY(1px); }
+.pd-action-pill:disabled { opacity: 0.5; cursor: default; }
+
+.pd-action-pill svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.4;
+  flex-shrink: 0;
+}
+
+.pd-action-pill--ghost {
+  background: transparent;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+.pd-action-pill--ghost:hover:not(:disabled) {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-subtle);
+}
+.pd-action-pill--ghost:disabled { color: var(--color-text-tertiary); }
 
 /* ===== Section: page-level group label spacing ========================= */
 
@@ -195,7 +253,7 @@
   background: var(--color-bg-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
-  margin: 0;
+  margin: 0 0 var(--space-4);
 }
 
 .pd-segment__button {
