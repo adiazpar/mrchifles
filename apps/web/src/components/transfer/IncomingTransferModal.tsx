@@ -1,10 +1,11 @@
 'use client'
 
 import { useIntl } from 'react-intl';
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowRightLeft } from 'lucide-react'
 import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useIncomingTransferContext } from '@/contexts/incoming-transfer-context'
 
 interface Props {
@@ -47,9 +48,10 @@ function useExpiryLabel(expiresAt: string | undefined): ExpiryLabel | null {
   }
 }
 
+type Step = 'review' | 'accept-success'
+
 export function IncomingTransferModal({ isOpen, onClose }: Props) {
-  const tAccount = useIntl()
-  const tManage = useIntl()
+  const intl = useIntl()
   const {
     transfer,
     error,
@@ -60,31 +62,70 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
   } = useIncomingTransferContext()
   const expiry = useExpiryLabel(transfer?.expiresAt)
 
-  // If the transfer disappears while the modal is open (e.g. after a
-  // successful decline, or the sender cancels in another tab) close
-  // the modal automatically so we don't show stale state.
+  const [step, setStep] = useState<Step>('review')
+  // Snapshot the accepted business name so the celebration still has it
+  // after `setTransfer(null)` clears the source-of-truth in context.
+  const [acceptedBusinessName, setAcceptedBusinessName] = useState<string | null>(null)
+
+  // Open-time reset, gated on close→open transition. Without this, the
+  // transfer disappearing from context after accept would re-fire the
+  // effect and reset 'accept-success' back to 'review'.
+  const wasOpenRef = useRef(false)
   useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      setStep('review')
+      setAcceptedBusinessName(null)
+    }
+    wasOpenRef.current = isOpen
+  }, [isOpen])
+
+  // Auto-close on review step if the transfer disappears (e.g. successful
+  // decline, sender cancels in another tab). Suppressed on the success
+  // step — that step intentionally outlives the transfer state.
+  useEffect(() => {
+    if (step !== 'review') return
     if (isOpen && !transfer && !isAccepting && !isDeclining) onClose()
-  }, [isOpen, transfer, isAccepting, isDeclining, onClose])
+  }, [isOpen, transfer, isAccepting, isDeclining, onClose, step])
 
   const busy = isAccepting || isDeclining
 
+  const onAccept = async () => {
+    if (!transfer) return
+    const name = transfer.business.name
+    const ok = await handleAccept()
+    if (ok) {
+      setAcceptedBusinessName(name)
+      setStep('accept-success')
+    }
+  }
+
+  // Any dismiss from the success step triggers a reload so every context
+  // picks up the new ownership + membership state. The reload unmounts
+  // the modal automatically, so onClose() is redundant.
+  const finishAndReload = () => {
+    window.location.reload()
+  }
+
   const description = transfer
     ? transfer.fromUser
-      ? tAccount.formatMessage({
+      ? intl.formatMessage({
     id: 'account.incoming_transfer_description'
   }, {
           name: transfer.fromUser.name,
           business: transfer.business.name,
         })
-      : tAccount.formatMessage({
+      : intl.formatMessage({
     id: 'account.incoming_transfer_description_anonymous'
   }, {
           business: transfer.business.name,
         })
     : ''
 
-  const footer = (
+  const title = step === 'review'
+    ? intl.formatMessage({ id: 'account.incoming_transfer_heading' })
+    : intl.formatMessage({ id: 'account.incoming_transfer_success_title' })
+
+  const footer = step === 'review' ? (
     <>
       <IonButton
         fill="outline"
@@ -93,63 +134,109 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
         className="flex-1"
         data-haptic
       >
-        {isDeclining ? <IonSpinner name="crescent" /> : tAccount.formatMessage({
+        {isDeclining ? <IonSpinner name="crescent" /> : intl.formatMessage({
           id: 'account.incoming_transfer_decline'
         })}
       </IonButton>
       <IonButton
-        onClick={handleAccept}
+        onClick={onAccept}
         disabled={busy || !transfer}
         className="flex-1"
         data-haptic
       >
-        {isAccepting ? <IonSpinner name="crescent" /> : tAccount.formatMessage({
+        {isAccepting ? <IonSpinner name="crescent" /> : intl.formatMessage({
           id: 'account.incoming_transfer_accept'
         })}
       </IonButton>
     </>
+  ) : (
+    <IonButton
+      onClick={finishAndReload}
+      className="flex-1"
+      expand="block"
+      data-haptic
+    >
+      {intl.formatMessage({ id: 'account.incoming_transfer_success_cta' })}
+    </IonButton>
   )
 
   return (
     <ModalShell
       isOpen={isOpen}
-      onClose={onClose}
-      title={tAccount.formatMessage({ id: 'account.incoming_transfer_heading' })}
+      onClose={step === 'accept-success' ? finishAndReload : onClose}
+      title={title}
       footer={footer}
+      noSwipeDismiss={step === 'accept-success'}
     >
-      <div
-        className="p-3 rounded-lg flex items-start gap-3"
-        style={{
-          backgroundColor:
-            'color-mix(in oklab, var(--color-warning) 10%, transparent)',
-        }}
-      >
-        <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{
-            backgroundColor:
-              'color-mix(in oklab, var(--color-warning) 22%, transparent)',
-          }}
-        >
-          <ArrowRightLeft className="w-5 h-5 text-warning" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-warning">
-            {tAccount.formatMessage({
-              id: 'account.incoming_transfer_heading'
-            })}
-          </p>
-          <p className="text-xs text-text-secondary mt-1">{description}</p>
-          {expiry && (
-            <p className="text-xs text-text-secondary mt-1">
-              {tManage.formatMessage({ id: expiry.id }, expiry.values)}
-            </p>
+      {step === 'review' && (
+        <>
+          <div
+            className="p-3 rounded-lg flex items-start gap-3"
+            style={{
+              backgroundColor:
+                'color-mix(in oklab, var(--color-warning) 10%, transparent)',
+            }}
+          >
+            <div
+              className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{
+                backgroundColor:
+                  'color-mix(in oklab, var(--color-warning) 22%, transparent)',
+              }}
+            >
+              <ArrowRightLeft className="w-5 h-5 text-warning" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-warning">
+                {intl.formatMessage({
+                  id: 'account.incoming_transfer_heading'
+                })}
+              </p>
+              <p className="text-xs text-text-secondary mt-1">{description}</p>
+              {expiry && (
+                <p className="text-xs text-text-secondary mt-1">
+                  {intl.formatMessage({ id: expiry.id }, expiry.values)}
+                </p>
+              )}
+            </div>
+          </div>
+          {error && (
+            <div className="mt-3 p-3 bg-error-subtle text-error text-sm rounded-lg">
+              {error}
+            </div>
           )}
-        </div>
-      </div>
-      {error && (
-        <div className="mt-3 p-3 bg-error-subtle text-error text-sm rounded-lg">
-          {error}
+        </>
+      )}
+
+      {step === 'accept-success' && (
+        <div className="manage-seal" aria-hidden={step !== 'accept-success'}>
+          <div className="manage-seal__lottie">
+            <LottiePlayer
+              src="/animations/success.json"
+              loop={false}
+              autoplay={true}
+              delay={300}
+              style={{ width: 144, height: 144 }}
+            />
+          </div>
+
+          <span className="manage-seal__stamp">
+            {intl.formatMessage({ id: 'account.incoming_transfer_success_stamp' })}
+          </span>
+
+          <h2 className="manage-seal__title">
+            {intl.formatMessage(
+              { id: 'account.incoming_transfer_success_hero_title' },
+              { em: (chunks) => <em>{chunks}</em> },
+            )}
+          </h2>
+
+          <p className="manage-seal__subtitle">
+            {intl.formatMessage(
+              { id: 'account.incoming_transfer_success_subtitle' },
+              { business: acceptedBusinessName ?? '' },
+            )}
+          </p>
         </div>
       )}
     </ModalShell>

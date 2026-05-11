@@ -26,7 +26,7 @@ export interface UseIncomingTransferReturn {
   error: string
   isAccepting: boolean
   isDeclining: boolean
-  handleAccept: () => Promise<void>
+  handleAccept: () => Promise<boolean>
   handleDecline: () => Promise<void>
 }
 
@@ -90,14 +90,17 @@ export function useIncomingTransfer(): UseIncomingTransferReturn {
     }
   }, [userId])
 
-  const handleAccept = useCallback(async () => {
-    if (!transfer) return
+  const handleAccept = useCallback(async (): Promise<boolean> => {
+    if (!transfer) return false
     setIsAccepting(true)
     setError('')
     try {
       await apiPost('/api/transfer/accept', { code: transfer.code })
-      // Reload so every context picks up the new ownership + membership state.
-      window.location.reload()
+      // The caller (IncomingTransferModal) owns the post-success flow:
+      // it paints the celebration step, then reloads so every context
+      // picks up the new ownership + membership state. Don't reload
+      // here or the Lottie never paints.
+      return true
     } catch (err) {
       console.error('Accept transfer error:', err)
       setError(
@@ -105,6 +108,7 @@ export function useIncomingTransfer(): UseIncomingTransferReturn {
           ? translateApiMessage(err.envelope)
           : '',
       )
+      return false
     } finally {
       setIsAccepting(false)
     }

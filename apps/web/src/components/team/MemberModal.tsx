@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
   IonHeader,
@@ -15,6 +15,7 @@ import {
 } from '@ionic/react'
 import { close, chevronBack } from 'ionicons/icons'
 import { ModalShell } from '@/components/ui'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import type { User, UserRole } from '@kasero/shared/types'
 import type { TeamMember } from '@/hooks/useTeamManagement'
 import { MemberDetailsBody } from './member-steps/MemberDetailsStep'
@@ -22,7 +23,13 @@ import { MemberRoleChangeBody } from './member-steps/MemberRoleChangeStep'
 import { MemberPartnerWarningBody } from './member-steps/MemberPartnerWarningStep'
 import { MemberRemoveBody } from './member-steps/MemberRemoveStep'
 
-type Step = 'details' | 'role-change' | 'partner-warn' | 'remove'
+type Step =
+  | 'details'
+  | 'role-change'
+  | 'partner-warn'
+  | 'remove'
+  | 'role-success'
+  | 'remove-success'
 
 export interface MemberModalProps {
   isOpen: boolean
@@ -57,6 +64,12 @@ export interface MemberModalProps {
  * `rawContent` so we keep the team modal's `.pm-header / .pm-content /
  * .pm-footer` styling that the default ModalShell IonContent doesn't
  * apply.
+ *
+ * Role change + remove confirm flows each push to their own
+ * `*-success` step on resolution — Lottie tick (or trash for the
+ * destructive remove) + mono stamp + Fraunces italic title — so the
+ * caller closes the loop the same way every other major action in the
+ * app does.
  */
 export function MemberModal({
   isOpen,
@@ -75,12 +88,28 @@ export function MemberModal({
 }: MemberModalProps) {
   const t = useIntl()
   const [step, setStep] = useState<Step>('details')
+  // Snapshot identity + intent before the parent's state mutation so the
+  // success copy still reads the right name + direction after the row
+  // disappears (remove) or the role flips (promote/demote) in the source
+  // of truth. `wasPromoting` captures the BEFORE state, so a confirmed
+  // promotion still reads "Promoted." even though `member.role` is now
+  // partner.
+  const [actedName, setActedName] = useState<string>('')
+  const [wasPromoting, setWasPromoting] = useState<boolean>(false)
 
-  // Reset to root surface every time the modal opens. The same modal
-  // is reused across different members, so without this it could open
-  // on a stale step from the previous member's flow.
+  // Reset to root surface every time the modal opens. Gated on the
+  // close→open transition via a ref so the parent flipping member.role
+  // mid-save (after onSubmitRoleChange resolves) doesn't re-fire the
+  // reset and clobber our 'role-success' step — same class of bug we
+  // patched on the manage + provider edit modals.
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    if (isOpen) setStep('details')
+    if (isOpen && !wasOpenRef.current) {
+      setStep('details')
+      setActedName('')
+      setWasPromoting(false)
+    }
+    wasOpenRef.current = isOpen
   }, [isOpen])
 
   // Delayed cleanup — runs ~250ms after dismiss animation so the
@@ -107,8 +136,12 @@ export function MemberModal({
     ? 'team.member_v2.step_title_self'
     : 'team.member_v2.step_title_other'
 
+  // Back arrow only on the intermediate confirm steps. Terminal success
+  // steps don't expose Back — the user closes via the Done pill.
   const onBack: (() => void) | undefined =
-    step === 'details' ? undefined : () => setStep('details')
+    step === 'role-change' || step === 'partner-warn' || step === 'remove'
+      ? () => setStep('details')
+      : undefined
 
   const handleChangeRoleTap = () => {
     // Pre-set the proposed direction so the role-change / warning
@@ -117,14 +150,29 @@ export function MemberModal({
     setStep(isPromoting ? 'partner-warn' : 'role-change')
   }
 
-  const handleRoleChangeConfirm = () => {
-    void onSubmitRoleChange()
-    setStep('details')
+  const handleRoleChangeConfirm = async () => {
+    // Snapshot identity + direction BEFORE the parent mutates the row.
+    const name = member.name
+    const promoting = isPromoting
+    const ok = await onSubmitRoleChange()
+    if (ok) {
+      setActedName(name)
+      setWasPromoting(promoting)
+      setStep('role-success')
+    } else {
+      // Fail closed back to the details surface so an error doesn't
+      // strand the user on the confirm step with no Back arrow.
+      setStep('details')
+    }
   }
 
   const handleRemoveConfirm = async () => {
+    const name = member.name
     const ok = await onRemoveMember()
-    if (ok) onClose()
+    if (ok) {
+      setActedName(name)
+      setStep('remove-success')
+    }
   }
 
   // Footer derived per step. Details step has no footer (its actions
@@ -165,7 +213,32 @@ export function MemberModal({
         )}
       </IonButton>
     )
+  } else if (step === 'role-success' || step === 'remove-success') {
+    footer = (
+      <IonButton onClick={onClose} data-haptic>
+        {t.formatMessage({ id: 'common.done' })}
+      </IonButton>
+    )
   }
+
+  const successStampKey = step === 'remove-success'
+    ? 'team.member_v2.remove_success_stamp'
+    : wasPromoting
+      ? 'team.member_v2.role_success_promote_stamp'
+      : 'team.member_v2.role_success_demote_stamp'
+  const successTitleKey = step === 'remove-success'
+    ? 'team.member_v2.remove_success_title'
+    : wasPromoting
+      ? 'team.member_v2.role_success_promote_title'
+      : 'team.member_v2.role_success_demote_title'
+  const successSubtitleKey = step === 'remove-success'
+    ? 'team.member_v2.remove_success_subtitle'
+    : wasPromoting
+      ? 'team.member_v2.role_success_promote_subtitle'
+      : 'team.member_v2.role_success_demote_subtitle'
+  const successLottieSrc = step === 'remove-success'
+    ? '/animations/trash.json'
+    : '/animations/success.json'
 
   return (
     <ModalShell rawContent isOpen={isOpen} onClose={onClose}>
@@ -213,6 +286,38 @@ export function MemberModal({
         {step === 'role-change' && <MemberRoleChangeBody member={member} />}
         {step === 'partner-warn' && <MemberPartnerWarningBody member={member} />}
         {step === 'remove' && <MemberRemoveBody member={member} />}
+
+        {(step === 'role-success' || step === 'remove-success') && (
+          <div className="manage-seal" aria-hidden={step !== 'role-success' && step !== 'remove-success'}>
+            <div className="manage-seal__lottie">
+              <LottiePlayer
+                src={successLottieSrc}
+                loop={false}
+                autoplay={true}
+                delay={300}
+                style={{ width: 144, height: 144 }}
+              />
+            </div>
+
+            <span className="manage-seal__stamp">
+              {t.formatMessage({ id: successStampKey })}
+            </span>
+
+            <h2 className="manage-seal__title">
+              {t.formatMessage(
+                { id: successTitleKey },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h2>
+
+            <p className="manage-seal__subtitle">
+              {t.formatMessage(
+                { id: successSubtitleKey },
+                { name: actedName },
+              )}
+            </p>
+          </div>
+        )}
       </IonContent>
 
       {footer && (

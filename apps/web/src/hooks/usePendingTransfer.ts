@@ -43,7 +43,7 @@ export interface UsePendingTransferReturn {
   isLoading: boolean
   error: string
   isCancelling: boolean
-  cancel: () => Promise<void>
+  cancel: () => Promise<boolean>
   refresh: () => Promise<void>
 }
 
@@ -86,14 +86,15 @@ export function usePendingTransfer(): UsePendingTransferReturn {
     refresh()
   }, [refresh])
 
-  const cancel = useCallback(async () => {
-    if (!businessId || !transfer) return
+  const cancel = useCallback(async (): Promise<boolean> => {
+    if (!businessId || !transfer) return false
     setIsCancelling(true)
     setError('')
     try {
       await apiPost(`/api/businesses/${businessId}/transfer/cancel`, { code: transfer.code })
       setTransfer(null)
       writeCachedTransfer(businessId, null)
+      return true
     } catch (err) {
       console.error('Cancel transfer error:', err)
       setError(
@@ -101,6 +102,7 @@ export function usePendingTransfer(): UsePendingTransferReturn {
           ? translateApiMessage(err.envelope)
           : '',
       )
+      return false
     } finally {
       setIsCancelling(false)
     }
