@@ -13,9 +13,13 @@ import {
   IonButton,
   IonIcon,
   IonSpinner,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonToggle,
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
-import { ChevronRight, ImagePlus } from 'lucide-react'
+import { ChevronRight, ImagePlus, Power, Trash2 } from 'lucide-react'
 import Image from '@/lib/Image'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
@@ -32,6 +36,7 @@ import { BarcodeStep } from './BarcodeStep'
 import { AddSuccessStep } from './AddSuccessStep'
 import { EditSuccessStep } from './EditSuccessStep'
 import { AdjustInventoryStep } from './AdjustInventoryStep'
+import { DeleteConfirmStep } from './DeleteConfirmStep'
 
 /**
  * Final wizard step + summary surface. Shown:
@@ -68,6 +73,7 @@ export function ReviewStep() {
     price,
     categoryId,
     active,
+    setActive,
     iconPreview,
     presetEmoji,
     iconType,
@@ -86,6 +92,39 @@ export function ReviewStep() {
   } = useProductForm()
 
   const [savingLocal, setSavingLocal] = useState(false)
+
+  const [isToggling, setIsToggling] = useState(false)
+  const [toggleError, setToggleError] = useState('')
+
+  // The toggle reads form-context `active` (already destructured above) —
+  // it's initialized from editingProduct.active on modal open via
+  // populateFromProduct, then this handler keeps it in sync after a
+  // successful PATCH. We avoid reading editingProduct.active directly
+  // because ProductsView's local editingProduct state is set at open-time
+  // and doesn't update on the inline toggle (only the shared products
+  // array does), so editingProduct here would be stale until close+reopen.
+  const handleToggleActive = async () => {
+    if (!isEdit || !editCtx || !editingProduct || isToggling) return
+    const next = !active
+    setIsToggling(true)
+    setToggleError('')
+    try {
+      const ok = await editCtx.onToggleActive(editingProduct.id, next)
+      if (ok) {
+        // Sync the form-context active so a subsequent Save doesn't
+        // ship a stale value and overwrite the inline PATCH.
+        setActive(next)
+      } else {
+        setToggleError(t.formatMessage({ id: 'productAddEdit.toggle_failed' }))
+      }
+    } finally {
+      setIsToggling(false)
+    }
+  }
+
+  const openDeleteConfirm = () => {
+    navRef.current?.push(() => <DeleteConfirmStep />)
+  }
 
   const { hasChanges } = useProductFormValidation()
 
@@ -314,27 +353,99 @@ export function ReviewStep() {
               valueIsMono
             />
           </div>
+
+          {/* Manager-only inline status toggle + footer trash affordance.
+              The toggle row mirrors ProviderDetailClient's status row chrome
+              (Power icon + label + IonToggle); we reuse the .pd-toggle-value
+              class from providers-detail.css — the selectors there are
+              unscoped, so the class works anywhere it's applied. */}
+          {isEdit && editCtx?.canDelete && editingProduct && (
+            <>
+              <IonList
+                inset
+                lines="full"
+                className="account-list pm-review__status"
+              >
+                <IonItem lines="none">
+                  <Power
+                    slot="start"
+                    className="text-text-secondary w-5 h-5"
+                  />
+                  <IonLabel>
+                    <h3>
+                      {t.formatMessage({ id: 'productAddEdit.active_label' })}
+                    </h3>
+                  </IonLabel>
+                  <span
+                    slot="end"
+                    className="pd-toggle-value"
+                    data-active={active}
+                  >
+                    <span>
+                      {t.formatMessage({
+                        id: active
+                          ? 'productAddEdit.active_status_active'
+                          : 'productAddEdit.active_status_inactive',
+                      })}
+                    </span>
+                    <IonToggle
+                      checked={active}
+                      disabled={isToggling}
+                      onIonChange={handleToggleActive}
+                      aria-label={t.formatMessage({
+                        id: 'productAddEdit.active_label',
+                      })}
+                    />
+                  </span>
+                </IonItem>
+              </IonList>
+              {toggleError && (
+                <p
+                  className="pm-error"
+                  role="alert"
+                  style={{ margin: 'var(--space-3) 0 0' }}
+                >
+                  {toggleError}
+                </p>
+              )}
+            </>
+          )}
         </div>
       </IonContent>
 
       <IonFooter className="pm-footer">
         <IonToolbar>
           <div className="modal-footer">
-            <IonButton
-              onClick={handleSave}
-              disabled={!isFormValid || !hasChanges || savingLocal || isSaving}
-              data-haptic
-            >
-              {savingLocal || isSaving ? (
-                <IonSpinner name="crescent" />
-              ) : (
-                t.formatMessage({
-                  id: isEdit
-                    ? 'productAddEdit.review_save_edit'
-                    : 'productAddEdit.review_save_add',
-                })
+            <div className="pm-review__actions">
+              {isEdit && editCtx?.canDelete && (
+                <button
+                  type="button"
+                  className="pm-review__icon-action pm-review__icon-action--delete"
+                  onClick={openDeleteConfirm}
+                  disabled={savingLocal || isSaving || isToggling}
+                  aria-label={t.formatMessage({
+                    id: 'productAddEdit.delete_button_aria',
+                  })}
+                >
+                  <Trash2 size={18} strokeWidth={1.8} />
+                </button>
               )}
-            </IonButton>
+              <IonButton
+                onClick={handleSave}
+                disabled={!isFormValid || !hasChanges || savingLocal || isSaving}
+                data-haptic
+              >
+                {savingLocal || isSaving ? (
+                  <IonSpinner name="crescent" />
+                ) : (
+                  t.formatMessage({
+                    id: isEdit
+                      ? 'productAddEdit.review_save_edit'
+                      : 'productAddEdit.review_save_add',
+                  })
+                )}
+              </IonButton>
+            </div>
           </div>
         </IonToolbar>
       </IonFooter>
