@@ -2,12 +2,12 @@
 
 import { useIntl } from 'react-intl'
 import { useMemo } from 'react'
-import { useRouter } from '@/lib/next-navigation-shim'
 import { LogOut } from 'lucide-react'
 import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { useBusiness } from '@/contexts/business-context'
 import { useLeaveBusiness } from '@/hooks/useLeaveBusiness'
+import { useGoBackTo } from '@/hooks'
 
 interface Props { isOpen: boolean; onClose: () => void }
 
@@ -20,13 +20,13 @@ interface Props { isOpen: boolean; onClose: () => void }
  */
 export function LeaveBusinessModal({ isOpen, onClose }: Props) {
   const intl = useIntl()
-  const router = useRouter()
+  const goBackTo = useGoBackTo()
   const { business } = useBusiness()
   const { leave, isSubmitting, error, reset } = useLeaveBusiness()
 
   const handleLeave = async () => {
     const ok = await leave()
-    if (ok) { onClose(); router.push('/') }
+    if (ok) { onClose(); goBackTo('/') }
   }
 
   const handleClose = () => {

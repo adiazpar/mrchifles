@@ -2,13 +2,13 @@
 
 import { useIntl } from 'react-intl'
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from '@/lib/next-navigation-shim'
 import { AlertOctagon, Check } from 'lucide-react'
 import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { AuthField } from '@/components/auth'
 import { useBusiness } from '@/contexts/business-context'
 import { useDeleteBusiness } from '@/hooks/useDeleteBusiness'
+import { useGoBackTo } from '@/hooks'
 
 interface Props { isOpen: boolean; onClose: () => void }
 
@@ -24,7 +24,7 @@ interface Props { isOpen: boolean; onClose: () => void }
  */
 export function DeleteBusinessModal({ isOpen, onClose }: Props) {
   const intl = useIntl()
-  const router = useRouter()
+  const goBackTo = useGoBackTo()
   const { business } = useBusiness()
   const { deleteBusiness, isSubmitting, error } = useDeleteBusiness()
   const [typed, setTyped] = useState('')
@@ -43,7 +43,7 @@ export function DeleteBusinessModal({ isOpen, onClose }: Props) {
   const handleDelete = async () => {
     if (!canDelete) return
     const ok = await deleteBusiness()
-    if (ok) { onClose(); router.push('/') }
+    if (ok) { onClose(); goBackTo('/') }
   }
 
   const titleNode = useMemo(() => {

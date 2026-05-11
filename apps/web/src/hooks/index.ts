@@ -42,3 +42,7 @@ export { useHorizontalSwipeIntent } from './useHorizontalSwipeIntent'
 export { useConfirmActionSheet } from './useConfirmActionSheet'
 
 export { useInfoAlert } from './useInfoAlert'
+
+export { useGoBackTo } from './useGoBackTo'
+
+export { useDetailEntityGuard } from './useDetailEntityGuard'

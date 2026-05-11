@@ -43,6 +43,7 @@ import { useProducts } from '@/contexts/products-context'
 import { apiRequest, apiPost, apiPatch, apiDelete, ApiError } from '@/lib/api-client'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
+import { useGoBackTo, useDetailEntityGuard } from '@/hooks'
 import { useBusiness } from '@/contexts/business-context'
 import { canManageBusiness } from '@kasero/shared/business-role'
 import { formatRelative } from '@/lib/formatRelative'
@@ -70,8 +71,9 @@ export interface ProviderDetailClientProps {
  * (`useProviders().providers.find(...)`) so the `IonTitle` can render
  * the provider name even before this component finishes its detail
  * fetch. `useRouter()` is retained because it still drives the tab
- * URL state (`router.replace`) and the post-delete redirect
- * (`router.push`).
+ * URL state (`router.replace`). The post-delete redirect uses
+ * `useGoBackTo` so the IonRouterOutlet pops the dead detail page
+ * instead of stacking the providers list on top of it.
  */
 
 type DetailTab = 'summary' | 'history' | 'notes'
@@ -84,6 +86,7 @@ function isDetailTab(value: string | null): value is DetailTab {
 
 export function ProviderDetailClient({ businessId, providerId }: ProviderDetailClientProps) {
   const router = useRouter()
+  const goBackTo = useGoBackTo()
   const searchParams = useSearchParams()
   const intl = useIntl()
   const { formatCurrencyCompact } = useBusinessFormat()
@@ -183,6 +186,16 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
     setProviders,
     ensureLoaded: ensureProvidersLoaded,
   } = useProviders()
+  // Defense-in-depth: if the provider disappears from the shared context
+  // for any reason other than this page's own delete flow, slide back to
+  // the providers list instead of rendering stale data. Disabled during
+  // our own delete-success animation (providerDeleted), since that path
+  // owns the navigation via goBackTo in the modal's onExitComplete.
+  useDetailEntityGuard(
+    allProvidersAll.find(p => p.id === providerId),
+    `/${businessId}/providers`,
+    { enabled: !providerDeleted },
+  )
   const { products, ensureLoaded: ensureProductsLoaded } = useProducts()
   const allProviders = useMemo(
     () => allProvidersAll.filter(p => p.active),
@@ -1294,7 +1307,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         onExitComplete={() => {
           setDeleteError('')
           if (providerDeleted) {
-            router.push(`/${businessId}/providers`)
+            goBackTo(`/${businessId}/providers`)
             setProviderDeleted(false)
           }
         }}

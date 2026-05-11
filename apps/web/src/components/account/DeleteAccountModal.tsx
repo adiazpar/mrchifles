@@ -2,13 +2,13 @@
 
 import { useIntl } from 'react-intl'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useRouter } from '@/lib/next-navigation-shim'
 import { Check, AlertOctagon } from 'lucide-react'
 import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { AuthField } from '@/components/auth'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
+import { useGoBackTo } from '@/hooks'
 import { ApiError, apiRequest } from '@/lib/api-client'
 import { fetchDeduped } from '@/lib/fetch'
 
@@ -29,7 +29,7 @@ export function DeleteAccountModal({
   onExitComplete,
 }: DeleteAccountModalProps) {
   const intl = useIntl()
-  const router = useRouter()
+  const goBackTo = useGoBackTo()
   const { user, logout } = useAuth()
   const translateApiMessage = useApiMessage()
 
@@ -117,7 +117,7 @@ export function DeleteAccountModal({
       })
       // Success: clear local auth cache and redirect to register.
       await logout()
-      router.push('/register')
+      goBackTo('/register')
     } catch (err) {
       if (err instanceof ApiError) {
         setError(
@@ -139,7 +139,7 @@ export function DeleteAccountModal({
     } finally {
       setIsDeleting(false)
     }
-  }, [canDelete, user, confirmEmail, currentPassword, logout, router, translateApiMessage, intl])
+  }, [canDelete, user, confirmEmail, currentPassword, logout, goBackTo, translateApiMessage, intl])
 
   const confirmTitle = useMemo(() => {
     const full = intl.formatMessage({ id: 'account.delete_confirm_hero_title' })
