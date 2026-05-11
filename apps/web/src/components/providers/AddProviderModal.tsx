@@ -12,7 +12,6 @@ import {
   IonIcon,
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
-import { CheckCircle2 } from 'lucide-react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { ModalShell } from '@/components/ui'
 
@@ -301,28 +300,20 @@ function SuccessBody({ triggered, mode }: SuccessBodyProps) {
 
   return (
     <div className="pv-seal" aria-hidden={!triggered}>
-      {/* Add + edit (save-success) play the canonical Lottie tick that
-          every other success step in the app uses (see
-          EditOrderSuccessStep / EditSuccessStep). Delete-success keeps
-          the quiet oxblood ring + glyph — destructive actions are
-          confirmed, not celebrated. */}
-      {isDanger ? (
-        <span className="pv-seal__circle pv-seal__circle--danger">
-          <CheckCircle2 size={44} strokeWidth={1.4} />
-        </span>
-      ) : (
-        <div style={{ width: 144, height: 144 }}>
-          {triggered && (
-            <LottiePlayer
-              src="/animations/success.json"
-              loop={false}
-              autoplay={true}
-              delay={300}
-              style={{ width: 144, height: 144 }}
-            />
-          )}
-        </div>
-      )}
+      {/* Add + edit play the canonical success tick; delete-success plays
+          the trash Lottie so destructive confirmations get their own
+          motion language without borrowing the celebratory tick. */}
+      <div style={{ width: 144, height: 144 }}>
+        {triggered && (
+          <LottiePlayer
+            src={isDanger ? '/animations/trash.json' : '/animations/success.json'}
+            loop={false}
+            autoplay={true}
+            delay={300}
+            style={{ width: 144, height: 144 }}
+          />
+        )}
+      </div>
 
       <span className="pv-seal__stamp">{t.formatMessage({ id: stampKey })}</span>
 

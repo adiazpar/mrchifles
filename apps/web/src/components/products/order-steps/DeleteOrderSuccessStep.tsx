@@ -23,7 +23,7 @@ export function DeleteOrderSuccessStep() {
             <div className="order-success__lottie">
               {orderDeleted && (
                 <LottiePlayer
-                  src="/animations/error.json"
+                  src="/animations/trash.json"
                   loop={false}
                   autoplay={true}
                   delay={300}
