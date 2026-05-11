@@ -26,8 +26,15 @@ export function ContentGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, authLoading, router])
 
-  // Show spinner while loading auth or business access
-  if (authLoading || businessLoading) {
+  // Show spinner only when we genuinely lack data. Once `business` is in
+  // hand, a businessLoading=true means BusinessContext is *refreshing* in
+  // the background (e.g. after useUpdateBusiness PATCHes the business and
+  // awaits validateAccess). Replacing the tree with a spinner there
+  // unmounts every page-scoped modal mid-flow — the user taps Save in a
+  // manage edit modal, this guard remounts ManageView, and the modal's
+  // open-state (held as ManageView local useState) resets to false.
+  // The user perceives that as the modal vanishing with no dismiss.
+  if (authLoading || (businessLoading && !business)) {
     return (
       <PageSpinner />
     )

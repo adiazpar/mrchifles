@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
   IonHeader,
@@ -50,11 +50,17 @@ export function EditProviderPhoneModal({
   const [step, setStep] = useState<Step>('form')
   const [value, setValue] = useState(initialPhone)
 
+  // Gate the reset on close→open transition only. The parent updates
+  // provider.phone before this modal commits step='save-success', so a
+  // reset on every initialPhone change clobbers the success step. See
+  // EditProviderNameModal for the full rationale.
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
       setStep('form')
       setValue(initialPhone)
     }
+    wasOpenRef.current = isOpen
   }, [isOpen, initialPhone])
 
   useEffect(() => {

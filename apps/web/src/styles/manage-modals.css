@@ -134,6 +134,86 @@
   word-break: break-word;
 }
 
+/* ---- Save-success terminal seal (shared across the four manage edit
+   modals) ----------------------------------------------------------------
+   Lottie tick + mono stamp + Fraunces italic title + an optional
+   "specimen" plate the per-modal markup fills with the freshly-saved
+   value (name, type, locale, mark, ...). Sits inside ModalShell's
+   IonContent — full-height centered column so the celebration occupies
+   the same visual real estate the form did. Sub-classes mirror the
+   pv-seal vocabulary on the provider modals so both flows read as one
+   family. */
+
+.manage-seal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-6) var(--space-2);
+  gap: var(--space-3);
+  min-height: 60vh;
+}
+
+.manage-seal__lottie {
+  width: 144px;
+  height: 144px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.manage-seal__stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px var(--space-3);
+  background: var(--color-paper-warm);
+  border: 1px solid var(--color-hair);
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  animation: manage-seal-in 320ms var(--ease-out-expo) 200ms both;
+}
+
+.manage-seal__title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 50;
+  font-size: var(--text-3xl);
+  font-weight: 400;
+  letter-spacing: -0.022em;
+  line-height: 1.08;
+  color: var(--color-text-primary);
+  margin: var(--space-1) 0 0;
+  animation: manage-seal-in 360ms var(--ease-out-expo) 280ms both;
+}
+
+.manage-seal__title em {
+  font-style: italic;
+  color: var(--color-brand);
+  font-variation-settings: "SOFT" 70;
+}
+
+.manage-seal__subtitle {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  max-width: 30ch;
+  margin: 0;
+  animation: manage-seal-in 400ms var(--ease-out-expo) 360ms both;
+}
+
+@keyframes manage-seal-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 
 /* ==========================================================================
    2. EditTypeModal — "the trade"

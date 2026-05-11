@@ -1446,7 +1446,7 @@
   border: 0;
   border-radius: var(--radius-full);
   background: var(--color-ink);
-  color: #ffffff;
+  color: var(--color-text-inverse);
   font-family: var(--font-body);
   font-size: 16px;
   font-weight: 600;
@@ -1511,12 +1511,14 @@
   transform: translateY(1px);
 }
 
-/* Spinner glyph used inside the primary pill while saving. */
+/* Spinner glyph used inside the primary pill while saving. Inherits the
+ * host pill's text color via currentColor so it stays readable when the
+ * pill repaints between light and dark themes. */
 .order-modal__pill-spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #ffffff;
+  border: 2px solid color-mix(in srgb, currentColor 40%, transparent);
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: order-modal-spin 700ms linear infinite;
 }

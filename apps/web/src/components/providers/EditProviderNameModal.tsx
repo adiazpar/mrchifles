@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
   IonHeader,
@@ -52,13 +52,19 @@ export function EditProviderNameModal({
   const [step, setStep] = useState<Step>('form')
   const [value, setValue] = useState(initialName)
 
-  // Reset to form + initialName whenever the modal opens. Without this
-  // reopening the modal after a save would land on the success step.
+  // Reset to form + initialName only when the modal transitions from
+  // closed to open. The parent updates provider.name (the source of
+  // initialName) inside the save handler before this modal commits its
+  // step='save-success' transition; if we reset on every initialName
+  // change the success step renders for one frame and is immediately
+  // flipped back to 'form', so the Lottie celebration never shows.
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
       setStep('form')
       setValue(initialName)
     }
+    wasOpenRef.current = isOpen
   }, [isOpen, initialName])
 
   // Delayed cleanup so onExitComplete fires after the dismiss animation.

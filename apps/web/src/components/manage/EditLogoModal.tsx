@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Upload, X } from 'lucide-react'
 import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useBusiness } from '@/contexts/business-context'
 import { useUpdateBusiness } from '@/hooks/useUpdateBusiness'
 import { BUSINESS_TYPE_ICONS } from '@/components/businesses/shared'
@@ -13,24 +14,35 @@ import { MAX_UPLOAD_SIZE } from '@/lib/storage-client'
 
 interface Props { isOpen: boolean; onClose: () => void }
 
+type Step = 'form' | 'save-success'
+
 export function EditLogoModal({ isOpen, onClose }: Props) {
   const intl = useIntl()
   const { business } = useBusiness()
   const { update, isSubmitting, error, reset } = useUpdateBusiness()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [step, setStep] = useState<Step>('form')
+  const [saved, setSaved] = useState(false)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [pendingPreview, setPendingPreview] = useState<string | null>(null)
   const [shouldRemove, setShouldRemove] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
+  // Open-time reset gated on close→open transition. Without this,
+  // refreshBusiness() updating business?.icon mid-save would re-fire
+  // this effect and reset 'save-success' back to 'form'.
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
+      setStep('form')
+      setSaved(false)
       setPendingFile(null)
       setPendingPreview(null)
       setShouldRemove(false)
       setUploadError(null)
     }
+    wasOpenRef.current = isOpen
   }, [isOpen])
 
   // Revoke object URLs when replaced or on unmount.
@@ -49,6 +61,8 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
         setPendingPreview(null)
         setShouldRemove(false)
         setUploadError(null)
+        setSaved(false)
+        setStep('form')
         reset()
       }, 250)
       return () => clearTimeout(timer)
@@ -124,10 +138,17 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
       logoFile: pendingFile,
       removeLogo: shouldRemove,
     })
-    if (ok) onClose()
+    if (ok) {
+      setSaved(true)
+      setStep('save-success')
+    }
   }
 
-  const footer = (
+  const title = step === 'form'
+    ? intl.formatMessage({ id: 'manage.edit_logo_title' })
+    : intl.formatMessage({ id: 'manage.edit_logo_title_success' })
+
+  const footer = step === 'form' ? (
     <IonButton
       expand="block"
       onClick={handleSave}
@@ -135,6 +156,14 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
       className="flex-1"
     >
       {isSubmitting ? <IonSpinner name="crescent" /> : intl.formatMessage({ id: 'manage.save' })}
+    </IonButton>
+  ) : (
+    <IonButton
+      expand="block"
+      onClick={onClose}
+      className="flex-1"
+    >
+      {intl.formatMessage({ id: 'common.done' })}
     </IonButton>
   )
 
@@ -146,90 +175,125 @@ export function EditLogoModal({ isOpen, onClose }: Props) {
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={intl.formatMessage({ id: 'manage.edit_logo_title' })}
+      title={title}
       footer={footer}
       noSwipeDismiss
     >
-      {error && <div className="modal-error">{error}</div>}
+      {step === 'form' && (
+        <>
+          {error && <div className="modal-error">{error}</div>}
 
-      <header className="modal-hero edit-logo__hero">
-        <div className="modal-hero__eyebrow">
-          {intl.formatMessage({ id: 'manage.edit_logo_eyebrow' })}
-        </div>
-        <h1 className="modal-hero__title">{titleNode}</h1>
-        <p className="modal-hero__subtitle">
-          {intl.formatMessage({ id: 'manage.edit_logo_hero_subtitle' })}
-        </p>
-      </header>
+          <header className="modal-hero edit-logo__hero">
+            <div className="modal-hero__eyebrow">
+              {intl.formatMessage({ id: 'manage.edit_logo_eyebrow' })}
+            </div>
+            <h1 className="modal-hero__title">{titleNode}</h1>
+            <p className="modal-hero__subtitle">
+              {intl.formatMessage({ id: 'manage.edit_logo_hero_subtitle' })}
+            </p>
+          </header>
 
-      <div className="edit-logo__stage">
-        <span className={'edit-logo__status' + statusModifier}>{statusText}</span>
+          <div className="edit-logo__stage">
+            <span className={'edit-logo__status' + statusModifier}>{statusText}</span>
 
-        <div className="edit-logo__medallion">
-          <div className="edit-logo__medallion-inner">
-            {displayPreview ? (
-              <Image
-                src={displayPreview}
-                alt=""
-                width={144}
-                height={144}
-                className="w-full h-full object-cover"
-                unoptimized
-              />
-            ) : TypeIcon ? (
-              <span className="edit-logo__fallback">
-                <TypeIcon />
-              </span>
-            ) : fallbackEmoji ? (
-              <span className="edit-logo__fallback-emoji">{fallbackEmoji}</span>
-            ) : null}
+            <div className="edit-logo__medallion">
+              <div className="edit-logo__medallion-inner">
+                {displayPreview ? (
+                  <Image
+                    src={displayPreview}
+                    alt=""
+                    width={144}
+                    height={144}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                ) : TypeIcon ? (
+                  <span className="edit-logo__fallback">
+                    <TypeIcon />
+                  </span>
+                ) : fallbackEmoji ? (
+                  <span className="edit-logo__fallback-emoji">{fallbackEmoji}</span>
+                ) : null}
+              </div>
+
+              {displayPreview && (
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  className="edit-logo__remove"
+                  aria-label={intl.formatMessage({ id: 'createBusiness.logo_remove' })}
+                >
+                  <X />
+                </button>
+              )}
+            </div>
           </div>
 
-          {displayPreview && (
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="edit-logo__remove"
-              aria-label={intl.formatMessage({ id: 'createBusiness.logo_remove' })}
-            >
-              <X />
-            </button>
-          )}
-        </div>
-      </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
-      />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="edit-logo__upload"
+          >
+            <span className="edit-logo__upload-icon" aria-hidden="true">
+              <Upload />
+            </span>
+            <span className="edit-logo__upload-body">
+              <span className="edit-logo__upload-label">
+                {intl.formatMessage({ id: 'manage.edit_logo_upload_label' })}
+              </span>
+              <span className="edit-logo__upload-value">{uploadValue}</span>
+            </span>
+          </button>
 
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className="edit-logo__upload"
-      >
-        <span className="edit-logo__upload-icon" aria-hidden="true">
-          <Upload />
-        </span>
-        <span className="edit-logo__upload-body">
-          <span className="edit-logo__upload-label">
-            {intl.formatMessage({ id: 'manage.edit_logo_upload_label' })}
+          <div
+            className={
+              'manage-edit__note' +
+              (uploadError ? ' manage-edit__note--error' : '')
+            }
+          >
+            {uploadError ?? intl.formatMessage({ id: 'manage.edit_logo_size_hint' })}
+          </div>
+        </>
+      )}
+
+      {step === 'save-success' && (
+        <div className="manage-seal" aria-hidden={!saved}>
+          <div className="manage-seal__lottie">
+            {saved && (
+              <LottiePlayer
+                src="/animations/success.json"
+                loop={false}
+                autoplay={true}
+                delay={300}
+                style={{ width: 144, height: 144 }}
+              />
+            )}
+          </div>
+
+          <span className="manage-seal__stamp">
+            {intl.formatMessage({ id: 'manage.edit_logo_success_stamp' })}
           </span>
-          <span className="edit-logo__upload-value">{uploadValue}</span>
-        </span>
-      </button>
 
-      <div
-        className={
-          'manage-edit__note' +
-          (uploadError ? ' manage-edit__note--error' : '')
-        }
-      >
-        {uploadError ?? intl.formatMessage({ id: 'manage.edit_logo_size_hint' })}
-      </div>
+          <h2 className="manage-seal__title">
+            {intl.formatMessage(
+              { id: 'manage.edit_logo_success_title' },
+              { em: (chunks) => <em>{chunks}</em> },
+            )}
+          </h2>
+
+          <p className="manage-seal__subtitle">
+            {intl.formatMessage({ id: 'manage.edit_logo_success_subtitle' })}
+          </p>
+        </div>
+      )}
     </ModalShell>
   )
 }
