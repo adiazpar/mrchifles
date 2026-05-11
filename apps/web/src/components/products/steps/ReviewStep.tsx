@@ -123,6 +123,10 @@ export function ReviewStep() {
   }
 
   const openDeleteConfirm = () => {
+    // Clear any prior error/toggleError so a stale red banner from a
+    // failed save doesn't carry over into the delete-confirm screen.
+    setError('')
+    setToggleError('')
     navRef.current?.push(() => <DeleteConfirmStep />)
   }
 
@@ -390,7 +394,7 @@ export function ReviewStep() {
                     </span>
                     <IonToggle
                       checked={active}
-                      disabled={isToggling}
+                      disabled={isToggling || savingLocal || isSaving}
                       onIonChange={handleToggleActive}
                       aria-label={t.formatMessage({
                         id: 'productAddEdit.active_label',
