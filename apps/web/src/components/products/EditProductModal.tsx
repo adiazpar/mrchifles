@@ -27,6 +27,7 @@ export interface EditProductModalProps {
   editingProduct: Product | null
   onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<Product | null>
   onDelete: (productId: string) => Promise<boolean>
+  onToggleActive: (productId: string, nextActive: boolean) => Promise<boolean>
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
   /** Default category for resetForm (after modal closes). */
@@ -56,6 +57,7 @@ function EditProductModalInner({
   editingProduct,
   onSubmit,
   onDelete,
+  onToggleActive,
   onSaveAdjustment,
   canDelete,
   defaultCategoryId,
@@ -89,6 +91,7 @@ function EditProductModalInner({
     categories,
     onSubmit,
     onDelete,
+    onToggleActive,
     onSaveAdjustment,
     canDelete,
   }

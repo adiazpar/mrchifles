@@ -180,6 +180,7 @@ interface EditProductModalWrapperProps {
   editingProduct: Product | null
   onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<Product | null>
   onDelete: (productId: string) => Promise<boolean>
+  onToggleActive: (productId: string, nextActive: boolean) => Promise<boolean>
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
   defaultCategoryId?: string | null
@@ -194,6 +195,7 @@ function EditProductModalWrapper({
   editingProduct,
   onSubmit,
   onDelete,
+  onToggleActive,
   onSaveAdjustment,
   canDelete,
   defaultCategoryId,
@@ -212,6 +214,7 @@ function EditProductModalWrapper({
       editingProduct={editingProduct}
       onSubmit={onSubmit}
       onDelete={onDelete}
+      onToggleActive={onToggleActive}
       onSaveAdjustment={onSaveAdjustment}
       canDelete={canDelete}
       defaultCategoryId={defaultCategoryId}
