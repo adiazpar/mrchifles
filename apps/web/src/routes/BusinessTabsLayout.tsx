@@ -22,8 +22,8 @@ const BUSINESS_PATH = '/:businessId([A-Za-z0-9_-]{9,})'
 // Lucide icons match the rest of the app's icon vocabulary (Hub feature
 // cards, Account settings rows, etc.) — and we need stroke-width control
 // to land at 1.5 across the row, which the stock ionicons outlines don't
-// expose. Active state is painted via .tab-selected::before in
-// ionic-theme.css (small terracotta bar above the glyph).
+// expose. Active state is signaled by the brand color flip on the icon
+// + label (--ion-tab-bar-color-selected), no extra mark.
 //
 // `size` is rendered as the SVG's `width`/`height` HTML attributes by
 // lucide-react. HTML attributes outrank CSS dimensions, so this is the

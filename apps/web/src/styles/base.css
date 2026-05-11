@@ -183,13 +183,26 @@
      LiveBarcodeScanner positioning — match the visual height of the
      IonTabBar plus its safe-area inset on a real device). */
   /* Bottom IonTabBar height (excludes safe-area-inset-bottom — Ionic
-     adds that automatically on iOS). 96px gives the redesigned tab
-     bar room for: 28px Lucide icon + 6px label gap + 10.5px mono
-     label + 18px top inset (anchoring the active mark) + 24px
-     bottom inset = visually balanced rows. The legacy 80px left the
-     row feeling cramped against the active terracotta mark. */
-  --mobile-nav-height: 96px;
-  --header-height: 80px;
+     adds that automatically on iOS). 72px holds the 28px Lucide icon
+     + 6px gap + 10.5px mono label (~44.5px content) with ~14px of
+     even breathing room above and below via justify-content: center
+     on the tab button. Bottom screen-edge clearance is handled
+     separately by --mobile-nav-safe-area-extra (see ionic-theme.css). */
+  --mobile-nav-height: 72px;
+  /* Extra padding stacked on top of env(safe-area-inset-bottom) below
+     the tab bar so items don't sit flush with the home indicator /
+     screen edge. Applied to ion-tab-bar in ionic-theme.css. */
+  --mobile-nav-safe-area-extra: 8px;
+  /* Matches --mobile-nav-height: the visible toolbar content row.
+     The notch / dynamic-island safe-area is applied as padding-top on
+     ion-header (see ionic-theme.css), OUTSIDE this height — so the
+     full 72px is pure content, mirroring the tab bar. */
+  --header-height: 72px;
+  /* Mirror of --mobile-nav-safe-area-extra for the top toolbar: extra
+     padding stacked on top of env(safe-area-inset-top) so the header
+     content doesn't sit flush with the notch / dynamic-island edge.
+     Applied to ion-toolbar's --padding-top in ionic-theme.css. */
+  --header-safe-area-extra: 8px;
   --page-padding: 16px;
   --touch-target-min: 56px;
 

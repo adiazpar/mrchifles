@@ -169,10 +169,26 @@ ion-footer ion-toolbar {
  * by default, but we explicitly null it via --ion-toolbar-border-color
  * (Ionic's md mode does draw one). */
 ion-toolbar {
-  /* Honor the safe-area at the top of the screen (notch / dynamic island)
-   * — legacy .page-header--fixed did this with padding-top: env(...). */
-  --padding-top: env(safe-area-inset-top, 0);
+  /* Default safe-area handling for non-page toolbars (e.g. modal
+   * headers). Page headers move the safe-area onto ion-header itself
+   * — see the `.ion-page > ion-header` rule below — so the page
+   * toolbar can be a clean fixed height. */
+  --padding-top: env(safe-area-inset-top, 0px);
   --border-width: 0;
+}
+
+/* Page-level header safe-area treatment — mirrors the tab bar.
+ * The notch / dynamic-island padding + extra clearance sits on the
+ * outer ion-header host (OUTSIDE the toolbar's declared height), so
+ * --header-height (72px) is the visible content row and matches
+ * --mobile-nav-height exactly. Background extends up through the
+ * padded region so the chrome reads as one continuous bar. */
+.ion-page > ion-header {
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--header-safe-area-extra));
+  background: var(--color-bg-base);
+}
+.ion-page > ion-header ion-toolbar {
+  --padding-top: 0;
 }
 
 /* Page-level header toolbars (AccountPage, BusinessHeader, etc.) get the
@@ -257,9 +273,9 @@ ion-title {
 /* ===== IonTabBar — Modern Mercantile chrome ===========================
  * The persistent business-tab bar at the bottom of every business page.
  * Paper-translucent backdrop with a hairline top border. Active state
- * uses a small terracotta mark anchored above the icon — typographic,
- * not a filled chip. Labels render in JetBrains Mono uppercase so the
- * whole bar reads as a row of stamps rather than a generic iOS chrome.
+ * is signaled by --ion-tab-bar-color-selected (icon + label flip to the
+ * brand color). Labels render in JetBrains Mono uppercase so the whole
+ * bar reads as a row of stamps rather than a generic iOS chrome.
  *
  * IMPORTANT — height override:
  * Ionic 8.4's iOS tab-bar source hard-codes `:host { height: 50px }`
@@ -267,31 +283,29 @@ ion-title {
  * iOS mode. The token mapping in :root above is documentation-correct
  * but functionally a no-op on the iOS theme. External selectors like
  * `ion-tab-bar { height: ... }` beat the shadow-DOM `:host` rule per
- * spec, which is the only seam we have.
- *
- * `contain: strict` is also set on the host: that means content past
- * the host's height is clipped (paint containment), which is why the
- * default 50px bar appeared to show "tiny icons" — the icons weren't
- * shrunk, the bar was clipping a 28px icon + label down to a sliver.
- * Lifting the host height to --mobile-nav-height (96px) gives content
- * the room it needs. The host also has `box-sizing: content-box
- * !important`, so the safe-area-inset-bottom padding stacks on top of
- * this height for iPhone home-indicator clearance — no env() needed
- * here. */
+ * spec, which is the only seam we have. The host also has
+ * `box-sizing: content-box !important`, so the safe-area-inset-bottom
+ * padding stacks on top of --mobile-nav-height for iPhone home-indicator
+ * clearance — no env() needed here. */
 ion-tab-bar {
   --background: var(--paper-translucent);
   border-top: 1px solid var(--color-border);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   height: var(--mobile-nav-height);
+  /* Override Ionic's :host padding-bottom (which is just
+   * env(safe-area-inset-bottom)) to stack our own extra clearance on
+   * top, so the tab row floats off the home-indicator / screen edge.
+   * External `ion-tab-bar { ... }` rules beat shadow-DOM :host
+   * declarations per the cascade. */
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--mobile-nav-safe-area-extra));
 }
 
 ion-tab-button {
   font-family: var(--font-mono);
-  /* The bar is 96px and the inner button host is height: 100% with
-   * justify-content: center — these paddings frame the centered icon +
-   * label group and leave headroom above the icon for the active mark
-   * (`::before`, top: 8px). */
+  /* Inner button host is height: 100% with justify-content: center, so
+   * matching top/bottom padding keeps the icon + label group visually
+   * centered within the bar. */
   --padding-top: var(--space-3);
   --padding-bottom: var(--space-3);
   --padding-start: var(--space-2);
@@ -299,22 +313,6 @@ ion-tab-button {
   --color: var(--color-text-tertiary);
   --color-selected: var(--color-text-primary);
   position: relative;
-}
-
-/* The selected-state mark — small terracotta bar floating above the
- * icon. Anchored to the IonTabButton itself so it stays put even when
- * the inner label/icon flexes. Tab-bar selection is signaled by the
- * tab-selected class on the IonTabButton. */
-ion-tab-button.tab-selected::before {
-  content: "";
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--color-brand);
 }
 
 ion-tab-button ion-label {

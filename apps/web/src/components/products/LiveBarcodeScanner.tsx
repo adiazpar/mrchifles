@@ -225,8 +225,8 @@ export function LiveBarcodeScanner({
   // visible and interactive around the scanner. Safe-area insets are
   // accounted for so notches and home indicators don't overlap content.
   const overlayStyle: React.CSSProperties = {
-    top: 'calc(var(--header-height) + env(safe-area-inset-top, 0px))',
-    bottom: 'calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px))',
+    top: 'calc(var(--header-height) + env(safe-area-inset-top, 0px) + var(--header-safe-area-extra))',
+    bottom: 'calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--mobile-nav-safe-area-extra))',
     left: 0,
     right: 0,
   }
