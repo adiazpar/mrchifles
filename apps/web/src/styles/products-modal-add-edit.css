@@ -2181,3 +2181,62 @@ ion-footer.pm-footer ion-toolbar {
   color: var(--color-text-tertiary);
   letter-spacing: 0.02em;
 }
+
+/* Footer action row — primary save sits on the right, optional destructive
+   icon-button sits on the left. Mirrors .order-overview__actions in the
+   order-modal stylesheet; duplicated locally rather than lifted to a
+   shared class because the two surfaces are never on screen together.
+   Token choices match the order-modal version for visual parity
+   (--color-border, --color-error-subtle, --duration-fast) rather than the
+   names suggested in the plan spec, which don't exist in base.css. */
+.pm-review__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.pm-review__actions ion-button {
+  flex: 1 1 auto;
+}
+
+.pm-review__icon-action {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+.pm-review__icon-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pm-review__icon-action:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.pm-review__icon-action--delete {
+  color: var(--color-error);
+}
+
+.pm-review__icon-action--delete:hover:not(:disabled),
+.pm-review__icon-action--delete:focus-visible:not(:disabled) {
+  border-color: var(--color-error);
+  background: var(--color-error-subtle);
+  color: var(--color-error);
+}
