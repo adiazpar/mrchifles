@@ -15,6 +15,7 @@ import { close } from 'ionicons/icons'
 import { ProviderSuccessBody } from './AddProviderModal'
 import { ModalShell } from '@/components/ui'
 import { getProviderInitials } from './ProviderListItem'
+import { pickProviderMarkColor } from '@/lib/provider-mark'
 import type { Provider } from '@kasero/shared/types'
 
 type Step = 'confirm' | 'delete-success'
@@ -144,7 +145,12 @@ export function DeleteProviderModal({
               className="pv-specimen"
               data-active={provider.active ? 'true' : 'false'}
             >
-              <span className="pv-specimen__avatar" aria-hidden="true">
+              <span
+                className="pv-mark pv-mark--md"
+                data-active={provider.active}
+                style={provider.active ? { background: pickProviderMarkColor(provider.id) } : undefined}
+                aria-hidden="true"
+              >
                 {getProviderInitials(provider.name)}
               </span>
               <span className="pv-specimen__body">

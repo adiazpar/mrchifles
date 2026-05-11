@@ -19,7 +19,7 @@ import {
 } from '@ionic/react'
 import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2, User as UserIcon, Power } from 'lucide-react'
 import { TabContainer, ModalShell, PageSpinner, GroupLabel } from '@/components/ui'
-import { pickBusinessMarkColor } from '@/lib/business-mark'
+import { pickProviderMarkColor } from '@/lib/provider-mark'
 import {
   EditProviderNameModal,
   EditProviderPhoneModal,
@@ -550,7 +550,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
 
   const initials = getProviderInitials(provider.name)
   const hasOrders = providerOrders.length > 0
-  const markColor = pickBusinessMarkColor(provider.id)
+  const markColor = pickProviderMarkColor(provider.id)
   const lifetimeSpend = formatCurrencyCompact(metrics.totalSpent)
   const sinceMonthYear = provider.createdAt
     ? formatMonthYear(provider.createdAt, userLocale)
@@ -567,14 +567,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
             lifetime spend). The hero is intentionally non-interactive;
             edit affordances live in the Details rows below. */}
         <div className="pd-hero">
-          <div
-            className="pd-hero__mark"
+          <span
+            className="pv-mark pv-mark--lg"
             data-active={provider.active}
             style={provider.active ? { background: markColor } : undefined}
             aria-hidden="true"
           >
             {initials}
-          </div>
+          </span>
           <div className="pd-hero__body">
             <div className="pd-hero__eyebrow">
               <span>{intl.formatMessage({ id: 'providers.detail_eyebrow' })}</span>

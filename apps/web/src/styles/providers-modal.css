@@ -20,9 +20,14 @@
    Sections:
      1. Field ledger      ............ .pv-field, .pv-field__caption
      2. Status row        ............ .pv-status, .pv-status__pill
-     3. Specimen card     ............ .pv-specimen (avatar + name + status)
-     4. Note prose body   ............ .pv-note-body, .pv-note-counter
-     5. Note specimen     ............ .pv-note-specimen (title + meta)
+     3. Provider mark     ............ .pv-mark (--sm / --md / --lg)
+     4. Specimen card     ............ .pv-specimen (mark + name + status)
+     5. Note prose body   ............ .pv-note-body, .pv-note-counter
+     6. Note specimen     ............ .pv-note-specimen (title + meta)
+     7. Success seal      ............ .pv-seal terminal surfaces
+     8. Section heading   ............ small mono caption between blocks
+     9. Destructive link  ............ .provider-modal__delete-link
+    10. Contact sheet     ............ .pv-contact-* (drawer rows)
 */
 
 /* ==========================================================================
@@ -292,11 +297,75 @@
 }
 
 /* ==========================================================================
-   3. Specimen card — used inside the delete-confirm step
+   3. Provider mark — unified across every surface
    ==========================================================================
-   Mirrors .tm-member__specimen but for providers: terracotta initials
-   tile + name + meta row with status dot. Makes the destructive target
-   unambiguous on the confirm step.
+   Single primitive used by the list rows, the detail-page hero, and the
+   delete-confirm specimen. Mirrors the business-mark family (manage-hero
+   + hub list): rounded square, solid fill driven by `pickProviderMarkColor`,
+   white Fraunces initials. The fill colour is set inline at the call site
+   (`style={{ background: markColor }}`) so the picker stays the source
+   of truth and CSS doesn't have to enumerate provider ids.
+
+   Size variants — sm (list rows), md (modal specimens), lg (detail hero).
+   Inactive providers desaturate the fill to muted grey + tertiary ink so
+   the row reads as paused without depending on opacity (which we already
+   use on the row chassis itself).
+*/
+
+.pv-mark {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-brand);
+  color: #FFFCF5;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.pv-mark--sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.pv-mark--md {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 15px;
+}
+
+.pv-mark--lg {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  font-size: 20px;
+}
+
+/* Paused providers — desaturated chip. Inline `style.background` is
+   skipped at the call site when data-active='false', so this rule wins
+   without an !important hack. */
+.pv-mark[data-active='false'] {
+  background: var(--color-bg-muted);
+  color: var(--color-text-tertiary);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+/* ==========================================================================
+   4. Specimen card — used inside the delete-confirm step
+   ==========================================================================
+   Mirrors .tm-member__specimen but for providers: provider mark + name +
+   meta row with status dot. Makes the destructive target unambiguous on
+   the confirm step. The avatar slot is the unified .pv-mark--md primitive
+   above; this section only owns the surrounding card chrome.
 */
 
 .pv-specimen {
@@ -307,24 +376,6 @@
   border: 1px solid var(--color-border);
   background: var(--color-bg-surface);
   border-radius: var(--radius-xl);
-}
-
-.pv-specimen__avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-brand-subtle);
-  border: 1px solid color-mix(in srgb, var(--color-brand) 28%, var(--color-hair));
-  color: var(--color-brand);
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 600;
-  font-size: 16px;
-  letter-spacing: -0.01em;
-  flex-shrink: 0;
 }
 
 .pv-specimen__body {
@@ -378,7 +429,7 @@
 }
 
 /* ==========================================================================
-   4. Note prose body — counter under the textarea
+   5. Note prose body — counter under the textarea
    ==========================================================================
    The note body uses .pv-field__input--prose for the textarea. The counter
    row underneath is a small mono caption that ticks the character cap
@@ -404,7 +455,7 @@
 }
 
 /* ==========================================================================
-   5. Note specimen — used inside the note delete-confirm step
+   6. Note specimen — used inside the note delete-confirm step
    ==========================================================================
    Shows the note about to be deleted as a small framed card: italic
    Fraunces title up top, mono "EDITED ..." caption underneath, body text
@@ -461,7 +512,7 @@
 }
 
 /* ==========================================================================
-   6. Success seal — terminal save / delete surfaces
+   7. Success seal — terminal save / delete surfaces
    ==========================================================================
    Provider-flavored variant of .tm-invite__seal: same circular icon ring,
    mono stamp, italic Fraunces title. Brand variant for save (terracotta
@@ -528,7 +579,7 @@
 }
 
 /* ==========================================================================
-   7. Section heading — small mono caption used between blocks
+   8. Section heading — small mono caption used between blocks
    ==========================================================================
    Mirrors .tm-invite__section-label. Used inside the form to introduce
    the optional "REACH" section (phone + email) after the required
@@ -547,7 +598,7 @@
 }
 
 /* ==========================================================================
-   8. Demoted destructive footer link — sits left of the primary save pill
+   9. Demoted destructive footer link — sits left of the primary save pill
    ==========================================================================
    Mirrors the .tm-member__danger-link voice: thin oxblood-bordered chip,
    mono uppercase label, intentionally subdued so the page never reads
@@ -598,7 +649,7 @@
 }
 
 /* ==========================================================================
-   9. Contact sheet — Fraunces hero + hairline row stack
+  10. Contact sheet — Fraunces hero + hairline row stack
    ==========================================================================
    The contact half-sheet shares its row chassis with the user-menu drawer
    (.user-menu-item — paper-warm hover wash, hairline divider between

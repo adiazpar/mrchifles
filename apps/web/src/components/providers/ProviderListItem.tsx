@@ -2,6 +2,7 @@
 
 import { useIntl } from 'react-intl'
 import { ChevronRight } from 'lucide-react'
+import { pickProviderMarkColor } from '@/lib/provider-mark'
 import type { Provider } from '@kasero/shared/types'
 
 export function getProviderInitials(name: string): string {
@@ -19,12 +20,13 @@ export interface ProviderListItemProps {
 /**
  * Single ledger row in the suppliers roster.
  *
- * Mirrors the team's TeamMemberListItem primitive: 36px terracotta avatar
- * (initials) → italic Fraunces name on the top line → mono uppercase
- * caption on the bottom line. The caption carries the provider's phone, or
- * "NO PHONE" when missing; paused providers append "PAUSED" and the whole
- * row dims to 0.55 opacity, matching the disabled-member treatment on the
- * team page.
+ * Avatar is the unified .pv-mark--sm primitive: rounded square, solid
+ * fill driven by `pickProviderMarkColor` (so the same provider keeps the
+ * same hue across the list, the detail-page hero, and the delete-confirm
+ * specimen). Italic Fraunces name on the top line; mono uppercase caption
+ * on the bottom line carries the provider's phone (or "NO PHONE"). Paused
+ * providers append "PAUSED" and the whole row dims to 0.55 opacity via
+ * the .tm-roster__row--inactive chassis.
  *
  * The row renders as bare markup (no <button>) because the wrapping
  * IonItem owns the click target so IonItemSliding can drive the
@@ -44,8 +46,13 @@ export function ProviderListItem({ provider }: ProviderListItemProps) {
 
   return (
     <div className={rowClass}>
-      <span className="tm-roster__avatar" aria-hidden="true">
-        <span>{getProviderInitials(provider.name)}</span>
+      <span
+        className="pv-mark pv-mark--sm"
+        data-active={provider.active}
+        style={provider.active ? { background: pickProviderMarkColor(provider.id) } : undefined}
+        aria-hidden="true"
+      >
+        {getProviderInitials(provider.name)}
       </span>
 
       <span className="tm-roster__row-body">
