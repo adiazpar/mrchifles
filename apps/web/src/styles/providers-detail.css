@@ -496,17 +496,49 @@
   align-items: center;
   gap: var(--space-3);
 }
+/* Product icon tile — adopts the same double-border treatment as
+   .product-row__icon (products page) and .product-tile__icon (sales
+   page): outer hairline + a subtler inset hairline at 0.4 opacity for
+   the printed-card edge, with a slightly darker cream background so
+   preset Lucide glyphs read as specimen tiles. The size is smaller
+   (40px) than the products/sales surfaces, but the styling vocabulary
+   is identical so a custom AI photo here looks the same as it does
+   anywhere else in the app. */
 .pd-typical__icon {
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   border-radius: 12px;
   background: var(--color-bg-muted);
   border: 1px solid var(--color-border);
   display: grid;
   place-items: center;
   overflow: hidden;
+  position: relative;
   color: var(--color-text-tertiary);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
 }
+
+.pd-typical__icon::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* Custom AI photo (background-removed product image) fills the tile
+   cleanly — the inset frame and inner highlight drop out, only the
+   outer hairline remains as the specimen-card edge. Mirrors
+   .product-row__icon--photo and .product-tile__icon--photo. */
+.pd-typical__icon--photo {
+  background: var(--color-bg-surface);
+  box-shadow: none;
+}
+.pd-typical__icon--photo::after { display: none; }
+
 .pd-typical__icon img { width: 100%; height: 100%; object-fit: cover; }
 
 .pd-typical__name {

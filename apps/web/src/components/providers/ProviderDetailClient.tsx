@@ -924,26 +924,40 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                   {typicalItems.length > 0 ? (
                     <div className="pd-typical">
                       {typicalItems.map(item => {
+                        // Resolve the icon via the same chain the products +
+                        // sales pages use: getProductIconUrl → isPresetIcon
+                        // → getPresetIcon. Items keyed by name (product was
+                        // deleted) fall through to the ImagePlus placeholder.
                         const product = productsById.get(item.key)
                         const iconUrl = product ? getProductIconUrl(product) : null
+                        const isPreset = iconUrl ? isPresetIcon(iconUrl) : false
+                        const isPhoto = !!iconUrl && !isPreset
                         return (
                           <div key={item.key} className="pd-typical__row">
-                            <div className="pd-typical__icon">
-                              {iconUrl && isPresetIcon(iconUrl) ? (
+                            <div
+                              className={`pd-typical__icon${
+                                isPhoto ? ' pd-typical__icon--photo' : ''
+                              }`}
+                              aria-hidden="true"
+                            >
+                              {iconUrl && isPreset ? (
                                 (() => {
                                   const p = getPresetIcon(iconUrl)
-                                  return p ? <p.icon size={22} /> : null
+                                  return p ? (
+                                    <p.icon size={20} className="text-text-primary" />
+                                  ) : null
                                 })()
                               ) : iconUrl ? (
                                 <Image
                                   src={iconUrl}
-                                  alt={item.name}
-                                  width={48}
-                                  height={48}
+                                  alt=""
+                                  width={40}
+                                  height={40}
+                                  className="object-cover w-full h-full"
                                   unoptimized
                                 />
                               ) : (
-                                <ImagePlus className="w-4 h-4" />
+                                <ImagePlus size={16} className="text-text-tertiary" />
                               )}
                             </div>
                             <div className="min-w-0">
