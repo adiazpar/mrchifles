@@ -23,7 +23,9 @@ import { RegisterPage } from '@/routes/RegisterPage'
 //   - AuthGateOverlay is a sibling of the route surface (NOT a route) so it
 //     survives route changes. Fixed-positioned at z-index --z-auth-gate.
 //   - HapticFeedbackProvider mounts a single document-level click listener
-//     that fires haptic() on any button-like target. Renders no DOM.
+//     that fires haptic() on a narrow allow-list: ion-tab-button,
+//     ion-back-button, ion-menu-button, and any element marked
+//     [data-haptic]. Renders no DOM.
 export function App() {
   return (
     <IonApp>

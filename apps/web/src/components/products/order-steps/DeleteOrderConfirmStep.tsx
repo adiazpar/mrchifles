@@ -139,6 +139,7 @@ export function DeleteOrderConfirmStep() {
               className="order-delete__pill"
               onClick={handleDelete}
               disabled={isDeleting}
+              data-haptic
             >
               {isDeleting ? (
                 <span className="order-modal__pill-spinner" aria-label={t.formatMessage({ id: 'common.loading' })} />

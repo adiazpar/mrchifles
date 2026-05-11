@@ -125,6 +125,7 @@ export function DeleteConfirmStep() {
               color="danger"
               onClick={handleDelete}
               disabled={isDeleting}
+              data-haptic
             >
               {isDeleting ? (
                 <IonSpinner name="crescent" />

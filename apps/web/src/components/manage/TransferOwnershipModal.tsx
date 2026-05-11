@@ -124,7 +124,7 @@ export function TransferOwnershipModal({ isOpen, onClose }: Props) {
         {intl.formatMessage({ id: 'common.continue' })}
       </IonButton>
     ) : step === 'confirm' ? (
-      <IonButton expand="block" onClick={handleSubmit} disabled={isSubmitting || !isStep2Valid}>
+      <IonButton expand="block" onClick={handleSubmit} disabled={isSubmitting || !isStep2Valid} data-haptic>
         {isSubmitting ? <IonSpinner name="crescent" /> : intl.formatMessage({ id: 'manage.transfer_send_request' })}
       </IonButton>
     ) : (

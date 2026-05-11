@@ -78,6 +78,7 @@ export function DeleteProviderModal({
         className="tm-invite__danger-pill"
         onClick={handleDelete}
         disabled={isDeleting || !provider}
+        data-haptic
       >
         {isDeleting ? (
           <span

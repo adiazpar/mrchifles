@@ -210,6 +210,7 @@ export function ReceiveOrderStep() {
               className="order-modal__primary-pill"
               onClick={handleReceive}
               disabled={isReceiving}
+              data-haptic
             >
               {isReceiving ? (
                 <span className="order-modal__pill-spinner" aria-label={t.formatMessage({ id: 'common.loading' })} />

@@ -249,6 +249,7 @@ export function EditOrderStep() {
               className="order-modal__primary-pill"
               onClick={handleSave}
               disabled={isDisabled}
+              data-haptic
             >
               {isSaving ? (
                 <span

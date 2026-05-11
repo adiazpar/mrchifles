@@ -178,6 +178,7 @@ export function EditProviderModal({
           className="order-modal__primary-pill"
           onClick={handleSave}
           disabled={isSaving || !isFormValid || !hasChanges}
+          data-haptic
         >
           {isSaving ? (
             <span
@@ -197,6 +198,7 @@ export function EditProviderModal({
         className="tm-invite__danger-pill"
         onClick={handleDelete}
         disabled={isDeleting}
+        data-haptic
       >
         {isDeleting ? (
           <span

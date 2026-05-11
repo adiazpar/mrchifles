@@ -7,7 +7,6 @@ import { Minus, Plus } from 'lucide-react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { useProducts } from '@/contexts/products-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { haptic } from '@/lib/haptics'
 import type { Product } from '@kasero/shared/types'
 import type { CartLine, UseCartResult } from '@/hooks/useCart'
 import { useBusiness } from '@/contexts/business-context'
@@ -134,7 +133,6 @@ export function ViewCartModal({ isOpen, onClose, cart }: ViewCartModalProps) {
       type="button"
       className="charge-pill"
       onClick={() => {
-        haptic()
         handleClose()
       }}
     >
@@ -323,7 +321,6 @@ function QtyButton({
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={(e) => {
-        haptic()
         onClick(e)
       }}
     >

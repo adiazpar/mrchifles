@@ -1,8 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
-import { hapticSuccess, hapticError } from '@/lib/haptics'
 
 interface ConfirmationAnimationProps {
   type: 'success' | 'error'
@@ -39,17 +37,6 @@ export function ConfirmationAnimation({
   const animationSrc = src ?? (type === 'success'
     ? '/animations/success.json'
     : '/animations/error.json')
-
-  const firedRef = useRef(false)
-  useEffect(() => {
-    if (triggered && !firedRef.current) {
-      firedRef.current = true
-      if (type === 'success') hapticSuccess()
-      else hapticError()
-    } else if (!triggered) {
-      firedRef.current = false
-    }
-  }, [triggered, type])
 
   return (
     <div className="flex flex-col items-center justify-center text-center py-4 h-full">

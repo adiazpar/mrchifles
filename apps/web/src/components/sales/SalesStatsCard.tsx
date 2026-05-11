@@ -8,7 +8,6 @@ import { useBusiness } from '@/contexts/business-context'
 import { useSales } from '@/contexts/sales-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { haptic } from '@/lib/haptics'
 import { SessionHistoryModal } from '@/components/sales/SessionHistoryModal'
 import { ActiveSessionSalesModal } from '@/components/sales/ActiveSessionSalesModal'
 
@@ -108,7 +107,6 @@ export function SalesStatsCard({
                 type="button"
                 className="sales-stats-link"
                 onClick={() => {
-                  haptic()
                   setHistoryOpen(true)
                 }}
               >
@@ -160,7 +158,6 @@ export function SalesStatsCard({
                 expand="block"
                 disabled={!canManage}
                 onClick={() => {
-                  haptic()
                   onOpenSession()
                 }}
               >
@@ -189,7 +186,6 @@ export function SalesStatsCard({
                 type="button"
                 className="sales-stats-link"
                 onClick={() => {
-                  haptic()
                   setSessionSalesOpen(true)
                 }}
               >
@@ -211,7 +207,6 @@ export function SalesStatsCard({
                 color="danger"
                 disabled={!canManage}
                 onClick={() => {
-                  haptic()
                   onRequestCloseSession()
                 }}
               >

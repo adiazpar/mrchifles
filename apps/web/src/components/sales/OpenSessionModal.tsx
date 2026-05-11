@@ -9,7 +9,6 @@ import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError } from '@/lib/api-client'
-import { haptic } from '@/lib/haptics'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 
 interface OpenSessionModalProps {
@@ -60,7 +59,6 @@ export function OpenSessionModal({
   }, [isOpen, previousCountedCash])
 
   const handleConfirm = async () => {
-    haptic()
     setError('')
     setSubmitting(true)
     const value = parseFloat(startingCashStr) || 0
@@ -93,7 +91,7 @@ export function OpenSessionModal({
 
   // Step 0 footer — primary action
   const step0Footer = (
-    <IonButton expand="block" onClick={handleConfirm} disabled={submitting} className="flex-1">
+    <IonButton expand="block" onClick={handleConfirm} disabled={submitting} className="flex-1" data-haptic>
       {intl.formatMessage({ id: 'sales.session.open_modal.confirm' })}
     </IonButton>
   )

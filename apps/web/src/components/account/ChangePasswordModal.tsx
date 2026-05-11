@@ -152,6 +152,7 @@ export function ChangePasswordModal({
       onClick={handleSave}
       disabled={!isValid || isSaving}
       className="flex-1"
+      data-haptic
     >
       {isSaving ? <IonSpinner name="crescent" /> : intl.formatMessage({ id: 'common.save' })}
     </IonButton>

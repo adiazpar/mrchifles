@@ -137,6 +137,7 @@ export function MemberModal({
         color={isDanger ? 'danger' : undefined}
         onClick={handleRoleChangeConfirm}
         disabled={roleChangeLoading}
+        data-haptic
       >
         {roleChangeLoading ? (
           <IonSpinner name="crescent" />
@@ -155,6 +156,7 @@ export function MemberModal({
         color="danger"
         onClick={handleRemoveConfirm}
         disabled={removeLoading}
+        data-haptic
       >
         {removeLoading ? (
           <IonSpinner name="crescent" />

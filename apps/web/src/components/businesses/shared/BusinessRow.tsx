@@ -59,7 +59,7 @@ export function BusinessRow({ business, onClick, className }: BusinessRowProps) 
   const cls = ['business-row', className].filter(Boolean).join(' ')
 
   return (
-    <button type="button" className={cls} onClick={onClick}>
+    <button type="button" className={cls} onClick={onClick} data-haptic>
       <span
         className="business-row__mark"
         style={{ background: pickBusinessMarkColor(business.id) }}

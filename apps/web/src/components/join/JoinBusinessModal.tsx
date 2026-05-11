@@ -89,7 +89,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
           <IonButton fill="outline" onClick={onClose} disabled={isJoining}>
             {t.formatMessage({ id: 'joinBusiness.button_decline' })}
           </IonButton>
-          <IonButton onClick={handleJoin} disabled={isJoining}>
+          <IonButton onClick={handleJoin} disabled={isJoining} data-haptic>
             {isJoining ? (
               <IonSpinner name="crescent" />
             ) : (
@@ -98,7 +98,7 @@ export function JoinBusinessModal({ joinBusiness }: JoinBusinessModalProps) {
           </IonButton>
         </>
       ) : (
-        <IonButton onClick={handleJoin} disabled={isJoining}>
+        <IonButton onClick={handleJoin} disabled={isJoining} data-haptic>
           {isJoining ? (
             <IonSpinner name="crescent" />
           ) : (

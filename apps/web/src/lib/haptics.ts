@@ -59,30 +59,9 @@ export function haptic(pattern: number | number[] = 50) {
   fireSwitchHaptic()
 }
 
-export function hapticSuccess() {
-  if (hasVibrate()) {
-    navigator.vibrate([50, 80, 50])
-    return
-  }
-  fireSwitchHaptic()
-  window.setTimeout(fireSwitchHaptic, 130)
-}
-
-export function hapticError() {
-  if (hasVibrate()) {
-    navigator.vibrate([50, 80, 50, 80, 50])
-    return
-  }
-  fireSwitchHaptic()
-  window.setTimeout(fireSwitchHaptic, 130)
-  window.setTimeout(fireSwitchHaptic, 260)
-}
-
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
   ;(window as unknown as Record<string, unknown>).__haptic = {
     haptic,
-    hapticSuccess,
-    hapticError,
     fireSwitchHaptic,
     hasVibrate: hasVibrate(),
   }

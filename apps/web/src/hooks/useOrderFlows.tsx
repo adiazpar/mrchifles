@@ -8,7 +8,6 @@ import { useOrders } from '@/contexts/orders-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useProductSettings } from '@/contexts/product-settings-context'
 import { ApiError, apiDelete, apiPost, apiPatchForm, apiPostForm } from '@/lib/api-client'
-import { hapticSuccess } from '@/lib/haptics'
 import { NewOrderModal, OrderDetailModal } from '@/components/products'
 import { sortProducts } from '@/lib/products'
 import type { Product, Provider } from '@kasero/shared/types'
@@ -250,7 +249,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       if (data.order) {
         setOrders(prev => [data.order, ...prev])
         setOrderSaved(true)
-        hapticSuccess()
         return true
       }
 
@@ -329,7 +327,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       }
 
       setEditOrderSaved(true)
-      hapticSuccess()
       return true
     } catch (err) {
       console.error('Error saving order:', err)
@@ -384,7 +381,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       // server already committed); stale-list self-heals on next nav.
 
       setOrderReceived(true)
-      hapticSuccess()
       return true
     } catch (err) {
       console.error('Error receiving order:', err)

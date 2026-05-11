@@ -4,7 +4,6 @@ import { useIntl } from 'react-intl'
 import { useState } from 'react'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { haptic } from '@/lib/haptics'
 import { SessionHistoryModal } from '@/components/sales/SessionHistoryModal'
 
 /**
@@ -50,7 +49,6 @@ export function RecentSessionsCard() {
                   type="button"
                   className="recent-session-row"
                   onClick={() => {
-                    haptic()
                     setHistoryOpen(true)
                   }}
                 >
@@ -80,7 +78,6 @@ export function RecentSessionsCard() {
               type="button"
               className="recent-sessions-view-all"
               onClick={() => {
-                haptic()
                 setHistoryOpen(true)
               }}
             >

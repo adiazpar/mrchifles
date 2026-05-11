@@ -17,7 +17,6 @@ import {
 import { close } from 'ionicons/icons'
 import { ChevronRight, ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
-import { hapticSuccess } from '@/lib/haptics'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useProductForm } from '@/contexts/product-form-context'
@@ -135,7 +134,6 @@ export function ReviewStep() {
       setLastSavedProductNumber(
         saved.productNumber ?? editingProduct?.productNumber ?? null,
       )
-      hapticSuccess()
       navRef.current?.push(() =>
         isEdit ? <EditSuccessStep /> : <AddSuccessStep />,
       )
@@ -305,6 +303,7 @@ export function ReviewStep() {
             <IonButton
               onClick={handleSave}
               disabled={!isFormValid || savingLocal || isSaving}
+              data-haptic
             >
               {savingLocal || isSaving ? (
                 <IonSpinner name="crescent" />

@@ -218,6 +218,7 @@ export function LogoStep() {
               expand="block"
               disabled={isCreating}
               onClick={handleCreate}
+              data-haptic
             >
               {isCreating ? (
                 <IonSpinner name="crescent" />

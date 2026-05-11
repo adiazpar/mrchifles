@@ -101,6 +101,7 @@ export function AddProviderNoteModal({
         className="order-modal__primary-pill"
         onClick={handleSave}
         disabled={isSaving || !isValid}
+        data-haptic
       >
         {isSaving ? (
           <span

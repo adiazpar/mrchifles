@@ -5,7 +5,6 @@ import { useIntl } from 'react-intl'
 import { Delete } from 'lucide-react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { getCurrencyConfig } from '@kasero/shared/locale-config'
-import { haptic } from '@/lib/haptics'
 
 export interface PriceKeypadStepProps {
   /**
@@ -134,7 +133,6 @@ export function PriceKeypadStep({
   const MAX_DIGITS = 12
 
   const pressDigit = (digit: string) => {
-    haptic()
     const current = valueToBuffer(value)
     if (current.toString().length >= MAX_DIGITS) return
     const next = current * 10 + parseInt(digit, 10)
@@ -144,7 +142,6 @@ export function PriceKeypadStep({
   const pressBackspace = () => {
     const current = valueToBuffer(value)
     if (current === 0) return
-    haptic()
     const next = Math.floor(current / 10)
     onValueChange(bufferToValue(next))
   }

@@ -2,26 +2,17 @@ import { useEffect } from 'react'
 
 import { haptic } from '@/lib/haptics'
 
+// Opt-in only. The provider fires haptics for exactly four surfaces:
+//   - bottom-nav business tabs       (ion-tab-button)
+//   - header back chevron            (ion-back-button)
+//   - header hamburger / menu        (ion-menu-button)
+//   - explicit final-action buttons  ([data-haptic]) — also used for the
+//     business row on the hub
+// Everything else is silent on purpose.
 const HAPTIC_TARGET_SELECTOR = [
-  'button',
-  'a[role="button"]',
-  '[role="button"]',
-  '[role="tab"]',
-  '[role="menuitem"]',
-  'ion-button',
   'ion-tab-button',
-  'ion-fab-button',
   'ion-back-button',
-  'ion-item[button]',
-  'ion-card[button]',
-  'ion-segment-button',
-  '.btn',
-  '.fab',
-  '.payment-btn',
-  '.list-item-clickable',
-  '.card-interactive',
-  'ion-item.ion-activatable',
-  '.user-menu-item',
+  'ion-menu-button',
   '[data-haptic]',
 ].join(',')
 

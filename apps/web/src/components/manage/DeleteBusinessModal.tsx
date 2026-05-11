@@ -82,6 +82,7 @@ export function DeleteBusinessModal({ isOpen, onClose }: Props) {
       expand="block"
       onClick={handleDelete}
       disabled={!canDelete}
+      data-haptic
     >
       {isSubmitting
         ? <IonSpinner name="crescent" />

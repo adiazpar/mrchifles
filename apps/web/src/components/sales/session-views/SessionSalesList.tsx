@@ -4,7 +4,6 @@ import { useIntl } from 'react-intl'
 import { useEffect, useState } from 'react'
 import { IonSpinner } from '@ionic/react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { haptic } from '@/lib/haptics'
 import { apiRequest } from '@/lib/api-client'
 
 export interface SaleProjection {
@@ -117,7 +116,6 @@ export function SessionSalesList({
               key={s.id}
               type="button"
               onClick={() => {
-                haptic()
                 onSaleTap(s.id)
               }}
               className="session-sales-row"

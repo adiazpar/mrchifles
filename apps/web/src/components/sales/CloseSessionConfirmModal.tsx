@@ -10,7 +10,6 @@ import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError } from '@/lib/api-client'
-import { haptic } from '@/lib/haptics'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { computeExpectedCash, computeVariance } from '@kasero/shared/sales-helpers'
 import { useBusiness } from '@/contexts/business-context'
@@ -75,14 +74,12 @@ export function CloseSessionConfirmModal({
   }, [currentSession, sales.sales, countedCashStr, currency])
 
   const handleNext = async () => {
-    haptic()
     // Refetch sales to ensure freshness for the variance reveal.
     await sales.refetch()
     setStep(1)
   }
 
   const handleConfirm = async () => {
-    haptic()
     setError('')
     setSubmitting(true)
     setStep(2)
@@ -118,7 +115,7 @@ export function CloseSessionConfirmModal({
       <IonButton fill="outline" onClick={() => setStep(0)} disabled={submitting}>
         {intl.formatMessage({ id: 'common.back' })}
       </IonButton>
-      <IonButton color="danger" onClick={handleConfirm} disabled={submitting}>
+      <IonButton color="danger" onClick={handleConfirm} disabled={submitting} data-haptic>
         {intl.formatMessage({ id: 'sales.session.close_modal.confirm' })}
       </IonButton>
     </>

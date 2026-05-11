@@ -206,6 +206,7 @@ export function ConfirmOrderStep() {
               className="order-modal__primary-pill"
               onClick={handleConfirm}
               disabled={isSaving}
+              data-haptic
             >
               {isSaving ? (
                 <span

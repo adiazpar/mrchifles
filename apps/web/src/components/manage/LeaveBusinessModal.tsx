@@ -65,6 +65,7 @@ export function LeaveBusinessModal({ isOpen, onClose }: Props) {
       expand="block"
       onClick={handleLeave}
       disabled={isSubmitting}
+      data-haptic
     >
       {isSubmitting
         ? <IonSpinner name="crescent" />

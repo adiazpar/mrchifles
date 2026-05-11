@@ -158,6 +158,7 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
       onClick={handleSave}
       disabled={!isValid || !hasChanges || isSaving}
       className="flex-1"
+      data-haptic
     >
       {isSaving ? <IonSpinner name="crescent" /> : intl.formatMessage({ id: 'common.save' })}
     </IonButton>

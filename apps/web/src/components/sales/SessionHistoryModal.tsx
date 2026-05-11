@@ -6,7 +6,6 @@ import { ModalShell } from '@/components/ui/modal-shell'
 import { useBusiness } from '@/contexts/business-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { haptic } from '@/lib/haptics'
 import { SessionSalesList } from './session-views/SessionSalesList'
 import { SaleDetailContent } from './session-views/SaleDetailContent'
 
@@ -78,7 +77,6 @@ export function SessionHistoryModal({
         type="button"
         className="session-history-load-more"
         onClick={() => {
-          haptic()
           void loadMore()
         }}
       >
@@ -130,7 +128,6 @@ export function SessionHistoryModal({
                     formatTime={formatTime}
                     formatCurrency={formatCurrency}
                     onTap={() => {
-                      haptic()
                       setSelectedSessionId(s.id)
                       setSelectedSaleId(null)
                       setStep(1)

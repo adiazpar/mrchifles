@@ -3,7 +3,6 @@
 import { useIntl } from 'react-intl';
 import { PriceInput } from '@/components/ui'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { haptic } from '@/lib/haptics'
 import { roundToCurrencyDecimals, nextRoundBills } from '@kasero/shared/sales-helpers'
 import { PAYMENT_METHODS } from '@/lib/payment-methods'
 import type { PaymentMethod } from '@kasero/shared/types/sale'
@@ -92,7 +91,6 @@ export function PaymentStepContent({
                 style={style}
                 aria-pressed={active}
                 onClick={() => {
-                  haptic()
                   setMethodId(method.id)
                   // Single invariant: clear tendered on every method change.
                   setTenderedStr('')
@@ -136,7 +134,6 @@ export function PaymentStepContent({
                   type="button"
                   className="quick-bill quick-bill--exact"
                   onClick={() => {
-                    haptic()
                     setTenderedStr(total.toString())
                   }}
                 >
@@ -148,7 +145,6 @@ export function PaymentStepContent({
                     type="button"
                     className="quick-bill"
                     onClick={() => {
-                      haptic()
                       setTenderedStr(amount.toString())
                     }}
                   >
@@ -194,7 +190,6 @@ export function PaymentStepContent({
                 type="button"
                 className="payment-error__back"
                 onClick={() => {
-                  haptic()
                   onGoToCart()
                 }}
               >

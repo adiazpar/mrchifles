@@ -155,6 +155,7 @@ export function InviteModal({
         className="order-modal__primary-pill"
         onClick={handleGenerate}
         disabled={isGenerating}
+        data-haptic
       >
         {isGenerating ? (
           <span
@@ -173,6 +174,7 @@ export function InviteModal({
         className="order-modal__primary-pill"
         onClick={handlePartnerConfirm}
         disabled={isGenerating}
+        data-haptic
       >
         {isGenerating ? (
           <span
@@ -201,6 +203,7 @@ export function InviteModal({
         className="tm-invite__danger-pill"
         onClick={handleDelete}
         disabled={isDeletingCode}
+        data-haptic
       >
         {isDeletingCode ? (
           <span

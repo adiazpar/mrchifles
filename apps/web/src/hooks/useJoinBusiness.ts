@@ -4,7 +4,6 @@ import { useIntl } from 'react-intl';
 import { useState, useCallback } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { apiPost, ApiError, ApiResponse } from '@/lib/api-client'
-import { hapticSuccess } from '@/lib/haptics'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { hasMessageEnvelope } from '@kasero/shared/api-messages'
 
@@ -178,7 +177,6 @@ export function useJoinBusiness(): UseJoinBusinessReturn {
 
       setJoinSuccess(true)
       setJoinedBusinessId(data.businessId ?? null)
-      hapticSuccess()
       return true
     } catch (err) {
       setError(

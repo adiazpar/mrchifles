@@ -8,7 +8,6 @@ import { useProducts } from '@/contexts/products-context'
 import { ApiError } from '@/lib/api-client'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { roundToCurrencyDecimals } from '@kasero/shared/sales-helpers'
-import { haptic } from '@/lib/haptics'
 import type { UseCartResult } from '@/hooks/useCart'
 import type { PaymentMethod } from '@kasero/shared/types/sale'
 import type { ConfirmedSaleRecap } from './SuccessStep'
@@ -64,7 +63,6 @@ export function ChargeButton({
   const tendered = parseFloat(tenderedStr) || 0
 
   const handleClick = async () => {
-    haptic()
     setSubmitting(true)
     setError('')
     setErrorMessageCode(undefined)
@@ -108,6 +106,7 @@ export function ChargeButton({
       disabled={!canConfirm}
       onClick={handleClick}
       aria-busy={submitting}
+      data-haptic
     >
       {submitting ? (
         <span className="charge-pill__spinner" aria-hidden="true" />

@@ -185,6 +185,7 @@ export function DeleteAccountModal({
       onClick={handleDelete}
       disabled={!canDelete}
       className="flex-1"
+      data-haptic
     >
       {isDeleting ? <IonSpinner name="crescent" /> : intl.formatMessage({ id: 'account.delete_button' })}
     </IonButton>

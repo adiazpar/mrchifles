@@ -3,7 +3,6 @@
 import { useIntl } from 'react-intl'
 import { useState } from 'react'
 import { ShoppingCart } from 'lucide-react'
-import { haptic } from '@/lib/haptics'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import type { UseCartResult } from '@/hooks/useCart'
 import { ViewCartModal } from '@/components/sales/ViewCartModal'
@@ -15,8 +14,8 @@ interface CartSheetProps {
 /**
  * Persistent terracotta pill FAB anchored to the bottom of the POS
  * workspace. Shows item count + running total in mono. Disabled state
- * is a flat ghost — same shape, no shadow lift, no haptic — so the
- * "alive" cue only fires when there's something to charge.
+ * is a flat ghost — same shape, no shadow lift — so the "alive" cue
+ * only fires when there's something to charge.
  *
  * Anchoring lives in `.cart-fab` (absolute) and the host container in
  * SalesView is `relative`, so the pill floats above the product grid
@@ -38,7 +37,6 @@ export function CartSheet({ cart }: CartSheetProps) {
           className="cart-fab__pill"
           disabled={isEmpty}
           onClick={() => {
-            haptic()
             setOpen(true)
           }}
           aria-label={t.formatMessage(

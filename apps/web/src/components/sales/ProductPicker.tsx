@@ -8,7 +8,6 @@ import { useBusiness } from '@/contexts/business-context'
 import { useProducts } from '@/contexts/products-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
-import { haptic } from '@/lib/haptics'
 import { getProductIconUrl } from '@/lib/utils'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import type { Product } from '@kasero/shared/types'
@@ -87,7 +86,6 @@ export function ProductPicker({ cart }: ProductPickerProps) {
           return
         }
         cart.addLine(product)
-        haptic()
         return
       }
     } catch {
@@ -324,7 +322,6 @@ function QtyButton({ variant, active, disabled, ariaLabel, onClick, children }: 
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={(e) => {
-        haptic()
         onClick(e)
       }}
     >

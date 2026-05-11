@@ -91,6 +91,7 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
         onClick={handleDecline}
         disabled={busy || !transfer}
         className="flex-1"
+        data-haptic
       >
         {isDeclining ? <IonSpinner name="crescent" /> : tAccount.formatMessage({
           id: 'account.incoming_transfer_decline'
@@ -100,6 +101,7 @@ export function IncomingTransferModal({ isOpen, onClose }: Props) {
         onClick={handleAccept}
         disabled={busy || !transfer}
         className="flex-1"
+        data-haptic
       >
         {isAccepting ? <IonSpinner name="crescent" /> : tAccount.formatMessage({
           id: 'account.incoming_transfer_accept'
