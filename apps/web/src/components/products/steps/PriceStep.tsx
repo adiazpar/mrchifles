@@ -31,13 +31,15 @@ interface PriceStepProps {
 export function PriceStep({ mode }: PriceStepProps) {
   const t = useIntl()
   const navRef = useProductNavRef()
-  const { price, setPrice } = useProductForm()
+  const { price, setPrice, editingProduct } = useProductForm()
 
   const numericPrice = parseFloat(price)
   const isValid = !isNaN(numericPrice) && numericPrice > 0
+  const hasFieldChange =
+    mode !== 'edit' || !editingProduct || numericPrice !== editingProduct.price
 
   const handleContinue = () => {
-    if (!isValid) return
+    if (!isValid || !hasFieldChange) return
     if (mode === 'edit') {
       navRef.current?.pop()
     } else {
@@ -86,7 +88,7 @@ export function PriceStep({ mode }: PriceStepProps) {
           <div className="modal-footer">
             <IonButton
               onClick={handleContinue}
-              disabled={!isValid}
+              disabled={!isValid || !hasFieldChange}
             >
               {t.formatMessage({
                 id: mode === 'edit'

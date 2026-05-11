@@ -469,6 +469,12 @@
   --padding-bottom: 0;
   --padding-start: var(--space-5);
   --padding-end: var(--space-5);
+  /* Tap / hover / focus flash one step up the ink ramp instead of the
+     default terracotta-shade, so the press feedback stays inside the
+     ink palette established by the resting button. */
+  --background-activated: var(--color-ink-2);
+  --background-hover: var(--color-ink-2);
+  --background-focused: var(--color-ink-2);
 }
 
 /* Default modal IonContent inset — applied via the .modal-content class

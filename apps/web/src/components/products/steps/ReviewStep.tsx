@@ -19,7 +19,7 @@ import { ChevronRight, ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
-import { useProductForm } from '@/contexts/product-form-context'
+import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
 import {
   useProductNavRef,
   AddProductCallbacksContext,
@@ -87,6 +87,8 @@ export function ReviewStep() {
 
   const [savingLocal, setSavingLocal] = useState(false)
 
+  const { hasChanges } = useProductFormValidation()
+
   const isFormValid =
     name.trim().length > 0 && parseFloat(price) > 0 && !isNaN(parseFloat(price))
 
@@ -94,12 +96,13 @@ export function ReviewStep() {
     categories.find((c) => c.id === categoryId)?.name ??
     t.formatMessage({ id: 'productForm.category_none' })
 
-  // Add path: stock is the user's just-entered initial value via
-  // CategoryStockStep (lives on form context as newStockValue).
-  // Edit path: stock is the existing product's stock (CategoryStockStep
-  // doesn't expose stock editing in edit mode — that's
-  // AdjustInventoryStep).
-  const stockValue = isEdit ? (editingProduct?.stock ?? 0) : newStockValue
+  // `newStockValue` is the source of truth on both paths:
+  //   - Add path: the value the user entered in CategoryStockStep.
+  //   - Edit path: initialized to editingProduct.stock by
+  //     populateFromProduct, then mutated by AdjustInventoryStep when the
+  //     user revises stock. The stock API call is deferred until Save
+  //     changes, just like every other field.
+  const stockValue = newStockValue
 
   const handleSave = async () => {
     if (!isFormValid || !onSubmit || savingLocal) return
@@ -108,6 +111,23 @@ export function ReviewStep() {
     setSavingLocal(true)
     setProductSaved(false)
     try {
+      // Edit path: if stock changed, persist it first via the dedicated
+      // optimistic-locked endpoint. Doing this BEFORE the regular product
+      // save means a 409 conflict aborts the whole flow before any other
+      // field is touched — the user sees the conflict on Review and can
+      // retry, instead of half-saving the product with a stale stock.
+      if (
+        isEdit &&
+        editingProduct &&
+        editCtx?.onSaveAdjustment &&
+        newStockValue !== (editingProduct.stock ?? 0)
+      ) {
+        await editCtx.onSaveAdjustment({
+          productId: editingProduct.id,
+          newStockValue,
+          expectedStockValue: editingProduct.stock ?? 0,
+        })
+      }
       const saved = await onSubmit(
         {
           name,
@@ -120,8 +140,8 @@ export function ReviewStep() {
           barcode,
           barcodeFormat,
           barcodeSource,
-          // Edit path uses AdjustInventoryStep for stock changes
-          // (different endpoint), so initialStock only matters on Add.
+          // Stock is owned by the dedicated adjust endpoint on the edit
+          // path (called above); initialStock only matters on Add.
           initialStock: isEdit ? undefined : newStockValue,
         },
         editingProduct?.id ?? null,
@@ -302,7 +322,7 @@ export function ReviewStep() {
           <div className="modal-footer">
             <IonButton
               onClick={handleSave}
-              disabled={!isFormValid || savingLocal || isSaving}
+              disabled={!isFormValid || !hasChanges || savingLocal || isSaving}
               data-haptic
             >
               {savingLocal || isSaving ? (

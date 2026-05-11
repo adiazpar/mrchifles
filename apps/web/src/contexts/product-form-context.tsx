@@ -298,7 +298,7 @@ export function useProductForm() {
 
 /** Hook for form validation state */
 export function useProductFormValidation() {
-  const { name, price, editingProduct, categoryId, active, generatedIconBlob, iconPreview, iconType, presetEmoji, barcode, barcodeFormat, barcodeSource } = useProductForm()
+  const { name, price, editingProduct, categoryId, active, generatedIconBlob, iconPreview, iconType, presetEmoji, barcode, barcodeFormat, barcodeSource, newStockValue } = useProductForm()
 
   const isFormValid = name.trim() && price && parseFloat(price) >= 0
 
@@ -316,7 +316,8 @@ export function useProductFormValidation() {
     iconChanged ||
     (barcode || '') !== (editingProduct.barcode || '') ||
     (barcodeFormat || null) !== (editingProduct.barcodeFormat || null) ||
-    (barcodeSource || null) !== (editingProduct.barcodeSource || null)
+    (barcodeSource || null) !== (editingProduct.barcodeSource || null) ||
+    (newStockValue ?? 0) !== (editingProduct.stock ?? 0)
   )
 
   return { isFormValid, hasChanges }

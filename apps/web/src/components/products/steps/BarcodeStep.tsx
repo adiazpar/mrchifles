@@ -13,6 +13,7 @@ import {
   IonButton,
 } from '@ionic/react'
 import { BarcodeFields } from '../BarcodeFields'
+import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef } from './ProductNavContext'
 import { ReviewStep } from './ReviewStep'
 
@@ -29,8 +30,18 @@ interface BarcodeStepProps {
 export function BarcodeStep({ mode }: BarcodeStepProps) {
   const t = useIntl()
   const navRef = useProductNavRef()
+  const { barcode, barcodeFormat, barcodeSource, editingProduct } =
+    useProductForm()
+
+  const hasFieldChange =
+    mode !== 'edit' ||
+    !editingProduct ||
+    (barcode || '') !== (editingProduct.barcode || '') ||
+    (barcodeFormat || null) !== (editingProduct.barcodeFormat || null) ||
+    (barcodeSource || null) !== (editingProduct.barcodeSource || null)
 
   const handleContinue = () => {
+    if (!hasFieldChange) return
     if (mode === 'edit') {
       navRef.current?.pop()
     } else {
@@ -75,7 +86,7 @@ export function BarcodeStep({ mode }: BarcodeStepProps) {
       <IonFooter className="pm-footer">
         <IonToolbar>
           <div className="modal-footer">
-            <IonButton onClick={handleContinue}>
+            <IonButton onClick={handleContinue} disabled={!hasFieldChange}>
               {t.formatMessage({
                 id: mode === 'edit'
                   ? 'productAddEdit.step_done_cta'

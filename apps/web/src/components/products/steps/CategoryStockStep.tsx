@@ -46,7 +46,13 @@ export function CategoryStockStep({ mode }: CategoryStockStepProps) {
 
   const { categoryId, setCategoryId, editingProduct } = useProductForm()
 
+  const hasFieldChange =
+    mode !== 'edit' ||
+    !editingProduct ||
+    (categoryId || null) !== (editingProduct.categoryId || null)
+
   const handleContinue = () => {
+    if (!hasFieldChange) return
     if (mode === 'edit') {
       navRef.current?.pop()
     } else {
@@ -154,7 +160,7 @@ export function CategoryStockStep({ mode }: CategoryStockStepProps) {
       <IonFooter className="pm-footer">
         <IonToolbar>
           <div className="modal-footer">
-            <IonButton onClick={handleContinue}>
+            <IonButton onClick={handleContinue} disabled={!hasFieldChange}>
               {t.formatMessage({
                 id: mode === 'edit'
                   ? 'productAddEdit.step_done_cta'

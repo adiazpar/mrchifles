@@ -1429,8 +1429,12 @@
 
 /* =====================================================================
  * Order place / save / receive primary pill — used in NewOrderModal +
- * EditOrderStep + ReceiveOrderStep footers. Same shape as
- * .order-overview__primary but with a wider hit area (full-width). */
+ * EditOrderStep + ReceiveOrderStep + provider Add/Edit footers.
+ *
+ * Mirrors the IonButton chrome rendered inside .modal-footer on the
+ * product-modal wizard (ReviewStep, etc.) so every primary footer CTA
+ * across the app reads as one design language: an ink-filled pill in
+ * the body font, sentence-cased, no mono tracking. */
 
 .order-modal__primary-pill {
   flex: 1 1 0;
@@ -1441,13 +1445,13 @@
   height: 50px;
   border: 0;
   border-radius: var(--radius-full);
-  background: var(--color-brand);
+  background: var(--color-ink);
   color: #ffffff;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -1456,11 +1460,14 @@
     opacity var(--duration-fast) ease-out;
 }
 
-.order-modal__primary-pill:hover:not(:disabled) {
-  background: var(--color-brand-hover);
+@media (hover: hover) {
+  .order-modal__primary-pill:hover:not(:disabled) {
+    background: var(--color-ink-2);
+  }
 }
 
 .order-modal__primary-pill:active:not(:disabled) {
+  background: var(--color-ink-2);
   transform: translateY(1px);
 }
 

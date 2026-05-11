@@ -8,7 +8,6 @@ import {
   IonFooter,
   IonButtons,
   IonBackButton,
-  IonSpinner,
   IonButton,
 } from '@ionic/react'
 import { ImagePlus } from 'lucide-react'
@@ -16,22 +15,17 @@ import Image from '@/lib/Image'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { StockStepper } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useEditProductCallbacks } from './ProductNavContext'
-import { useApiMessage } from '@/hooks/useApiMessage'
-import { ApiError } from '@/lib/api-client'
+import { useProductNavRef } from './ProductNavContext'
 
 export function AdjustInventoryStep() {
   const t = useIntl()
-  const { onSaveAdjustment } = useEditProductCallbacks()
-  const translateApiMessage = useApiMessage()
+  const navRef = useProductNavRef()
   const {
     editingProduct,
     iconPreview,
     newStockValue,
     setNewStockValue,
-    isAdjusting,
     error,
-    setError,
   } = useProductForm()
 
   const currentStock = editingProduct?.stock ?? 0
@@ -44,26 +38,11 @@ export function AdjustInventoryStep() {
       : 'pm-adjust__preview-delta--down'
     : 'pm-adjust__preview-delta--zero'
 
-  const handleSave = async () => {
-    if (!editingProduct) return
-    setError('')
-    try {
-      await onSaveAdjustment({
-        productId: editingProduct.id,
-        newStockValue,
-        expectedStockValue: editingProduct.stock ?? 0,
-      })
-    } catch (err) {
-      if (err instanceof ApiError && err.envelope) {
-        setError(translateApiMessage(err.envelope))
-      } else {
-        setError(
-          err instanceof Error
-            ? err.message
-            : t.formatMessage({ id: 'productForm.failed_to_save' }),
-        )
-      }
-    }
+  // Done just stashes the new value in form state and pops back to Review.
+  // The actual stock API call is deferred to ReviewStep's Save changes,
+  // so the user gets the same double-confirmation flow as every other field.
+  const handleDone = () => {
+    navRef.current?.pop()
   }
 
   return (
@@ -172,15 +151,8 @@ export function AdjustInventoryStep() {
       <IonFooter className="pm-footer">
         <IonToolbar>
           <div className="modal-footer">
-            <IonButton
-              onClick={handleSave}
-              disabled={isAdjusting || !isDirty}
-            >
-              {isAdjusting ? (
-                <IonSpinner name="crescent" />
-              ) : (
-                t.formatMessage({ id: 'common.save' })
-              )}
+            <IonButton onClick={handleDone} disabled={!isDirty}>
+              {t.formatMessage({ id: 'productAddEdit.step_done_cta' })}
             </IonButton>
           </div>
         </IonToolbar>

@@ -588,12 +588,15 @@ export function ProductsView() {
       // to the row's current value and refuses with 409 if another
       // manager edited it in the meantime. Without this guard the
       // last write silently won and the earlier edit was lost.
+      //
+      // Called from ReviewStep's Save changes flow, BEFORE the regular
+      // product save. We don't close the modal here — the caller is
+      // mid-flow and will navigate to the success step on its own.
       await apiPatch(`/api/businesses/${businessId}/products/${data.productId}/stock`, {
         stock: data.newStockValue,
         expectedStock: data.expectedStockValue,
       })
       setProducts(prev => prev.map(p => p.id === data.productId ? { ...p, stock: data.newStockValue } : p))
-      setIsModalOpen(false)
     } catch (err) {
       console.error('Error adjusting stock:', err)
       // Re-throw so the modal can surface the envelope (e.g.
