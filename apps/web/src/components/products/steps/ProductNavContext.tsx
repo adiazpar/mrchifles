@@ -41,6 +41,11 @@ export interface AddProductCallbacks extends ProductModalCallbacks {
 
 export interface EditProductCallbacks extends ProductModalCallbacks {
   onDelete: (productId: string) => Promise<boolean>
+  /** PATCH product.active inline (no review-then-save). Returns true on
+   *  success so the toggle step can revert its optimistic flip and surface
+   *  an inline error on false. The caller (ProductsView) handles the
+   *  optimistic mutation of the shared products array. */
+  onToggleActive: (productId: string, nextActive: boolean) => Promise<boolean>
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
 }
