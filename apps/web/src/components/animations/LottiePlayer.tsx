@@ -2,7 +2,6 @@
 
 import { useRef, useState, useEffect } from 'react'
 import LottieReact, { type LottieRefCurrentProps } from 'lottie-react'
-import { haptic as fireHaptic } from '@/lib/haptics'
 
 // `lottie-react`'s package.json declares `"browser": "build/index.umd.js"`.
 // Vite's resolver prefers the `browser` field over `module`, so it pulls in
@@ -27,15 +26,6 @@ export interface LottiePlayerProps {
   className?: string
   style?: React.CSSProperties
   onComplete?: () => void
-  /**
-   * Fire a single button-tap haptic the moment playback actually starts
-   * (respecting `delay`). Defaults to true so every success / delete /
-   * confirmation Lottie in the app gets a tactile companion to its visual
-   * cue without each call site having to wire it up. Opt out with
-   * `haptic={false}` for decorative or looping illustrations where a
-   * vibration would be noise.
-   */
-  haptic?: boolean
 }
 
 export function LottiePlayer({
@@ -47,11 +37,9 @@ export function LottiePlayer({
   className,
   style,
   onComplete,
-  haptic = true,
 }: LottiePlayerProps) {
   const lottieRef = useRef<LottieRefCurrentProps>(null)
   const hasCalledComplete = useRef(false)
-  const hasFiredHaptic = useRef(false)
   const [animationData, setAnimationData] = useState<object | null>(null)
   const [shouldPlay, setShouldPlay] = useState(delay === 0)
 
@@ -96,19 +84,6 @@ export function LottiePlayer({
       lottieRef.current.setSpeed(speed)
     }
   }, [speed, animationData])
-
-  // Fire the button-tap haptic the moment playback actually starts.
-  // We wait for both `animationData` (fetch resolved) and `shouldPlay`
-  // (delay elapsed) so the buzz lines up with the first painted frame
-  // rather than the mount. Guarded by a ref so the effect only fires once
-  // per component lifetime — re-renders won't re-trigger.
-  useEffect(() => {
-    if (!haptic) return
-    if (!animationData || !shouldPlay) return
-    if (hasFiredHaptic.current) return
-    hasFiredHaptic.current = true
-    fireHaptic()
-  }, [haptic, animationData, shouldPlay])
 
   const handleComplete = () => {
     if (hasCalledComplete.current) return
