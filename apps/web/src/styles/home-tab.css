@@ -64,3 +64,9 @@
   background: var(--color-bg-muted);
   border-radius: var(--radius-md);
 }
+
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
