@@ -4,7 +4,7 @@ import {
   IonItemSliding,
 } from '@ionic/react'
 import type { CSSProperties, ReactNode } from 'react'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 export type SwipeActionVariant = 'primary' | 'warning' | 'danger' | 'neutral'
 
@@ -41,6 +41,14 @@ export function SwipeRow({
   const slidingRef = useRef<HTMLIonItemSlidingElement | null>(null)
   const rafToken = useRef<number | null>(null)
   const pendingRatio = useRef<number>(0)
+
+  useEffect(() => {
+    return () => {
+      if (rafToken.current !== null) {
+        cancelAnimationFrame(rafToken.current)
+      }
+    }
+  }, [])
 
   const trimmed = actions.slice(0, MAX_ACTIONS)
   if (actions.length > MAX_ACTIONS && import.meta.env.DEV) {
