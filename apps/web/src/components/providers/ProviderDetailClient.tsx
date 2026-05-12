@@ -9,16 +9,13 @@ import type { ReactNode } from 'react'
 import {
   IonButton,
   IonItem,
-  IonItemOption,
-  IonItemOptions,
-  IonItemSliding,
   IonLabel,
   IonList,
   IonNote,
   IonToggle,
 } from '@ionic/react'
-import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2, User as UserIcon, Power } from 'lucide-react'
-import { TabContainer, ModalShell, PageSpinner, GroupLabel } from '@/components/ui'
+import { Plus, Phone, Mail, MessageCircle, Pencil, ChevronRight, Bell, ImagePlus, Trash2, User as UserIcon, Power, Inbox } from 'lucide-react'
+import { TabContainer, ModalShell, PageSpinner, GroupLabel, SwipeRow } from '@/components/ui'
 import { pickProviderMarkColor } from '@/lib/provider-mark'
 import {
   EditProviderNameModal,
@@ -1100,37 +1097,40 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                     // are manager-only.
                     const swipeActions = [
                       {
+                        id: `${order.id}-receive`,
+                        icon: <Inbox size={20} />,
                         label: intl.formatMessage({
                           id: 'orders.action_receive'
                         }),
-                        color: 'primary' as const,
+                        variant: 'primary' as const,
                         disabled: alreadyReceived,
                         onClick: () => orderFlows.openOrderDetail(order, 'receive'),
                       },
                       ...(canManage ? [
                         {
+                          id: `${order.id}-edit`,
+                          icon: <Pencil size={20} />,
                           label: intl.formatMessage({
                             id: 'orders.action_edit'
                           }),
-                          color: 'medium' as const,
-                          // Received orders are locked — no edits once stock posted.
+                          variant: 'neutral' as const,
                           disabled: alreadyReceived,
                           onClick: () => orderFlows.openOrderDetail(order, 'edit'),
                         },
                         {
+                          id: `${order.id}-delete`,
+                          icon: <Trash2 size={20} />,
                           label: intl.formatMessage({
                             id: 'orders.action_delete'
                           }),
-                          color: 'danger' as const,
-                          // Received orders can't be deleted either — would
-                          // require rolling back the stock changes they posted.
+                          variant: 'danger' as const,
                           disabled: alreadyReceived,
                           onClick: () => orderFlows.openOrderDetail(order, 'delete'),
                         },
                       ] : []),
                     ]
                     return (
-                      <IonItemSliding key={order.id}>
+                      <SwipeRow key={order.id} actions={swipeActions}>
                         <IonItem lines="full">
                           <OrderListItem
                             order={order}
@@ -1138,19 +1138,7 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
                             hideProviderRow
                           />
                         </IonItem>
-                        <IonItemOptions side="end">
-                          {swipeActions.map((action) => (
-                            <IonItemOption
-                              key={action.label}
-                              color={action.color}
-                              disabled={action.disabled}
-                              onClick={action.onClick}
-                            >
-                              {action.label}
-                            </IonItemOption>
-                          ))}
-                        </IonItemOptions>
-                      </IonItemSliding>
+                      </SwipeRow>
                     )
                   })}
                 </IonList>
