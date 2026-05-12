@@ -78,10 +78,6 @@
   --chip-fg: var(--color-text-primary);
 }
 
-.swipe-row__option[disabled] .swipe-row__chip {
-  opacity: calc(var(--swipe-scale) * 0.5);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .swipe-row__chip,
   .swipe-row.item-sliding-closing .swipe-row__chip {
