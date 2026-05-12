@@ -24,51 +24,11 @@
   padding-bottom: var(--space-6);
 }
 
-/* ===== Hero ========================================================== */
-.settings-hero {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.settings-hero__eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-}
-
-.settings-hero__title {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-optical-sizing: auto;
-  font-variation-settings: "SOFT" 60;
-  font-weight: 500;
-  font-size: 26px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: var(--color-text-primary);
-  margin: 2px 0 0;
-}
-
-.settings-hero__title em {
-  font-style: italic;
-  color: var(--color-brand);
-}
-
-.settings-hero__subtitle {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-  margin: 4px 0 0;
-  max-width: 36ch;
-}
+/* Hero is now .pm-hero (shared with AddProductModal / EditProductModal) so
+ * the top of every modal on the products page reads with the same
+ * eyebrow + Fraunces title + subtitle rhythm. See products-modal-add-edit.css
+ * for the canonical typography.
+ */
 
 /* ===== Section ======================================================= */
 .settings-section {
@@ -77,12 +37,18 @@
   gap: var(--space-3);
 }
 
+/* Hairline rules above AND below every section header — chapter marks on
+ * a printed ledger. The top rule replaces the hero's old bottom border;
+ * applying it uniformly here means every section (including Categories,
+ * which previously only had the bottom rule) reads as bracketed. */
 .settings-section__head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
+  padding-top: var(--space-2);
   padding-bottom: var(--space-2);
+  border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -202,7 +168,54 @@
   border-color: color-mix(in srgb, var(--color-saffron) 24%, transparent);
 }
 
-/* ===== Categories: add-new row ====================================== */
+/* ===== Categories: "Manage categories" CTA =========================== */
+/* Ghost row on step 1 that pushes into the dedicated management surface
+ * (add, rename, reorder, delete). Label-led, with a chevron on the trail;
+ * no leading icon so it reads as a navigational row, not an action. */
+.settings-add-cta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 12px 14px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    background-color var(--duration-fast) ease-out,
+    transform var(--duration-instant) ease-out;
+}
+
+.settings-add-cta:hover {
+  border-color: var(--color-brand);
+  background: var(--color-brand-subtle);
+}
+
+.settings-add-cta:active {
+  transform: scale(0.99);
+}
+
+.settings-add-cta__label {
+  flex: 1;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+}
+
+.settings-add-cta__chev {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-tertiary);
+}
+
+/* ===== Categories: add-new row (manage step) ========================= */
 .settings-add-row {
   position: relative;
   display: flex;

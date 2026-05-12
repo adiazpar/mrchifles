@@ -2,7 +2,7 @@
 
 import { useIntl } from 'react-intl'
 import { useState, useEffect, useRef } from 'react'
-import { Check, GripVertical, Plus, X } from 'lucide-react'
+import { Check, ChevronRight, GripVertical, Plus, X } from 'lucide-react'
 import { Reorder, useDragControls } from 'framer-motion'
 import { IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
@@ -461,27 +461,59 @@ export function ProductSettingsModal({
     }
   }
 
+  // Two-step flow inside the modal (Pattern 1 from ModalShell): the main
+  // surface holds sort + default category and a CTA into the second step,
+  // which is the dedicated category-management surface (add, rename,
+  // reorder, delete). Keeping creation + reorganization on the same step
+  // means the user can add a category and immediately drop it where they
+  // want it without bouncing back and forth.
+  const [step, setStep] = useState<'main' | 'manage'>('main')
+
+  // Bring the modal back to the main step on close so the next open is
+  // never mid-flow. Step state wipes immediately rather than after the
+  // 250ms exit animation (the body would otherwise flicker between steps).
+  useEffect(() => {
+    if (!isOpen) setStep('main')
+  }, [isOpen])
+
   return (
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={intl.formatMessage({ id: 'productSettings.title' })}
+      title={intl.formatMessage({
+        id: step === 'manage'
+          ? 'productSettings.manage_step_title'
+          : 'productSettings.title',
+      })}
+      onBack={step === 'manage' ? () => setStep('main') : undefined}
       noSwipeDismiss
     >
       <div className="settings-sheet">
         {/* ---------- Hero ---------- */}
-        <header className="settings-hero">
-          <span className="settings-hero__eyebrow">
-            {intl.formatMessage({ id: 'productSettings.eyebrow' })}
+        <header className="pm-hero">
+          <span className="pm-hero__eyebrow">
+            {intl.formatMessage({
+              id: step === 'manage'
+                ? 'productSettings.manage_eyebrow'
+                : 'productSettings.eyebrow',
+            })}
           </span>
-          <h2 className="settings-hero__title">
+          <h1 className="pm-hero__title">
             {intl.formatMessage(
-              { id: 'productSettings.hero_title' },
+              {
+                id: step === 'manage'
+                  ? 'productSettings.manage_hero_title'
+                  : 'productSettings.hero_title',
+              },
               { em: (chunks) => <em>{chunks}</em> },
             )}
-          </h2>
-          <p className="settings-hero__subtitle">
-            {intl.formatMessage({ id: 'productSettings.hero_subtitle' })}
+          </h1>
+          <p className="pm-hero__subtitle">
+            {intl.formatMessage({
+              id: step === 'manage'
+                ? 'productSettings.manage_hero_subtitle'
+                : 'productSettings.hero_subtitle',
+            })}
           </p>
         </header>
 
@@ -501,6 +533,8 @@ export function ProductSettingsModal({
           </div>
         )}
 
+        {step === 'main' && (
+          <>
         {/* ---------- Section 1: Default sort ---------- */}
         <section className="settings-section">
           <div className="settings-section__head">
@@ -613,7 +647,7 @@ export function ProductSettingsModal({
           </div>
         </section>
 
-        {/* ---------- Section 3: Categories CRUD ---------- */}
+        {/* ---------- Section 3: Categories entrypoint ---------- */}
         <section className="settings-section settings-section--categories">
           <div className="settings-section__head">
             <span className="settings-section__label">
@@ -627,75 +661,97 @@ export function ProductSettingsModal({
             </span>
           </div>
 
-          {/* Add-new inline form */}
-          <form
-            className="settings-add-row"
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleCreateCategory()
-            }}
+          {/* CTA into the dedicated manage step. Everything category-shaped
+              (add, rename, reorder, delete) lives there so this surface
+              stays focused on sort + default selection. */}
+          <button
+            type="button"
+            className="settings-add-cta"
+            onClick={() => setStep('manage')}
           >
-            <input
-              ref={newCategoryInputRef}
-              type="text"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              className="settings-add-row__input"
-              placeholder={intl.formatMessage({ id: 'productSettings.category_name_placeholder' })}
-              autoComplete="off"
-              maxLength={64}
-            />
-            <button
-              type="submit"
-              className="settings-add-row__button"
-              disabled={isCreatingCategory}
-            >
-              {isCreatingCategory ? (
-                <IonSpinner name="crescent" style={{ width: 14, height: 14 }} />
-              ) : (
-                <Plus style={{ width: 14, height: 14, strokeWidth: 2.5 }} />
-              )}
-              <span>{intl.formatMessage({ id: 'productSettings.add_category_button' })}</span>
-            </button>
-            {createCelebrating && (
-              <span className="settings-add-row__ping" role="status">
-                <Check style={{ width: 12, height: 12, strokeWidth: 2.5 }} />
-                {intl.formatMessage({ id: 'productSettings.category_created' })}
-              </span>
-            )}
-          </form>
-
-          {/* List */}
-          {categories.length === 0 ? (
-            <div className="settings-empty">
-              <span className="settings-empty__rule" aria-hidden="true" />
-              <p className="settings-empty__title">
-                {intl.formatMessage({ id: 'productSettings.no_categories' })}
-              </p>
-              <p className="settings-empty__desc">
-                {intl.formatMessage({ id: 'productSettings.no_categories_hint' })}
-              </p>
-            </div>
-          ) : (
-            <CategoryList
-              categories={categories}
-              defaultCategoryId={localDefaultCategoryId}
-              editingId={editingCategoryId}
-              editingValue={editingValue}
-              onEditingValueChange={setEditingValue}
-              pendingDeleteId={pendingDeleteId}
-              isCommittingEdit={isUpdatingCategory}
-              isCommittingDelete={isDeletingCategory}
-              onReorder={onReorderCategories}
-              onStartEdit={handleStartEdit}
-              onCancelEdit={handleCancelEdit}
-              onSaveEdit={handleSaveEdit}
-              onStartDelete={handleStartDelete}
-              onCancelDelete={handleCancelDelete}
-              onConfirmDelete={handleConfirmDelete}
-            />
-          )}
+            <span className="settings-add-cta__label">
+              {intl.formatMessage({ id: 'productSettings.manage_categories_cta' })}
+            </span>
+            <span className="settings-add-cta__chev" aria-hidden="true">
+              <ChevronRight style={{ width: 16, height: 16 }} />
+            </span>
+          </button>
         </section>
+          </>
+        )}
+
+        {step === 'manage' && (
+          <section className="settings-section settings-section--manage">
+            {/* Add-new inline form */}
+            <form
+              className="settings-add-row"
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleCreateCategory()
+              }}
+            >
+              <input
+                ref={newCategoryInputRef}
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                className="settings-add-row__input"
+                placeholder={intl.formatMessage({ id: 'productSettings.category_name_placeholder' })}
+                autoComplete="off"
+                maxLength={64}
+              />
+              <button
+                type="submit"
+                className="settings-add-row__button"
+                disabled={isCreatingCategory}
+              >
+                {isCreatingCategory ? (
+                  <IonSpinner name="crescent" style={{ width: 14, height: 14 }} />
+                ) : (
+                  <Plus style={{ width: 14, height: 14, strokeWidth: 2.5 }} />
+                )}
+                <span>{intl.formatMessage({ id: 'productSettings.add_category_button' })}</span>
+              </button>
+              {createCelebrating && (
+                <span className="settings-add-row__ping" role="status">
+                  <Check style={{ width: 12, height: 12, strokeWidth: 2.5 }} />
+                  {intl.formatMessage({ id: 'productSettings.category_created' })}
+                </span>
+              )}
+            </form>
+
+            {/* List */}
+            {categories.length === 0 ? (
+              <div className="settings-empty">
+                <span className="settings-empty__rule" aria-hidden="true" />
+                <p className="settings-empty__title">
+                  {intl.formatMessage({ id: 'productSettings.no_categories' })}
+                </p>
+                <p className="settings-empty__desc">
+                  {intl.formatMessage({ id: 'productSettings.no_categories_hint' })}
+                </p>
+              </div>
+            ) : (
+              <CategoryList
+                categories={categories}
+                defaultCategoryId={localDefaultCategoryId}
+                editingId={editingCategoryId}
+                editingValue={editingValue}
+                onEditingValueChange={setEditingValue}
+                pendingDeleteId={pendingDeleteId}
+                isCommittingEdit={isUpdatingCategory}
+                isCommittingDelete={isDeletingCategory}
+                onReorder={onReorderCategories}
+                onStartEdit={handleStartEdit}
+                onCancelEdit={handleCancelEdit}
+                onSaveEdit={handleSaveEdit}
+                onStartDelete={handleStartDelete}
+                onCancelDelete={handleCancelDelete}
+                onConfirmDelete={handleConfirmDelete}
+              />
+            )}
+          </section>
+        )}
 
         {/* Saving indicator stamp — quiet ledger feedback while a
             settings PATCH is in flight. */}
