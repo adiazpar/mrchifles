@@ -11,16 +11,12 @@ import {
   ListFilter,
   CircleCheckBig,
   Check,
+  Inbox,
+  Pencil,
+  Trash2,
 } from 'lucide-react'
-import {
-  IonItem,
-  IonItemOption,
-  IonItemOptions,
-  IonItemSliding,
-  IonList,
-  IonSpinner,
-} from '@ionic/react'
-import { ModalShell } from '@/components/ui'
+import { IonItem, IonList, IonSpinner } from '@ionic/react'
+import { ModalShell, SwipeRow } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'
 import { usePageTransition } from '@/contexts/page-transition-context'
 import { scrollToTop } from '@/lib/scroll'
@@ -273,10 +269,12 @@ export function OrdersTab({
                           ...(onReceiveOrder
                             ? [
                                 {
+                                  id: `${order.id}-receive`,
+                                  icon: <Inbox size={20} />,
                                   label: intl.formatMessage({
                                     id: 'orders.action_receive',
                                   }),
-                                  variant: 'success' as const,
+                                  variant: 'primary' as const,
                                   disabled: alreadyReceived,
                                   onClick: () => onReceiveOrder(order),
                                 },
@@ -285,6 +283,8 @@ export function OrdersTab({
                           ...(canManage && onEditOrder
                             ? [
                                 {
+                                  id: `${order.id}-edit`,
+                                  icon: <Pencil size={20} />,
                                   label: intl.formatMessage({
                                     id: 'orders.action_edit',
                                   }),
@@ -297,10 +297,12 @@ export function OrdersTab({
                           ...(canManage && onDeleteOrder
                             ? [
                                 {
+                                  id: `${order.id}-delete`,
+                                  icon: <Trash2 size={20} />,
                                   label: intl.formatMessage({
                                     id: 'orders.action_delete',
                                   }),
-                                  variant: 'destructive' as const,
+                                  variant: 'danger' as const,
                                   disabled: !canDelete || alreadyReceived,
                                   onClick: () => onDeleteOrder(order),
                                 },
@@ -309,31 +311,11 @@ export function OrdersTab({
                         ]
                       : []
                   return (
-                    <IonItemSliding key={order.id}>
+                    <SwipeRow key={order.id} actions={swipeActions}>
                       <IonItem lines="none">
                         <OrderListItem order={order} onView={onViewOrder} />
                       </IonItem>
-                      {swipeActions.length > 0 && (
-                        <IonItemOptions side="end">
-                          {swipeActions.map((action, index) => (
-                            <IonItemOption
-                              key={index}
-                              color={
-                                action.variant === 'destructive'
-                                  ? 'danger'
-                                  : action.variant === 'success'
-                                    ? 'success'
-                                    : 'medium'
-                              }
-                              disabled={action.disabled}
-                              onClick={() => action.onClick()}
-                            >
-                              {action.label}
-                            </IonItemOption>
-                          ))}
-                        </IonItemOptions>
-                      )}
-                    </IonItemSliding>
+                    </SwipeRow>
                   )
                 })}
               </IonList>
