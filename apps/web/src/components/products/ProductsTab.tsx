@@ -21,11 +21,9 @@ import {
 } from 'lucide-react'
 import {
   IonItem,
-  IonItemOption,
-  IonItemOptions,
-  IonItemSliding,
   IonList,
 } from '@ionic/react'
+import { SwipeRow } from '@/components/ui'
 import { ModalShell } from '@/components/ui'
 import { printBarcodeLabel } from '@/lib/barcode-print'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -434,12 +432,14 @@ const ProductListItem = memo(function ProductListItem({
   const swipeActions = canModify && onAdjustInventory && onToggleActive
     ? [
         {
+          id: `${product.id}-inventory`,
           icon: <SlidersHorizontal size={20} />,
           label: intl.formatMessage({ id: 'products.action_inventory' }),
-          variant: 'info' as const,
+          variant: 'primary' as const,
           onClick: () => onAdjustInventory(product),
         },
         {
+          id: `${product.id}-print`,
           icon: <Printer size={20} />,
           label: intl.formatMessage({ id: 'products.action_print' }),
           variant: 'warning' as const,
@@ -452,6 +452,7 @@ const ProductListItem = memo(function ProductListItem({
             }),
         },
         {
+          id: `${product.id}-toggle`,
           icon: isActive ? <EyeOff size={20} /> : <Eye size={20} />,
           label: isActive
             ? intl.formatMessage({ id: 'products.action_disable' })
@@ -471,7 +472,7 @@ const ProductListItem = memo(function ProductListItem({
       : undefined
 
   return (
-    <IonItemSliding>
+    <SwipeRow actions={swipeActions}>
       {/* lines="none" + a custom flex layout — IonItem's slot system was
           forcing a too-tight rhythm between the name and the metadata
           rows, and pushing the icon a fixed 16px away from the price
@@ -553,25 +554,6 @@ const ProductListItem = memo(function ProductListItem({
           </div>
         </div>
       </IonItem>
-      {swipeActions.length > 0 && (
-        <IonItemOptions side="end">
-          {swipeActions.map((action, index) => (
-            <IonItemOption
-              key={index}
-              color={
-                action.variant === 'warning'
-                  ? 'warning'
-                  : action.variant === 'info'
-                    ? 'primary'
-                    : 'medium'
-              }
-              onClick={() => action.onClick()}
-            >
-              {action.label}
-            </IonItemOption>
-          ))}
-        </IonItemOptions>
-      )}
-    </IonItemSliding>
+    </SwipeRow>
   )
 })
