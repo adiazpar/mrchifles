@@ -1,6 +1,8 @@
 'use client'
 
 import { useIntl } from 'react-intl'
+import { useMemo } from 'react'
+import { useBusiness } from '@/contexts/business-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 
 interface RevenueCardProps {
@@ -11,21 +13,40 @@ interface RevenueCardProps {
 
 export function RevenueCard({ isLoading, amount, vsYesterdayPct }: RevenueCardProps) {
   const intl = useIntl()
+  const { business } = useBusiness()
   const { formatCurrency } = useBusinessFormat()
+
+  // Mono date stamp in the eyebrow row — mirrors the Sales stats card
+  // ("TODAY · MAY 12"). Uses the business locale so the calendar
+  // convention matches the currency below.
+  const dateStamp = useMemo(() => {
+    try {
+      const fmt = new Intl.DateTimeFormat(business?.locale ?? 'en-US', {
+        month: 'short',
+        day: 'numeric',
+      })
+      return fmt.format(new Date()).toUpperCase()
+    } catch {
+      return ''
+    }
+  }, [business?.locale])
 
   return (
     <div className="home-revenue">
-      <span className="home-revenue__label">
-        {intl.formatMessage({ id: 'home.revenue_label' })}
-      </span>
+      <div className="home-revenue__eyebrow-row">
+        <span className="home-revenue__eyebrow">
+          {intl.formatMessage({ id: 'home.revenue_label' })}
+          {dateStamp ? ` · ${dateStamp}` : ''}
+        </span>
+        {!isLoading && amount !== null && vsYesterdayPct !== null ? (
+          <DeltaChip percent={vsYesterdayPct} />
+        ) : null}
+      </div>
       {isLoading || amount === null ? (
         <div className="home-revenue__skeleton" aria-hidden="true" />
       ) : (
-        <div className="home-revenue__amount">{formatCurrency(amount)}</div>
+        <p className="home-revenue__amount">{formatCurrency(amount)}</p>
       )}
-      {!isLoading && amount !== null && vsYesterdayPct !== null ? (
-        <DeltaChip percent={vsYesterdayPct} />
-      ) : null}
     </div>
   )
 }

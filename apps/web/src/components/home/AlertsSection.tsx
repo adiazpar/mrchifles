@@ -29,10 +29,10 @@ export function AlertsSection({
       <GroupLabel>
         {intl.formatMessage({ id: 'home.section_needs_attention' })}
       </GroupLabel>
-      <IonList inset lines="full" className="home-alerts">
+      <IonList inset lines="full" className="account-list home-alerts">
         {lowStockCount > 0 ? (
           <IonItem button detail onClick={onLowStockClick}>
-            <PackageX slot="start" className="text-text-secondary w-5 h-5" />
+            <PackageX slot="start" className="home-alerts__icon home-alerts__icon--warn w-5 h-5" />
             <IonLabel>
               <h3>{intl.formatMessage({ id: 'home.row_low_stock' })}</h3>
             </IonLabel>
@@ -46,7 +46,7 @@ export function AlertsSection({
         ) : null}
         {pendingOrdersCount > 0 ? (
           <IonItem button detail onClick={onPendingOrdersClick}>
-            <Clock slot="start" className="text-text-secondary w-5 h-5" />
+            <Clock slot="start" className="home-alerts__icon w-5 h-5" />
             <IonLabel>
               <h3>{intl.formatMessage({ id: 'home.row_pending_orders' })}</h3>
             </IonLabel>
