@@ -195,33 +195,42 @@ function Sparkline({ line, area, lastPoint, hasData, emptyLabel }: SparklineProp
   }
 
   return (
-    <svg
-      className="home-trend__sparkline"
-      viewBox="0 0 100 32"
-      preserveAspectRatio="none"
-      role="img"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="home-trend-area" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" className="home-trend__sparkline-stop home-trend__sparkline-stop--top" />
-          <stop
-            offset="100%"
-            className="home-trend__sparkline-stop home-trend__sparkline-stop--bottom"
-          />
-        </linearGradient>
-      </defs>
-      <path d={area} fill="url(#home-trend-area)" />
-      <path d={line} className="home-trend__sparkline-line" />
+    <div className="home-trend__sparkline-wrap">
+      <svg
+        className="home-trend__sparkline"
+        viewBox="0 0 100 32"
+        preserveAspectRatio="none"
+        role="img"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="home-trend-area" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" className="home-trend__sparkline-stop home-trend__sparkline-stop--top" />
+            <stop
+              offset="100%"
+              className="home-trend__sparkline-stop home-trend__sparkline-stop--bottom"
+            />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#home-trend-area)" />
+        <path d={line} className="home-trend__sparkline-line" />
+      </svg>
+      {/* Last-point dot lives in HTML, not inside the SVG, because the
+       * SVG uses preserveAspectRatio="none" to stretch the curve across
+       * the card width — that stretches an SVG circle into an ellipse.
+       * Positioning via percentages on a separately-sized HTML element
+       * gives a visually circular dot at every container size. */}
       {lastPoint ? (
-        <circle
-          cx={lastPoint.x}
-          cy={lastPoint.y}
-          r={2}
+        <span
           className="home-trend__sparkline-dot"
+          style={{
+            left: `${lastPoint.x}%`,
+            top: `${(lastPoint.y / 32) * 100}%`,
+          }}
+          aria-hidden="true"
         />
       ) : null}
-    </svg>
+    </div>
   )
 }
 

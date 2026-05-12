@@ -1068,7 +1068,7 @@
   "home.items_kicker": "本日の販売数",
   "home.page_title": "本日の状況",
   "home.page_title_emphasis": "本日",
-  "home.revenue_label": "本日の売上",
+  "home.revenue_label": "売上",
   "home.row_low_stock": "在庫わずか",
   "home.row_low_stock_count": "{count, plural, other {# 点}}",
   "home.row_pending_orders": "未着の発注",

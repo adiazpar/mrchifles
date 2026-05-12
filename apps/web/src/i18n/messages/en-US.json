@@ -1068,7 +1068,7 @@
   "home.items_kicker": "Items sold",
   "home.page_title": "Today, so far.",
   "home.page_title_emphasis": "Today",
-  "home.revenue_label": "Today's revenue",
+  "home.revenue_label": "Revenue",
   "home.row_low_stock": "Low stock",
   "home.row_low_stock_count": "{count, plural, one {# item} other {# items}}",
   "home.row_pending_orders": "Pending orders",

@@ -1068,7 +1068,7 @@
   "home.items_kicker": "Artículos vendidos",
   "home.page_title": "Hoy, hasta ahora.",
   "home.page_title_emphasis": "Hoy",
-  "home.revenue_label": "Ingresos de hoy",
+  "home.revenue_label": "Ingresos",
   "home.row_low_stock": "Stock bajo",
   "home.row_low_stock_count": "{count, plural, one {# artículo} other {# artículos}}",
   "home.row_pending_orders": "Pedidos pendientes",

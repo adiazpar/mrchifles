@@ -256,11 +256,25 @@
   stop-color: color-mix(in srgb, var(--color-brand) 0%, transparent);
 }
 
+/* Sparkline canvas + last-point dot.
+ *
+ * The SVG itself uses preserveAspectRatio="none" so the curve stretches
+ * across the card width — that means an SVG circle would render as an
+ * ellipse. The dot lives in HTML on top of a relatively-positioned wrap
+ * so it stays visually circular at every container size. */
+.home-trend__sparkline-wrap {
+  position: relative;
+}
+
 .home-trend__sparkline-dot {
-  fill: var(--color-brand);
-  stroke: var(--color-bg-surface);
-  stroke-width: 1.25;
-  vector-effect: non-scaling-stroke;
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  box-shadow: 0 0 0 1.5px var(--color-bg-surface);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 /* Empty-state axis line for weeks with zero sales. The line sits on
