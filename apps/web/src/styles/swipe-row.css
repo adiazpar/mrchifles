@@ -17,30 +17,34 @@
 
 .swipe-row__option {
   --swipe-idx: 0;
-  /* Right-to-left reveal: rightmost chip (highest --swipe-idx) crosses
-     the base threshold first; each chip further left needs an extra
-     step of drag before it starts scaling in. With 3 chips and a 0.10
-     step, effective thresholds are 0.7 / 0.6 / 0.5 for idx 0 / 1 / 2. */
-  --swipe-eff-threshold: calc(
-    var(--swipe-threshold) +
-    (2 - var(--swipe-idx)) * var(--swipe-step)
-  );
-  --swipe-scale: max(
-    0,
-    min(
-      1,
-      calc(
-        (var(--swipe-ratio) - var(--swipe-eff-threshold)) /
-        calc(1 - var(--swipe-eff-threshold))
-      )
-    )
-  );
+  /* Fallback scale formula — used if none of the per-position overrides
+     below match (e.g. >3 chips, which the component caps but the CSS
+     stays defensive). Plain reveal at the base threshold. */
+  --swipe-scale: max(0, min(1, calc((var(--swipe-ratio) - 0.5) * 2)));
 
   --background: transparent;
   --padding-start: 10px;
   --padding-end: 10px;
   background: transparent;
   min-width: 72px;
+}
+
+/* Right-to-left reveal via :nth-last-child. With 3 chips:
+     last-child (rightmost)        threshold 0.5, multiplier 2
+     nth-last-child(2) (middle)    threshold 0.6, multiplier 2.5
+     nth-last-child(3) (leftmost)  threshold 0.7, multiplier ~3.333
+   With 2 chips, only the first two rules apply (rightmost + middle slot
+   collapse). With 1 chip, only :last-child applies. Hardcoded multipliers
+   avoid CSS calc() division-by-var, which renders inconsistently across
+   browsers. */
+.swipe-row__options > .swipe-row__option:last-child {
+  --swipe-scale: max(0, min(1, calc((var(--swipe-ratio) - 0.5) * 2)));
+}
+.swipe-row__options > .swipe-row__option:nth-last-child(2) {
+  --swipe-scale: max(0, min(1, calc((var(--swipe-ratio) - 0.6) * 2.5)));
+}
+.swipe-row__options > .swipe-row__option:nth-last-child(3) {
+  --swipe-scale: max(0, min(1, calc((var(--swipe-ratio) - 0.7) * 3.333)));
 }
 
 /* Matches the .pm-action__icon style used by the barcode modal action
@@ -71,8 +75,8 @@
   transform: scale(0);
   opacity: 0;
   transition:
-    transform 180ms ease-in calc(var(--swipe-idx) * 60ms),
-    opacity 180ms ease-in calc(var(--swipe-idx) * 60ms);
+    transform 220ms ease-in calc(var(--swipe-idx) * 80ms),
+    opacity 220ms ease-in calc(var(--swipe-idx) * 80ms);
 }
 
 .swipe-row__option--primary {
