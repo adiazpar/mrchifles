@@ -7,16 +7,16 @@ import { GroupLabel } from '@/components/ui'
 
 interface AlertsSectionProps {
   lowStockCount: number
-  overdueCount?: number
+  overdueCount: number
   pendingOrdersCount: number
   onLowStockClick: () => void
-  onOverdueClick?: () => void
+  onOverdueClick: () => void
   onPendingOrdersClick: () => void
 }
 
 export function AlertsSection({
   lowStockCount,
-  overdueCount = 0,
+  overdueCount,
   pendingOrdersCount,
   onLowStockClick,
   onOverdueClick,
@@ -48,7 +48,7 @@ export function AlertsSection({
             </IonNote>
           </IonItem>
         ) : null}
-        {overdueCount > 0 && onOverdueClick ? (
+        {overdueCount > 0 ? (
           <IonItem button detail onClick={onOverdueClick}>
             <AlertTriangle slot="start" className="home-alerts__icon home-alerts__icon--overdue w-5 h-5" />
             <IonLabel>
