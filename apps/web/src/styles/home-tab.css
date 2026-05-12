@@ -169,14 +169,19 @@
   color: var(--color-text-tertiary);
 }
 
+/* Supporting headline — visually subordinate to .home-revenue__amount
+ * (the page's hero number). Same family (Fraunces italic) so the
+ * surfaces still read as siblings, but smaller scale + ink-2 color +
+ * regular weight establish hierarchy. Today's number is the focal
+ * point; this is the week-context that explains it. */
 .home-trend__amount {
   font-family: var(--font-display);
   font-style: italic;
-  font-weight: 500;
-  font-size: 44px;
+  font-weight: 400;
+  font-size: var(--text-3xl);
   line-height: 1;
   letter-spacing: -0.02em;
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
   font-variant-numeric: tabular-nums;
   margin: 0;
 }
@@ -353,7 +358,7 @@
  * reflow when data arrives. Static (no shimmer) to match the rest of
  * the app's loading vocabulary. */
 .home-trend__skeleton {
-  height: 44px;
+  height: var(--text-3xl);
   width: 10ch;
   background: var(--color-bg-muted);
   border-radius: var(--radius-md);
