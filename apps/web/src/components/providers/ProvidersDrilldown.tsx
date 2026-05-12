@@ -24,7 +24,7 @@ interface ProvidersDrilldownProps {
  * The page reads like a printed roster slip and reuses the team page's
  * primitives wholesale (.tm-roster, .pm-hero__*, .tm-roster__row,
  * .tm-roster__avatar, .tm-roster__row-meta, .report-card). The only
- * provider-specific addition is the IonItemSliding shell that gives
+ * provider-specific addition is the SwipeRow shell that gives
  * each row an edit / delete / new-order swipe tray.
  *
  *   - Hero band: tracked "SUPPLIERS · N PARTNERS" eyebrow → Fraunces

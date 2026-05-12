@@ -7,7 +7,7 @@
  *
  * Reuses .app-search (app.css) and the .pos-scan-button visual
  * vocabulary (sales-tab.css) for the search row's circular action
- * buttons. Lists wrap IonItem/IonItemSliding so swipe gestures work,
+ * buttons. Lists wrap IonItem in SwipeRow so swipe gestures work,
  * but the row body is restyled to read like a printed inventory
  * ledger entry rather than a generic Ionic list row.
  */

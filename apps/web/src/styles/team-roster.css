@@ -14,8 +14,8 @@
    Sections:
      1. Page shell + hero band (with manager Invite pill)
      2. Unified row primitive (avatar + body + chevron)
-     3. IonItemSliding shell — providers wrap each row in IonItemSliding
-        for swipe actions; this strips IonItem chrome so the row primitive
+     3. SwipeRow shell — providers wrap each row in SwipeRow for swipe
+        actions; this strips IonItem chrome so the row primitive
         renders edge-to-edge.
      4. Loading + error frames
 
@@ -267,17 +267,17 @@
 }
 
 /* ==========================================================================
-   3. IonItemSliding shell (providers — swipe actions on the row primitive)
+   3. SwipeRow shell (providers — swipe actions on the row primitive)
    ==========================================================================
    The team page renders rows as plain <button>s; the providers page wraps
-   each row in IonItemSliding so members get edit / delete / new-order swipe
-   actions. IonItemSliding requires an IonItem child, which ships with its
+   each row in SwipeRow so members get edit / delete / new-order swipe
+   actions. SwipeRow requires an IonItem child, which ships with its
    own padding, hairlines, and ripple. The .tm-roster__row-shell class
    strips that chrome so the row primitive renders edge-to-edge inside the
    .report-card container, identical to the team layout.
 
    The dotted divider that .tm-roster__row + .tm-roster__row provides on
-   the team page is recreated here between sibling IonItemSliding nodes.
+   the team page is recreated here between sibling ion-item-sliding nodes.
 */
 
 .tm-roster__row-shell {

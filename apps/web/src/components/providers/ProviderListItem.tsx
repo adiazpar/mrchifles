@@ -29,7 +29,7 @@ export interface ProviderListItemProps {
  * the .tm-roster__row--inactive chassis.
  *
  * The row renders as bare markup (no <button>) because the wrapping
- * IonItem owns the click target so IonItemSliding can drive the
+ * IonItem owns the click target so SwipeRow can drive the
  * edit / delete / new-order swipe actions.
  */
 export function ProviderListItem({ provider }: ProviderListItemProps) {
