@@ -1,15 +1,9 @@
-/* SwipeRow — circular icon chips with threshold-gated, right-to-left
-   staggered scale-in during drag, and a left-to-right staggered
-   fade-out during Ionic's auto-snap close. Open animation reads
-   --swipe-ratio (set by JS during ionDrag). Close animation is
-   triggered by the .item-sliding-closing class Ionic adds to the host
-   while it auto-animates the row back to 0. */
-
-.swipe-row {
-  --swipe-ratio: 0;
-  --swipe-threshold: 0.5;
-  --swipe-step: 0.10;
-}
+/* SwipeRow — chip animation is fully JS-driven. Each chip's
+   --swipe-scale is written by the SwipeRow component on every
+   animation frame via inline style. CSS just consumes that variable
+   and applies the variant colors. No transitions here — the JS lerp
+   IS the animation; adding a CSS transition would just produce a
+   second, lagging copy of the same motion. */
 
 .swipe-row__options {
   --background: transparent;
@@ -17,11 +11,6 @@
 
 .swipe-row__option {
   --swipe-idx: 0;
-  /* Fallback scale formula — used if none of the per-position overrides
-     below match (e.g. >3 chips, which the component caps but the CSS
-     stays defensive). Plain reveal at the base threshold. */
-  --swipe-scale: max(0, min(1, calc((var(--swipe-ratio) - 0.5) * 2)));
-
   --background: transparent;
   --padding-start: 10px;
   --padding-end: 10px;
@@ -29,27 +18,9 @@
   min-width: 72px;
 }
 
-/* Right-to-left reveal via :nth-last-child. With 3 chips:
-     last-child (rightmost)        threshold 0.5, multiplier 2
-     nth-last-child(2) (middle)    threshold 0.6, multiplier 2.5
-     nth-last-child(3) (leftmost)  threshold 0.7, multiplier ~3.333
-   With 2 chips, only the first two rules apply (rightmost + middle slot
-   collapse). With 1 chip, only :last-child applies. Hardcoded multipliers
-   avoid CSS calc() division-by-var, which renders inconsistently across
-   browsers. */
-.swipe-row__options > .swipe-row__option:last-child {
-  --swipe-scale: max(0, min(1, calc((var(--swipe-ratio) - 0.5) * 2)));
-}
-.swipe-row__options > .swipe-row__option:nth-last-child(2) {
-  --swipe-scale: max(0, min(1, calc((var(--swipe-ratio) - 0.6) * 2.5)));
-}
-.swipe-row__options > .swipe-row__option:nth-last-child(3) {
-  --swipe-scale: max(0, min(1, calc((var(--swipe-ratio) - 0.7) * 3.333)));
-}
-
-/* Matches the .pm-action__icon style used by the barcode modal action
-   row: rounded square, paper background, 1.5px tinted border, tinted
-   icon color. Sized down from 56 to 44 to fit list rows. */
+/* Matches .pm-action__icon from the barcode modal: rounded square,
+   paper background, tinted border, tinted icon color. Sized down from
+   56px to 44px for list rows. */
 .swipe-row__chip {
   display: inline-flex;
   align-items: center;
@@ -60,23 +31,9 @@
   border: 1.5px solid var(--chip-border);
   background: var(--color-bg-surface);
   color: var(--chip-fg);
-  transform: scale(var(--swipe-scale));
-  opacity: var(--swipe-scale);
-  transition:
-    transform 80ms ease-out,
-    opacity 80ms ease-out;
-}
-
-/* Staggered auto-snap close. Ionic adds .item-sliding-closing to the
-   IonItemSliding host for ~600ms while the row animates back to 0. We
-   force every chip to scale 0 with a per-button transition-delay so the
-   leftmost chip starts shrinking first. */
-.swipe-row.item-sliding-closing .swipe-row__chip {
-  transform: scale(0);
-  opacity: 0;
-  transition:
-    transform 220ms ease-in calc(var(--swipe-idx) * 80ms),
-    opacity 220ms ease-in calc(var(--swipe-idx) * 80ms);
+  transform: scale(var(--swipe-scale, 0));
+  opacity: var(--swipe-scale, 0);
+  will-change: transform, opacity;
 }
 
 .swipe-row__option--primary {
@@ -94,11 +51,4 @@
 .swipe-row__option--neutral {
   --chip-border: var(--color-border);
   --chip-fg: var(--color-text-secondary);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .swipe-row__chip,
-  .swipe-row.item-sliding-closing .swipe-row__chip {
-    transition: none;
-  }
 }
