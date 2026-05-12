@@ -338,6 +338,19 @@ export function ProductsView() {
     onSortChange: handleSortChange,
   })
 
+  const urlFilter = searchParams?.get('filter') ?? null
+
+  // Deep-link from Home's "Low stock" alert row. Apply the filter on first
+  // mount; subsequent in-app filter changes (user clicking pills) supersede.
+  useEffect(() => {
+    if (urlFilter === 'low_stock') {
+      setSelectedFilter('low_stock')
+    }
+    // Intentional: react only to the URL value. Once applied, in-app
+    // selectedFilter changes are not echoed back to the URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlFilter])
+
   // Sort sheet state
   const [isSortSheetOpen, setIsSortSheetOpen] = useState(false)
 
