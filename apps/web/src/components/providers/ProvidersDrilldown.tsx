@@ -2,13 +2,8 @@
 
 import { useIntl } from 'react-intl'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { Plus } from 'lucide-react'
-import {
-  IonItem,
-  IonItemOption,
-  IonItemOptions,
-  IonItemSliding,
-} from '@ionic/react'
+import { PackagePlus, Pencil, Plus, Trash2 } from 'lucide-react'
+import { IonItem } from '@ionic/react'
 import { useProviderManagement } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
@@ -17,7 +12,7 @@ import {
   AddProviderModal,
   EditProviderModal,
 } from '@/components/providers'
-import { PageSpinner } from '@/components/ui'
+import { PageSpinner, SwipeRow } from '@/components/ui'
 
 interface ProvidersDrilldownProps {
   businessId: string
@@ -173,24 +168,30 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
               const swipeActions = canManage
                 ? [
                     {
+                      id: `${provider.id}-new-order`,
+                      icon: <PackagePlus size={20} />,
                       label: t.formatMessage({ id: 'providers.action_new_order' }),
-                      color: 'primary' as const,
+                      variant: 'primary' as const,
                       onClick: () => orderFlows.openNewOrder(provider.id),
                     },
                     {
+                      id: `${provider.id}-edit`,
+                      icon: <Pencil size={20} />,
                       label: t.formatMessage({ id: 'providers.action_edit' }),
-                      color: 'medium' as const,
+                      variant: 'neutral' as const,
                       onClick: () => handleOpenModal(provider),
                     },
                     {
+                      id: `${provider.id}-delete`,
+                      icon: <Trash2 size={20} />,
                       label: t.formatMessage({ id: 'providers.action_delete' }),
-                      color: 'danger' as const,
+                      variant: 'danger' as const,
                       onClick: () => handleOpenDelete(provider),
                     },
                   ]
                 : []
               return (
-                <IonItemSliding key={provider.id}>
+                <SwipeRow key={provider.id} actions={swipeActions}>
                   <IonItem
                     button
                     detail={false}
@@ -202,20 +203,7 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
                   >
                     <ProviderListItem provider={provider} />
                   </IonItem>
-                  {swipeActions.length > 0 && (
-                    <IonItemOptions side="end">
-                      {swipeActions.map((action) => (
-                        <IonItemOption
-                          key={action.label}
-                          color={action.color}
-                          onClick={action.onClick}
-                        >
-                          {action.label}
-                        </IonItemOption>
-                      ))}
-                    </IonItemOptions>
-                  )}
-                </IonItemSliding>
+                </SwipeRow>
               )
             })}
           </section>
