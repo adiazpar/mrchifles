@@ -25,7 +25,6 @@ export interface EditProviderPhoneModalProps {
   initialPhone: string
   isSaving: boolean
   error: string
-  providerSaved: boolean
   /** PATCH the provider's phone. Empty string clears it (server stores null). */
   onSubmit: (phone: string) => Promise<boolean>
 }
@@ -43,12 +42,16 @@ export function EditProviderPhoneModal({
   initialPhone,
   isSaving,
   error,
-  providerSaved,
   onSubmit,
 }: EditProviderPhoneModalProps) {
   const t = useIntl()
   const [step, setStep] = useState<Step>('form')
   const [value, setValue] = useState(initialPhone)
+  // Local save-success flag — see EditProviderNameModal for the
+  // rationale. Owning this in the modal lets us flip it atomically
+  // with setStep('save-success') so the Lottie gate is true the
+  // frame the success step mounts.
+  const [saved, setSaved] = useState(false)
 
   // Gate the reset on close→open transition only. The parent updates
   // provider.phone before this modal commits step='save-success', so a
@@ -58,6 +61,7 @@ export function EditProviderPhoneModal({
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       setStep('form')
+      setSaved(false)
       setValue(initialPhone)
     }
     wasOpenRef.current = isOpen
@@ -76,7 +80,10 @@ export function EditProviderPhoneModal({
   const handleSave = async () => {
     if (!canSave) return
     const ok = await onSubmit(trimmed)
-    if (ok) setStep('save-success')
+    if (ok) {
+      setSaved(true)
+      setStep('save-success')
+    }
   }
 
   const footer =
@@ -152,7 +159,7 @@ export function EditProviderPhoneModal({
           </div>
         )}
         {step === 'save-success' && (
-          <ProviderSuccessBody triggered={providerSaved} mode="edit" />
+          <ProviderSuccessBody triggered={saved} mode="edit" />
         )}
       </IonContent>
 

@@ -125,16 +125,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   const [isContactSheetOpen, setContactSheetOpen] = useState(false)
 
   // Per-field edit + delete modal state. We keep one shared isSaving /
-  // editError / providerSaved triplet because only one modal can be open
-  // at a time, and each modal resets its own step on open. The opening
-  // helper below also clears these so a previous error never leaks into
-  // a fresh modal session.
+  // editError pair because only one modal can be open at a time. Each
+  // modal owns its own save-success flag locally so it can flip
+  // atomically with its step transition — see EditProviderNameModal.
   const [isNameEditOpen, setNameEditOpen] = useState(false)
   const [isPhoneEditOpen, setPhoneEditOpen] = useState(false)
   const [isEmailEditOpen, setEmailEditOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [editError, setEditError] = useState('')
-  const [providerSaved, setProviderSaved] = useState(false)
 
   // Inline Active toggle state — no modal. Optimistic flip with revert on
   // API failure; isTogglingActive locks the toggle while the PATCH is in
@@ -269,7 +267,6 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         )
         setProvider(result.provider)
         setProviders(prev => prev.map(p => (p.id === result.provider.id ? result.provider : p)))
-        setProviderSaved(true)
         return true
       } catch (err) {
         setEditError(
@@ -304,17 +301,14 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
   // success flag doesn't bleed into this session.
   const openNameEdit = useCallback(() => {
     setEditError('')
-    setProviderSaved(false)
     setNameEditOpen(true)
   }, [])
   const openPhoneEdit = useCallback(() => {
     setEditError('')
-    setProviderSaved(false)
     setPhoneEditOpen(true)
   }, [])
   const openEmailEdit = useCallback(() => {
     setEditError('')
-    setProviderSaved(false)
     setEmailEditOpen(true)
   }, [])
 
@@ -1242,46 +1236,35 @@ export function ProviderDetailClient({ businessId, providerId }: ProviderDetailC
         </div>
       </div>
       {/* ============== Per-field edit modals ==============
-          Each modal owns one field. The success step plays the lottie
-          when providerSaved flips true. onExitComplete clears the
-          shared edit-state triplet so a re-open lands on a clean form. */}
+          Each modal owns one field and its own local save-success
+          flag so the Lottie gate flips atomically with the step
+          transition. onExitComplete just clears the shared error so a
+          re-open lands on a clean form. */}
       <EditProviderNameModal
         isOpen={isNameEditOpen}
         onClose={() => setNameEditOpen(false)}
-        onExitComplete={() => {
-          setProviderSaved(false)
-          setEditError('')
-        }}
+        onExitComplete={() => setEditError('')}
         initialName={provider.name}
         isSaving={isSaving}
         error={editError}
-        providerSaved={providerSaved}
         onSubmit={handleSaveName}
       />
       <EditProviderPhoneModal
         isOpen={isPhoneEditOpen}
         onClose={() => setPhoneEditOpen(false)}
-        onExitComplete={() => {
-          setProviderSaved(false)
-          setEditError('')
-        }}
+        onExitComplete={() => setEditError('')}
         initialPhone={provider.phone ?? ''}
         isSaving={isSaving}
         error={editError}
-        providerSaved={providerSaved}
         onSubmit={handleSavePhone}
       />
       <EditProviderEmailModal
         isOpen={isEmailEditOpen}
         onClose={() => setEmailEditOpen(false)}
-        onExitComplete={() => {
-          setProviderSaved(false)
-          setEditError('')
-        }}
+        onExitComplete={() => setEditError('')}
         initialEmail={provider.email ?? ''}
         isSaving={isSaving}
         error={editError}
-        providerSaved={providerSaved}
         onSubmit={handleSaveEmail}
       />
       {/* ============== Delete provider modal ==============

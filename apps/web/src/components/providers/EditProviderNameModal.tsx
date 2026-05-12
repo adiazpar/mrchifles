@@ -25,7 +25,6 @@ export interface EditProviderNameModalProps {
   initialName: string
   isSaving: boolean
   error: string
-  providerSaved: boolean
   /** PATCH the provider with the new name. Resolves true on success
       so the modal can advance to the save-success step. */
   onSubmit: (name: string) => Promise<boolean>
@@ -45,12 +44,18 @@ export function EditProviderNameModal({
   initialName,
   isSaving,
   error,
-  providerSaved,
   onSubmit,
 }: EditProviderNameModalProps) {
   const t = useIntl()
   const [step, setStep] = useState<Step>('form')
   const [value, setValue] = useState(initialName)
+  // Local save-success flag. Owning this in the modal (instead of
+  // reading the parent's shared providerSaved prop) lets us flip it
+  // in the SAME callback as setStep('save-success'), so the Lottie
+  // gate inside ProviderSuccessBody is guaranteed true the frame the
+  // success step mounts. Parent-owned flags were racing the step
+  // transition across renders and the celebration never played.
+  const [saved, setSaved] = useState(false)
 
   // Reset to form + initialName only when the modal transitions from
   // closed to open. The parent updates provider.name (the source of
@@ -62,6 +67,7 @@ export function EditProviderNameModal({
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       setStep('form')
+      setSaved(false)
       setValue(initialName)
     }
     wasOpenRef.current = isOpen
@@ -82,7 +88,10 @@ export function EditProviderNameModal({
   const handleSave = async () => {
     if (!canSave) return
     const ok = await onSubmit(trimmed)
-    if (ok) setStep('save-success')
+    if (ok) {
+      setSaved(true)
+      setStep('save-success')
+    }
   }
 
   const footer =
@@ -158,7 +167,7 @@ export function EditProviderNameModal({
           </div>
         )}
         {step === 'save-success' && (
-          <ProviderSuccessBody triggered={providerSaved} mode="edit" />
+          <ProviderSuccessBody triggered={saved} mode="edit" />
         )}
       </IonContent>
 

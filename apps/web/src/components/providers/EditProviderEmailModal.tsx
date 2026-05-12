@@ -25,7 +25,6 @@ export interface EditProviderEmailModalProps {
   initialEmail: string
   isSaving: boolean
   error: string
-  providerSaved: boolean
   /** PATCH the provider's email. Empty string clears it (server stores null). */
   onSubmit: (email: string) => Promise<boolean>
 }
@@ -44,12 +43,16 @@ export function EditProviderEmailModal({
   initialEmail,
   isSaving,
   error,
-  providerSaved,
   onSubmit,
 }: EditProviderEmailModalProps) {
   const t = useIntl()
   const [step, setStep] = useState<Step>('form')
   const [value, setValue] = useState(initialEmail)
+  // Local save-success flag — see EditProviderNameModal for the
+  // rationale. Owning this in the modal lets us flip it atomically
+  // with setStep('save-success') so the Lottie gate is true the
+  // frame the success step mounts.
+  const [saved, setSaved] = useState(false)
 
   // Gate the reset on close→open transition only. The parent updates
   // provider.email before this modal commits step='save-success', so a
@@ -59,6 +62,7 @@ export function EditProviderEmailModal({
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       setStep('form')
+      setSaved(false)
       setValue(initialEmail)
     }
     wasOpenRef.current = isOpen
@@ -77,7 +81,10 @@ export function EditProviderEmailModal({
   const handleSave = async () => {
     if (!canSave) return
     const ok = await onSubmit(trimmed)
-    if (ok) setStep('save-success')
+    if (ok) {
+      setSaved(true)
+      setStep('save-success')
+    }
   }
 
   const footer =
@@ -153,7 +160,7 @@ export function EditProviderEmailModal({
           </div>
         )}
         {step === 'save-success' && (
-          <ProviderSuccessBody triggered={providerSaved} mode="edit" />
+          <ProviderSuccessBody triggered={saved} mode="edit" />
         )}
       </IonContent>
 
