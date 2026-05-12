@@ -16,6 +16,7 @@ import { ProviderDetailPage } from '@/routes/tabs/ProviderDetailPage'
 import { ProvidersTab } from '@/routes/tabs/ProvidersTab'
 import { SalesTab } from '@/routes/tabs/SalesTab'
 import { TeamTab } from '@/routes/tabs/TeamTab'
+import { businessShellTransition } from '@/lib/business-shell-animation'
 
 const BUSINESS_PATH = '/:businessId([A-Za-z0-9_-]{9,})'
 
@@ -39,7 +40,7 @@ export function BusinessTabsLayout() {
 
   return (
     <IonTabs>
-      <IonRouterOutlet>
+      <IonRouterOutlet animation={businessShellTransition}>
         <Route exact path={`${BUSINESS_PATH}/home`} component={HomeTab} />
         <Route exact path={`${BUSINESS_PATH}/sales`} component={SalesTab} />
         <Route exact path={`${BUSINESS_PATH}/products`} component={ProductsTab} />
