@@ -1,18 +1,37 @@
-import { createContext, useCallback, useContext, useRef } from 'react'
-import { IonNav } from '@ionic/react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ModalShell } from '@/components/ui'
 import type { UseCreateBusinessReturn } from '@/hooks'
 import { NameStep } from './steps/NameStep'
+import { TypeStep } from './steps/TypeStep'
+import { LocaleStep } from './steps/LocaleStep'
+import { LogoStep } from './steps/LogoStep'
+import { SuccessStep } from './steps/SuccessStep'
 
 // ---------------------------------------------------------------------------
-// Nav ref context — steps call navRef.current?.push / .pop to navigate.
+// Step-stack nav context — steps call nav.push('next-key') / nav.pop() to
+// move between steps. The previous IonNav-based version registered each
+// step's <IonPage> against the surrounding IonRouterOutlet's StackManager
+// from inside the IonModal portal, which corrupted the outlet's view-stack
+// tracking and surfaced as wrong-page-under-correct-URL after the next
+// push+pop in the outer outlet. See .claude/docs/modal-system.md rule 5
+// and the order-modal / product-modal references.
 // ---------------------------------------------------------------------------
 
-export const NavRefContext = createContext<React.RefObject<HTMLIonNavElement | null> | null>(null)
+export type CreateBusinessStep = 'name' | 'type' | 'locale' | 'logo' | 'success'
 
-export function useNavRef(): React.RefObject<HTMLIonNavElement | null> {
-  const ctx = useContext(NavRefContext)
-  if (!ctx) throw new Error('useNavRef must be used inside CreateBusinessModal')
+export interface CreateBusinessNav {
+  push: (step: CreateBusinessStep) => void
+  pop: () => void
+  /** Total entries in the back stack. Steps render the back chevron only
+   *  when depth > 1; depth === 1 is the root (close X only). */
+  depth: number
+}
+
+export const CreateBusinessNavContext = createContext<CreateBusinessNav | null>(null)
+
+export function useCreateBusinessNav(): CreateBusinessNav {
+  const ctx = useContext(CreateBusinessNavContext)
+  if (!ctx) throw new Error('useCreateBusinessNav must be used inside CreateBusinessModal')
   return ctx
 }
 
@@ -32,13 +51,21 @@ export function useCreateBusinessCtx(): UseCreateBusinessReturn {
 // Modal root
 // ---------------------------------------------------------------------------
 
+const INITIAL_STACK: CreateBusinessStep[] = ['name']
+
 interface CreateBusinessModalProps {
   createBusiness: UseCreateBusinessReturn
 }
 
 export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps) {
   const { isOpen, handleClose, handleExitComplete } = createBusiness
-  const navRef = useRef<HTMLIonNavElement>(null)
+  const [stack, setStack] = useState<CreateBusinessStep[]>(INITIAL_STACK)
+
+  // Reset the stack to the root every time the modal opens. The same modal
+  // component is reused across consecutive create-business flows.
+  useEffect(() => {
+    if (isOpen) setStack(INITIAL_STACK)
+  }, [isOpen])
 
   // Combine close + exit-complete so ModalShell's single onClose covers both.
   // IonModal fires onDidDismiss (mapped to onClose) after the dismiss animation,
@@ -48,17 +75,31 @@ export function CreateBusinessModal({ createBusiness }: CreateBusinessModalProps
     handleExitComplete()
   }, [handleClose, handleExitComplete])
 
-  // Stable root thunk — useCallback with [] so IonNav never remounts the step
-  // stack due to a new function reference produced on every parent render.
-  const nameStepRoot = useCallback(() => <NameStep />, [])
+  const push = useCallback((step: CreateBusinessStep) => {
+    setStack((s) => [...s, step])
+  }, [])
+  const pop = useCallback(() => {
+    setStack((s) => (s.length > 1 ? s.slice(0, -1) : s))
+  }, [])
+
+  const nav: CreateBusinessNav = useMemo(
+    () => ({ push, pop, depth: stack.length }),
+    [push, pop, stack.length],
+  )
+
+  const current = stack[stack.length - 1]
 
   return (
     <CreateBusinessContext.Provider value={createBusiness}>
-      <NavRefContext.Provider value={navRef}>
+      <CreateBusinessNavContext.Provider value={nav}>
         <ModalShell isOpen={isOpen} onClose={onClose} rawContent>
-          <IonNav ref={navRef} root={nameStepRoot} swipeGesture={false} />
+          {current === 'name' && <NameStep />}
+          {current === 'type' && <TypeStep />}
+          {current === 'locale' && <LocaleStep />}
+          {current === 'logo' && <LogoStep />}
+          {current === 'success' && <SuccessStep />}
         </ModalShell>
-      </NavRefContext.Provider>
+      </CreateBusinessNavContext.Provider>
     </CreateBusinessContext.Provider>
   )
 }

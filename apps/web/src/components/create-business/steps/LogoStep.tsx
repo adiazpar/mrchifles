@@ -1,18 +1,16 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
   IonIcon,
   IonSpinner,
 } from '@ionic/react'
-import { close } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { Upload, X } from 'lucide-react'
 import Image from '@/lib/Image'
 import {
@@ -21,8 +19,7 @@ import {
 } from '@/components/businesses/shared'
 import { MAX_UPLOAD_SIZE } from '@/lib/storage-client'
 import type { BusinessType } from '@/hooks'
-import { useCreateBusinessCtx, useNavRef } from '../CreateBusinessModal'
-import { SuccessStep } from './SuccessStep'
+import { useCreateBusinessCtx, useCreateBusinessNav } from '../CreateBusinessModal'
 
 function getDefaultIconForType(businessType: BusinessType | null) {
   if (!businessType) return <span className="text-5xl">💼</span>
@@ -41,7 +38,7 @@ function getDefaultIconForType(businessType: BusinessType | null) {
 
 export function LogoStep() {
   const t = useIntl()
-  const navRef = useNavRef()
+  const nav = useCreateBusinessNav()
   const {
     formData,
     setLogoFile,
@@ -87,9 +84,9 @@ export function LogoStep() {
   const handleCreate = useCallback(async () => {
     const success = await handleCreateBusiness()
     if (success) {
-      navRef.current?.push(() => <SuccessStep />)
+      nav.push('success')
     }
-  }, [handleCreateBusiness, navRef])
+  }, [handleCreateBusiness, nav])
 
   const titleNode = useMemo(() => {
     const full = t.formatMessage({ id: 'createBusiness.logo_title' })
@@ -108,11 +105,17 @@ export function LogoStep() {
   const hasLogo = !!formData.logoPreview
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
           <IonButtons slot="end">
             <IonButton fill="clear" onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
@@ -229,6 +232,6 @@ export function LogoStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

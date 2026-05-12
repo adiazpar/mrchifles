@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
-import { IonButton, IonPage, IonContent } from '@ionic/react'
+import { IonButton, IonContent } from '@ionic/react'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useCreateBusinessCtx } from '../CreateBusinessModal'
 
@@ -27,7 +27,7 @@ export function SuccessStep() {
   const businessName = createdBusiness?.name || formData.name || ''
 
   return (
-    <IonPage>
+    <>
       <IonContent className="wizard-content">
         <div className="create-business__success">
           <div className="create-business__success-lottie">
@@ -94,6 +94,6 @@ export function SuccessStep() {
           </div>
         </div>
       </IonContent>
-    </IonPage>
+    </>
   )
 }

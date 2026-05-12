@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
@@ -12,12 +11,11 @@ import {
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
 import { AuthField } from '@/components/auth'
-import { useCreateBusinessCtx, useNavRef } from '../CreateBusinessModal'
-import { TypeStep } from './TypeStep'
+import { useCreateBusinessCtx, useCreateBusinessNav } from '../CreateBusinessModal'
 
 export function NameStep() {
   const t = useIntl()
-  const navRef = useNavRef()
+  const nav = useCreateBusinessNav()
   const { formData, setName, isNameValid, handleClose, handleExitComplete } = useCreateBusinessCtx()
 
   function handleCancel() {
@@ -26,7 +24,7 @@ export function NameStep() {
   }
 
   function handleNext() {
-    navRef.current?.push(() => <TypeStep />)
+    nav.push('type')
   }
 
   // Title with one italic-terracotta accent word. The emphasis term is
@@ -51,7 +49,7 @@ export function NameStep() {
   const trimmed = formData.name.trim()
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           <IonButtons slot="end">
@@ -121,6 +119,6 @@ export function NameStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

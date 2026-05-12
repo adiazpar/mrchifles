@@ -1,24 +1,21 @@
 import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { close } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { BusinessTypeGrid } from '@/components/businesses/shared'
-import { useCreateBusinessCtx, useNavRef } from '../CreateBusinessModal'
-import { LocaleStep } from './LocaleStep'
+import { useCreateBusinessCtx, useCreateBusinessNav } from '../CreateBusinessModal'
 
 export function TypeStep() {
   const t = useIntl()
-  const navRef = useNavRef()
+  const nav = useCreateBusinessNav()
   const { formData, setType, isTypeValid, handleClose, handleExitComplete } = useCreateBusinessCtx()
 
   function handleCancel() {
@@ -27,7 +24,7 @@ export function TypeStep() {
   }
 
   function handleNext() {
-    navRef.current?.push(() => <LocaleStep />)
+    nav.push('locale')
   }
 
   const titleNode = useMemo(() => {
@@ -45,11 +42,17 @@ export function TypeStep() {
   }, [t])
 
   return (
-    <IonPage>
+    <>
       <IonHeader>
         <IonToolbar className="wizard-toolbar">
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
           <IonButtons slot="end">
             <IonButton fill="clear" onClick={handleCancel} aria-label={t.formatMessage({ id: 'common.close' })}>
@@ -96,6 +99,6 @@ export function TypeStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

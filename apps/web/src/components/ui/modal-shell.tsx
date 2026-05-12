@@ -24,14 +24,16 @@ interface ModalShellProps {
   /** When set, renders inside an IonFooter at the bottom of the modal. */
   footer?: ReactNode
   /**
-   * Body content. For Pattern 2 wizards, pass `<IonNav root={...} />` here
-   * and also set `rawContent` so IonNav is NOT wrapped in an extra IonContent.
+   * Body content. For multi-step modals, the active step renders its own
+   * `IonHeader` + `IonContent` + `IonFooter` directly here; the modal owns
+   * a step-stack state and conditionally renders the active step.
    */
   children: ReactNode
   /**
    * When true, children are rendered directly inside IonModal without an
-   * IonContent wrapper. Required for Pattern 2 (IonNav) — IonNav manages its
-   * own IonContent per step, and nesting it inside IonContent breaks the layout.
+   * auto-wrapped IonContent. Required for any modal whose step body
+   * renders its own `IonHeader` / `IonContent` / `IonFooter` chrome
+   * (i.e. every multi-step modal in this app).
    */
   rawContent?: boolean
   /**
@@ -66,13 +68,11 @@ interface ModalShellProps {
   /**
    * Keep modal contents mounted across open/close cycles. By default
    * Ionic unmounts modal children when the modal is dismissed (frees
-   * memory), and remounts them on the next present. For Pattern 2
-   * IonNav wizards, that remount fires the root step's iOS-style page
-   * enter animation concurrently with IonModal's slide-up — the two
-   * stacked animations look diagonal. Set this to true to force the
-   * IonNav (and its root step) to stay mounted from the page's first
-   * render. Currently used only by team modals (InviteModal,
-   * MemberModal) where this race was visible.
+   * memory), and remounts them on the next present. Set this to true to
+   * force the body to stay mounted from the page's first render — useful
+   * when a step's mount-time animation (Lottie, iOS-style enter) needs to
+   * be ready before the modal's slide-up so the two don't stack into a
+   * diagonal motion. Unused today; keep as an escape hatch.
    */
   keepContentsMounted?: boolean
 }
@@ -126,9 +126,10 @@ export function ModalShell({
   // To kill this entirely, `noSwipeDismiss` makes BOTH breakpoints AND
   // initialBreakpoint undefined, which flips `isSheetModal` to false. The modal
   // becomes a regular IonModal: iOS-style fullscreen card animation, no sheet
-  // gesture, no keyboard-coupled gesture handler. Pattern 2 (`rawContent` +
-  // IonNav) is non-sheet for the same reason — IonNav owns its own per-step
-  // layout. Pattern 0 / 1 modals without `noSwipeDismiss` keep the sheet.
+  // gesture, no keyboard-coupled gesture handler. `rawContent` is non-sheet
+  // for the same reason — each step renders its own IonContent and manages
+  // its own per-step layout. Pattern 0/1 modals without `noSwipeDismiss`
+  // keep the sheet.
   //
   // The breakpoints array is memoized so passing a fresh reference on every
   // parent render doesn't make IonModal re-evaluate its gesture mid-animation.

@@ -27,16 +27,13 @@ import React from 'react'
  * existing tests (IonApp, IonHeader, IonToolbar, IonTitle, IonContent,
  * IonFooter, IonButtons, IonIcon, useIonRouter, etc.) are unaffected.
  *
- * WARNING — Pattern 2 modal coverage gap:
- * IonNav is also a Stencil web component that JSDOM cannot initialize. The
- * mock above does NOT replace IonNav, so Pattern 2 modals (those that pass
- * `rawContent` and render an IonNav inside ModalShell — AddProductModal,
- * EditProductModal, NewOrderModal, OrderDetailModal, InviteModal,
- * MemberModal, CreateBusinessModal) will not render their step content in
- * vitest at all. This means gesture conflicts, shadow-DOM pointer-events
- * leaks, and IonNav root-thunk stability bugs are invisible to vitest.
- * Integration testing of Pattern 2 modals must happen on a real device or
- * in a Playwright/WebdriverIO test that runs the actual Stencil runtime.
+ * NOTE: All multi-step modals in this app are Pattern 1 (state-driven step
+ * stack, no IonNav, no nested IonPages — see .claude/docs/modal-system.md
+ * rule 5). Each active step renders its own IonHeader/IonContent/IonFooter
+ * inside ModalShell, which JSDOM handles fine via the mock above. Pattern 2
+ * (IonNav inside IonModal) is forbidden — the per-step IonPage registers
+ * against the outer IonRouterOutlet's StackManager and corrupts its view
+ * tracking — so no test coverage gap remains on that axis.
  */
 vi.mock('@ionic/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@ionic/react')>()
