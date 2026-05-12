@@ -21,17 +21,24 @@ import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const ROOT = resolve(__dirname, '..')
-const SOURCE_ICON = resolve(ROOT, 'public/icon-source.png')
-const OUT_DIR = resolve(ROOT, 'public/splash')
+// The SPA's apps/web/public/ is the source-of-truth; apps/api/public/ is
+// rebuilt from it by prepare-spa.mjs. We write splash PNGs there so the dev
+// server (Vite) and the next prod build both pick them up. After generating,
+// mirror to apps/api/public/ to keep an active local prod preview in sync.
+const WEB_PUBLIC = resolve(__dirname, '../../web/public')
+const SOURCE_ICON = resolve(WEB_PUBLIC, 'icon-source.png')
+const OUT_DIR = resolve(WEB_PUBLIC, 'splash')
 
 // Logical-CSS-pixel size of the icon on the splash. Each entry resizes the
 // source icon to ICON_CSS * dpr physical pixels and centers it on a solid bg.
 const ICON_CSS = 160
 
-// --color-bg-surface from src/app/styles/base.css
-const BG_LIGHT = '#F8FAFC'
-const BG_DARK = '#171717'
+// --color-paper from apps/web/src/styles/base.css — the Modern Mercantile
+// Paper & Ink palette. Light = warm cream, dark = deep warm ink. Matches the
+// theme-color meta in index.html so the splash, status bar, and first paint
+// are all the same color (no flash on launch).
+const BG_LIGHT = '#F6EFDF'
+const BG_DARK = '#16120F'
 
 /**
  * One row per unique (cssW, cssH, dpr) combination. Models listed in the
