@@ -94,6 +94,7 @@ function EditProductModalInner({
     onToggleActive,
     onSaveAdjustment,
     canDelete,
+    entryStep: initialStep,
   }
 
   // Stable root thunks — IonNav expects a function returning JSX (not a

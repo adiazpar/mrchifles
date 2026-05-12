@@ -48,6 +48,11 @@ export interface EditProductCallbacks extends ProductModalCallbacks {
   onToggleActive: (productId: string, nextActive: boolean) => Promise<boolean>
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
+  /** Step the modal opened to. Steps pushed deeper into the IonNav stack
+   *  always show a back button; the root step (matching this index) is the
+   *  entry point and shows the modal-level close X instead, since there
+   *  is nothing to navigate back to. */
+  entryStep: number
 }
 
 export const AddProductCallbacksContext = createContext<AddProductCallbacks | null>(null)

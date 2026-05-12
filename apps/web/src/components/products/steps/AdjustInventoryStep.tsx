@@ -9,17 +9,23 @@ import {
   IonButtons,
   IonBackButton,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { close } from 'ionicons/icons'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { StockStepper } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNavRef } from './ProductNavContext'
+import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
+
+const ADJUST_STEP_INDEX = 1
 
 export function AdjustInventoryStep() {
   const t = useIntl()
   const navRef = useProductNavRef()
+  const { onClose, entryStep } = useEditProductCallbacks()
+  const isEntryRoot = entryStep === ADJUST_STEP_INDEX
   const {
     editingProduct,
     iconPreview,
@@ -50,7 +56,13 @@ export function AdjustInventoryStep() {
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            {isEntryRoot ? (
+              <IonButton fill="clear" onClick={onClose} aria-label="Close">
+                <IonIcon icon={close} />
+              </IonButton>
+            ) : (
+              <IonBackButton defaultHref="" />
+            )}
           </IonButtons>
           <IonTitle>
             {t.formatMessage({ id: 'productForm.title_adjust_inventory' })}
