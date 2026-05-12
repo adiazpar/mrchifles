@@ -82,9 +82,11 @@
   transition: color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
 }
 
-.sales-stats-link:hover {
-  color: var(--color-brand);
-  background-color: var(--color-brand-subtle);
+@media (hover: hover) {
+  .sales-stats-link:hover {
+    color: var(--color-brand);
+    background-color: var(--color-brand-subtle);
+  }
 }
 
 .sales-stats-link__arrow {
@@ -93,8 +95,10 @@
   transition: transform var(--duration-fast) ease-out;
 }
 
-.sales-stats-link:hover .sales-stats-link__arrow {
-  transform: translateX(2px);
+@media (hover: hover) {
+  .sales-stats-link:hover .sales-stats-link__arrow {
+    transform: translateX(2px);
+  }
 }
 
 /* ===== Headline (the big number) ===================================== */
@@ -459,12 +463,16 @@
   color: var(--color-error);
 }
 
-.product-tile__qty-button:not(:disabled):hover {
-  background-color: rgba(0, 0, 0, 0.04);
+@media (hover: hover) {
+  .product-tile__qty-button:not(:disabled):hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
 }
 
-.dark .product-tile__qty-button:not(:disabled):hover {
-  background-color: rgba(255, 255, 255, 0.06);
+@media (hover: hover) {
+  .dark .product-tile__qty-button:not(:disabled):hover {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
 }
 
 .product-tile__qty-value {
@@ -821,9 +829,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.recent-session-row:hover {
-  background-color: var(--color-bg-base);
-  border-color: var(--color-border-hover);
+@media (hover: hover) {
+  .recent-session-row:hover {
+    background-color: var(--color-bg-base);
+    border-color: var(--color-border-hover);
+  }
 }
 
 .recent-session-row__lead {
@@ -910,8 +920,10 @@
   transition: background-color var(--duration-fast) ease-out;
 }
 
-.recent-sessions-view-all:hover {
-  background-color: var(--color-brand-subtle);
+@media (hover: hover) {
+  .recent-sessions-view-all:hover {
+    background-color: var(--color-brand-subtle);
+  }
 }
 
 /* ===== Payment split (donut + legend) ================================ */

@@ -17,10 +17,13 @@ import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
 import { DeleteSuccessStep } from './DeleteSuccessStep'
 
+export const DELETE_STEP_INDEX = 2
+
 export function DeleteConfirmStep() {
   const t = useIntl()
   const navRef = useProductNavRef()
-  const { onDelete, onClose } = useEditProductCallbacks()
+  const { onDelete, onClose, entryStep } = useEditProductCallbacks()
+  const isEntryRoot = entryStep === DELETE_STEP_INDEX
   const {
     editingProduct,
     isDeleting,
@@ -55,9 +58,11 @@ export function DeleteConfirmStep() {
     <IonPage>
       <IonHeader className="pm-header">
         <IonToolbar>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
-          </IonButtons>
+          {!isEntryRoot && (
+            <IonButtons slot="start">
+              <IonBackButton defaultHref="" />
+            </IonButtons>
+          )}
           <IonTitle>
             {t.formatMessage({ id: 'productForm.title_delete_product' })}
           </IonTitle>

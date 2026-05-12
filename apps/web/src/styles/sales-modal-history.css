@@ -157,10 +157,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.session-history-load-more:hover {
-  border-color: var(--color-brand);
-  color: var(--color-brand);
-  background: var(--color-brand-subtle);
+@media (hover: hover) {
+  .session-history-load-more:hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
 }
 
 .session-history-load-more:active {

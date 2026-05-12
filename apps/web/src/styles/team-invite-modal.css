@@ -547,8 +547,10 @@
     opacity var(--duration-fast) ease-out;
 }
 
-.tm-invite__danger-pill:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-error) 88%, #000);
+@media (hover: hover) {
+  .tm-invite__danger-pill:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-error) 88%, #000);
+  }
 }
 
 .tm-invite__danger-pill:active:not(:disabled) {

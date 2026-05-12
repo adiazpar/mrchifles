@@ -216,9 +216,11 @@
   opacity: 0.55;
 }
 
-.pm-choice--ghost:hover {
-  border-color: var(--color-hair);
-  background: var(--color-paper-warm);
+@media (hover: hover) {
+  .pm-choice--ghost:hover {
+    border-color: var(--color-hair);
+    background: var(--color-paper-warm);
+  }
 }
 
 .pm-choice__icon {
@@ -303,9 +305,11 @@
   transition: transform var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
-.pm-choice:hover .pm-choice__chev {
-  color: var(--color-brand);
-  transform: translateX(2px);
+@media (hover: hover) {
+  .pm-choice:hover .pm-choice__chev {
+    color: var(--color-brand);
+    transform: translateX(2px);
+  }
 }
 
 /* "OR" rule between the two pairs of choices. */
@@ -601,9 +605,11 @@ ion-segment.pm-form-segment ion-segment-button.segment-button-checked {
   transition: color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
 }
 
-.pm-barcode-input__copy:hover:not(:disabled) {
-  color: var(--color-text-secondary);
-  background: var(--color-paper-warm);
+@media (hover: hover) {
+  .pm-barcode-input__copy:hover:not(:disabled) {
+    color: var(--color-text-secondary);
+    background: var(--color-paper-warm);
+  }
 }
 
 .pm-barcode-input__copy:disabled {
@@ -1198,8 +1204,10 @@ ion-segment.pm-form-segment ion-segment-button.segment-button-checked {
   transition: background-color var(--duration-fast) ease-out;
 }
 
-.pm-suggested__back:hover {
-  background: var(--color-brand-subtle);
+@media (hover: hover) {
+  .pm-suggested__back:hover {
+    background: var(--color-brand-subtle);
+  }
 }
 
 /* ==========================================================================
@@ -1610,8 +1618,10 @@ ion-segment.pm-form-segment ion-segment-button.segment-button-checked {
   transition: background-color var(--duration-fast) ease-out, transform var(--duration-instant) ease-out;
 }
 
-.pm-scanner__close:hover {
-  background: rgba(0, 0, 0, 0.75);
+@media (hover: hover) {
+  .pm-scanner__close:hover {
+    background: rgba(0, 0, 0, 0.75);
+  }
 }
 
 .pm-scanner__close:active {
@@ -1718,8 +1728,10 @@ ion-segment.pm-form-segment ion-segment-button.segment-button-checked {
   transition: color var(--duration-fast) ease-out;
 }
 
-.pm-scanner__fallback:hover {
-  color: #fff;
+@media (hover: hover) {
+  .pm-scanner__fallback:hover {
+    color: #fff;
+  }
 }
 
 /* Starting / error overlays — centered. */
@@ -1890,9 +1902,11 @@ ion-footer.pm-footer ion-toolbar {
   transition: background-color var(--duration-fast) ease-out, color var(--duration-fast) ease-out;
 }
 
-.pm-stock-stepper__button:hover:not(:disabled) {
-  background: var(--color-brand-subtle);
-  color: var(--color-brand);
+@media (hover: hover) {
+  .pm-stock-stepper__button:hover:not(:disabled) {
+    background: var(--color-brand-subtle);
+    color: var(--color-brand);
+  }
 }
 
 .pm-stock-stepper__button:disabled {
@@ -2182,6 +2196,20 @@ ion-footer.pm-footer ion-toolbar {
   letter-spacing: 0.02em;
 }
 
+/* Helper paragraph that sits above the inline Status toggle on
+   ProductReview. Matches the display-italic voice used by other inline
+   descriptions in this modal (e.g. .pm-toggle-row__desc) so the hint
+   reads as a guided explanation rather than a label or error. */
+.pm-review__status-hint {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+  margin: var(--space-3) var(--space-2) calc(-1 * var(--space-1));
+}
+
 /* Footer action row — primary save sits on the right, optional destructive
    icon-button sits on the left. Mirrors .order-overview__actions in the
    order-modal stylesheet; duplicated locally rather than lifted to a
@@ -2234,9 +2262,16 @@ ion-footer.pm-footer ion-toolbar {
   color: var(--color-error);
 }
 
-.pm-review__icon-action--delete:hover:not(:disabled),
 .pm-review__icon-action--delete:focus-visible:not(:disabled) {
   border-color: var(--color-error);
   background: var(--color-error-subtle);
   color: var(--color-error);
+}
+
+@media (hover: hover) {
+  .pm-review__icon-action--delete:hover:not(:disabled) {
+    border-color: var(--color-error);
+    background: var(--color-error-subtle);
+    color: var(--color-error);
+  }
 }

@@ -256,12 +256,16 @@
   color: var(--color-error);
 }
 
-.cart-line__qty-button:not(:disabled):hover {
-  background-color: var(--color-paper-deep);
+@media (hover: hover) {
+  .cart-line__qty-button:not(:disabled):hover {
+    background-color: var(--color-paper-deep);
+  }
 }
 
-.dark .cart-line__qty-button:not(:disabled):hover {
-  background-color: rgba(255, 255, 255, 0.06);
+@media (hover: hover) {
+  .dark .cart-line__qty-button:not(:disabled):hover {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
 }
 
 .cart-line__qty-value {
@@ -463,10 +467,12 @@
   transform: scale(0.97);
 }
 
-.quick-bill:hover {
-  border-color: var(--color-brand);
-  background: var(--color-brand-subtle);
-  color: var(--color-brand);
+@media (hover: hover) {
+  .quick-bill:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
+    color: var(--color-brand);
+  }
 }
 
 /* "Exact" pill — distinguished as the canonical match (no change). */
@@ -476,8 +482,10 @@
   background: var(--color-bg-surface);
 }
 
-.quick-bill--exact:hover {
-  background: var(--color-brand-subtle);
+@media (hover: hover) {
+  .quick-bill--exact:hover {
+    background: var(--color-brand-subtle);
+  }
 }
 
 /* Change-due moment — the line that appears when tendered ≥ total.
@@ -673,8 +681,10 @@
     0 6px 12px -6px rgba(var(--color-brand-rgb), 0.45);
 }
 
-.charge-pill:hover:not(:disabled) {
-  background: var(--color-brand-hover);
+@media (hover: hover) {
+  .charge-pill:hover:not(:disabled) {
+    background: var(--color-brand-hover);
+  }
 }
 
 .charge-pill:disabled {

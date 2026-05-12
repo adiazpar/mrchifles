@@ -93,40 +93,13 @@ export function ReviewStep() {
 
   const [savingLocal, setSavingLocal] = useState(false)
 
-  const [isToggling, setIsToggling] = useState(false)
-  const [toggleError, setToggleError] = useState('')
-
-  // The toggle reads form-context `active` (already destructured above) —
-  // it's initialized from editingProduct.active on modal open via
-  // populateFromProduct, then this handler keeps it in sync after a
-  // successful PATCH. We avoid reading editingProduct.active directly
-  // because ProductsView's local editingProduct state is set at open-time
-  // and doesn't update on the inline toggle (only the shared products
-  // array does), so editingProduct here would be stale until close+reopen.
-  const handleToggleActive = async () => {
-    if (!isEdit || !editCtx || !editingProduct || isToggling) return
-    const next = !active
-    setIsToggling(true)
-    setToggleError('')
-    try {
-      const ok = await editCtx.onToggleActive(editingProduct.id, next)
-      if (ok) {
-        // Sync the form-context active so a subsequent Save doesn't
-        // ship a stale value and overwrite the inline PATCH.
-        setActive(next)
-      } else {
-        setToggleError(t.formatMessage({ id: 'productAddEdit.toggle_failed' }))
-      }
-    } finally {
-      setIsToggling(false)
-    }
+  const handleToggleActive = () => {
+    if (!isEdit || !editingProduct) return
+    setActive(!active)
   }
 
   const openDeleteConfirm = () => {
-    // Clear any prior error/toggleError so a stale red banner from a
-    // failed save doesn't carry over into the delete-confirm screen.
     setError('')
-    setToggleError('')
     navRef.current?.push(() => <DeleteConfirmStep />)
   }
 
@@ -365,6 +338,9 @@ export function ReviewStep() {
               unscoped, so the class works anywhere it's applied. */}
           {isEdit && editCtx?.canDelete && editingProduct && (
             <>
+              <p className="pm-review__status-hint">
+                {t.formatMessage({ id: 'productAddEdit.active_hint' })}
+              </p>
               <IonList
                 inset
                 lines="full"
@@ -394,7 +370,7 @@ export function ReviewStep() {
                     </span>
                     <IonToggle
                       checked={active}
-                      disabled={isToggling || savingLocal || isSaving}
+                      disabled={savingLocal || isSaving}
                       onIonChange={handleToggleActive}
                       aria-label={t.formatMessage({
                         id: 'productAddEdit.active_label',
@@ -403,15 +379,6 @@ export function ReviewStep() {
                   </span>
                 </IonItem>
               </IonList>
-              {toggleError && (
-                <p
-                  className="pm-error"
-                  role="alert"
-                  style={{ margin: 'var(--space-3) 0 0' }}
-                >
-                  {toggleError}
-                </p>
-              )}
             </>
           )}
         </div>
@@ -426,7 +393,7 @@ export function ReviewStep() {
                   type="button"
                   className="pm-review__icon-action pm-review__icon-action--delete"
                   onClick={openDeleteConfirm}
-                  disabled={savingLocal || isSaving || isToggling}
+                  disabled={savingLocal || isSaving}
                   aria-label={t.formatMessage({
                     id: 'productAddEdit.delete_button_aria',
                   })}

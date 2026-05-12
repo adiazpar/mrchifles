@@ -461,9 +461,11 @@
     color var(--duration-fast) ease-out,
     border-color var(--duration-fast) ease-out;
 }
-.edit-logo__remove:hover {
-  color: var(--color-error);
-  border-color: var(--color-error);
+@media (hover: hover) {
+  .edit-logo__remove:hover {
+    color: var(--color-error);
+    border-color: var(--color-error);
+  }
 }
 .edit-logo__remove svg { width: 14px; height: 14px; }
 
@@ -512,10 +514,12 @@
   text-align: left;
   margin-top: var(--space-3);
 }
-.edit-logo__upload:hover {
-  border-color: var(--color-brand);
-  background: var(--color-bg-muted);
-  box-shadow: 0 0 0 4px var(--color-brand-subtle);
+@media (hover: hover) {
+  .edit-logo__upload:hover {
+    border-color: var(--color-brand);
+    background: var(--color-bg-muted);
+    box-shadow: 0 0 0 4px var(--color-brand-subtle);
+  }
 }
 
 .edit-logo__upload-icon {
@@ -762,9 +766,11 @@
   border-bottom: 1px solid var(--color-border);
   padding: 0 0 1px;
 }
-.transfer-ownership__custom-back:hover {
-  color: var(--color-brand);
-  border-bottom-color: var(--color-brand);
+@media (hover: hover) {
+  .transfer-ownership__custom-back:hover {
+    color: var(--color-brand);
+    border-bottom-color: var(--color-brand);
+  }
 }
 
 .transfer-ownership__no-team {
@@ -801,10 +807,12 @@
     color var(--duration-fast) ease-out,
     background var(--duration-fast) ease-out;
 }
-.transfer-ownership__switch:hover {
-  border-color: var(--color-brand);
-  color: var(--color-brand);
-  background: var(--color-brand-subtle);
+@media (hover: hover) {
+  .transfer-ownership__switch:hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
 }
 .transfer-ownership__switch svg { width: 12px; height: 12px; }
 

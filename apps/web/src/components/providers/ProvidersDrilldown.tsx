@@ -3,7 +3,7 @@
 import { useIntl } from 'react-intl'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { PackagePlus, Pencil, Plus, Trash2 } from 'lucide-react'
-import { IonItem } from '@ionic/react'
+import { IonItem, IonList } from '@ionic/react'
 import { useProviderManagement } from '@/hooks'
 import { useOrderFlows } from '@/hooks/useOrderFlows'
 import { useOrders } from '@/contexts/orders-context'
@@ -23,16 +23,16 @@ interface ProvidersDrilldownProps {
  *
  * The page reads like a printed roster slip and reuses the team page's
  * primitives wholesale (.tm-roster, .pm-hero__*, .tm-roster__row,
- * .tm-roster__avatar, .tm-roster__row-meta, .report-card). The only
- * provider-specific addition is the SwipeRow shell that gives
+ * .tm-roster__avatar, .tm-roster__row-meta, .tm-roster__list-card). The
+ * only provider-specific addition is the SwipeRow shell that gives
  * each row an edit / delete / new-order swipe tray.
  *
  *   - Hero band: tracked "SUPPLIERS · N PARTNERS" eyebrow → Fraunces
  *     italic "Your suppliers" / "The suppliers" → italic subtitle. A
  *     terracotta Add pill anchors the right side for managers.
- *   - Roster card: single .report-card frame with one row per supplier.
- *     Active providers stay full opacity; paused providers dim to match
- *     the disabled-member treatment on the team page.
+ *   - Roster card: single flush .tm-roster__list-card frame with one row
+ *     per supplier. Active providers stay full opacity; paused providers
+ *     dim to match the disabled-member treatment on the team page.
  *   - Empty state: a quiet italic line nudging the manager toward the
  *     Add pill instead of a separate empty card.
  *
@@ -159,53 +159,55 @@ export function ProvidersDrilldown({ businessId }: ProvidersDrilldownProps) {
           </p>
         )}
 
-        {/* Roster card — every provider, active first then paused, all in
-            one .report-card frame. Paused rows render dimmed via the row
-            primitive. */}
+        {/* Roster card — flush wrapper so SwipeRow's trailing options
+            reveal flush against the card's right edge. Same shell as the
+            products inventory ledger. */}
         {sortedProviders.length > 0 && (
-          <section className="report-card">
-            {sortedProviders.map((provider) => {
-              const swipeActions = canManage
-                ? [
-                    {
-                      id: `${provider.id}-new-order`,
-                      icon: <PackagePlus size={20} />,
-                      label: t.formatMessage({ id: 'providers.action_new_order' }),
-                      variant: 'primary' as const,
-                      onClick: () => orderFlows.openNewOrder(provider.id),
-                    },
-                    {
-                      id: `${provider.id}-edit`,
-                      icon: <Pencil size={20} />,
-                      label: t.formatMessage({ id: 'providers.action_edit' }),
-                      variant: 'neutral' as const,
-                      onClick: () => handleOpenModal(provider),
-                    },
-                    {
-                      id: `${provider.id}-delete`,
-                      icon: <Trash2 size={20} />,
-                      label: t.formatMessage({ id: 'providers.action_delete' }),
-                      variant: 'danger' as const,
-                      onClick: () => handleOpenDelete(provider),
-                    },
-                  ]
-                : []
-              return (
-                <SwipeRow key={provider.id} actions={swipeActions}>
-                  <IonItem
-                    button
-                    detail={false}
-                    lines="none"
-                    className="tm-roster__row-shell"
-                    onClick={() =>
-                      router.push(`/${businessId}/providers/${provider.id}`)
-                    }
-                  >
-                    <ProviderListItem provider={provider} />
-                  </IonItem>
-                </SwipeRow>
-              )
-            })}
+          <section className="tm-roster__list-card">
+            <IonList lines="none" className="tm-roster__list">
+              {sortedProviders.map((provider) => {
+                const swipeActions = canManage
+                  ? [
+                      {
+                        id: `${provider.id}-new-order`,
+                        icon: <PackagePlus size={20} />,
+                        label: t.formatMessage({ id: 'providers.action_new_order' }),
+                        variant: 'primary' as const,
+                        onClick: () => orderFlows.openNewOrder(provider.id),
+                      },
+                      {
+                        id: `${provider.id}-edit`,
+                        icon: <Pencil size={20} />,
+                        label: t.formatMessage({ id: 'providers.action_edit' }),
+                        variant: 'neutral' as const,
+                        onClick: () => handleOpenModal(provider),
+                      },
+                      {
+                        id: `${provider.id}-delete`,
+                        icon: <Trash2 size={20} />,
+                        label: t.formatMessage({ id: 'providers.action_delete' }),
+                        variant: 'danger' as const,
+                        onClick: () => handleOpenDelete(provider),
+                      },
+                    ]
+                  : []
+                return (
+                  <SwipeRow key={provider.id} actions={swipeActions}>
+                    <IonItem
+                      button
+                      detail={false}
+                      lines="none"
+                      className="tm-roster__row-shell"
+                      onClick={() =>
+                        router.push(`/${businessId}/providers/${provider.id}`)
+                      }
+                    >
+                      <ProviderListItem provider={provider} />
+                    </IonItem>
+                  </SwipeRow>
+                )
+              })}
+            </IonList>
           </section>
         )}
       </div>

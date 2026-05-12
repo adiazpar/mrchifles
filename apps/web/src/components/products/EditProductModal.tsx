@@ -17,6 +17,7 @@ import {
 } from './steps/ProductNavContext'
 import { ReviewStep } from './steps/ReviewStep'
 import { AdjustInventoryStep } from './steps/AdjustInventoryStep'
+import { DeleteConfirmStep } from './steps/DeleteConfirmStep'
 
 export interface EditProductModalProps {
   isOpen: boolean
@@ -27,12 +28,11 @@ export interface EditProductModalProps {
   editingProduct: Product | null
   onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<Product | null>
   onDelete: (productId: string) => Promise<boolean>
-  onToggleActive: (productId: string, nextActive: boolean) => Promise<boolean>
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
   /** Default category for resetForm (after modal closes). */
   defaultCategoryId?: string | null
-  /** Step the modal opens to. Defaults to 0 (Review). Use 1 to open at "Adjust inventory". */
+  /** Step the modal opens to. Defaults to 0 (Review). 1 = Adjust inventory, 2 = Delete confirm. */
   initialStep?: number
 }
 
@@ -57,7 +57,6 @@ function EditProductModalInner({
   editingProduct,
   onSubmit,
   onDelete,
-  onToggleActive,
   onSaveAdjustment,
   canDelete,
   defaultCategoryId,
@@ -91,7 +90,6 @@ function EditProductModalInner({
     categories,
     onSubmit,
     onDelete,
-    onToggleActive,
     onSaveAdjustment,
     canDelete,
     entryStep: initialStep,
@@ -103,7 +101,13 @@ function EditProductModalInner({
   // across parent re-renders.
   const adjustStepRoot = useCallback(() => <AdjustInventoryStep />, [])
   const reviewStepRoot = useCallback(() => <ReviewStep />, [])
-  const rootComponent = initialStep === 1 ? adjustStepRoot : reviewStepRoot
+  const deleteStepRoot = useCallback(() => <DeleteConfirmStep />, [])
+  const rootComponent =
+    initialStep === 1
+      ? adjustStepRoot
+      : initialStep === 2
+        ? deleteStepRoot
+        : reviewStepRoot
 
   return (
     <EditProductCallbacksContext.Provider value={callbacks}>

@@ -82,8 +82,10 @@
     transform var(--duration-instant) ease-out;
 }
 
-.tm-roster__invite-pill:hover:not(:disabled) {
-  background: var(--color-brand-hover);
+@media (hover: hover) {
+  .tm-roster__invite-pill:hover:not(:disabled) {
+    background: var(--color-brand-hover);
+  }
 }
 
 .tm-roster__invite-pill:active:not(:disabled) {
@@ -261,24 +263,51 @@
     transform var(--duration-fast) ease-out;
 }
 
-.tm-roster__row:hover .tm-roster__row-chev {
-  color: var(--color-text-secondary);
-  transform: translateX(2px);
+@media (hover: hover) {
+  .tm-roster__row:hover .tm-roster__row-chev {
+    color: var(--color-text-secondary);
+    transform: translateX(2px);
+  }
 }
 
 /* ==========================================================================
-   3. SwipeRow shell (providers — swipe actions on the row primitive)
+   3. Flush list-card + SwipeRow shell
    ==========================================================================
-   The team page renders rows as plain <button>s; the providers page wraps
-   each row in SwipeRow so members get edit / delete / new-order swipe
-   actions. SwipeRow requires an IonItem child, which ships with its
-   own padding, hairlines, and ripple. The .tm-roster__row-shell class
-   strips that chrome so the row primitive renders edge-to-edge inside the
-   .report-card container, identical to the team layout.
+   Both the providers and team rosters wrap their rows in this flush card
+   so SwipeRow trailing options reveal flush against the card's right edge
+   — same chrome as .inventory-ledger on the products page. The row owns
+   its own horizontal padding (matching .product-row), which lets ion-item-
+   sliding span edge-to-edge.
 
    The dotted divider that .tm-roster__row + .tm-roster__row provides on
-   the team page is recreated here between sibling ion-item-sliding nodes.
+   the team page is recreated between sibling ion-item-sliding nodes.
 */
+
+.tm-roster__list-card {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  overflow: hidden;
+}
+
+.tm-roster__list {
+  --background: transparent;
+  background: transparent !important;
+  padding: 0;
+  margin: 0;
+}
+
+.tm-roster__list-card .tm-roster__row {
+  padding-inline: var(--space-4);
+  /* Tall enough for the SwipeRow chip stack (44px chip + 6px gap + 10px
+   * mono label ≈ 62px) with ~13px breathing room above and below. The
+   * floor also pulls single-line rows up to match multi-line ones so the
+   * roster reads as a uniform ledger. Lives on the row (not the IonItem
+   * shell) so align-items: center actually centers content vertically —
+   * if it lived on the IonItem, the row would stay at content height and
+   * sit at the top of the taller cell. */
+  min-height: 88px;
+}
 
 .tm-roster__row-shell {
   --background: transparent;

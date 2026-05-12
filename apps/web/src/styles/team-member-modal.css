@@ -429,9 +429,11 @@
   transition: color var(--duration-fast) ease-out, transform var(--duration-fast) ease-out;
 }
 
-.tm-member__action:hover .tm-member__action-chev {
-  color: var(--color-brand);
-  transform: translateX(2px);
+@media (hover: hover) {
+  .tm-member__action:hover .tm-member__action-chev {
+    color: var(--color-brand);
+    transform: translateX(2px);
+  }
 }
 
 /* Demoted destructive link — sits below a generous gap, rendered as a
@@ -534,8 +536,10 @@
   transition: background-color var(--duration-fast) ease-out;
 }
 
-.tm-member__self-footer-link:hover {
-  background: var(--color-brand-subtle);
+@media (hover: hover) {
+  .tm-member__self-footer-link:hover {
+    background: var(--color-brand-subtle);
+  }
 }
 
 /* ==========================================================================

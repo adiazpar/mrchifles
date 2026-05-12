@@ -16,16 +16,29 @@
 }
 
 .swipe-row__options {
-  --background: transparent;
+  --background: var(--color-bg-surface);
+  background: var(--color-bg-surface);
 }
 
 .swipe-row__option {
   --swipe-idx: 0;
-  --background: transparent;
-  --padding-start: 10px;
-  --padding-end: 10px;
-  background: transparent;
-  min-width: 72px;
+  --background: var(--color-bg-surface);
+  --padding-start: 8px;
+  --padding-end: 8px;
+  background: var(--color-bg-surface);
+  min-width: 88px;
+}
+
+/* Column wrapper holds the icon chip + label and drives both with
+   --swipe-scale so they fade and scale in together. */
+.swipe-row__chip-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transform: scale(var(--swipe-scale, 0));
+  opacity: var(--swipe-scale, 0);
+  will-change: transform, opacity;
 }
 
 /* Matches .pm-action__icon from the barcode modal: rounded square,
@@ -41,9 +54,17 @@
   border: 1.5px solid var(--chip-border);
   background: var(--color-bg-surface);
   color: var(--chip-fg);
-  transform: scale(var(--swipe-scale, 0));
-  opacity: var(--swipe-scale, 0);
-  will-change: transform, opacity;
+}
+
+/* Mirrors .pm-action__label from the barcode modal. */
+.swipe-row__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
 }
 
 .swipe-row__option--primary {

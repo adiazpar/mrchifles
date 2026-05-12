@@ -230,9 +230,11 @@
   cursor: pointer;
 }
 
-.auth-field-utility button:hover {
-  color: var(--color-text-primary);
-  border-bottom-color: var(--color-brand);
+@media (hover: hover) {
+  .auth-field-utility button:hover {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-brand);
+  }
 }
 
 /* ===== Error banner ===== */
@@ -292,8 +294,10 @@
   border-bottom: 1px solid var(--color-brand);
 }
 
-.auth-link-row button:hover {
-  color: var(--color-brand);
+@media (hover: hover) {
+  .auth-link-row button:hover {
+    color: var(--color-brand);
+  }
 }
 
 .auth-version {

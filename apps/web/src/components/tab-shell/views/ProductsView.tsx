@@ -180,7 +180,6 @@ interface EditProductModalWrapperProps {
   editingProduct: Product | null
   onSubmit: (data: ProductFormData, editingProductId: string | null) => Promise<Product | null>
   onDelete: (productId: string) => Promise<boolean>
-  onToggleActive: (productId: string, nextActive: boolean) => Promise<boolean>
   onSaveAdjustment: (data: StockAdjustmentData) => Promise<void>
   canDelete: boolean
   defaultCategoryId?: string | null
@@ -195,7 +194,6 @@ function EditProductModalWrapper({
   editingProduct,
   onSubmit,
   onDelete,
-  onToggleActive,
   onSaveAdjustment,
   canDelete,
   defaultCategoryId,
@@ -214,7 +212,6 @@ function EditProductModalWrapper({
       editingProduct={editingProduct}
       onSubmit={onSubmit}
       onDelete={onDelete}
-      onToggleActive={onToggleActive}
       onSaveAdjustment={onSaveAdjustment}
       canDelete={canDelete}
       defaultCategoryId={defaultCategoryId}
@@ -654,50 +651,21 @@ export function ProductsView() {
     setIsModalOpen(true)
   }, [pipeline, compression])
 
-  // Shared core — optimistic flip, PATCH, revert on failure. Returns the
-  // outcome so callers can react (the modal's inline toggle row needs to
-  // know whether to surface an error).
-  const toggleActive = useCallback(
-    async (productId: string, prevActive: boolean, nextActive: boolean): Promise<boolean> => {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === productId ? { ...p, active: nextActive } : p)),
-      )
-      try {
-        const fd = new FormData()
-        fd.set('active', nextActive ? 'true' : 'false')
-        await apiPatchForm(`/api/businesses/${businessId}/products/${productId}`, fd)
-        return true
-      } catch (err) {
-        console.error('Error toggling product status:', err)
-        setProducts((prev) =>
-          prev.map((p) => (p.id === productId ? { ...p, active: prevActive } : p)),
-        )
-        return false
-      }
-    },
-    [businessId, setProducts],
-  )
-
-  // Swipe-action call shape (unchanged signature) — fire-and-forget flip.
-  const handleToggleActive = useCallback(
-    (product: Product) => {
-      void toggleActive(product.id, product.active, !product.active)
-    },
-    [toggleActive],
-  )
-
-  // Modal call shape — pass an explicit nextActive (rather than negating
-  // the current value) so a rapid double-tap from inside the modal can't
-  // accidentally toggle twice off a stale snapshot. We look up prevActive
-  // from the live shared products array.
-  const handleToggleActiveFromModal = useCallback(
-    (productId: string, nextActive: boolean): Promise<boolean> => {
-      const current = products.find((p) => p.id === productId)
-      const prevActive = current?.active ?? !nextActive
-      return toggleActive(productId, prevActive, nextActive)
-    },
-    [toggleActive, products],
-  )
+  // Swipe-row delete entry — open the edit modal directly at the
+  // DeleteConfirmStep root. Mirrors how Orders surfaces a swipe delete:
+  // user keeps the full destructive-action confirm screen, just skips
+  // the Review detour.
+  const handleOpenDelete = useCallback((product: Product) => {
+    if (pipeline.state.step !== 'idle') {
+      pipeline.reset()
+    }
+    if (compression.state.isProcessing) {
+      compression.cancel()
+    }
+    setEditInitialStep(2)
+    setEditingProduct(product)
+    setIsModalOpen(true)
+  }, [pipeline, compression])
 
   const handleBarcodeScanResult = useCallback(async ({ value }: { value: string }) => {
     setError('')
@@ -843,7 +811,7 @@ export function ProductsView() {
               onEditProduct={handleOpenEdit}
               onViewProduct={setViewingProduct}
               onAdjustInventory={handleAdjustInventory}
-              onToggleActive={handleToggleActive}
+              onDeleteProduct={canDelete ? handleOpenDelete : undefined}
               canManage={canManage}
               canModify={canManage}
               onOpenSettings={() => setIsSettingsModalOpen(true)}
@@ -922,7 +890,6 @@ export function ProductsView() {
         editingProduct={editingProduct}
         onSubmit={handleSubmitProduct}
         onDelete={handleDeleteProduct}
-        onToggleActive={handleToggleActiveFromModal}
         onSaveAdjustment={handleSaveAdjustment}
         canDelete={canDelete}
         defaultCategoryId={settings?.defaultCategoryId}

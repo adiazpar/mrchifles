@@ -304,9 +304,11 @@
     border-color var(--duration-fast) ease-out;
 }
 
-.create-business__logo-remove:hover {
-  color: var(--color-error);
-  border-color: var(--color-error);
+@media (hover: hover) {
+  .create-business__logo-remove:hover {
+    color: var(--color-error);
+    border-color: var(--color-error);
+  }
 }
 
 .create-business__logo-remove svg {
@@ -335,10 +337,12 @@
   text-align: left;
 }
 
-.create-business__logo-upload:hover {
-  border-color: var(--color-brand);
-  background: var(--color-bg-muted);
-  box-shadow: 0 0 0 4px var(--color-brand-subtle);
+@media (hover: hover) {
+  .create-business__logo-upload:hover {
+    border-color: var(--color-brand);
+    background: var(--color-bg-muted);
+    box-shadow: 0 0 0 4px var(--color-brand-subtle);
+  }
 }
 
 .create-business__logo-upload-icon {

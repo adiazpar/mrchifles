@@ -188,9 +188,11 @@
     transform var(--duration-instant) ease-out;
 }
 
-.settings-add-cta:hover {
-  border-color: var(--color-brand);
-  background: var(--color-brand-subtle);
+@media (hover: hover) {
+  .settings-add-cta:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
 }
 
 .settings-add-cta:active {
@@ -272,8 +274,10 @@
     transform var(--duration-instant) ease-out;
 }
 
-.settings-add-row__button:hover {
-  filter: brightness(0.95);
+@media (hover: hover) {
+  .settings-add-row__button:hover {
+    filter: brightness(0.95);
+  }
 }
 
 .settings-add-row__button:active {
@@ -365,9 +369,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.settings-category-row__grip:hover {
-  color: var(--color-brand);
-  background: var(--color-brand-subtle);
+@media (hover: hover) {
+  .settings-category-row__grip:hover {
+    color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
 }
 
 .settings-category-row__grip:active {
@@ -437,8 +443,10 @@
   transition: color var(--duration-fast) ease-out;
 }
 
-.settings-link:hover:not(:disabled) {
-  color: var(--color-brand);
+@media (hover: hover) {
+  .settings-link:hover:not(:disabled) {
+    color: var(--color-brand);
+  }
 }
 
 .settings-link:disabled {
@@ -450,17 +458,21 @@
   color: var(--color-error);
 }
 
-.settings-link--danger:hover:not(:disabled) {
-  color: var(--color-error);
-  filter: brightness(0.85);
+@media (hover: hover) {
+  .settings-link--danger:hover:not(:disabled) {
+    color: var(--color-error);
+    filter: brightness(0.85);
+  }
 }
 
 .settings-link--primary {
   color: var(--color-brand);
 }
 
-.settings-link--primary:hover:not(:disabled) {
-  filter: brightness(0.85);
+@media (hover: hover) {
+  .settings-link--primary:hover:not(:disabled) {
+    filter: brightness(0.85);
+  }
 }
 
 .settings-link__sep {
@@ -546,9 +558,11 @@
   color: var(--color-text-secondary);
 }
 
-.settings-pill--ghost:hover:not(:disabled) {
-  border-color: var(--color-text-secondary);
-  color: var(--color-text-primary);
+@media (hover: hover) {
+  .settings-pill--ghost:hover:not(:disabled) {
+    border-color: var(--color-text-secondary);
+    color: var(--color-text-primary);
+  }
 }
 
 .settings-pill--danger {
@@ -557,8 +571,10 @@
   color: var(--color-text-inverse, #ffffff);
 }
 
-.settings-pill--danger:hover:not(:disabled) {
-  filter: brightness(0.92);
+@media (hover: hover) {
+  .settings-pill--danger:hover:not(:disabled) {
+    filter: brightness(0.92);
+  }
 }
 
 /* ===== Empty state =================================================== */
@@ -648,8 +664,10 @@
   transition: background-color var(--duration-fast) ease-out;
 }
 
-.settings-error__dismiss:hover {
-  background: color-mix(in srgb, var(--color-error) 16%, transparent);
+@media (hover: hover) {
+  .settings-error__dismiss:hover {
+    background: color-mix(in srgb, var(--color-error) 16%, transparent);
+  }
 }
 
 /* ===== Saving stamp (in-flight indicator) =========================== */

@@ -267,7 +267,9 @@ select.input option[value=""] {
   transition: border-color var(--duration-fast) ease-out, background-color var(--duration-fast) ease-out;
 }
 
-.image-upload-zone:hover {
-  border-color: var(--color-brand);
-  background: var(--color-brand-subtle);
+@media (hover: hover) {
+  .image-upload-zone:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
 }

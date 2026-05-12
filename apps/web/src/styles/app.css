@@ -384,7 +384,9 @@
   padding: 2px;
 }
 .app-search__clear svg { width: 14px; height: 14px; }
-.app-search__clear:hover { color: var(--color-text-primary); }
+@media (hover: hover) {
+  .app-search__clear:hover { color: var(--color-text-primary); }
+}
 
 /* ===== Hub body padding + section spacing ===== */
 .hub-body {

@@ -175,10 +175,11 @@ export function SwipeRow({
             >
               <span
                 ref={(el) => { chipRefs.current[i] = el }}
-                className="swipe-row__chip"
+                className="swipe-row__chip-wrap"
                 aria-label={action.label}
               >
-                {action.icon}
+                <span className="swipe-row__chip">{action.icon}</span>
+                <span className="swipe-row__label">{action.label}</span>
               </span>
             </IonItemOption>
           ))}

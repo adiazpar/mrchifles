@@ -318,7 +318,9 @@
   transition: transform var(--duration-fast) ease-out;
   z-index: 1;
 }
-.edit-profile__seal-clear:hover { transform: scale(1.06); }
+@media (hover: hover) {
+  .edit-profile__seal-clear:hover { transform: scale(1.06); }
+}
 .edit-profile__seal-clear svg { width: 12px; height: 12px; }
 
 .edit-profile__actions {
@@ -347,10 +349,12 @@
     color var(--duration-fast) ease-out,
     background var(--duration-fast) ease-out;
 }
-.edit-profile__action:hover {
-  border-color: var(--color-brand);
-  color: var(--color-brand);
-  background: var(--color-brand-subtle);
+@media (hover: hover) {
+  .edit-profile__action:hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+    background: var(--color-brand-subtle);
+  }
 }
 .edit-profile__action svg { width: 12px; height: 12px; }
 

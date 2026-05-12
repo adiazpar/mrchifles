@@ -9,7 +9,6 @@ import type { UserRole } from '@kasero/shared/types'
 export interface TeamMemberListItemProps {
   member: TeamMember
   isSelf: boolean
-  onClick: () => void
 }
 
 /**
@@ -20,8 +19,12 @@ export interface TeamMemberListItemProps {
  * `ROLE [· YOU] [· DISABLED]` → trailing chevron. The owner role token is
  * rendered in terracotta; everyone else stays in muted tertiary ink. The
  * whole row dims to 0.55 opacity when the member is disabled.
+ *
+ * Bare markup (no <button>): the wrapping IonItem owns the click target
+ * so SwipeRow can drive future swipe actions — same structure as the
+ * providers roster.
  */
-export function TeamMemberListItem({ member, isSelf, onClick }: TeamMemberListItemProps) {
+export function TeamMemberListItem({ member, isSelf }: TeamMemberListItemProps) {
   const t = useIntl()
 
   const roleLabels: Record<UserRole, string> = {
@@ -42,7 +45,7 @@ export function TeamMemberListItem({ member, isSelf, onClick }: TeamMemberListIt
     : 'tm-roster__row-role'
 
   return (
-    <button type="button" className={rowClass} onClick={onClick}>
+    <div className={rowClass}>
       <span className="tm-roster__avatar" aria-hidden="true">
         {member.avatar ? (
           <img src={member.avatar} alt="" />
@@ -71,6 +74,6 @@ export function TeamMemberListItem({ member, isSelf, onClick }: TeamMemberListIt
       </span>
 
       <ChevronRight size={16} className="tm-roster__row-chev" aria-hidden="true" />
-    </button>
+    </div>
   )
 }

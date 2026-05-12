@@ -14,9 +14,8 @@ import {
   ScanLine,
   ImagePlus,
   SlidersHorizontal,
-  Eye,
-  EyeOff,
   Printer,
+  Trash2,
   Check,
 } from 'lucide-react'
 import {
@@ -81,7 +80,7 @@ export interface ProductsTabProps {
   onEditProduct: (product: Product) => void
   onViewProduct?: (product: Product) => void
   onAdjustInventory?: (product: Product) => void
-  onToggleActive?: (product: Product) => void
+  onDeleteProduct?: (product: Product) => void
   onOpenSettings: () => void
 
   // Permissions
@@ -115,7 +114,7 @@ export function ProductsTab({
   onEditProduct,
   onViewProduct,
   onAdjustInventory,
-  onToggleActive,
+  onDeleteProduct,
   onOpenSettings,
   canModify = false,
   canManage = false,
@@ -268,7 +267,7 @@ export function ProductsTab({
                       onEdit={onEditProduct}
                       onView={onViewProduct}
                       onAdjustInventory={onAdjustInventory}
-                      onToggleActive={onToggleActive}
+                      onDeleteProduct={onDeleteProduct}
                       canModify={canModify}
                     />
                   </Fragment>
@@ -404,7 +403,7 @@ interface ProductListItemProps {
   onEdit: (product: Product) => void
   onView?: (product: Product) => void
   onAdjustInventory?: (product: Product) => void
-  onToggleActive?: (product: Product) => void
+  onDeleteProduct?: (product: Product) => void
   canModify?: boolean
 }
 
@@ -414,7 +413,7 @@ const ProductListItem = memo(function ProductListItem({
   onEdit,
   onView,
   onAdjustInventory,
-  onToggleActive,
+  onDeleteProduct,
   canModify = false,
 }: ProductListItemProps) {
   const intl = useIntl()
@@ -426,10 +425,11 @@ const ProductListItem = memo(function ProductListItem({
   const hasBarcode = !!product.barcode
   const isActive = product.active
 
-  // Swipe actions render left-to-right. Semantic ordering mirrors the
-  // orders list so muscle memory carries: primary leftmost, secondary
-  // middle, remove-ish rightmost.
-  const swipeActions = canModify && onAdjustInventory && onToggleActive
+  // Swipe actions render left-to-right. Same semantic contract as every
+  // other list in the app: primary leftmost, secondary middle, destructive
+  // rightmost — so muscle memory carries across Products, Orders,
+  // Providers, etc.
+  const swipeActions = canModify && onAdjustInventory && onDeleteProduct
     ? [
         {
           id: `${product.id}-inventory`,
@@ -442,7 +442,7 @@ const ProductListItem = memo(function ProductListItem({
           id: `${product.id}-print`,
           icon: <Printer size={20} />,
           label: intl.formatMessage({ id: 'products.action_print' }),
-          variant: 'warning' as const,
+          variant: 'neutral' as const,
           disabled: !hasBarcode,
           onClick: () =>
             printBarcodeLabel({
@@ -452,13 +452,11 @@ const ProductListItem = memo(function ProductListItem({
             }),
         },
         {
-          id: `${product.id}-toggle`,
-          icon: isActive ? <EyeOff size={20} /> : <Eye size={20} />,
-          label: isActive
-            ? intl.formatMessage({ id: 'products.action_disable' })
-            : intl.formatMessage({ id: 'products.action_enable' }),
-          variant: 'neutral' as const,
-          onClick: () => onToggleActive(product),
+          id: `${product.id}-delete`,
+          icon: <Trash2 size={20} />,
+          label: intl.formatMessage({ id: 'products.action_delete' }),
+          variant: 'danger' as const,
+          onClick: () => onDeleteProduct(product),
         },
       ]
     : []

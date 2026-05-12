@@ -3,7 +3,8 @@
 import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import { Plus } from 'lucide-react'
-import { PageSpinner } from '@/components/ui'
+import { IonItem, IonList } from '@ionic/react'
+import { PageSpinner, SwipeRow } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useTeamManagement, type TeamMember } from '@/hooks/useTeamManagement'
 import { TeamMemberListItem, InviteCodeListItem } from '@/components/team'
@@ -181,21 +182,30 @@ export function TeamDrilldown({ businessId }: TeamDrilldownProps) {
             </p>
           )}
 
-          {/* Roster card — owner, active members, and any disabled members
-              all flow into one .report-card frame (the same wrapper used
-              by Sales reports / Products inventory) so the page feels
-              consistent with the rest of the app. Disabled rows render
-              dimmed with a "DISABLED" mono token in the caption. */}
+          {/* Roster card — flush wrapper matching the providers roster
+              and products inventory ledger. Each row is wrapped in
+              SwipeRow + IonItem so the structure is ready for swipe
+              actions, even though none are wired up yet. */}
           {orderedRoster.length > 0 && (
-            <section className="report-card">
-              {orderedRoster.map((member) => (
-                <TeamMemberListItem
-                  key={member.id}
-                  member={member}
-                  isSelf={member.id === user?.id}
-                  onClick={() => handleOpenUserModal(member)}
-                />
-              ))}
+            <section className="tm-roster__list-card">
+              <IonList lines="none" className="tm-roster__list">
+                {orderedRoster.map((member) => (
+                  <SwipeRow key={member.id} actions={[]}>
+                    <IonItem
+                      button
+                      detail={false}
+                      lines="none"
+                      className="tm-roster__row-shell"
+                      onClick={() => handleOpenUserModal(member)}
+                    >
+                      <TeamMemberListItem
+                        member={member}
+                        isSelf={member.id === user?.id}
+                      />
+                    </IonItem>
+                  </SwipeRow>
+                ))}
+              </IonList>
             </section>
           )}
 
