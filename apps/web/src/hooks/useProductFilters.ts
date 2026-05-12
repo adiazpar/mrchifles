@@ -73,25 +73,14 @@ export function useProductFilters({
     onSortChange?.(sort)
   }, [onSortChange])
 
-  // Get available filters based on products
+  // Include every category so a newly-created empty category shows up
+  // in the filter sheet immediately, not only after a product is assigned.
   const availableFilters = useMemo(() => {
-    const productCategoryIds = new Set<string>()
-
-    products.forEach(p => {
-      if (p.categoryId) productCategoryIds.add(p.categoryId)
-    })
-
-    // Build filters array - always include low_stock first
-    const filters: string[] = ['low_stock']
-
-    // Add category filters for categories that have products
-    categories
-      .filter(c => productCategoryIds.has(c.id))
+    const sortedCategoryIds = [...categories]
       .sort((a, b) => a.sortOrder - b.sortOrder)
-      .forEach(c => filters.push(c.id))
-
-    return filters
-  }, [products, categories])
+      .map(c => c.id)
+    return ['low_stock', ...sortedCategoryIds]
+  }, [categories])
 
   // Filter and search products, then sort via the shared `sortProducts`
   // util — same sort the new-order modal uses, so the two surfaces agree.
