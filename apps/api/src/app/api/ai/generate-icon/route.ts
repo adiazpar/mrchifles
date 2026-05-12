@@ -34,6 +34,64 @@ const ICON_JPEG_QUALITY = 85
 // output. Matches the cap used in remove-background.
 const SHARP_PIXEL_LIMIT = 16_777_216
 
+// Locked target aesthetic for every product icon: Microsoft Fluent /
+// Notion flat. Built from Google's official sticker/icon template
+// (https://ai.google.dev/gemini-api/docs/image-generation):
+//   "A [style] sticker of a [subject], featuring [key characteristics]
+//    and a [color palette]. The design should have [line style] and
+//    [shading style]. The background must be white."
+//
+// Edit-mode variant — opens with a strong restyle verb (per the
+// Google Developers Blog edit-mode guidance), names two concrete
+// style anchors the model has strong learned priors for, and
+// explicitly forbids photo-realistic preservation. The anti-photo
+// clause matters: Nano Banana otherwise leaves clean marketing
+// renders nearly untouched because it reads them as "already iconic."
+//
+// Identity-fidelity guards (silhouette/proportions/distinctive
+// features/color palette + an explicit "do not invent" enumeration)
+// sit BEFORE the restyle license so identity reads as a constraint
+// the restyle must honor. Without them the model hallucinated new
+// structural hardware (a second gantry column, an invented filament
+// dock) on machinery-rich inputs.
+//
+// Known trade-off accepted with this prompt: on clean source images
+// (marketing renders, official product photos with simple backgrounds)
+// the model sometimes reads the input as already satisfying the
+// fidelity constraints and returns the source nearly unchanged. We
+// prefer this passthrough failure mode to the alternative — invented
+// hardware that misrepresents the product — because a stylized-but-
+// faithful photograph is still a usable product icon, whereas a
+// confidently-rendered icon with the wrong structural detail is not.
+// The proper architectural fix is reference-image grounding (passing
+// known-good icons as Nano Banana edit references), not more prompt
+// language.
+//
+// White background is mandatory — the model cannot produce
+// transparency; BiRefNet strips the white downstream.
+const ICON_PROMPT =
+  'Recreate the main object from this photograph as a flat, modern ' +
+  'emoji-style product icon in the visual language of Microsoft Fluent ' +
+  'emoji and Notion product icons. Keep the object\'s identity intact: ' +
+  'match its overall silhouette and proportions, preserve the ' +
+  'characteristic features that identify this specific kind of product ' +
+  '(a dial, a spout, a distinctive arm, a screen, a unique frame shape), ' +
+  'and stay faithful to its dominant color palette. Do not invent new ' +
+  'structural elements (extra columns, posts, arms, handles, attachments, ' +
+  'accessories) that are not visible in the source, and do not introduce ' +
+  'colors that the source does not have. With identity fixed, redraw the ' +
+  'rendering style from scratch: render the subject as a single, centered ' +
+  'illustration with clean geometric forms, 2–3 flat color tones, soft ' +
+  'cel-shading, gentle inner highlights, and a vibrant saturated ' +
+  'interpretation of the source colors. Strip away all packaging text, ' +
+  'labels, hands, backgrounds, props, photographic lighting, and realistic ' +
+  'texture. The subject should fill roughly 75% of the frame, perfectly ' +
+  'centered, and remain easily recognizable at small icon sizes. The ' +
+  'background must be a flat pure white (#FFFFFF) with nothing else in the ' +
+  'frame. The output must not be a photograph or realistic 3D render of ' +
+  'the source — only a stylized flat illustration that faithfully ' +
+  'represents the original object\'s shape and color.'
+
 /**
  * POST /api/ai/generate-icon
  *
@@ -103,8 +161,7 @@ export const POST = withAuth(async (request, user) => {
     // Use run() instead of subscribe() for faster direct execution (no queue overhead)
     const result = await fal.run('fal-ai/nano-banana/edit', {
       input: {
-        prompt:
-          'Transform into a clean Apple iOS emoji style icon. Simple centered single object, vibrant saturated colors, cartoon-like, pure white background, stylized like an official Apple emoji. No shadows, no gradients on background.',
+        prompt: ICON_PROMPT,
         // Use the SNIFFED data URL — never the client-declared one.
         image_urls: [sniffResult.dataUrl],
       },
