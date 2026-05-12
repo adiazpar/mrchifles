@@ -133,3 +133,228 @@
 .home-alerts .home-alerts__icon--warn {
   color: var(--color-warning);
 }
+
+/* ===== Week trend card ============================================== *
+ * Sibling shell to .home-revenue — same hairline-on-paper plate, same
+ * mono eyebrow + Fraunces italic headline scale — with a hairline rule
+ * separating the headline from the inline-SVG sparkline. The rule is
+ * the only ornament that distinguishes the trend card from the revenue
+ * card: a printed-edge echo of the box-shadow that doubles as a
+ * baseline anchor for the curve. */
+.home-trend {
+  position: relative;
+  padding: var(--space-5);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.home-trend__eyebrow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.home-trend__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.home-trend__amount {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+/* Hairline rule under the headline. Inset by the card padding via
+ * margin so it spans the inner content column, not the full plate.
+ * Color via --color-border so it sits in the same family as the
+ * card's own outline. */
+.home-trend__rule {
+  border: none;
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--space-4) 0 var(--space-3);
+}
+
+/* Delta chip — identical token vocabulary to .home-revenue__delta so
+ * the two cards present comparison data with one visual grammar. The
+ * --up/--down semantics use moss for growth, oxblood for decline. */
+.home-trend__delta {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.home-trend__delta--up {
+  background: var(--color-success-subtle);
+  border-color: var(--color-success-subtle);
+  color: var(--color-success);
+}
+
+.home-trend__delta--down {
+  background: var(--color-error-subtle);
+  border-color: var(--color-error-subtle);
+  color: var(--color-error);
+}
+
+/* Sparkline — inline SVG sized to the inner content column. Height
+ * is fixed at 48px so the card doesn't reflow between empty and
+ * full-data states; the SVG itself draws into viewBox 0 0 100 32 with
+ * preserveAspectRatio="none" so it stretches to fill the column.
+ * Letting the area fade past the bottom looks softer than clipping. */
+.home-trend__sparkline {
+  display: block;
+  width: 100%;
+  height: 48px;
+  overflow: visible;
+}
+
+.home-trend__sparkline-line {
+  fill: none;
+  stroke: var(--color-brand);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* Vector pixel-fit: keep the stroke width visually constant when
+   * the SVG stretches across the column width. */
+  vector-effect: non-scaling-stroke;
+}
+
+.home-trend__sparkline-stop--top {
+  stop-color: color-mix(in srgb, var(--color-brand) 18%, transparent);
+}
+
+.home-trend__sparkline-stop--bottom {
+  stop-color: color-mix(in srgb, var(--color-brand) 0%, transparent);
+}
+
+.home-trend__sparkline-dot {
+  fill: var(--color-brand);
+  stroke: var(--color-bg-surface);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Empty-state axis line for weeks with zero sales. The line sits on
+ * the same y as the sparkline baseline so the visual height is
+ * preserved across states. */
+.home-trend__sparkline-axis {
+  stroke: var(--color-border);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.home-trend__sparkline-empty {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-trend__sparkline-empty .home-trend__sparkline {
+  position: absolute;
+  inset: 0;
+}
+
+.home-trend__sparkline-empty-label {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-surface);
+  padding: 0 var(--space-2);
+}
+
+/* Flow row — mono micro-cells with leading Lucide trend icons. Earned
+ * uses moss (the celebration tone); spent uses ink-2 because spending
+ * is a necessary cost, not a regression. The center dot is a glyph
+ * sibling to the eyebrow's dot separator so the two rows feel
+ * typographically related. */
+.home-trend__flow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-trend__flow-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.home-trend__flow-cell--earned {
+  color: var(--color-success);
+}
+
+.home-trend__flow-cell--spent {
+  color: var(--color-text-secondary);
+}
+
+.home-trend__flow-icon {
+  flex: 0 0 auto;
+}
+
+.home-trend__flow-divider {
+  color: var(--color-text-tertiary);
+  font-weight: 400;
+}
+
+/* Skeletons — sized to their loaded counterparts so the card doesn't
+ * reflow when data arrives. Static (no shimmer) to match the rest of
+ * the app's loading vocabulary. */
+.home-trend__skeleton {
+  height: 44px;
+  width: 10ch;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+}
+
+.home-trend__sparkline-skeleton {
+  height: 48px;
+  width: 100%;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+}
+
+.home-trend__flow-skeleton {
+  height: 14px;
+  width: 22ch;
+  margin-top: var(--space-3);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-sm);
+}
