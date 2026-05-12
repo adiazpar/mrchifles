@@ -80,6 +80,7 @@ export function ReviewStep() {
     setProductSaved,
     setLastSavedProductNumber,
     error,
+    pipelineStep,
   } = useProductForm()
 
   const [savingLocal, setSavingLocal] = useState(false)
@@ -320,6 +321,12 @@ export function ReviewStep() {
               (Power icon + label + IonToggle); we reuse the .pd-toggle-value
               class from providers-detail.css — the selectors there are
               unscoped, so the class works anywhere it's applied. */}
+          {!isEdit && pipelineStep === 'complete' && (
+            <p className="pm-review__ai-disclaimer">
+              {t.formatMessage({ id: 'productAddEdit.review_ai_disclaimer' })}
+            </p>
+          )}
+
           {isEdit && editCtx?.canDelete && editingProduct && (
             <>
               <p className="pm-review__status-hint">

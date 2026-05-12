@@ -84,6 +84,7 @@ export interface AddProductModalProps {
       name: string
       categoryId: string | null
       suggestedNewCategoryName: string | null
+      price: number | null
       iconPreview: string
       iconBlob: Blob
     } | null
@@ -135,6 +136,7 @@ function AddProductModalInner({
     barcode,
     setName,
     setCategoryId,
+    setPrice,
     setIconPreview,
     setGeneratedIconBlob,
     setIconType,
@@ -190,6 +192,9 @@ function AddProductModalInner({
       if (result.categoryId) {
         setCategoryId(result.categoryId)
       }
+      if (result.price != null) {
+        setPrice(result.price.toFixed(2))
+      }
       setGeneratedIconBlob(result.iconBlob)
       setIconPreview(result.iconPreview)
       setIconType('custom')
@@ -200,6 +205,7 @@ function AddProductModalInner({
     pipelineState.result,
     setName,
     setCategoryId,
+    setPrice,
     setGeneratedIconBlob,
     setIconPreview,
     setIconType,

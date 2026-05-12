@@ -20,6 +20,7 @@ type IdentifyProductResponse = ApiResponse & {
     name: string
     categoryId: string | null
     suggestedNewCategoryName: string | null
+    price: number | null
   }
 }
 
@@ -45,6 +46,7 @@ interface PipelineResult {
   name: string
   categoryId: string | null
   suggestedNewCategoryName: string | null
+  price: number | null     // AI-estimated retail price in the business's currency, or null when the model declined
   iconPreview: string      // base64 data URL
   iconBlob: Blob
   cachedBgRemoved: string  // For regeneration
@@ -61,6 +63,10 @@ interface PipelineOptions {
   skipBgRemoval?: boolean
   /** User's existing categories — passed to identify-product so the model can match */
   categories?: { id: string; name: string }[]
+  /** Business locale (e.g. "es-PE"). Lets the model estimate a region-appropriate price. */
+  locale?: string
+  /** Business currency (ISO 4217, e.g. "PEN"). Required for the price to be in the right unit. */
+  currency?: string
 }
 
 interface UseAiProductPipelineReturn {
@@ -336,7 +342,12 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         // Task 1: Identify product using GPT-4o Mini Vision
         apiPost<IdentifyProductResponse>(
           '/api/ai/identify-product',
-          { image: imageBase64, categories: options?.categories ?? [] },
+          {
+            image: imageBase64,
+            categories: options?.categories ?? [],
+            locale: options?.locale,
+            currency: options?.currency,
+          },
           { signal }
         ),
         // Task 2: Generate emoji icon using Nano Banana Edit
@@ -400,6 +411,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
           name: identifyResult.data.name,
           categoryId: identifyResult.data.categoryId,
           suggestedNewCategoryName: identifyResult.data.suggestedNewCategoryName,
+          price: identifyResult.data.price,
           iconPreview: transparentIconBase64,
           iconBlob: transparentIconBlob,
           cachedBgRemoved: imageBase64, // Cache original for regeneration
@@ -515,6 +527,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         name: '', // Will use existing name
         categoryId: null,
         suggestedNewCategoryName: null,
+        price: null,
         iconPreview: transparentIconBase64,
         iconBlob: transparentIconBlob,
         cachedBgRemoved: cachedBgRemoved, // Keep the same cache
@@ -529,6 +542,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
           name: prev.result?.name || '',
           categoryId: prev.result?.categoryId ?? null,
           suggestedNewCategoryName: prev.result?.suggestedNewCategoryName ?? null,
+          price: prev.result?.price ?? null,
         },
       }))
 
@@ -537,6 +551,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
         name: state.result?.name || '',
         categoryId: state.result?.categoryId ?? null,
         suggestedNewCategoryName: state.result?.suggestedNewCategoryName ?? null,
+        price: state.result?.price ?? null,
       }
 
     } catch (err) {
@@ -563,7 +578,7 @@ export function useAiProductPipeline(): UseAiProductPipelineReturn {
       }))
       return null
     }
-  }, [cancel, isRunActive, safeSetState, state.result?.categoryId, state.result?.name, state.result?.suggestedNewCategoryName, translateApiMessage])
+  }, [cancel, isRunActive, safeSetState, state.result?.categoryId, state.result?.name, state.result?.price, state.result?.suggestedNewCategoryName, translateApiMessage])
 
   return {
     state,

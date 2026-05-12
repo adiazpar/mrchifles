@@ -86,6 +86,7 @@ interface AddProductModalWrapperProps {
       name: string
       categoryId: string | null
       suggestedNewCategoryName: string | null
+      price: number | null
       iconPreview: string
       iconBlob: Blob
     } | null
@@ -227,7 +228,7 @@ export function ProductsView() {
   const translateApiMessage = useApiMessage()
   const { user } = useAuth()
   const { canManage, businessId } = useBusiness()
-  const { formatDate, locale } = useBusinessFormat()
+  const { formatDate, locale, currency } = useBusinessFormat()
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -733,10 +734,12 @@ export function ProductsView() {
     if (!pendingAiImage) return
     pipeline.startPipeline(pendingAiImage, {
       categories: categories.map((c) => ({ id: c.id, name: c.name })),
+      locale,
+      currency,
     }).catch((err) => {
       setError(err instanceof Error ? err.message : 'Failed to start AI pipeline')
     })
-  }, [pendingAiImage, pipeline, categories])
+  }, [pendingAiImage, pipeline, categories, locale, currency])
 
   const handleCreateCategory = useCallback(async (name: string): Promise<string | null> => {
     const created = await createCategory(name)

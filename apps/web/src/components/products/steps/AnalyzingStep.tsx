@@ -11,7 +11,7 @@ import {
   IonIcon,
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
-import { AlertTriangle } from 'lucide-react'
+import { LottiePlayerDynamic } from '@/components/animations'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
 
@@ -100,10 +100,15 @@ export function AnalyzingStep() {
 
       <IonContent className="pm-content">
         {isError ? (
-          <div className="pm-analyzing">
-            <span className="pm-analyzing__ring pm-analyzing__ring--error">
-              <AlertTriangle size={28} strokeWidth={1.8} aria-hidden="true" />
-            </span>
+          <div className="pm-analyzing pm-analyzing--error">
+            <div className="pm-analyzing__lottie" aria-hidden="true">
+              <LottiePlayerDynamic
+                src="/animations/error.json"
+                loop={false}
+                autoplay
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
 
             <h2 className="pm-analyzing__heading">
               {t.formatMessage(

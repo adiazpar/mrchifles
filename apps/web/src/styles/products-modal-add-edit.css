@@ -972,7 +972,29 @@ ion-segment.pm-form-segment ion-segment-button.segment-button-checked {
   text-align: center;
   padding: var(--space-10) var(--space-4);
   gap: var(--space-4);
-  min-height: 300px;
+  /* Fill the IonContent's scroll part so justify-content actually
+     vertical-centers the column. Previously this used min-height: 300px,
+     which let the column hug the top of the screen any time its natural
+     height was below the viewport (most error states). */
+  min-height: 100%;
+  justify-content: center;
+}
+
+/* Error variant trims the heavy top padding so the lottie + heading sit
+   visually balanced when the only content below is a one-line subtitle
+   and the Try-again button. */
+.pm-analyzing--error {
+  padding: var(--space-4) var(--space-4);
+}
+
+/* Lottie frame replaces the AlertTriangle ring on the error state. Sized
+   to match the visual weight of the success Lottie used in confirmation
+   surfaces, slightly larger than the spinner ring used during loading. */
+.pm-analyzing__lottie {
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
   justify-content: center;
 }
 
@@ -992,12 +1014,6 @@ ion-segment.pm-form-segment ion-segment-button.segment-button-checked {
   --color: var(--color-brand);
   width: 28px;
   height: 28px;
-}
-
-.pm-analyzing__ring--error {
-  background: var(--color-error-subtle);
-  border-color: color-mix(in srgb, var(--color-error) 30%, transparent);
-  color: var(--color-error);
 }
 
 .pm-analyzing__heading {
@@ -2214,6 +2230,22 @@ ion-footer.pm-footer ion-toolbar {
   line-height: 1.45;
   color: var(--color-text-secondary);
   margin: var(--space-3) var(--space-2) calc(-1 * var(--space-1));
+}
+
+/* Cautionary note shown only on the AI-prefilled review path, sitting
+   just above the footer so the warning lands in the user's line of
+   sight right before they tap Save. Same italic display voice as
+   .pm-review__status-hint to read as a guided note, but in the
+   secondary-warning hue so it registers as "double-check this". */
+.pm-review__ai-disclaimer {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+  margin: var(--space-4) var(--space-2) 0;
+  text-align: center;
 }
 
 /* Footer action row — primary save sits on the right, optional destructive
