@@ -43,14 +43,18 @@
   min-width: 72px;
 }
 
+/* Matches the .pm-action__icon style used by the barcode modal action
+   row: rounded square, paper background, 1.5px tinted border, tinted
+   icon color. Sized down from 56 to 44 to fit list rows. */
 .swipe-row__chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-full);
-  background: var(--chip-bg);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--chip-border);
+  background: var(--color-bg-surface);
   color: var(--chip-fg);
   transform: scale(var(--swipe-scale));
   opacity: var(--swipe-scale);
@@ -72,20 +76,20 @@
 }
 
 .swipe-row__option--primary {
-  --chip-bg: var(--color-brand);
-  --chip-fg: var(--ion-color-primary-contrast);
+  --chip-border: color-mix(in srgb, var(--color-brand) 40%, var(--color-hair));
+  --chip-fg: var(--color-brand);
 }
 .swipe-row__option--warning {
-  --chip-bg: var(--color-warning);
-  --chip-fg: var(--ion-color-warning-contrast);
+  --chip-border: color-mix(in srgb, var(--color-warning) 40%, var(--color-hair));
+  --chip-fg: var(--color-warning);
 }
 .swipe-row__option--danger {
-  --chip-bg: var(--color-error);
-  --chip-fg: var(--ion-color-danger-contrast);
+  --chip-border: color-mix(in srgb, var(--color-error) 35%, var(--color-hair));
+  --chip-fg: var(--color-error);
 }
 .swipe-row__option--neutral {
-  --chip-bg: var(--color-surface);
-  --chip-fg: var(--color-text-primary);
+  --chip-border: var(--color-border);
+  --chip-fg: var(--color-text-secondary);
 }
 
 @media (prefers-reduced-motion: reduce) {
