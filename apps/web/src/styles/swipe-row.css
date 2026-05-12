@@ -1,12 +1,14 @@
-/* SwipeRow — circular icon chips with threshold-gated scale-in during
-   drag, and a left-to-right staggered fade-out during Ionic's auto-snap
-   close. Open animation reads --swipe-ratio (set by JS during ionDrag).
-   Close animation is triggered by the .item-sliding-closing class Ionic
-   adds to the host while it auto-animates the row back to 0. */
+/* SwipeRow — circular icon chips with threshold-gated, right-to-left
+   staggered scale-in during drag, and a left-to-right staggered
+   fade-out during Ionic's auto-snap close. Open animation reads
+   --swipe-ratio (set by JS during ionDrag). Close animation is
+   triggered by the .item-sliding-closing class Ionic adds to the host
+   while it auto-animates the row back to 0. */
 
 .swipe-row {
   --swipe-ratio: 0;
   --swipe-threshold: 0.5;
+  --swipe-step: 0.10;
 }
 
 .swipe-row__options {
@@ -15,13 +17,21 @@
 
 .swipe-row__option {
   --swipe-idx: 0;
+  /* Right-to-left reveal: rightmost chip (highest --swipe-idx) crosses
+     the base threshold first; each chip further left needs an extra
+     step of drag before it starts scaling in. With 3 chips and a 0.10
+     step, effective thresholds are 0.7 / 0.6 / 0.5 for idx 0 / 1 / 2. */
+  --swipe-eff-threshold: calc(
+    var(--swipe-threshold) +
+    (2 - var(--swipe-idx)) * var(--swipe-step)
+  );
   --swipe-scale: max(
     0,
     min(
       1,
       calc(
-        (var(--swipe-ratio) - var(--swipe-threshold)) /
-        calc(1 - var(--swipe-threshold))
+        (var(--swipe-ratio) - var(--swipe-eff-threshold)) /
+        calc(1 - var(--swipe-eff-threshold))
       )
     )
   );
