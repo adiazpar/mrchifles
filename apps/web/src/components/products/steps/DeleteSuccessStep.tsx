@@ -1,6 +1,5 @@
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonContent,
   IonFooter,
   IonToolbar,
@@ -23,7 +22,7 @@ export function DeleteSuccessStep() {
   }
 
   return (
-    <IonPage>
+    <>
       <IonContent className="pm-content">
         <div className="pm-success">
           <div className="pm-success__lottie">
@@ -86,6 +85,6 @@ export function DeleteSuccessStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

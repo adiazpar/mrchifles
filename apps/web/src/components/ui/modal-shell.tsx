@@ -83,16 +83,21 @@ interface ModalShellProps {
  * across all ~30 modals in the app. Multi-step flows live in the consumer:
  *
  *   - Pattern 0: pass a single body via `children`.
- *   - Pattern 1: own a `step` state in the consumer; conditionally render
- *     different bodies; pass `onBack` to surface a back button when not on
- *     the first step.
- *   - Pattern 2: pass `<IonNav swipeGesture={false} root={StepComponent} />`
- *     as `children` and set `rawContent`. The `swipeGesture={false}` is
- *     CRITICAL: IonNav installs its own swipe-back gesture by default, which
- *     fights IonModal's sheet-drag gesture for every touchstart. With both
- *     active, the drag gesture wins and swallows all taps inside the modal.
- *     Disabling IonNav's swipe-back keeps the modal's drag-down-to-dismiss
- *     working. In-stack back navigation uses the IonBackButton instead.
+ *   - Pattern 1: own a `step` state (or step-stack) in the consumer;
+ *     conditionally render the active step's body. For a single-step modal
+ *     with a back affordance, pass `onBack` and the shell renders the
+ *     chevron in the start slot. For a multi-step stack, the steps own
+ *     their own toolbars and render the back chevron themselves driven by
+ *     a step-stack context (see NewOrderModal / EditProductModal).
+ *
+ * **Do NOT nest `<IonNav>` (or any `<IonPage>`) inside the modal.** Even
+ * inside the IonModal portal, an IonPage in the React tree registers
+ * against the surrounding IonRouterOutlet's StackManager and corrupts its
+ * view-stack tracking. The corruption is dormant until the next push+pop
+ * in the outer outlet, at which point the outlet serves a cached IonPage
+ * from the wrong route under the correct URL. The order modals (and
+ * AddProductModal/EditProductModal) were both migrated away from IonNav
+ * for this reason — see .claude/docs/modal-system.md, rule 5.
  */
 export function ModalShell({
   isOpen,

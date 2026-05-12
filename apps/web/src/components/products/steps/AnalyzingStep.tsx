@@ -1,7 +1,6 @@
 import { useIntl } from 'react-intl'
 import { useEffect, useRef } from 'react'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
@@ -13,9 +12,7 @@ import {
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
-import { SuggestedCategoryStepWrapper } from './SuggestedCategoryStepWrapper'
-import { ReviewStep } from './ReviewStep'
+import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
 
 type Phase = 'preparing' | 'identifying' | 'generating' | 'removing-bg' | 'analyzing'
 
@@ -23,7 +20,7 @@ const PHASE_ORDER: Phase[] = ['preparing', 'identifying', 'generating', 'removin
 
 export function AnalyzingStep() {
   const t = useIntl()
-  const navRef = useProductNavRef()
+  const nav = useProductNav()
   const { onAbortAiProcessing, onClose, suggestedCategoryName } =
     useAddProductCallbacks()
   const { pipelineStep, isCompressing } = useProductForm()
@@ -36,12 +33,12 @@ export function AnalyzingStep() {
     if (pipelineStep === 'complete') {
       navigatedRef.current = true
       if (suggestedCategoryName) {
-        navRef.current?.push(() => <SuggestedCategoryStepWrapper />)
+        nav.push('suggested-category')
       } else {
-        navRef.current?.push(() => <ReviewStep />)
+        nav.push('review')
       }
     }
-  }, [pipelineStep, suggestedCategoryName, navRef])
+  }, [pipelineStep, suggestedCategoryName, nav])
 
   // Determine current phase for the heading + ledger.
   const currentPhase: Phase = isCompressing
@@ -75,7 +72,7 @@ export function AnalyzingStep() {
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonTitle>
@@ -152,6 +149,6 @@ export function AnalyzingStep() {
           </p>
         </div>
       </IonContent>
-    </IonPage>
+    </>
   )
 }

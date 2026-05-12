@@ -2,20 +2,19 @@
 
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import { BarcodeFields } from '../BarcodeFields'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNavRef } from './ProductNavContext'
-import { ReviewStep } from './ReviewStep'
+import { useProductNav } from './ProductNavContext'
 
 interface BarcodeStepProps {
   mode: 'forward' | 'edit'
@@ -29,7 +28,7 @@ interface BarcodeStepProps {
  */
 export function BarcodeStep({ mode }: BarcodeStepProps) {
   const t = useIntl()
-  const navRef = useProductNavRef()
+  const nav = useProductNav()
   const { barcode, barcodeFormat, barcodeSource, editingProduct } =
     useProductForm()
 
@@ -43,18 +42,24 @@ export function BarcodeStep({ mode }: BarcodeStepProps) {
   const handleContinue = () => {
     if (!hasFieldChange) return
     if (mode === 'edit') {
-      navRef.current?.pop()
+      nav.pop()
     } else {
-      navRef.current?.push(() => <ReviewStep />)
+      nav.push('review')
     }
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
           <IonTitle>
             {t.formatMessage({ id: 'productForm.tab_barcode' })}
@@ -96,6 +101,6 @@ export function BarcodeStep({ mode }: BarcodeStepProps) {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

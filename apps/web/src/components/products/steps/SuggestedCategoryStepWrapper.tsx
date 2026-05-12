@@ -1,37 +1,42 @@
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import { useProductForm } from '@/contexts/product-form-context'
 import { SuggestedCategoryStep } from '../SuggestedCategoryStep'
-import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
-import { ReviewStep } from './ReviewStep'
+import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
 
 export function SuggestedCategoryStepWrapper() {
   const t = useIntl()
-  const navRef = useProductNavRef()
+  const nav = useProductNav()
   const { suggestedCategoryName, categories, onCreateCategory } =
     useAddProductCallbacks()
   const { setCategoryId } = useProductForm()
 
   function goToForm() {
-    navRef.current?.push(() => <ReviewStep />)
+    nav.push('review')
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
           <IonTitle>
             {t.formatMessage({ id: 'productForm.ai_step_new_category_title' })}
@@ -88,6 +93,6 @@ export function SuggestedCategoryStepWrapper() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

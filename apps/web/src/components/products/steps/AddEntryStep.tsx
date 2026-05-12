@@ -1,6 +1,5 @@
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
@@ -19,36 +18,30 @@ import {
   ChevronRight,
   Settings2,
 } from 'lucide-react'
-import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
-import { AiPhotoStep } from './AiPhotoStep'
-import { NameStep } from './NameStep'
+import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
 
 export function AddEntryStep() {
   const t = useIntl()
-  const navRef = useProductNavRef()
+  const nav = useProductNav()
   const { onClose, onOpenSettings } = useAddProductCallbacks()
 
-  // Cleanup runs in AddProductModal's delayed useEffect (250ms after isOpen
-  // flips false). Calling onExitComplete synchronously here would mutate
-  // state mid-dismiss-animation and leave the IonRouterOutlet view-stack
-  // pointing at a stale view, breaking subsequent tab navigation.
   function handleCancel() {
     onClose()
   }
 
   function goToAiPhoto() {
-    navRef.current?.push(() => <AiPhotoStep />)
+    nav.push('ai-photo')
   }
 
   function goToManual() {
     // Manual entry kicks off the 4-step wizard chain
     // (Name → Price → Category/Stock → Barcode → Review). Each step
     // is mode='forward' so its CTA pushes the next one.
-    navRef.current?.push(() => <NameStep mode="forward" />)
+    nav.push('name-forward')
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonTitle>{t.formatMessage({ id: 'productForm.title_add' })}</IonTitle>
@@ -197,6 +190,6 @@ export function AddEntryStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

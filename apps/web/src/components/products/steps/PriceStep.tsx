@@ -2,20 +2,19 @@
 
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import { PriceKeypadStep } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNavRef } from './ProductNavContext'
-import { CategoryStockStep } from './CategoryStockStep'
+import { useProductNav } from './ProductNavContext'
 
 interface PriceStepProps {
   mode: 'forward' | 'edit'
@@ -30,7 +29,7 @@ interface PriceStepProps {
  */
 export function PriceStep({ mode }: PriceStepProps) {
   const t = useIntl()
-  const navRef = useProductNavRef()
+  const nav = useProductNav()
   const { price, setPrice, editingProduct } = useProductForm()
 
   const numericPrice = parseFloat(price)
@@ -41,18 +40,24 @@ export function PriceStep({ mode }: PriceStepProps) {
   const handleContinue = () => {
     if (!isValid || !hasFieldChange) return
     if (mode === 'edit') {
-      navRef.current?.pop()
+      nav.pop()
     } else {
-      navRef.current?.push(() => <CategoryStockStep mode="forward" />)
+      nav.push('category-stock-forward')
     }
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
           <IonTitle>
             {t.formatMessage({ id: 'productForm.price_label' })}
@@ -99,6 +104,6 @@ export function PriceStep({ mode }: PriceStepProps) {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

@@ -3,7 +3,6 @@
 import { useContext, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
@@ -25,18 +24,10 @@ import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useProductForm, useProductFormValidation } from '@/contexts/product-form-context'
 import {
-  useProductNavRef,
+  useProductNav,
   AddProductCallbacksContext,
   EditProductCallbacksContext,
 } from './ProductNavContext'
-import { NameStep } from './NameStep'
-import { PriceStep } from './PriceStep'
-import { CategoryStockStep } from './CategoryStockStep'
-import { BarcodeStep } from './BarcodeStep'
-import { AddSuccessStep } from './AddSuccessStep'
-import { EditSuccessStep } from './EditSuccessStep'
-import { AdjustInventoryStep } from './AdjustInventoryStep'
-import { DeleteConfirmStep } from './DeleteConfirmStep'
 
 /**
  * Final wizard step + summary surface. Shown:
@@ -55,7 +46,7 @@ import { DeleteConfirmStep } from './DeleteConfirmStep'
  */
 export function ReviewStep() {
   const t = useIntl()
-  const navRef = useProductNavRef()
+  const nav = useProductNav()
   const { formatCurrency } = useBusinessFormat()
 
   // Pull from whichever callbacks context is mounted (Add or Edit).
@@ -100,7 +91,7 @@ export function ReviewStep() {
 
   const openDeleteConfirm = () => {
     setError('')
-    navRef.current?.push(() => <DeleteConfirmStep />)
+    nav.push('delete-confirm')
   }
 
   const { hasChanges } = useProductFormValidation()
@@ -170,9 +161,7 @@ export function ReviewStep() {
       setLastSavedProductNumber(
         saved.productNumber ?? editingProduct?.productNumber ?? null,
       )
-      navRef.current?.push(() =>
-        isEdit ? <EditSuccessStep /> : <AddSuccessStep />,
-      )
+      nav.push(isEdit ? 'edit-success' : 'add-success')
     } catch (err) {
       setError(
         err instanceof Error
@@ -192,23 +181,18 @@ export function ReviewStep() {
 
   // Push a step in edit mode — that step's "Done" CTA will pop back to
   // this Review surface, preserving the user's place.
-  const editName = () =>
-    navRef.current?.push(() => <NameStep mode="edit" />)
-  const editPrice = () =>
-    navRef.current?.push(() => <PriceStep mode="edit" />)
-  const editCategory = () =>
-    navRef.current?.push(() => <CategoryStockStep mode="edit" />)
-  const editBarcode = () =>
-    navRef.current?.push(() => <BarcodeStep mode="edit" />)
+  const editName = () => nav.push('name-edit')
+  const editPrice = () => nav.push('price-edit')
+  const editCategory = () => nav.push('category-stock-edit')
+  const editBarcode = () => nav.push('barcode-edit')
   // Edit-only: stock on hand routes to the dedicated adjust step
   // (different endpoint, optimistic-locking, +/- delta UI). On Add the
   // stock value is just an initial value collected by CategoryStockStep,
   // so tapping the row there returns to that step.
-  const editStock = () =>
-    navRef.current?.push(() => <AdjustInventoryStep />)
+  const editStock = () => nav.push('adjust-inventory')
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonTitle>
@@ -420,7 +404,7 @@ export function ReviewStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }
 

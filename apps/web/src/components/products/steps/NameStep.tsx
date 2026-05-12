@@ -2,22 +2,21 @@
 
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import Image from '@/lib/Image'
 import { ImagePlus } from 'lucide-react'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNavRef } from './ProductNavContext'
-import { PriceStep } from './PriceStep'
+import { useProductNav } from './ProductNavContext'
 
 interface NameStepProps {
   /**
@@ -37,7 +36,7 @@ interface NameStepProps {
  */
 export function NameStep({ mode }: NameStepProps) {
   const t = useIntl()
-  const navRef = useProductNavRef()
+  const nav = useProductNav()
   const {
     name,
     setName,
@@ -58,18 +57,24 @@ export function NameStep({ mode }: NameStepProps) {
   const handleContinue = () => {
     if (!isFormValid) return
     if (mode === 'edit') {
-      navRef.current?.pop()
+      nav.pop()
     } else {
-      navRef.current?.push(() => <PriceStep mode="forward" />)
+      nav.push('price-forward')
     }
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
           <IonTitle>
             {t.formatMessage({ id: 'productForm.title_add' })}
@@ -203,6 +208,6 @@ export function NameStep({ mode }: NameStepProps) {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

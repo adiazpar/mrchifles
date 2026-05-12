@@ -1,31 +1,30 @@
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { close } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { ImagePlus } from 'lucide-react'
 import Image from '@/lib/Image'
 import { isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { StockStepper } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
-
-const ADJUST_STEP_INDEX = 1
+import { useProductNav, useEditProductCallbacks } from './ProductNavContext'
 
 export function AdjustInventoryStep() {
   const t = useIntl()
-  const navRef = useProductNavRef()
-  const { onClose, entryStep } = useEditProductCallbacks()
-  const isEntryRoot = entryStep === ADJUST_STEP_INDEX
+  const nav = useProductNav()
+  const { onClose } = useEditProductCallbacks()
+  // depth === 1 means this step is the modal's entry root (no back chevron,
+  // close X only). Deeper depths (pushed from ReviewStep) show the back
+  // chevron + close X like the other inner steps.
+  const isEntryRoot = nav.depth === 1
   const {
     editingProduct,
     iconPreview,
@@ -47,17 +46,26 @@ export function AdjustInventoryStep() {
   // Done just stashes the new value in form state and pops back to Review.
   // The actual stock API call is deferred to ReviewStep's Save changes,
   // so the user gets the same double-confirmation flow as every other field.
+  // At entry-root depth there's nothing to pop back to — nav.pop() is a
+  // no-op (matches the previous IonNav behaviour); the user exits via the
+  // close X in the toolbar instead.
   const handleDone = () => {
-    navRef.current?.pop()
+    nav.pop()
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           {!isEntryRoot && (
             <IonButtons slot="start">
-              <IonBackButton defaultHref="" />
+              <IonButton
+                fill="clear"
+                onClick={() => nav.pop()}
+                aria-label={t.formatMessage({ id: 'common.back' })}
+              >
+                <IonIcon icon={chevronBack} />
+              </IonButton>
             </IonButtons>
           )}
           <IonTitle>
@@ -170,6 +178,6 @@ export function AdjustInventoryStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

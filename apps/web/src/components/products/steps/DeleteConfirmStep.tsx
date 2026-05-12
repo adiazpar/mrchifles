@@ -1,29 +1,25 @@
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonIcon,
   IonSpinner,
   IonButton,
 } from '@ionic/react'
-import { close } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNavRef, useEditProductCallbacks } from './ProductNavContext'
-import { DeleteSuccessStep } from './DeleteSuccessStep'
-
-export const DELETE_STEP_INDEX = 2
+import { useProductNav, useEditProductCallbacks } from './ProductNavContext'
 
 export function DeleteConfirmStep() {
   const t = useIntl()
-  const navRef = useProductNavRef()
-  const { onDelete, onClose, entryStep } = useEditProductCallbacks()
-  const isEntryRoot = entryStep === DELETE_STEP_INDEX
+  const nav = useProductNav()
+  const { onDelete, onClose } = useEditProductCallbacks()
+  // depth === 1 → entry root (e.g. opened from swipe action), no back chevron.
+  const isEntryRoot = nav.depth === 1
   const {
     editingProduct,
     isDeleting,
@@ -39,10 +35,10 @@ export function DeleteConfirmStep() {
       const ok = await onDelete(editingProduct.id)
       if (ok) {
         setProductDeleted(true)
-        navRef.current?.push(() => <DeleteSuccessStep />)
+        nav.push('delete-success')
       } else {
         setError(t.formatMessage({ id: 'productForm.failed_to_delete' }))
-        navRef.current?.pop()
+        nav.pop()
       }
     } catch (err) {
       setError(
@@ -50,17 +46,23 @@ export function DeleteConfirmStep() {
           ? err.message
           : t.formatMessage({ id: 'productForm.failed_to_delete' }),
       )
-      navRef.current?.pop()
+      nav.pop()
     }
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           {!isEntryRoot && (
             <IonButtons slot="start">
-              <IonBackButton defaultHref="" />
+              <IonButton
+                fill="clear"
+                onClick={() => nav.pop()}
+                aria-label={t.formatMessage({ id: 'common.back' })}
+              >
+                <IonIcon icon={chevronBack} />
+              </IonButton>
             </IonButtons>
           )}
           <IonTitle>
@@ -141,6 +143,6 @@ export function DeleteConfirmStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

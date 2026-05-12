@@ -1,8 +1,7 @@
 'use client'
 
-import { useRef, useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useIntl } from 'react-intl'
-import { IonNav } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import type { Product, ProductCategory } from '@kasero/shared/types'
 import type { ProductFormData } from './ProductModal'
@@ -11,12 +10,46 @@ import {
   useProductForm,
 } from '@/contexts/product-form-context'
 import {
-  ProductNavRefContext,
+  AddProductNavContext,
   AddProductCallbacksContext,
   type AddProductCallbacks,
+  type ProductNav,
 } from './steps/ProductNavContext'
 import { AddEntryStep } from './steps/AddEntryStep'
+import { AiPhotoStep } from './steps/AiPhotoStep'
+import { AiBarcodeStep } from './steps/AiBarcodeStep'
+import { AnalyzingStep } from './steps/AnalyzingStep'
+import { SuggestedCategoryStepWrapper } from './steps/SuggestedCategoryStepWrapper'
+import { NameStep } from './steps/NameStep'
+import { PriceStep } from './steps/PriceStep'
+import { CategoryStockStep } from './steps/CategoryStockStep'
+import { BarcodeStep } from './steps/BarcodeStep'
+import { ReviewStep } from './steps/ReviewStep'
+import { AddSuccessStep } from './steps/AddSuccessStep'
 import type { PipelineStep } from '@/hooks'
+
+// Each entry in the step stack identifies which step body to render. Forward
+// chain (manual entry) and edit jumps (from Review) use distinct -forward /
+// -edit suffixes so each shared step knows whether its CTA pushes forward in
+// the chain or pops back to Review.
+type Step =
+  | 'entry'
+  | 'ai-photo'
+  | 'ai-barcode'
+  | 'analyzing'
+  | 'suggested-category'
+  | 'name-forward'
+  | 'price-forward'
+  | 'category-stock-forward'
+  | 'barcode-forward'
+  | 'review'
+  | 'name-edit'
+  | 'price-edit'
+  | 'category-stock-edit'
+  | 'barcode-edit'
+  | 'add-success'
+
+const INITIAL_STACK: Step[] = ['entry']
 
 export interface AddProductModalProps {
   isOpen: boolean
@@ -61,14 +94,14 @@ export interface AddProductModalProps {
 
 /**
  * Outer wrapper that mounts ProductFormProvider INSIDE the modal so it
- * wraps IonNav directly. Every step pushed via navRef.push lives inside
- * this provider's React subtree, which guarantees `useProductForm()`
- * resolves to the same provider instance for every step regardless of
- * any IonNav / IonModal portal boundary semantics. (When the provider
- * was mounted at the ProductsView level, fields the user typed into
- * NameStep/PriceStep/etc. weren't reaching ReviewStep — symptom was
- * blank values on the Review surface despite the user having typed
- * them. Mounting the provider inside the modal fixes that propagation.)
+ * wraps the step subtree directly. Every step rendered by the state-driven
+ * stack below lives inside this provider's React subtree, so
+ * `useProductForm()` resolves to the same provider instance for every step
+ * regardless of IonModal portal boundaries. (When the provider was mounted
+ * at the ProductsView level, fields the user typed into NameStep/PriceStep
+ * weren't reaching ReviewStep — symptom was blank values on the Review
+ * surface despite the user having typed them. Mounting the provider
+ * inside the modal fixes that propagation.)
  */
 export function AddProductModal(props: AddProductModalProps) {
   return (
@@ -97,7 +130,7 @@ function AddProductModalInner({
   defaultCategoryId,
 }: AddProductModalProps) {
   const tProductForm = useIntl()
-  const navRef = useRef<HTMLIonNavElement>(null)
+  const [stack, setStack] = useState<Step[]>(INITIAL_STACK)
   const {
     barcode,
     setName,
@@ -111,6 +144,12 @@ function AddProductModalInner({
     setIsCompressing,
     resetForm,
   } = useProductForm()
+
+  // Reset to the entry step every time the modal opens. The same modal
+  // component is reused across consecutive add flows.
+  useEffect(() => {
+    if (isOpen) setStack(INITIAL_STACK)
+  }, [isOpen])
 
   // Wrap onStartAiPipeline with a barcode-uniqueness pre-check. Reads
   // `barcode` from form context (which is why this lives inside the
@@ -173,9 +212,9 @@ function AddProductModalInner({
     }
   }, [pipelineState.step, pipelineState.error, setError])
 
-  // Delayed cleanup — runs ~250ms after the modal animates closed so we
-  // don't mutate state mid-animation (which would re-render IonNav
-  // children and corrupt the IonRouterOutlet view-stack reference).
+  // Delayed form reset — runs ~250ms after the modal animates closed so
+  // the parent's onExitComplete (clears editingProduct etc.) and our
+  // resetForm don't race the dismiss animation. Pattern matches NewOrderModal.
   useEffect(() => {
     if (isOpen) return
     const timer = window.setTimeout(() => {
@@ -184,6 +223,18 @@ function AddProductModalInner({
     }, 250)
     return () => window.clearTimeout(timer)
   }, [isOpen, resetForm, defaultCategoryId, onExitComplete])
+
+  const push = useCallback((step: string) => {
+    setStack((s) => [...s, step as Step])
+  }, [])
+  const pop = useCallback(() => {
+    setStack((s) => (s.length > 1 ? s.slice(0, -1) : s))
+  }, [])
+
+  const nav: ProductNav = useMemo(
+    () => ({ push, pop, depth: stack.length }),
+    [push, pop, stack.length],
+  )
 
   const callbacks: AddProductCallbacks = {
     onClose,
@@ -199,17 +250,29 @@ function AddProductModalInner({
     onClearPendingPhoto,
   }
 
-  // Stable root thunk — useCallback with [] so IonNav never remounts the
-  // step stack due to a new function reference on every parent render.
-  const entryStepRoot = useCallback(() => <AddEntryStep />, [])
+  const current = stack[stack.length - 1]
 
   return (
     <AddProductCallbacksContext.Provider value={callbacks}>
-      <ProductNavRefContext.Provider value={navRef}>
+      <AddProductNavContext.Provider value={nav}>
         <ModalShell rawContent isOpen={isOpen} onClose={onClose}>
-          <IonNav ref={navRef} root={entryStepRoot} swipeGesture={false} />
+          {current === 'entry' && <AddEntryStep />}
+          {current === 'ai-photo' && <AiPhotoStep />}
+          {current === 'ai-barcode' && <AiBarcodeStep />}
+          {current === 'analyzing' && <AnalyzingStep />}
+          {current === 'suggested-category' && <SuggestedCategoryStepWrapper />}
+          {current === 'name-forward' && <NameStep mode="forward" />}
+          {current === 'price-forward' && <PriceStep mode="forward" />}
+          {current === 'category-stock-forward' && <CategoryStockStep mode="forward" />}
+          {current === 'barcode-forward' && <BarcodeStep mode="forward" />}
+          {current === 'review' && <ReviewStep />}
+          {current === 'name-edit' && <NameStep mode="edit" />}
+          {current === 'price-edit' && <PriceStep mode="edit" />}
+          {current === 'category-stock-edit' && <CategoryStockStep mode="edit" />}
+          {current === 'barcode-edit' && <BarcodeStep mode="edit" />}
+          {current === 'add-success' && <AddSuccessStep />}
         </ModalShell>
-      </ProductNavRefContext.Provider>
+      </AddProductNavContext.Provider>
     </AddProductCallbacksContext.Provider>
   )
 }

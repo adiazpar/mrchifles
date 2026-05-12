@@ -1,16 +1,16 @@
 import { useIntl } from 'react-intl'
 import { useCallback, useEffect } from 'react'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import { Plus, ScanLine, RotateCcw } from 'lucide-react'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
@@ -20,12 +20,11 @@ import {
 } from '@kasero/shared/barcodes'
 import { BarcodeDisplay } from '../BarcodeDisplay'
 import type { BarcodeSource } from '@kasero/shared/types'
-import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
-import { AnalyzingStep } from './AnalyzingStep'
+import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
 
 export function AiBarcodeStep() {
   const t = useIntl()
-  const navRef = useProductNavRef()
+  const nav = useProductNav()
   const { onStartAiPipeline } = useAddProductCallbacks()
   const {
     barcode,
@@ -95,15 +94,21 @@ export function AiBarcodeStep() {
 
   function handleContinue() {
     onStartAiPipeline()
-    navRef.current?.push(() => <AnalyzingStep />)
+    nav.push('analyzing')
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
           <IonTitle>
             {t.formatMessage({ id: 'productForm.ai_step_barcode_title' })}
@@ -215,6 +220,6 @@ export function AiBarcodeStep() {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

@@ -1,22 +1,22 @@
 import { useIntl } from 'react-intl'
 import { useRef, useEffect } from 'react'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
+  IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import { Camera } from 'lucide-react'
-import { useProductNavRef, useAddProductCallbacks } from './ProductNavContext'
-import { AiBarcodeStep } from './AiBarcodeStep'
+import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
 
 export function AiPhotoStep() {
   const t = useIntl()
-  const navRef = useProductNavRef()
+  const nav = useProductNav()
   const { onAiPhotoCapture, onClearPendingPhoto } = useAddProductCallbacks()
   const photoInputRef = useRef<HTMLInputElement>(null)
 
@@ -35,16 +35,22 @@ export function AiPhotoStep() {
       if (photoInputRef.current) {
         photoInputRef.current.value = ''
       }
-      navRef.current?.push(() => <AiBarcodeStep />)
+      nav.push('ai-barcode')
     })
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
           <IonTitle>
             {t.formatMessage({ id: 'productForm.ai_step_photo_title' })}
@@ -109,6 +115,6 @@ export function AiPhotoStep() {
       <IonFooter className="pm-footer">
         <IonToolbar className="ion-padding-horizontal" />
       </IonFooter>
-    </IonPage>
+    </>
   )
 }

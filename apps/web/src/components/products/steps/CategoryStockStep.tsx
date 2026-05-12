@@ -2,25 +2,24 @@
 
 import { useIntl } from 'react-intl'
 import {
-  IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
   IonFooter,
   IonButtons,
-  IonBackButton,
   IonButton,
+  IonIcon,
 } from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
 import { Check, Minus, Plus } from 'lucide-react'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useContext } from 'react'
 import {
-  useProductNavRef,
+  useProductNav,
   AddProductCallbacksContext,
   EditProductCallbacksContext,
 } from './ProductNavContext'
-import { BarcodeStep } from './BarcodeStep'
 
 interface CategoryStockStepProps {
   mode: 'forward' | 'edit'
@@ -35,7 +34,7 @@ interface CategoryStockStepProps {
  */
 export function CategoryStockStep({ mode }: CategoryStockStepProps) {
   const t = useIntl()
-  const navRef = useProductNavRef()
+  const nav = useProductNav()
   // The wizard runs under either AddProductCallbacks or
   // EditProductCallbacks. Both expose `categories`. Read from whichever
   // is mounted — this component is shared across both modal flows.
@@ -54,18 +53,24 @@ export function CategoryStockStep({ mode }: CategoryStockStepProps) {
   const handleContinue = () => {
     if (!hasFieldChange) return
     if (mode === 'edit') {
-      navRef.current?.pop()
+      nav.pop()
     } else {
-      navRef.current?.push(() => <BarcodeStep mode="forward" />)
+      nav.push('barcode-forward')
     }
   }
 
   return (
-    <IonPage>
+    <>
       <IonHeader className="pm-header">
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="" />
+            <IonButton
+              fill="clear"
+              onClick={() => nav.pop()}
+              aria-label={t.formatMessage({ id: 'common.back' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
           </IonButtons>
           <IonTitle>
             {t.formatMessage({ id: 'productAddEdit.step_category_title_short' })}
@@ -170,7 +175,7 @@ export function CategoryStockStep({ mode }: CategoryStockStepProps) {
           </div>
         </IonToolbar>
       </IonFooter>
-    </IonPage>
+    </>
   )
 }
 
