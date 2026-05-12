@@ -64,9 +64,7 @@ export function WeekTrendCard({
           : new Date()
       const start = new Date(end)
       start.setDate(end.getDate() - 6)
-      // U+2009 thin space around the em dash for a typographic gap that
-      // doesn't break the mono rhythm.
-      return `${fmt.format(start).toUpperCase()} — ${fmt.format(end).toUpperCase()}`
+      return `${fmt.format(start).toUpperCase()} — ${fmt.format(end).toUpperCase()}`
     } catch {
       return ''
     }
