@@ -1,7 +1,7 @@
 'use client'
 
-import { Children, isValidElement, useEffect, useRef, type ReactElement, type ReactNode } from 'react'
-import { motion, type PanInfo } from 'framer-motion'
+import { Children, isValidElement, useEffect, useRef, type PointerEvent as ReactPointerEvent, type ReactElement, type ReactNode } from 'react'
+import { motion, useDragControls, type PanInfo } from 'framer-motion'
 import { useHorizontalSwipeIntent } from '@/hooks/useHorizontalSwipeIntent'
 
 interface TabProps {
@@ -83,6 +83,7 @@ function TabContainerRoot({ activeTab, children, onTabChange, swipeable = false,
   // In swipeable mode, prevent iOS from stealing a slightly-diagonal
   // swipe as a vertical scroll. No-op when swipeable is off.
   useHorizontalSwipeIntent(wrapperRef, swipeable && !!onTabChange)
+  const dragControls = useDragControls()
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
@@ -115,6 +116,16 @@ function TabContainerRoot({ activeTab, children, onTabChange, swipeable = false,
       onTabChange(tabIds[nextIndex])
     }
 
+    // Defer drag start to a manual pointerdown handler so we can skip
+    // gestures that originated inside a swipe-list row — IonItemSliding
+    // owns the horizontal drag there, and letting framer also track it
+    // would steal the gesture and switch tabs on every row swipe.
+    const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+      const target = e.target as Element | null
+      if (target?.closest('ion-item-sliding')) return
+      dragControls.start(e)
+    }
+
     const stackClass = fitActiveHeight ? 'relative' : 'grid'
     // When fitActiveHeight is on (full-page tabs), make the flex chain grow
     // so inner content (e.g. .page-body → .empty-state-fill) can fill empty
@@ -133,6 +144,9 @@ function TabContainerRoot({ activeTab, children, onTabChange, swipeable = false,
         <motion.div
           className={innerClass}
           drag="x"
+          dragListener={false}
+          dragControls={dragControls}
+          onPointerDown={onPointerDown}
           dragDirectionLock
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.2}
