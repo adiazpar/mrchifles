@@ -2,27 +2,30 @@
 
 import { useEffect, useMemo } from 'react'
 import { useIntl } from 'react-intl'
+import { useIonRouter } from '@ionic/react'
 import { useBusiness } from '@/contexts/business-context'
 import { useSales } from '@/contexts/sales-context'
 import { useSalesSessions } from '@/contexts/sales-sessions-context'
 import { useProducts } from '@/contexts/products-context'
 import { useOrders } from '@/contexts/orders-context'
+import { useProviders } from '@/contexts/providers-context'
+import { useProductSettings } from '@/contexts/product-settings-context'
 import { useSalesAggregate } from '@/hooks/useSalesAggregate'
-import { usePageTransition } from '@/contexts/page-transition-context'
 import { GroupLabel } from '@/components/ui'
 import { getOrderDisplayStatus } from '@/lib/products'
 import {
   HomeHero,
   RevenueCard,
-  SessionTile,
-  ItemsSoldTile,
+  SalesTile,
+  ProductsTile,
+  ManageTile,
   WeekTrendCard,
   AlertsSection,
 } from '@/components/home'
 
 export function HomeView() {
   const intl = useIntl()
-  const { businessId } = useBusiness()
+  const { businessId, canManage, isOwner } = useBusiness()
   const { sales, stats, isLoaded: salesLoaded, ensureLoaded: ensureSalesLoaded } = useSales()
   const {
     currentSession,
@@ -34,8 +37,16 @@ export function HomeView() {
     ensureActiveLoaded,
     ensureCompletedLoaded,
   } = useOrders()
+  const { providers, ensureLoaded: ensureProvidersLoaded } = useProviders()
+  const { categories } = useProductSettings()
   const aggregate = useSalesAggregate(businessId ?? '')
-  const { navigate } = usePageTransition()
+  // Ionic-aware router. Used for cross-tab navigation (Home -> Sales /
+  // Products / Manage and the alert rows) with the ('none', 'replace')
+  // signature so IonTabs recognizes the destination as a sibling tab
+  // and performs a tab swap instead of stacking a push on top of Home.
+  // Without this, tapping a tile then the back button would walk back
+  // through Home before reaching the Hub. Precedent: user-menu-content.
+  const ionRouter = useIonRouter()
 
   useEffect(() => {
     if (!businessId) return
@@ -46,6 +57,8 @@ export function HomeView() {
     // Completed orders feed the "spent this week" sub-line on the trend
     // card. ensureCompletedLoaded is idempotent.
     void ensureCompletedLoaded()
+    // Providers feed the Manage tile's provider count.
+    void ensureProvidersLoaded()
   }, [
     businessId,
     ensureSalesLoaded,
@@ -53,6 +66,7 @@ export function HomeView() {
     ensureProductsLoaded,
     ensureActiveLoaded,
     ensureCompletedLoaded,
+    ensureProvidersLoaded,
   ])
 
   // Mirror SalesStatsCard — open-session running total is computed from
@@ -115,20 +129,45 @@ export function HomeView() {
     return aggregate.data.dailyRevenue.reduce((sum, e) => sum + e.total, 0)
   }, [aggregate.isLoaded, aggregate.data])
 
+  // Role label for the Manage tile. canManage covers owner + manager
+  // (partner) roles; isOwner narrows further. Everyone else falls
+  // through to "employee" — the read-only voice on the description.
+  const role: 'owner' | 'manager' | 'employee' = isOwner
+    ? 'owner'
+    : canManage
+    ? 'manager'
+    : 'employee'
+
+  // Cross-tab navigation. push(href, 'none', 'replace') tells Ionic to
+  // perform a tab swap instead of stacking a push on top of Home — so
+  // the back button from the destination tab leaves the shell at Hub
+  // level rather than walking back through Home first.
+  const pushTab = (href: string) => {
+    ionRouter.push(href, 'none', 'replace')
+  }
+
   const handleSalesClick = () => {
-    if (businessId) navigate(`/${businessId}/sales`)
+    if (businessId) pushTab(`/${businessId}/sales`)
+  }
+
+  const handleProductsClick = () => {
+    if (businessId) pushTab(`/${businessId}/products`)
+  }
+
+  const handleManageClick = () => {
+    if (businessId) pushTab(`/${businessId}/manage`)
   }
 
   const handleLowStockClick = () => {
-    if (businessId) navigate(`/${businessId}/products?filter=low_stock`)
+    if (businessId) pushTab(`/${businessId}/products?filter=low_stock`)
   }
 
   const handleOverdueClick = () => {
-    if (businessId) navigate(`/${businessId}/products?tab=orders&filter=overdue`)
+    if (businessId) pushTab(`/${businessId}/products?tab=orders&filter=overdue`)
   }
 
   const handlePendingOrdersClick = () => {
-    if (businessId) navigate(`/${businessId}/products?tab=orders`)
+    if (businessId) pushTab(`/${businessId}/products?tab=orders`)
   }
 
   return (
@@ -140,17 +179,24 @@ export function HomeView() {
         vsYesterdayPct={stats?.vsYesterdayPct ?? null}
       />
       <GroupLabel>{intl.formatMessage({ id: 'home.section_today' })}</GroupLabel>
-      <div className="home-grid">
-        <SessionTile
+      <div className="home-tiles">
+        <SalesTile
           isOpen={Boolean(currentSession)}
           openedAt={currentSession?.openedAt ?? null}
           runningTotal={sessionRunningTotal}
-          onClick={handleSalesClick}
-        />
-        <ItemsSoldTile
-          count={stats?.todayCount ?? 0}
+          itemCount={stats?.todayCount ?? 0}
           avgTicket={stats?.todayAvgTicket ?? null}
           onClick={handleSalesClick}
+        />
+        <ProductsTile
+          productCount={products.length}
+          categoryCount={categories.length}
+          onClick={handleProductsClick}
+        />
+        <ManageTile
+          providerCount={providers.length}
+          role={role}
+          onClick={handleManageClick}
         />
       </div>
       <GroupLabel>

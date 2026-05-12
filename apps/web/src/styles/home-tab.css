@@ -106,19 +106,16 @@
   border-radius: var(--radius-md);
 }
 
-/* ===== 2-up tile grid ================================================ *
- * FeatureCard children fill the row via grid stretch. Equal height is
- * explicit so a 2-line description on one tile doesn't leave the
- * other looking short. */
-.home-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: stretch;
+/* ===== Vertical tile stack =========================================== *
+ * Three full-width FeatureCards (Sales, Products, Manage) stacked under
+ * the "Today" group label. Vertical flex column — the same vocabulary
+ * .manage-workspace uses in app.css for its full-width tile rhythm — so
+ * each tile presents its own kicker, title, and description without
+ * competing for horizontal space. */
+.home-tiles {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
-}
-
-.home-grid > .feature-card {
-  height: 100%;
 }
 
 /* ===== Alerts list =================================================== *
