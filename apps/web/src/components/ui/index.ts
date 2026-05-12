@@ -16,6 +16,9 @@ export type { PriceKeypadStepProps } from './PriceKeypadStep'
 
 export { ModalShell } from './modal-shell'
 
+export { SwipeRow } from './SwipeRow'
+export type { SwipeAction, SwipeActionVariant, SwipeRowProps } from './SwipeRow'
+
 export { UserAvatar } from './UserAvatar'
 export { GroupLabel } from './GroupLabel'
 export { FeatureCard } from './FeatureCard'
