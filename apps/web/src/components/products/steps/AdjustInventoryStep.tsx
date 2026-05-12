@@ -55,18 +55,19 @@ export function AdjustInventoryStep() {
     <IonPage>
       <IonHeader className="pm-header">
         <IonToolbar>
-          <IonButtons slot="start">
-            {isEntryRoot ? (
-              <IonButton fill="clear" onClick={onClose} aria-label="Close">
-                <IonIcon icon={close} />
-              </IonButton>
-            ) : (
+          {!isEntryRoot && (
+            <IonButtons slot="start">
               <IonBackButton defaultHref="" />
-            )}
-          </IonButtons>
+            </IonButtons>
+          )}
           <IonTitle>
             {t.formatMessage({ id: 'productForm.title_adjust_inventory' })}
           </IonTitle>
+          <IonButtons slot="end">
+            <IonButton fill="clear" onClick={onClose} aria-label="Close">
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
