@@ -340,11 +340,16 @@ export function ProductsView() {
 
   const urlFilter = searchParams?.get('filter') ?? null
 
-  // Deep-link from Home's "Low stock" alert row. Apply the filter on first
-  // mount; subsequent in-app filter changes (user clicking pills) supersede.
+  // Deep-link from Home's alerts:
+  //   ?filter=low_stock  → Products sub-tab + low_stock filter category
+  //   ?filter=overdue    → Orders sub-tab + overdue order status filter
+  // Subsequent in-app filter changes (user clicking pills) supersede.
   useEffect(() => {
     if (urlFilter === 'low_stock') {
       setSelectedFilter('low_stock')
+    } else if (urlFilter === 'overdue') {
+      setActiveTab('orders')
+      setOrderStatusFilter('overdue')
     }
     // Intentional: react only to the URL value. Once applied, in-app
     // selectedFilter changes are not echoed back to the URL.

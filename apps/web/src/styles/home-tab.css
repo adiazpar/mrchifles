@@ -134,6 +134,10 @@
   color: var(--color-warning);
 }
 
+.home-alerts .home-alerts__icon--overdue {
+  color: var(--color-error);
+}
+
 /* ===== Week trend card ============================================== *
  * Sibling shell to .home-revenue — same hairline-on-paper plate, same
  * mono eyebrow + Fraunces italic headline scale — with a hairline rule
