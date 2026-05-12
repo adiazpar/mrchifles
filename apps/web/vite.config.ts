@@ -85,6 +85,18 @@ export default defineConfig(({ mode }) => {
           // doesn't matter.
           secure: false,
         },
+        // Product icons live on the API server's filesystem in dev
+        // (apps/api/public/media/products/<id>.<ext>) — storage.ts writes
+        // there when NODE_ENV !== 'production' and returns a relative
+        // `/media/...` URL that the DB stores verbatim. Without this proxy
+        // entry the browser asks Vite for the path, falls into the SPA
+        // history fallback, gets index.html back, and renders the broken-
+        // image icon. Production stores icons as base64 data URLs so the
+        // fetch never happens there.
+        '/media': {
+          target: apiTarget,
+          secure: false,
+        },
       },
     },
     resolve: {
