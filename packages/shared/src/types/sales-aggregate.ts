@@ -32,6 +32,13 @@ export interface HourlyEntry {
 export interface SalesAggregateResponse {
   /** Last 7 days, oldest → newest, always 7 entries (zero-padded). */
   dailyRevenue: DailyRevenueEntry[]
+  /**
+   * Total revenue across the previous 7-day window, i.e. UTC range
+   * `[today - 13 days, today - 7 days]` inclusive. Used by the Home
+   * "This week" trend card to render a vs-last-week delta. Always a
+   * non-nullable scalar; 0 when there were no sales in the window.
+   */
+  previousWeekRevenue: number
   /** Last 30 days, top 10 by revenue. May be empty. */
   topProducts: TopProductEntry[]
   /** Last 7 days, totals per payment method. */

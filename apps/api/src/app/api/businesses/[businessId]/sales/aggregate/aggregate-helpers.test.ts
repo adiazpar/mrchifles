@@ -3,6 +3,7 @@ import {
   padDailyRevenue,
   padHourly,
   pivotPaymentSplit,
+  normalizePreviousWeekRevenue,
 } from './aggregate-helpers'
 
 describe('padDailyRevenue', () => {
@@ -105,5 +106,33 @@ describe('pivotPaymentSplit', () => {
     const out = pivotPaymentSplit(rows, 'USD')
     expect(out.cash).toBe(0.3)
     expect(out.card).toBe(0.8)
+  })
+})
+
+describe('normalizePreviousWeekRevenue', () => {
+  it('returns the rounded total when there were sales in the window', () => {
+    // Simulate a 14-day window where the previous 7 days (today − 13 .. today − 7)
+    // saw three sales totalling 123.456; SQL SUM returns the raw float.
+    expect(normalizePreviousWeekRevenue(123.456, 'USD')).toBe(123.46)
+  })
+
+  it('returns 0 when the SUM aggregate is null (no sales in the window)', () => {
+    // Drizzle returns `null` for SUM() over an empty result set.
+    expect(normalizePreviousWeekRevenue(null, 'USD')).toBe(0)
+  })
+
+  it('returns 0 when no row is returned at all', () => {
+    expect(normalizePreviousWeekRevenue(undefined, 'USD')).toBe(0)
+  })
+
+  it('rounds to 0 decimals for zero-decimal currencies', () => {
+    expect(normalizePreviousWeekRevenue(1500.7, 'JPY')).toBe(1501)
+  })
+
+  it('handles a clean integer-like total verbatim after rounding', () => {
+    // Mirrors the fixture-style assertion in padDailyRevenue: given
+    // explicit prior-week sales of 100 + 200 + 300 = 600, the helper
+    // returns 600.00 for a 2-decimal currency.
+    expect(normalizePreviousWeekRevenue(100 + 200 + 300, 'USD')).toBe(600)
   })
 })

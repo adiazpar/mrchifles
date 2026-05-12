@@ -52,6 +52,7 @@ export function useSalesAggregate(businessId: string): UseSalesAggregateResult {
       )
       const next: SalesAggregateResponse = {
         dailyRevenue: res.dailyRevenue,
+        previousWeekRevenue: res.previousWeekRevenue,
         topProducts: res.topProducts,
         paymentSplit: res.paymentSplit,
         hourly: res.hourly,

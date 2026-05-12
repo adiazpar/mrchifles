@@ -1,5 +1,5 @@
 import { db, sales, saleItems } from '@/db'
-import { and, desc, eq, gte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import type { PaymentMethod } from '@kasero/shared/types/sale'
 
 /**
@@ -85,6 +85,36 @@ export async function queryPaymentSplit(
     .where(and(eq(sales.businessId, businessId), gte(sales.date, since)))
     .groupBy(sales.paymentMethod)
     .all()
+}
+
+/**
+ * Sum of `sales.total` across the previous 7-day window, used by the
+ * Home "This week" trend card's vs-last-week delta. `since` is the
+ * inclusive lower bound (today − 13 days UTC); `until` is the exclusive
+ * upper bound (today − 6 days UTC, i.e. one day past the previous
+ * window's last day). Returns 0 when there were no sales in the
+ * window. Uses the same `idx_sales_business_date` composite index the
+ * other queries use.
+ */
+export async function queryPreviousWeekRevenue(
+  businessId: string,
+  since: Date,
+  until: Date,
+): Promise<number> {
+  const row = await db
+    .select({
+      total: sql<number | null>`SUM(${sales.total})`,
+    })
+    .from(sales)
+    .where(
+      and(
+        eq(sales.businessId, businessId),
+        gte(sales.date, since),
+        lt(sales.date, until),
+      ),
+    )
+    .get()
+  return row?.total ?? 0
 }
 
 export async function queryHourly(

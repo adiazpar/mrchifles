@@ -82,3 +82,17 @@ export function pivotPaymentSplit(
   }
   return out
 }
+
+/**
+ * Normalize the previous-week revenue scalar: coerce a missing /
+ * SQL-NULL aggregate to 0 and round to the business currency's
+ * decimals. The window is `[today − 13d, today − 7d]` UTC; values that
+ * come back as `null` (no sales in the window) become `0` so the Home
+ * trend card can render an unambiguous "no comparison" baseline.
+ */
+export function normalizePreviousWeekRevenue(
+  total: number | null | undefined,
+  currency: string,
+): number {
+  return roundToCurrencyDecimals(total ?? 0, currency)
+}
