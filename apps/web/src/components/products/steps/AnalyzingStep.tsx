@@ -11,6 +11,7 @@ import {
   IonIcon,
 } from '@ionic/react'
 import { close } from 'ionicons/icons'
+import { AlertTriangle } from 'lucide-react'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
 
@@ -21,9 +22,11 @@ const PHASE_ORDER: Phase[] = ['preparing', 'identifying', 'generating', 'removin
 export function AnalyzingStep() {
   const t = useIntl()
   const nav = useProductNav()
-  const { onAbortAiProcessing, onClose, suggestedCategoryName } =
+  const { onAbortAiProcessing, onClose, onStartAiPipeline, suggestedCategoryName } =
     useAddProductCallbacks()
-  const { pipelineStep, isCompressing } = useProductForm()
+  const { pipelineStep, isCompressing, error, setError } = useProductForm()
+
+  const isError = pipelineStep === 'error'
 
   // Track whether we've already navigated away from this step to avoid pushing twice.
   const navigatedRef = useRef(false)
@@ -39,6 +42,11 @@ export function AnalyzingStep() {
       }
     }
   }, [pipelineStep, suggestedCategoryName, nav])
+
+  function handleRetry() {
+    setError('')
+    onStartAiPipeline()
+  }
 
   // Determine current phase for the heading + ledger.
   const currentPhase: Phase = isCompressing
@@ -91,63 +99,86 @@ export function AnalyzingStep() {
       </IonHeader>
 
       <IonContent className="pm-content">
-        <div className="pm-analyzing">
-          <span className="pm-analyzing__ring">
-            <IonSpinner name="crescent" />
-          </span>
-
-          <h2 className="pm-analyzing__heading">
-            {t.formatMessage(
-              { id: 'productAddEdit.analyzing_heading' },
-              { em: (chunks) => <em>{chunks}</em> },
-            )}
-          </h2>
-
-          <span className="pm-analyzing__caption">
-            {phaseLabel[currentPhase]}
-            <span className="pm-analyzing__dots" aria-hidden="true">
-              <span className="pm-analyzing__dot" />
-              <span className="pm-analyzing__dot" />
-              <span className="pm-analyzing__dot" />
+        {isError ? (
+          <div className="pm-analyzing">
+            <span className="pm-analyzing__ring pm-analyzing__ring--error">
+              <AlertTriangle size={28} strokeWidth={1.8} aria-hidden="true" />
             </span>
-          </span>
 
-          <div className="pm-analyzing__phases">
-            {PHASE_ORDER.map((p) => {
-              const active = currentPhase === p
-              const done = isPhaseDone(p)
-              return (
-                <div
-                  key={p}
-                  className={`pm-analyzing__phase ${
-                    active
-                      ? 'pm-analyzing__phase--active'
-                      : done
-                      ? 'pm-analyzing__phase--done'
-                      : ''
-                  }`}
-                >
-                  <span>{phaseLabel[p]}</span>
-                  <span
-                    className="pm-analyzing__phase-leader"
-                    aria-hidden="true"
-                  />
-                  <span>
-                    {done
-                      ? t.formatMessage({ id: 'productAddEdit.phase_done' })
-                      : active
-                      ? t.formatMessage({ id: 'productAddEdit.phase_running' })
-                      : t.formatMessage({ id: 'productAddEdit.phase_pending' })}
-                  </span>
-                </div>
-              )
-            })}
+            <h2 className="pm-analyzing__heading">
+              {t.formatMessage(
+                { id: 'aiPipeline.error_heading' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h2>
+
+            <p className="pm-hero__subtitle" style={{ textAlign: 'center' }}>
+              {error || t.formatMessage({ id: 'aiPipeline.error_fallback' })}
+            </p>
+
+            <IonButton expand="block" onClick={handleRetry}>
+              {t.formatMessage({ id: 'aiPipeline.try_again' })}
+            </IonButton>
           </div>
+        ) : (
+          <div className="pm-analyzing">
+            <span className="pm-analyzing__ring">
+              <IonSpinner name="crescent" />
+            </span>
 
-          <p className="pm-hero__subtitle" style={{ textAlign: 'center', marginTop: 'var(--space-2)' }}>
-            {t.formatMessage({ id: 'aiPipeline.may_take_seconds' })}
-          </p>
-        </div>
+            <h2 className="pm-analyzing__heading">
+              {t.formatMessage(
+                { id: 'productAddEdit.analyzing_heading' },
+                { em: (chunks) => <em>{chunks}</em> },
+              )}
+            </h2>
+
+            <span className="pm-analyzing__caption">
+              {phaseLabel[currentPhase]}
+              <span className="pm-analyzing__dots" aria-hidden="true">
+                <span className="pm-analyzing__dot" />
+                <span className="pm-analyzing__dot" />
+                <span className="pm-analyzing__dot" />
+              </span>
+            </span>
+
+            <div className="pm-analyzing__phases">
+              {PHASE_ORDER.map((p) => {
+                const active = currentPhase === p
+                const done = isPhaseDone(p)
+                return (
+                  <div
+                    key={p}
+                    className={`pm-analyzing__phase ${
+                      active
+                        ? 'pm-analyzing__phase--active'
+                        : done
+                        ? 'pm-analyzing__phase--done'
+                        : ''
+                    }`}
+                  >
+                    <span>{phaseLabel[p]}</span>
+                    <span
+                      className="pm-analyzing__phase-leader"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      {done
+                        ? t.formatMessage({ id: 'productAddEdit.phase_done' })
+                        : active
+                        ? t.formatMessage({ id: 'productAddEdit.phase_running' })
+                        : t.formatMessage({ id: 'productAddEdit.phase_pending' })}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
+            <p className="pm-hero__subtitle" style={{ textAlign: 'center', marginTop: 'var(--space-2)' }}>
+              {t.formatMessage({ id: 'aiPipeline.may_take_seconds' })}
+            </p>
+          </div>
+        )}
       </IonContent>
     </>
   )

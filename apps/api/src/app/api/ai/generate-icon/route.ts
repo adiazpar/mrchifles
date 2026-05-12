@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
+import sharp from 'sharp'
 
 // Configure fal.ai client at module load instead of per-request.
 // fal is a singleton — concurrent requests racing on `fal.config()`
@@ -21,6 +22,17 @@ const MAX_AI_IMAGE_BYTES = 1_500_000
 // compromised) fal endpoint could otherwise stream hundreds of MB
 // into Lambda memory before the arrayBuffer() resolved.
 const MAX_FAL_RESPONSE_BYTES = 10 * 1024 * 1024
+// Bound the icon we return so /api/ai/remove-background (2 MB body cap)
+// can always accept it. Nano Banana sometimes emits 1024×1024 PNGs that
+// exceed 2 MB raw — large product photos with busy color landed callers
+// in a 413 loop on remove-bg. JPEG is fine here: the prompt forces a
+// pure white background, and the next stage's job is to mask it out.
+const MAX_ICON_DIMENSION = 768
+const ICON_JPEG_QUALITY = 85
+// Sharp's default limitInputPixels is ~268M. Tighten to 16M (4096×4096)
+// — defense against a decompression-bomb PNG masquerading as Nano Banana
+// output. Matches the cap used in remove-background.
+const SHARP_PIXEL_LIMIT = 16_777_216
 
 /**
  * POST /api/ai/generate-icon
@@ -139,9 +151,22 @@ export const POST = withAuth(async (request, user) => {
       // catch oversized payloads after the fact.
       return errorResponse(ApiMessageCode.AI_ICON_FAILED, 502)
     }
-    const base64 = Buffer.from(imageBuffer).toString('base64')
-    const contentType = imageResponse.headers.get('content-type') || 'image/png'
-    const dataUrl = `data:${contentType};base64,${base64}`
+
+    // Resize + re-encode so the icon fits comfortably inside the next
+    // route's body cap. JPEG is intentional — the prompt mandates a
+    // pure white background, and BiRefNet will discard it anyway.
+    const boundedBuffer = await sharp(Buffer.from(imageBuffer), {
+      limitInputPixels: SHARP_PIXEL_LIMIT,
+    })
+      .resize(MAX_ICON_DIMENSION, MAX_ICON_DIMENSION, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: ICON_JPEG_QUALITY })
+      .toBuffer()
+
+    const base64 = boundedBuffer.toString('base64')
+    const dataUrl = `data:image/jpeg;base64,${base64}`
 
     return NextResponse.json({
       success: true,
