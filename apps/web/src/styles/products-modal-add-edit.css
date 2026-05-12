@@ -2205,8 +2205,8 @@ ion-footer.pm-footer ion-toolbar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 50px;
+  height: 50px;
   padding: 0;
   border-radius: var(--radius-full);
   background: transparent;
