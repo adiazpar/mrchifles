@@ -38,12 +38,19 @@ export async function printBarcodeLabel({ barcode, barcodeFormat, name }: PrintB
   if (!barcode) return
 
   const { renderBarcodeSvg } = await import('./barcode-render')
+  // includetext is intentionally false. bwip-js v4 dropped its bundled
+  // OCR-B font, so includetext: true now requires a call to FontLib.loadFont
+  // up front — without it bwip-js silently emits broken text glyphs that
+  // DOMPurify strips, taking the bars with them and producing a blank
+  // print preview. The human-readable value is rendered below as a plain
+  // HTML .meta line, which is what we'd want anyway since the iframe's
+  // system font is more reliable for accessibility.
   const result = renderBarcodeSvg(barcode, barcodeFormat, {
     scale: 3,
-    height: 18,
-    includetext: true,
-    paddingwidth: 0,
-    paddingheight: 0,
+    height: 22,
+    includetext: false,
+    paddingwidth: 6,
+    paddingheight: 6,
   })
 
   if (!result.svg || result.error) {
@@ -124,7 +131,8 @@ export async function printBarcodeLabel({ barcode, barcodeFormat, name }: PrintB
         font-weight: 600;
         margin-bottom: 16px;
       }
-      .barcode { display: flex; justify-content: center; overflow: hidden; }
+      .barcode { display: flex; justify-content: center; }
+      .barcode svg { max-width: 100%; height: auto; }
       .meta {
         margin-top: 14px;
         font-size: 13px;
