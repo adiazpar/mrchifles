@@ -5,6 +5,16 @@
    IS the animation; adding a CSS transition would just produce a
    second, lagging copy of the same motion. */
 
+/* Force every swipe-list row to be opaque so the action chips behind it
+   don't bleed through. Several call sites set --background: transparent
+   on their IonItem to suppress Ionic's tap-highlight in favor of a
+   custom inner-row hover/active treatment; .swipe-row > ion-item beats
+   their (0,1,0) class specificity at (0,1,1), so this lands without
+   touching each list's stylesheet. */
+.swipe-row > ion-item {
+  --background: var(--color-bg-surface);
+}
+
 .swipe-row__options {
   --background: transparent;
 }
