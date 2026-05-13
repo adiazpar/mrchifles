@@ -43,6 +43,9 @@ const AUTH_ALLOWLIST: ReadonlySet<string> = new Set([
   // /api/auth/change-password manages its own rate-limit + auth
   // flow because it also accepts credentials in the body.
   'src/app/api/auth/change-password/route.ts',
+  // /api/auth/check-email is a public pre-registration availability check;
+  // no authenticated user exists yet at that step.
+  'src/app/api/auth/check-email/route.ts',
   // Geolocation: returns Vercel-injected IP-based hints, no user
   // data, no DB. Public is intentional.
   'src/app/api/geolocation/route.ts',
