@@ -31,7 +31,7 @@ export function Security() {
   const { user, refreshUser } = useAuth()
   const [sessions, setSessions] = useState<SessionRow[]>([])
   const [disablePromptOpen, setDisablePromptOpen] = useState(false)
-  const twoFactorEnabled = Boolean((user as { twoFactorEnabled?: boolean } | null)?.twoFactorEnabled)
+  const twoFactorEnabled = user?.twoFactorEnabled ?? false
 
   const loadSessions = useCallback(async () => {
     try {

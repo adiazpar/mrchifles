@@ -104,6 +104,7 @@ function mapSessionUserToUser(raw: unknown): User | null {
     emailVerified: Boolean(u.emailVerified),
     phoneNumber: (u.phoneNumber as string | null | undefined) ?? null,
     phoneNumberVerified: Boolean(u.phoneNumberVerified),
+    twoFactorEnabled: Boolean(u.twoFactorEnabled),
   }
 }
 

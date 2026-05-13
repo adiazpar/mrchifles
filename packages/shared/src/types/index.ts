@@ -13,6 +13,11 @@ export interface User {
   emailVerified: boolean
   phoneNumber?: string | null
   phoneNumberVerified: boolean
+  /**
+   * Mirrors the better-auth two-factor plugin flag. True once the user
+   * has completed TOTP enrollment via /account/security/2fa-setup.
+   */
+  twoFactorEnabled: boolean
 }
 
 // ============================================
