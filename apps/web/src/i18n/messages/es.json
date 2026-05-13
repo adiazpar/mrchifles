@@ -1087,7 +1087,6 @@
   "home.session_closed_title": "Sin sesión",
   "home.session_open_title": "Sesión abierta",
   "home.section_this_week": "Esta semana",
-  "home.trend_eyebrow": "ESTA SEMANA · {dateRange}",
   "home.trend_delta_up": "+{percent}% frente a la semana pasada",
   "home.trend_delta_down": "{percent}% frente a la semana pasada",
   "home.trend_earned": "{amount} ingresado",

@@ -114,9 +114,7 @@ export function WeekTrendCard({
   return (
     <div className="home-trend">
       <div className="home-trend__eyebrow-row">
-        <span className="home-trend__eyebrow">
-          {intl.formatMessage({ id: 'home.trend_eyebrow' }, { dateRange })}
-        </span>
+        <span className="home-trend__eyebrow">{dateRange}</span>
         {showDelta ? <DeltaChip percent={deltaPct} /> : null}
       </div>
 

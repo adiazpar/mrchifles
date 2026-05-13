@@ -1087,7 +1087,6 @@
   "home.session_closed_title": "セッション未開始",
   "home.session_open_title": "セッション開始中",
   "home.section_this_week": "今週",
-  "home.trend_eyebrow": "今週 · {dateRange}",
   "home.trend_delta_up": "+{percent}% (先週比)",
   "home.trend_delta_down": "{percent}% (先週比)",
   "home.trend_earned": "売上 {amount}",
