@@ -83,7 +83,7 @@ export function PasswordStep() {
   )
 
   return (
-    <AuthLayout footer={footer} onBack={() => goTo('email')}>
+    <AuthLayout footer={footer}>
       <form
         data-testid="register-password-form"
         onSubmit={handleSubmit}

@@ -1,6 +1,7 @@
 import { useIntl } from 'react-intl'
 import { useState, useCallback, useMemo } from 'react'
-import { IonPage, IonContent, IonButton, IonSpinner } from '@ionic/react'
+import { IonPage, IonContent, IonButton, IonSpinner, IonHeader, IonToolbar, IonTitle } from '@ionic/react'
+import { BrandMark } from '@/components/auth/BrandMark'
 import { useRouter, useSearchParams } from '@/lib/next-navigation-shim'
 import { AuthLayout, AuthField } from '@/components/auth'
 import { useAuth } from '@/contexts/auth-context'
@@ -103,6 +104,13 @@ export function LoginPage() {
 
   return (
     <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>
+            <BrandMark />
+          </IonTitle>
+        </IonToolbar>
+      </IonHeader>
       <IonContent>
         <AuthLayout footer={footer}>
           <header className="auth-hero">

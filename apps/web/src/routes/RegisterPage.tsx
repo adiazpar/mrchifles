@@ -1,4 +1,16 @@
-import { IonPage, IonContent } from '@ionic/react'
+import { useIntl } from 'react-intl'
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonButton,
+  IonTitle,
+  IonIcon,
+  IonContent,
+} from '@ionic/react'
+import { chevronBack } from 'ionicons/icons'
+import { BrandMark } from '@/components/auth/BrandMark'
 import {
   RegisterNavProvider,
   useRegisterNav,
@@ -10,12 +22,47 @@ import { PasswordStep } from '@/components/auth/register-steps/PasswordStep'
 export function RegisterPage() {
   return (
     <IonPage>
-      <IonContent>
-        <RegisterNavProvider>
+      <RegisterNavProvider>
+        <RegisterHeader />
+        <IonContent>
           <CurrentStep />
-        </RegisterNavProvider>
-      </IonContent>
+        </IonContent>
+      </RegisterNavProvider>
     </IonPage>
+  )
+}
+
+// Toolbar driven by the active wizard step. Back chevron renders for
+// steps 2 and 3 and walks one step back via the nav context.
+function RegisterHeader() {
+  const intl = useIntl()
+  const { current, goTo } = useRegisterNav()
+  const onBack =
+    current === 'email'
+      ? () => goTo('name')
+      : current === 'password'
+        ? () => goTo('email')
+        : null
+
+  return (
+    <IonHeader>
+      <IonToolbar>
+        {onBack ? (
+          <IonButtons slot="start">
+            <IonButton
+              fill="clear"
+              onClick={onBack}
+              aria-label={intl.formatMessage({ id: 'auth.register_wizard.back_aria' })}
+            >
+              <IonIcon icon={chevronBack} />
+            </IonButton>
+          </IonButtons>
+        ) : null}
+        <IonTitle>
+          <BrandMark />
+        </IonTitle>
+      </IonToolbar>
+    </IonHeader>
   )
 }
 

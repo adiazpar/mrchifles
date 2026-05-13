@@ -80,7 +80,7 @@ export function EmailStep() {
   )
 
   return (
-    <AuthLayout footer={footer} onBack={() => goTo('name')}>
+    <AuthLayout footer={footer}>
       <form data-testid="register-email-form" onSubmit={handleSubmit} className="flex flex-col gap-2.5 w-full">
         <header className="auth-hero auth-step-item auth-step-item--head">
           <h1 className="auth-hero__title">
