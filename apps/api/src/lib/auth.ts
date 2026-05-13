@@ -104,6 +104,14 @@ export const auth = betterAuth({
         await sendVerificationEmail({ email, otp, language })
       },
     }),
+    // TOTP secrets and backup codes are stored encrypted at rest by
+    // better-auth itself: the plugin runs symmetricEncrypt() against the
+    // shared AUTH_SECRET on insert and symmetricDecrypt() on read (see
+    // node_modules/better-auth/dist/plugins/two-factor/{index,totp/index}.mjs).
+    // No additional encryption wrapper is needed for this version (1.6.x).
+    // Note: rotating AUTH_SECRET invalidates every existing TOTP enrollment
+    // because the stored ciphertext can no longer be decrypted — users would
+    // need to re-enroll.
     twoFactor({
       issuer: 'Kasero',
     }),
