@@ -43,6 +43,7 @@
 
 /* ===== Main slot — hero + form, vertically centered ===== */
 .auth-main {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -344,12 +345,6 @@
 .auth-back:hover,
 .auth-back:focus-visible {
   color: var(--color-text-primary);
-}
-
-/* Ensure .auth-main is the positioning context so .auth-back can pin to
-   its top-left corner. Layout otherwise unchanged. */
-.auth-main {
-  position: relative;
 }
 
 /* ===== Register wizard step transitions =====
