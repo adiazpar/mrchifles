@@ -1660,5 +1660,18 @@
   "orders.edit_items_hero_title": "Adjust the <em>line items</em>",
   "orders.edit_items_hero_subtitle": "Tweak quantities or remove items. New products can't be added once an order is placed.",
   "email_verify_subject": "Verify your Kasero email",
-  "email_verify_body": "Your verification code is {code}. It expires in 10 minutes."
+  "email_verify_body": "Your verification code is {code}. It expires in 10 minutes.",
+  "email_verify_preview": "Your Kasero verification code",
+  "email_verify_greeting": "Hi,",
+  "email_verify_instruction": "Enter this code in Kasero to verify your email address.",
+  "email_verify_expires": "This code expires in 10 minutes.",
+  "email_verify_ignore": "If you didn't request this, you can safely ignore this email.",
+  "email_reset_subject": "Reset your Kasero password",
+  "email_reset_preview": "Reset link inside",
+  "email_reset_greeting": "Hi,",
+  "email_reset_instruction": "Click the button below to reset your password.",
+  "email_reset_cta": "Reset password",
+  "email_reset_expires": "This link expires in 60 minutes.",
+  "email_reset_ignore": "If you didn't request this, you can safely ignore this email.",
+  "email_footer_signature": "Kasero — manage your business simply."
 }

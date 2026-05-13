@@ -6,33 +6,31 @@
  * interpolation for these short strings, so this module ships a small
  * dependency-free interpolator instead of pulling react-intl onto the
  * server runtime.
+ *
+ * Bundles are loaded via static JSON imports so the Next.js bundler can
+ * inline them into the server chunk at build time. A previous version
+ * used readFileSync with a path derived from import.meta.url; that
+ * worked in dev and vitest but broke in production because the bundled
+ * function chunks live under .next/server/ and have no relative access
+ * to apps/web/src/i18n/messages/.
  */
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from '@kasero/shared/locales'
 
-// Resolve the messages directory relative to THIS source file. In dev that's
-// apps/api/src/lib -> ../../../web/src/i18n/messages. In a built apps/api
-// (which Next.js handles for us), the same relative resolution applies
-// because we use import.meta.url, not __dirname tricks. The path is
-// computed once at module load.
-const HERE = dirname(fileURLToPath(import.meta.url))
-const MESSAGES_DIR = join(HERE, '..', '..', '..', 'web', 'src', 'i18n', 'messages')
+import enUS from '../../../web/src/i18n/messages/en-US.json' with { type: 'json' }
+import es from '../../../web/src/i18n/messages/es.json' with { type: 'json' }
+import ja from '../../../web/src/i18n/messages/ja.json' with { type: 'json' }
 
 type MessageBundle = Record<string, string>
 
-function loadBundle(locale: SupportedLocale): MessageBundle {
-  return JSON.parse(readFileSync(join(MESSAGES_DIR, `${locale}.json`), 'utf-8'))
+const bundles: Record<SupportedLocale, MessageBundle> = {
+  'en-US': enUS as MessageBundle,
+  es: es as MessageBundle,
+  ja: ja as MessageBundle,
 }
-
-const bundles: Record<SupportedLocale, MessageBundle> = Object.fromEntries(
-  SUPPORTED_LOCALES.map(l => [l, loadBundle(l)])
-) as Record<SupportedLocale, MessageBundle>
 
 const PLACEHOLDER_RE = /\{(\w+)\}/g
 

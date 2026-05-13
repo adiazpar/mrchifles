@@ -1660,5 +1660,18 @@
   "orders.edit_items_hero_title": "Ajusta las <em>líneas</em>",
   "orders.edit_items_hero_subtitle": "Cambia cantidades o quita artículos. No se pueden agregar productos nuevos una vez creada la orden.",
   "email_verify_subject": "Verifique su correo de Kasero",
-  "email_verify_body": "Su código de verificación es {code}. Caduca en 10 minutos."
+  "email_verify_body": "Su código de verificación es {code}. Caduca en 10 minutos.",
+  "email_verify_preview": "Su código de verificación de Kasero",
+  "email_verify_greeting": "Hola,",
+  "email_verify_instruction": "Ingrese este código en Kasero para verificar su correo.",
+  "email_verify_expires": "Este código caduca en 10 minutos.",
+  "email_verify_ignore": "Si no solicitó esto, puede ignorar este correo.",
+  "email_reset_subject": "Restablezca su contraseña de Kasero",
+  "email_reset_preview": "Enlace para restablecer adentro",
+  "email_reset_greeting": "Hola,",
+  "email_reset_instruction": "Haga clic en el botón de abajo para restablecer su contraseña.",
+  "email_reset_cta": "Restablecer contraseña",
+  "email_reset_expires": "Este enlace caduca en 60 minutos.",
+  "email_reset_ignore": "Si no solicitó esto, puede ignorar este correo.",
+  "email_footer_signature": "Kasero — gestione su negocio de forma sencilla."
 }

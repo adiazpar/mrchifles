@@ -1660,5 +1660,18 @@
   "orders.edit_items_hero_title": "<em>明細</em>を調整",
   "orders.edit_items_hero_subtitle": "数量を変更したり、項目を削除できます。発注後に新しい商品は追加できません。",
   "email_verify_subject": "Kaseroのメールアドレスを確認してください",
-  "email_verify_body": "認証コードは {code} です。10分で有効期限が切れます。"
+  "email_verify_body": "認証コードは {code} です。10分で有効期限が切れます。",
+  "email_verify_preview": "Kaseroの認証コード",
+  "email_verify_greeting": "こんにちは",
+  "email_verify_instruction": "Kaseroでメールアドレスを認証するため、このコードを入力してください。",
+  "email_verify_expires": "このコードは10分で有効期限が切れます。",
+  "email_verify_ignore": "このメールに心当たりがない場合は、無視していただいて問題ありません。",
+  "email_reset_subject": "Kaseroのパスワードをリセット",
+  "email_reset_preview": "リセット用のリンクを記載しています",
+  "email_reset_greeting": "こんにちは",
+  "email_reset_instruction": "パスワードをリセットするには、下のボタンをクリックしてください。",
+  "email_reset_cta": "パスワードをリセット",
+  "email_reset_expires": "このリンクは60分で有効期限が切れます。",
+  "email_reset_ignore": "このメールに心当たりがない場合は、無視していただいて問題ありません。",
+  "email_footer_signature": "Kasero — 業務をシンプルに管理。"
 }
