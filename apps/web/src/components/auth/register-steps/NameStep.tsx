@@ -29,6 +29,9 @@ export function NameStep() {
 
   const footer = (
     <>
+      <div className="auth-divider">
+        {intl.formatMessage({ id: 'common.or' })}
+      </div>
       <p className="auth-link-row">
         {intl.formatMessage({ id: 'auth.have_account_prefix' })}
         <button type="button" onClick={handleGoToLogin}>
