@@ -266,6 +266,23 @@
  * so it stays visually circular at every container size. */
 .home-trend__sparkline-wrap {
   position: relative;
+  /* Let the browser handle vertical scroll natively, but reserve
+   * horizontal pan for our JS handlers. Without this, iOS Safari
+   * fights the scrub with its own pan-x rubber-banding. */
+  touch-action: pan-y;
+  /* Prevent the iOS callout / native text selection when the user
+   * holds on the sparkline area. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Desktop affordance — a horizontal-resize cursor on hover hints
+ * that the sparkline can be dragged side-to-side. */
+@media (hover: hover) {
+  .home-trend__sparkline-wrap:hover {
+    cursor: ew-resize;
+  }
 }
 
 .home-trend__sparkline-dot {
@@ -277,6 +294,80 @@
   box-shadow: 0 0 0 1.5px var(--color-bg-surface);
   transform: translate(-50%, -50%);
   pointer-events: none;
+}
+
+/* Scrub chip — floating tooltip that appears while the user drags
+ * along the sparkline. Anchored to the dot via `left` (set inline)
+ * and shifted via `--chip-shift` so it doesn't clip near the card
+ * edges. Renders above the wrapper using bottom: calc(100% + ...).
+ *
+ * pointer-events: none so the chip doesn't intercept scrubs and so
+ * taps on it (which logically belong to "outside the chart") pass
+ * through and dismiss the selection. */
+.home-trend__sparkline-chip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  /* left is set inline; --chip-shift is set inline (defaults to -50%
+   * if the property is missing, which shouldn't happen). */
+  transform: translateX(var(--chip-shift, -50%));
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  /* z-index: live above the SVG curve and the dot. */
+  z-index: 2;
+}
+
+/* Caret bridging the chip to the dot. A 6px square rotated 45° gives
+ * a clean diamond corner that reads as a tooltip point. Positioned
+ * relative to the *chip* so it follows the chip's shift; visually
+ * still pointing at the dot because the chip is centered on the dot
+ * (or snapped flush to an edge near the card sides). */
+.home-trend__sparkline-chip::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: var(--color-bg-surface);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  transform: translateX(-50%) rotate(45deg);
+  /* Hide the caret if the chip is snapped to the edges (the chip's
+   * own bottom-aligned position can't be perfectly anchored on the
+   * dot anymore — a caret pointing at empty space looks broken). */
+}
+
+/* Day label inside the chip — mono, small, secondary text color.
+ * Matches the eyebrow's vocabulary so the chip reads like a
+ * miniature version of the card header. */
+.home-trend__sparkline-chip-day {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+/* Amount inside the chip — Fraunces italic at a small size, matching
+ * the card's headline voice. */
+.home-trend__sparkline-chip-amount {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.05;
+  color: var(--color-text-primary);
 }
 
 /* Empty-state axis line for weeks with zero sales. The line sits on
