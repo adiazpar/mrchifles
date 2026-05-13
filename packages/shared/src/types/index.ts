@@ -10,6 +10,9 @@ export interface User {
   name: string
   avatar?: string | null
   language: string
+  emailVerified: boolean
+  phoneNumber?: string | null
+  phoneNumberVerified: boolean
 }
 
 // ============================================

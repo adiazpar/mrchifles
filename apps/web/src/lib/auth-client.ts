@@ -1,5 +1,27 @@
 import { createAuthClient } from 'better-auth/react'
-import { emailOTPClient, twoFactorClient } from 'better-auth/client/plugins'
+import {
+  emailOTPClient,
+  twoFactorClient,
+  inferAdditionalFields,
+} from 'better-auth/client/plugins'
+// Force-import the path-to-object types via the public `better-auth/client`
+// entry so the inferred `authClient` type can name them without referencing
+// the unresolvable `better-auth/dist/client/path-to-object` deep path that
+// would otherwise trip TS2742 under `composite: true`. The imports are
+// pure type-only sentinels — the bundler strips them at build time.
+import type {
+  InferRoutes as _InferRoutes,
+  PathToObject as _PathToObject,
+  InferClientAPI as _InferClientAPI,
+} from 'better-auth/client'
+
+// Reference the imports so TS keeps them in scope for emit.
+type _PathToObjectAnchor =
+  | _InferRoutes<Record<string, unknown>, { plugins: [] }>
+  | _PathToObject<'/', () => void>
+  | _InferClientAPI<{ plugins: [] }>
+const _pathToObjectAnchor: _PathToObjectAnchor | undefined = undefined
+void _pathToObjectAnchor
 
 // Same-origin in production (the SPA shell is served by the API). In dev,
 // Vite proxies /api/* to the API server, so the empty baseURL still works.
@@ -7,12 +29,56 @@ import { emailOTPClient, twoFactorClient } from 'better-auth/client/plugins'
 // origin (e.g. a previewing developer pointing the web build at a remote API).
 const baseURL = import.meta.env.VITE_AUTH_BASE_URL ?? ''
 
-// Type annotation: TS2742 — without an explicit type the inferred shape
-// references an internal `path-to-object` file inside better-auth/dist,
-// which isn't portable across `.d.ts` emit. `ReturnType` of the factory
-// gives a self-contained type that downstream callers can use via
-// `typeof authClient` once the symbol is imported.
-export const authClient: ReturnType<typeof createAuthClient> = createAuthClient({
-  baseURL,
-  plugins: [emailOTPClient(), twoFactorClient()],
-})
+// Mirror of the `additionalFields` block in apps/api/src/lib/auth.ts. The
+// server auth module is `'server-only'` so we can't import its type here;
+// instead we re-declare the shape so `authClient.updateUser({ language })`
+// and `session.user.{language,phoneNumber,phoneNumberVerified}` are typed.
+// If you add/rename a user additionalField in apps/api/src/lib/auth.ts,
+// mirror the change here.
+//
+// `as const` is load-bearing: better-auth's InferFieldsInputClient narrows
+// "required" / "defaultValue" / "input" against literal types — without
+// the const assertion, the booleans widen to `boolean` and every field
+// gets surfaced as required on the sign-up payload.
+const userAdditionalFields = {
+  language: {
+    type: 'string',
+    required: false,
+    defaultValue: 'en-US',
+    input: true,
+  },
+  phoneNumber: {
+    type: 'string',
+    required: false,
+    input: true,
+  },
+  phoneNumberVerified: {
+    type: 'boolean',
+    required: false,
+    defaultValue: false,
+    input: false,
+  },
+} as const
+
+// We wrap the factory call in a function so the inferred return type is
+// fully resolved at the call site instead of leaking the internal
+// `better-auth/dist/client/path-to-object.mjs` reference into a top-level
+// declaration. Without the wrapper, `export const authClient = ...` emits
+// TS2742 under `composite: true` because the inferred shape names that
+// internal module path, which isn't portable across `.d.ts` emit. A naive
+// `ReturnType<typeof createAuthClient>` annotation collapses the generic
+// to an empty-plugin form, which strips the typings for our
+// additionalFields (`language`, `phoneNumber`, …) on `updateUser` and
+// `session.user`, so we deliberately keep the wrapper pattern instead.
+function makeAuthClient() {
+  return createAuthClient({
+    baseURL,
+    plugins: [
+      emailOTPClient(),
+      twoFactorClient(),
+      inferAdditionalFields({ user: userAdditionalFields }),
+    ],
+  })
+}
+
+export const authClient: ReturnType<typeof makeAuthClient> = makeAuthClient()

@@ -55,7 +55,7 @@ export function PasswordStep() {
           setError(intl.formatMessage({ id: 'auth.register_wizard.error_email_taken_race' }))
           setErrorCode('AUTH_EMAIL_TAKEN')
         } else {
-          setError(result.error)
+          setError(result.error ?? null)
         }
         setSubmitting(false)
       } catch {
