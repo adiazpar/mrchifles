@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db, inviteCodes, businesses, ownershipTransfers, users } from '@/db'
 import { eq, and, gt, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { getCurrentUser } from '@/lib/simple-auth'
+import { auth } from '@/lib/auth'
 import { validationError, errorResponse, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { Schemas } from '@/lib/schemas'
@@ -49,9 +49,11 @@ export async function POST(request: NextRequest) {
       return response
     }
 
-    // Require authentication
-    const user = await getCurrentUser()
-    if (!user) {
+    // Require authentication. Note: /invite/validate does NOT gate on
+    // emailVerified — this endpoint only looks up an invite and is
+    // reachable mid-onboarding before the user has confirmed their email.
+    const session = await auth.api.getSession({ headers: request.headers })
+    if (!session) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
     }
 
@@ -123,14 +125,14 @@ export async function POST(request: NextRequest) {
 
     if (transfer) {
       // Get the from user's name. The current user's email comes from
-      // the JWT; no need to re-query the DB just to read it.
+      // the better-auth session; no need to re-query the DB just to read it.
       const fromUser = await db
         .select({ name: users.name })
         .from(users)
         .where(eq(users.id, transfer.fromUserId))
         .get()
 
-      const isRecipient = user.email.toLowerCase() === transfer.toEmail.toLowerCase()
+      const isRecipient = session.user.email.toLowerCase() === transfer.toEmail.toLowerCase()
 
       if (!isRecipient) {
         return NextResponse.json({

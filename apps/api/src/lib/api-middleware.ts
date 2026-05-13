@@ -30,10 +30,11 @@ export interface RouteParams {
 
 /**
  * The shape passed to user-scoped handler functions wrapped with withAuth.
- * Preserves the `userId` field name from the legacy JWTPayload so existing
- * handler call sites (e.g., `user.userId`) keep working unchanged during the
- * migration window. Removed when simple-auth.ts is deleted in T16; at that
- * point all in-repo callers will read from this shape directly.
+ * Field names are normalized from the better-auth session — `userId`
+ * (not `id`) so call sites in business-auth and elsewhere don't need to
+ * branch on which auth surface they came from. `withAuth` translates
+ * better-auth's `session.user.{id,email,emailVerified,name,language}`
+ * into this shape.
  */
 export interface AuthedUser {
   userId: string

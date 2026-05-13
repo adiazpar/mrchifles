@@ -3,7 +3,7 @@ import { db, ownershipTransfers, businessUsers } from '@/db'
 import { eq, and, gt, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
-import { getCurrentUser } from '@/lib/simple-auth'
+import { auth } from '@/lib/auth'
 import { validationError, errorResponse, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { Schemas } from '@/lib/schemas'
@@ -40,9 +40,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Require authentication
-    const user = await getCurrentUser()
-    if (!user) {
+    const session = await auth.api.getSession({ headers: request.headers })
+    if (!session) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+    }
+    if (!session.user.emailVerified) {
+      return errorResponse(ApiMessageCode.EMAIL_NOT_VERIFIED, 403)
     }
 
     const body = await request.json()
@@ -88,7 +91,7 @@ export async function POST(request: NextRequest) {
     // The JWT already carries the user's email — trust it and skip the DB
     // round trip. If the token is stale (user deleted mid-session) the
     // transaction below would fail on the FK insert anyway.
-    const isRecipient = user.email.toLowerCase() === transfer.toEmail.toLowerCase()
+    const isRecipient = session.user.email.toLowerCase() === transfer.toEmail.toLowerCase()
 
     if (!isRecipient) {
       return NextResponse.json({
@@ -134,7 +137,7 @@ export async function POST(request: NextRequest) {
           .select()
           .from(businessUsers)
           .where(and(
-            eq(businessUsers.userId, user.userId),
+            eq(businessUsers.userId, session.user.id),
             eq(businessUsers.businessId, transfer.businessId),
           ))
           .limit(1)
@@ -154,7 +157,7 @@ export async function POST(request: NextRequest) {
         } else {
           await tx.insert(businessUsers).values({
             id: nanoid(),
-            userId: user.userId,
+            userId: session.user.id,
             businessId: transfer.businessId,
             role: 'owner',
             status: 'active',
@@ -166,7 +169,7 @@ export async function POST(request: NextRequest) {
           .update(ownershipTransfers)
           .set({
             status: 'completed',
-            toUser: user.userId,
+            toUser: session.user.id,
           })
           .where(eq(ownershipTransfers.id, transfer.id))
       })
@@ -182,7 +185,7 @@ export async function POST(request: NextRequest) {
 
     // Invalidate cached access
     invalidateAccessCache(transfer.fromUser, transfer.businessId)
-    invalidateAccessCache(user.userId, transfer.businessId)
+    invalidateAccessCache(session.user.id, transfer.businessId)
 
     return NextResponse.json({
       success: true,

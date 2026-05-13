@@ -3,7 +3,7 @@ import { db, inviteCodes, businesses, businessUsers } from '@/db'
 import { eq, and, gt, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
-import { getCurrentUser } from '@/lib/simple-auth'
+import { auth } from '@/lib/auth'
 import { validationError, errorResponse, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { Schemas } from '@/lib/schemas'
@@ -28,16 +28,21 @@ export async function POST(request: NextRequest) {
     const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
     if (oversize) return oversize
 
-    // Require authentication
-    const user = await getCurrentUser()
-    if (!user) {
+    // Require authentication. Joining a business with an unverified
+    // account is risky (the email might belong to someone else), so we
+    // gate on emailVerified here even though /invite/validate does not.
+    const session = await auth.api.getSession({ headers: request.headers })
+    if (!session) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+    }
+    if (!session.user.emailVerified) {
+      return errorResponse(ApiMessageCode.EMAIL_NOT_VERIFIED, 403)
     }
 
     // Cap join attempts — a 6-char invite code is a brute-force surface
     // even with /validate limited, so the join itself needs its own gate.
     const rateLimited = await applyRateLimit(
-      `join:${user.userId}`,
+      `join:${session.user.id}`,
       RateLimits.userMutation,
     )
     if (rateLimited) return rateLimited
@@ -98,7 +103,7 @@ export async function POST(request: NextRequest) {
       .from(businessUsers)
       .where(
         and(
-          eq(businessUsers.userId, user.userId),
+          eq(businessUsers.userId, session.user.id),
           eq(businessUsers.businessId, invite.businessId)
         )
       )
@@ -125,7 +130,7 @@ export async function POST(request: NextRequest) {
     const membershipId = nanoid()
     const claimed = await db
       .update(inviteCodes)
-      .set({ usedBy: user.userId })
+      .set({ usedBy: session.user.id })
       .where(
         and(
           eq(inviteCodes.id, invite.id),
@@ -151,7 +156,7 @@ export async function POST(request: NextRequest) {
     // admin, a free re-claim is a security regression).
     await db.insert(businessUsers).values({
       id: membershipId,
-      userId: user.userId,
+      userId: session.user.id,
       businessId: invite.businessId,
       role: invite.role,
       status: 'active',

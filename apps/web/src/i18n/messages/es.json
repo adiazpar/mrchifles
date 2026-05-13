@@ -1342,6 +1342,8 @@
   "apiMessages.forbidden": "Permiso denegado",
   "apiMessages.unauthorized": "Autenticación requerida",
   "apiMessages.email_not_verified": "Verifique su correo para continuar.",
+  "apiMessages.cannot_delete_owns_business": "Transfiera la propiedad antes de eliminar su cuenta.",
+  "apiMessages.account_deleted": "Cuenta eliminada.",
   "apiMessages.validation_generic": "Entrada inválida",
   "apiMessages.validation_required": "Este campo es requerido",
   "apiMessages.validation_invalid_type": "Tipo inválido",

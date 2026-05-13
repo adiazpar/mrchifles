@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db, ownershipTransfers, users, businesses } from '@/db'
 // `users` is kept because the fromUser name fetch below still needs it.
 import { eq, and, gt } from 'drizzle-orm'
-import { getCurrentUser } from '@/lib/simple-auth'
+import { auth } from '@/lib/auth'
 import { errorResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { logServerError } from '@/lib/server-logger'
@@ -15,19 +15,22 @@ import { logServerError } from '@/lib/server-logger'
  *
  * Returns the transfer with sender info if one exists.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // Require authentication
-    const user = await getCurrentUser()
-    if (!user) {
+    const session = await auth.api.getSession({ headers: request.headers })
+    if (!session) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+    }
+    if (!session.user.emailVerified) {
+      return errorResponse(ApiMessageCode.EMAIL_NOT_VERIFIED, 403)
     }
 
     const now = new Date()
 
-    // Find incoming transfer for this user's email. The JWT already
-    // carries user.email, so we skip the pre-flight DB lookup the old
-    // code did — one round trip saved per hub-home render.
+    // Find incoming transfer for this user's email. The session already
+    // carries session.user.email, so we skip the pre-flight DB lookup the
+    // old code did — one round trip saved per hub-home render.
     const transfer = await db
       .select({
         id: ownershipTransfers.id,
@@ -42,7 +45,7 @@ export async function GET() {
       .innerJoin(businesses, eq(ownershipTransfers.businessId, businesses.id))
       .where(
         and(
-          eq(ownershipTransfers.toEmail, user.email.toLowerCase()),
+          eq(ownershipTransfers.toEmail, session.user.email.toLowerCase()),
           eq(ownershipTransfers.status, 'pending'),
           gt(ownershipTransfers.expiresAt, now)
         )

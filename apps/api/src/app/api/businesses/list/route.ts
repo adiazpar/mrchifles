@@ -1,6 +1,7 @@
+import { NextRequest } from 'next/server'
 import { db, businesses, businessUsers } from '@/db'
 import { eq, and, sql } from 'drizzle-orm'
-import { getCurrentUser } from '@/lib/simple-auth'
+import { auth } from '@/lib/auth'
 import { errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { logServerError } from '@/lib/server-logger'
@@ -11,11 +12,14 @@ import { logServerError } from '@/lib/server-logger'
  * List all businesses the current user belongs to.
  * Uses the business_users join table for multi-business support.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getCurrentUser()
+    const session = await auth.api.getSession({ headers: request.headers })
     if (!session) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+    }
+    if (!session.user.emailVerified) {
+      return errorResponse(ApiMessageCode.EMAIL_NOT_VERIFIED, 403)
     }
 
     // Query business_users joined with businesses for this user.
@@ -38,7 +42,7 @@ export async function GET() {
       .innerJoin(businesses, eq(businessUsers.businessId, businesses.id))
       .where(
         and(
-          eq(businessUsers.userId, session.userId),
+          eq(businessUsers.userId, session.user.id),
           eq(businessUsers.status, 'active'),
         ),
       )

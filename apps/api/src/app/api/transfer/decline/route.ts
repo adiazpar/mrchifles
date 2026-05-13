@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { db, ownershipTransfers } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { getCurrentUser } from '@/lib/simple-auth'
+import { auth } from '@/lib/auth'
 import { validationError, errorResponse, successResponse, applyRateLimit, enforceMaxContentLength } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { Schemas } from '@/lib/schemas'
@@ -31,16 +31,19 @@ export async function POST(request: NextRequest) {
     const oversize = enforceMaxContentLength(request, MAX_BODY_BYTES)
     if (oversize) return oversize
 
-    const user = await getCurrentUser()
-    if (!user) {
+    const session = await auth.api.getSession({ headers: request.headers })
+    if (!session) {
       return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+    }
+    if (!session.user.emailVerified) {
+      return errorResponse(ApiMessageCode.EMAIL_NOT_VERIFIED, 403)
     }
 
     // Transfer codes are 6 chars; /accept is already rate-limited, and
     // /decline is too — without this cap an attacker with a valid code
     // could flip pending transfers to cancelled at will.
     const rateLimited = await applyRateLimit(
-      `transfer-decline:${user.userId}`,
+      `transfer-decline:${session.user.id}`,
       RateLimits.userMutation,
     )
     if (rateLimited) return rateLimited
@@ -71,8 +74,8 @@ export async function POST(request: NextRequest) {
       return errorResponse(ApiMessageCode.TRANSFER_INVALID_OR_EXPIRED, 400)
     }
 
-    // JWT already has the email — no DB round trip needed for this check.
-    if (user.email.toLowerCase() !== transfer.toEmail.toLowerCase()) {
+    // Session already has the email — no DB round trip needed for this check.
+    if (session.user.email.toLowerCase() !== transfer.toEmail.toLowerCase()) {
       return errorResponse(ApiMessageCode.TRANSFER_WRONG_RECIPIENT, 403)
     }
 

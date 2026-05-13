@@ -1342,6 +1342,8 @@
   "apiMessages.forbidden": "Permission denied",
   "apiMessages.unauthorized": "Authentication required",
   "apiMessages.email_not_verified": "Verify your email to continue.",
+  "apiMessages.cannot_delete_owns_business": "Transfer ownership before deleting your account.",
+  "apiMessages.account_deleted": "Account deleted.",
   "apiMessages.validation_generic": "Invalid input",
   "apiMessages.validation_required": "This field is required",
   "apiMessages.validation_invalid_type": "Invalid type",

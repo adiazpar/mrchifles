@@ -29,38 +29,29 @@ const API_ROOT = join(process.cwd(), 'src', 'app', 'api')
 const BUSINESS_AUTH_ALLOWLIST: ReadonlySet<string> = new Set<string>()
 
 // Routes that legitimately don't use withAuth. These either use a
-// different gate (login/register hand-roll their own auth flow) or
+// different gate (better-auth catch-all owns the auth flow itself) or
 // are intentionally public (none today).
 const AUTH_ALLOWLIST: ReadonlySet<string> = new Set([
-  // Login/register/logout handle the authentication flow themselves;
-  // wrapping them in withAuth would be a chicken-and-egg.
-  'src/app/api/auth/login/route.ts',
-  'src/app/api/auth/register/route.ts',
-  'src/app/api/auth/logout/route.ts',
-  // /api/auth/me — both GET and DELETE manage their own auth flow
-  // (DELETE adds a password reauth before the destructive batch).
-  'src/app/api/auth/me/route.ts',
-  // /api/auth/change-password manages its own rate-limit + auth
-  // flow because it also accepts credentials in the body.
-  'src/app/api/auth/change-password/route.ts',
-  // /api/auth/check-email is a public pre-registration availability check;
-  // no authenticated user exists yet at that step.
-  'src/app/api/auth/check-email/route.ts',
+  // better-auth's catch-all handler IS the auth surface. It owns
+  // /sign-in/email, /sign-up/email, /sign-out, /get-session, etc.,
+  // and wrapping it in withAuth would be circular.
+  'src/app/api/auth/[...all]/route.ts',
   // Geolocation: returns Vercel-injected IP-based hints, no user
   // data, no DB. Public is intentional.
   'src/app/api/geolocation/route.ts',
-  // /api/transfer/{accept,decline} use their own auth flow — they
-  // need to look up the recipient by JWT email before admitting them
-  // to the transfer-state-machine routes.
+  // /api/transfer/{accept,decline,incoming} call auth.api.getSession
+  // directly because they need to read session.user.email before
+  // admitting the request into the transfer-state-machine routes.
   'src/app/api/transfer/accept/route.ts',
   'src/app/api/transfer/decline/route.ts',
   'src/app/api/transfer/incoming/route.ts',
   // /api/invite/validate and /api/invite/join handle their own
-  // rate-limit + auth.
+  // rate-limit + session check via auth.api.getSession.
   'src/app/api/invite/validate/route.ts',
   'src/app/api/invite/join/route.ts',
-  // /api/businesses/list uses getCurrentUser directly — it's the
-  // hub-level "what businesses am I in" query.
+  // /api/businesses/list uses auth.api.getSession directly — it's the
+  // hub-level "what businesses am I in" query that runs before the
+  // user has selected a business context.
   'src/app/api/businesses/list/route.ts',
 ])
 

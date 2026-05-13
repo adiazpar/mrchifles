@@ -1,11 +1,11 @@
 import { db, businessUsers, users, ownershipTransfers } from '@/db'
+import { session as sessionTable } from '@kasero/shared/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { canManageBusiness, invalidateAccessCache } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { Schemas } from '@/lib/schemas'
-import { invalidateUserSession } from '@/lib/simple-auth'
 
 const toggleStatusSchema = z.object({
   userId: Schemas.id(),
@@ -116,29 +116,17 @@ export const POST = withBusinessAuth(async (request, access) => {
           )
       }
 
-      // Server-side JWT revocation. Same mechanism as logout: bump
-      // tokensInvalidBefore so any token issued before now is
-      // rejected by getCurrentUser. Without this, a disabled user's
-      // JWT remains valid for non-business routes (/api/auth/me,
-      // /api/user/language, AI routes) until natural expiry — they
-      // can't access THIS business (requireBusinessAccess filters
-      // status='active') but they can still spend AI quota or
-      // mutate their own profile (audit M-21).
-      await tx
-        .update(users)
-        .set({ tokensInvalidBefore: new Date() })
-        .where(eq(users.id, userId))
+      // Server-side session revocation. With better-auth, sessions live
+      // in the `session` table and are validated on every request. Deleting
+      // the user's rows here forces them to re-login on next request,
+      // matching the audit M-21 remediation: a disabled user's session
+      // can't keep authorizing non-business routes (/api/user/language,
+      // AI routes, etc.) until natural cookie expiry.
+      await tx.delete(sessionTable).where(eq(sessionTable.userId, userId))
     }
   })
 
   invalidateAccessCache(userId, access.businessId)
-  // Flush the per-Lambda session cache so the next request from this
-  // user re-reads tokensInvalidBefore. Cross-Lambda flush is best-
-  // effort (each Lambda has its own cache); the 60s TTL bounds the
-  // window in the worst case.
-  if (status === 'disabled') {
-    invalidateUserSession(userId)
-  }
 
   return successResponse({})
 })

@@ -56,6 +56,14 @@ export const auth = betterAuth({
       phoneNumber: { type: 'string', required: false, input: true },
       phoneNumberVerified: { type: 'boolean', required: false, defaultValue: false, input: false },
     },
+    // Enables `auth.api.deleteUser` which the /api/account/delete wrapper
+    // calls after our own business-ownership pre-check. Without this flag
+    // better-auth returns NOT_FOUND from the endpoint. Sessions and
+    // account rows cascade-delete via the FK on user_id; business_users
+    // rows cascade-delete via FK on users.id as well.
+    deleteUser: {
+      enabled: true,
+    },
   },
 
   emailAndPassword: {
