@@ -1,0 +1,41 @@
+.security-page {
+  --background: var(--color-paper);
+}
+
+.security-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.security-section__heading {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.security-toggle-row {
+  --background: var(--color-surface);
+  --border-color: var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.security-session__device {
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.security-session__ip {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  margin: 0;
+  font-family: var(--font-mono);
+}
+
+.security-signout-others {
+  margin-top: var(--space-3);
+}

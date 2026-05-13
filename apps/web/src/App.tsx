@@ -14,6 +14,7 @@ import { ForgotPassword } from '@/routes/ForgotPassword'
 import { LoginPage } from '@/routes/LoginPage'
 import { RegisterPage } from '@/routes/RegisterPage'
 import { ResetPassword } from '@/routes/ResetPassword'
+import { TwoFactorChallenge } from '@/routes/TwoFactorChallenge'
 import { VerifyEmail } from '@/routes/VerifyEmail'
 
 // Provider order:
@@ -55,6 +56,9 @@ export function App() {
                   </Route>
                   <Route exact path="/reset-password">
                     <ResetPassword />
+                  </Route>
+                  <Route exact path="/two-factor-challenge">
+                    <TwoFactorChallenge />
                   </Route>
                   <Route>
                     <AuthenticatedShell />
