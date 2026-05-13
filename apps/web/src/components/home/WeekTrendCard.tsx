@@ -314,6 +314,21 @@ function Sparkline({
     // Leave `selection` as-is — that's the sticky state.
   }
 
+  // Dot position. When the user has a selection, the dot rides the
+  // curve at the continuous x. Otherwise it sits at the last data
+  // point as before.
+  const dotPosition = (() => {
+    if (selection) {
+      const xPct = selection.x * 100
+      const yPct = (lookupSampleY(samples, xPct) / 32) * 100
+      return { xPct, yPct }
+    }
+    if (lastPoint) {
+      return { xPct: lastPoint.x, yPct: (lastPoint.y / 32) * 100 }
+    }
+    return null
+  })()
+
   if (!hasData) {
     return (
       <div className="home-trend__sparkline-empty">
@@ -364,12 +379,12 @@ function Sparkline({
        * the card width — that stretches an SVG circle into an ellipse.
        * Positioning via percentages on a separately-sized HTML element
        * gives a visually circular dot at every container size. */}
-      {lastPoint ? (
+      {dotPosition ? (
         <span
           className="home-trend__sparkline-dot"
           style={{
-            left: `${lastPoint.x}%`,
-            top: `${(lastPoint.y / 32) * 100}%`,
+            left: `${dotPosition.xPct}%`,
+            top: `${dotPosition.yPct}%`,
           }}
           aria-hidden="true"
         />
