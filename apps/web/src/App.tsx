@@ -10,8 +10,10 @@ import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AppIntlProvider } from '@/i18n/AppIntlProvider'
 import { AuthenticatedShell } from '@/routes/AuthenticatedShell'
+import { ForgotPassword } from '@/routes/ForgotPassword'
 import { LoginPage } from '@/routes/LoginPage'
 import { RegisterPage } from '@/routes/RegisterPage'
+import { ResetPassword } from '@/routes/ResetPassword'
 import { VerifyEmail } from '@/routes/VerifyEmail'
 
 // Provider order:
@@ -47,6 +49,12 @@ export function App() {
                   </Route>
                   <Route exact path="/verify-email">
                     <VerifyEmail />
+                  </Route>
+                  <Route exact path="/forgot-password">
+                    <ForgotPassword />
+                  </Route>
+                  <Route exact path="/reset-password">
+                    <ResetPassword />
                   </Route>
                   <Route>
                     <AuthenticatedShell />

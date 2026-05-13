@@ -249,6 +249,18 @@
   border-radius: var(--radius-lg);
 }
 
+/* ===== Info/status banner (e.g. forgot-password success) ===== */
+.auth-info {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  background: var(--color-success-subtle);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  text-align: center;
+  border: 1px solid var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+
 /* ===== Footer (or-divider + secondary link + version) ===== */
 .auth-footer {
   display: flex;
