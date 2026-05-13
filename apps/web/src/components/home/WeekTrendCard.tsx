@@ -257,6 +257,9 @@ interface SparklineGeometry {
   line: string
   area: string
   lastPoint: { x: number; y: number } | null
+  /** Points evaluated along the bezier curve, in viewBox space
+   *  (x in [0, 100], y in [0, height]). Strictly non-decreasing in x. */
+  samples: { x: number; y: number }[]
 }
 
 /**
@@ -282,7 +285,7 @@ function computeSparklinePath(
   padY = 4,
 ): SparklineGeometry {
   if (values.length === 0) {
-    return { line: '', area: '', lastPoint: null }
+    return { line: '', area: '', lastPoint: null, samples: [] }
   }
 
   const max = Math.max(...values, 0)
@@ -300,6 +303,8 @@ function computeSparklinePath(
   // Catmull-Rom-to-Bezier. For each segment p1->p2 we compute control
   // points from the neighbouring points (p0, p3). Endpoints duplicate
   // themselves so the curve doesn't overshoot.
+  const SAMPLES_PER_SEGMENT = 32
+  const samples: { x: number; y: number }[] = [{ x: points[0]!.x, y: points[0]!.y }]
   const tension = 0.5
   let line = `M ${round(points[0]!.x)} ${round(points[0]!.y)}`
   for (let i = 0; i < points.length - 1; i++) {
@@ -312,6 +317,23 @@ function computeSparklinePath(
     const cp2x = p2.x - ((p3.x - p1.x) / 6) * tension * 2
     const cp2y = p2.y - ((p3.y - p1.y) / 6) * tension * 2
     line += ` C ${round(cp1x)} ${round(cp1y)}, ${round(cp2x)} ${round(cp2y)}, ${round(p2.x)} ${round(p2.y)}`
+    // Evaluate the cubic at t = 1/N..1 (skipping t=0 since the previous
+    // segment's endpoint already covers it). Standard Bernstein basis.
+    for (let s = 1; s <= SAMPLES_PER_SEGMENT; s++) {
+      const t = s / SAMPLES_PER_SEGMENT
+      const u = 1 - t
+      const x =
+        u * u * u * p1.x +
+        3 * u * u * t * cp1x +
+        3 * u * t * t * cp2x +
+        t * t * t * p2.x
+      const y =
+        u * u * u * p1.y +
+        3 * u * u * t * cp1y +
+        3 * u * t * t * cp2y +
+        t * t * t * p2.y
+      samples.push({ x, y })
+    }
   }
 
   // Area closes the curve back to the baseline. Drop straight down to
@@ -323,6 +345,7 @@ function computeSparklinePath(
     line,
     area,
     lastPoint: points[points.length - 1] ?? null,
+    samples,
   }
 }
 
