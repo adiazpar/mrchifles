@@ -1,7 +1,8 @@
 import 'server-only'
+import { headers } from 'next/headers'
 import { db, businessUsers, businesses, products, providers, productCategories } from '@/db'
 import { eq, and, inArray } from 'drizzle-orm'
-import { getCurrentUser } from './simple-auth'
+import { auth } from './auth'
 
 // Re-export client-safe utilities
 export { isOwner, canManageBusiness } from '@kasero/shared/business-role'
@@ -80,13 +81,18 @@ export function invalidateAccessCacheForUser(userId: string): void {
 export async function requireBusinessAccess(
   businessId: string
 ): Promise<BusinessAccess> {
-  const session = await getCurrentUser()
+  const reqHeaders = await headers()
+  const session = await auth.api.getSession({ headers: reqHeaders })
   if (!session) {
     throw new Error('Unauthorized: Not authenticated')
   }
+  if (!session.user.emailVerified) {
+    throw new Error('Unauthorized: Email not verified')
+  }
+  const userId = session.user.id
 
   // Check cache
-  const cacheKey = getCacheKey(session.userId, businessId)
+  const cacheKey = getCacheKey(userId, businessId)
   const cached = accessCache.get(cacheKey)
   if (cached && cached.expiresAt > Date.now()) {
     return cached.access
@@ -108,7 +114,7 @@ export async function requireBusinessAccess(
     .innerJoin(businesses, eq(businessUsers.businessId, businesses.id))
     .where(
       and(
-        eq(businessUsers.userId, session.userId),
+        eq(businessUsers.userId, userId),
         eq(businessUsers.businessId, businessId),
         eq(businessUsers.status, 'active')
       )
@@ -122,7 +128,7 @@ export async function requireBusinessAccess(
   }
 
   const access: BusinessAccess = {
-    userId: session.userId,
+    userId,
     businessId: membership.businessId,
     businessName: membership.businessName,
     businessType: membership.businessType,

@@ -1341,6 +1341,7 @@
   "apiMessages.not_found": "No encontrado",
   "apiMessages.forbidden": "Permiso denegado",
   "apiMessages.unauthorized": "Autenticación requerida",
+  "apiMessages.email_not_verified": "Verifique su correo para continuar.",
   "apiMessages.validation_generic": "Entrada inválida",
   "apiMessages.validation_required": "Este campo es requerido",
   "apiMessages.validation_invalid_type": "Tipo inválido",

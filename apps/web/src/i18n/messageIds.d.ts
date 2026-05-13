@@ -189,6 +189,7 @@ export type MessageId =
   | 'apiMessages.categories_not_found_in_business'
   | 'apiMessages.category_id_required'
   | 'apiMessages.category_not_found'
+  | 'apiMessages.email_not_verified'
   | 'apiMessages.forbidden'
   | 'apiMessages.heic_convert_failed'
   | 'apiMessages.heic_no_file'

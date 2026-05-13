@@ -1341,6 +1341,7 @@
   "apiMessages.not_found": "見つかりません",
   "apiMessages.forbidden": "アクセスが拒否されました",
   "apiMessages.unauthorized": "認証が必要です",
+  "apiMessages.email_not_verified": "続行するにはメールアドレスを確認してください",
   "apiMessages.validation_generic": "入力が無効です",
   "apiMessages.validation_required": "この項目は必須です",
   "apiMessages.validation_invalid_type": "無効な形式です",

@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireBusinessAccess, type BusinessAccess } from './business-auth'
 import { ApiMessageCode, type ApiMessageEnvelope } from '@kasero/shared/api-messages'
-import { getCurrentUser, type JWTPayload } from './simple-auth'
+import { auth } from './auth'
 import { checkRateLimit, getClientIp, RateLimits, UpstashUnavailableError, type RateLimitConfig } from './rate-limit'
 import { logServerError } from './server-logger'
 
@@ -26,6 +26,21 @@ export interface RouteParams {
   params: Promise<{
     businessId: string
   }>
+}
+
+/**
+ * The shape passed to user-scoped handler functions wrapped with withAuth.
+ * Preserves the `userId` field name from the legacy JWTPayload so existing
+ * handler call sites (e.g., `user.userId`) keep working unchanged during the
+ * migration window. Removed when simple-auth.ts is deleted in T16; at that
+ * point all in-repo callers will read from this shape directly.
+ */
+export interface AuthedUser {
+  userId: string
+  email: string
+  emailVerified: boolean
+  name: string
+  language: string
 }
 
 // ============================================
@@ -100,7 +115,7 @@ function enforceSameOrigin(request: NextRequest): NextResponse | null {
 
 type UserRouteHandler = (
   request: NextRequest,
-  user: JWTPayload,
+  user: AuthedUser,
 ) => Promise<NextResponse>
 
 /**
@@ -140,7 +155,7 @@ function isValidUrlIdSegment(value: string | undefined): value is string {
 
 export function withAuth(
   handler: UserRouteHandler,
-  options: { rateLimit?: false; maxBodyBytes?: number } = {},
+  options: { rateLimit?: false; maxBodyBytes?: number; allowUnverified?: boolean } = {},
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     try {
@@ -161,8 +176,28 @@ export function withAuth(
         if (oversize) return oversize
       }
 
-      const user = await getCurrentUser()
-      if (!user) return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+      const session = await auth.api.getSession({ headers: request.headers })
+      if (!session) return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+
+      const sessionUser = session.user as {
+        id: string
+        email: string
+        emailVerified: boolean
+        name: string
+        language?: string
+      }
+
+      if (!options.allowUnverified && !sessionUser.emailVerified) {
+        return errorResponse(ApiMessageCode.EMAIL_NOT_VERIFIED, 403)
+      }
+
+      const user: AuthedUser = {
+        userId: sessionUser.id,
+        email: sessionUser.email,
+        emailVerified: sessionUser.emailVerified,
+        name: sessionUser.name,
+        language: sessionUser.language ?? 'en-US',
+      }
 
       if (
         options.rateLimit !== false &&
@@ -356,6 +391,9 @@ export function withBusinessAuth(
         // denied. requireBusinessAccess throws distinct messages.
         if (error.message.includes('Not authenticated')) {
           return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+        }
+        if (error.message.includes('Email not verified')) {
+          return errorResponse(ApiMessageCode.EMAIL_NOT_VERIFIED, 403)
         }
         if (error.message.includes('No access')) {
           return errorResponse(ApiMessageCode.FORBIDDEN, 403)
