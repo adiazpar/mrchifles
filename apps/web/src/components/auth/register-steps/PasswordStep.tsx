@@ -98,20 +98,6 @@ export function PasswordStep() {
           </p>
         </header>
 
-        {error ? (
-          <div className="auth-step-item auth-error" role="alert">
-            {error}
-            {errorCode === 'AUTH_EMAIL_TAKEN' ? (
-              <>
-                {' '}
-                <button type="button" onClick={() => goTo('email')}>
-                  {intl.formatMessage({ id: 'auth.register_wizard.edit_email' })}
-                </button>
-              </>
-            ) : null}
-          </div>
-        ) : null}
-
         <div className="auth-step-item auth-step-item--field">
           <AuthField
             label={intl.formatMessage({ id: 'auth.password_label' })}
@@ -123,7 +109,23 @@ export function PasswordStep() {
             required
             minLength={8}
             revealable
-            below={<PasswordStrength password={password} />}
+            below={
+              error ? (
+                <div className="auth-error" role="alert">
+                  {error}
+                  {errorCode === 'AUTH_EMAIL_TAKEN' ? (
+                    <>
+                      {' '}
+                      <button type="button" onClick={() => goTo('email')}>
+                        {intl.formatMessage({ id: 'auth.register_wizard.edit_email' })}
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              ) : (
+                <PasswordStrength password={password} />
+              )
+            }
           />
         </div>
 
