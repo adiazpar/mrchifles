@@ -119,6 +119,22 @@ export const twoFactor = sqliteTable('two_factor', {
   userIdIdx: uniqueIndex('idx_two_factor_user_id').on(table.userId),
 }))
 
+/**
+ * Rate-limit counters managed by better-auth. Used when `auth.ts` is
+ * configured with `rateLimit: { storage: 'database' }` so per-key
+ * counters are consistent across Vercel Lambda instances (in-memory
+ * storage gives each cold start its own window — fail-open, weaker).
+ *
+ * Columns mirror better-auth's expected shape. better-auth handles
+ * inserts/updates against this table itself; do not write to it from
+ * application code.
+ */
+export const rateLimit = sqliteTable('rate_limit', {
+  key: text('key').primaryKey(),
+  count: integer('count').notNull(),
+  lastRequest: integer('last_request').notNull(),
+})
+
 // ===========================================
 // BUSINESS USERS (Multi-business membership)
 // ===========================================

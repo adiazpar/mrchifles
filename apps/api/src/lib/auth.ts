@@ -127,11 +127,10 @@ export const auth = betterAuth({
 
   rateLimit: {
     enabled: true,
-    // Default in-memory storage. `storage: 'database'` requires a
-    // `rateLimit` model in the Drizzle schema which T4 did not add; the
-    // serverless deployment model on Vercel also makes per-instance memory
-    // acceptable (each cold start gets a fresh window — failure mode is
-    // strictly more permissive, never blocks legit traffic across regions).
+    // Cross-instance consistency requires database storage. The
+    // `rate_limit` table is declared in packages/shared/src/db/schema.ts
+    // and applied via packages/shared/migrations/2026-05-13-04-rate-limit-table.sql.
+    storage: 'database',
     customRules: {
       '/sign-in/email': { window: 60, max: 5 },
       '/sign-up/email': { window: 60, max: 3 },
