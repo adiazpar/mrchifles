@@ -33,27 +33,24 @@ export const businesses = sqliteTable('businesses', {
 // ===========================================
 // USERS
 // ===========================================
-// Simple email/password auth
+// Authenticated via better-auth. Password is stored in the `account` table
+// (provider_id='credential'); legacy users.password / password_changed_at /
+// tokens_invalid_before columns are still present in SQL during the migration
+// window and will be dropped in a later migration once all sessions have rotated.
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
-  email: text('email').unique().notNull(),
-  password: text('password').notNull(), // bcrypt hash
   name: text('name').notNull(),
-  avatar: text('avatar'), // Base64 or URL
-  language: text('language').default('en-US').notNull(), // UI language (react-intl bundle); distinct from per-business locale/currency
-  // Bumped whenever the password changes. Any JWT whose `iat` is older
-  // than this timestamp is treated as invalidated on the server side —
-  // old sessions can't outlive a password change. Nullable because
-  // users who've never changed their password don't need the check.
-  passwordChangedAt: integer('password_changed_at', { mode: 'timestamp' }),
-  // Bumped on explicit logout (and on disable / removal-for-cause).
-  // Same revocation semantics as passwordChangedAt: any JWT whose
-  // `iat` predates this timestamp is rejected by getCurrentUser.
-  // This is what makes "log out" actually revoke the captured cookie
-  // server-side, instead of only deleting the browser's copy. Without
-  // it, a JWT exfiltrated via XSS / malicious extension stays valid
-  // for the rest of its 7-day window after the user clicks logout.
-  tokensInvalidBefore: integer('tokens_invalid_before', { mode: 'timestamp' }),
+  email: text('email').unique().notNull(),
+  emailVerified: integer('email_verified', { mode: 'boolean' }).default(false).notNull(),
+  emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp' }),
+  // better-auth's default field name is `image`; the column on disk stays `avatar`
+  // for zero-downtime migration. Aliased via field mapping in apps/api/src/lib/auth.ts.
+  avatar: text('avatar'),
+  language: text('language').default('en-US').notNull(),
+  phoneNumber: text('phone_number'),
+  phoneNumberVerified: integer('phone_number_verified', { mode: 'boolean' }).default(false).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   // Expression index for case-insensitive email lookup (invite-validate,
   // transfer-initiate). The built-in unique index on `email` is case-
