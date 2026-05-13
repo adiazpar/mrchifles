@@ -314,6 +314,42 @@ function Sparkline({
     // Leave `selection` as-is — that's the sticky state.
   }
 
+  // Dismiss listeners — mounted whenever there's a selection. They
+  // self-gate on activeDragRef so we don't dismiss our own selection
+  // while a drag is in progress.
+  useEffect(() => {
+    if (!selection) return
+
+    const onDocDown = (e: PointerEvent) => {
+      if (activeDragRef.current) return
+      if (wrapperRef.current?.contains(e.target as Node)) return
+      setSelection(null)
+    }
+    const onScroll = () => {
+      if (activeDragRef.current) return
+      setSelection(null)
+    }
+
+    document.addEventListener('pointerdown', onDocDown)
+
+    // Primary: Ionic emits a bubbling `ionScroll` CustomEvent on the
+    // <ion-content> element whose inner scroller is scrolling. Listen
+    // on the nearest one in the ancestry.
+    const ionContent = wrapperRef.current?.closest('ion-content')
+    ionContent?.addEventListener('ionScroll', onScroll)
+
+    // Fallback: capture-phase document `scroll` catches native scroll
+    // dispatched on any descendant (scroll doesn't bubble, but it
+    // dispatches through the capture phase to ancestors of the target).
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true })
+
+    return () => {
+      document.removeEventListener('pointerdown', onDocDown)
+      ionContent?.removeEventListener('ionScroll', onScroll)
+      document.removeEventListener('scroll', onScroll, { capture: true })
+    }
+  }, [selection])
+
   // Dot position. When the user has a selection, the dot rides the
   // curve at the continuous x. Otherwise it sits at the last data
   // point as before.
