@@ -319,3 +319,35 @@
   background: var(--color-border);
   margin: 0 auto var(--space-2);
 }
+
+/* Wizard back chevron — rendered at the top-left of .auth-main when
+   AuthLayout receives an onBack prop. Small, low-contrast, doesn't
+   compete with the hero title. */
+.auth-back {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  transition: color var(--duration-fast) var(--ease-out-expo);
+}
+.auth-back:hover,
+.auth-back:focus-visible {
+  color: var(--color-text-primary);
+}
+
+/* Ensure .auth-main is the positioning context so .auth-back can pin to
+   its top-left corner. Layout otherwise unchanged. */
+.auth-main {
+  position: relative;
+}
