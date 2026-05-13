@@ -1,7 +1,7 @@
 'use client'
 
 import { useIntl } from 'react-intl'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { TrendingDown, TrendingUp } from 'lucide-react'
 import { useBusiness } from '@/contexts/business-context'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -211,7 +211,40 @@ interface SparklineProps {
  *   - A "you are here" disc at the last data point with a paper ring
  *     for separation from the area gradient.
  */
-function Sparkline({ line, area, lastPoint, hasData, emptyLabel }: SparklineProps) {
+function Sparkline({
+  line,
+  area,
+  lastPoint,
+  hasData,
+  emptyLabel,
+  dailyRevenue,
+  samples,
+  formatCurrency,
+  formatDayLabel,
+}: SparklineProps) {
+  // Continuous x ratio (0..1) for the dot; snapped index for the chip.
+  const [selection, setSelection] = useState<{
+    x: number
+    index: number
+  } | null>(null)
+
+  // Ref to the .home-trend__sparkline-wrap div — used for
+  // getBoundingClientRect and the dismiss-on-tap-outside check.
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
+
+  // True while a pointer capture is active. The dismiss listener gates
+  // on this so a mid-drag scroll event doesn't dismiss our own selection.
+  const activeDragRef = useRef(false)
+
+  // Pending gesture start point — set on pointerdown, consumed on
+  // pointermove once the threshold is met (or on pointerup if not).
+  const gestureStartRef = useRef<{
+    pointerId: number
+    x0: number
+    y0: number
+    rect: DOMRect
+  } | null>(null)
+
   if (!hasData) {
     return (
       <div className="home-trend__sparkline-empty">
