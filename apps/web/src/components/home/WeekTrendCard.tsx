@@ -332,20 +332,14 @@ function Sparkline({
 
     document.addEventListener('pointerdown', onDocDown)
 
-    // Primary: Ionic emits a bubbling `ionScroll` CustomEvent on the
-    // <ion-content> element whose inner scroller is scrolling. Listen
-    // on the nearest one in the ancestry.
-    const ionContent = wrapperRef.current?.closest('ion-content')
-    ionContent?.addEventListener('ionScroll', onScroll)
-
-    // Fallback: capture-phase document `scroll` catches native scroll
-    // dispatched on any descendant (scroll doesn't bubble, but it
-    // dispatches through the capture phase to ancestors of the target).
+    // Capture-phase document `scroll` catches native scroll dispatched
+    // on any descendant. `scroll` doesn't bubble, but it dispatches
+    // through the capture phase to ancestors of the target — including
+    // Ionic's inner-scroll element.
     document.addEventListener('scroll', onScroll, { capture: true, passive: true })
 
     return () => {
       document.removeEventListener('pointerdown', onDocDown)
-      ionContent?.removeEventListener('ionScroll', onScroll)
       document.removeEventListener('scroll', onScroll, { capture: true })
     }
   }, [selection])
