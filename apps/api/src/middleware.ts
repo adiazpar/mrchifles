@@ -1,113 +1,90 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getTokenFromRequest, verifyToken } from '@/lib/auth-edge'
 
 /**
- * Middleware for Kasero
+ * Edge middleware — lightweight gate before page navigations.
  *
- * Protects dashboard routes - redirects to login if not authenticated.
- * Public routes (login, register, etc.) are accessible without auth.
+ * Session verification is delegated to `auth.api.getSession()` at the
+ * route handler / page level. Edge runtime can't reach the database
+ * (libsql + Drizzle adapter both need Node APIs), so the most this
+ * middleware can do is confirm that the better-auth session cookie is
+ * present and redirect to /login when it isn't.
  *
- * Route patterns:
- * - / - Hub page (authenticated, picks business)
- * - /[businessId]/* - Business-scoped routes
- * - /account - User-level settings
- * - /join - Join business with invite code (authenticated)
- * - /login, /register - Public auth routes
+ * Risk model: a present-but-revoked cookie reaches the page, then the
+ * page's `getSession()` returns null, and the handler issues its own
+ * 401 / redirect. The middleware just keeps unauthenticated traffic
+ * from spending a Lambda invocation to find that out.
+ *
+ * Cookie names this middleware accepts:
+ *   - "kasero.session_token"            (dev / non-secure)
+ *   - "__Secure-kasero.session_token"   (production, useSecureCookies)
+ *
+ * Anything more elaborate (signature check, DB lookup, refresh) has to
+ * happen off the edge.
  */
 
-// Page routes that don't require authentication.
-// API routes are excluded from middleware entirely (shouldSkip handles
-// them), so they don't need to be listed here.
 const publicPaths = [
   '/login',
   '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/two-factor-challenge',
 ]
 
-// Check if path is public
 function isPublicPath(pathname: string): boolean {
-  return publicPaths.some(path => pathname.startsWith(path))
+  return publicPaths.some(p => pathname === p || pathname.startsWith(`${p}/`))
 }
 
-// Check if path is a static asset or API
 function shouldSkip(pathname: string): boolean {
   return (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/') ||
-    pathname.includes('.') // Static files (favicon.ico, etc.)
+    pathname.includes('.')
   )
 }
 
-// Validate businessId format (nanoid pattern - 21 chars alphanumeric with - and _)
-function isValidBusinessId(id: string): boolean {
-  // nanoid default: 21 chars, A-Za-z0-9_-
-  return /^[A-Za-z0-9_-]{21}$/.test(id)
+const BUSINESS_ID_RE = /^[A-Za-z0-9_-]{21}$/
+
+const SESSION_COOKIE_RE = /(?:^|;\s*)(?:__Secure-)?kasero\.session_token=[^;\s]+/
+
+function hasSessionCookie(request: NextRequest): boolean {
+  const header = request.headers.get('cookie')
+  if (!header) return false
+  return SESSION_COOKIE_RE.test(header)
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip static assets and ALL API routes. Each API route handles its
-  // own auth via getCurrentUser() and returns proper JSON errors -- the
-  // middleware's HTML redirect would break them.
-  if (shouldSkip(pathname)) {
-    return NextResponse.next()
-  }
+  if (shouldSkip(pathname)) return NextResponse.next()
+  if (isPublicPath(pathname)) return NextResponse.next()
 
-  // Allow public paths
-  if (isPublicPath(pathname)) {
-    return NextResponse.next()
-  }
-
-  // Check for auth token
-  const token = getTokenFromRequest(request)
-
-  if (!token) {
-    // No token - redirect to login
+  if (!hasSessionCookie(request)) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // Verify token
-  const payload = await verifyToken(token)
-
-  if (!payload) {
-    // Invalid token - redirect to login
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
-  }
-
-  // For business-scoped routes, validate businessId format
-  // The actual access validation happens in BusinessContext
+  // Defense in depth for /<businessId>/* page routes: reject obviously
+  // malformed business id segments (e.g. a 1MB path) before the page
+  // handler bothers querying the DB. The full membership check still
+  // runs server-side in withBusinessAuth.
   const segments = pathname.split('/').filter(Boolean)
   if (segments.length > 0) {
-    const potentialBusinessId = segments[0]
-    // Check if this looks like a business route (not a known route like 'account', 'business')
-    const knownRoutes = ['account', 'business', 'login', 'register', 'join']
-    if (!knownRoutes.includes(potentialBusinessId)) {
-      // This might be a business ID route - validate format
-      if (!isValidBusinessId(potentialBusinessId)) {
-        // Invalid businessId format - redirect to hub
-        return NextResponse.redirect(new URL('/', request.url))
-      }
+    const first = segments[0]
+    const knownRoutes = ['account', 'business', 'login', 'register', 'join', 'forgot-password', 'reset-password', 'verify-email', 'two-factor-challenge']
+    if (!knownRoutes.includes(first) && !BUSINESS_ID_RE.test(first)) {
+      return NextResponse.redirect(new URL('/', request.url))
     }
   }
 
-  // Token is valid - allow request
   return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (icons, manifest, etc.)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|icons|manifest.json|animations).*)',
+    // Anything not /api/*, not /_next/*, not a static asset.
+    '/((?!api/|_next/|.*\\.).*)',
   ],
 }
