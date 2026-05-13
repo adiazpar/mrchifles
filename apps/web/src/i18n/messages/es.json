@@ -1092,7 +1092,6 @@
   "home.trend_delta_down": "{percent}% frente a la semana pasada",
   "home.trend_earned": "{amount} ingresado",
   "home.trend_spent": "{amount} gastado",
-  "home.trend_empty": "Sin ventas esta semana todavía",
   "home.row_overdue": "Atrasados",
   "home.row_overdue_count": "{count, plural, one {# pedido} other {# pedidos}}",
   "sales.title": "Ventas",

@@ -451,7 +451,6 @@ export type MessageId =
   | 'home.trend_delta_down'
   | 'home.trend_delta_up'
   | 'home.trend_earned'
-  | 'home.trend_empty'
   | 'home.trend_eyebrow'
   | 'home.trend_spent'
   | 'hub.action_create_desc'

@@ -1092,7 +1092,6 @@
   "home.trend_delta_down": "{percent}% vs last week",
   "home.trend_earned": "{amount} earned",
   "home.trend_spent": "{amount} spent",
-  "home.trend_empty": "No sales this week yet",
   "home.row_overdue": "Overdue",
   "home.row_overdue_count": "{count, plural, one {# order} other {# orders}}",
   "sales.title": "Sales",

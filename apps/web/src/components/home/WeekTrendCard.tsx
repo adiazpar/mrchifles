@@ -94,7 +94,6 @@ export function WeekTrendCard({
     () => (dailyRevenue ? dailyRevenue.map((d) => d.total) : []),
     [dailyRevenue],
   )
-  const hasAnyValue = values.some((v) => v > 0)
   const { line, area, lastPoint, samples } = useMemo(
     () => computeSparklinePath(values),
     [values],
@@ -136,8 +135,6 @@ export function WeekTrendCard({
           line={line}
           area={area}
           lastPoint={lastPoint}
-          hasData={hasAnyValue}
-          emptyLabel={intl.formatMessage({ id: 'home.trend_empty' })}
           dailyRevenue={dailyRevenue ?? []}
           samples={samples}
           formatCurrency={formatCurrency}
@@ -184,8 +181,6 @@ interface SparklineProps {
   line: string
   area: string
   lastPoint: { x: number; y: number } | null
-  hasData: boolean
-  emptyLabel: string
   /** Per-day rows for the scrub chip. Same array passed to the card. */
   dailyRevenue: { date: string; total: number }[]
   /** Curve samples in viewBox space for pointer-x → curve-y lookup. */
@@ -202,12 +197,11 @@ interface SparklineProps {
  * would be ceremony, not separation.
  *
  * Renders:
- *   - A flat baseline rule when there's no data (preserves the card
- *     height so layout doesn't jump when the week is empty) plus an
- *     inline empty-state label.
  *   - The area fill (paint order matters — drawn first so the line and
  *     dot sit on top).
- *   - The smoothed curve.
+ *   - The smoothed curve. A week with zero sales collapses to a flat
+ *     line at the baseline so the card reads as "zero everywhere"
+ *     rather than ambiguously centered.
  *   - A "you are here" disc at the last data point with a paper ring
  *     for separation from the area gradient.
  */
@@ -215,8 +209,6 @@ function Sparkline({
   line,
   area,
   lastPoint,
-  hasData,
-  emptyLabel,
   dailyRevenue,
   samples,
   formatCurrency,
@@ -359,23 +351,6 @@ function Sparkline({
     return null
   })()
 
-  if (!hasData) {
-    return (
-      <div className="home-trend__sparkline-empty">
-        <svg
-          className="home-trend__sparkline"
-          viewBox="0 0 100 32"
-          preserveAspectRatio="none"
-          role="img"
-          aria-hidden="true"
-        >
-          <line x1="0" y1="28" x2="100" y2="28" className="home-trend__sparkline-axis" />
-        </svg>
-        <span className="home-trend__sparkline-empty-label">{emptyLabel}</span>
-      </div>
-    )
-  }
-
   return (
     <div
       className="home-trend__sparkline-wrap"
@@ -486,8 +461,9 @@ interface SparklineGeometry {
  *   - Baseline is always min=0 so a flat-zero day reads as the bottom
  *     of the chart, not the middle (which would look like a negative
  *     trend).
- *   - When max=0 we collapse to a centered flat line; the parent
- *     component renders the empty-state label instead.
+ *   - When max=0 (a week with no sales) we collapse to a flat line
+ *     at the baseline so the card reads as "zero everywhere" rather
+ *     than ambiguously centered.
  */
 function computeSparklinePath(
   values: number[],
@@ -507,7 +483,7 @@ function computeSparklinePath(
   const points = values.map((v, i) => {
     const x = i * xStep
     const y =
-      max > min ? padY + (1 - (v - min) / (max - min)) * usableH : height / 2
+      max > min ? padY + (1 - (v - min) / (max - min)) * usableH : padY + usableH
     return { x, y }
   })
 

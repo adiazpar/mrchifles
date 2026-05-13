@@ -1092,7 +1092,6 @@
   "home.trend_delta_down": "{percent}% (先週比)",
   "home.trend_earned": "売上 {amount}",
   "home.trend_spent": "支出 {amount}",
-  "home.trend_empty": "今週の売上はまだありません",
   "home.row_overdue": "期限超過",
   "home.row_overdue_count": "{count, plural, other {# 件}}",
   "sales.title": "売上",
