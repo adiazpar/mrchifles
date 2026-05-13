@@ -1,5 +1,6 @@
-// Global test setup. Add jest-dom matchers, MSW server, etc., here as needed.
+// Global test setup. Adds jest-dom matchers, MSW server, etc., here as needed.
 
+import '@testing-library/jest-dom/vitest'
 import { vi } from 'vitest'
 import React from 'react'
 

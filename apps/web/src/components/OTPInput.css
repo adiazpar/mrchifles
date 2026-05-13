@@ -1,0 +1,76 @@
+/* OTP code entry — six tabular digit cells with a Modern-Mercantile
+   warm paper background and a terracotta focus ring. Mono font and
+   tabular figures keep digits centered and identically wide so the
+   row visually reads as a single coded line. */
+
+.otp-input {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+  align-items: center;
+}
+
+.otp-input input {
+  width: 48px;
+  height: 56px;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  caret-color: var(--color-brand);
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color var(--duration-fast) var(--ease-out-expo),
+    box-shadow var(--duration-fast) var(--ease-out-expo),
+    background-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.otp-input input:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+}
+
+.otp-input input:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--glow-strong);
+  background: var(--color-bg-elevated);
+}
+
+.otp-input input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error state — keep terracotta as the brand cue, oxblood as the error
+   cue. The shake is short and modest so the layout doesn't bounce. */
+.otp-input--error input {
+  border-color: var(--color-error);
+}
+
+.otp-input--error input:focus {
+  box-shadow: 0 0 0 3px var(--color-error-subtle);
+}
+
+.otp-input--error {
+  animation: otp-input-shake 220ms var(--ease-out-expo);
+}
+
+@keyframes otp-input-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .otp-input--error {
+    animation: none;
+  }
+  .otp-input input {
+    transition: none;
+  }
+}
