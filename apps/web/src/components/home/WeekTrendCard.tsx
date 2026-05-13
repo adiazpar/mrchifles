@@ -352,3 +352,34 @@ function computeSparklinePath(
 function round(n: number): number {
   return Math.round(n * 100) / 100
 }
+
+/**
+ * Look up the bezier curve's y at a given viewBox x. Samples must be
+ * sorted by x ascending (which they are by construction in
+ * computeSparklinePath). Returns 0 for an empty samples array and
+ * clamps to the first/last sample's y outside the sampled range.
+ */
+function lookupSampleY(
+  samples: { x: number; y: number }[],
+  xViewBox: number,
+): number {
+  if (samples.length === 0) return 0
+  if (xViewBox <= samples[0]!.x) return samples[0]!.y
+  const last = samples[samples.length - 1]!
+  if (xViewBox >= last.x) return last.y
+  // Binary search for the segment that contains xViewBox.
+  let lo = 0
+  let hi = samples.length - 1
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >>> 1
+    if (samples[mid]!.x <= xViewBox) lo = mid
+    else hi = mid
+  }
+  const a = samples[lo]!
+  const b = samples[hi]!
+  // Linear interpolate between the two nearest samples. With ~32
+  // samples per segment the spacing is small enough that a linear
+  // interp visually matches the curve.
+  const t = (xViewBox - a.x) / (b.x - a.x)
+  return a.y + (b.y - a.y) * t
+}
