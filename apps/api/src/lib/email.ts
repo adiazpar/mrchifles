@@ -32,6 +32,15 @@ const TEST_OTP_STORE: Map<string, string> | null =
     ? new Map<string, string>()
     : null
 
+// Test-mode reset-token store. Captures the password-reset token out of
+// the URL before the Resend send call so Playwright can navigate to the
+// reset page directly without scraping a real inbox. Same gating as
+// TEST_OTP_STORE: never enabled in production.
+const TEST_RESET_STORE: Map<string, string> | null =
+  process.env.ALLOW_TEST_ENDPOINTS === 'true' && process.env.NODE_ENV !== 'production'
+    ? new Map<string, string>()
+    : null
+
 export interface SendVerificationEmailArgs {
   email: string
   otp: string
@@ -65,6 +74,10 @@ export async function sendVerificationEmail({ email, otp, language }: SendVerifi
       email,
       error: err instanceof Error ? err.message : 'unknown',
     })
+    // In test mode the OTP has already been captured into TEST_OTP_STORE
+    // before this Resend call. Swallowing the error lets Playwright's
+    // signup flow proceed without a real Resend API key.
+    if (TEST_OTP_STORE) return
     throw err
   }
 }
@@ -76,6 +89,17 @@ export interface SendResetPasswordEmailArgs {
 }
 
 export async function sendResetPasswordEmail({ email, url, language }: SendResetPasswordEmailArgs): Promise<void> {
+  if (TEST_RESET_STORE) {
+    // Pull the token out of the URL so Playwright can navigate to the
+    // reset page directly without scraping a real inbox.
+    try {
+      const u = new URL(url)
+      const token = u.searchParams.get('token')
+      if (token) TEST_RESET_STORE.set(email.toLowerCase(), token)
+    } catch {
+      // Ignore parse failure.
+    }
+  }
   const intl = getMessages((language ?? 'en-US') as SupportedLocale)
   const from = process.env.EMAIL_FROM ?? DEFAULT_FROM
   try {
@@ -102,6 +126,10 @@ export async function sendResetPasswordEmail({ email, url, language }: SendReset
       hasUrl: Boolean(url),
       error: err instanceof Error ? err.message : 'unknown',
     })
+    // In test mode the reset token has already been captured into
+    // TEST_RESET_STORE above. Swallowing the error lets Playwright's
+    // forgot-password flow proceed without a real Resend API key.
+    if (TEST_RESET_STORE) return
     throw err
   }
 }
@@ -113,4 +141,13 @@ export async function sendResetPasswordEmail({ email, url, language }: SendReset
  */
 export function _getTestOtp(email: string): string | undefined {
   return TEST_OTP_STORE?.get(email.toLowerCase())
+}
+
+/**
+ * Test-only helper. Returns the most recent password-reset token captured
+ * for an email, or undefined. Returns undefined unconditionally when
+ * ALLOW_TEST_ENDPOINTS is not enabled.
+ */
+export function _getTestResetToken(email: string): string | undefined {
+  return TEST_RESET_STORE?.get(email.toLowerCase())
 }
