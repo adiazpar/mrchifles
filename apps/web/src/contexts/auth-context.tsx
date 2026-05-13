@@ -16,6 +16,7 @@ import { fetchDeduped } from '@/lib/fetch'
 import type { SupportedLocale } from '@/i18n/config'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { ApiError, apiPost, apiPatch } from '@/lib/api-client'
+import type { ApiMessageCode } from '@kasero/shared/api-messages'
 import { clearKaseroLocalStorage } from '@/hooks/useSessionCache'
 import {
   LANGUAGE_CHANGE_EVENT,
@@ -35,7 +36,14 @@ interface AuthContextType {
 
   // Auth methods
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>
+  register: (
+    email: string,
+    password: string,
+    name: string,
+  ) => Promise<
+    | { success: true }
+    | { success: false; error: string; messageCode?: ApiMessageCode }
+  >
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
   changeLanguage: (language: SupportedLocale) => Promise<{ success: boolean; error?: string }>
@@ -232,7 +240,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [tAuth, translateApiMessage])
 
-  const register = useCallback(async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
+  const register = useCallback(async (
+    email: string,
+    password: string,
+    name: string,
+  ): Promise<
+    | { success: true }
+    | { success: false; error: string; messageCode?: ApiMessageCode }
+  > => {
     try {
       const data = await apiPost<{ user: User }>('/api/auth/register', { email, password, name })
 
@@ -265,11 +280,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const error = err.envelope
           ? translateApiMessage(err.envelope)
           : translateApiMessage({ messageCode: 'AUTH_REGISTER_FAILED' })
-        return { success: false, error }
+        return {
+          success: false,
+          error,
+          messageCode: err.envelope?.messageCode as ApiMessageCode | undefined,
+        }
       }
-      return { success: false, error: tAuth.formatMessage({
-        id: 'auth.connection_error'
-      }) };
+      return {
+        success: false,
+        error: tAuth.formatMessage({ id: 'auth.connection_error' }),
+      }
     }
   }, [tAuth, translateApiMessage])
 
