@@ -351,3 +351,33 @@
 .auth-main {
   position: relative;
 }
+
+/* ===== Register wizard step transitions =====
+   Each step's hero / field / footer wraps in .auth-step-item with one of
+   the position modifiers so they settle in turn on each step mount. The
+   step root re-mounts via React's key={current} on the wrapper around
+   the step components, so animation-fill-mode: both guarantees the
+   element holds the from-state until its delay elapses. */
+@keyframes auth-step-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.auth-step-item {
+  animation: auth-step-fade-in var(--duration-normal) var(--ease-out-back) both;
+}
+.auth-step-item--head   { animation-delay:   0ms; }
+.auth-step-item--field  { animation-delay:  60ms; }
+.auth-step-item--footer { animation-delay: 120ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-step-item {
+    animation: none;
+  }
+}
