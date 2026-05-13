@@ -66,16 +66,19 @@ function RegisterHeader() {
   )
 }
 
-// Wrapper is keyed on the active step so React unmounts the previous
-// subtree and remounts the new one — the .auth-step-item children's
-// fade-in keyframes fire on each fresh mount.
+// Each step is a distinct component, so React unmounts the previous step
+// and mounts the new one on every transition — the .auth-step-item
+// children's fade-in keyframes fire on each fresh mount. Rendering a
+// fragment (not a wrapping div) keeps .auth-container as the direct
+// child of IonContent, preserving the min-height:100% chain that pins
+// the footer to the bottom.
 function CurrentStep() {
   const { current } = useRegisterNav()
   return (
-    <div key={current}>
+    <>
       {current === 'name' && <NameStep />}
       {current === 'email' && <EmailStep />}
       {current === 'password' && <PasswordStep />}
-    </div>
+    </>
   )
 }
