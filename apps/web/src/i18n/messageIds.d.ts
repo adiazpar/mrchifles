@@ -1681,6 +1681,15 @@ export type MessageId =
   | 'ui.user_menu.open'
   | 'ui.user_menu.support'
   | 'ui.user_menu.title'
+  | 'verify_email_instruction'
+  | 'verify_email_resend'
+  | 'verify_email_resend_cooldown'
+  | 'verify_email_title'
+  | 'verify_error_expired_otp'
+  | 'verify_error_generic'
+  | 'verify_error_invalid_otp'
+  | 'verify_error_resend'
+  | 'verify_error_too_many_attempts'
 
 declare global {
   namespace FormatjsIntl {

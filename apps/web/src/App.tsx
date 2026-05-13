@@ -12,6 +12,7 @@ import { AppIntlProvider } from '@/i18n/AppIntlProvider'
 import { AuthenticatedShell } from '@/routes/AuthenticatedShell'
 import { LoginPage } from '@/routes/LoginPage'
 import { RegisterPage } from '@/routes/RegisterPage'
+import { VerifyEmail } from '@/routes/VerifyEmail'
 
 // Provider order:
 //   - IonReactRouter wraps everything: AuthContext calls useRouter() (via the
@@ -43,6 +44,9 @@ export function App() {
                   </Route>
                   <Route exact path="/register">
                     <RegisterPage />
+                  </Route>
+                  <Route exact path="/verify-email">
+                    <VerifyEmail />
                   </Route>
                   <Route>
                     <AuthenticatedShell />

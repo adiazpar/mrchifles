@@ -1676,5 +1676,14 @@
   "email_reset_cta": "Restablecer contraseña",
   "email_reset_expires": "Este enlace caduca en 60 minutos.",
   "email_reset_ignore": "Si no solicitó esto, puede ignorar este correo.",
-  "email_footer_signature": "Kasero — gestione su negocio de forma sencilla."
+  "email_footer_signature": "Kasero — gestione su negocio de forma sencilla.",
+  "verify_email_title": "Verifique su correo",
+  "verify_email_instruction": "Le enviamos un código de 6 dígitos a {email}. Ingréselo para continuar.",
+  "verify_email_resend": "Enviar un código nuevo",
+  "verify_email_resend_cooldown": "Enviar un código nuevo en {seconds}s",
+  "verify_error_generic": "No pudimos verificar el código. Inténtelo de nuevo.",
+  "verify_error_invalid_otp": "El código no es correcto. Revise el correo e inténtelo de nuevo.",
+  "verify_error_expired_otp": "El código expiró. Solicite uno nuevo.",
+  "verify_error_too_many_attempts": "Demasiados intentos. Solicite un código nuevo.",
+  "verify_error_resend": "No pudimos enviar un código nuevo. Inténtelo en un momento."
 }

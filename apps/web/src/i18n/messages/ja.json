@@ -1676,5 +1676,14 @@
   "email_reset_cta": "パスワードをリセット",
   "email_reset_expires": "このリンクは60分で有効期限が切れます。",
   "email_reset_ignore": "このメールに心当たりがない場合は、無視していただいて問題ありません。",
-  "email_footer_signature": "Kasero — 業務をシンプルに管理。"
+  "email_footer_signature": "Kasero — 業務をシンプルに管理。",
+  "verify_email_title": "メールアドレスを確認",
+  "verify_email_instruction": "{email} に6桁のコードを送信しました。下に入力してください。",
+  "verify_email_resend": "新しいコードを送信",
+  "verify_email_resend_cooldown": "{seconds}秒後に新しいコードを送信できます",
+  "verify_error_generic": "コードを確認できませんでした。もう一度お試しください。",
+  "verify_error_invalid_otp": "コードが正しくありません。メールを確認してもう一度お試しください。",
+  "verify_error_expired_otp": "コードの有効期限が切れました。新しいコードを取得してください。",
+  "verify_error_too_many_attempts": "試行回数が多すぎます。新しいコードを取得してください。",
+  "verify_error_resend": "新しいコードを送信できませんでした。しばらくしてからお試しください。"
 }

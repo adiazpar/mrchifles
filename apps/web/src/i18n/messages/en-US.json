@@ -1676,5 +1676,14 @@
   "email_reset_cta": "Reset password",
   "email_reset_expires": "This link expires in 60 minutes.",
   "email_reset_ignore": "If you didn't request this, you can safely ignore this email.",
-  "email_footer_signature": "Kasero — manage your business simply."
+  "email_footer_signature": "Kasero — manage your business simply.",
+  "verify_email_title": "Verify your email",
+  "verify_email_instruction": "We sent a 6-digit code to {email}. Enter it below to continue.",
+  "verify_email_resend": "Send a new code",
+  "verify_email_resend_cooldown": "Send a new code in {seconds}s",
+  "verify_error_generic": "Couldn't verify the code. Try again.",
+  "verify_error_invalid_otp": "That code isn't right. Check the email and try again.",
+  "verify_error_expired_otp": "The code expired. Request a new one.",
+  "verify_error_too_many_attempts": "Too many attempts. Request a new code.",
+  "verify_error_resend": "Couldn't send a new code. Try again in a moment."
 }
