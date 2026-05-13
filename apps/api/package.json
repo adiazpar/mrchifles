@@ -15,6 +15,8 @@
     "db:studio": "npx drizzle-kit studio",
     "i18n:translate": "tsx scripts/i18n-translate.ts",
     "splash:generate": "node scripts/generate-ios-splash.mjs",
+    "auth:migrate": "TURSO_DATABASE_URL=${TURSO_DATABASE_URL:-file:./data/local.db} tsx scripts/run-auth-backfill.ts",
+    "auth:migrate:prod": "tsx scripts/run-auth-backfill.ts",
     "test": "vitest",
     "test:run": "vitest run"
   },
