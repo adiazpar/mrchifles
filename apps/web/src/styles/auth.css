@@ -42,13 +42,13 @@
   box-shadow: 0 0 0 3px var(--color-brand-subtle);
 }
 
-/* ===== Main slot — hero + form, vertically centered ===== */
+/* ===== Main slot — hero + form, anchored to the top ===== */
 .auth-main {
   position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--space-5);
   width: 100%;
 }
