@@ -266,10 +266,12 @@
  * so it stays visually circular at every container size. */
 .home-trend__sparkline-wrap {
   position: relative;
-  /* Let the browser handle vertical scroll natively, but reserve
-   * horizontal pan for our JS handlers. Without this, iOS Safari
-   * fights the scrub with its own pan-x rubber-banding. */
-  touch-action: pan-y;
+  /* Reserve all touch gestures on the sparkline for our JS handlers.
+   * Using `none` (not `pan-y`) so a near-horizontal drag with a tiny
+   * vertical component doesn't bobble the page during a scrub. The
+   * card is a small strip — users can scroll the page by touching
+   * anywhere outside this wrapper. */
+  touch-action: none;
   /* Prevent the iOS callout / native text selection when the user
    * holds on the sparkline area. */
   user-select: none;
