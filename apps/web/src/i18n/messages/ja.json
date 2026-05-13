@@ -1658,5 +1658,7 @@
   "orders.confirm_edit_total_aria": "支払い合計を編集",
   "orders.confirm_edit_details_aria": "仕入先・到着日・レシートを編集",
   "orders.edit_items_hero_title": "<em>明細</em>を調整",
-  "orders.edit_items_hero_subtitle": "数量を変更したり、項目を削除できます。発注後に新しい商品は追加できません。"
+  "orders.edit_items_hero_subtitle": "数量を変更したり、項目を削除できます。発注後に新しい商品は追加できません。",
+  "email_verify_subject": "Kaseroのメールアドレスを確認してください",
+  "email_verify_body": "認証コードは {code} です。10分で有効期限が切れます。"
 }

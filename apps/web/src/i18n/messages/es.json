@@ -1658,5 +1658,7 @@
   "orders.confirm_edit_total_aria": "Editar total pagado",
   "orders.confirm_edit_details_aria": "Editar proveedor, llegada y recibo",
   "orders.edit_items_hero_title": "Ajusta las <em>líneas</em>",
-  "orders.edit_items_hero_subtitle": "Cambia cantidades o quita artículos. No se pueden agregar productos nuevos una vez creada la orden."
+  "orders.edit_items_hero_subtitle": "Cambia cantidades o quita artículos. No se pueden agregar productos nuevos una vez creada la orden.",
+  "email_verify_subject": "Verifique su correo de Kasero",
+  "email_verify_body": "Su código de verificación es {code}. Caduca en 10 minutos."
 }

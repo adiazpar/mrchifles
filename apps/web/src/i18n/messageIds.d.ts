@@ -433,6 +433,8 @@ export type MessageId =
   | 'createBusiness.type_subtitle'
   | 'createBusiness.type_title'
   | 'createBusiness.type_title_emphasis'
+  | 'email_verify_body'
+  | 'email_verify_subject'
   | 'home.delta_down'
   | 'home.delta_up'
   | 'home.manage_tile_description_employee'
