@@ -1,3 +1,5 @@
+import { IonIcon } from '@ionic/react'
+import { eye, eyeOff } from 'ionicons/icons'
 import { forwardRef, useState } from 'react'
 import type { InputHTMLAttributes, ReactNode } from 'react'
 import { useIntl } from 'react-intl'
@@ -45,7 +47,7 @@ export const AuthField = forwardRef<HTMLInputElement, AuthFieldProps>(
         })}
         onClick={() => setRevealed((v) => !v)}
       >
-        {revealed ? '\u{1F441}\u{FE0E}' : '\u{1F441}'}
+        <IonIcon icon={revealed ? eyeOff : eye} />
       </button>
     ) : null
 
