@@ -1,35 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import bcrypt from 'bcryptjs'
-import { isBcryptHash, verifyPassword, hashPassword } from './password-hash'
+import { verifyPassword, hashPassword } from './password-hash'
 
-describe('password-hash', () => {
-  it('identifies bcrypt hashes', async () => {
-    const hash = await bcrypt.hash('test', 4)
-    expect(isBcryptHash(hash)).toBe(true)
-  })
-
-  it('does not identify scrypt hashes as bcrypt', () => {
-    const fakeScrypt = 'scrypt:a1b2:c3d4'
-    expect(isBcryptHash(fakeScrypt)).toBe(false)
-  })
-
-  it('does not identify garbage as bcrypt', () => {
-    expect(isBcryptHash('')).toBe(false)
-    expect(isBcryptHash('garbage')).toBe(false)
-    expect(isBcryptHash('$3$invalid')).toBe(false)
-  })
-
-  it('verifies a bcrypt-hashed password', async () => {
-    const hash = await bcrypt.hash('correct', 4)
-    expect(await verifyPassword('correct', hash)).toBe(true)
-    expect(await verifyPassword('wrong', hash)).toBe(false)
-  })
-
-  it('hashPassword produces a scrypt hash by default', async () => {
+describe('password-hash (scrypt-only)', () => {
+  it('hashPassword produces a scrypt hash', async () => {
     const hash = await hashPassword('test')
-    expect(isBcryptHash(hash)).toBe(false)
     expect(hash.startsWith('scrypt:')).toBe(true)
-    // Format: scrypt:<saltHex>:<derivedHex>
     const parts = hash.split(':')
     expect(parts).toHaveLength(3)
     expect(parts[1]).toMatch(/^[0-9a-f]+$/)
@@ -48,12 +23,18 @@ describe('password-hash', () => {
     expect(await verifyPassword('anything', 'scrypt:onlyone')).toBe(false)
   })
 
+  it('verifyPassword returns false for legacy bcrypt hashes', async () => {
+    // After T30 bcrypt is unsupported. A historical $2-prefixed hash
+    // must fail to verify rather than throw.
+    const legacy = '$2b$10$abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmn'
+    expect(await verifyPassword('anything', legacy)).toBe(false)
+  })
+
   it('produces different scrypt hashes for the same password (random salt)', async () => {
-    const a = await hashPassword('same-password')
-    const b = await hashPassword('same-password')
+    const a = await hashPassword('same')
+    const b = await hashPassword('same')
     expect(a).not.toBe(b)
-    // But both verify
-    expect(await verifyPassword('same-password', a)).toBe(true)
-    expect(await verifyPassword('same-password', b)).toBe(true)
+    expect(await verifyPassword('same', a)).toBe(true)
+    expect(await verifyPassword('same', b)).toBe(true)
   })
 })

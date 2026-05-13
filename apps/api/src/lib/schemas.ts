@@ -54,10 +54,10 @@ export const Schemas = {
    * - At least one uppercase letter
    * - At least one number
    *
-   * The .max(128) cap matters for DoS, not policy: bcryptjs truncates
-   * at 72 bytes anyway, but the regex walks and the JSON parse cost
-   * scale linearly with input length. NIST SP 800-63B recommends a
-   * minimum of 64; 128 leaves comfortable headroom for passphrases.
+   * The .max(128) cap matters for DoS, not policy: scrypt KDF cost and
+   * the regex walks and JSON parse cost scale with input length. NIST
+   * SP 800-63B recommends a minimum of 64; 128 leaves comfortable
+   * headroom for passphrases.
    *
    * Min length raised from 8 to 10 to push entropy floor up without
    * hurting UX. A future hardening should also blocklist the top-1k
