@@ -3,28 +3,34 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { IntlProvider } from 'react-intl'
 import { IonApp } from '@ionic/react'
 import { MemoryRouter } from 'react-router-dom'
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import enUS from '../../../i18n/messages/en-US.json'
 import { RegisterNavProvider, useRegisterNav } from './RegisterNavContext'
 import { PasswordStep } from './PasswordStep'
 
-// Mock the auth + auth-gate contexts. Each test overrides the `register` and
-// `playEntry` implementations as needed via vi.mocked(...).mockReturnValue(...).
+// Mock the auth context. Each test overrides the `register` implementation
+// as needed via vi.mocked(...).mockReturnValue(...).
 vi.mock('@/contexts/auth-context', () => ({
   useAuth: vi.fn(() => ({ register: vi.fn() })),
 }))
-vi.mock('@/contexts/auth-gate-context', () => ({
-  useAuthGate: vi.fn(() => ({ playEntry: vi.fn().mockResolvedValue(undefined) })),
-}))
 
 import { useAuth } from '@/contexts/auth-context'
-import { useAuthGate } from '@/contexts/auth-gate-context'
 
 function Seed({ name, email }: { name: string; email: string }) {
   const nav = useRegisterNav()
   if (nav.name !== name) nav.setName(name)
   if (nav.email !== email) nav.setEmail(email)
   if (nav.current !== 'password') nav.goTo('password')
+  return null
+}
+
+// Captures the current wizard step so success-path tests can assert on the
+// transition into the verify step instead of relying on playEntry().
+function StepProbe({ onChange }: { onChange: (step: string) => void }) {
+  const nav = useRegisterNav()
+  useEffect(() => {
+    onChange(nav.current)
+  }, [nav.current, onChange])
   return null
 }
 
@@ -44,9 +50,6 @@ const wrap = (node: ReactNode) => (
 describe('PasswordStep', () => {
   beforeEach(() => {
     vi.mocked(useAuth).mockReturnValue({ register: vi.fn() } as never)
-    vi.mocked(useAuthGate).mockReturnValue({
-      playEntry: vi.fn().mockResolvedValue(undefined),
-    } as never)
   })
   afterEach(() => vi.restoreAllMocks())
 
@@ -66,18 +69,24 @@ describe('PasswordStep', () => {
     expect(btn().disabled).toBe(false)
   })
 
-  it('calls register and triggers entry animation on success', async () => {
+  it('calls register and advances to the verify step on success', async () => {
     const register = vi.fn().mockResolvedValue({ success: true })
-    const playEntry = vi.fn().mockResolvedValue(undefined)
     vi.mocked(useAuth).mockReturnValue({ register } as never)
-    vi.mocked(useAuthGate).mockReturnValue({ playEntry } as never)
 
-    render(wrap(<PasswordStep />))
+    const steps: string[] = []
+    render(
+      wrap(
+        <>
+          <StepProbe onChange={(s) => steps.push(s)} />
+          <PasswordStep />
+        </>,
+      ),
+    )
     fireEvent.change(screen.getByLabelText(/password/i, { selector: 'input' }), { target: { value: 'longenough' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
 
     await waitFor(() => expect(register).toHaveBeenCalledWith('a@b.co', 'longenough', 'Alex'))
-    await waitFor(() => expect(playEntry).toHaveBeenCalledWith('/'))
+    await waitFor(() => expect(steps.at(-1)).toBe('verify'))
   })
 
   it('shows Edit email link on AUTH_EMAIL_TAKEN race', async () => {

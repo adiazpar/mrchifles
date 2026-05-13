@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
-export type RegisterStep = 'name' | 'email' | 'password'
+export type RegisterStep = 'name' | 'email' | 'password' | 'verify'
 
 export interface RegisterNav {
   current: RegisterStep

@@ -18,6 +18,7 @@ import {
 import { NameStep } from '@/components/auth/register-steps/NameStep'
 import { EmailStep } from '@/components/auth/register-steps/EmailStep'
 import { PasswordStep } from '@/components/auth/register-steps/PasswordStep'
+import { VerifyStep } from '@/components/auth/register-steps/VerifyStep'
 
 export function RegisterPage() {
   return (
@@ -79,6 +80,7 @@ function CurrentStep() {
       {current === 'name' && <NameStep />}
       {current === 'email' && <EmailStep />}
       {current === 'password' && <PasswordStep />}
+      {current === 'verify' && <VerifyStep />}
     </>
   )
 }

@@ -7,14 +7,12 @@ import { AuthField } from '../AuthField'
 import { PasswordStrength } from '../PasswordStrength'
 import { APP_VERSION } from '@/lib/version'
 import { useAuth } from '@/contexts/auth-context'
-import { useAuthGate } from '@/contexts/auth-gate-context'
 import { useRegisterNav } from './RegisterNavContext'
 
 export function PasswordStep() {
   const intl = useIntl()
   const router = useRouter()
   const { register } = useAuth()
-  const { playEntry } = useAuthGate()
   const { name, email, password, setPassword, goTo } = useRegisterNav()
 
   const [error, setError] = useState<string | null>(null)
@@ -47,8 +45,10 @@ export function PasswordStep() {
       try {
         const result = await register(email, password, name)
         if (result.success) {
-          // Keep submitting=true; playEntry will navigate. Same pattern as LoginPage.
-          await playEntry('/')
+          // Account created — better-auth's emailOTP plugin has dispatched
+          // the verification code. Advance to the verify step; entry into
+          // the hub happens after the OTP is confirmed there.
+          goTo('verify')
           return
         }
         if (result.messageCode === 'AUTH_EMAIL_TAKEN') {
@@ -63,7 +63,7 @@ export function PasswordStep() {
         setSubmitting(false)
       }
     },
-    [canSubmit, register, email, password, name, playEntry, intl],
+    [canSubmit, register, email, password, name, goTo, intl],
   )
 
   const handleGoToLogin = useCallback(() => router.push('/login'), [router])
