@@ -389,6 +389,28 @@ function Sparkline({
           aria-hidden="true"
         />
       ) : null}
+      {selection && dailyRevenue[selection.index] ? (
+        <div
+          className="home-trend__sparkline-chip"
+          style={{
+            left: `${selection.x * 100}%`,
+            // 0..0.15 → snap left, 0.85..1 → snap right, else center.
+            // Thresholds keep a ~110px chip from clipping a ~320px-min card.
+            ['--chip-shift' as string]:
+              selection.x < 0.15 ? '0%' :
+              selection.x > 0.85 ? '-100%' :
+              '-50%',
+          }}
+          aria-hidden="true"
+        >
+          <span className="home-trend__sparkline-chip-day">
+            {formatDayLabel(dailyRevenue[selection.index]!.date)}
+          </span>
+          <span className="home-trend__sparkline-chip-amount">
+            {formatCurrency(dailyRevenue[selection.index]!.total)}
+          </span>
+        </div>
+      ) : null}
     </div>
   )
 }
