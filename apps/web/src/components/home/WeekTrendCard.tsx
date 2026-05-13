@@ -70,12 +70,35 @@ export function WeekTrendCard({
     }
   }, [business?.locale, dailyRevenue])
 
+  // Locale-aware day label for the scrub chip. Mirrors the eyebrow's
+  // uppercase + " · " convention (line ~60) so the two surfaces stay
+  // typographically consistent. Memo so we don't rebuild the formatter
+  // on every pointermove-driven re-render.
+  const formatDayLabel = useMemo(() => {
+    const locale = business?.locale ?? 'en-US'
+    const fmt = new Intl.DateTimeFormat(locale, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    })
+    return (isoDate: string) => {
+      try {
+        return fmt.format(new Date(isoDate)).toUpperCase().replace(', ', ' · ')
+      } catch {
+        return ''
+      }
+    }
+  }, [business?.locale])
+
   const values = useMemo(
     () => (dailyRevenue ? dailyRevenue.map((d) => d.total) : []),
     [dailyRevenue],
   )
   const hasAnyValue = values.some((v) => v > 0)
-  const { line, area, lastPoint } = useMemo(() => computeSparklinePath(values), [values])
+  const { line, area, lastPoint, samples } = useMemo(
+    () => computeSparklinePath(values),
+    [values],
+  )
 
   const showDelta =
     !isLoading &&
@@ -115,6 +138,10 @@ export function WeekTrendCard({
           lastPoint={lastPoint}
           hasData={hasAnyValue}
           emptyLabel={intl.formatMessage({ id: 'home.trend_empty' })}
+          dailyRevenue={dailyRevenue ?? []}
+          samples={samples}
+          formatCurrency={formatCurrency}
+          formatDayLabel={formatDayLabel}
         />
       )}
 
@@ -159,6 +186,14 @@ interface SparklineProps {
   lastPoint: { x: number; y: number } | null
   hasData: boolean
   emptyLabel: string
+  /** Per-day rows for the scrub chip. Same array passed to the card. */
+  dailyRevenue: { date: string; total: number }[]
+  /** Curve samples in viewBox space for pointer-x → curve-y lookup. */
+  samples: { x: number; y: number }[]
+  /** Locale-aware currency formatter (passed from useBusinessFormat). */
+  formatCurrency: (n: number) => string
+  /** Locale-aware day label, e.g. "WED · MAY 8". */
+  formatDayLabel: (isoDate: string) => string
 }
 
 /**
