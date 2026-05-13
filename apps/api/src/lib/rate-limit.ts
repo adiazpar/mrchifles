@@ -286,6 +286,14 @@ export const RateLimits = {
   /** Registration: 3 per hour. failClosed — registration spam is the
    * pre-step to credential stuffing and AI-cost abuse. */
   register: { limit: 3, windowSeconds: 60 * 60, failClosed: true },
+  /**
+   * Email availability check used by the registration wizard's step 2:
+   * 20 per minute per IP. Not failClosed — the security-critical limiter
+   * is `register` itself; this one is a UX accelerator. Falling open
+   * during an Upstash blip is acceptable because the final register call
+   * still rate-limits properly.
+   */
+  checkEmail: { limit: 20, windowSeconds: 60, failClosed: false },
   /** Code validation (invite, transfer): 10 per 15 minutes */
   codeValidation: { limit: 10, windowSeconds: 15 * 60 },
   /**
