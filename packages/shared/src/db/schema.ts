@@ -59,6 +59,67 @@ export const users = sqliteTable('users', {
 }))
 
 // ===========================================
+// AUTH SURFACE (better-auth managed tables)
+// ===========================================
+// These tables are owned by better-auth. better-auth opens/closes its own
+// transactions when reading/writing them; do not hand-write rows into these
+// tables outside of explicit data migrations.
+
+export const session = sqliteTable('session', {
+  id: text('id').primaryKey(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  token: text('token').notNull().unique(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  userIdIdx: index('idx_session_user_id').on(table.userId),
+  expiresIdx: index('idx_session_expires_at').on(table.expiresAt),
+}))
+
+export const account = sqliteTable('account', {
+  id: text('id').primaryKey(),
+  accountId: text('account_id').notNull(),
+  providerId: text('provider_id').notNull(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  idToken: text('id_token'),
+  accessTokenExpiresAt: integer('access_token_expires_at', { mode: 'timestamp' }),
+  refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp' }),
+  scope: text('scope'),
+  password: text('password'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  userIdIdx: index('idx_account_user_id').on(table.userId),
+  providerIdIdx: index('idx_account_provider').on(table.providerId, table.accountId),
+}))
+
+export const verification = sqliteTable('verification', {
+  id: text('id').primaryKey(),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  identifierIdx: index('idx_verification_identifier').on(table.identifier),
+  expiresIdx: index('idx_verification_expires_at').on(table.expiresAt),
+}))
+
+export const twoFactor = sqliteTable('two_factor', {
+  id: text('id').primaryKey(),
+  secret: text('secret').notNull(),
+  backupCodes: text('backup_codes').notNull(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+}, (table) => ({
+  userIdIdx: uniqueIndex('idx_two_factor_user_id').on(table.userId),
+}))
+
+// ===========================================
 // BUSINESS USERS (Multi-business membership)
 // ===========================================
 // Join table enabling users to belong to multiple businesses
