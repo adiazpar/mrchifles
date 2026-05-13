@@ -20,6 +20,14 @@ export const AuthField = forwardRef<HTMLInputElement, AuthFieldProps>(
   ) {
     const intl = useIntl()
     const [revealed, setRevealed] = useState(false)
+
+    if (import.meta.env.MODE !== 'production' && revealable && trailing) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        'AuthField: `revealable` and `trailing` both passed — `revealable` wins, `trailing` is ignored.',
+      )
+    }
+
     const inputId =
       id ?? `auth-field-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
     const inputClass = ['auth-field__input', className].filter(Boolean).join(' ')
@@ -30,7 +38,6 @@ export const AuthField = forwardRef<HTMLInputElement, AuthFieldProps>(
       <button
         type="button"
         className="auth-field__reveal"
-        aria-pressed={revealed}
         aria-label={intl.formatMessage({
           id: revealed
             ? 'auth.register_wizard.hide_password_aria'

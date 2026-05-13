@@ -32,4 +32,9 @@ describe('AuthField revealable', () => {
     fireEvent.click(screen.getByRole('button', { name: /hide password/i }))
     expect(input.type).toBe('password')
   })
+
+  it('does not render an eye toggle when revealable + type=text (only password gets the toggle)', () => {
+    render(wrap(<AuthField label="Email" type="text" revealable />))
+    expect(screen.queryByRole('button', { name: /show password/i })).toBeNull()
+  })
 })
