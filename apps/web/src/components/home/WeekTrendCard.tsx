@@ -245,6 +245,75 @@ function Sparkline({
     rect: DOMRect
   } | null>(null)
 
+  const SCRUB_THRESHOLD_PX = 6
+  const valuesCount = dailyRevenue.length
+
+  const commitSelection = (clientX: number, rect: DOMRect) => {
+    const xRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+    const index = Math.max(
+      0,
+      Math.min(valuesCount - 1, Math.round(xRatio * Math.max(valuesCount - 1, 1))),
+    )
+    setSelection({ x: xRatio, index })
+  }
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!e.isPrimary) return
+    if (valuesCount === 0) return
+    // Record the start; do NOT engage yet. We wait for movement that
+    // crosses the threshold so vertical page scroll keeps working when a
+    // user starts a vertical pull on the sparkline.
+    gestureStartRef.current = {
+      pointerId: e.pointerId,
+      x0: e.clientX,
+      y0: e.clientY,
+      rect: e.currentTarget.getBoundingClientRect(),
+    }
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (activeDragRef.current) {
+      // Already scrubbing — just update.
+      const rect = e.currentTarget.getBoundingClientRect()
+      commitSelection(e.clientX, rect)
+      return
+    }
+    const start = gestureStartRef.current
+    if (!start || start.pointerId !== e.pointerId) return
+    const dx = e.clientX - start.x0
+    const dy = e.clientY - start.y0
+    const absDx = Math.abs(dx)
+    const absDy = Math.abs(dy)
+    if (absDx < SCRUB_THRESHOLD_PX && absDy < SCRUB_THRESHOLD_PX) return
+    if (absDy > absDx) {
+      // Vertical-dominant — abandon, let page scroll happen.
+      gestureStartRef.current = null
+      return
+    }
+    // Horizontal-dominant past threshold — claim the gesture.
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      // Some browsers (rare) throw if the pointer is no longer active.
+    }
+    activeDragRef.current = true
+    commitSelection(e.clientX, start.rect)
+  }
+
+  const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (gestureStartRef.current?.pointerId === e.pointerId) {
+      gestureStartRef.current = null
+    }
+    if (!activeDragRef.current) return
+    activeDragRef.current = false
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      // Already released.
+    }
+    // Leave `selection` as-is — that's the sticky state.
+  }
+
   if (!hasData) {
     return (
       <div className="home-trend__sparkline-empty">
@@ -263,7 +332,14 @@ function Sparkline({
   }
 
   return (
-    <div className="home-trend__sparkline-wrap">
+    <div
+      className="home-trend__sparkline-wrap"
+      ref={wrapperRef}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
+    >
       <svg
         className="home-trend__sparkline"
         viewBox="0 0 100 32"
