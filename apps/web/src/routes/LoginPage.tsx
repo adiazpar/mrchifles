@@ -2,10 +2,12 @@ import { useIntl } from 'react-intl'
 import { useState, useCallback, useMemo } from 'react'
 import { IonPage, IonContent, IonButton, IonSpinner, IonHeader, IonToolbar, IonTitle } from '@ionic/react'
 import { BrandMark } from '@/components/auth/BrandMark'
+import { OAuthButtons } from '@/components/auth/OAuthButtons'
 import { useRouter, useSearchParams } from '@/lib/next-navigation-shim'
 import { AuthLayout, AuthField } from '@/components/auth'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
+import { authClient } from '@/lib/auth-client'
 import { APP_VERSION } from '@/lib/version'
 
 // Defense against open-redirect via the `?redirect=` query param.
@@ -40,6 +42,29 @@ export function LoginPage() {
       try {
         const result = await login(email, password)
 
+        if (result.requiresEmailVerification) {
+          // Auto-send a fresh OTP so the user lands on /verify-email with
+          // a code in their inbox. better-auth's emailVerification.sendOnSignIn
+          // already triggers this server-side, but firing client-side too
+          // is harmless (rate limiter is the source of truth) and makes the
+          // UX self-explanatory.
+          try {
+            await authClient.emailOtp.sendVerificationOtp({
+              email,
+              type: 'email-verification',
+            })
+          } catch {
+            // best-effort; verify page can also resend manually
+          }
+          router.push('/verify-email')
+          return
+        }
+
+        if (result.requires2FA) {
+          router.push('/two-factor-challenge')
+          return
+        }
+
         if (!result.success) {
           setError(result.error ?? '')
           setIsLoading(false)
@@ -56,7 +81,7 @@ export function LoginPage() {
         setIsLoading(false)
       }
     },
-    [email, password, redirect, login, playEntry, intl]
+    [email, password, redirect, login, playEntry, intl, router]
   )
 
   const handleGoToRegister = useCallback(() => {
@@ -129,6 +154,11 @@ export function LoginPage() {
           >
             {error && <div className="auth-error">{error}</div>}
 
+            <OAuthButtons callbackURL={redirect} disabled={isLoading} />
+            <div className="oauth-divider">
+              {intl.formatMessage({ id: 'oauth_or_divider' })}
+            </div>
+
             <AuthField
               label={intl.formatMessage({ id: 'auth.email_label' })}
               type="email"
@@ -149,7 +179,7 @@ export function LoginPage() {
             />
 
             <div className="auth-field-utility">
-              <button type="button">
+              <button type="button" onClick={() => router.push('/forgot-password')}>
                 {intl.formatMessage({ id: 'auth.forgot_password' })}
               </button>
             </div>
