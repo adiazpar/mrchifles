@@ -1,6 +1,5 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { ApiMessageCode } from '@kasero/shared/api-messages'
 
 export type RegisterStep = 'name' | 'email' | 'password'
 
@@ -17,15 +16,6 @@ export interface RegisterNav {
   password: string
   setPassword: (v: string) => void
 
-  // Submit-time state, owned by PasswordStep but readable elsewhere if needed.
-  submitError: string | null
-  setSubmitError: (v: string | null) => void
-
-  submitErrorCode: ApiMessageCode | null
-  setSubmitErrorCode: (v: ApiMessageCode | null) => void
-
-  isSubmitting: boolean
-  setIsSubmitting: (v: boolean) => void
 }
 
 const RegisterNavContext = createContext<RegisterNav | null>(null)
@@ -39,32 +29,18 @@ export function RegisterNavProvider({ children }: ProviderProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const [submitErrorCode, setSubmitErrorCode] = useState<ApiMessageCode | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
   const value = useMemo<RegisterNav>(
     () => ({
       current,
-      goTo: (step) => {
-        setSubmitError(null)
-        setSubmitErrorCode(null)
-        setCurrent(step)
-      },
+      goTo: (step) => setCurrent(step),
       name,
       setName,
       email,
       setEmail,
       password,
       setPassword,
-      submitError,
-      setSubmitError,
-      submitErrorCode,
-      setSubmitErrorCode,
-      isSubmitting,
-      setIsSubmitting,
     }),
-    [current, name, email, password, submitError, submitErrorCode, isSubmitting],
+    [current, name, email, password],
   )
 
   return <RegisterNavContext.Provider value={value}>{children}</RegisterNavContext.Provider>
