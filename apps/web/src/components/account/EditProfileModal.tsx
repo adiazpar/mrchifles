@@ -6,10 +6,12 @@ import { Camera, X, Trash2 } from 'lucide-react'
 import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { AuthField } from '@/components/auth'
+import { PhoneInput } from '@/components/PhoneInput'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
-import { ApiError, apiPatch } from '@/lib/api-client'
+import { ApiError } from '@/lib/api-client'
+import { authClient } from '@/lib/auth-client'
 import { fileToBase64, MAX_UPLOAD_SIZE } from '@/lib/storage-client'
 import { getUserInitials } from '@kasero/shared/auth'
 
@@ -26,6 +28,7 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
 
   const [name, setName] = useState(user?.name ?? '')
   const [avatar, setAvatar] = useState<string | null>(user?.avatar ?? null)
+  const [phone, setPhone] = useState<string | null>(user?.phoneNumber ?? null)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -38,6 +41,7 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
     if (user) {
       setName(user.name)
       setAvatar(user.avatar ?? null)
+      setPhone(user.phoneNumber ?? null)
     }
   }, [user])
 
@@ -57,7 +61,9 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
 
   const hasChanges =
     user !== null &&
-    (name.trim() !== user.name || (avatar ?? null) !== (user.avatar ?? null))
+    (name.trim() !== user.name ||
+      (avatar ?? null) !== (user.avatar ?? null) ||
+      (phone ?? null) !== (user.phoneNumber ?? null))
   const isValid = name.trim().length >= 2
 
   const handleFilePick = useCallback(
@@ -96,7 +102,21 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
     setIsSaving(true)
     setError('')
     try {
-      await apiPatch('/api/auth/profile', { name: name.trim(), avatar })
+      // better-auth's update-user endpoint maps `image` → `avatar` via the
+      // server-side `user.fields` config and handles the `phoneNumber`
+      // additionalField directly. Passing an empty string clears the stored
+      // value on the server (the schema treats it as a nullable field).
+      const result = await authClient.updateUser({
+        name: name.trim(),
+        image: avatar ?? '',
+        phoneNumber: phone ?? '',
+      })
+      if (result.error) {
+        setError(
+          result.error.message ?? intl.formatMessage({ id: 'common.error' }),
+        )
+        return
+      }
       await refreshUser()
       setStep('success')
     } catch (err) {
@@ -119,6 +139,7 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
     isSaving,
     name,
     avatar,
+    phone,
     refreshUser,
     translateApiMessage,
     intl,
@@ -272,6 +293,8 @@ export function EditProfileModal({ isOpen, onClose, onExitComplete }: EditProfil
                 {intl.formatMessage({ id: 'account.profile_email_locked_tag' })}
               </span>
             </div>
+
+            <PhoneInput value={phone} onChange={setPhone} />
           </div>
         </>
       )}

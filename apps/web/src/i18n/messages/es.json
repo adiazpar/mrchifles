@@ -1737,5 +1737,6 @@
   "profile_phone_label": "Número de teléfono (opcional)",
   "profile_phone_help": "Nunca lo compartimos. Será necesario más adelante si activa el inicio de sesión por SMS.",
   "profile_phone_country": "País",
-  "phone_invalid": "Ese número de teléfono no parece correcto."
+  "phone_invalid": "Ese número de teléfono no parece correcto.",
+  "profile_add_later": "Agregar más tarde"
 }

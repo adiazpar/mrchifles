@@ -1737,5 +1737,6 @@
   "profile_phone_label": "電話番号（任意）",
   "profile_phone_help": "共有することはありません。SMSサインインを有効にする場合に必要になります",
   "profile_phone_country": "国",
-  "phone_invalid": "電話番号の形式が正しくありません"
+  "phone_invalid": "電話番号の形式が正しくありません",
+  "profile_add_later": "後で追加"
 }

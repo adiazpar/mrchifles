@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useIntl } from 'react-intl'
-import { IonButton, useIonRouter } from '@ionic/react'
+import { IonButton } from '@ionic/react'
 import { authClient } from '@/lib/auth-client'
 import { useAuth } from '@/contexts/auth-context'
 import { OTPInput } from '@/components/OTPInput'
@@ -36,8 +36,7 @@ function mapErrorCode(code: string | undefined): VerifyErrorKey {
  */
 export function VerifyStep() {
   const intl = useIntl()
-  const router = useIonRouter()
-  const { email } = useRegisterNav()
+  const { email, goTo } = useRegisterNav()
   const { refreshUser } = useAuth()
 
   const [code, setCode] = useState('')
@@ -66,14 +65,14 @@ export function VerifyStep() {
       // one if the signup was deferred. refreshUser pulls the freshly-
       // minted session into context.
       await refreshUser()
-      router.push('/', 'root', 'replace')
+      goTo('profile')
     } catch {
       setError('verify_error_generic')
       setCode('')
     } finally {
       setSubmitting(false)
     }
-  }, [email, refreshUser, router])
+  }, [email, refreshUser, goTo])
 
   const handleResend = useCallback(async () => {
     if (!email || cooldown > 0) return
