@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { z } from 'zod'
-import { Schemas } from '../../../../lib/schemas'
-
-const checkEmailSchema = z.object({
-  email: Schemas.email(),
-})
+import { checkEmailSchema } from './schema'
 
 describe('POST /api/auth/check-email schema', () => {
   it('accepts a valid email and normalizes to lowercase', () => {
@@ -14,14 +9,19 @@ describe('POST /api/auth/check-email schema', () => {
   })
 
   it('rejects missing email', () => {
-    expect(checkEmailSchema.safeParse({}).success).toBe(false)
+    const r = checkEmailSchema.safeParse({})
+    expect(r.success).toBe(false)
+    expect(r.success || r.error.issues[0].path).toEqual(['email'])
   })
 
   it('rejects a malformed email', () => {
-    expect(checkEmailSchema.safeParse({ email: 'not-an-email' }).success).toBe(false)
+    const r = checkEmailSchema.safeParse({ email: 'not-an-email' })
+    expect(r.success).toBe(false)
+    expect(r.success || r.error.issues[0].path).toEqual(['email'])
   })
 
   it('rejects an empty email', () => {
-    expect(checkEmailSchema.safeParse({ email: '' }).success).toBe(false)
+    const r = checkEmailSchema.safeParse({ email: '' })
+    expect(r.success).toBe(false)
   })
 })

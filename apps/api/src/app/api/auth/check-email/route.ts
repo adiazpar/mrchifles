@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db, users } from '@/db'
 import { eq } from 'drizzle-orm'
-import { z } from 'zod'
 import { logServerError } from '@/lib/server-logger'
 import {
   validationError,
@@ -11,12 +10,8 @@ import {
   enforceMaxContentLength,
 } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
-import { Schemas } from '@/lib/schemas'
 import { getClientIp, RateLimits } from '@/lib/rate-limit'
-
-const checkEmailSchema = z.object({
-  email: Schemas.email(),
-})
+import { checkEmailSchema } from './schema'
 
 const MAX_BODY_BYTES = 16 * 1024
 
