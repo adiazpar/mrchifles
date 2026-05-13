@@ -59,13 +59,21 @@ vi.mock('@ionic/react', async (importOriginal) => {
     children,
     onClick,
     'aria-label': ariaLabel,
+    disabled,
+    type,
   }: {
     children?: React.ReactNode
     onClick?: () => void
     'aria-label'?: string
+    disabled?: boolean
+    type?: 'button' | 'submit' | 'reset'
     [key: string]: unknown
   }) {
-    return React.createElement('button', { type: 'button', onClick, 'aria-label': ariaLabel }, children)
+    return React.createElement(
+      'button',
+      { type: type ?? 'button', onClick, 'aria-label': ariaLabel, disabled },
+      children,
+    )
   }
 
   return {
