@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { Check } from 'lucide-react'
 import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
-import { AuthField, PasswordStrength } from '@/components/auth'
+import { AuthField } from '@/components/auth'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { authClient } from '@/lib/auth-client'
 
@@ -195,7 +195,6 @@ export function ChangePasswordModal({
               autoComplete="new-password"
               required
               minLength={PASSWORD_MIN}
-              below={<PasswordStrength password={next} />}
             />
             <AuthField
               label={intl.formatMessage({ id: 'account.password_confirm_label' })}

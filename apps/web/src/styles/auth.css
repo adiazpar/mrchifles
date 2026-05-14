@@ -171,49 +171,6 @@
   margin-top: var(--space-2);
 }
 
-/* ===== Password strength meter (inline below the password input) ===== */
-.auth-strength {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.auth-strength__bars {
-  display: flex;
-  gap: 3px;
-  flex: 1;
-}
-
-.auth-strength__bars span {
-  height: 3px;
-  flex: 1;
-  border-radius: 2px;
-  background: var(--color-border);
-  transition: background var(--duration-fast) ease-out;
-}
-
-.auth-strength__label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
-}
-
-.auth-strength__label strong {
-  font-weight: 500;
-}
-
-.auth-strength--warn .auth-strength__bars span.is-on { background: var(--color-error); }
-.auth-strength--warn .auth-strength__label strong   { color: var(--color-error); }
-
-.auth-strength--fair .auth-strength__bars span.is-on { background: var(--color-warning); }
-.auth-strength--fair .auth-strength__label strong   { color: var(--color-warning); }
-
-.auth-strength--pass .auth-strength__bars span.is-on { background: var(--color-success); }
-.auth-strength--pass .auth-strength__label strong   { color: var(--color-success); }
-
 /* ===== Field utility row (e.g. "Forgot password?") ===== */
 .auth-field-utility {
   display: flex;
