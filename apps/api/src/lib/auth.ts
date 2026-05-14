@@ -2,6 +2,7 @@ import 'server-only'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from '@better-auth/drizzle-adapter'
 import { emailOTP, twoFactor } from 'better-auth/plugins'
+import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import * as schema from '@kasero/shared/db/schema'
@@ -101,6 +102,54 @@ export const auth = betterAuth({
   },
 
   socialProviders,
+
+  // Cross-session cookie-cache poisoning defense.
+  //
+  // better-auth's POST /email-otp/verify-email identifies the user to
+  // verify by `body.email` (not by the active session). On success it
+  // also rewrites the CALLER's session cookie cache with
+  // `emailVerified: true` — even when the caller's session belongs to
+  // a different user than the one whose OTP just succeeded.
+  //
+  // Concretely (node_modules/better-auth/dist/plugins/email-otp/routes.mjs:336-345):
+  //   const currentSession = await getSessionFromCtx(ctx)
+  //   if (currentSession && updatedUser.emailVerified) {
+  //     await setCookieCache(ctx, { session, user: { ...currentSession.user, emailVerified: true } })
+  //   }
+  //
+  // Without this defense, an attacker who controls any verifiable
+  // mailbox B can mint A's session, call verify-email for B, and have
+  // A's `session.user.emailVerified` flip to true server-side for the
+  // duration of `session.cookieCache.maxAge` (5 minutes) — bypassing
+  // the EMAIL_NOT_VERIFIED gate in withAuth / requireBusinessAccess /
+  // /api/invite/join etc.
+  //
+  // Targeted fix: a `before` hook that rejects /email-otp/verify-email
+  // whenever there's an active session whose email doesn't match the
+  // email being verified. Other paths and cookie caching are untouched
+  // (no DB hit on every authenticated request). The unauthenticated
+  // verify path used during signup still works because `currentSession`
+  // is null there. The matching-email case still works because the
+  // attacker would have to control the victim's mailbox to verify it,
+  // at which point full account takeover is already possible via
+  // password reset — the cookie-cache poisoning gains them nothing.
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== '/email-otp/verify-email') return
+      const body = ctx.body as { email?: string } | undefined
+      const targetEmail = body?.email?.toLowerCase()
+      if (!targetEmail) return
+      const currentSession = await getSessionFromCtx(ctx).catch(() => null)
+      if (!currentSession) return
+      const sessionEmail = currentSession.user.email?.toLowerCase()
+      if (sessionEmail && sessionEmail !== targetEmail) {
+        throw new APIError('FORBIDDEN', {
+          message: 'Cannot verify a different account while signed in. Sign out first.',
+          code: 'CROSS_ACCOUNT_VERIFICATION_FORBIDDEN',
+        })
+      }
+    }),
+  },
 
   plugins: [
     emailOTP({
