@@ -732,6 +732,19 @@ ion-modal ion-footer ion-toolbar {
   color: var(--color-text-tertiary);
 }
 
+/* Long-email variant on the Account section's row — clamps to a single
+   line and ellipses the tail so a 60-char mailbox doesn't push the
+   chevron off the row. The `max-width: 12em` keeps the visible portion
+   readable on phones; full email is still inside the user record. */
+.account-list ion-note.account-list__email-note {
+  max-width: 12em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
 /* Danger-zone list — color="danger" on the IonLabel handles the label
    color; the icon already uses .text-error inline. */
 .account-list--danger ion-item ion-label[color="danger"] {

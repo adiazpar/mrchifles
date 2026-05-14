@@ -1321,3 +1321,241 @@ input.delete-account__otp-input {
   background: var(--color-brand);
   flex-shrink: 0;
 }
+
+/* ==========================================================================
+   8. ChangeEmailModal — "the certified transfer"
+   --------------------------------------------------------------------------
+   Reads like a printed certificate of forwarding: the user's CURRENT
+   mailbox on one side, the destination mailbox on the other. The "FROM"
+   card uses a hairline border, the "TO" card gets the terracotta inset
+   stripe (mirrors the FeatureCard primary variant) so the eye knows where
+   the mail is going. Stage 2 lays two OTP inputs in a 2-up grid that
+   stacks below 480px so each numeric field stays large enough on phones. */
+
+.change-email__hero { margin-bottom: var(--space-4); }
+
+/* Read-only current-email row used in Stage 1. Same paper-deep treatment
+   as .delete-account__target so the destructive-friction and the
+   change-email flows feel like part of the same printed series. */
+.change-email__target {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.change-email__target-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.change-email__target-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--color-text-primary);
+  word-break: break-all;
+  font-feature-settings: "tnum" 1;
+}
+
+.change-email__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Tiny mono caption shown below the new-email input when the user types
+   the SAME address as their current one. Same shape as
+   .change-password__mismatch — short hairline + spaced caps. */
+.change-email__inline-warning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-error);
+}
+.change-email__inline-warning::before {
+  content: "";
+  width: 16px;
+  height: 1px;
+  background: var(--color-error);
+}
+
+/* ===== Stage 2 — the envelope pair =====
+   Two stamped envelopes side-by-side. The TO card gets a 3px terracotta
+   inset stripe along the leading edge so the eye reads left-to-right as
+   "from the old mailbox, to the new mailbox". On narrow viewports the
+   pair stacks; the stripe rotates to the top edge to preserve the
+   visual hierarchy without burning width. */
+.change-email__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.change-email__pair-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.change-email__pair-card--new {
+  background: var(--color-paper-deep);
+  box-shadow: inset 3px 0 0 var(--color-brand);
+}
+
+.change-email__pair-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.change-email__pair-card--new .change-email__pair-eyebrow {
+  color: var(--color-brand);
+}
+
+.change-email__pair-address {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0;
+  color: var(--color-text-primary);
+  /* Long addresses get an ellipsis rather than wrap — keeps both cards
+     at the same vertical rhythm and the tooltip still surfaces the full
+     address on hover/long-press. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ===== Stage 2 — paired OTP grid =====
+   Two AuthFields in a 2-up grid. Each cell keeps the mono digits styling
+   from .delete-account__otp-input. Below 480px the grid collapses to a
+   single column so the digit cell never gets cramped on phones. */
+.change-email__otp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .change-email__pair { grid-template-columns: 1fr; }
+  .change-email__pair-card--new {
+    /* Stripe rotates to the top edge when the cards stack so the
+       directional cue still reads top-to-bottom. */
+    box-shadow: inset 0 3px 0 var(--color-brand);
+  }
+  .change-email__otp-grid { grid-template-columns: 1fr; }
+}
+
+/* Stamped numerals: mono, tracked-out, centered. Mirrors the delete
+   modal's OTP input verbatim so the two step-up flows feel identical to
+   the user's hands — same visual cell row, same affordance. */
+.change-email__otp-input.auth-field__input,
+input.change-email__otp-input {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: 0.5em;
+  text-align: center;
+  text-transform: uppercase;
+  padding-right: calc(var(--space-3) - 0.5em);
+  font-feature-settings: "tnum" 1;
+}
+
+.change-email__resend {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+
+.change-email__resend-button {
+  background: none;
+  border: none;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--duration-fast) ease-out;
+}
+.change-email__resend-button:hover:not(:disabled) {
+  color: var(--color-brand);
+}
+.change-email__resend-button:disabled {
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+}
+
+/* Stage-2 footer — small "Back" outline on the leading edge, primary
+   "Update email" submit takes the remaining width. Same shape as
+   .delete-account__verify-footer so the two flows share a footer
+   vocabulary. */
+.change-email__verify-footer {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+  width: 100%;
+}
+.change-email__verify-back {
+  flex: 0 0 auto;
+}
+.change-email__verify-back ion-icon,
+.change-email__verify-back svg {
+  margin-right: 2px;
+}
+.change-email__verify-submit {
+  flex: 1 1 auto;
+}
+
+/* Success stage — Lottie + mercantile sign-off, mirrored from
+   .edit-profile__success / .delete-account__success. */
+.change-email__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-4) var(--space-2);
+  height: 100%;
+}
+.change-email__success-heading {
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 50;
+  font-size: 24px;
+  letter-spacing: -0.018em;
+  color: var(--color-text-primary);
+  margin-top: var(--space-3);
+}
+.change-email__success-heading-em {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100;
+  color: var(--color-brand);
+}
+.change-email__success-desc {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  margin-top: var(--space-3);
+  max-width: 36ch;
+  line-height: 1.55;
+}

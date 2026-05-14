@@ -19,6 +19,7 @@ import {
   CircleHelp,
   LogOut,
   ArrowRightLeft,
+  Mail,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
@@ -51,6 +52,10 @@ const DeleteAccountModal = dynamic(
   () => import('@/components/account/DeleteAccountModal').then(m => m.DeleteAccountModal),
   { ssr: false },
 )
+const ChangeEmailModal = dynamic(
+  () => import('@/components/account/ChangeEmailModal').then(m => m.ChangeEmailModal),
+  { ssr: false },
+)
 const IncomingTransferModal = dynamic(
   () => import('@/components/transfer/IncomingTransferModal').then(m => m.IncomingTransferModal),
   { ssr: false },
@@ -72,6 +77,7 @@ export function AccountPageContent() {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false)
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isChangeEmailModalOpen, setIsChangeEmailModalOpen] = useState(false)
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
   const { transfer: incomingTransfer } = useIncomingTransferContext()
 
@@ -178,6 +184,21 @@ export function AccountPageContent() {
         )}
 
         <GroupLabel>
+          {intl.formatMessage({ id: 'account.section_account' })}
+        </GroupLabel>
+        <IonList inset lines="full" className="account-list">
+          <IonItem button detail onClick={() => setIsChangeEmailModalOpen(true)}>
+            <Mail slot="start" className="text-text-secondary w-5 h-5" />
+            <IonLabel>
+              <h3>{intl.formatMessage({ id: 'account.row_change_email' })}</h3>
+            </IonLabel>
+            <IonNote slot="end" className="account-list__email-note">
+              {user.email}
+            </IonNote>
+          </IonItem>
+        </IonList>
+
+        <GroupLabel>
           {intl.formatMessage({ id: 'account.section_preferences' })}
         </GroupLabel>
         <IonList inset lines="full" className="account-list">
@@ -247,6 +268,10 @@ export function AccountPageContent() {
       <DeleteAccountModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
+      />
+      <ChangeEmailModal
+        isOpen={isChangeEmailModalOpen}
+        onClose={() => setIsChangeEmailModalOpen(false)}
       />
       <IncomingTransferModal
         isOpen={isTransferModalOpen}
