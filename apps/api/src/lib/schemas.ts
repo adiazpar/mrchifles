@@ -48,31 +48,6 @@ export const Schemas = {
   phone: () => z.string().nullable().optional(),
 
   /**
-   * Password with security requirements:
-   * - Minimum 10 characters (raised from 8 — audit L-9)
-   * - Maximum 128 characters (cap, not policy)
-   * - At least one uppercase letter
-   * - At least one number
-   *
-   * The .max(128) cap matters for DoS, not policy: scrypt KDF cost and
-   * the regex walks and JSON parse cost scale with input length. NIST
-   * SP 800-63B recommends a minimum of 64; 128 leaves comfortable
-   * headroom for passphrases.
-   *
-   * Min length raised from 8 to 10 to push entropy floor up without
-   * hurting UX. A future hardening should also blocklist the top-1k
-   * common passwords, but that's a separate change (requires
-   * bundling the blocklist + agreeing on the cutoff).
-   */
-  password: (minLength = 10) =>
-    z
-      .string()
-      .min(minLength)
-      .max(128)
-      .regex(/[A-Z]/)
-      .regex(/[0-9]/),
-
-  /**
    * Non-negative numeric amount for JSON-body callers (the field
    * arrives as a number, not a string). Upper bound caps the value
    * at ~1B in the smallest currency unit — well above any legit
