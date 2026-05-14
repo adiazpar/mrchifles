@@ -57,8 +57,6 @@ yarn-error.log*
 
 # Testing
 coverage/
-apps/web/playwright-report/
-apps/web/test-results/
 
 # Vercel
 .vercel/
