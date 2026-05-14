@@ -26,10 +26,6 @@ import type { NextRequest } from 'next/server'
 const publicPaths = [
   '/login',
   '/register',
-  '/forgot-password',
-  '/reset-password',
-  '/verify-email',
-  '/two-factor-challenge',
 ]
 
 function isPublicPath(pathname: string): boolean {
@@ -73,7 +69,7 @@ export async function middleware(request: NextRequest) {
   const segments = pathname.split('/').filter(Boolean)
   if (segments.length > 0) {
     const first = segments[0]
-    const knownRoutes = ['account', 'business', 'login', 'register', 'join', 'forgot-password', 'reset-password', 'verify-email', 'two-factor-challenge']
+    const knownRoutes = ['account', 'business', 'login', 'register', 'join']
     if (!knownRoutes.includes(first) && !BUSINESS_ID_RE.test(first)) {
       return NextResponse.redirect(new URL('/', request.url))
     }
