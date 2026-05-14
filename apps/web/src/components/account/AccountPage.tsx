@@ -13,7 +13,6 @@ import dynamic from '@/lib/next-dynamic-shim'
 import { useRouter } from '@/lib/next-navigation-shim'
 import {
   Palette,
-  KeyRound,
   Info,
   UserX,
   ChevronRight,
@@ -38,10 +37,6 @@ const ThemeModal = dynamic(
 )
 const EditProfileModal = dynamic(
   () => import('@/components/account/EditProfileModal').then(m => m.EditProfileModal),
-  { ssr: false },
-)
-const ChangePasswordModal = dynamic(
-  () => import('@/components/account/ChangePasswordModal').then(m => m.ChangePasswordModal),
   { ssr: false },
 )
 const AboutModal = dynamic(
@@ -74,7 +69,6 @@ export function AccountPageContent() {
   const { theme } = useTheme()
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false)
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -198,18 +192,6 @@ export function AccountPageContent() {
         </IonList>
 
         <GroupLabel>
-          {intl.formatMessage({ id: 'account.section_security' })}
-        </GroupLabel>
-        <IonList inset lines="full" className="account-list">
-          <IonItem button detail onClick={() => setIsPasswordModalOpen(true)}>
-            <KeyRound slot="start" className="text-text-secondary w-5 h-5" />
-            <IonLabel>
-              <h3>{intl.formatMessage({ id: 'account.row_change_password' })}</h3>
-            </IonLabel>
-          </IonItem>
-        </IonList>
-
-        <GroupLabel>
           {intl.formatMessage({ id: 'account.section_support' })}
         </GroupLabel>
         <IonList inset lines="full" className="account-list">
@@ -253,10 +235,6 @@ export function AccountPageContent() {
       <EditProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
-      />
-      <ChangePasswordModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
       />
       <AboutModal
         isOpen={isAboutModalOpen}
