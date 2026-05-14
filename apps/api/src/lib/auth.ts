@@ -52,8 +52,9 @@ export const auth = betterAuth({
     deleteUser: { enabled: true },
   },
 
-  // No emailAndPassword. Authentication is OTP-only via the emailOTP plugin
-  // (sign-in mode) plus Google OAuth via socialProviders.
+  // Passwordless by design. No password column is read or written by this
+  // config; existing scrypt hashes in account.password are unused and will
+  // be dropped in migration 2026-05-14-01-passwordless-cleanup.sql.
 
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
@@ -70,12 +71,14 @@ export const auth = betterAuth({
 
   socialProviders,
 
-  // Cross-session cookie-cache poisoning defense.
-  // better-auth's POST /email-otp/verify-email identifies the user by
-  // `body.email` and updates the CALLER's session cache with
-  // `emailVerified: true` even if the caller's session belongs to a
-  // different user. Reject the request whenever there's an active
-  // session whose email doesn't match the email being verified.
+  // Cross-session cookie-cache poisoning defense. better-auth's POST
+  // /email-otp/verify-email identifies the user by `body.email` and updates
+  // the CALLER's session cache with `emailVerified: true` even if the
+  // caller's session belongs to a different user.
+  // See node_modules/better-auth/dist/plugins/email-otp/routes.mjs:336-345
+  // for the upstream code path this defends against.
+  // We reject the request whenever there's an active session whose email
+  // doesn't match the email being verified.
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path !== '/email-otp/verify-email') return
