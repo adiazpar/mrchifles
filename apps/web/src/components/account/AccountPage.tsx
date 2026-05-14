@@ -20,6 +20,7 @@ import {
   LogOut,
   ArrowRightLeft,
   Mail,
+  MonitorSmartphone,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
@@ -195,6 +196,12 @@ export function AccountPageContent() {
             <IonNote slot="end" className="account-list__email-note">
               {user.email}
             </IonNote>
+          </IonItem>
+          <IonItem button detail routerLink="/account/sessions" routerDirection="forward">
+            <MonitorSmartphone slot="start" className="text-text-secondary w-5 h-5" />
+            <IonLabel>
+              <h3>{intl.formatMessage({ id: 'account.row_sessions' })}</h3>
+            </IonLabel>
           </IonItem>
         </IonList>
 

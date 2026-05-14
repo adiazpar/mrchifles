@@ -596,6 +596,7 @@
   "account.delete_success_desc": "Signing you out",
   "account.section_account": "Account",
   "account.row_change_email": "Change email",
+  "account.row_sessions": "Active sessions",
   "account.email_change_modal_title": "Change email",
   "account.email_change_hero_eyebrow": "Account",
   "account.email_change_hero_title": "Change your email.",

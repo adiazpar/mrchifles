@@ -596,6 +596,7 @@
   "account.delete_success_desc": "サインアウトしています",
   "account.section_account": "アカウント",
   "account.row_change_email": "メールアドレスを変更",
+  "account.row_sessions": "アクティブなセッション",
   "account.email_change_modal_title": "メールアドレスを変更",
   "account.email_change_hero_eyebrow": "アカウント",
   "account.email_change_hero_title": "メールアドレスを変更",

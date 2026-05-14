@@ -596,6 +596,7 @@
   "account.delete_success_desc": "Cerrando sesión",
   "account.section_account": "Cuenta",
   "account.row_change_email": "Cambiar correo",
+  "account.row_sessions": "Sesiones activas",
   "account.email_change_modal_title": "Cambiar correo",
   "account.email_change_hero_eyebrow": "Cuenta",
   "account.email_change_hero_title": "Cambie su correo.",

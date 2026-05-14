@@ -1,0 +1,27 @@
+.sessions-page {
+  --background: var(--color-paper);
+}
+
+.sessions-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.sessions-row__device {
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.sessions-row__ip {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  margin: 0;
+  font-family: var(--font-mono);
+}
+
+.sessions-signout-others {
+  margin-top: var(--space-3);
+}

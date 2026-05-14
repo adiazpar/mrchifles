@@ -141,6 +141,7 @@ export type MessageId =
   | 'account.row_delete_account'
   | 'account.row_language'
   | 'account.row_logout'
+  | 'account.row_sessions'
   | 'account.row_theme'
   | 'account.section_account'
   | 'account.section_danger_zone'
