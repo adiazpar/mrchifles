@@ -12,10 +12,13 @@ out/
 # just creates churn. Next.js regenerates it locally as needed.
 next-env.d.ts
 
-# Environment
-.env
-.env.local
-.env.*.local
+# Environment — ignore every .env* variant at any depth, then explicitly
+# allow the .env.example template files (and any per-env *.env.example).
+# Covers: .env, .env.local, .env.development, .env.production, .env.staging,
+# .env.test, .env.production.local, etc., regardless of subdirectory.
+.env*
+!.env.example
+!.env*.example
 
 # IDE
 .idea/
@@ -99,6 +102,4 @@ apps/api/public/og-image.png
 apps/api/public/icon-source.png
 apps/api/public/kasero-logo.png
 
-# Per-app env files
-apps/*/.env.local
-apps/*/.env.*.local
+# Per-app env files are covered by the .env* glob above; left as a marker.
