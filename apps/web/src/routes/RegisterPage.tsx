@@ -15,12 +15,24 @@ import {
   RegisterNavProvider,
   useRegisterNav,
 } from '@/components/auth/register-steps/RegisterNavContext'
-import { NameStep } from '@/components/auth/register-steps/NameStep'
 import { EmailStep } from '@/components/auth/register-steps/EmailStep'
-import { PasswordStep } from '@/components/auth/register-steps/PasswordStep'
 import { VerifyStep } from '@/components/auth/register-steps/VerifyStep'
-import { ProfileStep } from '@/components/auth/register-steps/ProfileStep'
+import { NameStep } from '@/components/auth/register-steps/NameStep'
 
+/**
+ * 3-step passwordless register wizard: email -> verify -> name.
+ *
+ * - email: collects the address and sends an OTP (sign-in mode, so
+ *   first-time verify creates the user record server-side).
+ * - verify: enters the 6-digit code, creates the session, and branches:
+ *     - returning user => navigate to the hub.
+ *     - new user => continue to the name step.
+ * - name: captures the new user's display name and PATCHes it onto the
+ *   user row, then routes to the hub.
+ *
+ * The wizard also accepts ?email=...&step=verify on mount — EntryPage
+ * uses that contract to hand off after its own OTP send.
+ */
 export function RegisterPage() {
   return (
     <IonPage>
@@ -34,17 +46,14 @@ export function RegisterPage() {
   )
 }
 
-// Toolbar driven by the active wizard step. Back chevron renders for
-// steps 2 and 3 and walks one step back via the nav context.
+// Toolbar driven by the active wizard step. Back chevron only renders
+// on the verify step (and walks back to email). The name step is
+// terminal — the new user has a verified session by the time they land
+// on it, so there's no meaningful "back" from there.
 function RegisterHeader() {
   const intl = useIntl()
   const { current, goTo } = useRegisterNav()
-  const onBack =
-    current === 'email'
-      ? () => goTo('name')
-      : current === 'password'
-        ? () => goTo('email')
-        : null
+  const onBack = current === 'verify' ? () => goTo('email') : null
 
   return (
     <IonHeader>
@@ -76,13 +85,12 @@ function RegisterHeader() {
 // the footer to the bottom.
 function CurrentStep() {
   const { current } = useRegisterNav()
-  return (
-    <>
-      {current === 'name' && <NameStep />}
-      {current === 'email' && <EmailStep />}
-      {current === 'password' && <PasswordStep />}
-      {current === 'verify' && <VerifyStep />}
-      {current === 'profile' && <ProfileStep />}
-    </>
-  )
+  switch (current) {
+    case 'email':
+      return <EmailStep />
+    case 'verify':
+      return <VerifyStep />
+    case 'name':
+      return <NameStep />
+  }
 }

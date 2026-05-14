@@ -1,47 +1,72 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
-import { IonButton } from '@ionic/react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { AuthLayout } from '../AuthLayout'
 import { AuthField } from '../AuthField'
 import { APP_VERSION } from '@/lib/version'
+import { useAuth } from '@/contexts/auth-context'
 import { useRegisterNav } from './RegisterNavContext'
 
+/**
+ * Final step of the 3-step passwordless register wizard. Only mounts
+ * when the OTP verify reported `isNewUser: true` — the brand-new user
+ * has a session but no name yet. Submitting calls `setName`, which
+ * PATCHes the name onto the user row via better-auth's updateUser, then
+ * routes to the hub. Name is mandatory: a missing name leaves the UI
+ * with awkward empty-string placeholders downstream, and the user can
+ * still edit it later via EditProfileModal.
+ *
+ * Defensive: if someone deep-links straight to this step without first
+ * completing verify, the isNewUser flag is null and we send them back
+ * to the hub. The auth-context's auth gate handles the unauthenticated
+ * case separately.
+ */
 export function NameStep() {
   const intl = useIntl()
   const router = useRouter()
-  const { name, setName, goTo } = useRegisterNav()
+  const { name, setName: setWizardName, isNewUser } = useRegisterNav()
+  const { setName: persistName } = useAuth()
+
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  // Anyone landing here without having just completed verify shouldn't
+  // be on this screen. Punt to the hub and let the higher-level auth
+  // gates decide what to render.
+  useEffect(() => {
+    if (isNewUser === false) {
+      router.replace('/')
+    }
+  }, [isNewUser, router])
 
   const trimmed = name.trim()
-  const canAdvance = trimmed.length >= 2
+  const canSubmit = trimmed.length >= 2 && !submitting
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault()
-      if (!canAdvance) return
-      setName(trimmed)
-      goTo('email')
+      if (!canSubmit) return
+      setError(null)
+      setSubmitting(true)
+      const result = await persistName(trimmed)
+      if (!result.success) {
+        setError(
+          result.error ?? intl.formatMessage({ id: 'auth.connection_error' }),
+        )
+        setSubmitting(false)
+        return
+      }
+      setSubmitting(false)
+      router.replace('/')
     },
-    [canAdvance, trimmed, setName, goTo],
+    [canSubmit, intl, persistName, router, trimmed],
   )
 
-  const handleGoToLogin = useCallback(() => router.push('/login'), [router])
-
   const footer = (
-    <>
-      <div className="auth-divider">
-        {intl.formatMessage({ id: 'common.or' })}
-      </div>
-      <p className="auth-link-row">
-        {intl.formatMessage({ id: 'auth.have_account_prefix' })}
-        <button type="button" onClick={handleGoToLogin}>
-          {intl.formatMessage({ id: 'auth.have_account_link' })}
-        </button>
-      </p>
-      <p className="auth-version">
-        {intl.formatMessage({ id: 'auth.version_label' }, { version: APP_VERSION })}
-      </p>
-    </>
+    <p className="auth-version">
+      {intl.formatMessage({ id: 'auth.version_label' }, { version: APP_VERSION })}
+    </p>
   )
 
   return (
@@ -61,11 +86,12 @@ export function NameStep() {
             label={intl.formatMessage({ id: 'auth.name_label' })}
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setWizardName(e.target.value)}
             autoComplete="name"
             autoFocus
             required
             minLength={2}
+            below={error ? <div className="auth-error" role="alert">{error}</div> : null}
           />
         </div>
 
@@ -73,10 +99,14 @@ export function NameStep() {
           <IonButton
             expand="block"
             type="submit"
-            disabled={!canAdvance}
+            disabled={!canSubmit}
             className="mt-3"
           >
-            {intl.formatMessage({ id: 'auth.register_wizard.continue' })}
+            {submitting ? (
+              <IonSpinner name="crescent" />
+            ) : (
+              intl.formatMessage({ id: 'auth.register_wizard.continue' })
+            )}
           </IonButton>
         </div>
       </form>

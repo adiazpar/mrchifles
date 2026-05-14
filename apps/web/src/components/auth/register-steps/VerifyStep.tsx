@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useIntl } from 'react-intl'
 import { IonButton } from '@ionic/react'
-import { authClient } from '@/lib/auth-client'
+import { useRouter } from '@/lib/next-navigation-shim'
 import { useAuth } from '@/contexts/auth-context'
 import { OTPInput } from '@/components/OTPInput'
 import { useRegisterNav } from './RegisterNavContext'
@@ -9,39 +9,23 @@ import './VerifyStep.css'
 
 const RESEND_COOLDOWN_SECONDS = 30
 
-type VerifyErrorKey =
-  | 'verify_error_generic'
-  | 'verify_error_invalid_otp'
-  | 'verify_error_expired_otp'
-  | 'verify_error_too_many_attempts'
-  | 'verify_error_resend'
-
-function mapErrorCode(code: string | undefined): VerifyErrorKey {
-  if (code === 'INVALID_OTP' || code === 'INVALID_VERIFICATION_CODE') return 'verify_error_invalid_otp'
-  if (code === 'EXPIRED_OTP' || code === 'EXPIRED_VERIFICATION_CODE') return 'verify_error_expired_otp'
-  if (code === 'TOO_MANY_ATTEMPTS' || code === 'RATE_LIMIT_EXCEEDED') return 'verify_error_too_many_attempts'
-  return 'verify_error_generic'
-}
-
 /**
- * Last step of the register wizard. Mounts after the password step has
- * called auth-context `register()` (which posts to /api/auth/sign-up/email).
- * The server sends the OTP via the emailOTP plugin, and this step lets the
- * user enter it. On success, refreshUser() pulls the now-verified session
- * into context and the wizard navigates to the hub.
- *
- * Reads the email from RegisterNavContext rather than useAuth().user
- * because better-auth's signup-without-session mode (when requireEmail
- * Verification + autoSignIn=false) leaves user null until verify lands.
+ * Middle step of the 3-step passwordless register wizard. The user has
+ * just received a 6-digit OTP (sent either by EntryPage or the
+ * preceding EmailStep). Submitting calls `verifyOtp`, which creates
+ * the session and reports whether the resolved user is brand-new
+ * (empty name). New users continue to the NameStep so we can capture
+ * their display name; returning users land on the hub.
  */
 export function VerifyStep() {
   const intl = useIntl()
-  const { email, goTo } = useRegisterNav()
-  const { refreshUser } = useAuth()
+  const router = useRouter()
+  const { email, goTo, setIsNewUser } = useRegisterNav()
+  const { sendOtp, verifyOtp } = useAuth()
 
   const [code, setCode] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<VerifyErrorKey | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [cooldown, setCooldown] = useState(0)
 
   useEffect(() => {
@@ -50,43 +34,43 @@ export function VerifyStep() {
     return () => window.clearTimeout(t)
   }, [cooldown])
 
-  const handleComplete = useCallback(async (value: string) => {
-    if (!email) return
-    setSubmitting(true)
-    setError(null)
-    try {
-      const result = await authClient.emailOtp.verifyEmail({ email, otp: value })
-      if (result.error) {
-        setError(mapErrorCode(result.error.code))
+  const handleComplete = useCallback(
+    async (value: string) => {
+      if (!email) return
+      setSubmitting(true)
+      setErrorMessage(null)
+      const result = await verifyOtp(email, value)
+      if (!result.success) {
+        setErrorMessage(
+          result.error ??
+            intl.formatMessage({ id: 'verify_error_generic' }),
+        )
         setCode('')
+        setSubmitting(false)
         return
       }
-      // Session may or may not have existed before — verifyEmail creates
-      // one if the signup was deferred. refreshUser pulls the freshly-
-      // minted session into context.
-      await refreshUser()
-      goTo('profile')
-    } catch {
-      setError('verify_error_generic')
-      setCode('')
-    } finally {
+      setIsNewUser(result.isNewUser)
       setSubmitting(false)
-    }
-  }, [email, refreshUser, goTo])
+      if (result.isNewUser) {
+        goTo('name')
+      } else {
+        router.replace('/')
+      }
+    },
+    [email, goTo, intl, router, setIsNewUser, verifyOtp],
+  )
 
   const handleResend = useCallback(async () => {
     if (!email || cooldown > 0) return
     setCooldown(RESEND_COOLDOWN_SECONDS)
-    setError(null)
-    try {
-      await authClient.emailOtp.sendVerificationOtp({
-        email,
-        type: 'email-verification',
-      })
-    } catch {
-      setError('verify_error_resend')
+    setErrorMessage(null)
+    const result = await sendOtp(email)
+    if (!result.success) {
+      setErrorMessage(
+        result.error ?? intl.formatMessage({ id: 'verify_error_resend' }),
+      )
     }
-  }, [email, cooldown])
+  }, [cooldown, email, intl, sendOtp])
 
   if (!email) {
     // Defensive — shouldn't reach this step without a wizard email.
@@ -106,11 +90,11 @@ export function VerifyStep() {
         onChange={setCode}
         onComplete={handleComplete}
         disabled={submitting}
-        error={!!error}
+        error={!!errorMessage}
       />
-      {error && (
+      {errorMessage && (
         <p role="alert" className="register-verify__error">
-          {intl.formatMessage({ id: error })}
+          {errorMessage}
         </p>
       )}
       <IonButton

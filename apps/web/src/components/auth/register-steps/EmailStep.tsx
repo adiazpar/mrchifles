@@ -1,28 +1,35 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
-import { IonButton } from '@ionic/react'
+import { IonButton, IonSpinner } from '@ionic/react'
 import { useRouter } from '@/lib/next-navigation-shim'
 import { AuthLayout } from '../AuthLayout'
 import { AuthField } from '../AuthField'
 import { APP_VERSION } from '@/lib/version'
+import { useAuth } from '@/contexts/auth-context'
 import { useRegisterNav } from './RegisterNavContext'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+/**
+ * First step of the 3-step passwordless register wizard. Sends a 6-digit
+ * OTP via better-auth's email-otp plugin in `sign-in` mode — that mode
+ * is idempotent and creates the user on first verify, so this single
+ * call handles both new and returning users. On success we advance to
+ * the verify step; the orchestrator also accepts ?email=...&step=verify
+ * from EntryPage which bypasses this step entirely.
+ */
 export function EmailStep() {
   const intl = useIntl()
   const router = useRouter()
-  const { name, email, setEmail, goTo } = useRegisterNav()
+  const { sendOtp } = useAuth()
+  const { email, setEmail, goTo } = useRegisterNav()
 
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  const firstName = name.trim().split(/\s+/)[0] ?? ''
-  const titleId = firstName
-    ? 'auth.register_wizard.step_email_title'
-    : 'auth.register_wizard.step_email_title_fallback'
-
-  const valid = EMAIL_RE.test(email.trim())
-  const canAdvance = valid
+  const trimmed = email.trim()
+  const valid = EMAIL_RE.test(trimmed)
+  const canSubmit = valid && !submitting
 
   // Clear inline error when the user edits the email.
   useEffect(() => {
@@ -30,23 +37,29 @@ export function EmailStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email])
 
-  // The legacy /api/auth/check-email pre-flight was removed when we
-  // migrated to better-auth (no equivalent endpoint, and adding one
-  // would leak account existence to anonymous callers). The PasswordStep
-  // submits via authClient.signUp.email which rejects with USER_ALREADY_EXISTS
-  // when the email is taken — the wizard handles that there. So this
-  // step is purely a format-validation + advance.
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault()
-      if (!canAdvance) return
+      if (!canSubmit) return
       setError(null)
-      goTo('password')
+      setSubmitting(true)
+      const result = await sendOtp(trimmed)
+      if (!result.success) {
+        setError(
+          result.error ?? intl.formatMessage({ id: 'auth.connection_error' }),
+        )
+        setSubmitting(false)
+        return
+      }
+      setSubmitting(false)
+      goTo('verify')
     },
-    [canAdvance, goTo],
+    [canSubmit, goTo, intl, sendOtp, trimmed],
   )
 
-  const handleGoToLogin = useCallback(() => router.push('/login'), [router])
+  // EntryPage now owns the sign-in entry point; the back-link routes
+  // there instead of the legacy /login screen.
+  const handleGoToEntry = useCallback(() => router.push('/'), [router])
 
   const footer = (
     <>
@@ -55,7 +68,7 @@ export function EmailStep() {
       </div>
       <p className="auth-link-row">
         {intl.formatMessage({ id: 'auth.have_account_prefix' })}
-        <button type="button" onClick={handleGoToLogin}>
+        <button type="button" onClick={handleGoToEntry}>
           {intl.formatMessage({ id: 'auth.have_account_link' })}
         </button>
       </p>
@@ -70,7 +83,7 @@ export function EmailStep() {
       <form data-testid="register-email-form" onSubmit={handleSubmit} className="flex flex-col gap-2.5 w-full">
         <header className="auth-hero auth-step-item auth-step-item--head">
           <h1 className="auth-hero__title">
-            {intl.formatMessage({ id: titleId }, { name: firstName })}
+            {intl.formatMessage({ id: 'auth.register_wizard.step_email_title_fallback' })}
           </h1>
           <p className="auth-hero__subtitle">
             {intl.formatMessage({ id: 'auth.register_wizard.step_email_helper' })}
@@ -95,10 +108,14 @@ export function EmailStep() {
           <IonButton
             expand="block"
             type="submit"
-            disabled={!canAdvance}
+            disabled={!canSubmit}
             className="mt-3"
           >
-            {intl.formatMessage({ id: 'auth.register_wizard.continue' })}
+            {submitting ? (
+              <IonSpinner name="crescent" />
+            ) : (
+              intl.formatMessage({ id: 'auth.register_wizard.continue' })
+            )}
           </IonButton>
         </div>
       </form>

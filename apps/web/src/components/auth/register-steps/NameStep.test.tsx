@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { IntlProvider } from 'react-intl'
 import { IonApp } from '@ionic/react'
 import type { ReactNode } from 'react'
@@ -8,15 +8,29 @@ import enUS from '../../../i18n/messages/en-US.json'
 import { RegisterNavProvider, useRegisterNav } from './RegisterNavContext'
 import { NameStep } from './NameStep'
 
-function ContextProbe({ render }: { render: (nav: ReturnType<typeof useRegisterNav>) => ReactNode }) {
-  return <>{render(useRegisterNav())}</>
+// Stub the auth context. Each test overrides setName as needed.
+vi.mock('@/contexts/auth-context', () => ({
+  useAuth: vi.fn(() => ({
+    setName: vi.fn().mockResolvedValue({ success: true }),
+  })),
+}))
+
+import { useAuth } from '@/contexts/auth-context'
+
+// Mark the wizard as new-user so the NameStep's defensive
+// router.replace('/') guard doesn't fire during the test.
+function Seed() {
+  const nav = useRegisterNav()
+  if (nav.isNewUser !== true) nav.setIsNewUser(true)
+  return null
 }
 
 const wrap = (node: ReactNode) => (
   <IntlProvider locale="en" messages={enUS as Record<string, string>}>
-    <MemoryRouter>
+    <MemoryRouter initialEntries={['/register']}>
       <IonApp>
         <RegisterNavProvider>
+          <Seed />
           {node}
         </RegisterNavProvider>
       </IonApp>
@@ -25,6 +39,13 @@ const wrap = (node: ReactNode) => (
 )
 
 describe('NameStep', () => {
+  beforeEach(() => {
+    vi.mocked(useAuth).mockReturnValue({
+      setName: vi.fn().mockResolvedValue({ success: true }),
+    } as never)
+  })
+  afterEach(() => vi.restoreAllMocks())
+
   it('renders the title and helper line', () => {
     render(wrap(<NameStep />))
     expect(screen.getByText('What should we call you?')).toBeDefined()
@@ -43,34 +64,28 @@ describe('NameStep', () => {
     expect((screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement).disabled).toBe(false)
   })
 
-  it('advances to the email step on Continue and trims the name', () => {
-    let captured: ReturnType<typeof useRegisterNav> | null = null
-    render(
-      wrap(
-        <>
-          <NameStep />
-          <ContextProbe render={(n) => { captured = n; return null }} />
-        </>,
-      ),
-    )
+  it('calls setName with the trimmed name on submit', async () => {
+    const setName = vi.fn().mockResolvedValue({ success: true })
+    vi.mocked(useAuth).mockReturnValue({ setName } as never)
+
+    render(wrap(<NameStep />))
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: '  Alex  ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(captured!.current).toBe('email')
-    expect(captured!.name).toBe('Alex')
+
+    await waitFor(() => expect(setName).toHaveBeenCalledWith('Alex'))
   })
 
-  it('advances on Enter key (form submit)', () => {
-    let captured: ReturnType<typeof useRegisterNav> | null = null
-    render(
-      wrap(
-        <>
-          <NameStep />
-          <ContextProbe render={(n) => { captured = n; return null }} />
-        </>,
-      ),
-    )
+  it('renders the connection-error fallback when setName fails without a message', async () => {
+    const setName = vi.fn().mockResolvedValue({ success: false })
+    vi.mocked(useAuth).mockReturnValue({ setName } as never)
+
+    render(wrap(<NameStep />))
     fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Alex' } })
-    fireEvent.submit(screen.getByTestId('register-name-form'))
-    expect(captured!.current).toBe('email')
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => {
+      expect(setName).toHaveBeenCalled()
+      expect(screen.getByRole('alert')).toBeDefined()
+    })
   })
 })

@@ -7,4 +7,4 @@ export { RegisterNavProvider, useRegisterNav } from './register-steps/RegisterNa
 export type { RegisterStep, RegisterNav } from './register-steps/RegisterNavContext'
 export { NameStep } from './register-steps/NameStep'
 export { EmailStep } from './register-steps/EmailStep'
-export { PasswordStep } from './register-steps/PasswordStep'
+export { VerifyStep } from './register-steps/VerifyStep'

@@ -1,21 +1,21 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useSearchParams } from '@/lib/next-navigation-shim'
 
-export type RegisterStep = 'name' | 'email' | 'password' | 'verify' | 'profile'
+export type RegisterStep = 'email' | 'verify' | 'name'
 
 export interface RegisterNav {
   current: RegisterStep
   goTo: (step: RegisterStep) => void
 
-  name: string
-  setName: (v: string) => void
-
   email: string
   setEmail: (v: string) => void
 
-  password: string
-  setPassword: (v: string) => void
+  isNewUser: boolean | null
+  setIsNewUser: (v: boolean) => void
 
+  name: string
+  setName: (v: string) => void
 }
 
 const RegisterNavContext = createContext<RegisterNav | null>(null)
@@ -24,23 +24,41 @@ interface ProviderProps {
   children: ReactNode
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export function RegisterNavProvider({ children }: ProviderProps) {
-  const [current, setCurrent] = useState<RegisterStep>('name')
+  // EntryPage hands off via /register?email={x}&step=verify after a
+  // successful OTP send. Honor those params so the wizard resumes at
+  // the verify step with the email pre-filled. Anything else (or no
+  // params) starts at the email step.
+  const searchParams = useSearchParams()
+  const initialEmail = useMemo(() => {
+    const raw = searchParams.get('email')
+    return raw && EMAIL_RE.test(raw.trim()) ? raw.trim() : ''
+  }, [searchParams])
+  const initialStep = useMemo<RegisterStep>(() => {
+    const stepParam = searchParams.get('step')
+    if (stepParam === 'verify' && initialEmail) return 'verify'
+    return 'email'
+  }, [searchParams, initialEmail])
+
+  const [current, setCurrent] = useState<RegisterStep>(initialStep)
+  const [email, setEmail] = useState(initialEmail)
+  const [isNewUser, setIsNewUser] = useState<boolean | null>(null)
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+
   const value = useMemo<RegisterNav>(
     () => ({
       current,
       goTo: (step) => setCurrent(step),
-      name,
-      setName,
       email,
       setEmail,
-      password,
-      setPassword,
+      isNewUser,
+      setIsNewUser,
+      name,
+      setName,
     }),
-    [current, name, email, password],
+    [current, email, isNewUser, name],
   )
 
   return <RegisterNavContext.Provider value={value}>{children}</RegisterNavContext.Provider>
