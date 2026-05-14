@@ -91,6 +91,7 @@ export function NameStep() {
             autoFocus
             required
             minLength={2}
+            data-testid="name-input"
             below={error ? <div className="auth-error" role="alert">{error}</div> : null}
           />
         </div>
@@ -101,6 +102,7 @@ export function NameStep() {
             type="submit"
             disabled={!canSubmit}
             className="mt-3"
+            data-testid="name-submit"
           >
             {submitting ? (
               <IonSpinner name="crescent" />

@@ -72,13 +72,25 @@ export function VerifyStep() {
     }
   }, [cooldown, email, intl, sendOtp])
 
+  // Manual submit handler for the explicit "verify-submit" button. Mirrors
+  // the auto-submit branch in handleComplete, but lets E2E tests drive the
+  // verify step with a deterministic click (the auto-submit-on-complete
+  // fires asynchronously, which makes the timing tricky for Playwright).
+  // Declared BEFORE the email-guard early-return so React's hook order is
+  // stable across renders (rules-of-hooks).
+  const handleManualSubmit = useCallback(() => {
+    if (submitting) return
+    if (code.length !== 6) return
+    void handleComplete(code)
+  }, [code, handleComplete, submitting])
+
   if (!email) {
     // Defensive — shouldn't reach this step without a wizard email.
     return null
   }
 
   return (
-    <div className="register-verify">
+    <div className="register-verify" data-testid="verify-step">
       <h2 className="register-verify__title">
         {intl.formatMessage({ id: 'verify_email_title' })}
       </h2>
@@ -97,6 +109,19 @@ export function VerifyStep() {
           {errorMessage}
         </p>
       )}
+      {/* Explicit submit hook for E2E + accessibility (some assistive
+          tech can't trigger the auto-submit). Hidden visually because
+          the auto-submit covers the keyboard path; rendered as a real
+          button so getByTestId('verify-submit').click() works. */}
+      <button
+        type="button"
+        data-testid="verify-submit"
+        className="register-verify__submit-hidden"
+        onClick={handleManualSubmit}
+        disabled={code.length !== 6 || submitting}
+        aria-hidden="true"
+        tabIndex={-1}
+      />
       <IonButton
         fill="clear"
         disabled={cooldown > 0 || submitting}

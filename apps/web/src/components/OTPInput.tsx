@@ -113,6 +113,7 @@ export function OTPInput({
           disabled={disabled}
           aria-invalid={error ? 'true' : 'false'}
           aria-label={`Digit ${i + 1} of ${length}`}
+          data-testid={`otp-input-${i}`}
         />
       ))}
     </div>

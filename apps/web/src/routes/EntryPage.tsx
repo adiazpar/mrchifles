@@ -148,6 +148,7 @@ export function EntryPage() {
                 inputMode="email"
                 autoFocus
                 required
+                data-testid="entry-email-input"
                 below={
                   error ? (
                     <div className="auth-error" role="alert">
@@ -164,6 +165,7 @@ export function EntryPage() {
                 type="submit"
                 disabled={!canSubmit}
                 className="mt-3"
+                data-testid="entry-email-submit"
               >
                 {isLoading ? (
                   <IonSpinner name="crescent" />

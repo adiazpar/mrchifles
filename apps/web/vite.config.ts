@@ -118,6 +118,11 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       globals: true,
       setupFiles: ['./src/test-setup.ts'],
+      // Vitest covers component / unit tests under src/. E2E specs under
+      // e2e/ are Playwright tests against the deployed server and have
+      // their own runner — exclude them here so Vitest doesn't pick them
+      // up and choke on the missing `@playwright/test` import.
+      exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
     },
   }
 })
