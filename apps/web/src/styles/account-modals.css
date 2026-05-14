@@ -758,8 +758,8 @@
   gap: var(--space-3);
 }
 
-/* Live checklist — same visual language as the password rule list,
-   but tinted oxblood for the destructive context. */
+/* Live checklist — confirmation gates for the destructive delete-account
+   flow, tinted oxblood. */
 .delete-account__checks {
   margin-top: var(--space-4);
   padding: var(--space-3) var(--space-4);

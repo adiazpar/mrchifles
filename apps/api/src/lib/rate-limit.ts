@@ -163,11 +163,12 @@ export interface RateLimitConfig {
   /**
    * When true, a transient Upstash failure causes checkRateLimit to
    * THROW UpstashUnavailableError instead of silently falling back to
-   * the per-Lambda in-memory limiter. Use for auth-critical limits
-   * (login, register, change-password): better to 503 the request
-   * than to disable brute-force protection during an Upstash blip.
-   * For non-auth limiters (AI, HEIC, business mutations) leave
-   * unset — the in-memory fallback is acceptable degradation.
+   * the per-Lambda in-memory limiter. Use for cost-/abuse-critical
+   * limits (AI per-user daily, global AI daily kill-switch): better to
+   * 503 the request than to disable spend protection during an Upstash
+   * blip. For non-critical limiters (HEIC, business/user mutations,
+   * code validation) leave unset — the in-memory fallback is
+   * acceptable degradation.
    */
   failClosed?: boolean
 }

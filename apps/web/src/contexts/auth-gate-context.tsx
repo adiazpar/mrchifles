@@ -13,8 +13,8 @@ import {
 import { useRouter } from '@/lib/next-navigation-shim'
 import { useAuth } from './auth-context'
 
-// Unified phase machine: both playEntry (login/register -> hub) and
-// playExit (logout -> login) use the same 5-phase choreography. The
+// Unified phase machine: both playEntry (entry-page/register -> hub) and
+// playExit (logout -> entry-page) use the same 5-phase choreography. The
 // "overlay" is conceptually a bidirectional entrance — it doesn't know
 // or care which direction you're going, only that it's covering a
 // transition. Work that needs to happen under cover (like clearing

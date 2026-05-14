@@ -1,12 +1,9 @@
 import { auth } from '@/lib/auth'
 import { toNextJsHandler } from 'better-auth/next-js'
 
-// better-auth wires every endpoint behind /api/auth (sign-in, sign-up,
-// callback/<provider>, email-otp/*, two-factor/*, session, get-session,
-// forget-password, reset-password, list-sessions, revoke-other-sessions,
-// delete-user, etc.). Legacy POS auth routes (login, logout, me, register,
-// profile, change-password, check-email) live as static siblings during the
-// migration window — Next.js prefers static over dynamic, so they take
-// precedence until they're deleted in T16. After T16 this catch-all owns
-// the entire /api/auth/* surface.
+// better-auth wires its endpoints behind /api/auth — sign-in/email-otp,
+// sign-up/email-otp, callback/<provider>, email-otp/* (send/verify),
+// session, get-session, list-sessions, revoke-other-sessions, delete-user.
+// Account-management routes that need our pre-checks (delete, change-email)
+// live as static siblings under /api/account/.
 export const { POST, GET } = toNextJsHandler(auth)
