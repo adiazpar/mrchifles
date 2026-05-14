@@ -125,12 +125,19 @@ export const twoFactor = sqliteTable('two_factor', {
  * counters are consistent across Vercel Lambda instances (in-memory
  * storage gives each cold start its own window — fail-open, weaker).
  *
- * Columns mirror better-auth's expected shape. better-auth handles
- * inserts/updates against this table itself; do not write to it from
- * application code.
+ * Columns mirror better-auth's expected shape. The `id` column is
+ * required because the drizzleAdapter auto-injects a generated id on
+ * every `create()` call regardless of which field the rate-limiter
+ * itself queries by (`key`). Omitting it raises
+ * "The field 'id' does not exist in the 'rateLimit' Drizzle schema"
+ * the first time better-auth tries to record a counter.
+ *
+ * better-auth handles inserts/updates against this table itself; do
+ * not write to it from application code.
  */
 export const rateLimit = sqliteTable('rate_limit', {
-  key: text('key').primaryKey(),
+  id: text('id').primaryKey(),
+  key: text('key').notNull().unique(),
   count: integer('count').notNull(),
   lastRequest: integer('last_request').notNull(),
 })
