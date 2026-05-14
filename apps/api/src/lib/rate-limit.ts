@@ -267,34 +267,6 @@ export function getClientIp(request: Request): string {
 
 // Preset configurations for common use cases
 export const RateLimits = {
-  /**
-   * Login attempts: 5 per 15 minutes per IP. failClosed because
-   * silent fallback to per-Lambda counters during an Upstash blip
-   * effectively disables brute-force protection at any non-trivial
-   * concurrency.
-   */
-  login: { limit: 5, windowSeconds: 15 * 60, failClosed: true },
-  /**
-   * Login attempts per target email: 10 per hour. Layered on top of
-   * the per-IP cap so credential-stuffing attackers who rotate IPs
-   * (botnet, residential proxies) still hit a brake when they target a
-   * single victim's email. The window is intentionally longer than the
-   * per-IP window so a legitimate user retrying their own password a
-   * few times doesn't lock themselves out of the account globally.
-   * failClosed for the same reason as login above.
-   */
-  loginEmail: { limit: 10, windowSeconds: 60 * 60, failClosed: true },
-  /** Registration: 3 per hour. failClosed — registration spam is the
-   * pre-step to credential stuffing and AI-cost abuse. */
-  register: { limit: 3, windowSeconds: 60 * 60, failClosed: true },
-  /**
-   * Email availability check used by the registration wizard's step 2:
-   * 20 per minute per IP. Not failClosed — the security-critical limiter
-   * is `register` itself; this one is a UX accelerator. Falling open
-   * during an Upstash blip is acceptable because the final register call
-   * still rate-limits properly.
-   */
-  checkEmail: { limit: 20, windowSeconds: 60, failClosed: false },
   /** Code validation (invite, transfer): 10 per 15 minutes */
   codeValidation: { limit: 10, windowSeconds: 15 * 60 },
   /**
