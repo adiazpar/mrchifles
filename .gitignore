@@ -12,10 +12,21 @@ out/
 # just creates churn. Next.js regenerates it locally as needed.
 next-env.d.ts
 
-# Environment — ignore every .env* variant at any depth, then explicitly
-# allow the .env.example template files (and any per-env *.env.example).
-# Covers: .env, .env.local, .env.development, .env.production, .env.staging,
-# .env.test, .env.production.local, etc., regardless of subdirectory.
+# Environment.
+#
+# This project keeps secrets in two places only:
+#   - apps/<api|web>/.env.local — local development
+#   - Vercel project env vars   — preview + production
+#
+# There are NO .env.production / .env.staging files anywhere. For prod
+# migrations or scripts run from a developer machine, either export the
+# vars inline (`TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... npm run ...`)
+# or pull them down on demand with `vercel env pull .env.local`.
+#
+# The broad pattern below is defense-in-depth: if anything (a future tool,
+# a tutorial copy-paste, vercel env pull's default output name) ever lands
+# a file named `.env.production` / `.env.staging` / etc. on disk, it won't
+# accidentally get committed. The .env*.example template files stay tracked.
 .env*
 !.env.example
 !.env*.example
