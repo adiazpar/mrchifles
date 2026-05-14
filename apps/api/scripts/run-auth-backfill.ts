@@ -67,7 +67,21 @@ async function main() {
     for (const stmt of filtered) {
       const preview = stmt.replace(/\s+/g, ' ').slice(0, 100)
       console.log('  ' + preview + (stmt.length > 100 ? '...' : ''))
-      await tx.execute(stmt)
+      try {
+        await tx.execute(stmt)
+      } catch (e: any) {
+        const msg = String(e?.message ?? e)
+        // ALTER TABLE ... DROP COLUMN raises "no such column" if the column
+        // was already removed by a prior migration. Treat as a no-op so the
+        // cleanup migration is idempotent across environments where some
+        // columns may already be absent (e.g. local DBs that ran the
+        // 2026-05-13-03-drop-legacy-auth-columns migration earlier).
+        if (/no such column/i.test(msg) && /DROP COLUMN/i.test(stmt)) {
+          console.warn(`  [skip] ${preview} — column already absent`)
+          continue
+        }
+        throw e
+      }
     }
     await tx.commit()
   } catch (err) {
