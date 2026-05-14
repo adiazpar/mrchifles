@@ -61,7 +61,9 @@ export function Security() {
       return
     }
     try {
-      await authClient.twoFactor.disable({ password })
+      // TODO(B12): remove the 2FA toggle entirely from Security; the
+      // twoFactor plugin was dropped in A1/B1 so this call no longer exists.
+      void password
       await refreshUser()
     } catch {
       // Best-effort. Surface a toast in a follow-up if needed.

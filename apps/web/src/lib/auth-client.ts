@@ -1,7 +1,6 @@
 import { createAuthClient } from 'better-auth/react'
 import {
   emailOTPClient,
-  twoFactorClient,
   inferAdditionalFields,
 } from 'better-auth/client/plugins'
 // Force-import the path-to-object types via the public `better-auth/client`
@@ -75,7 +74,6 @@ function makeAuthClient() {
     baseURL,
     plugins: [
       emailOTPClient(),
-      twoFactorClient(),
       inferAdditionalFields({ user: userAdditionalFields }),
     ],
   })
