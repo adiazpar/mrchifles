@@ -87,14 +87,12 @@ export const POST = withAuth(async (request, user) => {
   }
 
   // 4. Hand off to better-auth. Sessions, account rows, business_users
-  //    rows all cascade-delete via FKs. better-auth's deleteUser still
-  //    runs its own sensitiveSessionMiddleware freshness check — the OTP
-  //    step-up above is the user-facing proof; the upstream check is the
-  //    safety-net for sessions that have aged out since OTP send.
-  await auth.api.deleteUser({
-    headers: request.headers,
-    body: {},
-  })
+  //    rows all cascade-delete via FKs.
+  // better-auth's default `freshAge` gate (24h since session.createdAt) is
+  // explicitly disabled in auth.ts via `session.freshAge: 0`. The OTP we
+  // just verified is the sole freshness proof for this destructive action
+  // — without it, a stolen 6-day-old session could nuke the account.
+  await auth.api.deleteUser({ headers: request.headers, body: {} })
 
   return successResponse({}, ApiMessageCode.ACCOUNT_DELETED)
 })

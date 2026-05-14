@@ -105,7 +105,7 @@ describe('POST /api/account/delete', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeRequest({ confirmEmail: 'x@x.com', otp: '123456' }) as any,
     )
-    expect([401, 403]).toContain(res.status)
+    expect(res.status).toBe(401)
     const body = await res.json()
     expect(body.messageCode).toBe('UNAUTHORIZED')
   })
@@ -179,7 +179,34 @@ describe('POST /api/account/delete', () => {
     const body = await res.json()
     expect(body.messageCode).toBe('ACCOUNT_DELETED')
     expect(verifyEmailOTP).toHaveBeenCalledOnce()
+    expect(verifyEmailOTP).toHaveBeenCalledWith({
+      body: { email: 'me@x.com', otp: '123456' },
+      headers: expect.any(Headers),
+    })
     expect(deleteUser).toHaveBeenCalledOnce()
+  })
+
+  it('surfaces SESSION_EXPIRED as 500 if better-auth\'s freshAge gate is re-enabled (regression guard for freshAge: 0)', async () => {
+    // If a future refactor re-enables better-auth's default freshAge,
+    // deleteUser will throw SESSION_EXPIRED for sessions older than 24h.
+    // This test pins the expectation that our route does NOT recover from
+    // such an upstream throw — so the regression manifests loudly via a
+    // 500 instead of silently dropping deletions.
+    getSession.mockResolvedValueOnce({ user: SESSION_USER })
+    verifyEmailOTP.mockResolvedValueOnce({ status: true })
+    ownedActiveFindFirst.mockResolvedValueOnce(undefined)
+    // Simulate better-auth's APIError shape for SESSION_EXPIRED.
+    const sessionExpired = Object.assign(new Error('SESSION_EXPIRED'), {
+      status: 'BAD_REQUEST',
+      body: { code: 'SESSION_EXPIRED', message: 'Session expired' },
+    })
+    deleteUser.mockRejectedValueOnce(sessionExpired)
+    const { POST } = await import('./route')
+    const res = await POST(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeRequest({ confirmEmail: 'me@x.com', otp: '123456' }) as any,
+    )
+    expect(res.status).toBe(500)
   })
 
   it('lowercases confirmEmail before comparing to the session email', async () => {

@@ -7,6 +7,7 @@ const opts = (auth as unknown as {
     emailAndPassword?: { enabled?: boolean }
     account?: { accountLinking?: { trustedProviders?: string[] } }
     hooks?: { before?: unknown }
+    session?: { freshAge?: number }
   }
 }).options
 
@@ -41,5 +42,9 @@ describe('better-auth config', () => {
     // The actual rejection behavior (cross-account session check) is
     // exercised end-to-end by Task D2's passwordless E2E specs.
     expect(typeof opts.hooks?.before).toBe('function')
+  })
+
+  it('disables better-auth freshAge gate so OTP step-up is the sole freshness proof', () => {
+    expect(opts.session?.freshAge).toBe(0)
   })
 })

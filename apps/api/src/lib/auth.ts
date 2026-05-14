@@ -59,6 +59,14 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
+    // Disable better-auth's default 24h sensitive-op freshness gate. We
+    // gate destructive actions (delete account, change email, etc.) with
+    // a fresh email-OTP step-up at the route level — that proves mailbox
+    // control RIGHT NOW. The upstream freshAge check tests calendar age
+    // from initial login, which is redundant with our OTP gate and would
+    // produce SESSION_EXPIRED 500s for legitimate 6-day-old sessions.
+    // See node_modules/better-auth/dist/api/routes/update-user.mjs:304-308.
+    freshAge: 0,
     cookieCache: { enabled: true, maxAge: 5 * 60 },
   },
 
