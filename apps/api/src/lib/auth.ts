@@ -53,8 +53,8 @@ export const auth = betterAuth({
   },
 
   // Passwordless by design. No password column is read or written by this
-  // config; existing scrypt hashes in account.password are unused and will
-  // be dropped in migration 2026-05-14-01-passwordless-cleanup.sql.
+  // config; the legacy account.password column was dropped in migration
+  // 2026-05-14-01-passwordless-cleanup.sql.
 
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days

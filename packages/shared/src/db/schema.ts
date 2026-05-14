@@ -33,10 +33,10 @@ export const businesses = sqliteTable('businesses', {
 // ===========================================
 // USERS
 // ===========================================
-// Authenticated via better-auth. Password is stored in the `account` table
-// (provider_id='credential'); legacy users.password / password_changed_at /
-// tokens_invalid_before columns are still present in SQL during the migration
-// window and will be dropped in a later migration once all sessions have rotated.
+// Authenticated via better-auth in passwordless mode (email OTP only). No
+// password material is stored anywhere; the legacy users.password /
+// password_changed_at / tokens_invalid_before columns and the account.password
+// column were dropped in 2026-05-14-01-passwordless-cleanup.sql.
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -90,7 +90,6 @@ export const account = sqliteTable('account', {
   accessTokenExpiresAt: integer('access_token_expires_at', { mode: 'timestamp' }),
   refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp' }),
   scope: text('scope'),
-  password: text('password'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
@@ -108,15 +107,6 @@ export const verification = sqliteTable('verification', {
 }, (table) => ({
   identifierIdx: index('idx_verification_identifier').on(table.identifier),
   expiresIdx: index('idx_verification_expires_at').on(table.expiresAt),
-}))
-
-export const twoFactor = sqliteTable('two_factor', {
-  id: text('id').primaryKey(),
-  secret: text('secret').notNull(),
-  backupCodes: text('backup_codes').notNull(),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-}, (table) => ({
-  userIdIdx: uniqueIndex('idx_two_factor_user_id').on(table.userId),
 }))
 
 /**
