@@ -205,6 +205,7 @@ export type MessageId =
   | 'apiMessages.order_invalid_date'
   | 'apiMessages.order_invalid_items'
   | 'apiMessages.order_not_found'
+  | 'apiMessages.otp_invalid'
   | 'apiMessages.product_forbidden_not_manager'
   | 'apiMessages.product_icon_invalid_type'
   | 'apiMessages.product_icon_too_large'

@@ -50,6 +50,10 @@ export const ApiMessageCode = {
   AUTH_EMAIL_TAKEN: 'AUTH_EMAIL_TAKEN',
   CANNOT_DELETE_OWNS_BUSINESS: 'CANNOT_DELETE_OWNS_BUSINESS',
   ACCOUNT_DELETED: 'ACCOUNT_DELETED',
+  // OTP step-up. OTP_INVALID is consumed in A4 (account-delete) today and
+  // in A9 (business-transfer) soon. The rest of the OTP_* family lands in
+  // A8 once every route that emits an OTP-related code is settled.
+  OTP_INVALID: 'OTP_INVALID',
 
   // Products
   PRODUCT_NOT_FOUND: 'PRODUCT_NOT_FOUND',

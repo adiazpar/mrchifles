@@ -1353,6 +1353,7 @@
   "apiMessages.validation_number_too_large": "Must be {max} or less",
   "apiMessages.auth_invalid_credentials": "Invalid email or password",
   "apiMessages.auth_email_taken": "An account with this email already exists",
+  "apiMessages.otp_invalid": "That code is incorrect or expired. Request a new one and try again.",
   "apiMessages.product_not_found": "Product not found",
   "apiMessages.product_id_required": "Product ID is required",
   "apiMessages.product_no_data_to_update": "No data to update",
