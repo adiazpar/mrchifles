@@ -50,17 +50,4 @@ describe('email helpers', () => {
     warnSpy.mockRestore()
     errSpy.mockRestore()
   })
-
-  it('sendResetPasswordEmail forwards email + url + locale', async () => {
-    const { sendResetPasswordEmail } = await import('./email')
-    await sendResetPasswordEmail({
-      email: 'b@c.com',
-      url: 'https://kasero.app/reset-password?token=abc',
-      language: 'en-US',
-    })
-    expect(sendMock).toHaveBeenCalledTimes(1)
-    const call = sendMock.mock.calls[0][0]
-    expect(call.to).toBe('b@c.com')
-    expect(call.subject).toMatch(/reset/i)
-  })
 })
