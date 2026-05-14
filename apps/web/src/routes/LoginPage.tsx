@@ -1,3 +1,8 @@
+// TODO(B5): This file is slated for deletion as part of the passwordless
+// refactor — the new EntryPage (B3) replaces /login + /register with a
+// single OTP entry flow. The body below has been stubbed to keep the
+// build green after auth-context lost its `login` method; do not invest
+// in fixing the dead code paths here.
 import { useIntl } from 'react-intl'
 import { useState, useCallback, useMemo } from 'react'
 import { IonPage, IonContent, IonButton, IonSpinner, IonHeader, IonToolbar, IonTitle } from '@ionic/react'
@@ -7,7 +12,6 @@ import { useRouter, useSearchParams } from '@/lib/next-navigation-shim'
 import { AuthLayout, AuthField } from '@/components/auth'
 import { useAuth } from '@/contexts/auth-context'
 import { useAuthGate } from '@/contexts/auth-gate-context'
-import { authClient } from '@/lib/auth-client'
 import { APP_VERSION } from '@/lib/version'
 
 // Defense against open-redirect via the `?redirect=` query param.
@@ -24,8 +28,13 @@ export function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = safeRedirect(searchParams.get('redirect'))
-  const { login } = useAuth()
-  const { playEntry } = useAuthGate()
+  // TODO(B5): remove — useAuth() no longer exposes `login`. Keeping the
+  // hook call is harmless (still need it elsewhere for type-only deps),
+  // but the destructure has been dropped.
+  useAuth()
+  // useAuthGate() retained for the entry-overlay's mounting side effect
+  // but its `playEntry` is unused now that the success path is gone.
+  useAuthGate()
   const intl = useIntl()
 
   const [email, setEmail] = useState('')
@@ -36,52 +45,13 @@ export function LoginPage() {
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault()
-      setError('')
-      setIsLoading(true)
-
-      try {
-        const result = await login(email, password)
-
-        if (result.requiresEmailVerification) {
-          // Auto-send a fresh OTP so the user lands on /verify-email with
-          // a code in their inbox. better-auth's emailVerification.sendOnSignIn
-          // already triggers this server-side, but firing client-side too
-          // is harmless (rate limiter is the source of truth) and makes the
-          // UX self-explanatory.
-          try {
-            await authClient.emailOtp.sendVerificationOtp({
-              email,
-              type: 'email-verification',
-            })
-          } catch {
-            // best-effort; verify page can also resend manually
-          }
-          router.push('/verify-email')
-          return
-        }
-
-        if (result.requires2FA) {
-          router.push('/two-factor-challenge')
-          return
-        }
-
-        if (!result.success) {
-          setError(result.error ?? '')
-          setIsLoading(false)
-          return
-        }
-
-        // playEntry handles router.push + router.refresh internally and
-        // resolves when the overlay has fully faded out. We intentionally
-        // do NOT clear isLoading on success — the form is covered by the
-        // overlay during the transition and unmounted afterward.
-        await playEntry(redirect)
-      } catch {
-        setError(intl.formatMessage({ id: 'auth.connection_error' }))
-        setIsLoading(false)
-      }
+      // TODO(B5): the password-based login flow is gone. This handler
+      // exists only so the obsolete form doesn't break the build.
+      // EntryPage (B3) supersedes the entire route.
+      setError(intl.formatMessage({ id: 'auth.connection_error' }))
+      setIsLoading(false)
     },
-    [email, password, redirect, login, playEntry, intl, router]
+    [intl]
   )
 
   const handleGoToRegister = useCallback(() => {

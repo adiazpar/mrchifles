@@ -1,3 +1,8 @@
+// TODO(B4): This step is being deleted as part of the wizard rewrite —
+// the new 3-step flow (email -> OTP -> name) no longer collects a
+// password. The body below has been stubbed to keep the build green
+// after auth-context lost its `register` method; do not invest in
+// fixing the dead code paths here.
 import { useCallback, useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
 import { IonButton, IonSpinner } from '@ionic/react'
@@ -12,7 +17,10 @@ import { useRegisterNav } from './RegisterNavContext'
 export function PasswordStep() {
   const intl = useIntl()
   const router = useRouter()
-  const { register } = useAuth()
+  // TODO(B4): useAuth() no longer exposes `register`. The hook call is
+  // retained so this dead component still type-checks until B4 deletes
+  // it; the form submit below is now a no-op stub.
+  useAuth()
   const { name, email, password, setPassword, goTo } = useRegisterNav()
 
   const [error, setError] = useState<string | null>(null)
@@ -39,37 +47,20 @@ export function PasswordStep() {
     async (e: React.FormEvent) => {
       e.preventDefault()
       if (!canSubmit) return
-      setError(null)
+      // TODO(B4): the password-based register flow is gone. This handler
+      // is a stub so the obsolete form keeps building; the wizard rewrite
+      // replaces this entire step with the OTP path collected via
+      // EntryPage + a NameStep.
+      setError(intl.formatMessage({ id: 'auth.connection_error' }))
       setErrorCode(null)
-      setSubmitting(true)
-      try {
-        const result = await register(email, password, name)
-        if (result.success) {
-          // Account created — better-auth's emailOTP plugin has dispatched
-          // the verification code. Advance to the verify step; entry into
-          // the hub happens after the OTP is confirmed there.
-          goTo('verify')
-          return
-        }
-        // better-auth's signUp.email returns code USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL
-        // when the email is taken (see node_modules/better-auth/dist/api/routes/sign-up.mjs).
-        // The "AUTH_EMAIL_TAKEN" branch below mirrors the codebase's own
-        // ApiMessageCode so other consumers (PasswordStep test, EmailStep "Edit email"
-        // link) keep working off the same constant.
-        if (result.messageCode === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL' as never
-            || result.messageCode === 'AUTH_EMAIL_TAKEN') {
-          setError(intl.formatMessage({ id: 'auth.register_wizard.error_email_taken_race' }))
-          setErrorCode('AUTH_EMAIL_TAKEN')
-        } else {
-          setError(result.error ?? null)
-        }
-        setSubmitting(false)
-      } catch {
-        setError(intl.formatMessage({ id: 'auth.connection_error' }))
-        setSubmitting(false)
-      }
+      setSubmitting(false)
+      // References preserved so the destructured wizard-context fields
+      // stay live until B4 removes the file outright.
+      void email
+      void name
+      void goTo
     },
-    [canSubmit, register, email, password, name, goTo, intl],
+    [canSubmit, email, name, goTo, intl],
   )
 
   const handleGoToLogin = useCallback(() => router.push('/login'), [router])

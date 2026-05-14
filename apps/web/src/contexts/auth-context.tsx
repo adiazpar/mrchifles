@@ -14,8 +14,6 @@ import { useRouter } from '@/lib/next-navigation-shim'
 import { authClient } from '@/lib/auth-client'
 import type { User } from '@kasero/shared/types'
 import type { SupportedLocale } from '@/i18n/config'
-import { useApiMessage } from '@/hooks/useApiMessage'
-import type { ApiMessageCode } from '@kasero/shared/api-messages'
 import { clearKaseroLocalStorage } from '@/hooks/useSessionCache'
 import { LANGUAGE_CHANGE_EVENT, setCachedUser } from '@/lib/user-cache'
 
@@ -23,27 +21,50 @@ import { LANGUAGE_CHANGE_EVENT, setCachedUser } from '@/lib/user-cache'
 // TYPES
 // ============================================
 
-interface LoginResult {
+interface OtpSendResult {
   success: boolean
   error?: string
-  /** Set when the server demands a TOTP challenge before sign-in completes. */
-  requires2FA?: boolean
-  /** Set when the server bounced the sign-in because the email isn't verified. */
-  requiresEmailVerification?: boolean
 }
 
-interface RegisterResult {
+interface OtpVerifyResult {
+  success: boolean
+  isNewUser: boolean
+  error?: string
+}
+
+interface SetNameResult {
   success: boolean
   error?: string
-  messageCode?: ApiMessageCode
 }
 
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (email: string, password: string) => Promise<LoginResult>
-  register: (email: string, password: string, name: string) => Promise<RegisterResult>
+  /**
+   * Send a 6-digit OTP to the email for combined sign-in/sign-up. The
+   * email-otp plugin's `sign-in` mode creates the user record on first
+   * successful verify if they don't yet exist, so this single call serves
+   * both new and returning users.
+   */
+  sendOtp: (email: string) => Promise<OtpSendResult>
+  /**
+   * Verify the OTP and create the session. `isNewUser` is true when the
+   * resolved user record has no `name` set yet — the wizard should route
+   * those users to the NameStep before dropping them into the hub.
+   */
+  verifyOtp: (email: string, otp: string) => Promise<OtpVerifyResult>
+  /**
+   * Persist the name a brand-new user typed in the wizard's final step.
+   * Backed by better-auth's `updateUser`.
+   */
+  setName: (name: string) => Promise<SetNameResult>
+  /**
+   * Kick off Google OAuth. The email-verified flag on the existing
+   * account causes better-auth to auto-link rather than create a
+   * duplicate user when the Google email matches.
+   */
+  linkGoogle: (callbackURL?: string) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
   changeLanguage: (language: SupportedLocale) => Promise<{ success: boolean; error?: string }>
@@ -85,12 +106,20 @@ function dispatchLanguageChange(language: string | undefined): void {
 // column is `avatar` — the alias is configured in
 // apps/api/src/lib/auth.ts via `fields: { image: 'avatar' }`. We accept
 // either spelling here so the mapper survives any future alias change.
+//
+// The `name` column is now non-nullable at the DB level but the
+// passwordless sign-up path leaves it as the empty string for a
+// brand-new user (better-auth's emailOTP `sign-in` mode creates the row
+// without a name). We deliberately allow empty string here — verifyOtp
+// uses the empty-name signal to flag `isNewUser` and route through the
+// NameStep.
 function mapSessionUserToUser(raw: unknown): User | null {
   if (!raw || typeof raw !== 'object') return null
   const u = raw as Record<string, unknown>
-  if (typeof u.id !== 'string' || typeof u.email !== 'string' || typeof u.name !== 'string') {
+  if (typeof u.id !== 'string' || typeof u.email !== 'string') {
     return null
   }
+  const name = typeof u.name === 'string' ? u.name : ''
   const avatar =
     (u.image as string | null | undefined) ??
     (u.avatar as string | null | undefined) ??
@@ -98,14 +127,38 @@ function mapSessionUserToUser(raw: unknown): User | null {
   return {
     id: u.id,
     email: u.email,
-    name: u.name,
+    name,
     avatar,
     language: (u.language as string | undefined) ?? 'en-US',
     emailVerified: Boolean(u.emailVerified),
     phoneNumber: (u.phoneNumber as string | null | undefined) ?? null,
     phoneNumberVerified: Boolean(u.phoneNumberVerified),
-    twoFactorEnabled: Boolean(u.twoFactorEnabled),
+    // twoFactorEnabled stays in the User type until B17 cleanup. The
+    // passwordless build doesn't surface 2FA toggles in the UI, but the
+    // field has to keep type-checking everywhere it's read. We default
+    // to false rather than trusting whatever the session payload still
+    // contains.
+    twoFactorEnabled: false,
   }
+}
+
+// Normalize the assorted error shapes better-auth's client can produce
+// into a single string for the OTP-result types. The client returns
+// either { error: { message, code } } or throws — we tolerate both.
+function extractError(e: unknown, fallback: string): string {
+  if (e && typeof e === 'object') {
+    const obj = e as { message?: unknown; error?: { message?: unknown } }
+    if (typeof obj.message === 'string' && obj.message.length > 0) {
+      return obj.message
+    }
+    if (obj.error && typeof obj.error === 'object') {
+      const inner = obj.error as { message?: unknown }
+      if (typeof inner.message === 'string' && inner.message.length > 0) {
+        return inner.message
+      }
+    }
+  }
+  return fallback
 }
 
 // ============================================
@@ -121,7 +174,6 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const intl = useIntl()
-  const translateApiMessage = useApiMessage()
   const { data: session, isPending, refetch } = authClient.useSession()
 
   const user = useMemo(
@@ -173,60 +225,93 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // AUTH METHODS
   // ============================================
 
-  const login = useCallback(
-    async (email: string, password: string): Promise<LoginResult> => {
-      const result = await authClient.signIn.email({ email, password })
-      const err = result.error
-      if (err) {
-        const code = err.code
-        if (code === 'EMAIL_NOT_VERIFIED') {
-          return {
-            success: false,
-            requiresEmailVerification: true,
-            error: translateApiMessage({ messageCode: 'EMAIL_NOT_VERIFIED' }),
-          }
+  const sendOtp = useCallback(
+    async (email: string): Promise<OtpSendResult> => {
+      const fallback = intl.formatMessage({ id: 'auth.connection_error' })
+      try {
+        const res = await authClient.emailOtp.sendVerificationOtp({
+          email,
+          type: 'sign-in',
+        })
+        // better-auth's client returns `{ data, error }` rather than
+        // throwing for application-level failures (rate-limit, invalid
+        // email, …). Surface those as `success: false` so the caller
+        // can render the message.
+        const err = (res as { error?: { message?: string } | null } | null)?.error
+        if (err) {
+          return { success: false, error: err.message ?? fallback }
         }
-        if (
-          code === 'TWO_FACTOR_REQUIRED' ||
-          code === 'TWO_FACTOR_VERIFICATION_REQUIRED'
-        ) {
-          return {
-            success: false,
-            requires2FA: true,
-            error: '',
-          }
-        }
-        return {
-          success: false,
-          error:
-            err.message ??
-            intl.formatMessage({ id: 'auth.connection_error' }),
-        }
+        return { success: true }
+      } catch (e) {
+        return { success: false, error: extractError(e, fallback) }
       }
-      await refetch()
-      return { success: true }
     },
-    [intl, refetch, translateApiMessage],
+    [intl],
   )
 
-  const register = useCallback(
-    async (email: string, password: string, name: string): Promise<RegisterResult> => {
-      const result = await authClient.signUp.email({ email, password, name })
-      const err = result.error
-      if (err) {
-        const code = err.code as ApiMessageCode | undefined
+  const verifyOtp = useCallback(
+    async (email: string, otp: string): Promise<OtpVerifyResult> => {
+      const fallback = intl.formatMessage({ id: 'auth.connection_error' })
+      try {
+        const res = await authClient.signIn.emailOtp({ email, otp })
+        const err = (res as { error?: { message?: string } | null } | null)?.error
+        if (err) {
+          return {
+            success: false,
+            isNewUser: false,
+            error: err.message ?? fallback,
+          }
+        }
+        // Re-pull the session so the AuthProvider's `user` and the
+        // SCOPED_SW_CACHE eviction effect see the new identity before
+        // the wizard advances to the next step.
+        await refetch()
+        // Detect new-user via an empty/missing name. Better-auth's
+        // emailOTP sign-in mode creates users on the fly; the brand-new
+        // user has no `name` set yet, so we route them to the NameStep.
+        const data = (res as { data?: { user?: { name?: unknown } } | null } | null)?.data
+        const rawName = data?.user?.name
+        const userName = typeof rawName === 'string' ? rawName.trim() : ''
+        const isNewUser = userName.length === 0
+        return { success: true, isNewUser }
+      } catch (e) {
         return {
           success: false,
-          error:
-            err.message ??
-            intl.formatMessage({ id: 'auth.connection_error' }),
-          messageCode: code,
+          isNewUser: false,
+          error: extractError(e, fallback),
         }
       }
-      await refetch()
-      return { success: true }
     },
     [intl, refetch],
+  )
+
+  const setName = useCallback(
+    async (name: string): Promise<SetNameResult> => {
+      const fallback = intl.formatMessage({ id: 'auth.connection_error' })
+      try {
+        const res = await authClient.updateUser({ name })
+        const err = (res as { error?: { message?: string } | null } | null)?.error
+        if (err) {
+          return { success: false, error: err.message ?? fallback }
+        }
+        await refetch()
+        return { success: true }
+      } catch (e) {
+        return { success: false, error: extractError(e, fallback) }
+      }
+    },
+    [intl, refetch],
+  )
+
+  const linkGoogle = useCallback(
+    async (callbackURL: string = '/'): Promise<void> => {
+      // better-auth handles the redirect itself; this never resolves
+      // on the happy path (the page navigates away). We don't await a
+      // response shape because the OAuth dance owns the rest of the
+      // flow.
+      await authClient.signIn.social({ provider: 'google', callbackURL })
+    },
+    [],
   )
 
   const logout = useCallback(async () => {
@@ -284,13 +369,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAuthenticated,
       isLoading: isPending,
-      login,
-      register,
+      sendOtp,
+      verifyOtp,
+      setName,
+      linkGoogle,
       logout,
       refreshUser,
       changeLanguage,
     }),
-    [user, isAuthenticated, isPending, login, register, logout, refreshUser, changeLanguage],
+    [
+      user,
+      isAuthenticated,
+      isPending,
+      sendOtp,
+      verifyOtp,
+      setName,
+      linkGoogle,
+      logout,
+      refreshUser,
+      changeLanguage,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
