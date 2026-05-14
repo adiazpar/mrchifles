@@ -2,6 +2,7 @@ import { db, ownershipTransfers, users } from '@/db'
 import { eq, and, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
+import { auth } from '@/lib/auth'
 import { isOwner } from '@/lib/business-auth'
 import { withBusinessAuth, validationError, errorResponse, successResponse, applyRateLimit } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
@@ -10,6 +11,7 @@ import { RateLimits } from '@/lib/rate-limit'
 
 const initiateSchema = z.object({
   toEmail: Schemas.email(),
+  otp: Schemas.code(),
 })
 
 /**
@@ -26,6 +28,15 @@ function generateTransferCode(): string {
  * POST /api/businesses/[businessId]/transfer/initiate
  *
  * Initiate an ownership transfer to another user.
+ *
+ * Step-up auth: the legacy password re-auth was removed when Kasero went
+ * passwordless. Owners must now prove freshness via a 6-digit OTP sent to
+ * their own email before initiating a transfer. The flow on the client is:
+ *   1. POST /api/auth/email-otp/send-verification-otp { email, type: 'email-verification' }
+ *   2. POST /api/businesses/[businessId]/transfer/initiate { toEmail, otp }
+ * better-auth's verifyEmailOTP consumes the verification row on success,
+ * so a captured OTP can't be replayed for a second mutation.
+ *
  * Only the business owner can initiate a transfer.
  */
 export const POST = withBusinessAuth(async (request, access) => {
@@ -50,7 +61,35 @@ export const POST = withBusinessAuth(async (request, access) => {
     return validationError(validation)
   }
 
-  const { toEmail } = validation.data
+  const { toEmail, otp } = validation.data
+
+  // Step-up auth: verify a fresh OTP against the caller's own email.
+  // BusinessAccess doesn't carry the email (only userId), so look it up
+  // before handing off to better-auth. We don't sign anyone in —
+  // verifyEmailOTP confirms mailbox control RIGHT NOW and consumes the
+  // verification row. Wrong / expired / replayed codes throw APIError;
+  // translate any failure to OTP_INVALID so the client surfaces a single,
+  // unambiguous error string. Mirror /api/account/delete's pattern.
+  const [callerUser] = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.id, access.userId))
+    .limit(1)
+
+  if (!callerUser) {
+    // Caller row vanished between session check and this query —
+    // treat as unauthorized rather than 500ing.
+    return errorResponse(ApiMessageCode.UNAUTHORIZED, 401)
+  }
+
+  try {
+    await auth.api.verifyEmailOTP({
+      body: { email: callerUser.email, otp },
+      headers: request.headers,
+    })
+  } catch {
+    return errorResponse(ApiMessageCode.OTP_INVALID, 401)
+  }
 
   // Verify a Kasero user with this email actually exists, then compare
   // their id against the caller's to catch the self-transfer case in the
