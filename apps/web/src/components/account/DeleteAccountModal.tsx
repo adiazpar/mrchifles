@@ -2,10 +2,11 @@
 
 import { useIntl } from 'react-intl'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Check, AlertOctagon } from 'lucide-react'
+import { Check, AlertOctagon, ChevronLeft } from 'lucide-react'
 import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 import { AuthField } from '@/components/auth'
+import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
 import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useGoBackTo } from '@/hooks'
@@ -24,6 +25,27 @@ interface OwnedBusiness {
   name: string
 }
 
+/**
+ * Stage flow for the destructive friction:
+ *
+ *   loading  -- pre-flight business-ownership check
+ *      |
+ *      +--> blocked     (user still owns >=1 active business — terminal)
+ *      |
+ *      +--> warning     (consequences + type-email-to-confirm gate)
+ *              |
+ *              v
+ *           verify-otp  (mailbox-control step-up replaces the legacy
+ *                        current-password re-auth — see /api/account/delete
+ *                        which calls auth.api.verifyEmailOTP)
+ *              |
+ *              v
+ *           success     (Lottie beat, then logout + redirect)
+ */
+type Stage = 'loading' | 'blocked' | 'warning' | 'verify-otp' | 'success'
+
+const RESEND_COOLDOWN_SECONDS = 30
+
 export function DeleteAccountModal({
   isOpen,
   onClose,
@@ -34,23 +56,27 @@ export function DeleteAccountModal({
   const { user, logout } = useAuth()
   const translateApiMessage = useApiMessage()
 
-  const [isCheckLoading, setIsCheckLoading] = useState(true)
+  const [stage, setStage] = useState<Stage>('loading')
   const [ownedBusinesses, setOwnedBusinesses] = useState<OwnedBusiness[]>([])
   const [confirmEmail, setConfirmEmail] = useState('')
-  const [currentPassword, setCurrentPassword] = useState('')
+  const [otp, setOtp] = useState('')
+  const [isSendingOtp, setIsSendingOtp] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
   const [error, setError] = useState('')
 
-  // Pre-flight check: fetch the user's business memberships when the modal
-  // opens, so we can show the blocked state instantly without waiting for
-  // the user to click delete.
+  // ---------------------------------------------------------------- pre-flight
+  // Fetch the user's business memberships when the modal opens so we can
+  // route to the `blocked` stage instantly. The server-side route runs
+  // the same check, so this is purely UX — a race between two transfers
+  // and our delete is still caught by the 409 path below.
   useEffect(() => {
     if (!isOpen) return
 
     let cancelled = false
 
     async function checkOwnedBusinesses() {
-      setIsCheckLoading(true)
+      setStage('loading')
       setError('')
       try {
         const response = await fetchDeduped('/api/businesses/list')
@@ -61,17 +87,16 @@ export function DeleteAccountModal({
             .filter((b: { isOwner?: boolean }) => b.isOwner)
             .map((b: { id: string; name: string }) => ({ id: b.id, name: b.name }))
           setOwnedBusinesses(owned)
+          setStage(owned.length > 0 ? 'blocked' : 'warning')
         } else {
           setOwnedBusinesses([])
+          setStage('warning')
         }
       } catch (err) {
         if (cancelled) return
         console.error('Pre-flight check error:', err)
         setOwnedBusinesses([])
-      } finally {
-        if (!cancelled) {
-          setIsCheckLoading(false)
-        }
+        setStage('warning')
       }
     }
 
@@ -82,13 +107,18 @@ export function DeleteAccountModal({
     }
   }, [isOpen])
 
-  // Reset all state after the modal has finished closing
+  // Reset all state after the dismissal animation plays so the contents
+  // don't flash back into view while the modal slides away.
   useEffect(() => {
     if (!isOpen) {
       const timer = setTimeout(() => {
+        setStage('loading')
+        setOwnedBusinesses([])
         setConfirmEmail('')
-        setCurrentPassword('')
+        setOtp('')
+        setIsSendingOtp(false)
         setIsDeleting(false)
+        setResendCooldown(0)
         setError('')
         onExitComplete?.()
       }, 250)
@@ -96,42 +126,98 @@ export function DeleteAccountModal({
     }
   }, [isOpen, onExitComplete])
 
-  const isBlocked = ownedBusinesses.length > 0
+  // Resend cooldown tick — same shape as VerifyStep / useVerifyEmail.
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = window.setTimeout(() => setResendCooldown((c) => c - 1), 1000)
+    return () => window.clearTimeout(t)
+  }, [resendCooldown])
+
+  // ------------------------------------------------------------------ derived
   const emailMatches =
     !!user && confirmEmail.trim().toLowerCase() === user.email.toLowerCase()
-  const passwordEntered = currentPassword.length > 0
-  const canDelete =
-    !isCheckLoading && !isBlocked && emailMatches && passwordEntered && !isDeleting
+  const otpComplete = otp.trim().length === 6
+  const canContinueFromWarning = emailMatches && !isSendingOtp
+  const canDelete = otpComplete && !isDeleting
 
+  // ------------------------------------------------------------------- senders
+  const sendOtp = useCallback(async (): Promise<boolean> => {
+    if (!user) return false
+    const res = await authClient.emailOtp.sendVerificationOtp({
+      email: user.email,
+      type: 'email-verification',
+    })
+    const apiErr = (res as { error?: { message?: string } | null } | null)?.error
+    if (apiErr) {
+      setError(apiErr.message ?? intl.formatMessage({ id: 'common.error' }))
+      return false
+    }
+    return true
+  }, [intl, user])
+
+  const handleContinueToVerify = useCallback(async () => {
+    if (!canContinueFromWarning) return
+    setIsSendingOtp(true)
+    setError('')
+    try {
+      const ok = await sendOtp()
+      if (!ok) return
+      setOtp('')
+      setResendCooldown(RESEND_COOLDOWN_SECONDS)
+      setStage('verify-otp')
+    } catch (err) {
+      console.error('Send delete-OTP error:', err)
+      setError(intl.formatMessage({ id: 'common.error' }))
+    } finally {
+      setIsSendingOtp(false)
+    }
+  }, [canContinueFromWarning, intl, sendOtp])
+
+  const handleResend = useCallback(async () => {
+    if (resendCooldown > 0 || isDeleting) return
+    setError('')
+    setResendCooldown(RESEND_COOLDOWN_SECONDS)
+    const ok = await sendOtp()
+    if (!ok) {
+      // Keep the cooldown — re-asking immediately would just trip the
+      // server-side rate limiter again.
+      return
+    }
+    setOtp('')
+  }, [isDeleting, resendCooldown, sendOtp])
+
+  const handleBackToWarning = useCallback(() => {
+    if (isDeleting) return
+    setOtp('')
+    setError('')
+    setStage('warning')
+  }, [isDeleting])
+
+  // -------------------------------------------------------------- delete call
   const handleDelete = useCallback(async () => {
     if (!canDelete || !user) return
     setIsDeleting(true)
     setError('')
     try {
-      // better-auth's deleteUser endpoint requires a fresh session (the
-      // sensitiveSessionMiddleware), so we re-verify the current password
-      // by signing in again immediately before the delete call. This both
-      // refreshes the freshAt timestamp better-auth tracks AND surfaces
-      // wrong-password errors before we touch the server-side wrapper.
-      const reauth = await authClient.signIn.email({
-        email: user.email,
-        password: currentPassword,
-      })
-      if (reauth.error) {
-        setError(intl.formatMessage({ id: 'apiMessages.auth_invalid_credentials' }))
-        return
-      }
-      // Project wrapper does the active-owned-business pre-check then
-      // delegates to auth.api.deleteUser. Sessions / account / 2fa /
-      // business_users rows cascade-delete via FK.
+      // The server consumes the OTP via auth.api.verifyEmailOTP, so a
+      // captured code can't be replayed. confirmEmail mirrors the legacy
+      // type-to-confirm gate for the "wrong inbox open" foot-gun.
       await apiRequest('/api/account/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          confirmEmail: user.email,
+          otp: otp.trim().toUpperCase(),
+        }),
       })
-      // Success: clear local auth cache and redirect to register.
-      await logout()
-      goBackTo('/register')
+      setStage('success')
+      // Give the Lottie a beat to play, then clear local auth and route
+      // to the registration entry. The success animation reads as a
+      // confirmation receipt; jumping immediately feels like a crash.
+      window.setTimeout(async () => {
+        await logout()
+        goBackTo('/register')
+      }, 1400)
     } catch (err) {
       if (err instanceof ApiError) {
         setError(
@@ -139,12 +225,13 @@ export function DeleteAccountModal({
             ? translateApiMessage(err.envelope)
             : intl.formatMessage({ id: 'common.error' }),
         )
-        // 409 means the server-side check found owned businesses we missed
-        // (race condition: a transfer landed between pre-flight and submit).
-        // Reload the owned list so the UI can show the blocked state.
+        // 409 means the server caught a business-ownership state we
+        // missed at pre-flight (e.g. a transfer landed mid-flow). Route
+        // back to the blocked stage so the user sees what changed.
         const data = err.data as { ownedBusinesses?: OwnedBusiness[] }
         if (err.statusCode === 409 && Array.isArray(data.ownedBusinesses)) {
           setOwnedBusinesses(data.ownedBusinesses)
+          setStage('blocked')
         }
         return
       }
@@ -153,9 +240,10 @@ export function DeleteAccountModal({
     } finally {
       setIsDeleting(false)
     }
-  }, [canDelete, user, confirmEmail, currentPassword, logout, goBackTo, translateApiMessage, intl])
+  }, [canDelete, goBackTo, intl, logout, otp, translateApiMessage, user])
 
-  const confirmTitle = useMemo(() => {
+  // ---------------------------------------------------------------- titles fx
+  const warningTitle = useMemo(() => {
     const full = intl.formatMessage({ id: 'account.delete_confirm_hero_title' })
     const emphasis = intl.formatMessage({ id: 'account.delete_confirm_hero_title_emphasis' })
     const idx = full.indexOf(emphasis)
@@ -183,88 +271,134 @@ export function DeleteAccountModal({
     )
   }, [intl])
 
-  const footer = isBlocked ? (
-    <IonButton
-      fill="outline"
-      expand="block"
-      onClick={onClose}
-      className="flex-1"
-    >
-      {intl.formatMessage({ id: 'common.close' })}
-    </IonButton>
-  ) : (
-    <IonButton
-      color="danger"
-      expand="block"
-      onClick={handleDelete}
-      disabled={!canDelete}
-      className="flex-1"
-      data-haptic
-    >
-      {isDeleting ? <IonSpinner name="crescent" /> : intl.formatMessage({ id: 'account.delete_button' })}
-    </IonButton>
-  )
+  // ------------------------------------------------------------------ footers
+  let footer: React.ReactNode = undefined
+  if (stage === 'blocked') {
+    footer = (
+      <IonButton fill="outline" expand="block" onClick={onClose} className="flex-1">
+        {intl.formatMessage({ id: 'common.close' })}
+      </IonButton>
+    )
+  } else if (stage === 'warning') {
+    footer = (
+      <IonButton
+        color="danger"
+        expand="block"
+        onClick={handleContinueToVerify}
+        disabled={!canContinueFromWarning}
+        className="flex-1"
+        data-haptic
+      >
+        {isSendingOtp ? (
+          <IonSpinner name="crescent" />
+        ) : (
+          intl.formatMessage({ id: 'account.delete_continue_to_verify' })
+        )}
+      </IonButton>
+    )
+  } else if (stage === 'verify-otp') {
+    footer = (
+      <div className="delete-account__verify-footer">
+        <IonButton
+          fill="outline"
+          onClick={handleBackToWarning}
+          disabled={isDeleting}
+          className="delete-account__verify-back"
+          aria-label={intl.formatMessage({ id: 'common.back' })}
+        >
+          <ChevronLeft />
+          {intl.formatMessage({ id: 'common.back' })}
+        </IonButton>
+        <IonButton
+          color="danger"
+          onClick={handleDelete}
+          disabled={!canDelete}
+          className="delete-account__verify-submit"
+          data-haptic
+        >
+          {isDeleting ? (
+            <IonSpinner name="crescent" />
+          ) : (
+            intl.formatMessage({ id: 'account.delete_button' })
+          )}
+        </IonButton>
+      </div>
+    )
+  }
 
   return (
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={intl.formatMessage({ id: 'account.delete_modal_title' })}
-      footer={isCheckLoading ? undefined : footer}
+      title={
+        stage === 'success'
+          ? ''
+          : intl.formatMessage({ id: 'account.delete_modal_title' })
+      }
+      footer={footer}
       noSwipeDismiss
     >
-      {error && <div className="modal-error">{error}</div>}
+      {error && stage !== 'success' && <div className="modal-error">{error}</div>}
 
-      {isCheckLoading ? (
+      {stage === 'loading' && (
         <div className="delete-account__loading">
           <IonSpinner name="crescent" />
           <p className="delete-account__loading-label">
             {intl.formatMessage({ id: 'account.delete_loading_check' })}
           </p>
         </div>
-      ) : isBlocked ? (
+      )}
+
+      {stage === 'blocked' && (
         <BlockedView ownedBusinesses={ownedBusinesses} title={blockedTitle} />
-      ) : (
-        <ConfirmView
+      )}
+
+      {stage === 'warning' && (
+        <WarningView
           email={user?.email ?? ''}
           confirmEmail={confirmEmail}
           onConfirmEmailChange={setConfirmEmail}
-          currentPassword={currentPassword}
-          onCurrentPasswordChange={setCurrentPassword}
           emailMatches={emailMatches}
-          passwordEntered={passwordEntered}
-          title={confirmTitle}
+          title={warningTitle}
         />
       )}
+
+      {stage === 'verify-otp' && (
+        <VerifyOtpView
+          email={user?.email ?? ''}
+          otp={otp}
+          onOtpChange={setOtp}
+          onResend={handleResend}
+          resendCooldown={resendCooldown}
+          isResending={isSendingOtp}
+          isDeleting={isDeleting}
+        />
+      )}
+
+      {stage === 'success' && <SuccessView />}
     </ModalShell>
   )
 }
 
 // ============================================================================
-// CONFIRM VIEW
+// WARNING VIEW
 // ============================================================================
 
-interface ConfirmViewProps {
+interface WarningViewProps {
   email: string
   confirmEmail: string
   onConfirmEmailChange: (value: string) => void
-  currentPassword: string
-  onCurrentPasswordChange: (value: string) => void
   emailMatches: boolean
-  passwordEntered: boolean
   title: React.ReactNode
 }
 
-function ConfirmView({
+function WarningView({
   email,
   confirmEmail,
   onConfirmEmailChange,
-  currentPassword,
-  onCurrentPasswordChange,
   emailMatches,
-  passwordEntered,
   title,
-}: ConfirmViewProps) {
+}: WarningViewProps) {
   const intl = useIntl()
 
   const checks = [
@@ -272,11 +406,6 @@ function ConfirmView({
       key: 'email',
       label: intl.formatMessage({ id: 'account.delete_check_email' }),
       met: emailMatches,
-    },
-    {
-      key: 'password',
-      label: intl.formatMessage({ id: 'account.delete_check_password' }),
-      met: passwordEntered,
     },
   ]
 
@@ -332,14 +461,6 @@ function ConfirmView({
           spellCheck={false}
           required
         />
-        <AuthField
-          label={intl.formatMessage({ id: 'account.delete_password_label' })}
-          type="password"
-          value={currentPassword}
-          onChange={(e) => onCurrentPasswordChange(e.target.value)}
-          autoComplete="current-password"
-          required
-        />
       </div>
 
       <div className="delete-account__checks">
@@ -359,6 +480,93 @@ function ConfirmView({
             </li>
           ))}
         </ul>
+      </div>
+    </>
+  )
+}
+
+// ============================================================================
+// VERIFY-OTP VIEW
+// ============================================================================
+
+interface VerifyOtpViewProps {
+  email: string
+  otp: string
+  onOtpChange: (v: string) => void
+  onResend: () => void
+  resendCooldown: number
+  isResending: boolean
+  isDeleting: boolean
+}
+
+function VerifyOtpView({
+  email,
+  otp,
+  onOtpChange,
+  onResend,
+  resendCooldown,
+  isResending,
+  isDeleting,
+}: VerifyOtpViewProps) {
+  const intl = useIntl()
+
+  return (
+    <>
+      <header className="modal-hero delete-account__hero">
+        <div className="modal-hero__eyebrow modal-hero__eyebrow--danger">
+          <AlertOctagon size={12} />
+          {intl.formatMessage({ id: 'account.delete_otp_hero_eyebrow' })}
+        </div>
+        <h1 className="modal-hero__title modal-hero__title--danger">
+          {intl.formatMessage({ id: 'account.delete_otp_hero_title' })}
+        </h1>
+        <p className="modal-hero__subtitle">
+          {intl.formatMessage(
+            { id: 'account.delete_otp_hero_subtitle' },
+            { email },
+          )}
+        </p>
+      </header>
+
+      <div className="delete-account__target">
+        <span className="delete-account__target-eyebrow">
+          {intl.formatMessage({ id: 'account.delete_otp_target_eyebrow' })}
+        </span>
+        <span className="delete-account__target-value">{email}</span>
+      </div>
+
+      <div className="delete-account__form">
+        <AuthField
+          label={intl.formatMessage({ id: 'account.delete_otp_label' })}
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          value={otp}
+          onChange={(e) => onOtpChange(e.target.value.replace(/\s+/g, ''))}
+          placeholder="000000"
+          autoCapitalize="characters"
+          spellCheck={false}
+          className="delete-account__otp-input"
+          disabled={isDeleting}
+          required
+        />
+      </div>
+
+      <div className="delete-account__resend">
+        <button
+          type="button"
+          className="delete-account__resend-button"
+          onClick={onResend}
+          disabled={resendCooldown > 0 || isResending || isDeleting}
+        >
+          {resendCooldown > 0
+            ? intl.formatMessage(
+                { id: 'account.delete_otp_resend_cooldown' },
+                { seconds: resendCooldown },
+              )
+            : intl.formatMessage({ id: 'account.delete_otp_resend' })}
+        </button>
       </div>
     </>
   )
@@ -409,5 +617,40 @@ function BlockedView({
         </ul>
       </div>
     </>
+  )
+}
+
+// ============================================================================
+// SUCCESS VIEW
+// ============================================================================
+
+function SuccessView() {
+  const intl = useIntl()
+
+  return (
+    <div className="delete-account__success">
+      <div style={{ width: 160, height: 160 }}>
+        <LottiePlayer
+          src="/animations/trash.json"
+          loop={false}
+          autoplay={true}
+          delay={120}
+          style={{ width: 160, height: 160 }}
+        />
+      </div>
+      <p className="delete-account__success-heading">
+        {intl.formatMessage(
+          { id: 'account.delete_success_heading' },
+          {
+            em: (chunks) => (
+              <em className="delete-account__success-heading-em">{chunks}</em>
+            ),
+          },
+        )}
+      </p>
+      <p className="delete-account__success-desc">
+        {intl.formatMessage({ id: 'account.delete_success_desc' })}
+      </p>
+    </div>
   )
 }
