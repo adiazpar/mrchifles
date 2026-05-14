@@ -112,7 +112,7 @@ function HubHomeBody() {
   useEffect(() => {
     if (authLoading) return
     if (!userId) {
-      router.push('/login')
+      router.push('/')
       return
     }
     fetchBusinesses()

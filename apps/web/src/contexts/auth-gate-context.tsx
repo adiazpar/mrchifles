@@ -205,7 +205,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   )
 
   const playExit = useCallback(
-    (redirectTo: string = '/login'): Promise<void> => {
+    (redirectTo: string = '/'): Promise<void> => {
       return runTransition(redirectTo, logout)
     },
     [runTransition, logout],

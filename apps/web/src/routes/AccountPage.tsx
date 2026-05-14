@@ -40,7 +40,7 @@ export function AccountPage() {
   const intl = useIntl()
 
   if (!authLoading && !user) {
-    return <Redirect to="/login" />
+    return <Redirect to="/" />
   }
 
   return (

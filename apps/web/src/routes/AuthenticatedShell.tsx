@@ -3,7 +3,6 @@ import { IonRouterOutlet } from '@ionic/react'
 
 import { AccountPage } from '@/routes/AccountPage'
 import { Security } from '@/routes/account/Security'
-import { TwoFactorSetup } from '@/routes/account/TwoFactorSetup'
 import { BusinessProvidersFromUrl } from '@/routes/BusinessProvidersFromUrl'
 import { BusinessTabsLayout } from '@/routes/BusinessTabsLayout'
 import { HubPage } from '@/routes/HubPage'
@@ -26,9 +25,6 @@ export function AuthenticatedShell() {
       </Route>
       <Route exact path="/account/security">
         <Security />
-      </Route>
-      <Route exact path="/account/security/2fa-setup">
-        <TwoFactorSetup />
       </Route>
       <Route exact path="/join">
         <JoinPage />

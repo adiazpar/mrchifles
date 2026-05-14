@@ -10,12 +10,7 @@ import { AuthGateProvider } from '@/contexts/auth-gate-context'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AppIntlProvider } from '@/i18n/AppIntlProvider'
 import { AuthenticatedShell } from '@/routes/AuthenticatedShell'
-import { ForgotPassword } from '@/routes/ForgotPassword'
-import { LoginPage } from '@/routes/LoginPage'
 import { RegisterPage } from '@/routes/RegisterPage'
-import { ResetPassword } from '@/routes/ResetPassword'
-import { TwoFactorChallenge } from '@/routes/TwoFactorChallenge'
-import { VerifyEmail } from '@/routes/VerifyEmail'
 
 // Provider order:
 //   - IonReactRouter wraps everything: AuthContext calls useRouter() (via the
@@ -42,23 +37,8 @@ export function App() {
                 <AuthGateOverlay />
                 <OfflineBadge />
                 <Switch>
-                  <Route exact path="/login">
-                    <LoginPage />
-                  </Route>
                   <Route exact path="/register">
                     <RegisterPage />
-                  </Route>
-                  <Route exact path="/verify-email">
-                    <VerifyEmail />
-                  </Route>
-                  <Route exact path="/forgot-password">
-                    <ForgotPassword />
-                  </Route>
-                  <Route exact path="/reset-password">
-                    <ResetPassword />
-                  </Route>
-                  <Route exact path="/two-factor-challenge">
-                    <TwoFactorChallenge />
                   </Route>
                   <Route>
                     <AuthenticatedShell />

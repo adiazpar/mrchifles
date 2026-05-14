@@ -106,14 +106,14 @@ export function AccountPageContent() {
   }
 
   if (!user) {
-    router.push('/login')
+    router.push('/')
     return null
   }
 
   const themeLabel = intl.formatMessage({ id: `account.theme_${theme}` })
 
   const handleLogout = async () => {
-    await playExit('/login')
+    await playExit('/')
   }
 
   return (

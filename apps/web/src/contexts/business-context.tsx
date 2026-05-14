@@ -151,7 +151,7 @@ export function BusinessProvider({ children, businessId }: BusinessProviderProps
 
     // Must be authenticated
     if (!user) {
-      router.replace('/login')
+      router.replace('/')
       return
     }
 

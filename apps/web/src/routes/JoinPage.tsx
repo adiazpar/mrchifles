@@ -56,11 +56,10 @@ export function JoinPage() {
   }, [authLoading, user, code, history])
 
   // Auth gate: matches HubPage / AccountPage so a deep-linked QR scan
-  // by a logged-out user lands on /login first, then bounces back here
-  // after sign-in (the login redirect carries the original `pathname +
-  // search` via the legacy AuthContext flow).
+  // by a logged-out user lands on / (EntryPage) first, then bounces
+  // back here after sign-in.
   if (!authLoading && !user) {
-    return <Redirect to="/login" />
+    return <Redirect to="/" />
   }
 
   return (

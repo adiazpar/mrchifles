@@ -9,7 +9,7 @@ import { PageSpinner } from '@/components/ui'
 /**
  * ContentGuard - Protects page content while allowing the layout shell to render.
  * Shows a spinner during auth or business loading.
- * Redirects to login if not authenticated.
+ * Redirects to / (EntryPage) if not authenticated.
  * Business access validation is handled by BusinessContext.
  */
 export function ContentGuard({ children }: { children: React.ReactNode }) {
@@ -21,7 +21,7 @@ export function ContentGuard({ children }: { children: React.ReactNode }) {
     if (authLoading) return
 
     if (!user) {
-      router.replace('/login')
+      router.replace('/')
       return
     }
   }, [user, authLoading, router])

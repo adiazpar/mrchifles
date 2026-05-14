@@ -39,7 +39,7 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
 
   const handleLogout = useCallback(async () => {
     onAction?.()
-    await playExit('/login')
+    await playExit('/')
   }, [playExit, onAction])
 
   const pathname = usePathname()

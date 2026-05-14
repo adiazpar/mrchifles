@@ -1,6 +1,5 @@
 'use client'
 
-import { Redirect } from 'react-router-dom'
 import { IonButtons, IonContent, IonHeader, IonPage, IonToolbar } from '@ionic/react'
 import { PageSpinner } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
@@ -10,6 +9,7 @@ import { IncomingTransferProvider } from '@/contexts/incoming-transfer-context'
 import { PageTransitionProvider } from '@/contexts/page-transition-context'
 import { UserMenu } from '@/components/layout/user-menu'
 import { HubHome } from '@/components/hub/HubHome'
+import { EntryPage } from '@/routes/EntryPage'
 
 /**
  * Hub home page (the / route, post-login). Lists the user's businesses
@@ -29,15 +29,17 @@ import { HubHome } from '@/components/hub/HubHome'
  *                                 by UserMenuContent for cross-context
  *                                 navigation back into a business
  *
- * Auth gating: if the user is not authenticated once auth has finished
- * loading, redirect to /login. The redirect path mirrors what
- * AuthContext does on a 401, so deep links still work after sign-in.
+ * Auth gating: `/` serves a dual role — EntryPage (unauthenticated) and
+ * the business hub (authenticated). Once auth resolves with no user, we
+ * render EntryPage inline rather than redirecting, so the URL stays at
+ * `/` for both states. After sign-in, AuthContext updates `user` and
+ * this component re-renders into the hub tree.
  */
 export function HubPage() {
   const { user, isLoading: authLoading } = useAuth()
 
   if (!authLoading && !user) {
-    return <Redirect to="/login" />
+    return <EntryPage />
   }
 
   return (
