@@ -8,7 +8,7 @@ import type { NextRequest } from 'next/server'
  * route handler / page level. Edge runtime can't reach the database
  * (libsql + Drizzle adapter both need Node APIs), so the most this
  * middleware can do is confirm that the better-auth session cookie is
- * present and redirect to /login when it isn't.
+ * present and redirect to / (EntryPage) when it isn't.
  *
  * Risk model: a present-but-revoked cookie reaches the page, then the
  * page's `getSession()` returns null, and the handler issues its own
@@ -24,8 +24,9 @@ import type { NextRequest } from 'next/server'
  */
 
 const publicPaths = [
-  '/login',
+  '/',
   '/register',
+  '/join',
 ]
 
 function isPublicPath(pathname: string): boolean {
@@ -57,9 +58,9 @@ export async function middleware(request: NextRequest) {
   if (isPublicPath(pathname)) return NextResponse.next()
 
   if (!hasSessionCookie(request)) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+    const entryUrl = new URL('/', request.url)
+    entryUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(entryUrl)
   }
 
   // Defense in depth for /<businessId>/* page routes: reject obviously
@@ -69,7 +70,7 @@ export async function middleware(request: NextRequest) {
   const segments = pathname.split('/').filter(Boolean)
   if (segments.length > 0) {
     const first = segments[0]
-    const knownRoutes = ['account', 'business', 'login', 'register', 'join']
+    const knownRoutes = ['account', 'business', 'register', 'join']
     if (!knownRoutes.includes(first) && !BUSINESS_ID_RE.test(first)) {
       return NextResponse.redirect(new URL('/', request.url))
     }
