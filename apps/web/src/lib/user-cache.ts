@@ -9,9 +9,11 @@ import type { User } from '@kasero/shared/types'
 // locale flow.
 export const USER_CACHE_KEY = 'kasero.auth.user.v2'
 
-// Companion key — tracks the timestamp of the last successful
-// /api/auth/me revalidation. Stored alongside the user payload so
-// clearing the cached user also clears the staleness cursor.
+// Companion key — preserved from the JWT era for backwards compat with
+// any consumer that still reads it. The migrated AuthContext drives
+// session validity via authClient.useSession() (which has its own
+// internal refresh), so this timestamp is no longer the source of truth
+// for staleness. Safe to remove once no consumers read it.
 export const USER_VALIDATED_KEY = 'kasero.auth.user.validated.v2'
 
 // Custom DOM event broadcast from auth-context whenever the user's

@@ -2,10 +2,9 @@
  * Accept-Language header parser for pre-auth locale detection.
  *
  * Pure function: takes the raw header value, returns a SupportedLocale.
- * Used by:
- *   - /api/auth/register     → persisting the detected language on signup
- *                              so the user's first post-login experience is
- *                              also in their browser language
+ * Used at signup time (before the user picks a UI language) so the
+ * server-rendered verification email reaches them in the language their
+ * browser advertised.
  *
  * Precedence is strictly cookie > header > default. This module handles
  * only the header side; callers check the cookie first.

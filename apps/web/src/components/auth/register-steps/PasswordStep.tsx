@@ -51,7 +51,13 @@ export function PasswordStep() {
           goTo('verify')
           return
         }
-        if (result.messageCode === 'AUTH_EMAIL_TAKEN') {
+        // better-auth's signUp.email returns code USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL
+        // when the email is taken (see node_modules/better-auth/dist/api/routes/sign-up.mjs).
+        // The "AUTH_EMAIL_TAKEN" branch below mirrors the codebase's own
+        // ApiMessageCode so other consumers (PasswordStep test, EmailStep "Edit email"
+        // link) keep working off the same constant.
+        if (result.messageCode === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL' as never
+            || result.messageCode === 'AUTH_EMAIL_TAKEN') {
           setError(intl.formatMessage({ id: 'auth.register_wizard.error_email_taken_race' }))
           setErrorCode('AUTH_EMAIL_TAKEN')
         } else {

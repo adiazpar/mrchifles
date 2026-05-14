@@ -17,7 +17,7 @@ import type { SupportedLocale } from '@/i18n/config'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import type { ApiMessageCode } from '@kasero/shared/api-messages'
 import { clearKaseroLocalStorage } from '@/hooks/useSessionCache'
-import { LANGUAGE_CHANGE_EVENT } from '@/lib/user-cache'
+import { LANGUAGE_CHANGE_EVENT, setCachedUser } from '@/lib/user-cache'
 
 // ============================================
 // TYPES
@@ -155,11 +155,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Broadcast language whenever the resolved user.language changes so
   // AppIntlProvider (mounted ABOVE AuthProvider) can swap its bundle.
+  // Also persist the resolved user to the user-cache so AppIntlProvider's
+  // cold-start fast-path (getCachedUser) picks the right locale on the
+  // next page load — without this write the cache stays stale and a
+  // returning visitor sees the default en-US bundle until session loads.
   useEffect(() => {
     if (!user) {
+      setCachedUser(null)
       dispatchLanguageChange(undefined)
       return
     }
+    setCachedUser(user)
     dispatchLanguageChange(user.language)
   }, [user?.language, user?.id, user])
 

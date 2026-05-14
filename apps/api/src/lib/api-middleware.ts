@@ -207,7 +207,7 @@ export function withAuth(
       ) {
         // Per-user mutation cap. Mirrors the protection withBusinessAuth
         // applies to /businesses/[businessId]/* mutations; without this,
-        // /api/auth/profile and /api/user/language were unrate-limited
+        // /api/user/language was unrate-limited
         // and an attacker with a stolen cookie could hammer them
         // unconstrained.
         const userLimited = await applyRateLimit(

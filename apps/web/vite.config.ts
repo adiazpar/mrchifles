@@ -118,6 +118,10 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       globals: true,
       setupFiles: ['./src/test-setup.ts'],
+      // Playwright lives under e2e/ and ships its own runner; vitest
+      // would otherwise try to execute it under jsdom and fail at the
+      // @playwright/test import.
+      exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
     },
   }
 })
