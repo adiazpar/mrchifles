@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useIntl } from 'react-intl'
-import { IonButton, IonSpinner } from '@ionic/react'
+import { IonButton } from '@ionic/react'
 import { useRouter } from '@/lib/next-navigation-shim'
-import { useApiMessage } from '@/hooks/useApiMessage'
 import { AuthLayout } from '../AuthLayout'
 import { AuthField } from '../AuthField'
 import { APP_VERSION } from '@/lib/version'
-import { apiPost, ApiError } from '@/lib/api-client'
 import { useRegisterNav } from './RegisterNavContext'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -14,11 +12,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export function EmailStep() {
   const intl = useIntl()
   const router = useRouter()
-  const translateApiMessage = useApiMessage()
   const { name, email, setEmail, goTo } = useRegisterNav()
 
   const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
 
   const firstName = name.trim().split(/\s+/)[0] ?? ''
   const titleId = firstName
@@ -26,7 +22,7 @@ export function EmailStep() {
     : 'auth.register_wizard.step_email_title_fallback'
 
   const valid = EMAIL_RE.test(email.trim())
-  const canAdvance = valid && !submitting
+  const canAdvance = valid
 
   // Clear inline error when the user edits the email.
   useEffect(() => {
@@ -34,33 +30,20 @@ export function EmailStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email])
 
+  // The legacy /api/auth/check-email pre-flight was removed when we
+  // migrated to better-auth (no equivalent endpoint, and adding one
+  // would leak account existence to anonymous callers). The PasswordStep
+  // submits via authClient.signUp.email which rejects with USER_ALREADY_EXISTS
+  // when the email is taken — the wizard handles that there. So this
+  // step is purely a format-validation + advance.
   const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
+    (e: React.FormEvent) => {
       e.preventDefault()
       if (!canAdvance) return
       setError(null)
-      setSubmitting(true)
-      try {
-        await apiPost('/api/auth/check-email', { email: email.trim() })
-        goTo('password')
-      } catch (err) {
-        if (err instanceof ApiError) {
-          const code = err.messageCode
-          if (code === 'AUTH_EMAIL_TAKEN') {
-            setError(intl.formatMessage({ id: 'auth.register_wizard.error_email_taken_inline' }))
-          } else if (err.envelope) {
-            setError(translateApiMessage(err.envelope))
-          } else {
-            setError(intl.formatMessage({ id: 'auth.register_wizard.error_email_check_failed_inline' }))
-          }
-        } else {
-          setError(intl.formatMessage({ id: 'auth.register_wizard.error_email_check_failed_inline' }))
-        }
-      } finally {
-        setSubmitting(false)
-      }
+      goTo('password')
     },
-    [canAdvance, email, goTo, intl, translateApiMessage],
+    [canAdvance, goTo],
   )
 
   const handleGoToLogin = useCallback(() => router.push('/login'), [router])
@@ -115,11 +98,7 @@ export function EmailStep() {
             disabled={!canAdvance}
             className="mt-3"
           >
-            {submitting ? (
-              <IonSpinner name="crescent" />
-            ) : (
-              intl.formatMessage({ id: 'auth.register_wizard.continue' })
-            )}
+            {intl.formatMessage({ id: 'auth.register_wizard.continue' })}
           </IonButton>
         </div>
       </form>

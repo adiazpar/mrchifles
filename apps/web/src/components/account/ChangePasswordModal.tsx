@@ -7,8 +7,7 @@ import { IonButton, IonSpinner } from '@ionic/react'
 import { ModalShell } from '@/components/ui/modal-shell'
 import { AuthField, PasswordStrength } from '@/components/auth'
 import { LottiePlayerDynamic as LottiePlayer } from '@/components/animations'
-import { useApiMessage } from '@/hooks/useApiMessage'
-import { hasMessageEnvelope } from '@kasero/shared/api-messages'
+import { authClient } from '@/lib/auth-client'
 
 export interface ChangePasswordModalProps {
   isOpen: boolean
@@ -26,7 +25,6 @@ export function ChangePasswordModal({
   onExitComplete,
 }: ChangePasswordModalProps) {
   const intl = useIntl()
-  const translateApiMessage = useApiMessage()
 
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
@@ -67,21 +65,15 @@ export function ChangePasswordModal({
     setIsSaving(true)
     setError('')
     try {
-      const response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          currentPassword: current,
-          newPassword: next,
-        }),
+      const result = await authClient.changePassword({
+        currentPassword: current,
+        newPassword: next,
+        // Revoke all other sessions on password change so an attacker
+        // who exfiltrated a previous cookie can't keep using it.
+        revokeOtherSessions: true,
       })
-      const data = await response.json()
-      if (!response.ok) {
-        setError(
-          hasMessageEnvelope(data)
-            ? translateApiMessage(data)
-            : intl.formatMessage({ id: 'common.error' }),
-        )
+      if (result.error) {
+        setError(result.error.message ?? intl.formatMessage({ id: 'common.error' }))
         return
       }
       setStep('success')
@@ -91,7 +83,7 @@ export function ChangePasswordModal({
     } finally {
       setIsSaving(false)
     }
-  }, [isValid, isSaving, current, next, translateApiMessage, intl])
+  }, [isValid, isSaving, current, next, intl])
 
   const titleNode = useMemo(() => {
     const full = intl.formatMessage({ id: 'account.password_hero_title' })

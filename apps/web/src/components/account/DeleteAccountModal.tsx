@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { useApiMessage } from '@/hooks/useApiMessage'
 import { useGoBackTo } from '@/hooks'
 import { ApiError, apiRequest } from '@/lib/api-client'
+import { authClient } from '@/lib/auth-client'
 import { fetchDeduped } from '@/lib/fetch'
 
 export interface DeleteAccountModalProps {
@@ -107,13 +108,26 @@ export function DeleteAccountModal({
     setIsDeleting(true)
     setError('')
     try {
-      await apiRequest('/api/auth/me', {
-        method: 'DELETE',
+      // better-auth's deleteUser endpoint requires a fresh session (the
+      // sensitiveSessionMiddleware), so we re-verify the current password
+      // by signing in again immediately before the delete call. This both
+      // refreshes the freshAt timestamp better-auth tracks AND surfaces
+      // wrong-password errors before we touch the server-side wrapper.
+      const reauth = await authClient.signIn.email({
+        email: user.email,
+        password: currentPassword,
+      })
+      if (reauth.error) {
+        setError(intl.formatMessage({ id: 'apiMessages.auth_invalid_credentials' }))
+        return
+      }
+      // Project wrapper does the active-owned-business pre-check then
+      // delegates to auth.api.deleteUser. Sessions / account / 2fa /
+      // business_users rows cascade-delete via FK.
+      await apiRequest('/api/account/delete', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          confirmEmail: confirmEmail.trim(),
-          currentPassword,
-        }),
+        body: JSON.stringify({}),
       })
       // Success: clear local auth cache and redirect to register.
       await logout()
