@@ -14,8 +14,10 @@ export interface User {
   phoneNumber?: string | null
   phoneNumberVerified: boolean
   /**
-   * Mirrors the better-auth two-factor plugin flag. True once the user
-   * has completed TOTP enrollment via /account/security/2fa-setup.
+   * Legacy two-factor plugin flag. The passwordless build does not load
+   * the better-auth two-factor plugin and does not expose any 2FA UI;
+   * the field is retained for stable downstream typing and is always
+   * `false` at runtime.
    */
   twoFactorEnabled: boolean
 }

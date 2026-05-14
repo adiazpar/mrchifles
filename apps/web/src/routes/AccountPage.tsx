@@ -27,7 +27,7 @@ import { AccountPageContent } from '@/components/account/AccountPage'
  * Provider tree mirrors HubPage. The body consumes:
  *   - `useAuth()` (provided at App.tsx)
  *   - `useAuthGate()` (provided at App.tsx) for the logout exit
- *     animation via `playExit('/login')`
+ *     animation via `playExit('/')`
  *   - `useIncomingTransferContext()` for the inbound-transfer banner +
  *     modal — mounted locally here, matching HubPage's pattern.
  *   - `PageTransitionProvider` is mounted because the body and several

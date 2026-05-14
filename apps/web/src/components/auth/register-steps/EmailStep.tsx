@@ -57,8 +57,8 @@ export function EmailStep() {
     [canSubmit, goTo, intl, sendOtp, trimmed],
   )
 
-  // EntryPage now owns the sign-in entry point; the back-link routes
-  // there instead of the legacy /login screen.
+  // EntryPage at `/` owns the sign-in entry point; the back-link
+  // routes there.
   const handleGoToEntry = useCallback(() => router.push('/'), [router])
 
   const footer = (

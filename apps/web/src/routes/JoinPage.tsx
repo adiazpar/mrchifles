@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/auth-context'
  * `/join` is to forward the user — and any `?code=` param — to the Hub.
  *
  * Behavior:
- *   - Unauthenticated -> redirect to /login (matches HubPage / AccountPage)
+ *   - Unauthenticated -> redirect to / (matches HubPage / AccountPage)
  *   - With `?code=ABC` -> replace history with `/?code=ABC` so the Hub's
  *     JoinBusinessProvider picks up the deep link
  *   - Without a code   -> replace history with `/`
@@ -45,7 +45,7 @@ export function JoinPage() {
 
   useEffect(() => {
     // Only run the redirect after auth resolves and the user is signed
-    // in. The unauthenticated branch below short-circuits to /login.
+    // in. The unauthenticated branch below short-circuits to /.
     if (authLoading || !user) return
 
     if (code) {

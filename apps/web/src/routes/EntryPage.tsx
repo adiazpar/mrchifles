@@ -29,8 +29,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
  *    wizard's verify step. The wizard handles new vs returning users
  *    based on whether the verified account has a name set.
  *
- * Replaces the old /login + /register split. Not yet wired into routing
- * (B6); creating the file in B3 so B4 can mount it cleanly.
+ * Replaces the old /login + /register split. Mounted at `/` by
+ * HubPage's unauthenticated branch.
  */
 export function EntryPage() {
   const intl = useIntl()

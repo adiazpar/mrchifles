@@ -126,7 +126,7 @@ export function DeleteAccountModal({
     }
   }, [isOpen, onExitComplete])
 
-  // Resend cooldown tick — same shape as VerifyStep / useVerifyEmail.
+  // Resend cooldown tick — same shape as VerifyStep.
   useEffect(() => {
     if (resendCooldown <= 0) return
     const t = window.setTimeout(() => setResendCooldown((c) => c - 1), 1000)

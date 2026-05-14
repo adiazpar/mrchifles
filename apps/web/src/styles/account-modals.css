@@ -1,8 +1,8 @@
 /* ==========================================================================
    Account modals — Modern Mercantile chrome
    ==========================================================================
-   Styles for the six modals reachable from the Account page:
-   ThemeModal, EditProfileModal, ChangePasswordModal, AboutModal,
+   Styles for the modals reachable from the Account page:
+   ThemeModal, EditProfileModal, ChangeEmailModal, AboutModal,
    ContactSupportModal, DeleteAccountModal. Class names prefixed by
    modal so we don't collide with .auth-* / .hub-* / .account-* primitives. */
 
@@ -449,129 +449,7 @@
 }
 
 /* ==========================================================================
-   3. ChangePasswordModal — "the key"
-   --------------------------------------------------------------------------
-   Three stacked AuthFields, each with its own mono eyebrow context.
-   Strength meter slides into the new-password field's `below` slot.
-   A "RULE" mono strip below the form lists requirements with live ticks. */
-
-.change-password__hero { margin-bottom: var(--space-5); }
-
-.change-password__form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.change-password__rules {
-  margin-top: var(--space-5);
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-bg-muted);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.change-password__rules-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-  margin-bottom: var(--space-2);
-}
-
-.change-password__rule-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px var(--space-3);
-}
-
-.change-password__rule {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.change-password__rule-marker {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 1px solid var(--color-border);
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-.change-password__rule-marker svg {
-  width: 8px;
-  height: 8px;
-  color: transparent;
-  transition: color var(--duration-fast) ease-out;
-}
-.change-password__rule.is-met .change-password__rule-marker {
-  border-color: var(--color-success);
-  background: var(--color-success);
-}
-.change-password__rule.is-met .change-password__rule-marker svg { color: #fff; }
-.change-password__rule.is-met { color: var(--color-text-primary); }
-
-.change-password__mismatch {
-  margin-top: var(--space-2);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-error);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-.change-password__mismatch::before {
-  content: "";
-  width: 16px;
-  height: 1px;
-  background: var(--color-error);
-}
-
-.change-password__success {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: var(--space-4) var(--space-2);
-  height: 100%;
-}
-.change-password__success-heading {
-  font-family: var(--font-display);
-  font-variation-settings: "SOFT" 50;
-  font-size: 24px;
-  letter-spacing: -0.018em;
-  color: var(--color-text-primary);
-  margin-top: var(--space-3);
-}
-.change-password__success-heading em {
-  font-style: italic;
-  font-variation-settings: "SOFT" 100;
-  color: var(--color-brand);
-}
-.change-password__success-desc {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-  margin-top: var(--space-2);
-}
-
-/* ==========================================================================
-   4. AboutModal — "the colophon"
+   3. AboutModal — "the colophon"
    --------------------------------------------------------------------------
    Editorial layout. Big Fraunces wordmark with terracotta dot, italic
    tagline, a printed-press version block (rule + mono edition), brand
@@ -698,7 +576,7 @@
 }
 
 /* ==========================================================================
-   5. ContactSupportModal — "notice posted"
+   4. ContactSupportModal — "notice posted"
    --------------------------------------------------------------------------
    The "coming soon" content reframed as a notice pinned to the wall:
    bordered paper card with mono NOTICE eyebrow, italic-accent title,
@@ -792,7 +670,7 @@
 }
 
 /* ==========================================================================
-   6. DeleteAccountModal — "destructive friction"
+   5. DeleteAccountModal — "destructive friction"
    --------------------------------------------------------------------------
    Oxblood hero. The user's email is shown in mono as the target above
    the type-to-confirm input. A live mono check-list reflects which
@@ -1118,7 +996,7 @@ input.delete-account__otp-input {
 }
 
 /* ==========================================================================
-   7. LanguageModal — "the specimen book"
+   6. LanguageModal — "the specimen book"
    --------------------------------------------------------------------------
    A vertical stack of language cards. Each card is a horizontal composition:
    square paper-deep "stamp" tile with the country flag emoji on the leading
@@ -1323,7 +1201,7 @@ input.delete-account__otp-input {
 }
 
 /* ==========================================================================
-   8. ChangeEmailModal — "the certified transfer"
+   7. ChangeEmailModal — "the certified transfer"
    --------------------------------------------------------------------------
    Reads like a printed certificate of forwarding: the user's CURRENT
    mailbox on one side, the destination mailbox on the other. The "FROM"
@@ -1370,8 +1248,7 @@ input.delete-account__otp-input {
 }
 
 /* Tiny mono caption shown below the new-email input when the user types
-   the SAME address as their current one. Same shape as
-   .change-password__mismatch — short hairline + spaced caps. */
+   the SAME address as their current one. Short hairline + spaced caps. */
 .change-email__inline-warning {
   display: flex;
   align-items: center;

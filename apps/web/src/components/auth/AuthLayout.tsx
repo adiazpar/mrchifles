@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
 
-// Shared body shell for /login and /register's three steps. The page-level
-// route (LoginPage / RegisterPage) owns the IonHeader + IonToolbar chrome
-// — back chevron in the toolbar's start slot, Kasero wordmark in the
-// title slot — matching the rest of the app's header pattern.
+// Shared body shell for the / (EntryPage) and /register wizard steps.
+// The page-level route (EntryPage / RegisterPage) owns the IonHeader +
+// IonToolbar chrome — back chevron in the toolbar's start slot, Kasero
+// wordmark in the title slot — matching the rest of the app's header
+// pattern.
 //
 // This component just renders the auth body: a vertically-stacked main
 // slot (hero + form) and an optional footer slot pinned to the bottom.
