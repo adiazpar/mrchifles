@@ -65,7 +65,7 @@ Per-app scripts of note (run inside the workspace, or via `npm run <script> --wo
 
 ## Environment Variables
 
-Each app has its own `.env.local` (both gitignored). See `apps/api/.env.example` for the full template; the repo-root `.env.example` documents the port layout.
+Each app has its own `.env.local` (both gitignored). See `apps/api/.env.example` and `apps/web/.env.example` for the full templates.
 
 Required:
 - `AUTH_SECRET` (in `apps/api/.env.local`) — JWT signing secret, min 32 chars
