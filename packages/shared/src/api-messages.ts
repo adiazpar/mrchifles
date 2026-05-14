@@ -55,6 +55,17 @@ export const ApiMessageCode = {
   // A8 once every route that emits an OTP-related code is settled.
   OTP_INVALID: 'OTP_INVALID',
 
+  // Change-email (dual-OTP flow at /api/account/change-email — A5).
+  // EMAIL_CHANGE_OTP_SENT is the initiate-phase success toast; EMAIL_CHANGED
+  // is the confirm-phase success toast. EMAIL_CHANGE_TARGET_TAKEN fires
+  // when another user already owns the requested new email. EMAIL_CHANGE_
+  // SAME_AS_CURRENT fires when the user types their own email as the
+  // target (also a cheap pre-OTP guard).
+  EMAIL_CHANGE_TARGET_TAKEN: 'EMAIL_CHANGE_TARGET_TAKEN',
+  EMAIL_CHANGE_OTP_SENT: 'EMAIL_CHANGE_OTP_SENT',
+  EMAIL_CHANGED: 'EMAIL_CHANGED',
+  EMAIL_CHANGE_SAME_AS_CURRENT: 'EMAIL_CHANGE_SAME_AS_CURRENT',
+
   // Products
   PRODUCT_NOT_FOUND: 'PRODUCT_NOT_FOUND',
   PRODUCT_ID_REQUIRED: 'PRODUCT_ID_REQUIRED',
