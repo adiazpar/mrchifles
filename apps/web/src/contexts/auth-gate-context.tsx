@@ -32,7 +32,6 @@ export interface AuthGateContextValue {
   phase: AuthGatePhase
   reducedMotion: boolean
   playEntry: (redirectTo: string) => Promise<void>
-  playExit: (redirectTo?: string) => Promise<void>
   requestLogout: (redirectTo?: string) => void
   // Called by the hub page once it has rendered with its data. Releases the
   // hold phase of playEntry so the fade-out can begin. No-op if called
@@ -251,8 +250,8 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   }, [playExit])
 
   const value = useMemo<AuthGateContextValue>(
-    () => ({ phase, reducedMotion, playEntry, playExit, requestLogout, markHubReady }),
-    [phase, reducedMotion, playEntry, playExit, requestLogout, markHubReady],
+    () => ({ phase, reducedMotion, playEntry, requestLogout, markHubReady }),
+    [phase, reducedMotion, playEntry, requestLogout, markHubReady],
   )
 
   useEffect(() => {
