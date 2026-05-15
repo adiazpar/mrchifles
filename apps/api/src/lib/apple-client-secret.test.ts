@@ -1,8 +1,7 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { generateKeyPair, exportPKCS8, jwtVerify } from 'jose'
 import { mintAppleClientSecret } from './apple-client-secret'
-
-// @vitest-environment node
 
 async function makeKeyPair() {
   const { publicKey, privateKey } = await generateKeyPair('ES256', {
