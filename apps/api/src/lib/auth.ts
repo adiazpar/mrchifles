@@ -8,6 +8,7 @@ import { Redis } from '@upstash/redis'
 import { db } from '@/db'
 import * as schema from '@kasero/shared/db/schema'
 import { sendVerificationEmail } from './email'
+import { mintAppleClientSecret } from './apple-client-secret'
 
 async function lookupUserLanguage(email: string): Promise<string> {
   try {
@@ -22,11 +23,41 @@ async function lookupUserLanguage(email: string): Promise<string> {
   }
 }
 
-const socialProviders: Record<string, { clientId: string; clientSecret: string }> = {}
+// Loose typing here because the apple provider takes a different shape
+// (extra appBundleIdentifier field) than Google's clientId/clientSecret pair.
+const socialProviders: Record<string, Record<string, unknown>> = {}
+
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   socialProviders.google = {
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  }
+}
+
+if (
+  process.env.APPLE_CLIENT_ID &&
+  process.env.APPLE_TEAM_ID &&
+  process.env.APPLE_KEY_ID &&
+  process.env.APPLE_PRIVATE_KEY
+) {
+  // better-auth's apple provider only accepts a string clientSecret (a
+  // pre-built JWT). We mint it at module load so there's no 6-month human
+  // rotation. Vercel cold-starts re-mint; the JWT itself expires in 1h.
+  // See node_modules/@better-auth/core/dist/social-providers/apple.d.mts
+  // for the AppleOptions interface.
+  const appleClientSecret = await mintAppleClientSecret({
+    teamId: process.env.APPLE_TEAM_ID,
+    clientId: process.env.APPLE_CLIENT_ID,
+    keyId: process.env.APPLE_KEY_ID,
+    privateKey: process.env.APPLE_PRIVATE_KEY,
+  })
+
+  socialProviders.apple = {
+    clientId: process.env.APPLE_CLIENT_ID,
+    clientSecret: appleClientSecret,
+    ...(process.env.APPLE_APP_BUNDLE_IDENTIFIER && {
+      appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER,
+    }),
   }
 }
 
@@ -136,7 +167,7 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ['google'],
+      trustedProviders: ['google', 'apple'],
     },
   },
 

@@ -10,6 +10,7 @@ const opts = (auth as unknown as {
     session?: { freshAge?: number }
     rateLimit?: { storage?: string; enabled?: boolean }
     secondaryStorage?: { get: unknown; set: unknown; delete: unknown }
+    socialProviders?: Record<string, { clientId?: unknown; clientSecret?: unknown } | undefined>
   }
 }).options
 
@@ -37,6 +38,29 @@ describe('better-auth config', () => {
 
   it('keeps Google in trustedProviders for account linking', () => {
     expect(opts.account?.accountLinking?.trustedProviders).toContain('google')
+  })
+
+  it('lists Apple in trustedProviders so verified Apple emails can link to existing accounts', () => {
+    expect(opts.account?.accountLinking?.trustedProviders).toContain('apple')
+  })
+
+  it('registers the apple provider when all four APPLE_* env vars are set, otherwise omits it', () => {
+    // Mirrors the conditional pattern used for Upstash above. We can only
+    // observe the env state vitest was launched with — we don't manipulate
+    // process.env at runtime because auth.ts evaluates socialProviders
+    // once at module load.
+    const hasApple =
+      !!process.env.APPLE_CLIENT_ID &&
+      !!process.env.APPLE_TEAM_ID &&
+      !!process.env.APPLE_KEY_ID &&
+      !!process.env.APPLE_PRIVATE_KEY
+    if (hasApple) {
+      expect(opts.socialProviders?.apple).toBeDefined()
+      expect(opts.socialProviders?.apple?.clientId).toBe(process.env.APPLE_CLIENT_ID)
+      expect(typeof opts.socialProviders?.apple?.clientSecret).toBe('string')
+    } else {
+      expect(opts.socialProviders?.apple).toBeUndefined()
+    }
   })
 
   it('registers a before hook for cross-account defense', () => {
