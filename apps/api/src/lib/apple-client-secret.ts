@@ -13,7 +13,7 @@ export async function mintAppleClientSecret(
 ): Promise<string> {
   const key = await importPKCS8(input.privateKey, 'ES256')
   const now = Math.floor(Date.now() / 1000)
-  return await new SignJWT({ _: '' })
+  return new SignJWT({})
     .setProtectedHeader({ alg: 'ES256', kid: input.keyId })
     .setIssuer(input.teamId)
     .setIssuedAt(now)

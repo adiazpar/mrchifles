@@ -1,4 +1,3 @@
-/// <reference types="vitest" />
 import { describe, it, expect } from 'vitest'
 import { generateKeyPair, exportPKCS8, jwtVerify } from 'jose'
 import { mintAppleClientSecret } from './apple-client-secret'
