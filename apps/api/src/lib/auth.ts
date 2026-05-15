@@ -41,6 +41,19 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:8000',
   secret: process.env.AUTH_SECRET ?? '',
 
+  // Origins beyond `baseURL` that better-auth's CSRF check should accept.
+  // Comma-separated list in BETTER_AUTH_TRUSTED_ORIGINS, plus an always-on
+  // dev set (localhost:3000 = Vite SPA, localhost:8000 = API). Production
+  // is same-origin via the Vercel deploy and falls back to baseURL alone.
+  trustedOrigins: [
+    'http://localhost:3000',
+    'http://localhost:8000',
+    ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS
+      ?.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean) ?? []),
+  ],
+
   user: {
     modelName: 'users',
     fields: { image: 'avatar' },
