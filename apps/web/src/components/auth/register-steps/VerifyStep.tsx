@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useIntl } from 'react-intl'
 import { IonButton } from '@ionic/react'
-import { useRouter } from '@/lib/next-navigation-shim'
 import { useAuth } from '@/contexts/auth-context'
+import { useAuthGate } from '@/contexts/auth-gate-context'
 import { OTPInput } from '@/components/OTPInput'
 import { useRegisterNav } from './RegisterNavContext'
 import './VerifyStep.css'
@@ -19,9 +19,9 @@ const RESEND_COOLDOWN_SECONDS = 30
  */
 export function VerifyStep() {
   const intl = useIntl()
-  const router = useRouter()
   const { email, goTo, setIsNewUser } = useRegisterNav()
   const { sendOtp, verifyOtp } = useAuth()
+  const { playEntry } = useAuthGate()
 
   const [code, setCode] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -54,10 +54,10 @@ export function VerifyStep() {
       if (result.isNewUser) {
         goTo('name')
       } else {
-        router.replace('/')
+        await playEntry('/')
       }
     },
-    [email, goTo, intl, router, setIsNewUser, verifyOtp],
+    [email, goTo, intl, playEntry, setIsNewUser, verifyOtp],
   )
 
   const handleResend = useCallback(async () => {

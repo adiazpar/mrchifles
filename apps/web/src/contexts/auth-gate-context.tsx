@@ -48,6 +48,14 @@ const POST_ICON_GAP_MS = 150
 const OVERLAY_OUT_MS = 300
 const REDUCED_MOTION_FADE_MS = 200
 
+// sessionStorage flag the OAuth buttons set immediately before the
+// cross-origin redirect. On return (cold-start back at callbackURL),
+// AuthGateProvider consumes the flag and plays the entry overlay so the
+// transition into the hub feels symmetric with the email/OTP path.
+// sessionStorage survives a same-tab round-trip through an external
+// origin, so the flag is still there when the SPA boots back up.
+export const PENDING_ENTRY_STORAGE_KEY = 'kasero.auth.pending-entry'
+
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -64,7 +72,7 @@ export function useAuthGate(): AuthGateContextValue {
 
 export function AuthGateProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const { logout } = useAuth()
+  const { logout, isAuthenticated, isLoading: authLoading } = useAuth()
   const [phase, setPhase] = useState<AuthGatePhase>('idle')
   const [reducedMotion, setReducedMotion] = useState(false)
   const inFlightRef = useRef<Promise<void> | null>(null)
@@ -91,8 +99,13 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
       destination: string,
       work?: () => Promise<void>,
       readySignal?: Promise<void>,
+      replace: boolean = false,
     ): Promise<void> => {
       if (inFlightRef.current) return inFlightRef.current
+      const navigate = (to: string) => {
+        if (replace) router.replace(to)
+        else router.push(to)
+      }
 
       // Defense-in-depth: every caller of runTransition is supposed
       // to pass a same-origin path, but the login page reads the
@@ -120,13 +133,13 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
           if (reducedMotion) {
             setPhase('overlay-in')
             if (navigateEarly) {
-              router.push(destination)
+              navigate(destination)
               router.refresh()
             }
             await wait(REDUCED_MOTION_FADE_MS)
             if (work) {
               await work()
-              router.push(destination)
+              navigate(destination)
               router.refresh()
             }
             setPhase('overlay-out')
@@ -137,7 +150,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
           // 1. Overlay fades in over the current page.
           setPhase('overlay-in')
           if (navigateEarly) {
-            router.push(destination)
+            navigate(destination)
             router.refresh()
           }
           await wait(OVERLAY_IN_MS)
@@ -157,7 +170,7 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
           setPhase('hold')
           if (work) {
             await work()
-            router.push(destination)
+            navigate(destination)
             router.refresh()
           }
           await Promise.all([
@@ -199,7 +212,11 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
       const hubReadyPromise = new Promise<void>((resolve) => {
         hubReadyResolverRef.current = resolve
       })
-      return runTransition(redirectTo, undefined, hubReadyPromise)
+      // replace=true: auth surface (entry/register) shouldn't remain in
+      // history after a successful login — back-button must not walk
+      // the user back into the verify step or the OAuth pre-redirect
+      // page once they're authenticated.
+      return runTransition(redirectTo, undefined, hubReadyPromise, true)
     },
     [runTransition],
   )
@@ -224,6 +241,34 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [])
+
+  // Cold-start after OAuth: if OAuthButtons set the pending-entry flag
+  // before the redirect, consume it once the session has resolved and
+  // play the entry overlay. The flag is one-shot — if the user lands
+  // back unauthenticated (declined consent, server error) we still
+  // clear it so the next genuine OAuth attempt isn't shadowed.
+  const pendingEntryConsumedRef = useRef(false)
+  useEffect(() => {
+    if (pendingEntryConsumedRef.current) return
+    if (typeof window === 'undefined') return
+    if (authLoading) return
+    let flagged = false
+    try {
+      flagged = sessionStorage.getItem(PENDING_ENTRY_STORAGE_KEY) === '1'
+    } catch {
+      flagged = false
+    }
+    if (!flagged) return
+    pendingEntryConsumedRef.current = true
+    try {
+      sessionStorage.removeItem(PENDING_ENTRY_STORAGE_KEY)
+    } catch {
+      // ignore
+    }
+    if (isAuthenticated) {
+      void playEntry('/')
+    }
+  }, [authLoading, isAuthenticated, playEntry])
 
   return (
     <AuthGateContext.Provider value={value}>

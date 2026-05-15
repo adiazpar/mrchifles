@@ -6,6 +6,7 @@ import { AuthLayout } from '../AuthLayout'
 import { AuthField } from '../AuthField'
 import { APP_VERSION } from '@/lib/version'
 import { useAuth } from '@/contexts/auth-context'
+import { useAuthGate } from '@/contexts/auth-gate-context'
 import { useRegisterNav } from './RegisterNavContext'
 
 /**
@@ -27,6 +28,7 @@ export function NameStep() {
   const router = useRouter()
   const { name, setName: setWizardName, isNewUser } = useRegisterNav()
   const { setName: persistName } = useAuth()
+  const { playEntry } = useAuthGate()
 
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -58,9 +60,9 @@ export function NameStep() {
         return
       }
       setSubmitting(false)
-      router.replace('/')
+      await playEntry('/')
     },
-    [canSubmit, intl, persistName, router, trimmed],
+    [canSubmit, intl, persistName, playEntry, trimmed],
   )
 
   const footer = (

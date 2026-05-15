@@ -15,6 +15,15 @@ vi.mock('@/contexts/auth-context', () => ({
   })),
 }))
 
+// Stub the auth-gate context. NameStep calls playEntry after a
+// successful submit; the test only cares that setName ran, so a no-op
+// promise resolver is sufficient.
+vi.mock('@/contexts/auth-gate-context', () => ({
+  useAuthGate: vi.fn(() => ({
+    playEntry: vi.fn().mockResolvedValue(undefined),
+  })),
+}))
+
 import { useAuth } from '@/contexts/auth-context'
 
 // Mark the wizard as new-user so the NameStep's defensive

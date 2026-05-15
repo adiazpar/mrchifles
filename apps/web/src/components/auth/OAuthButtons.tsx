@@ -3,6 +3,7 @@ import { IonButton, IonIcon, IonSpinner } from '@ionic/react'
 import { logoApple, logoGoogle } from 'ionicons/icons'
 import { useIntl } from 'react-intl'
 import { authClient } from '@/lib/auth-client'
+import { PENDING_ENTRY_STORAGE_KEY } from '@/contexts/auth-gate-context'
 import './OAuthButtons.css'
 
 type Provider = 'google' | 'apple'
@@ -27,6 +28,16 @@ export function OAuthButtons({ callbackURL = '/', onInitiate, disabled }: OAuthB
     if (disabled || pending) return
     setPending(provider)
     onInitiate?.()
+    // Tell AuthGateProvider that the upcoming cold-start (after the OAuth
+    // round-trip lands back on callbackURL) should play the entry overlay.
+    // sessionStorage survives cross-origin redirects within the same tab,
+    // and the OAuth callback resolves back on this origin where the flag
+    // is then consumed.
+    try {
+      sessionStorage.setItem(PENDING_ENTRY_STORAGE_KEY, '1')
+    } catch {
+      // Storage error, ignore — entry overlay just won't play.
+    }
     try {
       // The call triggers a full-page redirect; the SPA won't get a chance
       // to resolve the promise. We don't await — we let the browser
@@ -34,6 +45,11 @@ export function OAuthButtons({ callbackURL = '/', onInitiate, disabled }: OAuthB
       // misconfigured), the button re-enables.
       await authClient.signIn.social({ provider, callbackURL })
     } catch {
+      try {
+        sessionStorage.removeItem(PENDING_ENTRY_STORAGE_KEY)
+      } catch {
+        // ignore
+      }
       setPending(null)
     }
   }
