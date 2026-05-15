@@ -69,7 +69,7 @@ const IncomingTransferModal = dynamic(
  */
 export function AccountPageContent() {
   const { user, isLoading } = useAuth()
-  const { playExit } = useAuthGate()
+  const { requestLogout } = useAuthGate()
   const router = useRouter()
   const intl = useIntl()
   const { theme } = useTheme()
@@ -113,8 +113,8 @@ export function AccountPageContent() {
 
   const themeLabel = intl.formatMessage({ id: `account.theme_${theme}` })
 
-  const handleLogout = async () => {
-    await playExit('/')
+  const handleLogout = () => {
+    requestLogout('/')
   }
 
   return (
