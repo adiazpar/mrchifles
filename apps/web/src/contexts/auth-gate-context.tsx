@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useRouter } from '@/lib/next-navigation-shim'
+import { LogoutConfirmModal } from '@/components/auth/LogoutConfirmModal'
 import { useAuth } from './auth-context'
 
 // Unified phase machine: both playEntry (entry-page/register -> hub) and
@@ -32,6 +33,7 @@ export interface AuthGateContextValue {
   reducedMotion: boolean
   playEntry: (redirectTo: string) => Promise<void>
   playExit: (redirectTo?: string) => Promise<void>
+  requestLogout: (redirectTo?: string) => void
   // Called by the hub page once it has rendered with its data. Releases the
   // hold phase of playEntry so the fade-out can begin. No-op if called
   // outside of an active entry (e.g. on warm hub re-mounts).
@@ -82,6 +84,8 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   // transitions so stray markHubReady calls from warm hub re-mounts
   // are harmless no-ops.
   const hubReadyResolverRef = useRef<(() => void) | null>(null)
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
+  const pendingRedirectRef = useRef<string>('/')
 
   const markHubReady = useCallback(() => {
     hubReadyResolverRef.current?.()
@@ -228,9 +232,27 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
     [runTransition, logout],
   )
 
+  const requestLogout = useCallback(
+    (redirectTo: string = '/'): void => {
+      // Don't stack a confirmation on top of an in-flight transition.
+      if (inFlightRef.current) return
+      // First caller wins — if the modal is already open, keep the
+      // originally-stashed redirect target.
+      if (isLogoutConfirmOpen) return
+      pendingRedirectRef.current = redirectTo
+      setIsLogoutConfirmOpen(true)
+    },
+    [isLogoutConfirmOpen],
+  )
+
+  const handleLogoutConfirm = useCallback(() => {
+    setIsLogoutConfirmOpen(false)
+    void playExit(pendingRedirectRef.current)
+  }, [playExit])
+
   const value = useMemo<AuthGateContextValue>(
-    () => ({ phase, reducedMotion, playEntry, playExit, markHubReady }),
-    [phase, reducedMotion, playEntry, playExit, markHubReady],
+    () => ({ phase, reducedMotion, playEntry, playExit, requestLogout, markHubReady }),
+    [phase, reducedMotion, playEntry, playExit, requestLogout, markHubReady],
   )
 
   useEffect(() => {
@@ -273,6 +295,11 @@ export function AuthGateProvider({ children }: { children: ReactNode }) {
   return (
     <AuthGateContext.Provider value={value}>
       {children}
+      <LogoutConfirmModal
+        isOpen={isLogoutConfirmOpen}
+        onClose={() => setIsLogoutConfirmOpen(false)}
+        onConfirm={handleLogoutConfirm}
+      />
     </AuthGateContext.Provider>
   )
 }
