@@ -1,10 +1,24 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 // Mock db lazily: each test sets the response. The handler builds a
-// select chain ending in .where(...) and a delete chain ending in
-// .where(...). The mocked db returns a thenable for each.
+// select chain ending in .where(...) and TWO delete chains ending in
+// .where(...) — one for the verification table, one for the users table.
+// The mocked db routes deletes by the schema-object reference passed to
+// `db.delete(...)` so each test can stage independent results.
 const selectChainResult = vi.fn()
-const deleteChainResult = vi.fn()
+const verificationDeleteResult = vi.fn()
+const usersDeleteResult = vi.fn()
+
+const verificationRef = {
+  id: 'verification.id',
+  identifier: 'verification.identifier',
+  value: 'verification.value',
+  expiresAt: 'verification.expires_at',
+  createdAt: 'verification.created_at',
+  updatedAt: 'verification.updated_at',
+}
+const usersRef = { id: 'users.id', emailVerified: 'users.email_verified', createdAt: 'users.created_at' }
+const businessUsersRef = { userId: 'business_users.user_id', status: 'business_users.status', id: 'business_users.id' }
 
 vi.mock('@/db', () => {
   const select = () => ({
@@ -14,25 +28,34 @@ vi.mock('@/db', () => {
       }),
     }),
   })
-  const del = () => ({
-    where: (...args: unknown[]) => deleteChainResult(...args),
+  const del = (table: unknown) => ({
+    where: (...args: unknown[]) => {
+      if (table === verificationRef) return verificationDeleteResult(...args)
+      return usersDeleteResult(...args)
+    },
   })
   return {
     db: { select, delete: del },
-    users: { id: 'users.id', emailVerified: 'users.email_verified', createdAt: 'users.created_at' },
-    businessUsers: { userId: 'business_users.user_id', status: 'business_users.status', id: 'business_users.id' },
+    users: usersRef,
+    businessUsers: businessUsersRef,
+    verification: verificationRef,
   }
 })
 
 vi.mock('@kasero/shared/db/schema', () => ({
-  users: { id: 'users.id', emailVerified: 'users.email_verified', createdAt: 'users.created_at' },
-  businessUsers: { userId: 'business_users.user_id', status: 'business_users.status', id: 'business_users.id' },
+  users: usersRef,
+  businessUsers: businessUsersRef,
+  verification: verificationRef,
 }))
 
 beforeEach(() => {
   process.env.CRON_SECRET = 'test-secret'
   selectChainResult.mockReset()
-  deleteChainResult.mockReset()
+  verificationDeleteResult.mockReset()
+  usersDeleteResult.mockReset()
+  // Default: no expired verifications so existing tests stay focused on
+  // the user-deletion path. Individual tests override as needed.
+  verificationDeleteResult.mockResolvedValue({ rowsAffected: 0 })
 })
 
 describe('cleanup-unverified route', () => {
@@ -61,12 +84,13 @@ describe('cleanup-unverified route', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.deletedCount).toBe(0)
-    expect(deleteChainResult).not.toHaveBeenCalled()
+    expect(body.verificationsDeleted).toBe(0)
+    expect(usersDeleteResult).not.toHaveBeenCalled()
   })
 
   it('deletes candidates when present', async () => {
     selectChainResult.mockResolvedValueOnce([{ id: 'a' }, { id: 'b' }])
-    deleteChainResult.mockResolvedValueOnce({ rowsAffected: 2 })
+    usersDeleteResult.mockResolvedValueOnce({ rowsAffected: 2 })
     const { POST } = await import('./route')
     const res = await POST(new Request('http://localhost/api/cron/cleanup-unverified', {
       method: 'POST',
@@ -75,7 +99,53 @@ describe('cleanup-unverified route', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.deletedCount).toBe(2)
-    expect(deleteChainResult).toHaveBeenCalledTimes(1)
+    expect(usersDeleteResult).toHaveBeenCalledTimes(1)
+  })
+
+  it('prunes expired verification rows and reports the count', async () => {
+    // No unverified-user candidates so the user-deletion branch is a
+    // no-op; this test isolates the verification cleanup path.
+    selectChainResult.mockResolvedValueOnce([])
+    verificationDeleteResult.mockResolvedValueOnce({ rowsAffected: 3 })
+    const { POST } = await import('./route')
+    const res = await POST(new Request('http://localhost/api/cron/cleanup-unverified', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer test-secret' },
+    }))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.verificationsDeleted).toBe(3)
+    expect(body.deletedCount).toBe(0)
+    expect(verificationDeleteResult).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns verificationsDeleted: 0 when no expired rows exist', async () => {
+    selectChainResult.mockResolvedValueOnce([])
+    // beforeEach default already resolves to { rowsAffected: 0 }
+    const { POST } = await import('./route')
+    const res = await POST(new Request('http://localhost/api/cron/cleanup-unverified', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer test-secret' },
+    }))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.verificationsDeleted).toBe(0)
+    expect(verificationDeleteResult).toHaveBeenCalledTimes(1)
+  })
+
+  it('runs both cleanups on the same invocation', async () => {
+    selectChainResult.mockResolvedValueOnce([{ id: 'a' }])
+    usersDeleteResult.mockResolvedValueOnce({ rowsAffected: 1 })
+    verificationDeleteResult.mockResolvedValueOnce({ rowsAffected: 5 })
+    const { POST } = await import('./route')
+    const res = await POST(new Request('http://localhost/api/cron/cleanup-unverified', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer test-secret' },
+    }))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.deletedCount).toBe(1)
+    expect(body.verificationsDeleted).toBe(5)
   })
 
   it('GET returns 405', async () => {
