@@ -25,7 +25,7 @@ interface UserMenuContentProps {
 export function UserMenuContent({ onAction, showHeader = true }: UserMenuContentProps) {
   const t = useIntl()
   const { user } = useAuth()
-  const { playExit } = useAuthGate()
+  const { requestLogout } = useAuthGate()
   const { navigate } = usePageTransition()
   // Ionic-aware router. We use it for cross-shell drilldown navigations
   // (Hub -> /account, Account -> /, Hub -> business) so that the
@@ -37,10 +37,10 @@ export function UserMenuContent({ onAction, showHeader = true }: UserMenuContent
   const ionRouter = useIonRouter()
   const { transfer: incomingTransfer } = useIncomingTransferContext()
 
-  const handleLogout = useCallback(async () => {
+  const handleLogout = useCallback(() => {
     onAction?.()
-    await playExit('/')
-  }, [playExit, onAction])
+    requestLogout('/')
+  }, [requestLogout, onAction])
 
   const pathname = usePathname()
 
