@@ -675,6 +675,7 @@ export type MessageId =
   | 'navigation.settings'
   | 'navigation.team'
   | 'network.offline_banner'
+  | 'oauth_apple_continue'
   | 'oauth_google_continue'
   | 'oauth_or_divider'
   | 'orders.action_delete'

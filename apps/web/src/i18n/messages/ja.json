@@ -1647,6 +1647,7 @@
   "verify_error_too_many_attempts": "試行回数が多すぎます。新しいコードを取得してください。",
   "verify_error_resend": "新しいコードを送信できませんでした。しばらくしてからお試しください。",
   "oauth_google_continue": "Googleで続行",
+  "oauth_apple_continue": "Appleで続行",
   "oauth_or_divider": "または",
   "login_no_account": "アカウントをお持ちでないですか",
   "login_sign_up": "新規登録",

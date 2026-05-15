@@ -1647,6 +1647,7 @@
   "verify_error_too_many_attempts": "Too many attempts. Request a new code.",
   "verify_error_resend": "Couldn't send a new code. Try again in a moment.",
   "oauth_google_continue": "Continue with Google",
+  "oauth_apple_continue": "Continue with Apple",
   "oauth_or_divider": "or",
   "login_no_account": "No account yet?",
   "login_sign_up": "Sign up",
