@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { users, businessUsers } from '@kasero/shared/db/schema'
+import { users, businessUsers, verification } from '@kasero/shared/db/schema'
 import { and, eq, lt, sql, inArray } from 'drizzle-orm'
 import { timingSafeEqual } from 'node:crypto'
 
 /**
- * Daily cleanup of unverified accounts that never completed signup.
+ * Daily cleanup of two unrelated tables:
+ *
+ *   1. Unverified `users` that never completed signup.
+ *   2. Expired `verification` rows (email-OTP records past their TTL).
  *
  * Guarded by a shared CRON_SECRET (Bearer token). Set in Vercel:
  *   Project -> Settings -> Cron Jobs -> Authorization header
+ *
+ * --- Users cleanup ---
  *
  * Deletes users that satisfy ALL of:
  *   - email_verified = false (never confirmed their address), AND
@@ -18,8 +23,25 @@ import { timingSafeEqual } from 'node:crypto'
  *     row with an active business is anomalous but we never want the
  *     cron to take down a real owner).
  *
- * Sessions and account rows cascade-delete via FK on users.id. The job is
- * safe to re-run (no-op if there are no candidates).
+ * Sessions and account rows cascade-delete via FK on users.id.
+ *
+ * --- Verification cleanup ---
+ *
+ * Email-OTP rows have a 10-minute TTL but better-auth never deletes
+ * expired ones — they accumulate forever. We prune anything 1+ hour past
+ * `expires_at`; the buffer past the 10-minute OTP TTL is intentional to
+ * avoid edge-case races with verify attempts arriving at the last second.
+ *
+ * Verification records stay in Turso (not Redis) on purpose: better-auth
+ * has open bugs around verification under secondary-storage — see
+ * #8893 (verification model removed from adapter schema), #4721
+ * (email-verified flag not synced), #1368 (email-change cache
+ * invalidation). Our change-email route also queries `verification`
+ * directly, which would break under any non-SQL backend.
+ *
+ * The job is safe to re-run (no-op if there are no candidates / no
+ * expired verifications). Both cleanups run on every invocation; the
+ * JSON response always carries both counters.
  */
 
 const CLEANUP_WINDOW_DAYS = 7
@@ -44,6 +66,19 @@ export async function POST(request: Request) {
 
   const cutoff = new Date(Date.now() - CLEANUP_WINDOW_DAYS * 24 * 60 * 60 * 1000)
 
+  // --- 1. Prune expired email-OTP verification rows ---
+  // Runs unconditionally (no user-candidates short-circuit). The 10-minute
+  // OTP TTL has elapsed by ~50 minutes by the time this cutoff hits — the
+  // buffer is to avoid edge-case races with verify attempts arriving at
+  // the last second.
+  const verificationCutoff = new Date(Date.now() - 60 * 60 * 1000)
+  const vResult = await db
+    .delete(verification)
+    .where(lt(verification.expiresAt, verificationCutoff))
+  const verificationsDeleted =
+    (vResult as { rowsAffected?: number }).rowsAffected ?? 0
+
+  // --- 2. Prune unverified-stale users ---
   // Find candidate user ids in a single query that left-joins
   // business_users and filters where there is no active membership.
   const candidates = await db
@@ -61,20 +96,21 @@ export async function POST(request: Request) {
       ),
     )
 
-  if (candidates.length === 0) {
-    return NextResponse.json({ deletedCount: 0 })
+  let deletedCount = 0
+  if (candidates.length > 0) {
+    const ids = candidates.map((c) => c.id)
+    const result = await db.delete(users).where(inArray(users.id, ids))
+    deletedCount = (result as { rowsAffected?: number }).rowsAffected ?? ids.length
   }
-
-  const ids = candidates.map((c) => c.id)
-  const result = await db.delete(users).where(inArray(users.id, ids))
-  const deletedCount = (result as { rowsAffected?: number }).rowsAffected ?? ids.length
 
   console.log('[cron/cleanup-unverified]', {
     cutoff: cutoff.toISOString(),
+    verificationCutoff: verificationCutoff.toISOString(),
     deletedCount,
+    verificationsDeleted,
   })
 
-  return NextResponse.json({ deletedCount })
+  return NextResponse.json({ deletedCount, verificationsDeleted })
 }
 
 export async function GET() {
