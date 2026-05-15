@@ -1,6 +1,5 @@
 export { ContentGuard } from './content-guard'
 export { AuthLayout } from './AuthLayout'
-export { BrandMark } from './BrandMark'
 export { AuthField } from './AuthField'
 export { RegisterNavProvider, useRegisterNav } from './register-steps/RegisterNavContext'
 export type { RegisterStep, RegisterNav } from './register-steps/RegisterNavContext'

@@ -431,7 +431,6 @@ function SuccessContent({ codeType, business, joinSuccess }: SuccessContentProps
       <span
         className="join-business__success-eyebrow"
         data-ready={joinSuccess}
-        data-delay="1"
       >
         {t.formatMessage({ id: 'joinBusiness.success_eyebrow' })}
       </span>
@@ -439,7 +438,6 @@ function SuccessContent({ codeType, business, joinSuccess }: SuccessContentProps
       <h1
         className="join-business__success-title"
         data-ready={joinSuccess}
-        data-delay="2"
       >
         {titleNode}
       </h1>
@@ -447,7 +445,6 @@ function SuccessContent({ codeType, business, joinSuccess }: SuccessContentProps
       <p
         className="join-business__success-body"
         data-ready={joinSuccess}
-        data-delay="3"
       >
         {codeType === 'transfer'
           ? t.formatMessage(

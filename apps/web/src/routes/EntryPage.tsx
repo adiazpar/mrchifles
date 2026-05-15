@@ -5,11 +5,7 @@ import {
   IonContent,
   IonButton,
   IonSpinner,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
 } from '@ionic/react'
-import { BrandMark } from '@/components/auth/BrandMark'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
 import { AuthLayout, AuthField } from '@/components/auth'
 import { useRouter } from '@/lib/next-navigation-shim'
@@ -45,15 +41,16 @@ export function EntryPage() {
   const valid = EMAIL_RE.test(trimmed)
   const canSubmit = valid && !isLoading
 
-  // Hero title with italic accent on a single word — mirrors the
-  // pre-refactor LoginPage typography. The emphasis term comes from
-  // i18n so locales can choose a word that lands the same accent.
-  // Falls back to plain text when the term isn't found in the title.
+  // Italic accent on the brand word, mirroring Hub's HubGreeting pattern
+  // (apps/web/src/components/hub/HubHome.tsx). "Kasero" is a proper noun
+  // rendered verbatim across locales, so the emphasis term is a fixed
+  // string rather than a separate i18n key. Falls through to plain text
+  // if the localized title happens not to contain the brand.
   const titleNode = useMemo(() => {
     const full = intl.formatMessage({ id: 'auth.heading_login' })
-    const emphasis = intl.formatMessage({ id: 'auth.welcome_back_emphasis' })
+    const emphasis = 'Kasero'
     const idx = full.indexOf(emphasis)
-    if (!emphasis || idx === -1) return full
+    if (idx === -1) return full
     return (
       <>
         {full.slice(0, idx)}
@@ -109,16 +106,9 @@ export function EntryPage() {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>
-            <BrandMark />
-          </IonTitle>
-        </IonToolbar>
-      </IonHeader>
       <IonContent>
-        <AuthLayout footer={footer}>
-          <header className="auth-hero auth-step-item auth-step-item--head">
+        <AuthLayout footer={footer} center>
+          <header className="auth-hero">
             <div className="auth-hero__eyebrow">
               {intl.formatMessage({ id: 'auth.sign_in_eyebrow' })}
             </div>
@@ -133,7 +123,7 @@ export function EntryPage() {
             className="flex flex-col gap-2.5 w-full"
             data-testid="entry-form"
           >
-            <div className="auth-step-item auth-step-item--field">
+            <div>
               <OAuthButtons callbackURL="/" disabled={isLoading} />
               <div className="oauth-divider">
                 {intl.formatMessage({ id: 'oauth_or_divider' })}
@@ -159,7 +149,7 @@ export function EntryPage() {
               />
             </div>
 
-            <div className="auth-step-item auth-step-item--footer">
+            <div>
               <IonButton
                 expand="block"
                 type="submit"

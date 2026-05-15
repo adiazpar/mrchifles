@@ -10,11 +10,31 @@
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  padding: var(--space-2) var(--page-padding) var(--space-6);
+  /* Top padding reserves the visual space an IonHeader would occupy
+   * (status-bar safe area + ~44px toolbar) so the hero sits at the same
+   * vertical position as it does on headered pages elsewhere in the app.
+   * The verify step still mounts its own IonHeader and uses a different
+   * container (.register-verify), so it's unaffected by this offset. */
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 44px + var(--space-2))
+    var(--page-padding)
+    var(--space-6);
   gap: var(--space-6);
   background:
     radial-gradient(var(--grain) 1px, transparent 1.2px) 0 0 / 3px 3px,
     var(--color-bg-base);
+}
+
+/* Login variant — drop the absent-toolbar offset (the page no longer
+ * mimics a headered layout) and vertically center the main block in the
+ * remaining viewport. Safe-area-top is preserved so content still
+ * clears the status bar / notch. */
+.auth-container--center {
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--space-2));
+}
+
+.auth-container--center .auth-main {
+  justify-content: center;
 }
 
 /* ===== Wordmark — inside IonToolbar's IonTitle ===== */
@@ -72,11 +92,11 @@
 .auth-hero__title {
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-variation-settings: "SOFT" 60;
+  font-variation-settings: "SOFT" 70;
   font-weight: 400;
-  font-size: 40px;
+  font-size: 36px;
   letter-spacing: -0.025em;
-  line-height: 1.04;
+  line-height: 1.05;
   color: var(--color-text-primary);
   margin: 0;
 }
@@ -291,32 +311,3 @@
   margin: 0 auto var(--space-2);
 }
 
-/* ===== Register wizard step transitions =====
-   Each step's hero / field / footer wraps in .auth-step-item with one of
-   the position modifiers so they settle in turn on each step mount. The
-   step root re-mounts via React's key={current} on the wrapper around
-   the step components, so animation-fill-mode: both guarantees the
-   element holds the from-state until its delay elapses. */
-@keyframes auth-step-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.auth-step-item {
-  animation: auth-step-fade-in var(--duration-normal) var(--ease-out-back) both;
-}
-.auth-step-item--head   { animation-delay:   0ms; }
-.auth-step-item--field  { animation-delay:  60ms; }
-.auth-step-item--footer { animation-delay: 120ms; }
-
-@media (prefers-reduced-motion: reduce) {
-  .auth-step-item {
-    animation: none;
-  }
-}

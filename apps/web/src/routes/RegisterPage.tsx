@@ -5,12 +5,10 @@ import {
   IonToolbar,
   IonButtons,
   IonButton,
-  IonTitle,
   IonIcon,
   IonContent,
 } from '@ionic/react'
 import { chevronBack } from 'ionicons/icons'
-import { BrandMark } from '@/components/auth/BrandMark'
 import {
   RegisterNavProvider,
   useRegisterNav,
@@ -46,43 +44,35 @@ export function RegisterPage() {
   )
 }
 
-// Toolbar driven by the active wizard step. Back chevron only renders
-// on the verify step (and walks back to email). The name step is
-// terminal — the new user has a verified session by the time they land
-// on it, so there's no meaningful "back" from there.
+// Back-chevron-only toolbar that mounts only on the verify step (and
+// walks back to email). The email step is the wizard entry and the
+// name step is terminal (the new user has a verified session), so
+// neither needs a header bar. Branding intentionally absent from the
+// auth surface.
 function RegisterHeader() {
   const intl = useIntl()
   const { current, goTo } = useRegisterNav()
-  const onBack = current === 'verify' ? () => goTo('email') : null
-
+  if (current !== 'verify') return null
   return (
     <IonHeader>
       <IonToolbar>
-        {onBack ? (
-          <IonButtons slot="start">
-            <IonButton
-              fill="clear"
-              onClick={onBack}
-              aria-label={intl.formatMessage({ id: 'auth.register_wizard.back_aria' })}
-            >
-              <IonIcon icon={chevronBack} />
-            </IonButton>
-          </IonButtons>
-        ) : null}
-        <IonTitle>
-          <BrandMark />
-        </IonTitle>
+        <IonButtons slot="start">
+          <IonButton
+            fill="clear"
+            onClick={() => goTo('email')}
+            aria-label={intl.formatMessage({ id: 'auth.register_wizard.back_aria' })}
+          >
+            <IonIcon icon={chevronBack} />
+          </IonButton>
+        </IonButtons>
       </IonToolbar>
     </IonHeader>
   )
 }
 
-// Each step is a distinct component, so React unmounts the previous step
-// and mounts the new one on every transition — the .auth-step-item
-// children's fade-in keyframes fire on each fresh mount. Rendering a
-// fragment (not a wrapping div) keeps .auth-container as the direct
-// child of IonContent, preserving the min-height:100% chain that pins
-// the footer to the bottom.
+// Rendering a fragment (not a wrapping div) keeps .auth-container as the
+// direct child of IonContent, preserving the min-height:100% chain that
+// pins the footer to the bottom.
 function CurrentStep() {
   const { current } = useRegisterNav()
   switch (current) {

@@ -497,9 +497,6 @@
   transform: translateY(0);
 }
 
-.create-business__success [data-ready][data-delay="1"] { transition-delay: 80ms; }
-.create-business__success [data-ready][data-delay="2"] { transition-delay: 200ms; }
-.create-business__success [data-ready][data-delay="3"] { transition-delay: 340ms; }
 
 /* ==========================================================================
    JoinBusiness — code step
@@ -847,6 +844,3 @@
   transform: translateY(0);
 }
 
-.join-business__success [data-ready][data-delay="1"] { transition-delay: 80ms; }
-.join-business__success [data-ready][data-delay="2"] { transition-delay: 200ms; }
-.join-business__success [data-ready][data-delay="3"] { transition-delay: 340ms; }

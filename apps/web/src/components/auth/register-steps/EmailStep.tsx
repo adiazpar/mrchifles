@@ -81,7 +81,7 @@ export function EmailStep() {
   return (
     <AuthLayout footer={footer}>
       <form data-testid="register-email-form" onSubmit={handleSubmit} className="flex flex-col gap-2.5 w-full">
-        <header className="auth-hero auth-step-item auth-step-item--head">
+        <header className="auth-hero">
           <h1 className="auth-hero__title">
             {intl.formatMessage({ id: 'auth.register_wizard.step_email_title_fallback' })}
           </h1>
@@ -90,7 +90,7 @@ export function EmailStep() {
           </p>
         </header>
 
-        <div className="auth-step-item auth-step-item--field">
+        <div>
           <AuthField
             label={intl.formatMessage({ id: 'auth.email_label' })}
             type="email"
@@ -104,7 +104,7 @@ export function EmailStep() {
           />
         </div>
 
-        <div className="auth-step-item auth-step-item--footer">
+        <div>
           <IonButton
             expand="block"
             type="submit"

@@ -45,7 +45,6 @@ export function SuccessStep() {
           <span
             className="create-business__success-eyebrow"
             data-ready={createSuccess}
-            data-delay="1"
           >
             {t.formatMessage({ id: 'createBusiness.success_eyebrow' })}
           </span>
@@ -53,7 +52,6 @@ export function SuccessStep() {
           <h1
             className="create-business__success-title"
             data-ready={createSuccess}
-            data-delay="2"
           >
             {titleNode}
           </h1>
@@ -62,7 +60,6 @@ export function SuccessStep() {
             <span
               className="create-business__success-name"
               data-ready={createSuccess}
-              data-delay="3"
               title={businessName}
             >
               {/* User content — verbatim. icon is optional emoji. */}
@@ -80,7 +77,6 @@ export function SuccessStep() {
           <div
             className="create-business__success-action"
             data-ready={createSuccess}
-            data-delay="3"
           >
             <IonButton
               expand="block"

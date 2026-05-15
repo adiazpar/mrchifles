@@ -72,7 +72,7 @@ export function NameStep() {
   return (
     <AuthLayout footer={footer}>
       <form data-testid="register-name-form" onSubmit={handleSubmit} className="flex flex-col gap-2.5 w-full">
-        <header className="auth-hero auth-step-item auth-step-item--head">
+        <header className="auth-hero">
           <h1 className="auth-hero__title">
             {intl.formatMessage({ id: 'auth.register_wizard.step_name_title' })}
           </h1>
@@ -81,7 +81,7 @@ export function NameStep() {
           </p>
         </header>
 
-        <div className="auth-step-item auth-step-item--field">
+        <div>
           <AuthField
             label={intl.formatMessage({ id: 'auth.name_label' })}
             type="text"
@@ -96,7 +96,7 @@ export function NameStep() {
           />
         </div>
 
-        <div className="auth-step-item auth-step-item--footer">
+        <div>
           <IonButton
             expand="block"
             type="submit"

@@ -310,7 +310,6 @@ export type MessageId =
   | 'auth.register_wizard.step_name_title'
   | 'auth.sign_in_eyebrow'
   | 'auth.version_label'
-  | 'auth.welcome_back_emphasis'
   | 'auth.welcome_back_subtitle'
   | 'barcode.ai_barcode_intro'
   | 'barcode.copy_aria_copied'
