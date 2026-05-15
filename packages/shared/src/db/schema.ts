@@ -109,28 +109,11 @@ export const verification = sqliteTable('verification', {
   expiresIdx: index('idx_verification_expires_at').on(table.expiresAt),
 }))
 
-/**
- * Rate-limit counters managed by better-auth. Used when `auth.ts` is
- * configured with `rateLimit: { storage: 'database' }` so per-key
- * counters are consistent across Vercel Lambda instances (in-memory
- * storage gives each cold start its own window — fail-open, weaker).
- *
- * Columns mirror better-auth's expected shape. The `id` column is
- * required because the drizzleAdapter auto-injects a generated id on
- * every `create()` call regardless of which field the rate-limiter
- * itself queries by (`key`). Omitting it raises
- * "The field 'id' does not exist in the 'rateLimit' Drizzle schema"
- * the first time better-auth tries to record a counter.
- *
- * better-auth handles inserts/updates against this table itself; do
- * not write to it from application code.
- */
-export const rateLimit = sqliteTable('rate_limit', {
-  id: text('id').primaryKey(),
-  key: text('key').notNull().unique(),
-  count: integer('count').notNull(),
-  lastRequest: integer('last_request').notNull(),
-})
+// Note: better-auth's rate-limit counters were moved to Upstash Redis
+// (secondary-storage) in migration 2026-05-15-01-drop-rate-limit-table.sql.
+// The `rate_limit` table was dropped; TTL-based expiry in Redis replaces
+// the unbounded accumulation we had with the SQL backend. See
+// apps/api/src/lib/auth.ts (`secondaryStorage` + `rateLimit.storage`).
 
 // ===========================================
 // BUSINESS USERS (Multi-business membership)
