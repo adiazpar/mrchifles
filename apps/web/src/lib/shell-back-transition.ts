@@ -2,14 +2,16 @@ import { createAnimation, iosTransitionAnimation } from '@ionic/react'
 import type { AnimationBuilder } from '@ionic/react'
 
 /**
- * Page transition for the per-business inner outlet.
+ * Page transition for IonRouterOutlets where the back nav was showing
+ * a delayed toolbar fade — used by both the outer authenticated outlet
+ * (Account → Hub, Account → Business) and the per-business inner outlet
+ * (Manage → Team / Provider).
  *
  * Forward push: delegate to Ionic's default iOS transition. That branch
  * fades the entering toolbar's background AND its children together
  * (`ios.transition.js` lines ~493-503), so the whole top bar appears as
- * a single unit. This is the look the per-business shell aims for — it
- * matches the hub → business push at the outer outlet, which is what
- * the user was happy with.
+ * a single unit. This is the look we want for forward navigation — it
+ * matches the hub → business push the user was happy with.
  *
  * Back nav: replace it. In back direction the iOS transition leaves the
  * toolbar background opaque from frame 0 but still fades the title /
@@ -17,10 +19,9 @@ import type { AnimationBuilder } from '@ionic/react'
  * duration (same file, lines ~479-489 — `enteringToolBarBg` only gets
  * the opacity fromTo in the forward branch). The visible result is a
  * "header chrome is here, but title + back arrow + menu dot materialize
- * a beat later" stutter on Team → Manage / Provider → Manage. We do a
- * clean slide of the entire `.ion-page` instead: header and content
- * move as one rigid surface, no per-element opacity choreography on
- * the toolbar.
+ * a beat later" stutter on every back nav. We do a clean slide of the
+ * entire `.ion-page` instead: header and content move as one rigid
+ * surface, no per-element opacity choreography on the toolbar.
  *
  * The lifecycle hooks (`beforeRemoveClass('ion-page-invisible')`,
  * `beforeClearStyles(['opacity'])`) live on the entering sub-animation,
@@ -68,7 +69,7 @@ const backSlide = (
   return root
 }
 
-export const businessShellTransition: AnimationBuilder = (baseEl, opts) => {
+export const shellBackTransition: AnimationBuilder = (baseEl, opts) => {
   if (opts.direction === 'back') {
     return backSlide(
       opts.enteringEl as HTMLElement,

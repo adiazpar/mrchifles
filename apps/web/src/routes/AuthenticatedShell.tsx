@@ -7,6 +7,7 @@ import { BusinessProvidersFromUrl } from '@/routes/BusinessProvidersFromUrl'
 import { BusinessTabsLayout } from '@/routes/BusinessTabsLayout'
 import { HubPage } from '@/routes/HubPage'
 import { JoinPage } from '@/routes/JoinPage'
+import { shellBackTransition } from '@/lib/shell-back-transition'
 
 // `BusinessProvidersFromUrl` is mounted INSIDE the `/:businessId` route,
 // not around the outlet. Wrapping the outlet with a component whose
@@ -19,7 +20,7 @@ import { JoinPage } from '@/routes/JoinPage'
 // Keeping the outlet structurally stable fixes that.
 export function AuthenticatedShell() {
   return (
-    <IonRouterOutlet>
+    <IonRouterOutlet animation={shellBackTransition}>
       <Route exact path="/account">
         <AccountPage />
       </Route>
