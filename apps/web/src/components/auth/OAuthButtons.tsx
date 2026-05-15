@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { IonButton, IonIcon, IonSpinner } from '@ionic/react'
-import { logoGoogle } from 'ionicons/icons'
+import { logoApple, logoGoogle } from 'ionicons/icons'
 import { useIntl } from 'react-intl'
 import { authClient } from '@/lib/auth-client'
 import './OAuthButtons.css'
 
-type Provider = 'google'
+type Provider = 'google' | 'apple'
 
 interface OAuthButtonsProps {
   /**
@@ -53,6 +53,23 @@ export function OAuthButtons({ callbackURL = '/', onInitiate, disabled }: OAuthB
           <>
             <IonIcon slot="start" icon={logoGoogle} aria-hidden="true" />
             {intl.formatMessage({ id: 'oauth_google_continue' })}
+          </>
+        )}
+      </IonButton>
+
+      <IonButton
+        expand="block"
+        fill="solid"
+        onClick={() => startSocial('apple')}
+        disabled={disabled || pending !== null}
+        className="oauth-button oauth-button--apple"
+      >
+        {pending === 'apple' ? (
+          <IonSpinner name="crescent" />
+        ) : (
+          <>
+            <IonIcon slot="start" icon={logoApple} aria-hidden="true" />
+            {intl.formatMessage({ id: 'oauth_apple_continue' })}
           </>
         )}
       </IonButton>
