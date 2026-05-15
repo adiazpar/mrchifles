@@ -395,6 +395,29 @@
   flex-direction: column;
 }
 
+.hub-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Empty-state layout: pin the greeting (top) and action cards (bottom)
+ * to the page edges, with the empty-state block centered in the slack
+ * between them. min-height: 100% mirrors .wizard-step--centered — the
+ * IonContent scroll-part is positioned with definite height, so a child
+ * with min-height 100% gets a real height to grow into (flex:1 here is
+ * dead because the scroll-part isn't display:flex). */
+.hub-body--empty {
+  min-height: 100%;
+  padding-bottom: var(--space-12);
+}
+.hub-body--empty .hub-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 /* Sibling block above the Create/Join action cards when the user has no
  * businesses yet — not a full-page empty state. Stays as a text block so
  * the cards below remain on-screen. */

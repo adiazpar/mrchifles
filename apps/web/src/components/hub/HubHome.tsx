@@ -57,11 +57,7 @@ const SearchIcon = (
 )
 
 export function HubHome() {
-  return (
-    <div className="flex flex-col flex-1 min-h-0">
-      <HubHomeBody />
-    </div>
-  )
+  return <HubHomeBody />
 }
 
 function HubHomeBody() {
@@ -145,7 +141,7 @@ function HubHomeBody() {
   }
 
   return (
-    <div className="hub-body">
+    <div className={hasBusinesses ? 'hub-body' : 'hub-body hub-body--empty'}>
       <HubGreeting userName={user?.name ?? null} locale={intl.locale} />
 
       {hasBusinesses ? (
@@ -164,7 +160,7 @@ function HubHomeBody() {
         </div>
       )}
 
-      <div className="flex flex-col gap-2.5">
+      <div className="hub-actions">
         <FeatureCard
           primary
           kicker={intl.formatMessage({ id: 'hub.action_create_kicker' })}
@@ -311,6 +307,8 @@ function HubGreeting({ userName, locale }: HubGreetingProps) {
 
   if (!greetingKey || !userName) return null
 
+  const firstName = userName.trim().split(/\s+/)[0] || userName
+
   // Italic accent on the time-of-day word ("Good evening" → "Good <em>evening</em>").
   const greetingFull = intl.formatMessage({ id: greetingKey })
   const emphasis = intl.formatMessage({ id: EMPHASIS_KEY[greetingKey] })
@@ -330,7 +328,7 @@ function HubGreeting({ userName, locale }: HubGreetingProps) {
     <header className="page-hero">
       {dateLabel ? <div className="page-hero__eyebrow">{dateLabel}</div> : null}
       <h1 className="page-hero__title">
-        {greetingNode}, {userName}.
+        {greetingNode}, {firstName}.
       </h1>
     </header>
   )
