@@ -1,6 +1,7 @@
 'use client'
 
 import { useIntl } from 'react-intl'
+import { useMemo } from 'react'
 import { IonButton } from '@ionic/react'
 import { ModalShell } from '@/components/ui'
 
@@ -11,11 +12,13 @@ interface LogoutConfirmModalProps {
 }
 
 /**
- * Minimal confirmation shown before the logout splash choreography
- * begins. Stateless — every render is derived from props and i18n,
- * so no onExitComplete cleanup is needed. noSwipeDismiss is set so
- * the user has to make a deliberate Cancel/Confirm choice (matching
+ * Confirmation shown before the logout splash choreography begins.
+ * Stateless — every render is derived from props and i18n, so no
+ * onExitComplete cleanup is needed. noSwipeDismiss is set so the
+ * user has to make a deliberate Cancel/Confirm choice (matching
  * LeaveBusinessModal); the X and backdrop still close the modal.
+ * The hero header (eyebrow + italicized title + subtitle) follows
+ * the same pattern as LeaveBusinessModal and AccountPage.
  */
 export function LogoutConfirmModal({
   isOpen,
@@ -23,6 +26,20 @@ export function LogoutConfirmModal({
   onConfirm,
 }: LogoutConfirmModalProps) {
   const intl = useIntl()
+
+  const titleNode = useMemo(() => {
+    const full = intl.formatMessage({ id: 'auth.logout_confirm.hero_title' })
+    const emphasis = intl.formatMessage({ id: 'auth.logout_confirm.hero_title_emphasis' })
+    const idx = full.indexOf(emphasis)
+    if (!emphasis || idx === -1) return full
+    return (
+      <>
+        {full.slice(0, idx)}
+        <em>{emphasis}</em>
+        {full.slice(idx + emphasis.length)}
+      </>
+    )
+  }, [intl])
 
   const footer = (
     <>
@@ -43,9 +60,15 @@ export function LogoutConfirmModal({
       footer={footer}
       noSwipeDismiss
     >
-      <p className="text-text-secondary leading-relaxed">
-        {intl.formatMessage({ id: 'auth.logout_confirm.subtitle' })}
-      </p>
+      <header className="modal-hero">
+        <div className="modal-hero__eyebrow">
+          {intl.formatMessage({ id: 'auth.logout_confirm.eyebrow' })}
+        </div>
+        <h1 className="modal-hero__title">{titleNode}</h1>
+        <p className="modal-hero__subtitle">
+          {intl.formatMessage({ id: 'auth.logout_confirm.subtitle' })}
+        </p>
+      </header>
     </ModalShell>
   )
 }
