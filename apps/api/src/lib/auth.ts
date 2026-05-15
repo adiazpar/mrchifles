@@ -4,6 +4,7 @@ import { drizzleAdapter } from '@better-auth/drizzle-adapter'
 import { emailOTP } from 'better-auth/plugins'
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
 import { eq } from 'drizzle-orm'
+import { Redis } from '@upstash/redis'
 import { db } from '@/db'
 import * as schema from '@kasero/shared/db/schema'
 import { sendVerificationEmail } from './email'
@@ -29,6 +30,44 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   }
 }
 
+// Shared Upstash client. Only enabled in production / when env vars are set.
+// In dev without Upstash creds, secondaryStorage is undefined and better-auth
+// falls back to in-memory (acceptable for local development).
+const redisClient =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
+    : null
+
+// better-auth's secondaryStorage interface. We use a key-prefix so kasero's
+// keys don't collide with the @upstash/ratelimit keys (which use prefix
+// `kasero` — see rate-limit.ts:91). Different prefix here intentionally.
+const secondaryStorage: NonNullable<Parameters<typeof betterAuth>[0]['secondaryStorage']> | undefined =
+  redisClient
+    ? {
+        get: async (key: string) => {
+          const value = await redisClient.get(`kasero:ba:${key}`)
+          // Upstash @upstash/redis auto-deserializes JSON; coerce to string
+          // for better-auth which expects either a string or null.
+          if (value === null || value === undefined) return null
+          if (typeof value === 'string') return value
+          return JSON.stringify(value)
+        },
+        set: async (key: string, value: string, ttl?: number) => {
+          if (typeof ttl === 'number' && ttl > 0) {
+            await redisClient.set(`kasero:ba:${key}`, value, { ex: ttl })
+          } else {
+            await redisClient.set(`kasero:ba:${key}`, value)
+          }
+        },
+        delete: async (key: string) => {
+          await redisClient.del(`kasero:ba:${key}`)
+        },
+      }
+    : undefined
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'sqlite',
@@ -53,6 +92,17 @@ export const auth = betterAuth({
       .map((s) => s.trim())
       .filter(Boolean) ?? []),
   ],
+
+  // Reuse Upstash Redis for better-auth's short-lived auth data —
+  // rate-limit counters only (see rateLimit.storage below).
+  // Sessions and verification records intentionally stay in Turso because:
+  //   - Open bugs in better-auth's secondary-storage handling of those:
+  //     #8893 (verification model removed from adapter schema breaks
+  //     our change-email direct DB query), #4721 (email-verified flag
+  //     not synced), #1368 (email-change cache invalidation).
+  // If secondaryStorage is undefined (no Upstash creds in dev), better-auth
+  // silently falls back to in-memory rate-limiting which is fine locally.
+  secondaryStorage,
 
   user: {
     modelName: 'users',
@@ -132,7 +182,7 @@ export const auth = betterAuth({
 
   rateLimit: {
     enabled: true,
-    storage: 'database',
+    storage: 'secondary-storage',
     customRules: {
       '/email-otp/send-verification-otp': { window: 60, max: 1 },
       '/email-otp/verify-email': { window: 60, max: 5 },

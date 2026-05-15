@@ -8,6 +8,8 @@ const opts = (auth as unknown as {
     account?: { accountLinking?: { trustedProviders?: string[] } }
     hooks?: { before?: unknown }
     session?: { freshAge?: number }
+    rateLimit?: { storage?: string; enabled?: boolean }
+    secondaryStorage?: { get: unknown; set: unknown; delete: unknown }
   }
 }).options
 
@@ -46,5 +48,31 @@ describe('better-auth config', () => {
 
   it('disables better-auth freshAge gate so OTP step-up is the sole freshness proof', () => {
     expect(opts.session?.freshAge).toBe(0)
+  })
+
+  it('routes rate-limit counters through secondary storage (not the SQL database)', () => {
+    // Counters live in Upstash Redis with TTL-based expiry; the legacy
+    // `rate_limit` Turso table was dropped in migration
+    // 2026-05-15-01-drop-rate-limit-table.sql.
+    expect(opts.rateLimit?.storage).toBe('secondary-storage')
+    expect(opts.rateLimit?.enabled).toBe(true)
+  })
+
+  it('wires secondaryStorage when Upstash creds are present', () => {
+    // In CI / dev without UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+    // the adapter is intentionally undefined and better-auth falls back to
+    // an in-memory limiter (acceptable for local dev). When the env vars
+    // ARE present we expect the 3-method adapter to be wired up.
+    const hasUpstash =
+      !!process.env.UPSTASH_REDIS_REST_URL &&
+      !!process.env.UPSTASH_REDIS_REST_TOKEN
+    if (hasUpstash) {
+      expect(opts.secondaryStorage).toBeDefined()
+      expect(typeof opts.secondaryStorage?.get).toBe('function')
+      expect(typeof opts.secondaryStorage?.set).toBe('function')
+      expect(typeof opts.secondaryStorage?.delete).toBe('function')
+    } else {
+      expect(opts.secondaryStorage).toBeUndefined()
+    }
   })
 })
