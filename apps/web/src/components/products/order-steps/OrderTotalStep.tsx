@@ -10,7 +10,7 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { PriceKeypadStep } from '@/components/ui'
 import { useOrderNav, useOrderCallbacks } from './OrderNavContext'
 
@@ -34,7 +34,7 @@ interface OrderTotalStepProps {
 export function OrderTotalStep({ mode }: OrderTotalStepProps) {
   const t = useIntl()
   const nav = useOrderNav()
-  const { orderTotal, onOrderTotalChange } = useOrderCallbacks()
+  const { orderTotal, onOrderTotalChange, onClose } = useOrderCallbacks()
 
   const numericTotal = parseFloat(orderTotal)
   const isValid = !isNaN(numericTotal) && numericTotal > 0
@@ -59,6 +59,15 @@ export function OrderTotalStep({ mode }: OrderTotalStepProps) {
               aria-label={t.formatMessage({ id: 'common.back' })}
             >
               <IonIcon icon={chevronBack} />
+            </IonButton>
+          </IonButtons>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
         </IonToolbar>

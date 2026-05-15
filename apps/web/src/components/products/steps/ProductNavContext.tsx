@@ -91,3 +91,13 @@ export function useEditProductCallbacks(): EditProductCallbacks {
   if (!ctx) throw new Error('useEditProductCallbacks must be used inside EditProductModal')
   return ctx
 }
+
+export function useProductOnClose(): () => void {
+  const addCtx = useContext(AddProductCallbacksContext)
+  const editCtx = useContext(EditProductCallbacksContext)
+  const onClose = addCtx?.onClose ?? editCtx?.onClose
+  if (!onClose) {
+    throw new Error('useProductOnClose must be used inside AddProductModal or EditProductModal')
+  }
+  return onClose
+}

@@ -10,14 +10,14 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { Camera } from 'lucide-react'
 import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
 
 export function AiPhotoStep() {
   const t = useIntl()
   const nav = useProductNav()
-  const { onAiPhotoCapture, onClearPendingPhoto } = useAddProductCallbacks()
+  const { onAiPhotoCapture, onClearPendingPhoto, onClose } = useAddProductCallbacks()
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   // Clear any previously stashed photo when this step mounts so the user
@@ -55,6 +55,15 @@ export function AiPhotoStep() {
           <IonTitle>
             {t.formatMessage({ id: 'productForm.ai_step_photo_title' })}
           </IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 

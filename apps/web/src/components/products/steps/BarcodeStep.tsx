@@ -11,10 +11,10 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { BarcodeFields } from '../BarcodeFields'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNav } from './ProductNavContext'
+import { useProductNav, useProductOnClose } from './ProductNavContext'
 
 interface BarcodeStepProps {
   mode: 'forward' | 'edit'
@@ -29,6 +29,7 @@ interface BarcodeStepProps {
 export function BarcodeStep({ mode }: BarcodeStepProps) {
   const t = useIntl()
   const nav = useProductNav()
+  const onClose = useProductOnClose()
   const { barcode, barcodeFormat, barcodeSource, editingProduct } =
     useProductForm()
 
@@ -64,6 +65,15 @@ export function BarcodeStep({ mode }: BarcodeStepProps) {
           <IonTitle>
             {t.formatMessage({ id: 'productForm.tab_barcode' })}
           </IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 

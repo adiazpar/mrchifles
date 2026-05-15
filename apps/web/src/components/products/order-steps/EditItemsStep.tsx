@@ -8,7 +8,7 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { Minus, Plus, Package } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
@@ -34,6 +34,7 @@ export function EditItemsStep() {
     orderItems,
     onToggleProduct,
     onUpdateQuantity,
+    onClose,
   } = useOrderDetailCallbacks()
 
   const productsById = new Map(products.map((p) => [p.id, p]))
@@ -50,6 +51,15 @@ export function EditItemsStep() {
               aria-label={t.formatMessage({ id: 'common.back' })}
             >
               <IonIcon icon={chevronBack} />
+            </IonButton>
+          </IonButtons>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
         </IonToolbar>

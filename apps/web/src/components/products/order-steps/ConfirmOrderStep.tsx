@@ -8,7 +8,7 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { Package, ChevronRight } from 'lucide-react'
 import Image from '@/lib/Image'
 import { getProductIconUrl } from '@/lib/utils'
@@ -39,6 +39,7 @@ export function ConfirmOrderStep() {
     isSaving,
     error,
     onSaveOrder,
+    onClose,
   } = useNewOrderCallbacks()
 
   const handleConfirm = async () => {
@@ -72,6 +73,15 @@ export function ConfirmOrderStep() {
               aria-label={t.formatMessage({ id: 'common.back' })}
             >
               <IonIcon icon={chevronBack} />
+            </IonButton>
+          </IonButtons>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
         </IonToolbar>

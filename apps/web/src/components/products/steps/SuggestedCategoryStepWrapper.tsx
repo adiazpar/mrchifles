@@ -9,7 +9,7 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { useProductForm } from '@/contexts/product-form-context'
 import { SuggestedCategoryStep } from '../SuggestedCategoryStep'
 import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
@@ -17,7 +17,7 @@ import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
 export function SuggestedCategoryStepWrapper() {
   const t = useIntl()
   const nav = useProductNav()
-  const { suggestedCategoryName, categories, onCreateCategory } =
+  const { suggestedCategoryName, categories, onCreateCategory, onClose } =
     useAddProductCallbacks()
   const { setCategoryId } = useProductForm()
 
@@ -41,6 +41,15 @@ export function SuggestedCategoryStepWrapper() {
           <IonTitle>
             {t.formatMessage({ id: 'productForm.ai_step_new_category_title' })}
           </IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 

@@ -11,12 +11,13 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { Check, Minus, Plus } from 'lucide-react'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useContext } from 'react'
 import {
   useProductNav,
+  useProductOnClose,
   AddProductCallbacksContext,
   EditProductCallbacksContext,
 } from './ProductNavContext'
@@ -35,6 +36,7 @@ interface CategoryStockStepProps {
 export function CategoryStockStep({ mode }: CategoryStockStepProps) {
   const t = useIntl()
   const nav = useProductNav()
+  const onClose = useProductOnClose()
   // The wizard runs under either AddProductCallbacks or
   // EditProductCallbacks. Both expose `categories`. Read from whichever
   // is mounted — this component is shared across both modal flows.
@@ -75,6 +77,15 @@ export function CategoryStockStep({ mode }: CategoryStockStepProps) {
           <IonTitle>
             {t.formatMessage({ id: 'productAddEdit.step_category_title_short' })}
           </IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 

@@ -60,13 +60,11 @@ export function ReceiveOrderStep() {
               </IonButton>
             </IonButtons>
           )}
-          {openedFromSwipe && (
-            <IonButtons slot="end">
-              <IonButton fill="clear" onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
-                <IonIcon icon={close} />
-              </IonButton>
-            </IonButtons>
-          )}
+          <IonButtons slot="end">
+            <IonButton fill="clear" onClick={onClose} aria-label={t.formatMessage({ id: 'common.close' })}>
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 

@@ -11,12 +11,12 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import Image from '@/lib/Image'
 import { ImagePlus } from 'lucide-react'
 import { PRESET_ICONS, isPresetIcon, getPresetIcon } from '@/lib/preset-icons'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNav } from './ProductNavContext'
+import { useProductNav, useProductOnClose } from './ProductNavContext'
 
 interface NameStepProps {
   /**
@@ -37,6 +37,7 @@ interface NameStepProps {
 export function NameStep({ mode }: NameStepProps) {
   const t = useIntl()
   const nav = useProductNav()
+  const onClose = useProductOnClose()
   const {
     name,
     setName,
@@ -79,6 +80,15 @@ export function NameStep({ mode }: NameStepProps) {
           <IonTitle>
             {t.formatMessage({ id: 'productForm.title_add' })}
           </IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 

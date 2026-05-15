@@ -11,10 +11,10 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { PriceKeypadStep } from '@/components/ui'
 import { useProductForm } from '@/contexts/product-form-context'
-import { useProductNav } from './ProductNavContext'
+import { useProductNav, useProductOnClose } from './ProductNavContext'
 
 interface PriceStepProps {
   mode: 'forward' | 'edit'
@@ -30,6 +30,7 @@ interface PriceStepProps {
 export function PriceStep({ mode }: PriceStepProps) {
   const t = useIntl()
   const nav = useProductNav()
+  const onClose = useProductOnClose()
   const { price, setPrice, editingProduct } = useProductForm()
 
   const numericPrice = parseFloat(price)
@@ -62,6 +63,15 @@ export function PriceStep({ mode }: PriceStepProps) {
           <IonTitle>
             {t.formatMessage({ id: 'productForm.price_label' })}
           </IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 

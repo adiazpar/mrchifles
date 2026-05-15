@@ -10,7 +10,7 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { Plus, ScanLine, RotateCcw } from 'lucide-react'
 import { useProductForm } from '@/contexts/product-form-context'
 import { useBarcodeScan } from '@/hooks/useBarcodeScan'
@@ -25,7 +25,7 @@ import { useProductNav, useAddProductCallbacks } from './ProductNavContext'
 export function AiBarcodeStep() {
   const t = useIntl()
   const nav = useProductNav()
-  const { onStartAiPipeline } = useAddProductCallbacks()
+  const { onStartAiPipeline, onClose } = useAddProductCallbacks()
   const {
     barcode,
     barcodeFormat,
@@ -113,6 +113,15 @@ export function AiBarcodeStep() {
           <IonTitle>
             {t.formatMessage({ id: 'productForm.ai_step_barcode_title' })}
           </IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 

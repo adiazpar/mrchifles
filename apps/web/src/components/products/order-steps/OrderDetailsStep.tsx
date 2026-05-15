@@ -9,7 +9,7 @@ import {
   IonButton,
   IonIcon,
 } from '@ionic/react'
-import { chevronBack } from 'ionicons/icons'
+import { close, chevronBack } from 'ionicons/icons'
 import { CalendarClock, ChevronDown, ImageIcon, ImagePlus, Trash2 } from 'lucide-react'
 import { apiPostForm } from '@/lib/api-client'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
@@ -43,6 +43,7 @@ export function OrderDetailsStep({ mode = 'forward' }: OrderDetailsStepProps = {
     orderProvider,
     onOrderProviderChange,
     error,
+    onClose,
   } = useOrderCallbacks()
 
   const receiptInputRef = useRef<HTMLInputElement>(null)
@@ -59,6 +60,15 @@ export function OrderDetailsStep({ mode = 'forward' }: OrderDetailsStepProps = {
               aria-label={t.formatMessage({ id: 'common.back' })}
             >
               <IonIcon icon={chevronBack} />
+            </IonButton>
+          </IonButtons>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={onClose}
+              aria-label={t.formatMessage({ id: 'common.close' })}
+            >
+              <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
         </IonToolbar>
