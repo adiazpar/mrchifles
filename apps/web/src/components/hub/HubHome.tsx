@@ -144,21 +144,9 @@ function HubHomeBody() {
     <div className={hasBusinesses ? 'hub-body' : 'hub-body hub-body--empty'}>
       <HubGreeting userName={user?.name ?? null} locale={intl.locale} />
 
-      {hasBusinesses ? (
-        <GroupLabel>
-          {intl.formatMessage({ id: 'hub.get_started_label' })}
-        </GroupLabel>
-      ) : (
-        <div className="hub-empty">
-          <Building2 className="hub-empty__icon" aria-hidden="true" />
-          <h2 className="hub-empty__title">
-            {intl.formatMessage({ id: 'hub.empty_state_title' })}
-          </h2>
-          <p className="hub-empty__desc">
-            {intl.formatMessage({ id: 'hub.empty_state_description' })}
-          </p>
-        </div>
-      )}
+      <GroupLabel>
+        {intl.formatMessage({ id: 'hub.get_started_label' })}
+      </GroupLabel>
 
       <div className="hub-actions">
         <FeatureCard
@@ -175,6 +163,18 @@ function HubHomeBody() {
           onClick={openJoinModal}
         />
       </div>
+
+      {!hasBusinesses && (
+        <div className="hub-empty">
+          <Building2 className="hub-empty__icon" aria-hidden="true" />
+          <h2 className="hub-empty__title">
+            {intl.formatMessage({ id: 'hub.empty_state_title' })}
+          </h2>
+          <p className="hub-empty__desc">
+            {intl.formatMessage({ id: 'hub.empty_state_description' })}
+          </p>
+        </div>
+      )}
 
       {hasBusinesses && (
         <>

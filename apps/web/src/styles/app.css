@@ -401,12 +401,12 @@
   gap: 10px;
 }
 
-/* Empty-state layout: pin the greeting (top) and action cards (bottom)
- * to the page edges, with the empty-state block centered in the slack
- * between them. min-height: 100% mirrors .wizard-step--centered — the
- * IonContent scroll-part is positioned with definite height, so a child
- * with min-height 100% gets a real height to grow into (flex:1 here is
- * dead because the scroll-part isn't display:flex). */
+/* Empty-state layout: greeting/label/action cards sit at the top to
+ * match the non-empty layout; the empty-state block fills the slack
+ * below and centers within it. min-height: 100% mirrors
+ * .wizard-step--centered — the IonContent scroll-part is positioned
+ * with definite height, so a child with min-height 100% gets a real
+ * height to grow into. */
 .hub-body--empty {
   min-height: 100%;
   padding-bottom: var(--space-12);
@@ -418,9 +418,9 @@
   justify-content: center;
 }
 
-/* Sibling block above the Create/Join action cards when the user has no
- * businesses yet — not a full-page empty state. Stays as a text block so
- * the cards below remain on-screen. */
+/* Sibling block below the Create/Join action cards when the user has
+ * no businesses yet — supporting content that fills the remaining
+ * vertical slack. */
 .hub-empty {
   text-align: center;
   padding: var(--space-8) var(--space-6) var(--space-4);
