@@ -41,8 +41,15 @@ registerRoute(
 // Image caching for product/business icons + static logos. Cache-first because
 // product icons are content-addressed (`?v=<timestamp>` cache buster on
 // upload), so a cache hit is always correct.
+//
+// Scoped to same-origin for the same reason as the script/style route below:
+// cross-origin images (e.g. Google OAuth avatars at lh3.googleusercontent.com)
+// would otherwise be fetched through worker context and trip CSP `connect-src`
+// instead of falling under `img-src`. Same-origin matches the documented
+// intent — only icons under `/media/...` are meant to be SW-cached.
 registerRoute(
-  ({ request }) => request.destination === 'image',
+  ({ url, request }) =>
+    url.origin === self.location.origin && request.destination === 'image',
   new CacheFirst({
     cacheName: 'images',
     plugins: [
