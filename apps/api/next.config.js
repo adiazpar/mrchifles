@@ -134,7 +134,9 @@ const nextConfig = {
               // fonts.googleapis.com hosts the Fraunces/Geist/JetBrains
               // Mono stylesheet linked from index.html.
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob:",
+              // lh3.googleusercontent.com hosts Google OAuth profile
+              // pictures attached via better-auth account linking.
+              "img-src 'self' data: blob: https://lh3.googleusercontent.com",
               // fonts.gstatic.com serves the .woff2 files referenced by
               // the Google Fonts stylesheet above.
               "font-src 'self' data: https://fonts.gstatic.com",
