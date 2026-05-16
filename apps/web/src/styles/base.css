@@ -344,8 +344,14 @@ body {
   height: 100dvh;
   height: 100vh; /* Fallback for older browsers */
   overflow: clip;
-  /* Mobile-only constraint - center on larger screens */
+  /* Mobile-only constraint - center on larger screens. Ionic's
+     structure.css applies `position: fixed` to <body> with no
+     left/right, so margin-inline: auto alone won't center it (the
+     static position pins it to the viewport's top-left). Setting
+     inset-inline: 0 gives the centering algorithm both edges to
+     resolve against. */
   max-width: var(--max-viewport-width);
+  inset-inline: 0;
   margin-inline: auto;
 }
 
