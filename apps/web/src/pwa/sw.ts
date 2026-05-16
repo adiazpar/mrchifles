@@ -54,8 +54,16 @@ registerRoute(
 // Static assets that fall outside the precache (e.g. dynamically-imported
 // chunks loaded after a deploy). Stale-while-revalidate keeps the UI snappy
 // while quietly fetching the latest version in the background.
+//
+// Scoped to same-origin so the SW doesn't intercept cross-origin CSS/JS
+// (e.g. the Google Fonts stylesheet linked from index.html). Letting the
+// browser fetch those directly avoids a CSP `connect-src` violation — the
+// SW's revalidating fetch runs in worker-script context, which is governed
+// by `connect-src` rather than the original request's `style-src`/`script-src`.
 registerRoute(
-  ({ request }) => request.destination === 'script' || request.destination === 'style',
+  ({ url, request }) =>
+    url.origin === self.location.origin &&
+    (request.destination === 'script' || request.destination === 'style'),
   new StaleWhileRevalidate({ cacheName: 'static-resources' }),
 )
 
