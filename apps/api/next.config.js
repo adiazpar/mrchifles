@@ -131,15 +131,22 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline'",
-              "style-src 'self' 'unsafe-inline'",
+              // fonts.googleapis.com hosts the Fraunces/Geist/JetBrains
+              // Mono stylesheet linked from index.html.
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob:",
-              "font-src 'self' data:",
+              // fonts.gstatic.com serves the .woff2 files referenced by
+              // the Google Fonts stylesheet above.
+              "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self'",
               "frame-ancestors 'none'",
               "base-uri 'none'",
               "form-action 'self'",
               "object-src 'none'",
-              'upgrade-insecure-requests',
+              // upgrade-insecure-requests is ignored in report-only mode
+              // per spec; HSTS already enforces HTTPS at the protocol
+              // layer. Re-add this directive if/when this header is
+              // flipped from -Report-Only to enforcing.
             ].join('; '),
           },
         ],
