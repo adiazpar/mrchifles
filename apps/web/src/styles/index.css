@@ -48,8 +48,15 @@
 /* Reset coexistence: Ionic provides its own base styles; Tailwind preflight
  * may conflict in places. Add scoped overrides here as needed. */
 
-html, body, #root {
+html, #root {
   height: 100%;
   margin: 0;
+  padding: 0;
+}
+
+/* Body height/padding only — margin-inline is owned by base.css so the
+ * mobile-viewport-width body centers in the wider desktop window. */
+body {
+  height: 100%;
   padding: 0;
 }
