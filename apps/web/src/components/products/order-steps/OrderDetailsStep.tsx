@@ -1,4 +1,3 @@
-import { useRef, useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
   IonHeader,
@@ -10,13 +9,9 @@ import {
   IonIcon,
 } from '@ionic/react'
 import { close, chevronBack } from 'ionicons/icons'
-import { CalendarClock, ChevronDown, ImageIcon, ImagePlus, Trash2 } from 'lucide-react'
-import { apiPostForm } from '@/lib/api-client'
+import { CalendarClock, ChevronDown } from 'lucide-react'
 import { useBusinessFormat } from '@/hooks/useBusinessFormat'
 import { useOrderNav, useOrderCallbacks } from './OrderNavContext'
-
-const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
-const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
 
 interface OrderDetailsStepProps {
   /**
@@ -36,18 +31,11 @@ export function OrderDetailsStep({ mode = 'forward' }: OrderDetailsStepProps = {
     orderTotal,
     orderEstimatedArrival,
     onOrderEstimatedArrivalChange,
-    orderReceiptFile,
-    onOrderReceiptFileChange,
-    orderReceiptPreview,
-    onOrderReceiptPreviewChange,
     orderProvider,
     onOrderProviderChange,
     error,
     onClose,
   } = useOrderCallbacks()
-
-  const receiptInputRef = useRef<HTMLInputElement>(null)
-  const [receiptError, setReceiptError] = useState('')
 
   return (
     <>
@@ -151,102 +139,6 @@ export function OrderDetailsStep({ mode = 'forward' }: OrderDetailsStepProps = {
             </div>
           </div>
 
-          {/* Receipt */}
-          <div className="order-details__field">
-            <label className="order-details__label">
-              {t.formatMessage({ id: 'orders.receipt_label' })}
-            </label>
-            <input
-              ref={receiptInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
-              onChange={async e => {
-                setReceiptError('')
-                const file = e.target.files?.[0]
-                e.target.value = ''
-                if (!file) return
-
-                const isHeic = file.type === 'image/heic' || file.type === 'image/heif'
-                  || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
-
-                if (!isHeic && !ACCEPTED_RECEIPT_TYPES.includes(file.type)) {
-                  setReceiptError(t.formatMessage({ id: 'orders.receipt_invalid_type' }))
-                  return
-                }
-                if (file.size > MAX_RECEIPT_BYTES) {
-                  setReceiptError(t.formatMessage({ id: 'orders.receipt_too_large' }))
-                  return
-                }
-
-                onOrderReceiptFileChange(file)
-
-                if (isHeic) {
-                  try {
-                    const fd = new FormData()
-                    fd.append('file', file)
-                    const data = await apiPostForm<{ data?: { image?: string } }>('/api/convert-heic', fd)
-                    if (data.data?.image) {
-                      onOrderReceiptPreviewChange(data.data.image)
-                    } else {
-                      onOrderReceiptPreviewChange(null)
-                    }
-                  } catch {
-                    onOrderReceiptPreviewChange(null)
-                  }
-                } else if (file.type.startsWith('image/')) {
-                  const reader = new FileReader()
-                  reader.onload = () => onOrderReceiptPreviewChange(reader.result as string)
-                  reader.readAsDataURL(file)
-                } else {
-                  onOrderReceiptPreviewChange(null)
-                }
-              }}
-              className="hidden"
-            />
-            {orderReceiptFile ? (
-              <div className="order-details__receipt-attached">
-                {orderReceiptPreview ? (
-                  <img
-                    src={orderReceiptPreview}
-                    alt=""
-                    className="order-details__receipt-thumb"
-                  />
-                ) : (
-                  <div className="order-details__receipt-thumb order-details__receipt-thumb--placeholder">
-                    <ImageIcon size={18} strokeWidth={1.6} />
-                  </div>
-                )}
-                <span className="order-details__receipt-name">{orderReceiptFile.name}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onOrderReceiptFileChange(null)
-                    onOrderReceiptPreviewChange(null)
-                    if (receiptInputRef.current) receiptInputRef.current.value = ''
-                  }}
-                  className="order-details__receipt-remove"
-                  aria-label={t.formatMessage({ id: 'common.remove' })}
-                >
-                  <Trash2 size={16} strokeWidth={1.8} />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => receiptInputRef.current?.click()}
-                className="order-details__receipt-tile"
-              >
-                <ImagePlus size={22} strokeWidth={1.5} />
-                <span className="order-details__receipt-tile-label">
-                  {t.formatMessage({ id: 'orders.receipt_attach_placeholder' })}
-                </span>
-              </button>
-            )}
-            <p className="order-details__receipt-hint">{t.formatMessage({ id: 'orders.receipt_hint' })}</p>
-            {receiptError && (
-              <div className="order-modal__error" role="alert">{receiptError}</div>
-            )}
-          </div>
         </div>
       </IonContent>
 

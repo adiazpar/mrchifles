@@ -16,7 +16,6 @@ import {
   Info,
   UserX,
   ChevronRight,
-  CircleHelp,
   LogOut,
   ArrowRightLeft,
   Mail,
@@ -43,10 +42,6 @@ const EditProfileModal = dynamic(
 )
 const AboutModal = dynamic(
   () => import('@/components/account/AboutModal').then(m => m.AboutModal),
-  { ssr: false },
-)
-const ContactSupportModal = dynamic(
-  () => import('@/components/account/ContactSupportModal').then(m => m.ContactSupportModal),
   { ssr: false },
 )
 const DeleteAccountModal = dynamic(
@@ -76,7 +71,6 @@ export function AccountPageContent() {
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false)
-  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isChangeEmailModalOpen, setIsChangeEmailModalOpen] = useState(false)
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
@@ -229,12 +223,6 @@ export function AccountPageContent() {
               <h3>{intl.formatMessage({ id: 'account.row_about' })}</h3>
             </IonLabel>
           </IonItem>
-          <IonItem button detail onClick={() => setIsSupportModalOpen(true)}>
-            <CircleHelp slot="start" className="text-text-secondary w-5 h-5" />
-            <IonLabel>
-              <h3>{intl.formatMessage({ id: 'account.row_contact_support' })}</h3>
-            </IonLabel>
-          </IonItem>
         </IonList>
 
         <GroupLabel tone="danger">
@@ -267,10 +255,6 @@ export function AccountPageContent() {
       <AboutModal
         isOpen={isAboutModalOpen}
         onClose={() => setIsAboutModalOpen(false)}
-      />
-      <ContactSupportModal
-        isOpen={isSupportModalOpen}
-        onClose={() => setIsSupportModalOpen(false)}
       />
       <DeleteAccountModal
         isOpen={isDeleteModalOpen}

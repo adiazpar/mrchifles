@@ -103,7 +103,10 @@ export async function POST(request: Request) {
     deletedCount = (result as { rowsAffected?: number }).rowsAffected ?? ids.length
   }
 
-  console.log('[cron/cleanup-unverified]', {
+  // Operational summary — surfaced in Vercel cron logs for monitoring.
+  // Uses console.warn (not console.log) because the no-console eslint rule
+  // permits warn/error only; the line is informational, not a real warning.
+  console.warn('[cron/cleanup-unverified]', {
     cutoff: cutoff.toISOString(),
     verificationCutoff: verificationCutoff.toISOString(),
     deletedCount,

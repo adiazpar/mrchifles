@@ -174,20 +174,6 @@ export function SelectProductsStep({ mode = 'forward' }: SelectProductsStepProps
             )}
           </div>
 
-          {/* Disabled "Import from invoice" tile — future surface. */}
-          <div
-            className="order-select__import-tile"
-            role="note"
-            aria-label={t.formatMessage({ id: 'orders.import_invoice_button' })}
-          >
-            <span className="order-select__import-tile-label">
-              {t.formatMessage({ id: 'orders.import_invoice_button' })}
-            </span>
-            <span className="order-select__import-tile-meta">
-              {t.formatMessage({ id: 'orders.import_coming_soon' })}
-            </span>
-          </div>
-
           {/* Section eyebrow + count of selected products */}
           <div className="order-select__section-eyebrow">
             <span>{t.formatMessage({ id: 'orders.eyebrow_catalog' })}</span>

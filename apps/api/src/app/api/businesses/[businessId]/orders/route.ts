@@ -4,7 +4,6 @@ import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { canManageBusiness, assertProductsInBusiness, assertProviderInBusiness } from '@/lib/business-auth'
-import { sniffDocumentMimeType } from '@/lib/file-sniff'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { Schemas } from '@/lib/schemas'
 
@@ -169,19 +168,11 @@ export const GET = withBusinessAuth(async (request, access) => {
  *
  * Create a new order with items.
  */
-// Orders may include a receipt (image or PDF); 15 MB covers multi-page PDFs.
-// Passed to withBusinessAuth via maxBodyBytes so the wrapper's default
-// 256 KB cap is overridden for this specific route.
-const POST_MAX_BODY_BYTES = 15 * 1024 * 1024
-
 export const POST = withBusinessAuth(async (request, access) => {
   // Only partners and owners can create orders.
   if (!canManageBusiness(access.role)) {
     return errorResponse(ApiMessageCode.ORDER_FORBIDDEN_NOT_MANAGER, 403)
   }
-
-  const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
-  const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
 
   const formData = await request.formData()
   const dateStr = formData.get('date') as string
@@ -190,34 +181,6 @@ export const POST = withBusinessAuth(async (request, access) => {
   const estimatedArrivalStr = formData.get('estimatedArrival') as string | null
   const providerId = formData.get('providerId') as string | null
   const itemsJson = formData.get('items') as string
-  const receiptFile = formData.get('receipt') as File | null
-
-  // Validate receipt file if provided. Two-step check:
-  //   1. file.type must be in the allowlist (cheap reject for
-  //      obviously-wrong client metadata).
-  //   2. Magic-byte sniff the actual bytes to confirm the type
-  //      matches what was claimed. file.type is client-declared and
-  //      spoofable; without sniffing, an attacker could send an HTML
-  //      file under image/png — harmless today (the receipt is
-  //      currently discarded) but a stored-XSS surface the moment
-  //      receipts start being persisted.
-  if (receiptFile) {
-    if (!ACCEPTED_RECEIPT_TYPES.includes(receiptFile.type)) {
-      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
-    }
-    if (receiptFile.size > MAX_RECEIPT_BYTES) {
-      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
-    }
-    const buffer = Buffer.from(await receiptFile.arrayBuffer())
-    const sniffed = sniffDocumentMimeType(buffer)
-    // HEIC/HEIF receipts are accepted in the client list but
-    // sniffDocumentMimeType only recognizes the static raster + PDF
-    // shapes — both file.type and sniffed must agree.
-    const ACCEPTED_SNIFFED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const
-    if (!sniffed || !(ACCEPTED_SNIFFED as ReadonlyArray<string>).includes(sniffed)) {
-      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
-    }
-  }
 
   // Parse and validate items
   let items: Array<{ productId: string; productName: string; quantity: number; unitCost?: number | null }>
@@ -306,8 +269,6 @@ export const POST = withBusinessAuth(async (request, access) => {
       total,
       status: orderStatus,
       estimatedArrival,
-      receipt: null,
-      notes: null,
     }),
     ...(itemValues.length > 0
       ? [db.insert(orderItems).values(itemValues)]
@@ -347,8 +308,6 @@ export const POST = withBusinessAuth(async (request, access) => {
       total,
       status: orderStatus,
       estimatedArrival,
-      receipt: null,
-      notes: null,
       expand: {
         provider,
         createdByUser,
@@ -360,4 +319,4 @@ export const POST = withBusinessAuth(async (request, access) => {
       },
     },
   })
-}, { maxBodyBytes: POST_MAX_BODY_BYTES })
+})

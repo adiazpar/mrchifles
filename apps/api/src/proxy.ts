@@ -2,25 +2,26 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Edge middleware — lightweight gate before page navigations.
+ * Proxy — lightweight gate before page navigations.
  *
  * Session verification is delegated to `auth.api.getSession()` at the
- * route handler / page level. Edge runtime can't reach the database
- * (libsql + Drizzle adapter both need Node APIs), so the most this
- * middleware can do is confirm that the better-auth session cookie is
- * present and redirect to / (EntryPage) when it isn't.
+ * route handler / page level. The proxy runtime is Node.js (Next.js 16
+ * dropped edge support for this file convention; we always needed Node
+ * for libsql + the Drizzle adapter anyway), so the most this layer does
+ * is confirm that the better-auth session cookie is present and redirect
+ * to / (EntryPage) when it isn't.
  *
  * Risk model: a present-but-revoked cookie reaches the page, then the
  * page's `getSession()` returns null, and the handler issues its own
- * 401 / redirect. The middleware just keeps unauthenticated traffic
- * from spending a Lambda invocation to find that out.
+ * 401 / redirect. The proxy just keeps unauthenticated traffic from
+ * spending a Lambda invocation to find that out.
  *
- * Cookie names this middleware accepts:
+ * Cookie names this proxy accepts:
  *   - "kasero.session_token"            (dev / non-secure)
  *   - "__Secure-kasero.session_token"   (production, useSecureCookies)
  *
- * Anything more elaborate (signature check, DB lookup, refresh) has to
- * happen off the edge.
+ * Anything more elaborate (signature check, DB lookup, refresh) happens
+ * inside the route handler, not here.
  */
 
 const publicPaths = [
@@ -51,7 +52,7 @@ function hasSessionCookie(request: NextRequest): boolean {
   return SESSION_COOKIE_RE.test(header)
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (shouldSkip(pathname)) return NextResponse.next()

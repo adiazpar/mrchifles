@@ -133,11 +133,6 @@ function mapSessionUserToUser(raw: unknown): User | null {
     emailVerified: Boolean(u.emailVerified),
     phoneNumber: (u.phoneNumber as string | null | undefined) ?? null,
     phoneNumberVerified: Boolean(u.phoneNumberVerified),
-    // The passwordless build doesn't surface 2FA toggles in the UI, but
-    // the field is kept on the User type for stable downstream typing.
-    // We default to false rather than trusting whatever the session
-    // payload still contains.
-    twoFactorEnabled: false,
   }
 }
 

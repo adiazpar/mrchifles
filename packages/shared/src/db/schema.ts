@@ -51,12 +51,12 @@ export const users = sqliteTable('users', {
   phoneNumberVerified: integer('phone_number_verified', { mode: 'boolean' }).default(false).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
+}, (table) => [
   // Expression index for case-insensitive email lookup (invite-validate,
   // transfer-initiate). The built-in unique index on `email` is case-
   // sensitive and is bypassed when queries wrap the column in LOWER().
-  emailLowerIdx: index('idx_users_email_lower').on(sql`lower(${table.email})`),
-}))
+  index('idx_users_email_lower').on(sql`lower(${table.email})`),
+])
 
 // ===========================================
 // AUTH SURFACE (better-auth managed tables)
@@ -74,10 +74,10 @@ export const session = sqliteTable('session', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  userIdIdx: index('idx_session_user_id').on(table.userId),
-  expiresIdx: index('idx_session_expires_at').on(table.expiresAt),
-}))
+}, (table) => [
+  index('idx_session_user_id').on(table.userId),
+  index('idx_session_expires_at').on(table.expiresAt),
+])
 
 export const account = sqliteTable('account', {
   id: text('id').primaryKey(),
@@ -92,10 +92,10 @@ export const account = sqliteTable('account', {
   scope: text('scope'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  userIdIdx: index('idx_account_user_id').on(table.userId),
-  providerIdIdx: index('idx_account_provider').on(table.providerId, table.accountId),
-}))
+}, (table) => [
+  index('idx_account_user_id').on(table.userId),
+  index('idx_account_provider').on(table.providerId, table.accountId),
+])
 
 export const verification = sqliteTable('verification', {
   id: text('id').primaryKey(),
@@ -104,10 +104,10 @@ export const verification = sqliteTable('verification', {
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  identifierIdx: index('idx_verification_identifier').on(table.identifier),
-  expiresIdx: index('idx_verification_expires_at').on(table.expiresAt),
-}))
+}, (table) => [
+  index('idx_verification_identifier').on(table.identifier),
+  index('idx_verification_expires_at').on(table.expiresAt),
+])
 
 // Note: better-auth's rate-limit counters were moved to Upstash Redis
 // (secondary-storage) in migration 2026-05-15-01-drop-rate-limit-table.sql.
@@ -126,17 +126,17 @@ export const businessUsers = sqliteTable('business_users', {
   role: text('role', { enum: ['owner', 'partner', 'employee'] }).notNull(),
   status: text('status', { enum: ['active', 'pending', 'disabled'] }).default('active').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  userIdIdx: index('idx_business_users_user_id').on(table.userId),
-  businessIdIdx: index('idx_business_users_business_id').on(table.businessId),
-  statusIdx: index('idx_business_users_status').on(table.status),
+}, (table) => [
+  index('idx_business_users_user_id').on(table.userId),
+  index('idx_business_users_business_id').on(table.businessId),
+  index('idx_business_users_status').on(table.status),
   // Composite index for the hottest query in the app: requireBusinessAccess,
   // role/status mutations, leave, accept-transfer, invite-join — every
   // business-scoped request runs `WHERE userId = ? AND businessId = ?`.
   // Non-unique today: the one-row-per-(user, business) constraint is the
   // right invariant, but enforcing it atomically would fail a prod push if
   // any duplicate rows exist. Keeping this as a performance index only.
-  userBusinessIdx: index('idx_business_users_user_business').on(table.userId, table.businessId),
+  index('idx_business_users_user_business').on(table.userId, table.businessId),
   // Single-active-owner invariant. The transfer/accept demote-and-promote
   // sequence relies on there being exactly one row with role='owner' AND
   // status='active' per business; without this, a manual DB write or a
@@ -146,10 +146,10 @@ export const businessUsers = sqliteTable('business_users', {
   // pre-flight `SELECT businessId, COUNT(*) FROM business_users WHERE
   // role='owner' AND status='active' GROUP BY businessId HAVING COUNT(*)>1`
   // and reconcile before pushing to Turso.
-  ownerPerBusinessIdx: uniqueIndex('idx_unique_business_users_owner_per_business')
+  uniqueIndex('idx_unique_business_users_owner_per_business')
     .on(table.businessId)
     .where(sql`${table.role} = 'owner' AND ${table.status} = 'active'`),
-}))
+])
 
 // ===========================================
 // PRODUCT CATEGORIES
@@ -159,9 +159,9 @@ export const productCategories = sqliteTable('product_categories', {
   businessId: text('business_id').references(() => businesses.id).notNull(),
   name: text('name').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
-}, (table) => ({
-  businessIdIdx: index('idx_product_categories_business_id').on(table.businessId),
-}))
+}, (table) => [
+  index('idx_product_categories_business_id').on(table.businessId),
+])
 
 // ===========================================
 // PRODUCTS
@@ -207,19 +207,19 @@ export const products = sqliteTable('products', {
   updatedAt: integer('updated_at', { mode: 'timestamp' })
     .default(sql`(unixepoch())`)
     .notNull(),
-}, (table) => ({
-  businessIdIdx: index('idx_products_business_id').on(table.businessId),
-  categoryIdIdx: index('idx_products_category_id').on(table.categoryId),
-  businessActiveIdx: index('idx_products_business_active').on(table.businessId, table.active),
-  barcodeGtinIdx: index('idx_products_barcode_gtin').on(table.barcodeGtin),
+}, (table) => [
+  index('idx_products_business_id').on(table.businessId),
+  index('idx_products_category_id').on(table.categoryId),
+  index('idx_products_business_active').on(table.businessId, table.active),
+  index('idx_products_barcode_gtin').on(table.barcodeGtin),
   // Partial unique index on (businessId, barcode). Archived products no longer
   // exist (hard-delete), so we only need to exclude NULL barcodes. SQLite
   // treats NULLs as distinct in unique indexes, so the IS NOT NULL clause is
   // technically redundant but documents intent.
-  uniqueBusinessBarcode: uniqueIndex('idx_unique_products_business_barcode')
+  uniqueIndex('idx_unique_products_business_barcode')
     .on(table.businessId, table.barcode)
     .where(sql`${table.barcode} IS NOT NULL`),
-}))
+])
 
 // ===========================================
 // PROVIDERS (Suppliers)
@@ -234,9 +234,9 @@ export const providers = sqliteTable('providers', {
   // Functional timestamp: displayed on the provider detail page ("Since Oct 2025").
   // Nullable so pre-existing rows without a stamp gracefully omit the line.
   createdAt: integer('created_at', { mode: 'timestamp' }),
-}, (table) => ({
-  businessIdIdx: index('idx_providers_business_id').on(table.businessId),
-}))
+}, (table) => [
+  index('idx_providers_business_id').on(table.businessId),
+])
 
 // ===========================================
 // PROVIDER NOTES
@@ -252,10 +252,10 @@ export const providerNotes = sqliteTable('provider_notes', {
   body: text('body').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  providerIdIdx: index('idx_provider_notes_provider_id').on(table.providerId),
-  businessProviderIdx: index('idx_provider_notes_business_provider').on(table.businessId, table.providerId),
-}))
+}, (table) => [
+  index('idx_provider_notes_provider_id').on(table.providerId),
+  index('idx_provider_notes_business_provider').on(table.businessId, table.providerId),
+])
 
 // ===========================================
 // ORDERS (Purchase orders from suppliers)
@@ -279,13 +279,11 @@ export const orders = sqliteTable('orders', {
   total: real('total').notNull(),
   status: text('status', { enum: ['pending', 'received'] }).default('pending').notNull(),
   estimatedArrival: integer('estimated_arrival', { mode: 'timestamp' }),
-  receipt: text('receipt'), // R2 URL for receipt image
-  notes: text('notes'),
-}, (table) => ({
-  businessIdIdx: index('idx_orders_business_id').on(table.businessId),
-  providerIdIdx: index('idx_orders_provider_id').on(table.providerId),
-  dateIdx: index('idx_orders_date').on(table.date),
-}))
+}, (table) => [
+  index('idx_orders_business_id').on(table.businessId),
+  index('idx_orders_provider_id').on(table.providerId),
+  index('idx_orders_date').on(table.date),
+])
 
 // ===========================================
 // ORDER ITEMS
@@ -299,13 +297,13 @@ export const orderItems = sqliteTable('order_items', {
   unitCost: real('unit_cost'),
   subtotal: real('subtotal'),
   receivedQuantity: integer('received_quantity'),
-}, (table) => ({
-  orderIdIdx: index('idx_order_items_order_id').on(table.orderId),
+}, (table) => [
+  index('idx_order_items_order_id').on(table.orderId),
   // Used by the product-delete blocking-order check (join on productId to
   // find pending orders referencing this product). Without this index that
   // query scans order_items.
-  productIdIdx: index('idx_order_items_product_id').on(table.productId),
-}))
+  index('idx_order_items_product_id').on(table.productId),
+])
 
 // ===========================================
 // SALES (Customer transactions)
@@ -335,12 +333,12 @@ export const sales = sqliteTable('sales', {
   sessionId: text('session_id')
     .references(() => salesSessions.id, { onDelete: 'restrict' })
     .notNull(),
-}, (table) => ({
+}, (table) => [
   // Drives both the history list query and the today/yesterday stats
   // aggregation. DESC because most queries scan from newest first.
-  businessDateIdx: index('idx_sales_business_date').on(table.businessId, table.date),
-  sessionIdIdx: index('idx_sales_session_id').on(table.sessionId),
-}))
+  index('idx_sales_business_date').on(table.businessId, table.date),
+  index('idx_sales_session_id').on(table.sessionId),
+])
 
 // ===========================================
 // SALE ITEMS (Line items per sale)
@@ -355,13 +353,13 @@ export const saleItems = sqliteTable('sale_items', {
   productName: text('product_name').notNull(),
   quantity: integer('quantity').notNull(),
   unitPrice: real('unit_price').notNull(),
-}, (table) => ({
-  saleIdIdx: index('idx_sale_items_sale_id').on(table.saleId),
+}, (table) => [
+  index('idx_sale_items_sale_id').on(table.saleId),
   // REQUIRED for ON DELETE SET NULL FK enforcement — without this, every
   // product DELETE full-scans sale_items to null rows. NOT a block-on-delete
   // index (different from order_items.productId, which IS a block index).
-  productIdIdx: index('idx_sale_items_product_id').on(table.productId),
-}))
+  index('idx_sale_items_product_id').on(table.productId),
+])
 
 // ===========================================
 // SALES SESSIONS (Cash-drawer reconciliation)
@@ -389,16 +387,16 @@ export const salesSessions = sqliteTable('sales_sessions', {
   variance: real('variance'),
 
   notes: text('notes'),
-}, (table) => ({
+}, (table) => [
   // Drives history list query: WHERE businessId = ? ORDER BY closedAt DESC.
-  businessClosedIdx: index('idx_sales_sessions_business_closed')
+  index('idx_sales_sessions_business_closed')
     .on(table.businessId, table.closedAt),
 
   // "At most one open session per business" — DB-enforced.
-  uniqueOpenPerBusiness: uniqueIndex('idx_unique_sales_sessions_open_per_business')
+  uniqueIndex('idx_unique_sales_sessions_open_per_business')
     .on(table.businessId)
     .where(sql`${table.closedAt} IS NULL`),
-}))
+])
 
 // ===========================================
 // INVITE CODES
@@ -410,10 +408,10 @@ export const inviteCodes = sqliteTable('invite_codes', {
   role: text('role', { enum: ['partner', 'employee'] }).notNull(),
   usedBy: text('used_by').references(() => users.id),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  businessIdIdx: index('idx_invite_codes_business_id').on(table.businessId),
-  usedExpiresIdx: index('idx_invite_codes_used_expires').on(table.usedBy, table.expiresAt),
-}))
+}, (table) => [
+  index('idx_invite_codes_business_id').on(table.businessId),
+  index('idx_invite_codes_used_expires').on(table.usedBy, table.expiresAt),
+])
 
 // ===========================================
 // OWNERSHIP TRANSFERS
@@ -429,10 +427,10 @@ export const ownershipTransfers = sqliteTable('ownership_transfers', {
     enum: ['pending', 'accepted', 'completed', 'expired', 'cancelled']
   }).default('pending').notNull(),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
-}, (table) => ({
-  businessIdIdx: index('idx_ownership_transfers_business_id').on(table.businessId),
-  statusIdx: index('idx_ownership_transfers_status').on(table.status),
-}))
+}, (table) => [
+  index('idx_ownership_transfers_business_id').on(table.businessId),
+  index('idx_ownership_transfers_status').on(table.status),
+])
 
 // ===========================================
 // RELATIONS

@@ -2,10 +2,9 @@ import { db, orders, orderItems } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { withBusinessAuth, validationError, errorResponse, successResponse, enforceMaxContentLength } from '@/lib/api-middleware'
+import { withBusinessAuth, validationError, errorResponse, successResponse } from '@/lib/api-middleware'
 import { ApiMessageCode } from '@kasero/shared/api-messages'
 import { canManageBusiness, assertProductsInBusiness, assertProviderInBusiness } from '@/lib/business-auth'
-import { sniffDocumentMimeType } from '@/lib/file-sniff'
 import { Schemas } from '@/lib/schemas'
 
 const orderItemSchema = z.object({
@@ -22,9 +21,6 @@ const orderItemSchema = z.object({
  *
  * Update an order and its items.
  */
-// Mirrors the create-route cap (15 MB) — receipt upload is the only large field.
-const PATCH_MAX_BODY_BYTES = 15 * 1024 * 1024
-
 export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   // Only partners and owners can modify orders
   if (!canManageBusiness(access.role)) {
@@ -35,9 +31,6 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   if (!id) {
     return errorResponse(ApiMessageCode.ORDER_ID_REQUIRED, 400)
   }
-
-  const oversize = enforceMaxContentLength(request, PATCH_MAX_BODY_BYTES)
-  if (oversize) return oversize
 
   // Verify order exists and belongs to business
   const [existingOrder] = await db
@@ -59,33 +52,11 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
     return errorResponse(ApiMessageCode.ORDER_CANNOT_EDIT_RECEIVED, 400)
   }
 
-  const MAX_RECEIPT_BYTES = 5 * 1024 * 1024
-  const ACCEPTED_RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
-
   const formData = await request.formData()
   const totalStr = formData.get('total') as string | null
   const estimatedArrivalStr = formData.get('estimatedArrival') as string | null
   const providerId = formData.get('providerId') as string | null
   const itemsJson = formData.get('items') as string | null
-  const receiptFile = formData.get('receipt') as File | null
-
-  // Validate receipt file if provided. Same two-step check as the
-  // POST route — see that file for the rationale on magic-byte
-  // sniffing in addition to client-declared MIME.
-  if (receiptFile) {
-    if (!ACCEPTED_RECEIPT_TYPES.includes(receiptFile.type)) {
-      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
-    }
-    if (receiptFile.size > MAX_RECEIPT_BYTES) {
-      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
-    }
-    const buffer = Buffer.from(await receiptFile.arrayBuffer())
-    const sniffed = sniffDocumentMimeType(buffer)
-    const ACCEPTED_SNIFFED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const
-    if (!sniffed || !(ACCEPTED_SNIFFED as ReadonlyArray<string>).includes(sniffed)) {
-      return errorResponse(ApiMessageCode.VALIDATION_GENERIC, 400)
-    }
-  }
 
   const updateData: Record<string, unknown> = {}
 
@@ -204,7 +175,7 @@ export const PATCH = withBusinessAuth(async (request, access, routeParams) => {
   ])
 
   return successResponse({})
-}, { maxBodyBytes: PATCH_MAX_BODY_BYTES })
+})
 
 /**
  * DELETE /api/businesses/[businessId]/orders/[id]

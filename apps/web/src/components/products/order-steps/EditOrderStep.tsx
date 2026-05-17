@@ -42,7 +42,6 @@ export function EditOrderStep() {
     orderTotal,
     orderEstimatedArrival,
     orderProvider,
-    orderReceiptFile,
     isSaving,
     error,
     onSaveEditOrder,
@@ -69,7 +68,6 @@ export function EditOrderStep() {
       total: orderTotal,
       provider: orderProvider,
       arrival: orderEstimatedArrival,
-      hasReceipt: !!orderReceiptFile,
     }) !== initialEditSnapshot
 
   const isDisabled =
@@ -226,15 +224,6 @@ export function EditOrderStep() {
               onClick={editDetails}
               ariaLabel={t.formatMessage({ id: 'orders.confirm_edit_details_aria' })}
             />
-            {orderReceiptFile && (
-              <ReviewRow
-                label={t.formatMessage({ id: 'orders.receipt_attached_label' })}
-                value={t.formatMessage({ id: 'orders.receipt_attached_value' })}
-                valueIsSet
-                onClick={editDetails}
-                ariaLabel={t.formatMessage({ id: 'orders.confirm_edit_details_aria' })}
-              />
-            )}
           </div>
         </div>
       </IonContent>

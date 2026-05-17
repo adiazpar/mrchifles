@@ -73,10 +73,6 @@ export interface OrderDetailModalProps {
   onOrderEstimatedArrivalChange: (date: string) => void
   orderProvider: string
   onOrderProviderChange: (providerId: string) => void
-  orderReceiptFile: File | null
-  onOrderReceiptFileChange: (file: File | null) => void
-  orderReceiptPreview: string | null
-  onOrderReceiptPreviewChange: (preview: string | null) => void
 
   isSaving: boolean
   isReceiving: boolean
@@ -92,7 +88,6 @@ export interface OrderDetailModalProps {
   onSaveEditOrder: () => Promise<boolean>
   onReceiveOrder: () => Promise<boolean>
   onDeleteOrder: () => Promise<boolean>
-  getReceiptUrl: (order: ExpandedOrder) => string | null
 
   initialEditSnapshot: string
 
@@ -130,10 +125,6 @@ export function OrderDetailModal({
   onOrderEstimatedArrivalChange,
   orderProvider,
   onOrderProviderChange,
-  orderReceiptFile,
-  onOrderReceiptFileChange,
-  orderReceiptPreview,
-  onOrderReceiptPreviewChange,
   isSaving,
   isReceiving,
   isDeleting,
@@ -146,7 +137,6 @@ export function OrderDetailModal({
   onSaveEditOrder,
   onReceiveOrder,
   onDeleteOrder,
-  getReceiptUrl,
   initialEditSnapshot,
   canDelete,
   canManage,
@@ -202,10 +192,6 @@ export function OrderDetailModal({
     onOrderEstimatedArrivalChange,
     orderProvider,
     onOrderProviderChange,
-    orderReceiptFile,
-    onOrderReceiptFileChange,
-    orderReceiptPreview,
-    onOrderReceiptPreviewChange,
     isSaving,
     isReceiving,
     isDeleting,
@@ -218,7 +204,6 @@ export function OrderDetailModal({
     onSaveEditOrder,
     onReceiveOrder,
     onDeleteOrder,
-    getReceiptUrl,
     initialEditSnapshot,
     canDelete,
     canManage,

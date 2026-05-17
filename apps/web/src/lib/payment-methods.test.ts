@@ -15,7 +15,7 @@ describe('PAYMENT_METHODS registry', () => {
   it('every entry carries the required metadata', () => {
     for (const m of PAYMENT_METHODS) {
       expect(m.id).toBeTruthy()
-      expect(m.labelKey).toMatch(/^modal_method_/)
+      expect(m.labelKey).toMatch(/^sales\.cart\.modal_method_/)
       expect(m.icon).toBeDefined()
       expect(m.colorToken).toMatch(/^var\(--/)
     }

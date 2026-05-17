@@ -146,8 +146,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
   const [orderItems, setOrderItems] = useState<OrderFormItem[]>([])
   const [orderTotal, setOrderTotal] = useState('')
   const [orderEstimatedArrival, setOrderEstimatedArrival] = useState('')
-  const [orderReceiptFile, setOrderReceiptFile] = useState<File | null>(null)
-  const [orderReceiptPreview, setOrderReceiptPreview] = useState<string | null>(null)
   const [orderProvider, setOrderProvider] = useState('')
   const [orderProductSearchQuery, setOrderProductSearchQuery] = useState('')
 
@@ -182,8 +180,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     setOrderItems([])
     setOrderTotal('')
     setOrderEstimatedArrival('')
-    setOrderReceiptFile(null)
-    setOrderReceiptPreview(null)
     setOrderProvider('')
     setOrderProductSearchQuery('')
     setError('')
@@ -232,7 +228,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     formData.append('total', totalNum.toString())
     formData.append('status', 'pending')
     if (orderEstimatedArrival) formData.append('estimatedArrival', dateOnlyToLocalISO(orderEstimatedArrival))
-    if (orderReceiptFile) formData.append('receipt', orderReceiptFile)
     if (orderProvider) formData.append('providerId', orderProvider)
     formData.append('items', JSON.stringify(orderItems.map(item => ({
       productId: item.product.id,
@@ -265,7 +260,7 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     } finally {
       setIsSavingOrder(false)
     }
-  }, [businessId, orderItems, orderTotal, orderEstimatedArrival, orderReceiptFile, orderProvider, setOrders, tOrders])
+  }, [businessId, orderItems, orderTotal, orderEstimatedArrival, orderProvider, setOrders, tOrders])
 
   const handleSaveEditOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder) return false
@@ -292,7 +287,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       if (orderEstimatedArrival) {
         formData.append('estimatedArrival', dateOnlyToLocalISO(orderEstimatedArrival))
       }
-      if (orderReceiptFile) formData.append('receipt', orderReceiptFile)
       formData.append('providerId', orderProvider || '')
       formData.append('items', JSON.stringify(orderItems.map(item => ({
         productId: item.product.id,
@@ -337,7 +331,7 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     } finally {
       setIsSavingOrder(false)
     }
-  }, [businessId, orderItems, orderTotal, orderEstimatedArrival, orderReceiptFile, orderProvider, viewingOrder, refetchActiveOrders, tOrders, translateApiMessage])
+  }, [businessId, orderItems, orderTotal, orderEstimatedArrival, orderProvider, viewingOrder, refetchActiveOrders, tOrders, translateApiMessage])
 
   const handleReceiveOrder = useCallback(async (): Promise<boolean> => {
     if (!viewingOrder || !user) return false
@@ -448,8 +442,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
     setOrderTotal(total)
     setOrderEstimatedArrival(arrival)
     setOrderProvider(provider)
-    setOrderReceiptFile(null)
-    setOrderReceiptPreview(null)
     setOrderProductSearchQuery('')
     setError('')
     setEditOrderSaved(false)
@@ -458,13 +450,8 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
       total,
       provider,
       arrival,
-      hasReceipt: false,
     }))
   }, [products])
-
-  const getOrderReceiptUrl = useCallback((order: ExpandedOrder): string | null => {
-    return order.receipt || null
-  }, [])
 
   // ===== Openers / closers =====
   const openNewOrder = useCallback((presetProviderId?: string) => {
@@ -517,10 +504,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
         onOrderTotalChange={setOrderTotal}
         orderEstimatedArrival={orderEstimatedArrival}
         onOrderEstimatedArrivalChange={setOrderEstimatedArrival}
-        orderReceiptFile={orderReceiptFile}
-        onOrderReceiptFileChange={setOrderReceiptFile}
-        orderReceiptPreview={orderReceiptPreview}
-        onOrderReceiptPreviewChange={setOrderReceiptPreview}
         orderProvider={orderProvider}
         onOrderProviderChange={setOrderProvider}
         productSearchQuery={orderProductSearchQuery}
@@ -554,10 +537,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
           onOrderEstimatedArrivalChange={setOrderEstimatedArrival}
           orderProvider={orderProvider}
           onOrderProviderChange={setOrderProvider}
-          orderReceiptFile={orderReceiptFile}
-          onOrderReceiptFileChange={setOrderReceiptFile}
-          orderReceiptPreview={orderReceiptPreview}
-          onOrderReceiptPreviewChange={setOrderReceiptPreview}
           isSaving={isSavingOrder}
           isReceiving={isReceiving}
           isDeleting={isDeletingOrder}
@@ -570,7 +549,6 @@ export function useOrderFlows(opts: UseOrderFlowsOptions): UseOrderFlowsReturn {
           onSaveEditOrder={handleSaveEditOrder}
           onReceiveOrder={handleReceiveOrder}
           onDeleteOrder={handleDeleteOrder}
-          getReceiptUrl={getOrderReceiptUrl}
           initialEditSnapshot={initialEditSnapshot}
           canDelete={canDelete}
           canManage={canManage}

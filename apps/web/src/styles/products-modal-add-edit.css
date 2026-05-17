@@ -207,22 +207,6 @@
   outline-offset: 2px;
 }
 
-/* Disabled / coming-soon ghost — half opacity, dotted border. */
-.pm-choice--ghost {
-  cursor: default;
-  border-style: dashed;
-  border-color: var(--color-hair);
-  background: var(--color-paper-warm);
-  opacity: 0.55;
-}
-
-@media (hover: hover) {
-  .pm-choice--ghost:hover {
-    border-color: var(--color-hair);
-    background: var(--color-paper-warm);
-  }
-}
-
 .pm-choice__icon {
   flex-shrink: 0;
   width: 52px;
@@ -234,12 +218,6 @@
   background: var(--color-brand-subtle);
   color: var(--color-brand);
   border: 1px solid var(--color-hair);
-}
-
-.pm-choice--ghost .pm-choice__icon {
-  background: var(--color-paper-deep);
-  color: var(--color-text-tertiary);
-  border-color: var(--color-hair);
 }
 
 .pm-choice__body {
@@ -279,10 +257,6 @@
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-text-tertiary);
-}
-
-.pm-choice--ghost .pm-choice__meta {
   color: var(--color-text-tertiary);
 }
 

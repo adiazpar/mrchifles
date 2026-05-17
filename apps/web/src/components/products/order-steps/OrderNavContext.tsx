@@ -61,10 +61,6 @@ export interface NewOrderCallbacks {
   onOrderTotalChange: (total: string) => void
   orderEstimatedArrival: string
   onOrderEstimatedArrivalChange: (date: string) => void
-  orderReceiptFile: File | null
-  onOrderReceiptFileChange: (file: File | null) => void
-  orderReceiptPreview: string | null
-  onOrderReceiptPreviewChange: (preview: string | null) => void
   orderProvider: string
   onOrderProviderChange: (providerId: string) => void
   productSearchQuery: string
@@ -107,10 +103,6 @@ export interface OrderDetailCallbacks {
   onOrderEstimatedArrivalChange: (date: string) => void
   orderProvider: string
   onOrderProviderChange: (providerId: string) => void
-  orderReceiptFile: File | null
-  onOrderReceiptFileChange: (file: File | null) => void
-  orderReceiptPreview: string | null
-  onOrderReceiptPreviewChange: (preview: string | null) => void
 
   isSaving: boolean
   isReceiving: boolean
@@ -126,7 +118,6 @@ export interface OrderDetailCallbacks {
   onSaveEditOrder: () => Promise<boolean>
   onReceiveOrder: () => Promise<boolean>
   onDeleteOrder: () => Promise<boolean>
-  getReceiptUrl: (order: ExpandedOrder) => string | null
 
   initialEditSnapshot: string
 
@@ -161,10 +152,6 @@ export interface SharedOrderFieldCallbacks {
   onOrderEstimatedArrivalChange: (date: string) => void
   orderProvider: string
   onOrderProviderChange: (providerId: string) => void
-  orderReceiptFile: File | null
-  onOrderReceiptFileChange: (file: File | null) => void
-  orderReceiptPreview: string | null
-  onOrderReceiptPreviewChange: (preview: string | null) => void
   isSaving: boolean
   error: string
   onClose: () => void
@@ -185,10 +172,6 @@ export function useOrderCallbacks(): SharedOrderFieldCallbacks {
     onOrderEstimatedArrivalChange: ctx.onOrderEstimatedArrivalChange,
     orderProvider: ctx.orderProvider,
     onOrderProviderChange: ctx.onOrderProviderChange,
-    orderReceiptFile: ctx.orderReceiptFile,
-    onOrderReceiptFileChange: ctx.onOrderReceiptFileChange,
-    orderReceiptPreview: ctx.orderReceiptPreview,
-    onOrderReceiptPreviewChange: ctx.onOrderReceiptPreviewChange,
     isSaving: ctx.isSaving,
     error: ctx.error,
     onClose: ctx.onClose,

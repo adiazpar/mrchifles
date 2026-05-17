@@ -102,6 +102,15 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        // lottie-react pulls in the full `lottie-web` build, which includes
+        // a JSON-expression evaluator that uses direct `eval()`. We don't
+        // use expression-based animations (all Lottie JSONs in
+        // public/animations/ are static), so swap to the `lottie_light`
+        // sub-build that omits the evaluator. This eliminates the rolldown
+        // "direct eval" build warning and is the upstream-recommended fix
+        // (lottie-web docs explicitly suggest the light build when
+        // expressions aren't needed).
+        'lottie-web': 'lottie-web/build/player/lottie_light',
       },
     },
     build: {
@@ -110,9 +119,12 @@ export default defineConfig(({ mode }) => {
       // warnings on every build. esbuild handles it cleanly.
       cssMinify: 'esbuild',
       // bwip-js (~900 kB) and unpdf/pdfjs (~1.6 MB) are unavoidably large
-      // and already loaded behind dynamic imports / route splits. Raise the
-      // threshold so the perf hint isn't constant noise.
-      chunkSizeWarningLimit: 2000,
+      // and already loaded behind dynamic imports / route splits. The main
+      // entry bundle (Ionic + React + Drizzle + better-auth client +
+      // intl-messageformat + the app shell) lands around ~2.1 MB after
+      // minification. Raise the threshold so the perf hint isn't constant
+      // noise for chunks we've already triaged.
+      chunkSizeWarningLimit: 2200,
     },
     test: {
       environment: 'jsdom',

@@ -57,10 +57,6 @@ export interface NewOrderModalProps {
   onOrderTotalChange: (total: string) => void
   orderEstimatedArrival: string
   onOrderEstimatedArrivalChange: (date: string) => void
-  orderReceiptFile: File | null
-  onOrderReceiptFileChange: (file: File | null) => void
-  orderReceiptPreview: string | null
-  onOrderReceiptPreviewChange: (preview: string | null) => void
   orderProvider: string
   onOrderProviderChange: (providerId: string) => void
   productSearchQuery: string
@@ -103,10 +99,6 @@ export function NewOrderModal({
   onOrderTotalChange,
   orderEstimatedArrival,
   onOrderEstimatedArrivalChange,
-  orderReceiptFile,
-  onOrderReceiptFileChange,
-  orderReceiptPreview,
-  onOrderReceiptPreviewChange,
   orderProvider,
   onOrderProviderChange,
   productSearchQuery,
@@ -159,10 +151,6 @@ export function NewOrderModal({
     onOrderTotalChange,
     orderEstimatedArrival,
     onOrderEstimatedArrivalChange,
-    orderReceiptFile,
-    onOrderReceiptFileChange,
-    orderReceiptPreview,
-    onOrderReceiptPreviewChange,
     orderProvider,
     onOrderProviderChange,
     productSearchQuery,

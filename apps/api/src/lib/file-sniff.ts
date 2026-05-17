@@ -161,27 +161,3 @@ export function isHeic(bytes: Uint8Array): boolean {
   )
 }
 
-/**
- * Like sniffImageMimeType but also accepts PDF (common for order
- * receipts). Returns the detected MIME or null.
- */
-export function sniffDocumentMimeType(
-  bytes: Uint8Array,
-): ImageMimeType | 'application/pdf' | null {
-  const img = sniffImageMimeType(bytes)
-  if (img) return img
-
-  // PDF: 25 50 44 46 2D  →  "%PDF-"
-  if (
-    bytes.length >= 5 &&
-    bytes[0] === 0x25 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x44 &&
-    bytes[3] === 0x46 &&
-    bytes[4] === 0x2d
-  ) {
-    return 'application/pdf'
-  }
-
-  return null
-}

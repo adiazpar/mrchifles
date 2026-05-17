@@ -20,7 +20,6 @@ import {
   UserPlus,
   UserCheck,
   Truck,
-  Paperclip,
   CheckCircle2,
 } from 'lucide-react'
 import Image from '@/lib/Image'
@@ -43,7 +42,6 @@ export function OrderOverviewStep() {
     onClose,
     onInitializeEditForm,
     onInitializeReceiveQuantities,
-    getReceiptUrl,
     canDelete,
     canManage,
   } = useOrderDetailCallbacks()
@@ -325,25 +323,6 @@ export function OrderOverviewStep() {
                 <span className="order-receipt__audit-value">
                   {order.expand.receivedByUser.name || order.expand.receivedByUser.email}
                 </span>
-              </div>
-            )}
-            {order.receipt && (
-              <div className="order-receipt__audit-row">
-                <span className="order-receipt__audit-icon" aria-hidden="true">
-                  <Paperclip size={14} strokeWidth={1.7} />
-                </span>
-                <span className="order-receipt__audit-label">
-                  {t.formatMessage({ id: 'orders.receipt_attached_label' })}
-                </span>
-                <span className="order-receipt__audit-leader" aria-hidden="true" />
-                <a
-                  href={getReceiptUrl(order) || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="order-receipt__audit-value order-receipt__audit-value--link"
-                >
-                  {t.formatMessage({ id: 'orders.view_attachment' })}
-                </a>
               </div>
             )}
           </div>

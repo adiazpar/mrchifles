@@ -13,13 +13,6 @@ export interface User {
   emailVerified: boolean
   phoneNumber?: string | null
   phoneNumberVerified: boolean
-  /**
-   * Legacy two-factor plugin flag. The passwordless build does not load
-   * the better-auth two-factor plugin and does not expose any 2FA UI;
-   * the field is retained for stable downstream typing and is always
-   * `false` at runtime.
-   */
-  twoFactorEnabled: boolean
 }
 
 // ============================================
@@ -94,7 +87,6 @@ export interface Product {
   costPrice?: number | null
   active: boolean
   categoryId?: string | null
-  productCategory?: ProductCategory | null
   icon?: string | null
   barcode?: string | null
   barcodeFormat?: BarcodeFormat | null
@@ -158,8 +150,6 @@ export interface Order {
   total: number
   status: OrderStatus
   estimatedArrival?: Date | string | null
-  receipt?: string | null
-  notes?: string | null
 }
 
 export interface OrderItem {

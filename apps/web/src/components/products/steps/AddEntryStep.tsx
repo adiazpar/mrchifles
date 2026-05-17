@@ -13,8 +13,6 @@ import { close } from 'ionicons/icons'
 import {
   Sparkles,
   PencilLine,
-  FileScan,
-  FileSpreadsheet,
   ChevronRight,
   Settings2,
 } from 'lucide-react'
@@ -101,23 +99,6 @@ export function AddEntryStep() {
                 </span>
               </button>
 
-              {/* Coming-soon scan-a-document */}
-              <div className="pm-choice pm-choice--ghost" aria-disabled="true">
-                <span className="pm-choice__icon">
-                  <FileScan size={24} strokeWidth={1.6} />
-                </span>
-                <span className="pm-choice__body">
-                  <span className="pm-choice__title">
-                    {t.formatMessage({ id: 'productForm.add_from_document_title' })}
-                  </span>
-                  <span className="pm-choice__desc">
-                    {t.formatMessage({ id: 'productForm.add_from_document_desc' })}
-                  </span>
-                  <span className="pm-choice__meta">
-                    <span>{t.formatMessage({ id: 'productAddEdit.coming_soon' })}</span>
-                  </span>
-                </span>
-              </div>
             </div>
 
             <div className="pm-entry__or" aria-hidden="true">
@@ -153,24 +134,6 @@ export function AddEntryStep() {
                   <ChevronRight size={18} />
                 </span>
               </button>
-
-              {/* Coming-soon import file */}
-              <div className="pm-choice pm-choice--ghost" aria-disabled="true">
-                <span className="pm-choice__icon">
-                  <FileSpreadsheet size={24} strokeWidth={1.6} />
-                </span>
-                <span className="pm-choice__body">
-                  <span className="pm-choice__title">
-                    {t.formatMessage({ id: 'productForm.import_file_title' })}
-                  </span>
-                  <span className="pm-choice__desc">
-                    {t.formatMessage({ id: 'productForm.import_file_desc' })}
-                  </span>
-                  <span className="pm-choice__meta">
-                    <span>{t.formatMessage({ id: 'productAddEdit.coming_soon' })}</span>
-                  </span>
-                </span>
-              </div>
             </div>
           </div>
         </div>
